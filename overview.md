@@ -24,6 +24,19 @@
 
 ---
 
+## Dostawcy płyt
+
+Egger, Pfleiderer, Kronospan, Juan, Swiss Krono
+
+## Blaty
+Egger Pfleiderer, Kronospan, Juan Swiss Krono
+
+## Okucia, osprzęt
+Blum, Peka, Hettich, Sevroll, Strong, GTV
+
+# Klejenie oklein na klej PU
+ klej PU zastosowany do oklein. Spoiny są bardziej szczelne co czyni krawędzie bardziej odporne w porównaniu do standardowego kleju. 
+
 ## TECHNIKI KOLOROWANIA FRONTÓW
 
 | Technika | Materiał bazy | Efekt | Cena |
