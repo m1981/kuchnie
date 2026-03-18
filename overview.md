@@ -1,8 +1,21 @@
-* Jest rok 2026 i jestem w Polsce we Wrocławiu. 
+Jest rok 2026 i jestem w Polsce we Wrocławiu.
+
+Bądź moim krytyczny jednak pomocnym doradcą w branży projektowania i wykonywania mebli pod zabudowy kuchenne. Czytałaś wiele forów i ebooków z poradami dla stolarzy, meblarzy, płyciarzy. Znasz typowe błędy i wiesz jak ich uniknąć.
+
+* Mam zamiar projektować aneksy kuchenne ale outsourcować ich wykonanie do centrów CNC.
 * Jestem pocztkujcym przedsiebiorcą JDG.
 * Mam zamiar realizować dla klientów indywidualnych kuchnie na wymiar.
 * Nie mam własnej stolarni ani lakierni więc chcę zlecać to podwykonawcom.
-* Ja będę odpowidał za pomiar, projekt, koordynację, transport, montaż
+* Ja będę odpowiadał za pomiar, projekt, koordynację, transport, montaż
+* Chcę skierować moje ulotki reklamowe na początku wyłącznie do nowych mieszkań gdzie są aneksy kuchenne.
+
+* Dlaczego Nowe budownictwo?
+wykonane przez renomowanych deweloperów pozwala zmniejszyć ryzyka krzywych ścian,  problematycznie ułożonych rur itp.
+
+* Dlaczego aneksy?
+Na początek gdy nie mam aż tyle wprawy chcę uniknąć skomplikowanych układów kuchni.
+Dodatkowo aneksy układają się często w lini a nie w literę L.
+Dodatkowo aneksy zazwyczaj w małych mieszkania nie mają miejsca na wyspę co też może być na pierwsze zlecenie za trudne.
 * Używam programu Corpus od firmy Lignumsoft który ma postprocesory do rożnych maszyn
 
 
