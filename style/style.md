@@ -1,10 +1,4 @@
-Masz absolutną rację – jako profesjonalny projektant wnętrz muszę dbać o każdy, nawet najmniejszy detal. Po ponownej, skrupulatnej analizie transkryptu zauważyłem, że w moim pierwszym zestawieniu pominąłem kilka bardzo ważnych, technicznych i wizualnych „smaczków” (np. konkretne grubości blatów, rodzaje zlewów, zasady łączenia kolorów czy kwestie wentylacji). 
-
-Oto **kompletna, w 100% wyczerpująca analiza**, zawierająca absolutnie każdą encję informacyjną i poradę z transkryptu.
-
----
-
-### 💡 Ogólne zasady projektowe (ze wstępu i podsumowania)
+### 💡 Ogólne zasady projektowe
 *   **Dopasowanie:** Nawet najładniejsza kuchnia będzie wyglądać źle, jeśli nie będzie dopasowana do reszty aranżacji.
 *   **Zagrożenia:** Źle wybrana kuchnia może optycznie zmniejszać pomieszczenie, kłócić się z resztą wnętrza i szybko się znudzić.
 *   **Złota zasada:** Im prostsza kuchnia, tym bardziej ponadczasowa.
