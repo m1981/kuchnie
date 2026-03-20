@@ -44,3 +44,9 @@ flowchart TD
     style Z fill:#E74C3C,color:#fff
     style O fill:#E74C3C,color:#fff
 ```
+
+
+# Projektowanie wstepne szfek i układu
+Projektowanie wstepne można zrobić za pomocą konfiguratora 
+
+https://komfort.pl/netdecor

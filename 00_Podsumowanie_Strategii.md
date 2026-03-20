@@ -1,4 +1,7 @@
 
+
+
+
 # BIZNESPLAN: STOLARZ-PROJEKTANT (Wrocław 2026)
 **Model:** JDG, brak własnej stolarni, montaż w pojedynkę, outsourcing do centrów CNC.
 **Nisza:** Nowe budownictwo deweloperskie, wyłącznie aneksy kuchenne.
@@ -54,6 +57,7 @@ Nie kupuj wszystkiego. Załóż konto na JDG w dużej hurtowni (np. Korner, Belm
 
 ## Notatki
 
+* Uważaj na wentylację lodówki w zabudowie! W małych aneksach łatwo o tym zapomnieć, a bez kratki w cokole i przestrzeni z tyłu, lodówka spali się po roku, a klient przyjdzie do Ciebie z reklamacją.
 
 
 3. Outsourcing do centrów CNC
@@ -75,3 +79,22 @@ Wyrzynarka i frezarka: Do wycinania otworów w blacie pod zlew i płytę indukcy
 Pomocnik: Płyta wiórowa jest ciężka. Wniesienie formatek na 4 piętro i wieszanie szafek górnych w pojedynkę to prosta droga do zniszczenia materiału i własnego kręgosłupa. Znajdź kogoś do pomocy na dni montażowe.
 
 
+
+### Pod piekarnik
+* Samoprzylepna gruba osłona termiczna do piekarnika.
+Jeśli aneks kończy się np. wysokim słupkiem na lodówkę, którego prawy bok widać z salonu, TEN JEDEN BOK nie może być zrobiony z tej płyty za 327 zł! Musisz go wyciąć z tej drogiej płyty PerfectSense (PM), z której robisz fronty. Inaczej klient pod światło zobaczy, że front jest głęboko matowy i gładki, a bok szafki ma strukturę "skórki pomarańczy" (ST9) i odbija światło inaczej.
+
+* Fronty i boki widoczne: Egger U702 PM (PerfectSense)
+* Wnętrza szafek (korpusy): Egger U702 ST9 (zwykła laminowana)
+* Blat: Kompaktowy HPL (np. w dekorze jasnego dębu lub białego marmuru dla kontrastu).
+
+https://www.meble.pl/p1039789,plyta-meblowa-egger-u702-st9-kaszmir-18-mm.html
+
+### Zawiasy
+Häfele METALLA 310 SM
+
+### Podnośniki
+Blum Aventos HF top
+
+
+* Złota zasada stolarza w 2026 roku: Na korpusach możesz oszczędzać (Egger ST9). Na frontach możesz szukać alternatyw (PET zamiast lakieru). Ale NIGDY nie oszczędzaj na okuciach ruchomych (zawiasy, szuflady, podnośniki). To one pracują codziennie i to one budują Twoją renomę. Zostań przy Blumie lub Hettichu.
