@@ -33,6 +33,91 @@
 *   **Dostawcy płyt/blatów:** Egger, Pfleiderer, Kronospan, Juan, Swiss Krono.
 *   **Dostawcy okuć:** Blum, Peka, Hettich, Sevroll, Strong, GTV, Häfele.
 
+
+### Dobre sklepy / dobre ceny
+
+* https://meblight.pl/
+
+* https://viyar.pl/catalog/komplet-zawieszek-niewidocznych-libra-h1-listwa-standardowa-zaslepka-szeroka-biala-150-kg-para-itali/?srsltid=AfmBOorHc_-atdll1N_Me149lIOCuR_oHlnmJxvk1-UGunYRfR_IOYeN
+
+### Wkręty Wurth Assy
+ * w łbem torx
+
+### Profile Gole'a
+
+1. HÄFELE (Mój faworyt do systemów z oświetleniem)
+Dlaczego: Mają genialnie dopracowane profile Gola, które są od razu zintegrowane z ich systemem oświetlenia Loox LED. Kupujesz profil, który ma już gotowe korytko z mleczną osłonką. Wciskasz taśmę, podłączasz na wtyczki i masz bezuchwytową kuchnię z podświetleniem szuflad. Mają też świetne, gotowe łączniki kątowe (wewnętrzne i zewnętrzne).
+2. WÜRTH (Pancerna jakość i precyzja)
+Dlaczego: Würth ma bardzo sztywne profile aluminiowe i świetny system mocowań do korpusów. Ich łączniki narożne (kąty 90 stopni) pasują idealnie, nie ma mowy o żadnych szparach. Jeśli robię ciężką, dużą kuchnię i zależy mi na idealnej linii bez wyginania się aluminium, biorę od nich.
+3. DEMOS (Świetny stosunek jakości do ceny)
+Dlaczego: Demos (często pod swoją marką własną Strong) ma w ofercie kompletne systemy Gola. To bardzo dobry wybór do standardowych projektów. Mają wszystkie potrzebne kształty (L pod blat, C między szuflady, pionowe do szaf lodówkowych) i pełną gamę kolorystyczną (aluminium, czarny mat, biały, złoty, szampański).
+
+### Zawiasy
+
+> Titus T-type (30zł)
+> https://www.youtube.com/watch?v=d65oi5nzmO4
+
+> Sklep: https://www.fruugo.pl/zawias-titus-t-type-110%25C2%25B0-ca%25C5%2582kowicie-nak%25C5%2582adany-cicho-zamykajacy-czarny-701-0at0-068/p-469990878-984171930
+> ![img_5.png](img_5.png)
+
+### Zawieszki szafek górnych
+LIBRA H1
+> https://www.italianaferramenta.it/en/catalog/libra-h1-1201
+![img_2.png](img_2.png)
+
+### Szuflady z podświetleniem
+> Hafele Szuflady AvanTech YOU Illumination
+> https://www.hettich.com/pl-pl/produkty/systemy-szuflad/avantech-you
+![img_1.png](img_1.png)
+
+
+### Cargo
+
+* Peka DISPENSA
+https://youtu.be/9dO40cuo4ck?t=29
+
+### Systemy narożne
+
+1. Peka Le Mans 2 (1500zł)
+> https://www.youtube.com/watch?v=-5arZTWKzD0&t=17s
+
+2. Peko Arena Revo (1500zł)
+> https://www.youtube.com/watch?v=-5arZTWKzD0&t=101s
+
+
+### LED 
+
+### Seria Hafele Loox
+
+https://meblownia.pl/category/oswietlenie-led-hafele-loox-12v
+
+> **Zasilacz HAFELE LOOX5 40w - 100zł**
+> 
+> https://meblownia.pl/hafele-zasilacz-loox5e-12v-40w-833-72-935-z-funk-przelacznika.html
+![img_4.png](img_4.png)
+
+> https://meblownia.pl/adapter-multi-white-do-dystrybutora-hafele-loox5-12v-833-95-745.html
+![img_3.png](img_3.png)
+
+#### Włączniki
+
+![img.png](img.png)
+https://www.intar.pl/karta-produktu/wyl-xc60-ni-02w,22150
+
+
+https://www.intar.pl/karta-produktu/wyl-sc60-ni-02w,22138
+
+
+
+#### Sterowniki zdalne LED
+
+https://meblownia.pl/category/inteligentne-oswietlenie-hafele-connect-mesh
+
+https://www.intar.pl/karta-produktu/oli-ster-cz-01,18734
+
+Rozdzielacz 6 punktów
+https://www.intar.pl/karta-produktu/oksz-2m-led-6-cz-v03,21989
+
 ## 5. Obróbka
 
 Oto Twoja wyselekcjonowana lista lektur (podzielona na to, co ważne dla montażysty i dla projektanta):
