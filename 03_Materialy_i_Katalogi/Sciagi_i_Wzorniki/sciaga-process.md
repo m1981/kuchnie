@@ -76,3 +76,44 @@ Oto Twoja kompletna ściąga, ułożona chronologicznie – od pierwszego spotka
     *   Fronty PET (PerfectSense): Myć tylko miękką ściereczką i wodą z mydłem. Zakaz używania mleczek z mikrogranulkami (Cif) i ostrych gąbek!
     *   Blat HPL: Nie kroić nożem bezpośrednio na blacie. Nie stawiać gorących garnków prosto z kuchenki (używać podkładek). Rozlane płyny wycierać na bieżąco.
 3.  **Zdjęcia:** Zrób profesjonalne zdjęcia do portfolio (zgodnie z umową z klientem).
+
+
+## Indukcja - zasady projektowe
+
+https://www.youtube.com/watch?v=LxsZxeljh60
+![img.png](img.png)
+
+*   **Płyta indukcyjna, która "oddycha":** Indukcja generuje ogromne ilości ciepła od spodu. Jeśli pod nią dasz szufladę na sztućce i zamkniesz ją szczelnie, płyta się przegrzeje i spali (a serwis odrzuci gwarancję).
+    *   *Rozwiązanie:* W projekcie CNC obniżam przednią listwę spinającą korpus o 1-2 cm i robię wycięcie w tylnej ściance. Powietrze musi wchodzić pod blatem i uchodzić tyłem.
+
+
+
+## Zmywarka  - zasady projektowe
+### Zmywarka musi mieć zawiasy ślizgowe!
+> https://www.tiktok.com/@agdprestige/video/7440929987374386454
+
+![img_1.png](img_1.png)
+
+## Szafka pod zlewem
+* Szafka zlewowa – strefa podwyższonego ryzyka: Przeciekający syfon to kwestia czasu. Woda na płycie wiórowej to wyrok śmierci dla szafki.
+Rozwiązanie: Na dno szafki zlewowej zawsze wklejam **aluminiową matę ociekową**. Kosztuje grosze (ok. 50 zł), a jeśli coś kapnie, woda zostaje na aluminium, nie wsiąkając w płytę.
+![img_3.png](img_3.png)
+
+
+
+### Listwa przy ścianie kończąca
+https://www.youtube.com/watch?v=0waVo4zKUGM&t=136s
+![img_2.png](img_2.png)
+
+
+### Narożnik kuchenny / ślepy narożnik
+
+https://www.youtube.com/watch?v=6lN7PfFfOcQ
+
+
+### Montaż lodówki - zawiasy suwakowe 
+https://www.youtube.com/watch?v=Z596L5vUU_8
+
+![img_4.png](img_4.png)
+
+
