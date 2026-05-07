@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Karta Pomiarowa - Instalacje</title>
+        <link rel="stylesheet" href="common.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1>KARTA POMIAROWA: C. INSTALACJE I PRZYŁĄCZA</h1>
+
+            <p>
+                <strong>Punkt Referencyjny (Baza 0,0):</strong>
+                <input
+                    type="text"
+                    style="width: 300px"
+                    placeholder="np. Lewy narożnik ściany głównej"
+                />
+            </p>
+
+            <div class="cad-rules">
+                <h2>Zasady Pomiaru CAD (Przypomnienie)</h2>
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>1. Jeden Punkt Referencyjny</h3>
+                        <div class="img-placeholder">
+                            <!-- Podmień src na nazwę swojego pliku -->
+                            <img src="sop-datum-point.jpg" alt="Zasada 1 Baza" />
+                        </div>
+                    </div>
+                    <div class="rule-card">
+                        <h3>2. System XYZ (Do osi)</h3>
+                        <div class="img-placeholder">
+                            <!-- Podmień src na nazwę swojego pliku -->
+                            <img src="sop-center-points.jpg" alt="Zasada XYZ" />
+                        </div>
+                    </div>
+                    <div class="rule-card">
+                        <h3>3. Pomiar Narastający</h3>
+                        <div class="img-placeholder">
+                            <!-- Podmień src na nazwę swojego pliku -->
+                            <img src="obrazek_narastajacy.jpg" alt="Pomiar narastający" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Rodzaj przyłącza</th>
+                        <th style="width: 15%">Oś X (od Bazy) [mm]</th>
+                        <th style="width: 15%">Oś Y (od podłogi) [mm]</th>
+                        <th style="width: 45%">Oś Z (Głębokość) / Uwagi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Woda (Zimna)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Ile wystaje ze ściany?" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Woda (Ciepła)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Ile wystaje ze ściany?" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Odpływ (Kanalizacja)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Średnica rury / Uwagi" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gniazdo: Zmywarka</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Uwagi" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gniazdo: Piekarnik</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Uwagi" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gniazdo: Lodówka</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Uwagi" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Siła (400V - Indukcja)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Długość kabla ze ściany" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gniazda robocze (Blat)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Uwagi" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kratka wentylacyjna</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Średnica: fi... / Typ" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gaz (Zawór)</strong></td>
+                        <td><input type="text" placeholder="X..." /></td>
+                        <td><input type="text" placeholder="Y..." /></td>
+                        <td><input type="text" placeholder="Dostępność zaworu" /></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="warning-box">
+                ⚠️ KONTROLA ZMYWARKI: Czy za planowanym miejscem zmywarki ściana jest w 100% pusta?
+                <div class="checkbox-group">
+                    <label><input type="radio" name="zmywarka" value="tak" /> TAK</label>
+                    <label style="margin-left: 20px"
+                        ><input type="radio" name="zmywarka" value="nie" /> NIE</label
+                    >
+                </div>
+                <div style="margin-top: 10px">
+                    <input type="text" placeholder="Jeśli NIE, co tam jest i kto to przenosi?" />
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
