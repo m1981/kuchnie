@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Etap 1.3: Projektowanie Technologiczne - SOP PRO</title>
+        <link rel="stylesheet" href="./common.css" />
+        <style>
+            .nav-bar {
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .nav-bar a {
+                text-decoration: none;
+                color: var(--primary-color);
+                font-weight: bold;
+            }
+            .nav-bar a:hover {
+                text-decoration: underline;
+            }
+
+            .sop-section {
+                background: #fff;
+                padding: 20px;
+                margin-bottom: 20px;
+                border-left: 4px solid var(--primary-color);
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            }
+            .sop-section h2 {
+                margin-top: 0;
+                color: #2c3e50;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+            }
+
+            .math-box {
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                padding: 15px;
+                border-radius: 5px;
+                font-family: monospace;
+                font-size: 1.1em;
+                margin: 15px 0;
+            }
+            .math-box strong {
+                color: #d35400;
+            }
+
+            .pro-tip {
+                background-color: #e8f4f8;
+                border-left: 4px solid #3498db;
+                padding: 15px;
+                margin: 15px 0;
+                font-style: italic;
+            }
+            .warning-box {
+                background-color: #fadbd8;
+                border-left: 4px solid #e74c3c;
+                padding: 15px;
+                margin: 15px 0;
+                font-weight: bold;
+            }
+
+            table.tech-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            table.tech-table th,
+            table.tech-table td {
+                border: 1px solid var(--border-color);
+                padding: 10px;
+                text-align: left;
+            }
+            table.tech-table th {
+                background-color: #ecf0f1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="nav-bar">
+                <a href="index.html">← Powrót do Panelu Głównego</a>
+            </div>
+
+            <h1>ETAP 1.3: PROJEKTOWANIE TECHNOLOGICZNE (Matematyka i Luzy)</h1>
+            <p>
+                <em
+                    >Cel: Przekucie wymiarów z natury na wymiary szafek. Tu zarabiasz pieniądze.
+                    Błąd w obliczeniach to formatka do wyrzucenia.</em
+                >
+            </p>
+
+            <div class="sop-section">
+                <h2>1. Konstrukcja Korpusów (Standard 18mm)</h2>
+                <p>Zasady łączenia płyt wiórowych (ST9) dla maksymalnej sztywności i estetyki.</p>
+
+                <table class="tech-table">
+                    <tr>
+                        <th style="width: 30%">Typ Szafki</th>
+                        <th>Zasada Konstrukcyjna</th>
+                        <th>Dlaczego tak?</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Szafki Dolne</strong></td>
+                        <td>Boki stoją <strong>NA</strong> wieńcu dolnym.</td>
+                        <td>
+                            Wieniec dolny przenosi cały ciężar na nóżki. Wkręty (konfirmaty) nie
+                            pracują na ścinanie pod ciężarem blatu i szuflad.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Szafki Wiszące (Górne)</strong></td>
+                        <td>Wieniec dolny jest <strong>MIĘDZY</strong> bokami.</td>
+                        <td>
+                            Estetyka. Patrząc od spodu na szafkę wiszącą, nie widzisz łączenia
+                            (krawędzi boku), tylko gładką płaszczyznę wieńca.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Plecy (HDF 3mm)</strong></td>
+                        <td>Wpuszczane w nutę (frez) 16 mm od tylnej krawędzi.</td>
+                        <td>
+                            Usztywnia korpus (trzyma przekątną). Daje 16 mm przestrzeni z tyłu na
+                            zawieszki (np. Libra H1) i gubienie krzywizn ściany.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="sop-section">
+                <h2>2. Matematyka Formatek (Wymiary Netto/Brutto)</h2>
+                <p>
+                    Systemy CNC (np. eRozkrój) wymagają podania wymiaru gotowej formatki. Musisz
+                    uwzględnić grubość okleiny!
+                </p>
+
+                <div class="warning-box">
+                    ZASADA: Wymiar w systemie CNC = Wymiar docelowy - (Grubość okleiny x Ilość
+                    oklejanych krawędzi)
+                </div>
+
+                <div class="math-box">
+                    <strong>Przykład: Wieniec dolny szafki 600 mm (Szafka górna)</strong><br />
+                    Szerokość całkowita szafki: 600 mm<br />
+                    Grubość boków: 2 x 18 mm = 36 mm<br />
+                    Szerokość wieńca (bez okleiny): 600 - 36 = 564 mm<br />
+                    Okleina z przodu: 1 mm (PUR)<br />
+                    <strong>Wymiar do wpisania w CNC: 564 mm x (Głębokość - 1mm)</strong>
+                </div>
+            </div>
+
+            <div class="sop-section">
+                <h2>3. Zasada Blend i Luzów (Nigdy na styk)</h2>
+                <p>
+                    Ściany nie są proste. Jeśli zaprojektujesz zabudowę od ściany do ściany na
+                    wymiar "zero", szafki się nie zmieszczą.
+                </p>
+
+                <ul style="line-height: 1.8">
+                    <li>
+                        <strong>Luzy boczne (Blendy):</strong> Zostaw minimum
+                        <strong>30-50 mm</strong> luzu od ścian bocznych. W to miejsce wchodzi
+                        blenda maskująca (frontowa).
+                    </li>
+                    <li>
+                        <strong>Luz sufitowy:</strong> Zostaw minimum <strong>30-50 mm</strong> pod
+                        sufitem. Sufity często opadają na środku pomieszczenia.
+                    </li>
+                    <li>
+                        <strong>Zamawianie blend:</strong> Blendę zamawiaj zawsze o
+                        <strong>50 mm szerszą</strong> niż wynika z projektu. Dotniesz ją na montażu
+                        zagłębiarką pod kątem krzywizny ściany.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sop-section">
+                <h2>4. Ślepy Róg (Narożnik) - Strefa Kolizji</h2>
+                <p>
+                    Najwięcej błędów projektowych powstaje w szafkach narożnych. Fronty uderzają o
+                    siebie lub o uchwyty.
+                </p>
+
+                <div class="pro-tip">
+                    <strong>Zasada 5x5 cm:</strong> Blenda narożna (łącząca dwie szafki pod kątem 90
+                    stopni) musi mieć minimum 50 mm szerokości z każdej strony (tzw. L-ka 50x50).
+                    <br /><br />
+                    <em>Dlaczego?</em> Jeśli dasz mniej, uchwyt krawędziowy z jednej szafki
+                    zablokuje otwarcie szuflady z drugiej szafki. Jeśli klient wybrał bardzo
+                    wystające uchwyty relingowe, blenda musi mieć nawet 60-70 mm!
+                </div>
+            </div>
+
+            <div class="sop-section">
+                <h2>5. Fugi (Szczeliny między frontami)</h2>
+                <p>Konsekwencja to klucz do estetyki premium.</p>
+
+                <table class="tech-table">
+                    <tr>
+                        <th>Rodzaj szczeliny</th>
+                        <th>Standardowy wymiar</th>
+                        <th>Uwagi</th>
+                    </tr>
+                    <tr>
+                        <td>Między frontami (Pion/Poziom)</td>
+                        <td><strong>3 mm</strong> lub <strong>4 mm</strong></td>
+                        <td>
+                            Wybierz jedną wartość i trzymaj się jej w całym projekcie. 3 mm wygląda
+                            nowocześniej, ale wymaga idealnej regulacji zawiasów.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Nad blatem (Szafki dolne)</td>
+                        <td><strong>3 mm</strong></td>
+                        <td>Szczelina między górną krawędzią frontu a spodem blatu.</td>
+                    </tr>
+                    <tr>
+                        <td>Nad cokołem</td>
+                        <td><strong>0 mm</strong> (Front zlicowany z dołem korpusu)</td>
+                        <td>
+                            Front szafki dolnej zazwyczaj kończy się równo z dolną krawędzią wieńca
+                            dolnego.
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="math-box">
+                    <strong
+                        >Obliczanie wysokości frontu szuflady (Przykład dla 3 szuflad równej
+                        wysokości):</strong
+                    ><br />
+                    Wysokość korpusu: 720 mm<br />
+                    Ilość szczelin poziomych: 4 (nad górną, między 1-2, między 2-3, pod dolną -
+                    jeśli jest)<br />
+                    Załóżmy szczeliny 3 mm. Całkowity luz: 4 x 3 mm = 12 mm<br />
+                    Dostępna przestrzeń na fronty: 720 - 12 = 708 mm<br />
+                    Wysokość jednego frontu: 708 / 3 = <strong>236 mm</strong>
+                </div>
+            </div>
+
+            <div
+                class="nav-bar"
+                style="
+                    margin-top: 30px;
+                    border-bottom: none;
+                    border-top: 1px solid var(--border-color);
+                    padding-top: 20px;
+                "
+            >
+                <a href="etap-1-2-specyfikacja-agd.html" style="float: left">← Wróć do Etapu 1.2</a>
+                <a href="etap-1-4-zamowienie-cnc.html" style="float: right"
+                    >Przejdź do Etapu 1.4: Zamówienie CNC →</a
+                >
+                <div style="clear: both"></div>
+            </div>
+        </div>
+    </body>
+</html>
