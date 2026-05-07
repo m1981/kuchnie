@@ -3,12 +3,171 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Karta Pomiarowa - Instalacje</title>
-        <link rel="stylesheet" href="common.css" />
+        <title>Karta Pomiarowa - SOP PRO</title>
+        <link rel="stylesheet" href="./common.css" />
+        <style>
+            .section-header {
+                background-color: var(--primary-color);
+                color: white;
+                padding: 10px 15px;
+                margin-top: 30px;
+                margin-bottom: 15px;
+                border-radius: 3px;
+            }
+            .input-small {
+                width: 80px;
+                text-align: center;
+            }
+            .highlight-base {
+                background-color: #fff3cd;
+                font-weight: bold;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
-            <h1>KARTA POMIAROWA: C. INSTALACJE I PRZYŁĄCZA</h1>
+            <div style="margin-bottom: 20px">
+                <a
+                    href="index.html"
+                    style="text-decoration: none; color: var(--primary-color); font-weight: bold"
+                    >← Powrót do Panelu Głównego</a
+                >
+            </div>
+
+            <h1>KARTA POMIAROWA (ETAP 1.1)</h1>
+
+            <table style="margin-bottom: 20px">
+                <tr>
+                    <td style="width: 50%">
+                        <strong>Inwestycja / Klient:</strong>
+                        <input type="text" style="width: 60%" />
+                    </td>
+                    <td style="width: 50%">
+                        <strong>Data:</strong> <input type="text" style="width: 60%" />
+                    </td>
+                </tr>
+            </table>
+
+            <!-- ========================================== -->
+            <!-- SEKCJA B: GEOMETRIA POMIESZCZENIA          -->
+            <!-- ========================================== -->
+            <h2 class="section-header">📐 B. GEOMETRIA POMIESZCZENIA</h2>
+
+            <div class="cad-rules">
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <h3>Zasada 3 Punktów (Szukaj MIN)</h3>
+                        <div class="img-placeholder">
+                            <img src="img/zasada-3-punktow.jpg" alt="Zasada 3 punktów" />
+                        </div>
+                    </div>
+                    <div class="rule-card">
+                        <h3>Kąty i Piony</h3>
+                        <div class="img-placeholder">
+                            <img src="img/katy-piony.jpg" alt="Kąty i piony" />
+                        </div>
+                    </div>
+                    <div class="rule-card">
+                        <h3>Poziom Podłogi (Szukaj MAX)</h3>
+                        <div class="img-placeholder">
+                            <img src="img/poziom-podlogi.jpg" alt="Poziom podłogi" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p>
+                <em
+                    >Zawsze mierz od lewej do prawej. Zaznacz najmniejszy wymiar jako BAZĘ do
+                    projektu.</em
+                >
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Wymiar [mm]</th>
+                        <th style="width: 15%; text-align: center">Dół / Lewo</th>
+                        <th style="width: 15%; text-align: center">Środek</th>
+                        <th style="width: 15%; text-align: center">Góra / Prawo</th>
+                        <th style="width: 15%; text-align: center; background-color: #e67e22">
+                            BAZA (MIN)
+                        </th>
+                        <th style="width: 15%">Uwagi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Szerokość Ściany A (Główna)</strong></td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td class="highlight-base" style="text-align: center">
+                            <input type="text" class="input-small" style="font-weight: bold" />
+                        </td>
+                        <td><input type="text" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Szerokość Ściany B (Boczna)</strong></td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td class="highlight-base" style="text-align: center">
+                            <input type="text" class="input-small" style="font-weight: bold" />
+                        </td>
+                        <td><input type="text" /></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wysokość pomieszczenia</strong></td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td style="text-align: center">
+                            <input type="text" class="input-small" />
+                        </td>
+                        <td class="highlight-base" style="text-align: center">
+                            <input type="text" class="input-small" style="font-weight: bold" />
+                        </td>
+                        <td><input type="text" /></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table style="margin-bottom: 30px">
+                <tr>
+                    <td style="width: 50%">
+                        <strong>Kąt Narożnik Lewy:</strong>
+                        <input type="text" class="input-small" /> stopni<br />
+                        <strong>Kąt Narożnik Prawy:</strong>
+                        <input type="text" class="input-small" /> stopni
+                    </td>
+                    <td style="width: 50%">
+                        <strong>Odchyłka podłogi (ile mm ucieka?):</strong>
+                        <input type="text" style="width: 100px" /><br />
+                        <strong>Odchyłka ścian od pionu:</strong>
+                        <input type="text" style="width: 150px" />
+                    </td>
+                </tr>
+            </table>
+
+            <!-- ========================================== -->
+            <!-- SEKCJA C: INSTALACJE I PRZYŁĄCZA           -->
+            <!-- ========================================== -->
+            <h2 class="section-header">⚡ C. INSTALACJE I PRZYŁĄCZA</h2>
 
             <p>
                 <strong>Punkt Referencyjny (Baza 0,0):</strong>
@@ -20,27 +179,23 @@
             </p>
 
             <div class="cad-rules">
-                <h2>Zasady Pomiaru CAD (Przypomnienie)</h2>
                 <div class="rules-grid">
                     <div class="rule-card">
                         <h3>1. Jeden Punkt Referencyjny</h3>
                         <div class="img-placeholder">
-                            <!-- Podmień src na nazwę swojego pliku -->
-                            <img src="sop-datum-point.jpg" alt="Zasada 1 Baza" />
+                            <img src="img/cad-baza.jpg" alt="Zasada 1 Baza" />
                         </div>
                     </div>
                     <div class="rule-card">
                         <h3>2. System XYZ (Do osi)</h3>
                         <div class="img-placeholder">
-                            <!-- Podmień src na nazwę swojego pliku -->
-                            <img src="sop-center-points.jpg" alt="Zasada XYZ" />
+                            <img src="img/cad-xyz.jpg" alt="Zasada XYZ" />
                         </div>
                     </div>
                     <div class="rule-card">
                         <h3>3. Pomiar Narastający</h3>
                         <div class="img-placeholder">
-                            <!-- Podmień src na nazwę swojego pliku -->
-                            <img src="obrazek_narastajacy.jpg" alt="Pomiar narastający" />
+                            <img src="img/cad-narastajacy.jpg" alt="Pomiar narastający" />
                         </div>
                     </div>
                 </div>
@@ -99,22 +254,10 @@
                         <td><input type="text" placeholder="Długość kabla ze ściany" /></td>
                     </tr>
                     <tr>
-                        <td><strong>Gniazda robocze (Blat)</strong></td>
-                        <td><input type="text" placeholder="X..." /></td>
-                        <td><input type="text" placeholder="Y..." /></td>
-                        <td><input type="text" placeholder="Uwagi" /></td>
-                    </tr>
-                    <tr>
                         <td><strong>Kratka wentylacyjna</strong></td>
                         <td><input type="text" placeholder="X..." /></td>
                         <td><input type="text" placeholder="Y..." /></td>
                         <td><input type="text" placeholder="Średnica: fi... / Typ" /></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Gaz (Zawór)</strong></td>
-                        <td><input type="text" placeholder="X..." /></td>
-                        <td><input type="text" placeholder="Y..." /></td>
-                        <td><input type="text" placeholder="Dostępność zaworu" /></td>
                     </tr>
                 </tbody>
             </table>
