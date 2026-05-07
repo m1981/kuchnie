@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+# 1. PurgeCSS runs on EVERYTHING (no lint-staged)
+echo "🧹 1/2: Cleaning up unused CSS (Whole Repo)..."
+pnpm exec purgecss --config ./purgecss.config.js
+git add common.css
+
+# 2. Prettier runs ONLY on the files you are committing (using lint-staged)
+echo "💅 2/2: Formatting staged files with Prettier..."
+pnpm exec lint-staged
