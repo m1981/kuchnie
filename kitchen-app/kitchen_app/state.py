@@ -47,7 +47,11 @@ class KitchenState(rx.State):
         """Combines the default option with the materials list."""
         return ["Use Global Default"] + self.materials
 
-    def change_global_front(self, mat_name: str):
+    def change_global_front(self, formatted_name: str):
+        # Extract the actual name by splitting at " - "
+        # e.g., "Egger - U999 Black" -> "U999 Black"
+        mat_name = formatted_name.split(" - ")[1] if " - " in formatted_name else formatted_name
+
         with next(get_session()) as session:
             mat = session.exec(select(Material).where(Material.name == mat_name)).first()
             project = session.exec(select(Project)).first()
@@ -57,12 +61,15 @@ class KitchenState(rx.State):
                 session.commit()
         self.load_mock_data()
 
-    def change_local_front(self, mat_name: str):
+    def change_local_front(self, formatted_name: str):
         if not self.selected_cabinet_id: return
+
+        mat_name = formatted_name.split(" - ")[1] if " - " in formatted_name else formatted_name
+
         with next(get_session()) as session:
             cab = session.get(Cabinet, self.selected_cabinet_id)
             if cab:
-                if mat_name == "Use Global Default":
+                if formatted_name == "Use Global Default":
                     cab.override_front_mat_id = None
                 else:
                     mat = session.exec(select(Material).where(Material.name == mat_name)).first()
@@ -239,7 +246,8 @@ class KitchenState(rx.State):
                     db_cab = session.get(Cabinet, cab.id)
                     if db_cab.override_front_mat_id:
                         local_mat = session.get(Material, db_cab.override_front_mat_id)
-                        self.local_front_mat_name = local_mat.name if local_mat else "Use Global Default"
+                        # Format it to match the dropdown list
+                        self.local_front_mat_name = f"{local_mat.brand} - {local_mat.name}" if local_mat else "Use Global Default"
                     else:
                         self.local_front_mat_name = "Use Global Default"
                 break
@@ -248,46 +256,120 @@ class KitchenState(rx.State):
         SQLModel.metadata.create_all(engine)
         with next(get_session()) as session:
             existing = session.exec(select(Project)).first()
-            if not existing:
-                mdf = Material(name="Standard White MDF", price_per_unit=10.0, unit="m2")
-                oak = Material(name="Premium Oak Veneer", price_per_unit=45.0, unit="m2")
-                pet = Material(name="Supermatte Black PET", price_per_unit=35.0, unit="m2")
-                hdf = Material(name="HDF Back", price_per_unit=5.0, unit="m2")
-                edge = Material(name="ABS Edge", price_per_unit=1.0, unit="lm")
-                hinge = HardwareSet(name="Blum Hinge", price_per_set=2.0)
-                drawer = HardwareSet(name="Blum Drawer", price_per_set=30.0)
 
-                session.add_all([mdf, oak, pet, hdf, edge, hinge, drawer])
+            if not existing:
+                # ==========================================
+                # 📖 MASTER CATALOG (Easy Maintenance Area)
+                # ==========================================
+
+                # 1. Hardware
+                hw_catalog = [
+                    HardwareSet(brand="Blum", name="Clip Top Hinge", price_per_set=2.50),
+                    HardwareSet(brand="Hettich", name="Sensys Hinge", price_per_set=2.20),
+                    HardwareSet(brand="Blum", name="Legrabox Drawer", price_per_set=35.00),
+                    HardwareSet(brand="Hettich", name="AvanTech Drawer", price_per_set=32.00),
+                ]
+
+                # 2. Utility Materials
+                utility_catalog = [
+                    Material(category="Back", brand="Generic", name="HDF White 3mm", price_per_unit=4.50, unit="m2"),
+                    Material(category="Edge", brand="Generic", name="ABS White 1mm", price_per_unit=0.80, unit="lm"),
+                    Material(category="Edge", brand="Generic", name="ABS Color 1mm", price_per_unit=1.20, unit="lm"),
+                ]
+
+                # 3. MDF / Particle Boards (The Brands)
+                board_catalog = [
+                    # EGGER (Standard & Premium)
+                    Material(category="Board", brand="Egger", name="W1000 Premium White", price_per_unit=12.50,
+                             unit="m2"),
+                    Material(category="Board", brand="Egger", name="U999 Black", price_per_unit=14.00, unit="m2"),
+                    Material(category="Board", brand="Egger", name="H3131 Davos Oak", price_per_unit=18.50, unit="m2"),
+                    Material(category="Board", brand="Egger", name="U708 Light Grey", price_per_unit=13.00, unit="m2"),
+                    Material(category="Board", brand="Egger", name="F204 Marmara Marble", price_per_unit=22.00,
+                             unit="m2"),
+
+                    # KRONOSPAN (Budget & Standard)
+                    Material(category="Board", brand="Krono", name="K101 Front White", price_per_unit=9.50, unit="m2"),
+                    Material(category="Board", brand="Krono", name="0190 Black", price_per_unit=11.00, unit="m2"),
+                    Material(category="Board", brand="Krono", name="D1811 Walnut", price_per_unit=14.50, unit="m2"),
+                    Material(category="Board", brand="Krono", name="0171 Slate Grey", price_per_unit=10.50, unit="m2"),
+                    Material(category="Board", brand="Krono", name="8685 Snow White", price_per_unit=9.00, unit="m2"),
+
+                    # FORNER (Premium Supermattes & Gloss)
+                    Material(category="Board", brand="Forner", name="Velvet Ultramatte Black", price_per_unit=38.00,
+                             unit="m2"),
+                    Material(category="Board", brand="Forner", name="Velvet Ultramatte White", price_per_unit=38.00,
+                             unit="m2"),
+                    Material(category="Board", brand="Forner", name="Pearl Gloss", price_per_unit=35.00, unit="m2"),
+                    Material(category="Board", brand="Forner", name="Cashmere Matte", price_per_unit=36.50, unit="m2"),
+                    Material(category="Board", brand="Forner", name="Navy Blue Matte", price_per_unit=36.50, unit="m2"),
+
+                    # CLEAF (Deep Textures)
+                    Material(category="Board", brand="Cleaf", name="Ares Beton", price_per_unit=42.00, unit="m2"),
+                    Material(category="Board", brand="Cleaf", name="Pembroke Oak", price_per_unit=45.00, unit="m2"),
+                    Material(category="Board", brand="Cleaf", name="Nadir Linen", price_per_unit=40.00, unit="m2"),
+                    Material(category="Board", brand="Cleaf", name="Piombo Matte", price_per_unit=48.00, unit="m2"),
+                    Material(category="Board", brand="Cleaf", name="Sherwood Dark", price_per_unit=45.00, unit="m2"),
+                ]
+
+                # Insert everything into the database
+                session.add_all(hw_catalog + utility_catalog + board_catalog)
                 session.commit()
 
+                # ==========================================
+                # Create the Default Project
+                # ==========================================
                 project = Project(customer_name="Smith Family Kitchen")
+
+                # Fetch defaults from the newly created catalog
+                def_corpus = session.exec(select(Material).where(Material.name == "W1000 Premium White")).first()
+                def_back = session.exec(select(Material).where(Material.name == "HDF White 3mm")).first()
+                def_edge = session.exec(select(Material).where(Material.name == "ABS White 1mm")).first()
+                def_hinge = session.exec(select(HardwareSet).where(HardwareSet.name == "Clip Top Hinge")).first()
+                def_drawer = session.exec(select(HardwareSet).where(HardwareSet.name == "Legrabox Drawer")).first()
+
                 defaults = ProjectDefaults(
-                    project=project, corpus_mat_id=mdf.id, front_mat_id=mdf.id,
-                    back_mat_id=hdf.id, edge_band_mat_id=edge.id,
-                    hinge_sys_id=hinge.id, drawer_sys_id=drawer.id
+                    project=project,
+                    corpus_mat_id=def_corpus.id,
+                    front_mat_id=def_corpus.id,
+                    back_mat_id=def_back.id,
+                    edge_band_mat_id=def_edge.id,
+                    hinge_sys_id=def_hinge.id,
+                    drawer_sys_id=def_drawer.id
                 )
 
-                cab1 = Cabinet(project=project, name="Sink Base", type="BASE", width_mm=800, height_mm=720, depth_mm=560, door_count=2)
-                cab2 = Cabinet(project=project, name="Drawer Base", type="BASE", width_mm=600, height_mm=720, depth_mm=560, drawer_count=3)
-                cab3 = Cabinet(project=project, name="Tall Oven", type="TALL", width_mm=600, height_mm=2100, depth_mm=560, door_count=2)
-                # NEW: Added a Wall Cabinet to the seed data!
-                cab4 = Cabinet(project=project, name="Wall Cabinet", type="WALL", width_mm=800, height_mm=720, depth_mm=300, door_count=2)
+                cab1 = Cabinet(project=project, name="Sink Base", type="BASE", width_mm=800, height_mm=720,
+                               depth_mm=560, door_count=2)
+                cab2 = Cabinet(project=project, name="Drawer Base", type="BASE", width_mm=600, height_mm=720,
+                               depth_mm=560, drawer_count=3)
+                cab3 = Cabinet(project=project, name="Tall Oven", type="TALL", width_mm=600, height_mm=2100,
+                               depth_mm=560, door_count=2, drawer_count=5)
+                cab4 = Cabinet(project=project, name="Wall Cabinet", type="WALL", width_mm=800, height_mm=720,
+                               depth_mm=300, door_count=2)
 
                 session.add_all([project, defaults, cab1, cab2, cab3, cab4])
                 session.commit()
                 existing = project
 
-            all_mats = session.exec(select(Material)).all()
-            self.materials = [m.name for m in all_mats if m.price_per_unit >= 10.0]
+            # ==========================================
+            # Populate UI State
+            # ==========================================
+
+            # Fetch only "Board" category materials for the dropdowns
+            all_boards = session.exec(select(Material).where(Material.category == "Board")).all()
+
+            # Format the string for the UI dropdown: "Brand - Name"
+            self.materials = [f"{m.brand} - {m.name}" for m in all_boards]
 
             global_mat = session.get(Material, existing.defaults.front_mat_id)
-            self.global_front_mat_name = global_mat.name if global_mat else ""
+            self.global_front_mat_name = f"{global_mat.brand} - {global_mat.name}" if global_mat else ""
 
             self.project_name = existing.customer_name
             total_price = 0.0
 
             wall_cabs = sorted([c for c in existing.cabinets if c.type == "WALL"], key=lambda c: c.order_index)
-            base_cabs = sorted([c for c in existing.cabinets if c.type in ["BASE", "TALL"]], key=lambda c: c.order_index)
+            base_cabs = sorted([c for c in existing.cabinets if c.type in ["BASE", "TALL"]],
+                               key=lambda c: c.order_index)
 
             for i, cab in enumerate(wall_cabs): cab.order_index = i
             for i, cab in enumerate(base_cabs): cab.order_index = i
@@ -302,7 +384,8 @@ class KitchenState(rx.State):
 
                 cab_ui = CabinetUI(
                     id=cab.id, name=cab.name, price=cost_result.total_cost,
-                    width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px", css_height=f"{cab.height_mm / 10}px",
+                    width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px",
+                    css_height=f"{cab.height_mm / 10}px",
                     doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count)),
                     width_mm=cab.width_mm, height_mm=cab.height_mm, depth_mm=cab.depth_mm,
                     door_count=cab.door_count, drawer_count=cab.drawer_count,

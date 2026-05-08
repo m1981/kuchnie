@@ -6,6 +6,8 @@ from kitchen_erp.schemas import CabinetCostResult
 class Material(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
+    brand: str | None = None      # NEW: e.g., "Egger", "Krono"
+    category: str | None = None   # NEW: e.g., "Board", "Edge", "Back"
     price_per_unit: float
     unit: str
 
@@ -13,6 +15,7 @@ class Material(SQLModel, table=True):
 class HardwareSet(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
+    brand: str | None = None      # NEW: e.g., "Blum", "Hettich"
     price_per_set: float
 
 class ProjectDefaults(SQLModel, table=True):
