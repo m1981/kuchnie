@@ -1,6 +1,6 @@
 # kitchen_app/kitchen_app.py
 import reflex as rx
-from .state import KitchenState
+from .state import KitchenState, CabinetUI
 
 def top_bar() -> rx.Component:
     """The Deal Closer Header."""
@@ -13,7 +13,8 @@ def top_bar() -> rx.Component:
         rx.spacer(),
         rx.vstack(
             rx.text("TOTAL ESTIMATE", font_size="0.75rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
-            rx.text(f"${KitchenState.total_price}", font_size="2.5rem", font_weight="900", color="#16a34a", font_family="monospace"),
+            # Reflex string concatenation for Vars
+            rx.text("$" + KitchenState.total_price.to_string(), font_size="2.5rem", font_weight="900", color="#16a34a", font_family="monospace"),
             spacing="0",
             align_items="flex-end"
         ),
@@ -24,38 +25,31 @@ def top_bar() -> rx.Component:
         align_items="center"
     )
 
-def cabinet_2d_box(cabinet: dict) -> rx.Component:
+def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
     """Draws a single cabinet to scale using CSS."""
-    # Scale: 10mm = 1px (e.g., 800mm = 80px)
-    scaled_width = cabinet["width_mm"] / 10
-    scaled_height = cabinet["height_mm"] / 10
-
     return rx.vstack(
         # Top Dimension Line
-        rx.text(f"{cabinet['width_mm']}mm", font_size="0.7rem", color="#64748b", font_family="monospace"),
+        rx.text(cabinet.width_label, font_size="0.7rem", color="#64748b", font_family="monospace"),
         
         # The Blueprint Box
         rx.box(
-            width=f"{scaled_width}px",
-            height=f"{scaled_height}px",
+            width=cabinet.css_width,
+            height=cabinet.css_height,
             border="2px solid #334155",
             bg="#f8fafc",
             position="relative",
             _hover={"bg": "#e0f2fe", "cursor": "pointer", "border_color": "#0284c7"},
             transition="all 0.2s ease",
-            
-            # A subtle inner shadow to make it look like a physical box
             box_shadow="inset 0 0 10px rgba(0,0,0,0.05)"
         ),
         
         # Cabinet Info
-        rx.text(cabinet["name"], font_size="0.8rem", font_weight="bold", color="#334155", margin_top="0.5rem"),
-        rx.text(f"${cabinet['price']}", font_size="0.8rem", color="#16a34a", font_family="monospace"),
+        rx.text(cabinet.name, font_size="0.8rem", font_weight="bold", color="#334155", margin_top="0.5rem"),
+        rx.text("$" + cabinet.price.to_string(), font_size="0.8rem", color="#16a34a", font_family="monospace"),
         
         align_items="center",
-        # Push base cabinets to the bottom so they align with tall cabinets
         justify_content="flex-end", 
-        height="250px" # Fixed height container so they align on the "floor"
+        height="250px"
     )
 
 def main_canvas() -> rx.Component:

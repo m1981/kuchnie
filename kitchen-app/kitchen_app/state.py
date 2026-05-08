@@ -1,9 +1,20 @@
 # kitchen_app/state.py
 import reflex as rx
+from pydantic import BaseModel # <-- Import standard Pydantic
 from sqlmodel import select
 from kitchen_erp.database import get_session, engine, SQLModel
 from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults
 
+class CabinetUI(BaseModel): # <-- Inherit from BaseModel instead of rx.Base
+    """ViewModel for the frontend to render cabinets easily."""
+    id: int
+    name: str
+    price: float
+
+    # Pre-formatted strings for the UI
+    width_label: str
+    css_width: str
+    css_height: str
 
 class KitchenState(rx.State):
     """The reactive state for our UI."""
@@ -11,8 +22,8 @@ class KitchenState(rx.State):
     project_name: str = "Loading..."
     total_price: float = 0.0
 
-    # We store pure dictionaries for the UI to easily render without SQLModel relationship serialization issues
-    cabinets_ui: list[dict] = []
+    # Use our typed ViewModel instead of a raw dict
+    cabinets_ui: list[CabinetUI] = []
 
     def load_mock_data(self):
         """Seeds the DB and loads it into the UI state."""
@@ -60,15 +71,17 @@ class KitchenState(rx.State):
                 cost_result = cab.calculate_cost(existing.defaults, existing.waste_factor)
                 total += cost_result.total_cost
 
-                # Map to a simple dict for the frontend
-                ui_list.append({
-                    "id": cab.id,
-                    "name": cab.name,
-                    "width_mm": cab.width_mm,
-                    "height_mm": cab.height_mm,
-                    "price": cost_result.total_cost,
-                    "is_tall": cab.type == "TALL"
-                })
+                # Create the ViewModel with pre-calculated CSS
+                ui_list.append(
+                    CabinetUI(
+                        id=cab.id,
+                        name=cab.name,
+                        price=cost_result.total_cost,
+                        width_label=f"{cab.width_mm}mm",
+                        css_width=f"{cab.width_mm / 10}px",   # Math happens in Python!
+                        css_height=f"{cab.height_mm / 10}px"  # Math happens in Python!
+                    )
+                )
 
             self.cabinets_ui = ui_list
             self.total_price = round(total * existing.labor_markup, 2)
