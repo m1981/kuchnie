@@ -44,25 +44,31 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
     is_selected = KitchenState.selected_cabinet_id == cabinet.id
 
     # UX: Visual styling for Custom Materials
-    # If custom, use a warm amber tint. If default, use clean white.
     front_bg = rx.cond(cabinet.has_custom_front, "#fef3c7", "#ffffff")
     front_border = rx.cond(cabinet.has_custom_front, "1px solid #f59e0b", "1px solid #94a3b8")
+    handle_color = rx.cond(cabinet.has_custom_front, "#d97706", "#94a3b8")  # Darker handles for contrast
 
-    # UX: Reusable Door Component (with Handle)
+    # UX: Symmetrical Doors
     def render_door(index: int) -> rx.Component:
         return rx.box(
-            # The Handle (Vertical line on the side)
-            rx.box(width="4px", height="20px", bg="#cbd5e1", border_radius="2px", position="absolute", top="50%",
-                   right="4px", transform="translateY(-50%)"),
+            # The Handle (Dynamically positioned based on odd/even index)
+            rx.box(
+                width="4px", height="20px", bg=handle_color, border_radius="2px",
+                position="absolute", top="50%", transform="translateY(-50%)",
+                # If index is even (0), handle is on the right. If odd (1), handle is on the left.
+                right=rx.cond(index % 2 == 0, "4px", "auto"),
+                left=rx.cond(index % 2 == 0, "auto", "4px")
+            ),
             width="100%", height="100%", border=front_border, bg=front_bg, position="relative"
         )
 
-    # UX: Reusable Drawer Component (with Handle)
     def render_drawer(index: int) -> rx.Component:
         return rx.box(
-            # The Handle (Horizontal line in the middle)
-            rx.box(width="30px", height="4px", bg="#cbd5e1", border_radius="2px", position="absolute", top="50%",
-                   left="50%", transform="translate(-50%, -50%)"),
+            # The Handle (Centered)
+            rx.box(
+                width="30px", height="4px", bg=handle_color, border_radius="2px",
+                position="absolute", top="50%", left="50%", transform="translate(-50%, -50%)"
+            ),
             width="100%", height="100%", border=front_border, bg=front_bg, position="relative"
         )
 
@@ -73,7 +79,7 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
 
         # 2. The Blueprint Box
         rx.box(
-            # UX: Custom Material Badge (Top Left Corner)
+            # UX: Custom Material Badge
             rx.cond(
                 cabinet.has_custom_front,
                 rx.icon(tag="palette", size=14, color="#d97706", position="absolute", top="4px", left="4px",
@@ -81,30 +87,36 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
                 rx.fragment()
             ),
 
-            # Insides (Drawers, Doors, or Open Shelf)
+            # CAD Elevation Logic: Stack Doors on top, Drawers on bottom
             rx.cond(
-                cabinet.drawers.length() > 0,
-                # HAS DRAWERS
-                rx.vstack(rx.foreach(cabinet.drawers, render_drawer), width="100%", height="100%", spacing="0",
-                          position="absolute", top="0", left="0"),
+                (cabinet.doors.length() == 0) & (cabinet.drawers.length() == 0),
 
-                rx.cond(
-                    cabinet.doors.length() > 0,
-                    # HAS DOORS
-                    rx.hstack(rx.foreach(cabinet.doors, render_door), width="100%", height="100%", spacing="0",
-                              position="absolute", top="0", left="0"),
+                # STATE A: OPEN SHELF
+                rx.box(
+                    width="100%", height="100%", bg="#e2e8f0",
+                    box_shadow="inset 0 4px 10px rgba(0, 0, 0, 0.15)",
+                    position="absolute", top="0", left="0"
+                ),
 
-                    # OPEN SHELF (0 Doors, 0 Drawers)
-                    # UX: Inset shadow and darker background creates the illusion of an empty cavity
-                    rx.box(
-                        width="100%", height="100%", bg="#e2e8f0",
-                        box_shadow="inset 0 4px 10px rgba(0, 0, 0, 0.15)",
-                        position="absolute", top="0", left="0"
-                    )
+                # STATE B: DOORS AND/OR DRAWERS
+                rx.vstack(
+                    # Top Half: Doors
+                    rx.cond(
+                        cabinet.doors.length() > 0,
+                        rx.hstack(rx.foreach(cabinet.doors, render_door), width="100%", flex="1", spacing="0"),
+                        rx.fragment()
+                    ),
+                    # Bottom Half: Drawers
+                    rx.cond(
+                        cabinet.drawers.length() > 0,
+                        rx.vstack(rx.foreach(cabinet.drawers, render_drawer), width="100%", flex="1", spacing="0"),
+                        rx.fragment()
+                    ),
+                    width="100%", height="100%", spacing="0", position="absolute", top="0", left="0"
                 )
             ),
 
-            # Arrows INSIDE the box (for moving)
+            # Arrows INSIDE the box
             rx.hstack(
                 rx.icon(tag="chevron-left", size=16, color="#0f172a", bg="rgba(255,255,255,0.8)", border_radius="sm",
                         cursor="pointer", _hover={"bg": "#e2e8f0"},
@@ -129,11 +141,10 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
             box_shadow=rx.cond(is_selected, "0 0 0 4px rgba(2, 132, 199, 0.2)", "none"),
             z_index=rx.cond(is_selected, "10", "1"),
 
-            # Click to select
             on_click=lambda: KitchenState.select_cabinet(cabinet.id),
         ),
 
-        # 3. Bottom Labels (Fixed Height Pedestal)
+        # 3. Bottom Labels
         rx.vstack(
             rx.text(cabinet.name, font_size="0.7rem", font_weight="bold",
                     color=rx.cond(is_selected, "#0284c7", "#334155"), line_height="1.2", text_align="center"),
