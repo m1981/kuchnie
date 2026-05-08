@@ -28,8 +28,8 @@ def top_bar() -> rx.Component:
 
 def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
     return rx.vstack(
-        # Top Dimension
-        rx.text(cabinet.width_label, font_size="0.7rem", color="#64748b", font_family="monospace"),
+        # 1. Top Dimension (Normal Flow)
+        rx.text(cabinet.width_label, font_size="0.7rem", color="#64748b", font_family="monospace", text_align="center", width="100%"),
 
         # The Blueprint Box
         rx.box(
@@ -70,20 +70,22 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
             transition="all 0.2s ease",
         ),
 
-        # Bottom Labels (Absolute positioned so they don't stretch the flexbox)
-        rx.box(
-            rx.text(cabinet.name, font_size="0.7rem", font_weight="bold", color="#334155", white_space="nowrap"),
-            rx.text("$" + cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace"),
-            position="absolute", bottom="-35px", left="0", width="100%", text_align="center"
+        # 3. Bottom Labels (Normal Flow, Fixed Height Pedestal)
+        rx.vstack(
+            rx.text(cabinet.name, font_size="0.7rem", font_weight="bold", color="#334155", line_height="1.2", text_align="center"),
+            rx.text("$" + cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace", text_align="center"),
+            spacing="1",
+            width="100%",
+            height="45px", # <--- CRITICAL: Reserves exact space so flex-end aligns the boxes perfectly
+            justify_content="flex-start",
+            align_items="center"
         ),
 
         # STRICT WIDTH ENFORCEMENT
         width=cabinet.css_width,
+        spacing="2", # Small natural gap between text and box
         align_items="center",
-        justify_content="flex-end",
-        height="250px",
-        position="relative",
-        margin_bottom="40px"  # Make room for the absolute positioned text below
+        justify_content="flex-end", # Pushes the box down to the floor line
     )
 
 
@@ -100,14 +102,17 @@ def main_canvas() -> rx.Component:
                         rx.text("TOTAL WALL", font_size="0.6rem", color="#94a3b8", font_weight="bold"),
                         rx.text(KitchenState.total_wall_width.to_string() + "mm", font_size="1rem", color="#0f172a",
                                 font_family="monospace", font_weight="bold"),
-                        padding_left="2rem", justify_content="flex-end", height="250px", padding_bottom="40px"
+                        padding_left="2rem",
+                        justify_content="flex-end",
+                        height="45px" # Matches the text pedestal height of the cabinets!
                     ),
                     rx.fragment()
                 ),
-                spacing="0", align_items="flex-end", padding_left="2rem", min_height="250px"
+                spacing="0", align_items="flex-end", padding_left="2rem"
             ),
 
-            rx.box(height="50px", width="100%", border_bottom="1px dashed #cbd5e1"),
+            # THE BACKSPLASH GAP (Now acts as a proper spacer in the normal flow)
+            rx.box(height="60px", width="100%", border_bottom="1px dashed #cbd5e1"),
 
             # BOTTOM ROW: Base and Tall Cabinets
             rx.hstack(
@@ -119,16 +124,21 @@ def main_canvas() -> rx.Component:
                         rx.text("TOTAL BASE", font_size="0.6rem", color="#94a3b8", font_weight="bold"),
                         rx.text(KitchenState.total_base_width.to_string() + "mm", font_size="1rem", color="#0f172a",
                                 font_family="monospace", font_weight="bold"),
-                        padding_left="2rem", justify_content="flex-end", height="250px", padding_bottom="40px"
+                        padding_left="2rem",
+                        justify_content="flex-end",
+                        height="45px" # Matches the text pedestal height of the cabinets!
                     ),
                     rx.fragment()
                 ),
                 spacing="0", align_items="flex-end", padding_left="2rem",
             ),
 
-            align_items="flex-start", padding_top="2rem", padding_bottom="2rem"
+            spacing="0",
+            align_items="flex-start",
+            padding_top="2rem",
+            padding_bottom="0"
         ),
-        width="100%", overflow_x="auto", bg="#f1f5f9", min_height="60vh", border_bottom="2px solid #94a3b8"
+        width="100%", overflow_x="auto", bg="#f1f5f9", border_bottom="2px solid #94a3b8"
     )
 
 # In kitchen_app/kitchen_app.py
