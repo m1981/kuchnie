@@ -20,6 +20,13 @@ class CabinetUI(BaseModel): # <-- Inherit from BaseModel instead of rx.Base
     doors: list[int] = []
     drawers: list[int] = []
 
+    # NEW: Raw data for the Sidebar Inputs
+    width_mm: float
+    height_mm: float
+    depth_mm: float
+    door_count: int
+    drawer_count: int
+
 class KitchenState(rx.State):
     """The reactive state for our UI."""
 
@@ -32,6 +39,60 @@ class KitchenState(rx.State):
     # NEW: Track total widths
     total_wall_width: float = 0.0
     total_base_width: float = 0.0
+
+    # NEW: Sidebar State
+    selected_cabinet_id: int | None = None
+    selected_cabinet: CabinetUI | None = None
+
+    def select_cabinet(self, cab_id: int):
+        """Opens the sidebar for the clicked cabinet."""
+        self.selected_cabinet_id = cab_id
+        self._update_selected_cabinet_ui()
+
+    def close_sidebar(self):
+        self.selected_cabinet_id = None
+        self.selected_cabinet = None
+
+    def _update_selected_cabinet_ui(self):
+        """Finds the selected cabinet data to populate the sidebar."""
+        if self.selected_cabinet_id is None: return
+        for cab in self.wall_cabinets + self.base_cabinets:
+            if cab.id == self.selected_cabinet_id:
+                self.selected_cabinet = cab
+                break
+
+    def update_cabinet_field(self, field: str, value: str):
+        """Updates a specific field in the database and recalculates."""
+        if not self.selected_cabinet_id: return
+
+        with next(get_session()) as session:
+            cab = session.get(Cabinet, self.selected_cabinet_id)
+            if not cab: return
+
+            # Safely cast the string input from the UI to the correct Python type
+            if field in ["width_mm", "height_mm", "depth_mm"]:
+                setattr(cab, field, float(value or 0))
+            elif field in ["door_count", "drawer_count"]:
+                setattr(cab, field, int(value or 0))
+            else:
+                setattr(cab, field, value)
+
+            session.add(cab)
+            session.commit()
+
+        # Reload everything to recalculate prices and redraw boxes
+        self.load_mock_data()
+
+    def delete_cabinet(self):
+        """Deletes the currently selected cabinet."""
+        if not self.selected_cabinet_id: return
+        with next(get_session()) as session:
+            cab = session.get(Cabinet, self.selected_cabinet_id)
+            if cab:
+                session.delete(cab)
+                session.commit()
+        self.close_sidebar()
+        self.load_mock_data()
 
     def load_mock_data(self):
         """Seeds the DB and loads it into the UI state."""
@@ -92,7 +153,10 @@ class KitchenState(rx.State):
                 cab_ui = CabinetUI(
                     id=cab.id, name=cab.name, price=cost_result.total_cost,
                     width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px", css_height=f"{cab.height_mm / 10}px",
-                    doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count))
+                    doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count)),
+                    # NEW: Pass raw data to UI
+                    width_mm=cab.width_mm, height_mm=cab.height_mm, depth_mm=cab.depth_mm,
+                    door_count=cab.door_count, drawer_count=cab.drawer_count
                 )
 
                 # Split into rows
@@ -108,6 +172,8 @@ class KitchenState(rx.State):
             self.total_wall_width = wall_width
             self.total_base_width = base_width
             self.total_price = round(total_price * existing.labor_markup, 2)
+
+            self._update_selected_cabinet_ui()
 
     def add_cabinet(self, cab_type: str):
         """Inserts a new cabinet into the database and refreshes the UI."""

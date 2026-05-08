@@ -26,14 +26,19 @@ def top_bar() -> rx.Component:
     )
 
 
-def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
-    return rx.vstack(
-        # 1. Top Dimension (Normal Flow)
-        rx.text(cabinet.width_label, font_size="0.7rem", color="#64748b", font_family="monospace", text_align="center", width="100%"),
+# In kitchen_app/kitchen_app.py
 
-        # The Blueprint Box
+# In kitchen_app/kitchen_app.py
+
+def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
+    # Check if this specific cabinet is the one currently selected
+    is_selected = KitchenState.selected_cabinet_id == cabinet.id
+
+    return rx.vstack(
+        rx.text(cabinet.width_label, font_size="0.7rem", color="#64748b", font_family="monospace", text_align="center",
+                width="100%"),
+
         rx.box(
-            # Insides (Doors/Drawers)
             rx.cond(
                 cabinet.drawers.length() > 0,
                 rx.vstack(rx.foreach(cabinet.drawers,
@@ -48,7 +53,6 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
                 )
             ),
 
-            # NEW: Move Arrows INSIDE the box at the bottom
             rx.hstack(
                 rx.icon(tag="chevron-left", size=16, color="#0f172a", bg="rgba(255,255,255,0.8)", border_radius="sm",
                         cursor="pointer", _hover={"bg": "#e2e8f0"},
@@ -62,30 +66,30 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
 
             width=cabinet.css_width,
             height=cabinet.css_height,
-            border="2px solid #334155",
             bg="#f8fafc",
             position="relative",
-            margin_right="-2px",  # Prevents double borders when sticking together
-            _hover={"bg": "#e0f2fe", "border_color": "#0284c7"},
+            margin_right="-2px",
             transition="all 0.2s ease",
+            cursor="pointer",
+
+            # NEW: Highlight styling when selected!
+            border=rx.cond(is_selected, "2px solid #0284c7", "2px solid #334155"),
+            box_shadow=rx.cond(is_selected, "0 0 0 4px rgba(2, 132, 199, 0.2)", "none"),
+            z_index=rx.cond(is_selected, "10", "1"),  # Bring selected box to front
+
+            # NEW: Click to select
+            on_click=lambda: KitchenState.select_cabinet(cabinet.id),
         ),
 
-        # 3. Bottom Labels (Normal Flow, Fixed Height Pedestal)
         rx.vstack(
-            rx.text(cabinet.name, font_size="0.7rem", font_weight="bold", color="#334155", line_height="1.2", text_align="center"),
-            rx.text("$" + cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace", text_align="center"),
-            spacing="1",
-            width="100%",
-            height="45px", # <--- CRITICAL: Reserves exact space so flex-end aligns the boxes perfectly
-            justify_content="flex-start",
-            align_items="center"
+            rx.text(cabinet.name, font_size="0.7rem", font_weight="bold",
+                    color=rx.cond(is_selected, "#0284c7", "#334155"), line_height="1.2", text_align="center"),
+            rx.text("$" + cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace",
+                    text_align="center"),
+            spacing="1", width="100%", height="45px", justify_content="flex-start", align_items="center"
         ),
 
-        # STRICT WIDTH ENFORCEMENT
-        width=cabinet.css_width,
-        spacing="2", # Small natural gap between text and box
-        align_items="center",
-        justify_content="flex-end", # Pushes the box down to the floor line
+        width=cabinet.css_width, spacing="2", align_items="center", justify_content="flex-end",
     )
 
 
@@ -141,7 +145,6 @@ def main_canvas() -> rx.Component:
         width="100%", overflow_x="auto", bg="#f1f5f9", border_bottom="2px solid #94a3b8"
     )
 
-# In kitchen_app/kitchen_app.py
 
 def action_bar() -> rx.Component:
     """Buttons to add new cabinets."""
@@ -157,11 +160,98 @@ def action_bar() -> rx.Component:
         border_top="1px solid #e2e8f0"
     )
 
+
+def sidebar() -> rx.Component:
+    """The Right Panel Inspector."""
+    return rx.cond(
+        KitchenState.selected_cabinet_id != None,
+        rx.vstack(
+            # Header
+            rx.hstack(
+                rx.heading("Cabinet Details", size="4", color="#0f172a"),
+                rx.spacer(),
+                rx.icon(tag="x", cursor="pointer", color="#64748b", _hover={"color": "#0f172a"},
+                        on_click=KitchenState.close_sidebar),
+                width="100%", align_items="center", padding_bottom="1rem", border_bottom="1px solid #e2e8f0"
+            ),
+
+            # Inputs
+            rx.text("Name", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="1rem"),
+            rx.input(value=KitchenState.selected_cabinet.name,
+                     on_blur=lambda v: KitchenState.update_cabinet_field("name", v), width="100%"),
+
+            rx.text("Width (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
+            rx.input(value=KitchenState.selected_cabinet.width_mm.to_string(),
+                     on_blur=lambda v: KitchenState.update_cabinet_field("width_mm", v), width="100%"),
+
+            rx.text("Height (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
+            rx.input(value=KitchenState.selected_cabinet.height_mm.to_string(),
+                     on_blur=lambda v: KitchenState.update_cabinet_field("height_mm", v), width="100%"),
+
+            rx.text("Depth (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
+            rx.input(value=KitchenState.selected_cabinet.depth_mm.to_string(),
+                     on_blur=lambda v: KitchenState.update_cabinet_field("depth_mm", v), width="100%"),
+
+            rx.hstack(
+                rx.vstack(
+                    rx.text("Doors", font_size="0.75rem", font_weight="bold", color="#64748b"),
+                    rx.input(value=KitchenState.selected_cabinet.door_count.to_string(),
+                             on_blur=lambda v: KitchenState.update_cabinet_field("door_count", v), width="100%"),
+                    width="100%"
+                ),
+                rx.vstack(
+                    rx.text("Drawers", font_size="0.75rem", font_weight="bold", color="#64748b"),
+                    rx.input(value=KitchenState.selected_cabinet.drawer_count.to_string(),
+                             on_blur=lambda v: KitchenState.update_cabinet_field("drawer_count", v), width="100%"),
+                    width="100%"
+                ),
+                width="100%", margin_top="0.5rem", spacing="4"
+            ),
+
+            rx.spacer(),
+
+            # Delete Button
+            rx.button(
+                rx.icon(tag="trash-2", size=16), "Delete Cabinet",
+                color_scheme="red", variant="soft", width="100%", cursor="pointer",
+                on_click=KitchenState.delete_cabinet
+            ),
+
+            width="350px",
+            height="calc(100vh - 85px)",  # Fits perfectly under the top bar
+            bg="white",
+            border_left="1px solid #e2e8f0",
+            padding="1.5rem",
+            align_items="flex-start",
+            position="sticky",
+            top="0"
+        ),
+        rx.fragment()  # Render nothing if no cabinet is selected
+    )
+
 def index() -> rx.Component:
     return rx.vstack(
         top_bar(),
+
+        # NEW: Horizontal layout for Canvas + Sidebar
+        rx.hstack(
+            # Left Side: Canvas and Action Bar
+            rx.vstack(
         main_canvas(),
-        action_bar(), # <-- Added the action bar here
+                action_bar(),
+                width="100%",
+                flex="1", # This tells the canvas to take up all remaining space
+                spacing="0"
+            ),
+
+            # Right Side: The Sidebar
+            sidebar(),
+
+            width="100%",
+            align_items="flex-start",
+            spacing="0"
+        ),
+
         width="100%",
         min_height="100vh",
         bg="#f8fafc",
