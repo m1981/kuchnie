@@ -49,6 +49,9 @@ class Cabinet(SQLModel, table=True):
     door_count: int = 0
     drawer_count: int = 0
 
+    # NEW: Keep track of the order in the row
+    order_index: int = 0
+
     # Local Overrides (Nullable Foreign Keys)
     override_front_mat_id: int | None = Field(default=None, foreign_key="material.id")
     override_corpus_mat_id: int | None = Field(default=None, foreign_key="material.id")

@@ -26,8 +26,12 @@ class KitchenState(rx.State):
     project_name: str = "Loading..."
     total_price: float = 0.0
 
-    # Use our typed ViewModel instead of a raw dict
-    cabinets_ui: list[CabinetUI] = []
+    wall_cabinets: list[CabinetUI] = []
+    base_cabinets: list[CabinetUI] = []
+
+    # NEW: Track total widths
+    total_wall_width: float = 0.0
+    total_base_width: float = 0.0
 
     def load_mock_data(self):
         """Seeds the DB and loads it into the UI state."""
@@ -67,32 +71,43 @@ class KitchenState(rx.State):
 
             # --- Update UI State ---
             self.project_name = existing.customer_name
+            total_price = 0.0
 
-            total = 0.0
-            ui_list = []
+            # 1. NORMALIZE ORDER INDEXES (Fixes the arrow bug for old data)
+            wall_cabs = sorted([c for c in existing.cabinets if c.type == "WALL"], key=lambda c: c.order_index)
+            base_cabs = sorted([c for c in existing.cabinets if c.type in ["BASE", "TALL"]], key=lambda c: c.order_index)
 
-            for cab in existing.cabinets:
+            for i, cab in enumerate(wall_cabs): cab.order_index = i
+            for i, cab in enumerate(base_cabs): cab.order_index = i
+            session.commit() # Save the fixed indexes
+
+            # 2. CALCULATE UI DATA
+            wall_list, base_list = [], []
+            wall_width, base_width = 0.0, 0.0
+
+            for cab in wall_cabs + base_cabs:
                 cost_result = cab.calculate_cost(existing.defaults, existing.waste_factor)
-                total += cost_result.total_cost
+                total_price += cost_result.total_cost
 
-                # Create the ViewModel with pre-calculated CSS
-                ui_list.append(
-                    CabinetUI(
-                        id=cab.id,
-                        name=cab.name,
-                        price=cost_result.total_cost,
-                        width_label=f"{cab.width_mm}mm",
-                        css_width=f"{cab.width_mm / 10}px",
-                        css_height=f"{cab.height_mm / 10}px",
-
-                        # NEW: Create dummy lists based on the counts
-                        doors=list(range(cab.door_count)),
-                        drawers=list(range(cab.drawer_count))
-                    )
+                cab_ui = CabinetUI(
+                    id=cab.id, name=cab.name, price=cost_result.total_cost,
+                    width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px", css_height=f"{cab.height_mm / 10}px",
+                    doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count))
                 )
 
-            self.cabinets_ui = ui_list
-            self.total_price = round(total * existing.labor_markup, 2)
+                # Split into rows
+                if cab.type == "WALL":
+                    wall_list.append(cab_ui)
+                    wall_width += cab.width_mm
+                else:
+                    base_list.append(cab_ui)
+                    base_width += cab.width_mm
+
+            self.wall_cabinets = wall_list
+            self.base_cabinets = base_list
+            self.total_wall_width = wall_width
+            self.total_base_width = base_width
+            self.total_price = round(total_price * existing.labor_markup, 2)
 
     def add_cabinet(self, cab_type: str):
         """Inserts a new cabinet into the database and refreshes the UI."""
@@ -102,20 +117,51 @@ class KitchenState(rx.State):
             if not project:
                 return
 
-            # Create a new cabinet based on the button clicked
+            # Find the highest order_index so the new cabinet goes to the end of the line
+            max_order = max([c.order_index for c in project.cabinets if c.type == cab_type] or [-1])
+
             if cab_type == "BASE":
-                new_cab = Cabinet(project=project, name="New Base", type="BASE", width_mm=600, height_mm=720,
-                                  depth_mm=560, door_count=1)
+                new_cab = Cabinet(project=project, name="New Base", type="BASE", width_mm=600, height_mm=720, depth_mm=560, door_count=1, order_index=max_order + 1)
             elif cab_type == "WALL":
-                new_cab = Cabinet(project=project, name="New Wall", type="WALL", width_mm=600, height_mm=720,
-                                  depth_mm=300, door_count=1)
+                new_cab = Cabinet(project=project, name="New Wall", type="WALL", width_mm=600, height_mm=720, depth_mm=300, door_count=1, order_index=max_order + 1)
             elif cab_type == "TALL":
-                new_cab = Cabinet(project=project, name="New Tall", type="TALL", width_mm=600, height_mm=2100,
-                                  depth_mm=560, door_count=2)
+                new_cab = Cabinet(project=project, name="New Tall", type="TALL", width_mm=600, height_mm=2100, depth_mm=560, door_count=2, order_index=max_order + 1)
 
             # Save to database
             session.add(new_cab)
             session.commit()
 
         # Refresh the UI state (this recalculates the math and redraws the screen!)
+        self.load_mock_data()
+
+    def move_cabinet(self, cab_id: int, direction: int):
+        """Moves a cabinet left (-1) or right (+1)."""
+        with next(get_session()) as session:
+            cab = session.get(Cabinet, cab_id)
+            if not cab: return
+
+            project = session.get(Project, cab.project_id)
+
+            # Group siblings correctly (Base and Tall share a row)
+            if cab.type == "WALL":
+                siblings = [c for c in project.cabinets if c.type == "WALL"]
+            else:
+                siblings = [c for c in project.cabinets if c.type in ["BASE", "TALL"]]
+
+            siblings.sort(key=lambda c: c.order_index)
+
+            # Find current index using ID to avoid object mismatch
+            idx = next((i for i, c in enumerate(siblings) if c.id == cab_id), -1)
+            if idx == -1: return
+
+            new_idx = idx + direction
+
+            # If the move is valid, swap their order_indexes
+            if 0 <= new_idx < len(siblings):
+                swap_cab = siblings[new_idx]
+                # Swap the indexes
+                cab.order_index, swap_cab.order_index = swap_cab.order_index, cab.order_index
+                session.add_all([cab, swap_cab])
+                session.commit()
+
         self.load_mock_data()
