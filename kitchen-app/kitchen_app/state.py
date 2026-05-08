@@ -1,4 +1,5 @@
 # kitchen_app/state.py
+import re
 import reflex as rx
 from pydantic import BaseModel
 from sqlmodel import select
@@ -38,6 +39,7 @@ class KitchenState(rx.State):
     materials: list[str] = []
     global_front_mat_name: str = ""
     local_front_mat_name: str = ""
+    field_warnings: dict[str, str] = {}
 
     @rx.var
     def local_material_options(self) -> list[str]:
@@ -69,54 +71,82 @@ class KitchenState(rx.State):
                 session.commit()
         self.load_mock_data()
 
-    def _apply_cabinet_constraints(self, cab: Cabinet, field: str, raw_value: str):
+    def _parse_number(self, raw_value: str, is_float: bool) -> float | int | None:
+        """UX: Forgiving parser. Extracts numbers even if user types '600mm' or ' 600 '."""
+        if not raw_value: return 0
+        # Strip everything except digits and decimal points
+        cleaned = re.sub(r'[^\d.]', '', str(raw_value))
+        if not cleaned: return None
         try:
-            if field in ["width_mm", "height_mm", "depth_mm"]:
-                val = float(raw_value or 0)
-            elif field in ["door_count", "drawer_count"]:
-                val = int(raw_value or 0)
-            else:
-                setattr(cab, field, raw_value)
-                return
+            return float(cleaned) if is_float else int(float(cleaned))
         except ValueError:
+            return None
+
+    def _apply_cabinet_constraints(self, cab: Cabinet, field: str, raw_value: str):
+        # Clear previous warning for this specific field
+        if field in self.field_warnings:
+            del self.field_warnings[field]
+
+        # 1. Forgiving Parsing
+        if field in ["width_mm", "height_mm", "depth_mm"]:
+            val = self._parse_number(raw_value, is_float=True)
+        elif field in ["door_count", "drawer_count"]:
+            val = self._parse_number(raw_value, is_float=False)
+        else:
+            setattr(cab, field, raw_value)
             return
 
-        if cab.type == "BASE":
-            if field == "width_mm": val = max(150.0, min(1200.0, val))
-            elif field == "height_mm": val = max(450.0, min(900.0, val))
-            elif field == "depth_mm": val = max(300.0, min(650.0, val))
-            elif field == "door_count": val = max(0, min(2, val))
-            elif field == "drawer_count": val = max(0, min(5, val))
-        elif cab.type == "WALL":
-            if field == "width_mm": val = max(150.0, min(1200.0, val))
-            elif field == "height_mm": val = max(300.0, min(1200.0, val))
-            elif field == "depth_mm": val = max(200.0, min(400.0, val))
-            elif field == "door_count": val = max(0, min(2, val))
-            elif field == "drawer_count": val = 0
-        elif cab.type == "TALL":
-            if field == "width_mm": val = max(300.0, min(900.0, val))
-            elif field == "height_mm": val = max(1900.0, min(2750.0, val))
-            elif field == "depth_mm": val = max(500.0, min(650.0, val))
-            elif field == "door_count": val = max(0, min(4, val))
-            elif field == "drawer_count": val = max(0, min(5, val))
+        if val is None:
+            return  # Invalid string with no numbers, just ignore
+
+        original_val = val
+
+        # 2. HARD CLAMPS (With UX Feedback)
+        limits = {
+            "BASE": {"width_mm": (150, 1200), "height_mm": (450, 900), "depth_mm": (300, 650), "door_count": (0, 2),
+                     "drawer_count": (0, 5)},
+            "WALL": {"width_mm": (150, 1200), "height_mm": (300, 1200), "depth_mm": (200, 400), "door_count": (0, 2),
+                     "drawer_count": (0, 0)},
+            "TALL": {"width_mm": (300, 900), "height_mm": (1900, 2750), "depth_mm": (500, 650), "door_count": (0, 4),
+                     "drawer_count": (0, 5)}
+        }
+
+        if cab.type in limits and field in limits[cab.type]:
+            min_val, max_val = limits[cab.type][field]
+            val = max(min_val, min(max_val, val))
+
+            # UX: Tell the user we changed their input
+            if val != original_val:
+                self.field_warnings[field] = f"Adjusted to fit limits ({min_val}-{max_val})."
 
         setattr(cab, field, val)
 
-        if field == "width_mm" and cab.width_mm > 600 and cab.door_count == 1:
+        # 3. HEURISTICS (Business Rules)
+        # We check these holistically, but assign the warning to the affected field
+
+        if cab.width_mm > 600 and cab.door_count == 1:
             cab.door_count = 2
-        if field == "door_count" and cab.door_count == 1 and cab.width_mm > 600:
+            self.field_warnings["door_count"] = "Widths > 600mm require 2 doors."
+
+        if cab.drawer_count > 0 and cab.door_count > 2:
             cab.door_count = 2
-        if field == "drawer_count" and cab.drawer_count > 0 and cab.door_count > 2:
-            cab.door_count = 2
+            self.field_warnings["door_count"] = "Max 2 doors when drawers are present."
+
+        if cab.door_count == 0 and cab.drawer_count == 0:
+            cab.door_count = 1 if cab.width_mm <= 600 else 2
+            self.field_warnings["door_count"] = "Cabinet must have at least one front."
 
     def update_cabinet_field(self, field: str, value: str):
         if not self.selected_cabinet_id: return
         with next(get_session()) as session:
             cab = session.get(Cabinet, self.selected_cabinet_id)
             if not cab: return
+
             self._apply_cabinet_constraints(cab, field, value)
+
             session.add(cab)
             session.commit()
+
         self.load_mock_data()
 
     def add_cabinet(self, cab_type: str):
@@ -171,11 +201,14 @@ class KitchenState(rx.State):
 
     def select_cabinet(self, cab_id: int):
         self.selected_cabinet_id = cab_id
+        # Clear warnings when switching cabinets so old errors don't persist
+        self.field_warnings = {}
         self._update_selected_cabinet_ui()
 
     def close_sidebar(self):
         self.selected_cabinet_id = None
         self.selected_cabinet = None
+        self.field_warnings = {}
 
     def _update_selected_cabinet_ui(self):
         if self.selected_cabinet_id is None: return

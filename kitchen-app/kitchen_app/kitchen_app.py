@@ -151,6 +151,31 @@ def action_bar() -> rx.Component:
     )
 
 
+def form_input_group(label: str, field_name: str, default_val: str) -> rx.Component:
+    """UX: Reusable component that pairs an input with its specific inline warning."""
+    return rx.vstack(
+        rx.text(label, font_size="0.75rem", font_weight="bold", color="#64748b"),
+        rx.input(
+            default_value=default_val,
+            on_blur=lambda v: KitchenState.update_cabinet_field(field_name, v),
+            width="100%"
+        ),
+        # UX: Inline warning text that only appears if this specific field has an error
+        rx.cond(
+            KitchenState.field_warnings.contains(field_name),
+            rx.text(
+                KitchenState.field_warnings[field_name],
+                color="#ef4444", # Red color for visibility
+                font_size="0.65rem",
+                margin_top="-0.25rem"
+            ),
+            rx.fragment()
+        ),
+        width="100%",
+        spacing="1"
+    )
+
+
 def sidebar() -> rx.Component:
     """The Right Panel Inspector."""
     return rx.cond(
@@ -164,35 +189,20 @@ def sidebar() -> rx.Component:
                 width="100%", align_items="center", padding_bottom="1rem", border_bottom="1px solid #e2e8f0"
             ),
 
-            # INPUT FORM
+            # INPUT FORM (Now using the UX-optimized component)
             rx.vstack(
-                rx.text("Name", font_size="0.75rem", font_weight="bold", color="#64748b"),
-                rx.input(default_value=KitchenState.selected_cabinet.name, on_blur=lambda v: KitchenState.update_cabinet_field("name", v), width="100%"),
-
-                rx.text("Width (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
-                rx.input(default_value=KitchenState.selected_cabinet.width_mm.to_string(), on_blur=lambda v: KitchenState.update_cabinet_field("width_mm", v), width="100%"),
-
-                rx.text("Height (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
-                rx.input(default_value=KitchenState.selected_cabinet.height_mm.to_string(), on_blur=lambda v: KitchenState.update_cabinet_field("height_mm", v), width="100%"),
-
-                rx.text("Depth (mm)", font_size="0.75rem", font_weight="bold", color="#64748b", margin_top="0.5rem"),
-                rx.input(default_value=KitchenState.selected_cabinet.depth_mm.to_string(), on_blur=lambda v: KitchenState.update_cabinet_field("depth_mm", v), width="100%"),
+                form_input_group("Name", "name", KitchenState.selected_cabinet.name),
+                form_input_group("Width (mm)", "width_mm", KitchenState.selected_cabinet.width_mm.to_string()),
+                form_input_group("Height (mm)", "height_mm", KitchenState.selected_cabinet.height_mm.to_string()),
+                form_input_group("Depth (mm)", "depth_mm", KitchenState.selected_cabinet.depth_mm.to_string()),
 
                 rx.hstack(
-                    rx.vstack(
-                        rx.text("Doors", font_size="0.75rem", font_weight="bold", color="#64748b"),
-                        rx.input(default_value=KitchenState.selected_cabinet.door_count.to_string(), on_blur=lambda v: KitchenState.update_cabinet_field("door_count", v), width="100%"),
-                        width="100%"
-                    ),
-                    rx.vstack(
-                        rx.text("Drawers", font_size="0.75rem", font_weight="bold", color="#64748b"),
-                        rx.input(default_value=KitchenState.selected_cabinet.drawer_count.to_string(), on_blur=lambda v: KitchenState.update_cabinet_field("drawer_count", v), width="100%"),
-                        width="100%"
-                    ),
-                    width="100%", margin_top="0.5rem", spacing="4"
+                    form_input_group("Doors", "door_count", KitchenState.selected_cabinet.door_count.to_string()),
+                    form_input_group("Drawers", "drawer_count", KitchenState.selected_cabinet.drawer_count.to_string()),
+                    width="100%", spacing="4"
                 ),
 
-                width="100%", align_items="flex-start",
+                width="100%", align_items="flex-start", spacing="3", margin_top="1rem",
                 # Forces the inputs to reset their default_value when you click a new cabinet or math changes
                 key=KitchenState.selected_cabinet_id.to_string() + "_" + KitchenState.selected_cabinet.price.to_string()
             ),
@@ -202,7 +212,7 @@ def sidebar() -> rx.Component:
             # Local Material Override
             rx.text("Custom Front Material", font_size="0.75rem", font_weight="bold", color="#64748b"),
             rx.select(
-                KitchenState.local_material_options, # <--- FIX: Use the computed var here!
+                KitchenState.local_material_options,
                 value=KitchenState.local_front_mat_name,
                 on_change=KitchenState.change_local_front,
                 width="100%",
