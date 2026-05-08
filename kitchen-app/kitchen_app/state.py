@@ -21,6 +21,7 @@ class CabinetUI(BaseModel):
     depth_mm: float
     door_count: int
     drawer_count: int
+    has_custom_front: bool = False
 
 class KitchenState(rx.State):
     """The reactive state for our UI."""
@@ -304,7 +305,8 @@ class KitchenState(rx.State):
                     width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px", css_height=f"{cab.height_mm / 10}px",
                     doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count)),
                     width_mm=cab.width_mm, height_mm=cab.height_mm, depth_mm=cab.depth_mm,
-                    door_count=cab.door_count, drawer_count=cab.drawer_count
+                    door_count=cab.door_count, drawer_count=cab.drawer_count,
+                    has_custom_front=cab.override_front_mat_id is not None
                 )
 
                 if cab.type == "WALL":
