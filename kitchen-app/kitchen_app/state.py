@@ -101,7 +101,7 @@ class KitchenState(rx.State):
 
         original_val = val
 
-        # 2. HARD CLAMPS (With UX Feedback)
+        # 2. HARD CLAMPS (Physics & Manufacturing Limits)
         limits = {
             "BASE": {"width_mm": (150, 1200), "height_mm": (450, 900), "depth_mm": (300, 650), "door_count": (0, 2),
                      "drawer_count": (0, 5)},
@@ -115,26 +115,45 @@ class KitchenState(rx.State):
             min_val, max_val = limits[cab.type][field]
             val = max(min_val, min(max_val, val))
 
-            # UX: Tell the user we changed their input
             if val != original_val:
                 self.field_warnings[field] = f"Adjusted to fit limits ({min_val}-{max_val})."
 
         setattr(cab, field, val)
 
-        # 3. HEURISTICS (Business Rules)
-        # We check these holistically, but assign the warning to the affected field
+        # 3. CARPENTER'S HEURISTICS (Real-world European Kitchen Rules)
 
+        # Rule A: Side-hinged doors > 600mm destroy hinges.
+        # BUT Wall cabinets can use top-hinged flap doors, so 1 door is fine up to 1200mm!
         if cab.width_mm > 600 and cab.door_count == 1:
-            cab.door_count = 2
-            self.field_warnings["door_count"] = "Widths > 600mm require 2 doors."
+            if cab.type in ["BASE", "TALL"]:
+                cab.door_count = 2
+                self.field_warnings["door_count"] = "Base/Tall doors > 600mm are too heavy. Forced 2 doors."
+            elif cab.type == "WALL" and cab.width_mm > 1200:
+                # Even flap doors have limits
+                cab.door_count = 2
+                self.field_warnings["door_count"] = "Wall cabinets > 1200mm require 2 doors."
 
+        # Rule B: Drawers and Doors combo
         if cab.drawer_count > 0 and cab.door_count > 2:
             cab.door_count = 2
             self.field_warnings["door_count"] = "Max 2 doors when drawers are present."
 
-        if cab.door_count == 0 and cab.drawer_count == 0:
-            cab.door_count = 1 if cab.width_mm <= 600 else 2
-            self.field_warnings["door_count"] = "Cabinet must have at least one front."
+        # Rule C: The "Useless Drawer" Warning
+        # We don't force it to 0, because maybe they want a custom spice pull-out, but we warn them.
+        if cab.drawer_count > 0 and cab.width_mm < 300:
+            self.field_warnings["drawer_count"] = "Warning: Usable inside width will be very narrow."
+
+        # Rule D: The "Shelf Sag" Warning
+        # Wide cabinets need center partitions or thick shelves.
+        if cab.width_mm > 900 and cab.drawer_count == 0:
+            self.field_warnings["width_mm"] = "Warning: Shelves > 900mm may sag under heavy load."
+
+        # Rule E: The "Jumbo Board" Warning
+        if cab.height_mm > 2700:
+            self.field_warnings["height_mm"] = "Warning: Exceeds standard 2800mm board size. Grain matching difficult."
+
+        # NOTE: We completely removed the "Must have at least one front" rule.
+        # 0 doors and 0 drawers is now perfectly valid (Open Shelving).
 
     def update_cabinet_field(self, field: str, value: str):
         if not self.selected_cabinet_id: return
