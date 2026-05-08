@@ -26,7 +26,7 @@ dev: ## Run Reflex in development mode (frontend + backend)
 test-cov: ## Run UNIT tests with strict coverage (Fail under 80%, excludes UI and integration tests)
 	@echo "$(GREEN)Running Unit Tests with Coverage Check...$(RESET)"
 	uv run pytest -m "unit" \
-		--cov=mychat_reflex \
+		--cov=kitchen_erp \
 		--cov-report=term-missing \
 		--cov-report=html \
 		--cov-fail-under=80
@@ -35,7 +35,7 @@ test-cov: ## Run UNIT tests with strict coverage (Fail under 80%, excludes UI an
 test-cov-simple: ## Run ALL tests with simple console coverage report (shows missing lines)
 	@echo "$(GREEN)Running All Tests with Simple Coverage Report...$(RESET)"
 	uv run pytest \
-		--cov=mychat_reflex \
+		--cov=kitchen_erp \
 		--cov-report=term-missing \
 		--cov-fail-under=0
 
