@@ -1,0 +1,140 @@
+{
+  "DRAWER_BASE": {
+    "name": "Drawer base",
+    "type": "BASE",
+    "tags": ["is_base", "has_drawers"],
+    "default_dimensions": {
+      "width_mm": 400,
+      "height_mm": 802,
+      "depth_mm": 560
+    },
+    "limits": {
+      "width_min": 300,
+      "width_max": 1200,
+      "height_min": 700,
+      "height_max": 900,
+      "depth_min": 460,
+      "depth_max": 600
+    },
+    "formulas": {
+      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "back_m2": "(height_mm * width_mm) / 1000000",
+      "front_m2": "(height_mm * width_mm) / 1000000"
+    }
+  },
+  "SINK_BASE": {
+    "name": "Sink base",
+    "type": "BASE",
+    "tags": ["is_base", "has_doors", "is_sink"],
+    "default_dimensions": {
+      "width_mm": 800,
+      "height_mm": 802,
+      "depth_mm": 560
+    },
+    "limits": {
+      "width_min": 600,
+      "width_max": 1200,
+      "height_min": 700,
+      "height_max": 900,
+      "depth_min": 460,
+      "depth_max": 600
+    },
+    "formulas": {
+      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "back_m2": "(height_mm * width_mm) / 1000000",
+      "front_m2": "(height_mm * width_mm) / 1000000"
+    }
+  },
+  "WALL_CABINET": {
+    "name": "Wall cabinet",
+    "type": "WALL",
+    "tags": ["is_wall", "has_doors"],
+    "default_dimensions": {
+      "width_mm": 400,
+      "height_mm": 720,
+      "depth_mm": 320
+    },
+    "limits": {
+      "width_min": 300,
+      "width_max": 1200,
+      "height_min": 360,
+      "height_max": 900,
+      "depth_min": 280,
+      "depth_max": 400
+    },
+    "formulas": {
+      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "back_m2": "(height_mm * width_mm) / 1000000",
+      "front_m2": "(height_mm * width_mm) / 1000000"
+    }
+  },
+  "OVEN_BASE": {
+    "name": "Oven cabinet",
+    "type": "BASE",
+    "tags": ["is_base", "is_appliance", "no_back_panel"],
+    "default_dimensions": {
+      "width_mm": 600,
+      "height_mm": 802,
+      "depth_mm": 560
+    },
+    "limits": {
+      "width_min": 600,
+      "width_max": 600,
+      "height_min": 700,
+      "height_max": 900,
+      "depth_min": 560,
+      "depth_max": 600
+    },
+    "formulas": {
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
+      "back_m2": "0",
+      "front_m2": "0"
+    }
+  },
+  "PULLOUT_FILLER": {
+    "name": "Pull-out filler",
+    "type": "BASE",
+    "tags": ["is_base", "is_pullout"],
+    "default_dimensions": {
+      "width_mm": 200,
+      "height_mm": 802,
+      "depth_mm": 560
+    },
+    "limits": {
+      "width_min": 150,
+      "width_max": 300,
+      "height_min": 700,
+      "height_max": 900,
+      "depth_min": 460,
+      "depth_max": 600
+    },
+    "formulas": {
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
+      "back_m2": "(height_mm * width_mm) / 1000000",
+      "front_m2": "(height_mm * width_mm) / 1000000"
+    }
+  },
+  "SIDE_PANEL": {
+    "name": "Side panel",
+    "type": "PANEL",
+    "tags": ["is_panel"],
+    "default_dimensions": {
+      "width_mm": 580,
+      "height_mm": 2070,
+      "depth_mm": 19
+    },
+    "limits": {
+      "width_min": 300,
+      "width_max": 900,
+      "height_min": 700,
+      "height_max": 2400,
+      "depth_min": 16,
+      "depth_max": 19
+    },
+    "formulas": {
+      "corpus_m2": "(width_mm * height_mm) / 1000000",
+      "back_m2": "0",
+      "front_m2": "0"
+    }
+  }
+}
