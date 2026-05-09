@@ -140,10 +140,10 @@ class KitchenState(rx.State):
             category=line.category,
             label=line.label,
             quantity_label=f"{line.quantity:g} {line.unit}".strip(),
-            unit_price_label=f"${line.unit_price:.2f}",
+            unit_price_label=f"{line.unit_price:,.2f} zł".replace(',', "'"),
             waste_label=f"{line.waste_factor:.2f}x" if line.waste_factor is not None else "-",
             formula=line.formula,
-            subtotal_label=f"${line.subtotal:.2f}",
+            subtotal_label=f"{line.subtotal:,.2f} zł".replace(',', "'"),
         )
 
     def _is_row_module(self, cab: Cabinet) -> bool:
@@ -404,8 +404,8 @@ class KitchenState(rx.State):
             self.cost_trace_lines = [self._format_cost_trace_line(line) for line in cost_result.trace_lines]
             self.cost_trace_total = cost_result.total_cost
             self.cost_trace_summary = (
-                f"Material ${cost_result.material_cost:.2f} + "
-                f"hardware ${cost_result.hardware_cost:.2f}"
+                f"Material {cost_result.material_cost:,.2f} zł + "
+                f"hardware {cost_result.hardware_cost:,.2f} zł"
             )
             self.cost_trace_open = True
     
@@ -439,7 +439,7 @@ class KitchenState(rx.State):
             self.cost_trace_title = f"{cabinet.name} cost trace (NEW BOM)"
             self.cost_trace_lines = [self._format_cost_trace_line(line) for line in trace_lines]
             self.cost_trace_total = sum(line.subtotal for line in trace_lines)
-            self.cost_trace_summary = "Using new BOM generator with tag-based hardware"
+            self.cost_trace_summary = "Nowy system BOM z automatycznym doborem okuć"
             self.cost_trace_open = True
 
     def open_project_cost_trace(self):
@@ -472,12 +472,12 @@ class KitchenState(rx.State):
             trace_rows.append(
                 CostTraceLineUI(
                     category="Project",
-                    label="Labor / shop markup",
-                    quantity_label=f"${raw_total:.2f} base",
+                    label="Robocizna / narzut",
+                    quantity_label=f"{raw_total:,.2f} zł podstawa".replace(',', "'"),
                     unit_price_label=f"{project.labor_markup:.2f}x",
                     waste_label="-",
-                    formula=f"{raw_total:.2f} x ({project.labor_markup:.2f} - 1)",
-                    subtotal_label=f"${markup_cost:.2f}",
+                    formula=f"{raw_total:,.2f} x ({project.labor_markup:.2f} - 1)".replace(',', "'"),
+                    subtotal_label=f"{markup_cost:,.2f} zł".replace(',', "'"),
                 )
             )
 
@@ -485,8 +485,8 @@ class KitchenState(rx.State):
             self.cost_trace_lines = trace_rows
             self.cost_trace_total = round(final_total, 2)
             self.cost_trace_summary = (
-                f"{len(cabs)} cabinets, raw BOM ${raw_total:.2f}, "
-                f"markup {project.labor_markup:.2f}x"
+                f"{len(cabs)} szafek, materiały {raw_total:,.2f} zł, "
+                f"narzut {project.labor_markup:.2f}x"
             )
             self.cost_trace_open = True
     
@@ -556,12 +556,12 @@ class KitchenState(rx.State):
                 trace_rows.append(
                     CostTraceLineUI(
                         category="Material",
-                        label=f"{data['name']} (aggregated)",
+                        label=f"{data['name']} (zagregowane)",
                         quantity_label=f"{purchase_qty:.2f} {unit}",
-                        unit_price_label=f"${data['unit_price']:.2f}",
+                        unit_price_label=f"{data['unit_price']:,.2f} zł".replace(',', "'"),
                         waste_label=f"{waste_factor:.2f}x",
                         formula=formula,
-                        subtotal_label=f"${cost:.2f}",
+                        subtotal_label=f"{cost:,.2f} zł".replace(',', "'"),
                     )
                 )
             
@@ -576,10 +576,10 @@ class KitchenState(rx.State):
                         category="Hardware",
                         label=name,
                         quantity_label=f"{data['quantity_net']:.0f} {data['unit']}",
-                        unit_price_label=f"${data['unit_price']:.2f}",
+                        unit_price_label=f"{data['unit_price']:,.2f} zł".replace(',', "'"),
                         waste_label="-",
-                        formula=f"{data['quantity_net']:.0f} x ${data['unit_price']:.2f}",
-                        subtotal_label=f"${cost:.2f}",
+                        formula=f"{data['quantity_net']:.0f} x {data['unit_price']:,.2f} zł".replace(',', "'"),
+                        subtotal_label=f"{cost:,.2f} zł".replace(',', "'"),
                     )
                 )
             
@@ -588,12 +588,12 @@ class KitchenState(rx.State):
                 trace_rows.append(
                     CostTraceLineUI(
                         category="Equipment",
-                        label="Appliances & Equipment",
-                        quantity_label=f"${equipment_total:.2f}",
+                        label="AGD i wyposażenie",
+                        quantity_label=f"{equipment_total:,.2f} zł".replace(',', "'"),
                         unit_price_label="1.00x",
                         waste_label="-",
-                        formula=f"Aggregated equipment allowances",
-                        subtotal_label=f"${equipment_total:.2f}",
+                        formula=f"Zagregowane koszty wyposażenia",
+                        subtotal_label=f"{equipment_total:,.2f} zł".replace(',', "'"),
                     )
                 )
             
@@ -605,21 +605,21 @@ class KitchenState(rx.State):
             trace_rows.append(
                 CostTraceLineUI(
                     category="Project",
-                    label="Labor / shop markup",
-                    quantity_label=f"${raw_total:.2f} base",
+                    label="Robocizna / narzut",
+                    quantity_label=f"{raw_total:,.2f} zł podstawa".replace(',', "'"),
                     unit_price_label=f"{project.labor_markup:.2f}x",
                     waste_label="-",
-                    formula=f"{raw_total:.2f} x ({project.labor_markup:.2f} - 1)",
-                    subtotal_label=f"${markup_cost:.2f}",
+                    formula=f"{raw_total:,.2f} x ({project.labor_markup:.2f} - 1)".replace(',', "'"),
+                    subtotal_label=f"{markup_cost:,.2f} zł".replace(',', "'"),
                 )
             )
 
-            self.cost_trace_title = "Project cost trace (NEW BOM)"
+            self.cost_trace_title = "Kosztorys projektu (NOWY BOM)"
             self.cost_trace_lines = trace_rows
             self.cost_trace_total = round(final_total, 2)
             self.cost_trace_summary = (
-                f"{len(project.cabinets)} cabinets, aggregated materials, "
-                f"purchasing strategies applied"
+                f"{len(project.cabinets)} szafek, materiały zagregowane, "
+                f"strategie zakupowe zastosowane"
             )
             self.cost_trace_open = True
 

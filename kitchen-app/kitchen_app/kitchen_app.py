@@ -47,8 +47,18 @@ def top_bar() -> rx.Component:
         ),
 
         rx.vstack(
-            rx.text("TOTAL ESTIMATE", font_size="0.75rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
-            rx.text("$" + KitchenState.total_price.to_string(), font_size="2.5rem", font_weight="900", color="#16a34a", font_family="monospace"),
+            rx.text("CAŁKOWITY KOSZTORYS", font_size="0.75rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
+            rx.text(
+                rx.cond(
+                    KitchenState.total_price >= 1000,
+                    f"{KitchenState.total_price:,.0f} zł".replace(',', "'"),
+                    f"{KitchenState.total_price:.2f} zł"
+                ),
+                font_size="2.5rem", 
+                font_weight="900", 
+                color="#16a34a", 
+                font_family="monospace"
+            ),
             spacing="0",
             align_items="flex-end"
         ),
@@ -121,9 +131,19 @@ def cost_trace_panel() -> rx.Component:
                     overflow_y="auto",
                 ),
                 rx.hstack(
-                    rx.text("Traced total", font_size="0.85rem", color="#334155", font_weight="bold"),
+                    rx.text("Suma", font_size="0.85rem", color="#334155", font_weight="bold"),
                     rx.spacer(),
-                    rx.text("$" + KitchenState.cost_trace_total.to_string(), font_size="1.4rem", color="#16a34a", font_weight="900", font_family="monospace"),
+                    rx.text(
+                        rx.cond(
+                            KitchenState.cost_trace_total >= 1000,
+                            f"{KitchenState.cost_trace_total:,.2f} zł".replace(',', "'"),
+                            f"{KitchenState.cost_trace_total:.2f} zł"
+                        ),
+                        font_size="1.4rem", 
+                        color="#16a34a", 
+                        font_weight="900", 
+                        font_family="monospace"
+                    ),
                     width="100%",
                     padding_top="1rem",
                 ),
@@ -258,8 +278,17 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
         rx.vstack(
             rx.text(cabinet.name, font_size="0.7rem", font_weight="bold",
                     color=rx.cond(is_selected, "#0284c7", "#334155"), line_height="1.2", text_align="center"),
-            rx.text("$" + cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace",
-                    text_align="center"),
+            rx.text(
+                rx.cond(
+                    cabinet.price >= 1000,
+                    f"{cabinet.price:,.0f} zł".replace(',', "'"),
+                    f"{cabinet.price:.2f} zł"
+                ),
+                font_size="0.7rem", 
+                color="#16a34a", 
+                font_family="monospace",
+                text_align="center"
+            ),
             spacing="1", width="100%", height="45px", justify_content="flex-start", align_items="center"
         ),
 
@@ -521,7 +550,17 @@ def sidebar() -> rx.Component:
             rx.hstack(
                 rx.text(KitchenState.selected_cabinet.module_label, font_size="0.7rem", color="#0f172a", font_weight="bold"),
                 rx.spacer(),
-                rx.text("$" + KitchenState.selected_cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace", font_weight="bold"),
+                rx.text(
+                    rx.cond(
+                        KitchenState.selected_cabinet.price >= 1000,
+                        f"{KitchenState.selected_cabinet.price:,.0f} zł".replace(',', "'"),
+                        f"{KitchenState.selected_cabinet.price:.2f} zł"
+                    ),
+                    font_size="0.7rem", 
+                    color="#16a34a", 
+                    font_family="monospace", 
+                    font_weight="bold"
+                ),
                 width="100%",
                 padding="0.55rem 0.7rem",
                 bg="#f8fafc",
