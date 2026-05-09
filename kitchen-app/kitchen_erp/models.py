@@ -67,9 +67,42 @@ class Cabinet(SQLModel, table=True):
     project: "Project" = Relationship(back_populates="cabinets")
     override_front_mat: Material | None = Relationship(sa_relationship_kwargs={"foreign_keys": "[Cabinet.override_front_mat_id]"})
     override_corpus_mat: Material | None = Relationship(sa_relationship_kwargs={"foreign_keys": "[Cabinet.override_corpus_mat_id]"})
+    
+    @property
+    def has_custom_front(self) -> bool:
+        """
+        Check if this cabinet should have custom front material.
+        
+        Used by BOM generator to determine if front material should be included.
+        Returns False for equipment-only cabinets.
+        """
+        fixed_equipment = {
+            "DISHWASHER", "OVEN", "COOKTOP", "HOOD", "SINK", "FAUCET",
+            "APPLIANCE", "DECOR", "COUNTERTOP"
+        }
+        return self.module_kind not in fixed_equipment
+    
+    @property
+    def local_front_mat(self) -> Material | None:
+        """
+        Get the front material for this cabinet (override or None).
+        
+        Used by BOM generator. If None, generator will use project defaults.
+        """
+        return self.override_front_mat
 
     def calculate_cost(self, defaults: ProjectDefaults, waste_factor: float) -> CabinetCostResult:
-        """Calculates cost using relationships. Assumes relationships are loaded."""
+        """
+        LEGACY METHOD: Calculates cost using relationships. Assumes relationships are loaded.
+        
+        NOTE: This is the OLD cost calculation system. For new projects, use:
+            from kitchen_erp.bom_generator import BOMGenerator
+            generator = BOMGenerator(cabinet, defaults)
+            bom_tree = generator.generate()
+        
+        This method is kept for backward compatibility during migration.
+        See MIGRATION_GUIDE.md for details on switching to the new BOM system.
+        """
         fixed_equipment = {
             "DISHWASHER", "OVEN", "COOKTOP", "HOOD", "SINK", "FAUCET",
             "APPLIANCE", "DECOR",
@@ -222,3 +255,102 @@ class Project(SQLModel, table=True):
     # cascade_delete=True ensures if we delete a project, its cabinets and defaults vanish too.
     cabinets: list[Cabinet] = Relationship(back_populates="project", cascade_delete=True)
     defaults: ProjectDefaults | None = Relationship(back_populates="project", cascade_delete=True)
+    
+    def generate_project_bom(self):
+        """
+        Generate complete BOM for entire project using new BOM generator system.
+        
+        This method demonstrates the new architecture:
+        1. Generates BOM tree for each cabinet
+        2. Aggregates materials across all cabinets
+        3. Applies purchasing strategies (full sheets, rolls, etc.)
+        4. Returns project-level cost breakdown
+        
+        Returns:
+            dict with keys:
+                - total_cost: float
+                - material_cost: float
+                - hardware_cost: float
+                - bom_trees: list of (cabinet_name, BOMAssembly) tuples
+                - aggregated_materials: dict of aggregated material quantities
+        
+        Example:
+            project = session.get(Project, project_id)
+            result = project.generate_project_bom()
+            print(f"Total project cost: ${result['total_cost']:.2f}")
+        """
+        from kitchen_erp.bom_generator import BOMGenerator
+        from kitchen_erp.purchasing import get_strategy_for_material
+        
+        if not self.defaults:
+            raise ValueError("Project has no defaults configured")
+        
+        # Generate BOM trees for all cabinets
+        bom_trees = []
+        for cabinet in self.cabinets:
+            generator = BOMGenerator(cabinet, self.defaults)
+            bom_tree = generator.generate()
+            bom_trees.append((cabinet.name or cabinet.module_kind, bom_tree))
+        
+        # Aggregate materials
+        material_aggregation = {}
+        hardware_aggregation = {}
+        
+        for cab_name, bom_tree in bom_trees:
+            for part in bom_tree.get_all_parts():
+                if part.material_id:
+                    # Material with database ID
+                    key = (part.material_id, part.unit)
+                    if key not in material_aggregation:
+                        material_aggregation[key] = {
+                            "name": part.name,
+                            "quantity_net": 0,
+                            "unit": part.unit,
+                            "unit_price": part.unit_price,
+                            "material_id": part.material_id
+                        }
+                    material_aggregation[key]["quantity_net"] += part.quantity_net
+                else:
+                    # Hardware without material_id
+                    if part.name not in hardware_aggregation:
+                        hardware_aggregation[part.name] = {
+                            "quantity_net": 0,
+                            "unit": part.unit,
+                            "unit_price": part.unit_price
+                        }
+                    hardware_aggregation[part.name]["quantity_net"] += part.quantity_net
+        
+        # Apply purchasing strategies
+        total_material_cost = 0.0
+        for (mat_id, unit), data in material_aggregation.items():
+            # Get material category from database
+            # Note: In real usage, you'd need a session here
+            # This is just a demonstration of the concept
+            material_category = "Board"  # Placeholder
+            
+            strategy = get_strategy_for_material(material_category)
+            purchase_qty = strategy.calculate_purchase_quantity(data["quantity_net"])
+            waste_factor = strategy.get_waste_factor(data["quantity_net"])
+            
+            cost = purchase_qty * data["unit_price"]
+            total_material_cost += cost
+            
+            data["quantity_purchase"] = purchase_qty
+            data["waste_factor"] = waste_factor
+            data["cost"] = cost
+        
+        # Calculate hardware cost
+        total_hardware_cost = 0.0
+        for name, data in hardware_aggregation.items():
+            cost = data["quantity_net"] * data["unit_price"]
+            total_hardware_cost += cost
+            data["cost"] = cost
+        
+        return {
+            "total_cost": total_material_cost + total_hardware_cost,
+            "material_cost": total_material_cost,
+            "hardware_cost": total_hardware_cost,
+            "bom_trees": bom_trees,
+            "aggregated_materials": material_aggregation,
+            "aggregated_hardware": hardware_aggregation
+        }
