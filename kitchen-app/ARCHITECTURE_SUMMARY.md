@@ -125,8 +125,10 @@ trace_lines = generator.generate_cost_trace_lines()  # Returns list[CostTraceLin
 4. `tests/test_purchasing.py` - 18 tests for purchasing strategies
 5. `tests/test_bom_generator.py` - 9 tests for BOM generation
 6. `tests/test_integration_bom.py` - 8 tests for integration
+7. `tests/test_complete_integration.py` - 3 tests for complete workflow
+8. `tests/test_end_to_end_workflow.py` - 2 comprehensive demonstration tests
 
-**Total: 61 tests, all passing ✅**
+**Total: 66 tests, all passing ✅**
 
 Run all tests:
 ```bash
