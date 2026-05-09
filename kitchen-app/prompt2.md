@@ -1,6 +1,115 @@
+# Kitchen App Architecture Documentation
+
+## Overview
+
+This application implements a professional CAD/CAM-style BOM (Bill of Materials) generation system for kitchen cabinets, following industry best practices and design patterns.
+
+## Architecture Patterns Implemented
+
+### 1. Recipe Pattern (Data-Driven Design)
+Cabinet definitions are stored in `kitchen_erp/recipes.json` rather than hardcoded in Python. This allows:
+- Easy addition of new cabinet types without code changes
+- Clear separation of configuration from logic
+- Version control of cabinet specifications
+
+### 2. Composite Pattern (BOM Tree)
+BOMs are hierarchical trees, not flat lists:
+- `BOMAssembly` - composite nodes (cabinets, drawers)
+- `BOMPart` - leaf nodes (materials, hardware)
+- Enables nested cost calculation and detailed breakdowns
+
+### 3. Rules Engine (Tag-Based Components)
+Tags in recipes automatically trigger hardware addition:
+- `is_base` → adds cabinet legs
+- `has_doors` → adds hinges and bumpers
+- `has_drawers` → adds drawer slides
+- Extensible via `HARDWARE_RULES` dictionary
+
+### 4. Strategy Pattern (Purchasing Logic)
+Different materials have different purchasing strategies:
+- `SheetMaterialStrategy` - boards sold in full sheets
+- `LinearMaterialStrategy` - edgebanding in rolls
+- `CountertopStrategy` - countertops in standard lengths
+- `ExactQuantityStrategy` - hardware in exact quantities
+
+## Key Components
+
+### BOM Generator (`kitchen_erp/bom_generator.py`)
+Main orchestrator that:
+1. Loads recipe for cabinet type
+2. Evaluates formulas to calculate material quantities
+3. Applies rules engine for hardware
+4. Builds hierarchical BOM tree
+
+### Recipe Loader (`kitchen_erp/recipe_loader.py`)
+- Loads and caches recipes from JSON
+- Safely evaluates mathematical formulas
+- Provides recipe lookup utilities
+
+### Rules Engine (`kitchen_erp/rules_engine.py`)
+- Maps tags to required hardware
+- Handles quantity multipliers (e.g., 2 doors = 4 hinges)
+- Extensible rule configuration
+
+### Purchasing Strategies (`kitchen_erp/purchasing.py`)
+- Calculates actual purchase quantities
+- Accounts for standard sizes and waste
+- Provides realistic cost estimates
+
+## Testing
+
+All components have comprehensive test coverage:
+- `tests/test_recipe_loader.py` - Recipe loading and formula evaluation
+- `tests/test_bom_tree.py` - Composite pattern and tree operations
+- `tests/test_rules_engine.py` - Tag-based component addition
+- `tests/test_purchasing.py` - Purchasing strategy calculations
+- `tests/test_bom_generator.py` - End-to-end BOM generation
+
+Run tests with:
+```bash
+cd kitchen-app && uv run pytest tests/ -v
+```
+
+## Usage Example
+
+```python
+from kitchen_erp.bom_generator import BOMGenerator
+from kitchen_erp.models import Cabinet, ProjectDefaults
+
+# Create cabinet
+cabinet = Cabinet(
+    module_kind="DRAWER_BASE",
+    width_mm=400,
+    height_mm=802,
+    depth_mm=560,
+    drawer_count=4
+)
+
+# Generate BOM
+generator = BOMGenerator(cabinet, project_defaults)
+bom_tree = generator.generate()
+
+# Access hierarchical structure
+print(f"Total cost: ${bom_tree.cost:.2f}")
+for part in bom_tree.get_all_parts():
+    print(f"  {part.name}: {part.quantity_net} {part.unit} @ ${part.unit_price}")
+```
+
+## Future Enhancements
+
+1. **Nesting Engine** - Optimize sheet material cutting
+2. **CNC Export** - Generate machine-ready cutting files
+3. **Material Aggregation** - Combine materials across multiple cabinets
+4. **Visual BOM Tree** - Interactive UI for exploring BOM hierarchy
+5. **Custom Rules** - User-defined hardware rules per project
+
+---
+
+## Original Consultation (Archived)
+
 ## USER
 
-Bądź stolarzem i certyfikowanym montażystą blatów i zabudowy ADG. Zansz się na
+Bądź stolarzem i certyfikowanym montażystą blatów i zabudowy ADG. Znasz się na
 sztuce stolarskiej i budowlano-remontowej.
 Jako technolog i inżynier znasz rodzaje i budowę płyt MDF, techniki okleinowania. Znasz budowę i słabe strony blatów HPL.
 Jako stolarz i specjalista w branży meblarskiej znasz typy połączeń płyt MDF, zawiasów, profili, ledów.
