@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlmodel import select
 from kitchen_erp.database import get_session, engine, SQLModel
 from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults
+from kitchen_erp.schemas import CostTraceLine
 
 class CabinetUI(BaseModel):
     """ViewModel for the frontend to render cabinets easily."""
@@ -22,6 +23,17 @@ class CabinetUI(BaseModel):
     door_count: int
     drawer_count: int
     has_custom_front: bool = False
+
+
+class CostTraceLineUI(BaseModel):
+    """ViewModel for rendering calculation trace rows without UI math."""
+    category: str
+    label: str
+    quantity_label: str
+    unit_price_label: str
+    waste_label: str
+    formula: str
+    subtotal_label: str
 
 class KitchenState(rx.State):
     """The reactive state for our UI."""
@@ -41,11 +53,90 @@ class KitchenState(rx.State):
     global_front_mat_name: str = ""
     local_front_mat_name: str = ""
     field_warnings: dict[str, str] = {}
+    cost_trace_open: bool = False
+    cost_trace_title: str = ""
+    cost_trace_lines: list[CostTraceLineUI] = []
+    cost_trace_total: float = 0.0
+    cost_trace_summary: str = ""
 
     @rx.var
     def local_material_options(self) -> list[str]:
         """Combines the default option with the materials list."""
         return ["Use Global Default"] + self.materials
+
+    def _format_cost_trace_line(self, line: CostTraceLine) -> CostTraceLineUI:
+        return CostTraceLineUI(
+            category=line.category,
+            label=line.label,
+            quantity_label=f"{line.quantity:g} {line.unit}".strip(),
+            unit_price_label=f"${line.unit_price:.2f}",
+            waste_label=f"{line.waste_factor:.2f}x" if line.waste_factor is not None else "-",
+            formula=line.formula,
+            subtotal_label=f"${line.subtotal:.2f}",
+        )
+
+    def close_cost_trace(self):
+        self.cost_trace_open = False
+
+    def open_selected_cabinet_cost_trace(self):
+        if self.selected_cabinet_id is None:
+            return
+
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            cab = session.get(Cabinet, self.selected_cabinet_id)
+            if not project or not project.defaults or not cab:
+                return
+
+            cost_result = cab.calculate_cost(project.defaults, project.waste_factor)
+            self.cost_trace_title = f"{cab.name} cost trace"
+            self.cost_trace_lines = [self._format_cost_trace_line(line) for line in cost_result.trace_lines]
+            self.cost_trace_total = cost_result.total_cost
+            self.cost_trace_summary = (
+                f"Material ${cost_result.material_cost:.2f} + "
+                f"hardware ${cost_result.hardware_cost:.2f}"
+            )
+            self.cost_trace_open = True
+
+    def open_project_cost_trace(self):
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project or not project.defaults:
+                return
+
+            cabs = sorted(project.cabinets, key=lambda c: (0 if c.type == "WALL" else 1, c.order_index))
+            trace_rows: list[CostTraceLineUI] = []
+            raw_total = 0.0
+
+            for cab in cabs:
+                cost_result = cab.calculate_cost(project.defaults, project.waste_factor)
+                raw_total += cost_result.total_cost
+                for line in cost_result.trace_lines:
+                    prefixed = line.model_copy(update={"label": f"{cab.name}: {line.label}"})
+                    trace_rows.append(self._format_cost_trace_line(prefixed))
+
+            markup_cost = raw_total * (project.labor_markup - 1)
+            final_total = raw_total * project.labor_markup
+            trace_rows.append(
+                CostTraceLineUI(
+                    category="Project",
+                    label="Labor / shop markup",
+                    quantity_label=f"${raw_total:.2f} base",
+                    unit_price_label=f"{project.labor_markup:.2f}x",
+                    waste_label="-",
+                    formula=f"{raw_total:.2f} x ({project.labor_markup:.2f} - 1)",
+                    subtotal_label=f"${markup_cost:.2f}",
+                )
+            )
+
+            self.cost_trace_title = "Project cost trace"
+            self.cost_trace_lines = trace_rows
+            self.cost_trace_total = round(final_total, 2)
+            self.cost_trace_summary = (
+                f"{len(cabs)} cabinets, raw BOM ${raw_total:.2f}, "
+                f"markup {project.labor_markup:.2f}x"
+            )
+            self.cost_trace_open = True
 
     def change_global_front(self, formatted_name: str):
         # Extract the actual name by splitting at " - "

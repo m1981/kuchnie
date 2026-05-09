@@ -1,6 +1,6 @@
 # kitchen_app/kitchen_app.py
 import reflex as rx
-from .state import KitchenState, CabinetUI
+from .state import KitchenState, CabinetUI, CostTraceLineUI
 
 def top_bar() -> rx.Component:
     """The Deal Closer Header."""
@@ -26,6 +26,16 @@ def top_bar() -> rx.Component:
             margin_right="2rem"
         ),
 
+        rx.button(
+            rx.icon(tag="receipt-text", size=16),
+            "Trace Costs",
+            on_click=KitchenState.open_project_cost_trace,
+            color_scheme="gray",
+            variant="soft",
+            cursor="pointer",
+            margin_right="1rem",
+        ),
+
         rx.vstack(
             rx.text("TOTAL ESTIMATE", font_size="0.75rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
             rx.text("$" + KitchenState.total_price.to_string(), font_size="2.5rem", font_weight="900", color="#16a34a", font_family="monospace"),
@@ -37,6 +47,96 @@ def top_bar() -> rx.Component:
         bg="white",
         border_bottom="1px solid #e2e8f0",
         align_items="center"
+    )
+
+
+def cost_trace_row(line: CostTraceLineUI) -> rx.Component:
+    return rx.hstack(
+        rx.text(line.category, width="85px", font_size="0.72rem", color="#475569", font_weight="bold"),
+        rx.vstack(
+            rx.text(line.label, font_size="0.78rem", color="#0f172a", font_weight="600", line_height="1.2"),
+            rx.text(line.formula, font_size="0.7rem", color="#64748b", font_family="monospace", line_height="1.2"),
+            spacing="1",
+            align_items="flex-start",
+            flex="1",
+            min_width="240px",
+        ),
+        rx.text(line.quantity_label, width="90px", font_size="0.72rem", color="#334155", text_align="right", font_family="monospace"),
+        rx.text(line.unit_price_label, width="80px", font_size="0.72rem", color="#334155", text_align="right", font_family="monospace"),
+        rx.text(line.waste_label, width="60px", font_size="0.72rem", color="#334155", text_align="right", font_family="monospace"),
+        rx.text(line.subtotal_label, width="90px", font_size="0.78rem", color="#16a34a", text_align="right", font_family="monospace", font_weight="bold"),
+        width="100%",
+        padding="0.65rem 0",
+        border_bottom="1px solid #e2e8f0",
+        align_items="center",
+        spacing="3",
+    )
+
+
+def cost_trace_panel() -> rx.Component:
+    return rx.cond(
+        KitchenState.cost_trace_open,
+        rx.box(
+            rx.vstack(
+                rx.hstack(
+                    rx.vstack(
+                        rx.text("COST TRACE", font_size="0.68rem", color="#64748b", font_weight="bold", letter_spacing="0.05em"),
+                        rx.heading(KitchenState.cost_trace_title, size="5", color="#0f172a"),
+                        rx.text(KitchenState.cost_trace_summary, font_size="0.78rem", color="#64748b"),
+                        spacing="1",
+                        align_items="flex-start",
+                    ),
+                    rx.spacer(),
+                    rx.icon(tag="x", cursor="pointer", color="#64748b", _hover={"color": "#0f172a"}, on_click=KitchenState.close_cost_trace),
+                    width="100%",
+                    align_items="flex-start",
+                    padding_bottom="1rem",
+                    border_bottom="1px solid #cbd5e1",
+                ),
+                rx.hstack(
+                    rx.text("TYPE", width="85px", font_size="0.65rem", color="#64748b", font_weight="bold"),
+                    rx.text("CALCULATION", flex="1", min_width="240px", font_size="0.65rem", color="#64748b", font_weight="bold"),
+                    rx.text("QTY", width="90px", font_size="0.65rem", color="#64748b", font_weight="bold", text_align="right"),
+                    rx.text("RATE", width="80px", font_size="0.65rem", color="#64748b", font_weight="bold", text_align="right"),
+                    rx.text("WASTE", width="60px", font_size="0.65rem", color="#64748b", font_weight="bold", text_align="right"),
+                    rx.text("COST", width="90px", font_size="0.65rem", color="#64748b", font_weight="bold", text_align="right"),
+                    width="100%",
+                    padding_top="0.5rem",
+                    spacing="3",
+                ),
+                rx.box(
+                    rx.foreach(KitchenState.cost_trace_lines, cost_trace_row),
+                    width="100%",
+                    max_height="55vh",
+                    overflow_y="auto",
+                ),
+                rx.hstack(
+                    rx.text("Traced total", font_size="0.85rem", color="#334155", font_weight="bold"),
+                    rx.spacer(),
+                    rx.text("$" + KitchenState.cost_trace_total.to_string(), font_size="1.4rem", color="#16a34a", font_weight="900", font_family="monospace"),
+                    width="100%",
+                    padding_top="1rem",
+                ),
+                width="min(960px, calc(100vw - 3rem))",
+                max_height="calc(100vh - 4rem)",
+                bg="white",
+                border="1px solid #cbd5e1",
+                border_radius="8px",
+                box_shadow="0 24px 80px rgba(15, 23, 42, 0.28)",
+                padding="1.25rem",
+                spacing="3",
+                align_items="flex-start",
+            ),
+            position="fixed",
+            inset="0",
+            bg="rgba(15, 23, 42, 0.35)",
+            z_index="100",
+            display="flex",
+            align_items="center",
+            justify_content="center",
+            padding="1.5rem",
+        ),
+        rx.fragment(),
     )
 
 
@@ -281,6 +381,12 @@ def sidebar() -> rx.Component:
 
             rx.spacer(),
 
+            rx.button(
+                rx.icon(tag="receipt-text", size=16), "Trace This Cabinet",
+                color_scheme="gray", variant="soft", width="100%", cursor="pointer",
+                on_click=KitchenState.open_selected_cabinet_cost_trace
+            ),
+
             # Delete Button
             rx.button(
                 rx.icon(tag="trash-2", size=16), "Delete Cabinet",
@@ -313,6 +419,8 @@ def index() -> rx.Component:
 
             width="100%", align_items="flex-start", spacing="0"
         ),
+
+        cost_trace_panel(),
 
         width="100%", min_height="100vh", bg="#f8fafc", spacing="0"
     )

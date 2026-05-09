@@ -53,3 +53,13 @@ def test_cabinet_cost_calculation():
     assert result.material_cost == 62.0
     assert result.hardware_cost == 6.0
     assert result.total_cost == 68.0
+    assert [line.label.split(":")[0] for line in result.trace_lines] == [
+        "Corpus board",
+        "Back panel",
+        "Fronts",
+        "Edge banding",
+        "Hinges",
+        "Drawers",
+    ]
+    assert sum(line.subtotal for line in result.trace_lines if line.category == "Material") == result.material_cost
+    assert sum(line.subtotal for line in result.trace_lines if line.category == "Hardware") == result.hardware_cost

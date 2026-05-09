@@ -1,6 +1,6 @@
 # kitchen_erp/models.py
 from sqlmodel import SQLModel, Field, Relationship
-from kitchen_erp.schemas import CabinetCostResult
+from kitchen_erp.schemas import CabinetCostResult, CostTraceLine
 
 
 class Material(SQLModel, table=True):
@@ -82,12 +82,53 @@ class Cabinet(SQLModel, table=True):
         edge_length_m = ((self.height_mm * 2 + self.width_mm * 2) * 2) / 1000
 
         # 2. Material Cost
-        mat_cost = (
-            (corpus_area_m2 * active_corpus.price_per_unit * waste_factor) +
-                (back_area_m2 * defaults.back_mat.price_per_unit * waste_factor) +
-            (front_area_m2 * active_front.price_per_unit * waste_factor) +
-            (edge_length_m * defaults.edge_band_mat.price_per_unit)
-        )
+        corpus_cost = corpus_area_m2 * active_corpus.price_per_unit * waste_factor
+        back_cost = back_area_m2 * defaults.back_mat.price_per_unit * waste_factor
+        front_cost = front_area_m2 * active_front.price_per_unit * waste_factor
+        edge_cost = edge_length_m * defaults.edge_band_mat.price_per_unit
+        mat_cost = corpus_cost + back_cost + front_cost + edge_cost
+
+        trace_lines = [
+            CostTraceLine(
+                category="Material",
+                label=f"Corpus board: {active_corpus.brand or 'Generic'} {active_corpus.name}",
+                quantity=round(corpus_area_m2, 4),
+                unit=active_corpus.unit,
+                unit_price=active_corpus.price_per_unit,
+                waste_factor=waste_factor,
+                formula=f"{corpus_area_m2:.4f} {active_corpus.unit} x {active_corpus.price_per_unit:.2f} x {waste_factor:.2f}",
+                subtotal=round(corpus_cost, 2),
+            ),
+            CostTraceLine(
+                category="Material",
+                label=f"Back panel: {defaults.back_mat.brand or 'Generic'} {defaults.back_mat.name}",
+                quantity=round(back_area_m2, 4),
+                unit=defaults.back_mat.unit,
+                unit_price=defaults.back_mat.price_per_unit,
+                waste_factor=waste_factor,
+                formula=f"{back_area_m2:.4f} {defaults.back_mat.unit} x {defaults.back_mat.price_per_unit:.2f} x {waste_factor:.2f}",
+                subtotal=round(back_cost, 2),
+            ),
+            CostTraceLine(
+                category="Material",
+                label=f"Fronts: {active_front.brand or 'Generic'} {active_front.name}",
+                quantity=round(front_area_m2, 4),
+                unit=active_front.unit,
+                unit_price=active_front.price_per_unit,
+                waste_factor=waste_factor,
+                formula=f"{front_area_m2:.4f} {active_front.unit} x {active_front.price_per_unit:.2f} x {waste_factor:.2f}",
+                subtotal=round(front_cost, 2),
+            ),
+            CostTraceLine(
+                category="Material",
+                label=f"Edge banding: {defaults.edge_band_mat.brand or 'Generic'} {defaults.edge_band_mat.name}",
+                quantity=round(edge_length_m, 4),
+                unit=defaults.edge_band_mat.unit,
+                unit_price=defaults.edge_band_mat.price_per_unit,
+                formula=f"{edge_length_m:.4f} {defaults.edge_band_mat.unit} x {defaults.edge_band_mat.price_per_unit:.2f}",
+                subtotal=round(edge_cost, 2),
+            ),
+        ]
 
         # 3. Hardware Cost
         hinges_per_door = 2
@@ -97,13 +138,35 @@ class Cabinet(SQLModel, table=True):
             hinges_per_door = 3
 
         total_hinges = hinges_per_door * self.door_count
-        hw_cost = (total_hinges * defaults.hinge_sys.price_per_set) + (
-                    self.drawer_count * defaults.drawer_sys.price_per_set)
+        hinge_cost = total_hinges * defaults.hinge_sys.price_per_set
+        drawer_cost = self.drawer_count * defaults.drawer_sys.price_per_set
+        hw_cost = hinge_cost + drawer_cost
+        trace_lines.extend([
+            CostTraceLine(
+                category="Hardware",
+                label=f"Hinges: {defaults.hinge_sys.brand or 'Generic'} {defaults.hinge_sys.name}",
+                quantity=total_hinges,
+                unit="pcs",
+                unit_price=defaults.hinge_sys.price_per_set,
+                formula=f"{self.door_count} doors x {hinges_per_door} hinges x {defaults.hinge_sys.price_per_set:.2f}",
+                subtotal=round(hinge_cost, 2),
+            ),
+            CostTraceLine(
+                category="Hardware",
+                label=f"Drawers: {defaults.drawer_sys.brand or 'Generic'} {defaults.drawer_sys.name}",
+                quantity=self.drawer_count,
+                unit="sets",
+                unit_price=defaults.drawer_sys.price_per_set,
+                formula=f"{self.drawer_count} drawers x {defaults.drawer_sys.price_per_set:.2f}",
+                subtotal=round(drawer_cost, 2),
+            ),
+        ])
 
         return CabinetCostResult(
             material_cost=round(mat_cost, 2),
             hardware_cost=round(hw_cost, 2),
-            total_cost=round(mat_cost + hw_cost, 2)
+            total_cost=round(mat_cost + hw_cost, 2),
+            trace_lines=trace_lines,
         )
 
 class Project(SQLModel, table=True):
