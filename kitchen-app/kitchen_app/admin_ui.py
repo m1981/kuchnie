@@ -13,14 +13,14 @@ def material_row(material: MaterialUI) -> rx.Component:
             rx.hstack(
                 rx.button(
                     rx.icon(tag="pencil", size=14),
-                    on_click=lambda: AdminState.open_edit_material_form(material.id),
+                    on_click=AdminState.open_edit_material_form(material.id),
                     size="1",
                     variant="soft",
                     color_scheme="blue"
                 ),
                 rx.button(
                     rx.icon(tag="trash-2", size=14),
-                    on_click=lambda: AdminState.delete_material(material.id),
+                    on_click=AdminState.delete_material(material.id),
                     size="1",
                     variant="soft",
                     color_scheme="red"
@@ -41,14 +41,14 @@ def hardware_row(hardware: HardwareUI) -> rx.Component:
             rx.hstack(
                 rx.button(
                     rx.icon(tag="pencil", size=14),
-                    on_click=lambda: AdminState.open_edit_hardware_form(hardware.id),
+                    on_click=AdminState.open_edit_hardware_form(hardware.id),
                     size="1",
                     variant="soft",
                     color_scheme="blue"
                 ),
                 rx.button(
                     rx.icon(tag="trash-2", size=14),
-                    on_click=lambda: AdminState.delete_hardware(hardware.id),
+                    on_click=AdminState.delete_hardware(hardware.id),
                     size="1",
                     variant="soft",
                     color_scheme="red"
@@ -73,14 +73,14 @@ def hardware_rule_row(rule: HardwareRuleUI) -> rx.Component:
             rx.hstack(
                 rx.button(
                     rx.icon(tag="pencil", size=14),
-                    on_click=lambda: AdminState.open_edit_rule_form(rule.id),
+                    on_click=AdminState.open_edit_rule_form(rule.id),
                     size="1",
                     variant="soft",
                     color_scheme="blue"
                 ),
                 rx.button(
                     rx.icon(tag="trash-2", size=14),
-                    on_click=lambda: AdminState.delete_hardware_rule(rule.id),
+                    on_click=AdminState.delete_hardware_rule(rule.id),
                     size="1",
                     variant="soft",
                     color_scheme="red"
