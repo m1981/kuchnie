@@ -105,7 +105,7 @@ class KitchenState(rx.State):
     global_front_mat_name: str = ""
     local_front_mat_name: str = ""
     field_warnings: dict[str, str] = {}
-    use_new_bom: bool = False  # Toggle for new BOM system
+    use_new_bom: bool = True  # Toggle for new BOM system (default: ON)
     cost_trace_open: bool = False
     cost_trace_title: str = ""
     cost_trace_lines: list[CostTraceLineUI] = []
@@ -506,6 +506,7 @@ class KitchenState(rx.State):
             # Generate BOM trees for all cabinets
             material_aggregation = {}
             hardware_aggregation = {}
+            equipment_total = 0.0
             
             for cab in project.cabinets:
                 generator = BOMGenerator(cab, project.defaults)
@@ -530,6 +531,10 @@ class KitchenState(rx.State):
                                 "unit_price": part.unit_price
                             }
                         hardware_aggregation[part.name]["quantity_net"] += part.quantity_net
+                
+                # Add equipment costs
+                if cab.equipment_price > 0:
+                    equipment_total += cab.equipment_price
             
             # Apply purchasing strategies
             trace_rows: list[CostTraceLineUI] = []
@@ -578,8 +583,22 @@ class KitchenState(rx.State):
                     )
                 )
             
+            # Add equipment costs
+            if equipment_total > 0:
+                trace_rows.append(
+                    CostTraceLineUI(
+                        category="Equipment",
+                        label="Appliances & Equipment",
+                        quantity_label=f"${equipment_total:.2f}",
+                        unit_price_label="1.00x",
+                        waste_label="-",
+                        formula=f"Aggregated equipment allowances",
+                        subtotal_label=f"${equipment_total:.2f}",
+                    )
+                )
+            
             # Add markup
-            raw_total = total_material_cost + total_hardware_cost
+            raw_total = total_material_cost + total_hardware_cost + equipment_total
             markup_cost = raw_total * (project.labor_markup - 1)
             final_total = raw_total * project.labor_markup
             
@@ -1006,10 +1025,21 @@ class KitchenState(rx.State):
             wall_list, base_list, plan_modules = [], [], []
             wall_width, base_width = 0.0, 0.0
 
+            # Use new BOM system for total price calculation
+            from kitchen_erp.bom_generator import BOMGenerator
+            
             for cab in wall_cabs + base_cabs + decor_cabs:
-                cost_result = cab.calculate_cost(existing.defaults, existing.waste_factor)
-                total_price += cost_result.total_cost
-                cab_ui = self._module_ui(cab, cost_result.total_cost)
+                # Generate cost using new BOM system
+                generator = BOMGenerator(cab, existing.defaults)
+                bom_tree = generator.generate()
+                cab_cost = bom_tree.cost
+                
+                # Add equipment price if applicable
+                if cab.equipment_price > 0:
+                    cab_cost += cab.equipment_price
+                
+                total_price += cab_cost
+                cab_ui = self._module_ui(cab, cab_cost)
                 plan_modules.append(cab_ui)
 
                 if self._row_key(cab) == "WALL":
