@@ -135,3 +135,46 @@ class BOMGenerator:
             })
         
         return flat_bom
+    
+    def generate_cost_trace_lines(self):
+        """
+        Generate cost trace lines compatible with existing UI.
+        
+        This converts the BOM tree to the legacy CostTraceLine format
+        for seamless integration with the current UI.
+        
+        Returns:
+            List of CostTraceLine objects
+        """
+        from kitchen_erp.schemas import CostTraceLine
+        
+        tree = self.generate()
+        parts = tree.get_all_parts()
+        
+        trace_lines = []
+        for part in parts:
+            # Determine category based on part name
+            if "Corpus" in part.name or "Back panel" in part.name or "Front" in part.name:
+                category = "Material"
+            elif "Edge banding" in part.name:
+                category = "Material"
+            else:
+                category = "Hardware"
+            
+            # Create formula string for display
+            formula = f"{part.quantity_net:.4f} {part.unit} x {part.unit_price:.2f}"
+            if part.waste_factor > 1.0:
+                formula += f" x {part.waste_factor:.2f}"
+            
+            trace_lines.append(CostTraceLine(
+                category=category,
+                label=part.name,
+                quantity=part.quantity_net,
+                unit=part.unit,
+                unit_price=part.unit_price,
+                subtotal=part.cost,
+                formula=formula,
+                waste_factor=part.waste_factor if part.waste_factor > 1.0 else None
+            ))
+        
+        return trace_lines

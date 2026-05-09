@@ -72,36 +72,130 @@ cd kitchen-app && uv run pytest tests/ -v
 
 ## Usage Example
 
+### Basic BOM Generation
+
 ```python
 from kitchen_erp.bom_generator import BOMGenerator
 from kitchen_erp.models import Cabinet, ProjectDefaults
+from sqlmodel import Session
 
-# Create cabinet
-cabinet = Cabinet(
-    module_kind="DRAWER_BASE",
-    width_mm=400,
-    height_mm=802,
-    depth_mm=560,
-    drawer_count=4
-)
-
-# Generate BOM
-generator = BOMGenerator(cabinet, project_defaults)
-bom_tree = generator.generate()
-
-# Access hierarchical structure
-print(f"Total cost: ${bom_tree.cost:.2f}")
-for part in bom_tree.get_all_parts():
-    print(f"  {part.name}: {part.quantity_net} {part.unit} @ ${part.unit_price}")
+# Assuming you have a session and defaults loaded
+with Session(engine) as session:
+    # Get cabinet and project defaults
+    cabinet = session.get(Cabinet, cabinet_id)
+    defaults = session.exec(
+        select(ProjectDefaults).where(ProjectDefaults.project_id == cabinet.project_id)
+    ).first()
+    
+    # Generate hierarchical BOM tree
+    generator = BOMGenerator(cabinet, defaults)
+    bom_tree = generator.generate()
+    
+    # Access total cost
+    print(f"Total cost: ${bom_tree.cost:.2f}")
+    
+    # Get flat list of all parts
+    for part in bom_tree.get_all_parts():
+        print(f"  {part.name}: {part.quantity_net} {part.unit} @ ${part.unit_price}")
 ```
 
-## Future Enhancements
+### Integration with Existing Code
 
-1. **Nesting Engine** - Optimize sheet material cutting
-2. **CNC Export** - Generate machine-ready cutting files
-3. **Material Aggregation** - Combine materials across multiple cabinets
-4. **Visual BOM Tree** - Interactive UI for exploring BOM hierarchy
-5. **Custom Rules** - User-defined hardware rules per project
+The new BOM system is **backward compatible** with your existing `Cabinet.calculate_cost()` method:
+
+```python
+# OLD WAY (still works)
+result = cabinet.calculate_cost(defaults, waste_factor=1.20)
+print(result.total_cost)  # Returns CabinetCostResult
+
+# NEW WAY (hierarchical BOM)
+generator = BOMGenerator(cabinet, defaults)
+bom_tree = generator.generate()
+print(bom_tree.cost)  # Returns same total, but with tree structure
+
+# Convert new BOM to old format for UI compatibility
+flat_bom = generator.generate_flat_bom()
+# Returns list[dict] compatible with existing cost trace display
+```
+
+### Migrating from Old to New System
+
+**Phase 1: Keep both systems running** (current state)
+- Old `calculate_cost()` method still works
+- New `BOMGenerator` available for testing
+- UI can use either system
+
+**Phase 2: Update UI to use BOM tree** (future)
+```python
+# In state.py - KitchenState
+def open_selected_cabinet_cost_trace(self):
+    with next(get_session()) as session:
+        cabinet = session.get(Cabinet, self.selected_cabinet_id)
+        defaults = session.exec(
+            select(ProjectDefaults).where(
+                ProjectDefaults.project_id == cabinet.project_id
+            )
+        ).first()
+        
+        # NEW: Use BOM generator
+        generator = BOMGenerator(cabinet, defaults)
+        bom_tree = generator.generate()
+        
+        # Convert to UI format
+        self.cost_trace_lines = self._convert_bom_tree_to_ui(bom_tree)
+        self.cost_trace_visible = True
+```
+
+**Phase 3: Remove old calculate_cost()** (after UI migration)
+- Delete `Cabinet.calculate_cost()` method
+- All cost calculations go through `BOMGenerator`
+
+## Migration Path
+
+### Current State (v0.1)
+- ✅ Recipe system with JSON configuration
+- ✅ BOM tree structure (Composite pattern)
+- ✅ Rules engine for hardware
+- ✅ Purchasing strategies
+- ✅ BOM generator orchestrator
+- ✅ Backward compatible with existing UI
+- ⚠️ Old `Cabinet.calculate_cost()` still in use by UI
+
+### Next Steps (v0.2)
+1. **Update UI to display BOM tree** - Replace flat cost trace with expandable tree
+2. **Integrate purchasing strategies** - Show "Net vs Purchase" quantities in UI
+3. **Add recipe editor** - Allow users to modify recipes.json through UI
+4. **Project-level BOM aggregation** - Combine materials across all cabinets
+
+### Future Enhancements (v1.0+)
+1. **Nesting Engine** - Optimize sheet material cutting with real nesting algorithms
+2. **CNC Export** - Generate machine-ready cutting files (DXF, CNC code)
+3. **Visual BOM Tree** - Interactive 3D visualization of cabinet assembly
+4. **Custom Rules per Project** - Override global hardware rules for specific projects
+5. **Material Supplier Integration** - Direct ordering from suppliers via API
+6. **Cost History Tracking** - Track material price changes over time
+
+## Design Decisions & Trade-offs
+
+### Why JSON for Recipes?
+**Pro:** Easy to edit, version control friendly, no code changes needed for new cabinet types
+**Con:** No type safety, must validate at runtime
+**Decision:** Benefits outweigh risks for this use case
+
+### Why Composite Pattern for BOM?
+**Pro:** Natural representation of assembly hierarchy, easy to extend
+**Con:** More complex than flat list, requires tree traversal
+**Decision:** Professional CAD/CAM systems use this pattern for good reason
+
+### Why Keep Old calculate_cost()?
+**Pro:** Zero breaking changes, gradual migration possible
+**Con:** Code duplication, maintenance burden
+**Decision:** Temporary - will be removed after UI migration
+
+### Why Separate Purchasing Strategies?
+**Pro:** Realistic cost estimates, matches real-world procurement
+**Con:** More complex than simple waste factor
+**Decision:** Critical for accurate quotes - worth the complexity
 
 ---
 
