@@ -216,13 +216,25 @@ class KitchenState(rx.State):
             anchor = cooktop or oven
             if anchor:
                 hood.x_mm = anchor.x_mm + (anchor.width_mm - hood.width_mm) / 2
-            for wall_cab in wall_row:
-                overlaps_wall_cab = hood.x_mm < wall_cab.x_mm + wall_cab.width_mm and hood.x_mm + hood.width_mm > wall_cab.x_mm
-                if overlaps_wall_cab:
-                    hood.x_mm = wall_cab.x_mm + wall_cab.width_mm
             if hood.x_mm + hood.width_mm > CANVAS_WIDTH_MM:
                 hood.x_mm = max(WALL_ROW_START_X, CANVAS_WIDTH_MM - hood.width_mm)
             hood.y_mm = 1480
+
+            x_mm = WALL_ROW_START_X
+            right_of_hood: list[Cabinet] = []
+            for wall_cab in wall_row:
+                if x_mm + wall_cab.width_mm <= hood.x_mm:
+                    wall_cab.x_mm = x_mm
+                    wall_cab.y_mm = WALL_ROW_Y
+                    x_mm += wall_cab.width_mm
+                else:
+                    right_of_hood.append(wall_cab)
+
+            x_mm = hood.x_mm + hood.width_mm
+            for wall_cab in right_of_hood:
+                wall_cab.x_mm = x_mm
+                wall_cab.y_mm = WALL_ROW_Y
+                x_mm += wall_cab.width_mm
 
     def _relayout_project(self, project: Project):
         base_row = [c for c in project.cabinets if self._row_key(c) == "BASE"]
