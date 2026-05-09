@@ -136,6 +136,51 @@ class AdminState(rx.State):
         self.material_filter = category
         self.load_materials()
     
+    # Material form setters
+    def set_edit_material_name(self, value: str):
+        self.edit_material_name = value
+    
+    def set_edit_material_brand(self, value: str):
+        self.edit_material_brand = value
+    
+    def set_edit_material_price(self, value: float):
+        self.edit_material_price = value
+    
+    def set_edit_material_unit(self, value: str):
+        self.edit_material_unit = value
+    
+    def set_edit_material_category(self, value: str):
+        self.edit_material_category = value
+    
+    # Hardware form setters
+    def set_edit_hardware_name(self, value: str):
+        self.edit_hardware_name = value
+    
+    def set_edit_hardware_brand(self, value: str):
+        self.edit_hardware_brand = value
+    
+    def set_edit_hardware_price(self, value: float):
+        self.edit_hardware_price = value
+    
+    # Hardware rule form setters
+    def set_edit_rule_tag(self, value: str):
+        self.edit_rule_tag = value
+    
+    def set_edit_rule_hardware_name(self, value: str):
+        self.edit_rule_hardware_name = value
+    
+    def set_edit_rule_qty(self, value: int):
+        self.edit_rule_qty = value
+    
+    def set_edit_rule_unit(self, value: str):
+        self.edit_rule_unit = value
+    
+    def set_edit_rule_price(self, value: float):
+        self.edit_rule_price = value
+    
+    def set_edit_rule_description(self, value: str):
+        self.edit_rule_description = value
+    
     def set_rule_filter(self, tag: str):
         """Filter rules by tag"""
         self.rule_filter = tag
