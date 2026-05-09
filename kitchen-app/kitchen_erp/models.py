@@ -51,6 +51,10 @@ class Cabinet(SQLModel, table=True):
     depth_mm: float
     door_count: int = 0
     drawer_count: int = 0
+    module_kind: str = "BASE_CABINET"
+    x_mm: float = 0
+    y_mm: float = 0
+    equipment_price: float = 0
 
     # NEW: Keep track of the order in the row
     order_index: int = 0
@@ -66,6 +70,45 @@ class Cabinet(SQLModel, table=True):
 
     def calculate_cost(self, defaults: ProjectDefaults, waste_factor: float) -> CabinetCostResult:
         """Calculates cost using relationships. Assumes relationships are loaded."""
+        fixed_equipment = {
+            "DISHWASHER", "OVEN", "COOKTOP", "HOOD", "SINK", "FAUCET",
+            "APPLIANCE", "DECOR",
+        }
+        if self.module_kind in fixed_equipment:
+            trace_line = CostTraceLine(
+                category="Equipment",
+                label=f"{self.name}: allowance",
+                quantity=1,
+                unit="pcs",
+                unit_price=self.equipment_price,
+                formula=f"1 pcs x {self.equipment_price:.2f}",
+                subtotal=round(self.equipment_price, 2),
+            )
+            return CabinetCostResult(
+                material_cost=0,
+                hardware_cost=round(self.equipment_price, 2),
+                total_cost=round(self.equipment_price, 2),
+                trace_lines=[trace_line],
+            )
+
+        if self.module_kind == "COUNTERTOP":
+            worktop_area_m2 = (self.width_mm * self.depth_mm) / 1_000_000
+            worktop_cost = worktop_area_m2 * self.equipment_price
+            trace_line = CostTraceLine(
+                category="Material",
+                label=f"{self.name}: worktop slab",
+                quantity=round(worktop_area_m2, 4),
+                unit="m2",
+                unit_price=self.equipment_price,
+                formula=f"{worktop_area_m2:.4f} m2 x {self.equipment_price:.2f}",
+                subtotal=round(worktop_cost, 2),
+            )
+            return CabinetCostResult(
+                material_cost=round(worktop_cost, 2),
+                hardware_cost=0,
+                total_cost=round(worktop_cost, 2),
+                trace_lines=[trace_line],
+            )
 
         # Fallback Pattern: Use override if it exists, otherwise use project default
         active_front = self.override_front_mat or defaults.front_mat

@@ -257,57 +257,217 @@ def cabinet_2d_box(cabinet: CabinetUI) -> rx.Component:
     )
 
 
+def module_front(cabinet: CabinetUI) -> rx.Component:
+    front_bg = rx.cond(cabinet.has_custom_front, "#fef3c7", "#f8fafc")
+    front_border = rx.cond(cabinet.has_custom_front, "1px solid #d97706", "1px solid #94a3b8")
+    handle_color = rx.cond(cabinet.has_custom_front, "#d97706", "#94a3b8")
+
+    def render_door(index: int) -> rx.Component:
+        return rx.box(
+            rx.box(
+                width="4px", height="22px", bg=handle_color, border_radius="2px",
+                position="absolute", top="50%", transform="translateY(-50%)",
+                right=rx.cond(index % 2 == 0, "8px", "auto"),
+                left=rx.cond(index % 2 == 0, "auto", "8px"),
+            ),
+            width="100%", height="100%", border=front_border, bg=front_bg, position="relative",
+        )
+
+    def render_drawer(index: int) -> rx.Component:
+        return rx.box(
+            rx.box(
+                width="34px", height="4px", bg=handle_color, border_radius="2px",
+                position="absolute", top="14px", left="50%", transform="translateX(-50%)",
+            ),
+            width="100%", height="100%", border=front_border, bg=front_bg, position="relative",
+        )
+
+    return rx.cond(
+        cabinet.is_appliance & (cabinet.is_hood == False) & (cabinet.is_cooktop == False),
+        rx.vstack(
+            rx.box(width="100%", height="18%", bg="#e5e7eb", border_bottom="1px solid #94a3b8"),
+            rx.box(
+                rx.cond(
+                    cabinet.module_kind == "OVEN",
+                    rx.box(width="72%", height="45%", bg="#111827", margin="18% auto 0", border_radius="3px"),
+                    rx.box(width="82%", height="4px", bg="#94a3b8", margin="16px auto 0", border_radius="2px"),
+                ),
+                width="100%", flex="1", bg="#f8fafc",
+            ),
+            width="100%", height="100%", border="2px solid #334155", spacing="0", bg="#f8fafc",
+        ),
+        rx.cond(
+            cabinet.drawers.length() > 0,
+            rx.vstack(
+                rx.foreach(cabinet.drawers, render_drawer),
+                width="100%", height="100%", spacing="0",
+            ),
+            rx.cond(
+                cabinet.doors.length() > 0,
+                rx.hstack(rx.foreach(cabinet.doors, render_door), width="100%", height="100%", spacing="0"),
+                rx.box(
+                    width="100%", height="100%", bg="#eef2f7",
+                    box_shadow="inset 0 6px 14px rgba(15, 23, 42, 0.14)",
+                    border="2px solid #334155",
+                ),
+            ),
+        ),
+    )
+
+
+def plan_module_box(cabinet: CabinetUI) -> rx.Component:
+    is_selected = KitchenState.selected_cabinet_id == cabinet.id
+
+    return rx.box(
+        rx.cond(
+            cabinet.is_countertop,
+            rx.box(
+                width="100%", height="100%", bg="#9ca3af", border="1px solid #64748b",
+                box_shadow="inset 0 1px 0 rgba(255,255,255,0.45)",
+            ),
+            rx.cond(
+                cabinet.is_sink,
+                rx.box(
+                    rx.box(
+                        width="68%", height="72%", border="2px solid #cbd5e1", bg="#f8fafc",
+                        border_radius="5px", margin="8% auto 0",
+                        box_shadow="inset 0 5px 12px rgba(15,23,42,0.12)",
+                    ),
+                    width="100%", height="100%", bg="transparent",
+                ),
+                rx.cond(
+                    cabinet.is_faucet,
+                    rx.box(
+                        rx.box(width="7px", height="72%", bg="#94a3b8", border_radius="4px", position="absolute", bottom="0", left="45%"),
+                        rx.box(width="48px", height="48px", border_top="7px solid #94a3b8", border_right="7px solid #94a3b8", border_radius="0 22px 0 0", position="absolute", top="4px", left="43%"),
+                        width="100%", height="100%", position="relative",
+                    ),
+                    rx.cond(
+                        cabinet.is_cooktop,
+                        rx.box(
+                            width="100%", height="100%", bg="#111827", border="1px solid #020617",
+                            box_shadow="inset 0 0 0 2px rgba(255,255,255,0.05)",
+                        ),
+                        rx.cond(
+                            cabinet.is_hood,
+                            rx.box(
+                                rx.box(width="22%", height="58%", bg="#e5e7eb", border="1px solid #94a3b8", margin="0 auto"),
+                                rx.box(width="86%", height="20%", bg="#e5e7eb", border="1px solid #94a3b8", margin="0 auto", transform="skewX(-18deg)"),
+                                rx.box(width="72%", height="8px", bg="#94a3b8", margin="0 auto", border_radius="0 0 3px 3px"),
+                                width="100%", height="100%", padding_top="3px",
+                            ),
+                            module_front(cabinet),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        rx.cond(
+            cabinet.show_canvas_label,
+            rx.box(
+                rx.text(cabinet.width_label, font_size="0.62rem", color="#475569", font_family="monospace"),
+                rx.text(cabinet.module_label, font_size="0.58rem", color="#334155", font_weight="bold", line_height="1.05"),
+                position="absolute", left="2px", bottom="-31px", width="100%", text_align="center",
+            ),
+            rx.fragment(),
+        ),
+        rx.cond(
+            is_selected,
+            rx.hstack(
+                rx.icon(
+                    tag="chevron-left", size=16, color="#0f172a", bg="rgba(255,255,255,0.92)",
+                    border="1px solid #cbd5e1", border_radius="4px", cursor="pointer",
+                    _hover={"bg": "#e2e8f0"},
+                    on_click=lambda: KitchenState.move_cabinet(cabinet.id, -1),
+                ),
+                rx.icon(
+                    tag="chevron-right", size=16, color="#0f172a", bg="rgba(255,255,255,0.92)",
+                    border="1px solid #cbd5e1", border_radius="4px", cursor="pointer",
+                    _hover={"bg": "#e2e8f0"},
+                    on_click=lambda: KitchenState.move_cabinet(cabinet.id, 1),
+                ),
+                position="absolute",
+                left="50%",
+                top="-28px",
+                transform="translateX(-50%)",
+                spacing="1",
+                z_index="30",
+            ),
+            rx.fragment(),
+        ),
+        position="absolute",
+        left=cabinet.css_left,
+        bottom=cabinet.css_bottom,
+        width=cabinet.css_width,
+        height=cabinet.css_height,
+        cursor="pointer",
+        border=rx.cond(is_selected, "2px solid #0284c7", "0"),
+        box_shadow=rx.cond(is_selected, "0 0 0 4px rgba(2, 132, 199, 0.2)", "none"),
+        z_index=rx.cond(is_selected, "20", rx.cond(cabinet.is_countertop, "8", rx.cond(cabinet.is_sink | cabinet.is_faucet | cabinet.is_cooktop, "12", "10"))),
+        on_click=lambda: KitchenState.select_cabinet(cabinet.id),
+    )
+
+
 def main_canvas() -> rx.Component:
     return rx.box(
-        rx.vstack(
-            # TOP ROW: Wall Cabinets
+        rx.box(
             rx.hstack(
-                rx.foreach(KitchenState.wall_cabinets, cabinet_2d_box),
-                # Total Width Indicator for Wall Row
-                rx.cond(
-                    KitchenState.total_wall_width > 0,
-                    rx.vstack(
-                        rx.text("TOTAL WALL", font_size="0.6rem", color="#94a3b8", font_weight="bold"),
-                        rx.text(KitchenState.total_wall_width.to_string() + "mm", font_size="1rem", color="#0f172a", font_family="monospace", font_weight="bold"),
-                        padding_left="2rem", justify_content="flex-end", height="45px"
-                    ),
-                    rx.fragment()
-                ),
-                spacing="0", align_items="flex-end", padding_left="2rem"
+                rx.text("0", font_size="0.65rem", color="#64748b", font_family="monospace"),
+                rx.spacer(),
+                rx.text(KitchenState.canvas_width_label, font_size="0.65rem", color="#64748b", font_family="monospace"),
+                position="absolute", top="-24px", left="0", width=KitchenState.canvas_css_width,
             ),
-
-            # THE BACKSPLASH GAP
-            rx.box(height="60px", width="100%", border_bottom="1px dashed #cbd5e1"),
-
-            # BOTTOM ROW: Base and Tall Cabinets
-            rx.hstack(
-                rx.foreach(KitchenState.base_cabinets, cabinet_2d_box),
-                # Total Width Indicator for Base Row
-                rx.cond(
-                    KitchenState.total_base_width > 0,
-                    rx.vstack(
-                        rx.text("TOTAL BASE", font_size="0.6rem", color="#94a3b8", font_weight="bold"),
-                        rx.text(KitchenState.total_base_width.to_string() + "mm", font_size="1rem", color="#0f172a", font_family="monospace", font_weight="bold"),
-                        padding_left="2rem", justify_content="flex-end", height="45px"
-                    ),
-                    rx.fragment()
-                ),
-                spacing="0", align_items="flex-end", padding_left="2rem",
+            rx.vstack(
+                rx.text(KitchenState.canvas_height_label, font_size="0.65rem", color="#64748b", font_family="monospace"),
+                rx.spacer(),
+                rx.text("floor", font_size="0.65rem", color="#64748b", font_family="monospace"),
+                position="absolute", right="-54px", top="0", height=KitchenState.canvas_css_height,
             ),
-
-            spacing="0", align_items="flex-start", padding_top="2rem", padding_bottom="0"
+            rx.box(position="absolute", left="0", bottom="18px", width="100%", height="2px", bg="#64748b"),
+            rx.box(position="absolute", left="0", bottom="196px", width="100%", height="1px", border_top="1px dashed #94a3b8"),
+            rx.foreach(KitchenState.plan_modules, plan_module_box),
+            position="relative",
+            width=KitchenState.canvas_css_width,
+            height=KitchenState.canvas_css_height,
+            margin="3rem 5rem 4rem 2rem",
+            bg="#f8fafc",
+            border="1px solid #94a3b8",
+            background_image="linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px)",
+            background_size="40px 40px",
         ),
-        width="100%", overflow_x="auto", bg="#f1f5f9", border_bottom="2px solid #94a3b8"
+        width="100%", overflow_x="auto", bg="#eef2f7", border_bottom="2px solid #94a3b8"
     )
 
 
 def action_bar() -> rx.Component:
     """Buttons to add new cabinets."""
     return rx.hstack(
-        rx.button("+ Base Cabinet", on_click=lambda: KitchenState.add_cabinet("BASE"), color_scheme="blue", variant="outline", cursor="pointer"),
-        rx.button("+ Wall Cabinet", on_click=lambda: KitchenState.add_cabinet("WALL"), color_scheme="blue", variant="outline", cursor="pointer"),
-        rx.button("+ Tall Unit", on_click=lambda: KitchenState.add_cabinet("TALL"), color_scheme="blue", variant="outline", cursor="pointer"),
-        padding="2rem", width="100%", justify_content="center", bg="white", border_top="1px solid #e2e8f0"
+        rx.button(rx.icon(tag="layout-template", size=16), "IKEA Layout", on_click=KitchenState.load_ikea_layout, color_scheme="green", variant="solid", cursor="pointer"),
+        rx.button(rx.icon(tag="eraser", size=16), "Clear", on_click=KitchenState.clear_layout, color_scheme="gray", variant="outline", cursor="pointer"),
+        rx.button(rx.icon(tag="archive", size=16), "Base", on_click=lambda: KitchenState.add_cabinet("BASE"), color_scheme="blue", variant="outline", cursor="pointer"),
+        rx.button(rx.icon(tag="panel-top", size=16), "Wall", on_click=lambda: KitchenState.add_cabinet("WALL"), color_scheme="blue", variant="outline", cursor="pointer"),
+        rx.button(rx.icon(tag="columns-3", size=16), "Tall", on_click=lambda: KitchenState.add_cabinet("TALL"), color_scheme="blue", variant="outline", cursor="pointer"),
+        rx.menu.root(
+            rx.menu.trigger(
+                rx.button(rx.icon(tag="plus", size=16), "Equipment", color_scheme="gray", variant="soft", cursor="pointer")
+            ),
+            rx.menu.content(
+                rx.menu.item("Drawer Base", on_click=lambda: KitchenState.add_equipment("Drawer Base")),
+                rx.menu.item("Sink Base", on_click=lambda: KitchenState.add_equipment("Sink Base")),
+                rx.menu.item("Dishwasher", on_click=lambda: KitchenState.add_equipment("Dishwasher")),
+                rx.menu.item("Oven", on_click=lambda: KitchenState.add_equipment("Oven")),
+                rx.menu.item("Cooktop", on_click=lambda: KitchenState.add_equipment("Cooktop")),
+                rx.menu.item("Filler", on_click=lambda: KitchenState.add_equipment("Filler")),
+                rx.menu.item("Side Panel", on_click=lambda: KitchenState.add_equipment("Side Panel")),
+                rx.menu.item("Countertop", on_click=lambda: KitchenState.add_equipment("Countertop")),
+                rx.menu.item("Sink", on_click=lambda: KitchenState.add_equipment("Sink")),
+                rx.menu.item("Faucet", on_click=lambda: KitchenState.add_equipment("Faucet")),
+                rx.menu.item("Wall Cabinet 400", on_click=lambda: KitchenState.add_equipment("Wall Cabinet 400")),
+                rx.menu.item("Wall Cabinet 800", on_click=lambda: KitchenState.add_equipment("Wall Cabinet 800")),
+                rx.menu.item("Hood", on_click=lambda: KitchenState.add_equipment("Hood")),
+            ),
+        ),
+        padding="1.25rem", width="100%", justify_content="center", bg="white", border_top="1px solid #e2e8f0", spacing="3"
     )
 
 
@@ -348,23 +508,63 @@ def sidebar() -> rx.Component:
                 rx.icon(tag="x", cursor="pointer", color="#64748b", _hover={"color": "#0f172a"}, on_click=KitchenState.close_sidebar),
                 width="100%", align_items="center", padding_bottom="1rem", border_bottom="1px solid #e2e8f0"
             ),
+            rx.hstack(
+                rx.text(KitchenState.selected_cabinet.module_label, font_size="0.7rem", color="#0f172a", font_weight="bold"),
+                rx.spacer(),
+                rx.text("$" + KitchenState.selected_cabinet.price.to_string(), font_size="0.7rem", color="#16a34a", font_family="monospace", font_weight="bold"),
+                width="100%",
+                padding="0.55rem 0.7rem",
+                bg="#f8fafc",
+                border="1px solid #e2e8f0",
+                border_radius="6px",
+            ),
+            rx.hstack(
+                rx.button(
+                    rx.icon(tag="chevron-left", size=16), "50mm",
+                    on_click=lambda: KitchenState.move_selected_cabinet(-1),
+                    color_scheme="gray", variant="soft", cursor="pointer", flex="1", color="#334155",
+                ),
+                rx.button(
+                    "50mm", rx.icon(tag="chevron-right", size=16),
+                    on_click=lambda: KitchenState.move_selected_cabinet(1),
+                    color_scheme="gray", variant="soft", cursor="pointer", flex="1", color="#334155",
+                ),
+                width="100%",
+                spacing="3",
+            ),
 
             # INPUT FORM (Now using the UX-optimized component)
             rx.vstack(
                 form_input_group("Name", "name", KitchenState.selected_cabinet.name),
+                rx.hstack(
+                    form_input_group("X (mm)", "x_mm", KitchenState.selected_cabinet.x_mm.to_string()),
+                    form_input_group("Y (mm)", "y_mm", KitchenState.selected_cabinet.y_mm.to_string()),
+                    width="100%", spacing="4"
+                ),
                 form_input_group("Width (mm)", "width_mm", KitchenState.selected_cabinet.width_mm.to_string()),
                 form_input_group("Height (mm)", "height_mm", KitchenState.selected_cabinet.height_mm.to_string()),
                 form_input_group("Depth (mm)", "depth_mm", KitchenState.selected_cabinet.depth_mm.to_string()),
 
-                rx.hstack(
-                    form_input_group("Doors", "door_count", KitchenState.selected_cabinet.door_count.to_string()),
-                    form_input_group("Drawers", "drawer_count", KitchenState.selected_cabinet.drawer_count.to_string()),
-                    width="100%", spacing="4"
+                rx.cond(
+                    KitchenState.selected_cabinet.can_have_fronts,
+                    rx.hstack(
+                        form_input_group("Doors", "door_count", KitchenState.selected_cabinet.door_count.to_string()),
+                        form_input_group("Drawers", "drawer_count", KitchenState.selected_cabinet.drawer_count.to_string()),
+                        width="100%", spacing="4"
+                    ),
+                    form_input_group("Equipment Price", "equipment_price", KitchenState.selected_cabinet.equipment_price.to_string()),
                 ),
 
                 width="100%", align_items="flex-start", spacing="3", margin_top="1rem",
                 # Forces the inputs to reset their default_value when you click a new cabinet or math changes
-                key=KitchenState.selected_cabinet_id.to_string() + "_" + KitchenState.selected_cabinet.price.to_string()
+                key=(
+                    KitchenState.selected_cabinet_id.to_string() + "_" +
+                    KitchenState.selected_cabinet.x_mm.to_string() + "_" +
+                    KitchenState.selected_cabinet.y_mm.to_string() + "_" +
+                    KitchenState.selected_cabinet.width_mm.to_string() + "_" +
+                    KitchenState.selected_cabinet.height_mm.to_string() + "_" +
+                    KitchenState.selected_cabinet.price.to_string()
+                )
             ),
 
             rx.divider(margin_y="1rem"),

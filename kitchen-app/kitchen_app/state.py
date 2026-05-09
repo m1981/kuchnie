@@ -2,10 +2,28 @@
 import re
 import reflex as rx
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlmodel import select
 from kitchen_erp.database import get_session, engine, SQLModel
 from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults
 from kitchen_erp.schemas import CostTraceLine
+
+MODULE_LABELS = {
+    "BASE_CABINET": "Base cabinet",
+    "DRAWER_BASE": "Drawer base",
+    "SINK_BASE": "Sink base",
+    "DISHWASHER": "Dishwasher",
+    "OVEN": "Oven",
+    "COOKTOP": "Cooktop",
+    "WALL_CABINET": "Wall cabinet",
+    "HOOD": "Extractor hood",
+    "FILLER": "Pull-out filler",
+    "SIDE_PANEL": "Side panel",
+    "COUNTERTOP": "Countertop",
+    "SINK": "Sink",
+    "FAUCET": "Faucet",
+}
+
 
 class CabinetUI(BaseModel):
     """ViewModel for the frontend to render cabinets easily."""
@@ -23,6 +41,26 @@ class CabinetUI(BaseModel):
     door_count: int
     drawer_count: int
     has_custom_front: bool = False
+    module_kind: str = "BASE_CABINET"
+    module_label: str = "Base cabinet"
+    x_mm: float = 0
+    y_mm: float = 0
+    equipment_price: float = 0
+    css_left: str = "0px"
+    css_bottom: str = "0px"
+    css_top: str = "0px"
+    css_depth: str = "0px"
+    is_wall: bool = False
+    is_appliance: bool = False
+    is_countertop: bool = False
+    is_sink: bool = False
+    is_faucet: bool = False
+    is_hood: bool = False
+    is_filler: bool = False
+    is_panel: bool = False
+    is_cooktop: bool = False
+    can_have_fronts: bool = True
+    show_canvas_label: bool = True
 
 
 class CostTraceLineUI(BaseModel):
@@ -42,9 +80,14 @@ class KitchenState(rx.State):
 
     wall_cabinets: list[CabinetUI] = []
     base_cabinets: list[CabinetUI] = []
+    plan_modules: list[CabinetUI] = []
 
     total_wall_width: float = 0.0
     total_base_width: float = 0.0
+    canvas_width_label: str = "4000mm"
+    canvas_height_label: str = "2400mm"
+    canvas_css_width: str = "800px"
+    canvas_css_height: str = "480px"
 
     selected_cabinet_id: int | None = None
     selected_cabinet: CabinetUI | None = None
@@ -58,6 +101,24 @@ class KitchenState(rx.State):
     cost_trace_lines: list[CostTraceLineUI] = []
     cost_trace_total: float = 0.0
     cost_trace_summary: str = ""
+    equipment_options: list[str] = [
+        "Drawer Base", "Sink Base", "Dishwasher", "Oven", "Cooktop", "Filler",
+        "Side Panel", "Countertop", "Sink", "Faucet", "Wall Cabinet 400",
+        "Wall Cabinet 800", "Hood",
+    ]
+
+    def _ensure_cabinet_schema(self, session):
+        columns = {row[1] for row in session.exec(text("PRAGMA table_info(cabinet)")).all()}
+        migrations = {
+            "module_kind": "ALTER TABLE cabinet ADD COLUMN module_kind VARCHAR DEFAULT 'BASE_CABINET'",
+            "x_mm": "ALTER TABLE cabinet ADD COLUMN x_mm FLOAT DEFAULT 0",
+            "y_mm": "ALTER TABLE cabinet ADD COLUMN y_mm FLOAT DEFAULT 0",
+            "equipment_price": "ALTER TABLE cabinet ADD COLUMN equipment_price FLOAT DEFAULT 0",
+        }
+        for column_name, statement in migrations.items():
+            if column_name not in columns:
+                session.exec(text(statement))
+        session.commit()
 
     @rx.var
     def local_material_options(self) -> list[str]:
@@ -74,6 +135,135 @@ class KitchenState(rx.State):
             formula=line.formula,
             subtotal_label=f"${line.subtotal:.2f}",
         )
+
+    def _module_ui(self, cab: Cabinet, cost: float) -> CabinetUI:
+        scale = 0.2
+        module_kind = cab.module_kind or ("WALL_CABINET" if cab.type == "WALL" else "BASE_CABINET")
+        is_wall = module_kind == "WALL_CABINET" or cab.type == "WALL"
+        is_appliance = module_kind in ["DISHWASHER", "OVEN", "COOKTOP", "HOOD"]
+        can_have_fronts = module_kind not in [
+            "DISHWASHER", "OVEN", "COOKTOP", "HOOD", "COUNTERTOP", "SINK", "FAUCET", "SIDE_PANEL"
+        ]
+
+        return CabinetUI(
+            id=cab.id,
+            name=cab.name,
+            price=cost,
+            width_label=f"{cab.width_mm:g}mm",
+            css_width=f"{cab.width_mm * scale}px",
+            css_height=f"{cab.height_mm * scale}px",
+            css_depth=f"{cab.depth_mm * scale}px",
+            css_left=f"{cab.x_mm * scale}px",
+            css_bottom=f"{cab.y_mm * scale}px",
+            css_top=f"{(2400 - cab.y_mm - cab.height_mm) * scale}px",
+            doors=list(range(cab.door_count)),
+            drawers=list(range(cab.drawer_count)),
+            width_mm=cab.width_mm,
+            height_mm=cab.height_mm,
+            depth_mm=cab.depth_mm,
+            door_count=cab.door_count,
+            drawer_count=cab.drawer_count,
+            has_custom_front=cab.override_front_mat_id is not None,
+            module_kind=module_kind,
+            module_label=MODULE_LABELS.get(module_kind, module_kind.replace("_", " ").title()),
+            x_mm=cab.x_mm,
+            y_mm=cab.y_mm,
+            equipment_price=cab.equipment_price,
+            is_wall=is_wall,
+            is_appliance=is_appliance,
+            is_countertop=module_kind == "COUNTERTOP",
+            is_sink=module_kind == "SINK",
+            is_faucet=module_kind == "FAUCET",
+            is_hood=module_kind == "HOOD",
+            is_filler=module_kind == "FILLER",
+            is_panel=module_kind == "SIDE_PANEL",
+            is_cooktop=module_kind == "COOKTOP",
+            can_have_fronts=can_have_fronts,
+            show_canvas_label=module_kind not in ["COUNTERTOP", "SINK", "FAUCET", "COOKTOP", "SIDE_PANEL"],
+        )
+
+    def load_ikea_layout(self):
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project:
+                self.load_mock_data()
+                project = session.exec(select(Project)).first()
+            if not project:
+                return
+
+            for cab in list(project.cabinets):
+                session.delete(cab)
+            session.commit()
+
+            def add_module(
+                name: str,
+                module_kind: str,
+                cab_type: str,
+                x_mm: float,
+                y_mm: float,
+                width_mm: float,
+                height_mm: float,
+                depth_mm: float,
+                doors: int = 0,
+                drawers: int = 0,
+                equipment_price: float = 0,
+                order_index: int = 0,
+            ):
+                cab = Cabinet(
+                    project=project,
+                    name=name,
+                    type=cab_type,
+                    module_kind=module_kind,
+                    x_mm=x_mm,
+                    y_mm=y_mm,
+                    width_mm=width_mm,
+                    height_mm=height_mm,
+                    depth_mm=depth_mm,
+                    door_count=doors,
+                    drawer_count=drawers,
+                    equipment_price=equipment_price,
+                    order_index=order_index,
+                )
+                session.add(cab)
+
+            left_offset = 1750
+            base_y = 90
+            base_h = 802
+            add_module("Drawer base", "DRAWER_BASE", "BASE", left_offset, base_y, 400, base_h, 560, drawers=4, order_index=0)
+            add_module("Sink base", "SINK_BASE", "BASE", left_offset + 400, base_y, 400, base_h, 560, doors=1, order_index=1)
+            add_module("Dishwasher", "DISHWASHER", "BASE", left_offset + 800, base_y, 600, base_h, 560, equipment_price=650, order_index=2)
+            add_module("Oven cabinet", "OVEN", "BASE", left_offset + 1400, base_y, 600, base_h, 560, drawers=1, equipment_price=780, order_index=3)
+            add_module("Pull-out filler", "FILLER", "BASE", left_offset + 2000, base_y, 200, base_h, 560, doors=1, equipment_price=80, order_index=4)
+            add_module("Side panel", "SIDE_PANEL", "BASE", left_offset + 2200, base_y, 50, base_h, 560, equipment_price=35, order_index=5)
+            add_module("Concrete-look worktop", "COUNTERTOP", "DECOR", left_offset, base_y + base_h, 2250, 56, 620, equipment_price=120)
+            add_module("Inset sink", "SINK", "DECOR", left_offset + 410, base_y + base_h + 12, 320, 170, 420, equipment_price=220)
+            add_module("Tall faucet", "FAUCET", "DECOR", left_offset + 565, base_y + base_h + 180, 70, 270, 80, equipment_price=110)
+            add_module("Black cooktop", "COOKTOP", "DECOR", left_offset + 1500, base_y + base_h + 18, 500, 80, 500, equipment_price=420)
+            add_module("Wall cabinet 400", "WALL_CABINET", "WALL", left_offset, 1570, 400, 620, 310, doors=1, order_index=0)
+            add_module("Wall cabinet 800", "WALL_CABINET", "WALL", left_offset + 400, 1570, 800, 620, 310, doors=2, order_index=1)
+            add_module("Extractor hood", "HOOD", "WALL", left_offset + 1400, 1480, 600, 710, 420, equipment_price=360, order_index=2)
+
+            project.customer_name = "IKEA Planner Recreation"
+            session.add(project)
+            session.commit()
+
+        self.close_sidebar()
+        self.load_mock_data()
+
+    def clear_layout(self):
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project:
+                return
+
+            for cab in list(project.cabinets):
+                session.delete(cab)
+            project.customer_name = "Custom Kitchen Layout"
+            session.add(project)
+            session.commit()
+
+        self.close_sidebar()
+        self.load_mock_data()
 
     def close_cost_trace(self):
         self.cost_trace_open = False
@@ -187,7 +377,7 @@ class KitchenState(rx.State):
             del self.field_warnings[field]
 
         # 1. Forgiving Parsing
-        if field in ["width_mm", "height_mm", "depth_mm"]:
+        if field in ["width_mm", "height_mm", "depth_mm", "x_mm", "y_mm", "equipment_price"]:
             val = self._parse_number(raw_value, is_float=True)
         elif field in ["door_count", "drawer_count"]:
             val = self._parse_number(raw_value, is_float=False)
@@ -203,11 +393,14 @@ class KitchenState(rx.State):
         # 2. HARD CLAMPS (Physics & Manufacturing Limits)
         limits = {
             "BASE": {"width_mm": (150, 1200), "height_mm": (450, 900), "depth_mm": (300, 650), "door_count": (0, 2),
-                     "drawer_count": (0, 5)},
+                     "drawer_count": (0, 5), "x_mm": (0, 4000), "y_mm": (0, 2400), "equipment_price": (0, 100000)},
             "WALL": {"width_mm": (150, 1200), "height_mm": (300, 1200), "depth_mm": (200, 400), "door_count": (0, 2),
-                     "drawer_count": (0, 0)},
+                     "drawer_count": (0, 0), "x_mm": (0, 4000), "y_mm": (0, 2400), "equipment_price": (0, 100000)},
             "TALL": {"width_mm": (300, 900), "height_mm": (1900, 2750), "depth_mm": (500, 650), "door_count": (0, 4),
-                     "drawer_count": (0, 5)}
+                     "drawer_count": (0, 5), "x_mm": (0, 4000), "y_mm": (0, 2400), "equipment_price": (0, 100000)},
+            "DECOR": {"width_mm": (20, 4000), "height_mm": (20, 2400), "depth_mm": (20, 1200),
+                      "door_count": (0, 0), "drawer_count": (0, 0), "x_mm": (0, 4000), "y_mm": (0, 2400),
+                      "equipment_price": (0, 100000)}
         }
 
         if cab.type in limits and field in limits[cab.type]:
@@ -274,12 +467,61 @@ class KitchenState(rx.State):
             max_order = max([c.order_index for c in project.cabinets if c.type == cab_type] or [-1])
 
             if cab_type == "BASE":
-                new_cab = Cabinet(project=project, name="New Base", type="BASE", width_mm=600, height_mm=720, depth_mm=560, door_count=1, order_index=max_order + 1)
+                new_cab = Cabinet(project=project, name="New Base", type="BASE", module_kind="BASE_CABINET", x_mm=1750, y_mm=90, width_mm=600, height_mm=802, depth_mm=560, door_count=1, order_index=max_order + 1)
             elif cab_type == "WALL":
-                new_cab = Cabinet(project=project, name="New Wall", type="WALL", width_mm=600, height_mm=720, depth_mm=300, door_count=1, order_index=max_order + 1)
+                new_cab = Cabinet(project=project, name="New Wall", type="WALL", module_kind="WALL_CABINET", x_mm=1750, y_mm=1570, width_mm=600, height_mm=620, depth_mm=300, door_count=1, order_index=max_order + 1)
             elif cab_type == "TALL":
-                new_cab = Cabinet(project=project, name="New Tall", type="TALL", width_mm=600, height_mm=2100, depth_mm=560, door_count=2, order_index=max_order + 1)
+                new_cab = Cabinet(project=project, name="New Tall", type="TALL", module_kind="BASE_CABINET", x_mm=1750, y_mm=90, width_mm=600, height_mm=2100, depth_mm=560, door_count=2, order_index=max_order + 1)
 
+            session.add(new_cab)
+            session.commit()
+        self.load_mock_data()
+
+    def add_equipment(self, equipment_name: str):
+        specs = {
+            "Drawer Base": ("Drawer base", "DRAWER_BASE", "BASE", 400, 802, 560, 0, 4, 0, 0, 90),
+            "Sink Base": ("Sink base", "SINK_BASE", "BASE", 400, 802, 560, 1, 0, 0, 0, 90),
+            "Dishwasher": ("Dishwasher", "DISHWASHER", "BASE", 600, 802, 560, 0, 0, 650, 0, 90),
+            "Oven": ("Oven cabinet", "OVEN", "BASE", 600, 802, 560, 0, 1, 780, 0, 90),
+            "Filler": ("Pull-out filler", "FILLER", "BASE", 200, 802, 560, 1, 0, 80, 0, 90),
+            "Side Panel": ("Side panel", "SIDE_PANEL", "BASE", 50, 802, 560, 0, 0, 35, 0, 90),
+            "Countertop": ("Countertop", "COUNTERTOP", "DECOR", 2250, 56, 620, 0, 0, 120, 0, 892),
+            "Sink": ("Inset sink", "SINK", "DECOR", 320, 170, 420, 0, 0, 220, 410, 904),
+            "Faucet": ("Tall faucet", "FAUCET", "DECOR", 70, 270, 80, 0, 0, 110, 565, 1072),
+            "Cooktop": ("Black cooktop", "COOKTOP", "DECOR", 500, 80, 500, 0, 0, 420, 1500, 910),
+            "Wall Cabinet 400": ("Wall cabinet 400", "WALL_CABINET", "WALL", 400, 620, 310, 1, 0, 0, 0, 1570),
+            "Wall Cabinet 800": ("Wall cabinet 800", "WALL_CABINET", "WALL", 800, 620, 310, 2, 0, 0, 0, 1570),
+            "Hood": ("Extractor hood", "HOOD", "WALL", 600, 710, 420, 0, 0, 360, 0, 1480),
+        }
+        if equipment_name not in specs:
+            return
+
+        name, module_kind, cab_type, width, height, depth, doors, drawers, price, x_offset, y = specs[equipment_name]
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project:
+                return
+            siblings = [c for c in project.cabinets if c.type == cab_type]
+            max_order = max([c.order_index for c in siblings] or [-1])
+            base_modules = [c for c in project.cabinets if c.type in ["BASE", "TALL"]]
+            base_start = min([c.x_mm for c in base_modules] or [1750])
+            base_x = max([c.x_mm + c.width_mm for c in base_modules] or [1750])
+            wall_x = max([c.x_mm + c.width_mm for c in project.cabinets if c.type == "WALL"] or [1750])
+            new_cab = Cabinet(
+                project=project,
+                name=name,
+                type=cab_type,
+                module_kind=module_kind,
+                x_mm=wall_x if cab_type == "WALL" else base_start + x_offset if cab_type == "DECOR" else base_x,
+                y_mm=y,
+                width_mm=width,
+                height_mm=height,
+                depth_mm=depth,
+                door_count=doors,
+                drawer_count=drawers,
+                equipment_price=price,
+                order_index=max_order + 1,
+            )
             session.add(new_cab)
             session.commit()
         self.load_mock_data()
@@ -288,24 +530,16 @@ class KitchenState(rx.State):
         with next(get_session()) as session:
             cab = session.get(Cabinet, cab_id)
             if not cab: return
-            project = session.get(Project, cab.project_id)
-
-            if cab.type == "WALL":
-                siblings = [c for c in project.cabinets if c.type == "WALL"]
-            else:
-                siblings = [c for c in project.cabinets if c.type in ["BASE", "TALL"]]
-
-            siblings.sort(key=lambda c: c.order_index)
-            idx = next((i for i, c in enumerate(siblings) if c.id == cab_id), -1)
-            if idx == -1: return
-
-            new_idx = idx + direction
-            if 0 <= new_idx < len(siblings):
-                swap_cab = siblings[new_idx]
-                cab.order_index, swap_cab.order_index = swap_cab.order_index, cab.order_index
-                session.add_all([cab, swap_cab])
-                session.commit()
+            step_mm = 50
+            cab.x_mm = max(0, min(4000 - cab.width_mm, cab.x_mm + (direction * step_mm)))
+            session.add(cab)
+            session.commit()
         self.load_mock_data()
+
+    def move_selected_cabinet(self, direction: int):
+        if self.selected_cabinet_id is None:
+            return
+        self.move_cabinet(self.selected_cabinet_id, direction)
 
     def delete_cabinet(self):
         if not self.selected_cabinet_id: return
@@ -330,7 +564,7 @@ class KitchenState(rx.State):
 
     def _update_selected_cabinet_ui(self):
         if self.selected_cabinet_id is None: return
-        for cab in self.wall_cabinets + self.base_cabinets:
+        for cab in self.plan_modules:
             if cab.id == self.selected_cabinet_id:
                 self.selected_cabinet = cab
                 with next(get_session()) as session:
@@ -346,6 +580,7 @@ class KitchenState(rx.State):
     def load_mock_data(self):
         SQLModel.metadata.create_all(engine)
         with next(get_session()) as session:
+            self._ensure_cabinet_schema(session)
             existing = session.exec(select(Project)).first()
 
             if not existing:
@@ -429,14 +664,15 @@ class KitchenState(rx.State):
                     drawer_sys_id=def_drawer.id
                 )
 
-                cab1 = Cabinet(project=project, name="Sink Base", type="BASE", width_mm=800, height_mm=720,
-                               depth_mm=560, door_count=2)
-                cab2 = Cabinet(project=project, name="Drawer Base", type="BASE", width_mm=600, height_mm=720,
-                               depth_mm=560, drawer_count=3)
-                cab3 = Cabinet(project=project, name="Tall Oven", type="TALL", width_mm=600, height_mm=2100,
-                               depth_mm=560, door_count=2, drawer_count=5)
-                cab4 = Cabinet(project=project, name="Wall Cabinet", type="WALL", width_mm=800, height_mm=720,
-                               depth_mm=300, door_count=2)
+                cab1 = Cabinet(project=project, name="Sink Base", type="BASE", module_kind="SINK_BASE",
+                               x_mm=1750, y_mm=90, width_mm=800, height_mm=802, depth_mm=560, door_count=2)
+                cab2 = Cabinet(project=project, name="Drawer Base", type="BASE", module_kind="DRAWER_BASE",
+                               x_mm=2550, y_mm=90, width_mm=600, height_mm=802, depth_mm=560, drawer_count=3)
+                cab3 = Cabinet(project=project, name="Tall Oven", type="TALL", module_kind="OVEN",
+                               x_mm=3150, y_mm=90, width_mm=600, height_mm=2100, depth_mm=560, door_count=2, drawer_count=5,
+                               equipment_price=780)
+                cab4 = Cabinet(project=project, name="Wall Cabinet", type="WALL", module_kind="WALL_CABINET",
+                               x_mm=1750, y_mm=1570, width_mm=800, height_mm=620, depth_mm=300, door_count=2)
 
                 session.add_all([project, defaults, cab1, cab2, cab3, cab4])
                 session.commit()
@@ -461,37 +697,31 @@ class KitchenState(rx.State):
             wall_cabs = sorted([c for c in existing.cabinets if c.type == "WALL"], key=lambda c: c.order_index)
             base_cabs = sorted([c for c in existing.cabinets if c.type in ["BASE", "TALL"]],
                                key=lambda c: c.order_index)
+            decor_cabs = sorted([c for c in existing.cabinets if c.type == "DECOR"], key=lambda c: (c.y_mm, c.x_mm))
 
             for i, cab in enumerate(wall_cabs): cab.order_index = i
             for i, cab in enumerate(base_cabs): cab.order_index = i
             session.commit()
 
-            wall_list, base_list = [], []
+            wall_list, base_list, plan_modules = [], [], []
             wall_width, base_width = 0.0, 0.0
 
-            for cab in wall_cabs + base_cabs:
+            for cab in wall_cabs + base_cabs + decor_cabs:
                 cost_result = cab.calculate_cost(existing.defaults, existing.waste_factor)
                 total_price += cost_result.total_cost
-
-                cab_ui = CabinetUI(
-                    id=cab.id, name=cab.name, price=cost_result.total_cost,
-                    width_label=f"{cab.width_mm}mm", css_width=f"{cab.width_mm / 10}px",
-                    css_height=f"{cab.height_mm / 10}px",
-                    doors=list(range(cab.door_count)), drawers=list(range(cab.drawer_count)),
-                    width_mm=cab.width_mm, height_mm=cab.height_mm, depth_mm=cab.depth_mm,
-                    door_count=cab.door_count, drawer_count=cab.drawer_count,
-                    has_custom_front=cab.override_front_mat_id is not None
-                )
+                cab_ui = self._module_ui(cab, cost_result.total_cost)
+                plan_modules.append(cab_ui)
 
                 if cab.type == "WALL":
                     wall_list.append(cab_ui)
                     wall_width += cab.width_mm
-                else:
+                elif cab.type in ["BASE", "TALL"]:
                     base_list.append(cab_ui)
                     base_width += cab.width_mm
 
             self.wall_cabinets = wall_list
             self.base_cabinets = base_list
+            self.plan_modules = sorted(plan_modules, key=lambda item: (item.y_mm, item.x_mm, item.height_mm))
             self.total_wall_width = wall_width
             self.total_base_width = base_width
             self.total_price = round(total_price * existing.labor_markup, 2)
