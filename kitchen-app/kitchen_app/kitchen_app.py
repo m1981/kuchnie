@@ -372,7 +372,7 @@ def plan_module_box(cabinet: CabinetUI) -> rx.Component:
             rx.fragment(),
         ),
         rx.cond(
-            is_selected,
+            is_selected & cabinet.is_reorderable,
             rx.hstack(
                 rx.icon(
                     tag="chevron-left", size=16, color="#0f172a", bg="rgba(255,255,255,0.92)",
@@ -442,7 +442,7 @@ def main_canvas() -> rx.Component:
 def action_bar() -> rx.Component:
     """Buttons to add new cabinets."""
     return rx.hstack(
-        rx.button(rx.icon(tag="layout-template", size=16), "IKEA Layout", on_click=KitchenState.load_ikea_layout, color_scheme="green", variant="solid", cursor="pointer"),
+        rx.button(rx.icon(tag="layout-template", size=16), "Reference Layout", on_click=KitchenState.load_ikea_layout, color_scheme="green", variant="solid", cursor="pointer"),
         rx.button(rx.icon(tag="eraser", size=16), "Clear", on_click=KitchenState.clear_layout, color_scheme="gray", variant="outline", cursor="pointer"),
         rx.button(rx.icon(tag="archive", size=16), "Base", on_click=lambda: KitchenState.add_cabinet("BASE"), color_scheme="blue", variant="outline", cursor="pointer"),
         rx.button(rx.icon(tag="panel-top", size=16), "Wall", on_click=lambda: KitchenState.add_cabinet("WALL"), color_scheme="blue", variant="outline", cursor="pointer"),
@@ -520,26 +520,31 @@ def sidebar() -> rx.Component:
             ),
             rx.hstack(
                 rx.button(
-                    rx.icon(tag="chevron-left", size=16), "50mm",
+                    rx.icon(tag="chevron-left", size=16), "Move left",
                     on_click=lambda: KitchenState.move_selected_cabinet(-1),
                     color_scheme="gray", variant="soft", cursor="pointer", flex="1", color="#334155",
                 ),
                 rx.button(
-                    "50mm", rx.icon(tag="chevron-right", size=16),
+                    "Move right", rx.icon(tag="chevron-right", size=16),
                     on_click=lambda: KitchenState.move_selected_cabinet(1),
                     color_scheme="gray", variant="soft", cursor="pointer", flex="1", color="#334155",
                 ),
                 width="100%",
                 spacing="3",
+                display=rx.cond(KitchenState.selected_cabinet.is_reorderable, "flex", "none"),
             ),
 
             # INPUT FORM (Now using the UX-optimized component)
             rx.vstack(
                 form_input_group("Name", "name", KitchenState.selected_cabinet.name),
-                rx.hstack(
-                    form_input_group("X (mm)", "x_mm", KitchenState.selected_cabinet.x_mm.to_string()),
-                    form_input_group("Y (mm)", "y_mm", KitchenState.selected_cabinet.y_mm.to_string()),
-                    width="100%", spacing="4"
+                rx.cond(
+                    KitchenState.selected_cabinet.is_reorderable,
+                    rx.fragment(),
+                    rx.hstack(
+                        form_input_group("X (mm)", "x_mm", KitchenState.selected_cabinet.x_mm.to_string()),
+                        form_input_group("Y (mm)", "y_mm", KitchenState.selected_cabinet.y_mm.to_string()),
+                        width="100%", spacing="4"
+                    ),
                 ),
                 form_input_group("Width (mm)", "width_mm", KitchenState.selected_cabinet.width_mm.to_string()),
                 form_input_group("Height (mm)", "height_mm", KitchenState.selected_cabinet.height_mm.to_string()),
