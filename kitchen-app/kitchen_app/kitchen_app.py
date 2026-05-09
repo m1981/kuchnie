@@ -26,6 +26,18 @@ def top_bar() -> rx.Component:
             margin_right="2rem"
         ),
 
+        rx.link(
+            rx.button(
+                rx.icon(tag="settings", size=16),
+                "Admin",
+                color_scheme="gray",
+                variant="soft",
+                cursor="pointer",
+            ),
+            href="/admin",
+            margin_right="1rem",
+        ),
+        
         rx.hstack(
             rx.switch(
                 checked=KitchenState.use_new_bom,
@@ -680,6 +692,15 @@ def index() -> rx.Component:
     )
 
 
-# Initialize the app and add the page
+# Initialize the app and add pages
 app = rx.App()
-app.add_page(index, on_load=KitchenState.load_mock_data)
+app.add_page(index, route="/", on_load=KitchenState.load_mock_data)
+
+# Admin panel
+from .admin_ui import admin_page
+from .admin_state import AdminState
+app.add_page(
+    admin_page,
+    route="/admin",
+    on_load=[AdminState.load_materials, AdminState.load_hardware, AdminState.load_hardware_rules]
+)
