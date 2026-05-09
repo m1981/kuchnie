@@ -3,31 +3,72 @@ from typing import Any
 from kitchen_erp.schemas import BOMPart, BOMAssembly
 
 
-# Hardware rules configuration - maps tags to required hardware
-HARDWARE_RULES = {
-    "is_base": [
-        {"name": "Cabinet legs", "qty_per_unit": 4, "unit": "pcs", "price": 1.50}
-    ],
-    "is_wall": [
-        {"name": "Wall mounting brackets", "qty_per_unit": 2, "unit": "pcs", "price": 3.00}
-    ],
-    "has_doors": [
-        {"name": "Door hinges", "qty_per_unit": 2, "unit": "pcs", "price": 2.50},
-        {"name": "Door bumpers", "qty_per_unit": 1, "unit": "pcs", "price": 0.20}
-    ],
-    "has_drawers": [
-        {"name": "Drawer slides", "qty_per_unit": 1, "unit": "sets", "price": 35.00}
-    ],
-    "is_pullout": [
-        {"name": "Pull-out mechanism", "qty_per_unit": 1, "unit": "sets", "price": 40.00}
-    ],
-    "is_sink": [
-        {"name": "Sink cabinet mat", "qty_per_unit": 1, "unit": "pcs", "price": 8.00}
-    ],
-    "is_appliance": [
-        {"name": "Appliance ventilation grille", "qty_per_unit": 1, "unit": "pcs", "price": 5.00}
-    ]
-}
+def load_hardware_rules_from_db():
+    """
+    Load hardware rules from database.
+    Falls back to default rules if database is empty.
+    """
+    from kitchen_erp.database import get_session
+    from kitchen_erp.models import HardwareRule
+    from sqlmodel import select
+    
+    try:
+        with next(get_session()) as session:
+            rules = session.exec(select(HardwareRule)).all()
+            
+            if not rules:
+                # Return default rules if database is empty
+                return get_default_hardware_rules()
+            
+            # Convert database rules to dictionary format
+            rules_dict = {}
+            for rule in rules:
+                if rule.tag not in rules_dict:
+                    rules_dict[rule.tag] = []
+                
+                rules_dict[rule.tag].append({
+                    "name": rule.hardware_name,
+                    "qty_per_unit": rule.qty_per_unit,
+                    "unit": rule.unit,
+                    "price": rule.price
+                })
+            
+            return rules_dict
+    except Exception:
+        # Fallback to defaults if database not initialized
+        return get_default_hardware_rules()
+
+
+def get_default_hardware_rules():
+    """Default hardware rules (used for initialization)"""
+    return {
+        "is_base": [
+            {"name": "Cabinet legs", "qty_per_unit": 4, "unit": "pcs", "price": 1.50}
+        ],
+        "is_wall": [
+            {"name": "Wall mounting brackets", "qty_per_unit": 2, "unit": "pcs", "price": 3.00}
+        ],
+        "has_doors": [
+            {"name": "Door hinges", "qty_per_unit": 2, "unit": "pcs", "price": 2.50},
+            {"name": "Door bumpers", "qty_per_unit": 1, "unit": "pcs", "price": 0.20}
+        ],
+        "has_drawers": [
+            {"name": "Drawer slides", "qty_per_unit": 1, "unit": "sets", "price": 35.00}
+        ],
+        "is_pullout": [
+            {"name": "Pull-out mechanism", "qty_per_unit": 1, "unit": "sets", "price": 40.00}
+        ],
+        "is_sink": [
+            {"name": "Sink cabinet mat", "qty_per_unit": 1, "unit": "pcs", "price": 8.00}
+        ],
+        "is_appliance": [
+            {"name": "Appliance ventilation grille", "qty_per_unit": 1, "unit": "pcs", "price": 5.00}
+        ]
+    }
+
+
+# Load rules from database (with fallback to defaults)
+HARDWARE_RULES = load_hardware_rules_from_db()
 
 
 class RulesEngine:
@@ -43,9 +84,9 @@ class RulesEngine:
         Initialize the rules engine.
         
         Args:
-            rules: Optional custom rules dictionary. If None, uses HARDWARE_RULES.
+            rules: Optional custom rules dictionary. If None, loads from database.
         """
-        self.rules = rules or HARDWARE_RULES
+        self.rules = rules or load_hardware_rules_from_db()
     
     def apply_rules(
         self,

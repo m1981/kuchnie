@@ -18,6 +18,17 @@ class HardwareSet(SQLModel, table=True):
     brand: str | None = None      # NEW: e.g., "Blum", "Hettich"
     price_per_set: float
 
+
+class HardwareRule(SQLModel, table=True):
+    """Tag-based hardware rules for automatic component addition"""
+    id: int | None = Field(default=None, primary_key=True)
+    tag: str  # e.g., "is_base", "has_doors"
+    hardware_name: str  # e.g., "Cabinet legs", "Door hinges"
+    qty_per_unit: int  # How many per cabinet/door/drawer
+    unit: str  # "pcs", "sets"
+    price: float  # Price per unit
+    description: str | None = None  # Optional description
+
 class ProjectDefaults(SQLModel, table=True):
     # Primary Key is also a Foreign Key to Project (1-to-1 relationship)
     project_id: int = Field(foreign_key="project.id", primary_key=True, ondelete="CASCADE")
