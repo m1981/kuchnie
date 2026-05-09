@@ -105,6 +105,7 @@ class KitchenState(rx.State):
     global_front_mat_name: str = ""
     local_front_mat_name: str = ""
     field_warnings: dict[str, str] = {}
+    use_new_bom: bool = False  # Toggle for new BOM system
     cost_trace_open: bool = False
     cost_trace_title: str = ""
     cost_trace_lines: list[CostTraceLineUI] = []
