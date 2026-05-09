@@ -143,8 +143,11 @@ class AdminState(rx.State):
     def set_edit_material_brand(self, value: str):
         self.edit_material_brand = value
     
-    def set_edit_material_price(self, value: float):
-        self.edit_material_price = value
+    def set_edit_material_price(self, value: str):
+        try:
+            self.edit_material_price = float(value) if value else 0.0
+        except ValueError:
+            self.edit_material_price = 0.0
     
     def set_edit_material_unit(self, value: str):
         self.edit_material_unit = value
@@ -159,8 +162,11 @@ class AdminState(rx.State):
     def set_edit_hardware_brand(self, value: str):
         self.edit_hardware_brand = value
     
-    def set_edit_hardware_price(self, value: float):
-        self.edit_hardware_price = value
+    def set_edit_hardware_price(self, value: str):
+        try:
+            self.edit_hardware_price = float(value) if value else 0.0
+        except ValueError:
+            self.edit_hardware_price = 0.0
     
     # Hardware rule form setters
     def set_edit_rule_tag(self, value: str):
@@ -169,14 +175,20 @@ class AdminState(rx.State):
     def set_edit_rule_hardware_name(self, value: str):
         self.edit_rule_hardware_name = value
     
-    def set_edit_rule_qty(self, value: int):
-        self.edit_rule_qty = value
+    def set_edit_rule_qty(self, value: str):
+        try:
+            self.edit_rule_qty = int(value) if value else 1
+        except ValueError:
+            self.edit_rule_qty = 1
     
     def set_edit_rule_unit(self, value: str):
         self.edit_rule_unit = value
     
-    def set_edit_rule_price(self, value: float):
-        self.edit_rule_price = value
+    def set_edit_rule_price(self, value: str):
+        try:
+            self.edit_rule_price = float(value) if value else 0.0
+        except ValueError:
+            self.edit_rule_price = 0.0
     
     def set_edit_rule_description(self, value: str):
         self.edit_rule_description = value
