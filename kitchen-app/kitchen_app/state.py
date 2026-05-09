@@ -373,10 +373,22 @@ class KitchenState(rx.State):
         self.close_sidebar()
         self.load_mock_data()
 
+    def set_use_new_bom(self, value: bool):
+        """Toggle between old and new BOM system."""
+        self.use_new_bom = value
+    
     def close_cost_trace(self):
         self.cost_trace_open = False
 
     def open_selected_cabinet_cost_trace(self):
+        """
+        Open cost trace for selected cabinet.
+        Routes to old or new system based on use_new_bom toggle.
+        """
+        if self.use_new_bom:
+            return self.open_selected_cabinet_cost_trace_new()
+        
+        # OLD SYSTEM
         if self.selected_cabinet_id is None:
             return
 
@@ -395,8 +407,49 @@ class KitchenState(rx.State):
                 f"hardware ${cost_result.hardware_cost:.2f}"
             )
             self.cost_trace_open = True
+    
+    def open_selected_cabinet_cost_trace_new(self):
+        """
+        NEW: Open cost trace for selected cabinet using BOM generator system.
+        """
+        from kitchen_erp.bom_generator import BOMGenerator
+        
+        if self.selected_cabinet_id is None:
+            return
+
+        with next(get_session()) as session:
+            cabinet = session.get(Cabinet, self.selected_cabinet_id)
+            if not cabinet:
+                return
+
+            defaults = session.exec(
+                select(ProjectDefaults).where(
+                    ProjectDefaults.project_id == cabinet.project_id
+                )
+            ).first()
+            if not defaults:
+                return
+
+            # Generate BOM using new system
+            generator = BOMGenerator(cabinet, defaults)
+            trace_lines = generator.generate_cost_trace_lines()
+            
+            # Convert to UI format
+            self.cost_trace_title = f"{cabinet.name} cost trace (NEW BOM)"
+            self.cost_trace_lines = [self._format_cost_trace_line(line) for line in trace_lines]
+            self.cost_trace_total = sum(line.subtotal for line in trace_lines)
+            self.cost_trace_summary = "Using new BOM generator with tag-based hardware"
+            self.cost_trace_open = True
 
     def open_project_cost_trace(self):
+        """
+        Open cost trace for entire project.
+        Routes to old or new system based on use_new_bom toggle.
+        """
+        if self.use_new_bom:
+            return self.open_project_cost_trace_new()
+        
+        # OLD SYSTEM
         with next(get_session()) as session:
             project = session.exec(select(Project)).first()
             if not project or not project.defaults:
@@ -433,6 +486,120 @@ class KitchenState(rx.State):
             self.cost_trace_summary = (
                 f"{len(cabs)} cabinets, raw BOM ${raw_total:.2f}, "
                 f"markup {project.labor_markup:.2f}x"
+            )
+            self.cost_trace_open = True
+    
+    def open_project_cost_trace_new(self):
+        """
+        NEW: Open cost trace for entire project using BOM generator system.
+        Shows material aggregation and purchasing strategies.
+        """
+        from kitchen_erp.bom_generator import BOMGenerator
+        from kitchen_erp.purchasing import get_strategy_for_material
+        
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project or not project.defaults:
+                return
+
+            # Generate BOM trees for all cabinets
+            material_aggregation = {}
+            hardware_aggregation = {}
+            
+            for cab in project.cabinets:
+                generator = BOMGenerator(cab, project.defaults)
+                bom_tree = generator.generate()
+                
+                for part in bom_tree.get_all_parts():
+                    if part.material_id:
+                        key = (part.material_id, part.unit)
+                        if key not in material_aggregation:
+                            material_aggregation[key] = {
+                                "name": part.name,
+                                "quantity_net": 0,
+                                "unit": part.unit,
+                                "unit_price": part.unit_price
+                            }
+                        material_aggregation[key]["quantity_net"] += part.quantity_net
+                    else:
+                        if part.name not in hardware_aggregation:
+                            hardware_aggregation[part.name] = {
+                                "quantity_net": 0,
+                                "unit": part.unit,
+                                "unit_price": part.unit_price
+                            }
+                        hardware_aggregation[part.name]["quantity_net"] += part.quantity_net
+            
+            # Apply purchasing strategies
+            trace_rows: list[CostTraceLineUI] = []
+            total_material_cost = 0.0
+            
+            for (mat_id, unit), data in material_aggregation.items():
+                material = session.get(Material, mat_id)
+                if not material:
+                    continue
+                
+                strategy = get_strategy_for_material(material.category)
+                purchase_qty = strategy.calculate_purchase_quantity(data["quantity_net"])
+                waste_factor = strategy.get_waste_factor(data["quantity_net"])
+                cost = purchase_qty * data["unit_price"]
+                total_material_cost += cost
+                
+                formula = f"{data['quantity_net']:.2f} {unit} net → {purchase_qty:.2f} {unit} purchase"
+                
+                trace_rows.append(
+                    CostTraceLineUI(
+                        category="Material",
+                        label=f"{data['name']} (aggregated)",
+                        quantity_label=f"{purchase_qty:.2f} {unit}",
+                        unit_price_label=f"${data['unit_price']:.2f}",
+                        waste_label=f"{waste_factor:.2f}x",
+                        formula=formula,
+                        subtotal_label=f"${cost:.2f}",
+                    )
+                )
+            
+            # Add hardware
+            total_hardware_cost = 0.0
+            for name, data in hardware_aggregation.items():
+                cost = data["quantity_net"] * data["unit_price"]
+                total_hardware_cost += cost
+                
+                trace_rows.append(
+                    CostTraceLineUI(
+                        category="Hardware",
+                        label=name,
+                        quantity_label=f"{data['quantity_net']:.0f} {data['unit']}",
+                        unit_price_label=f"${data['unit_price']:.2f}",
+                        waste_label="-",
+                        formula=f"{data['quantity_net']:.0f} x ${data['unit_price']:.2f}",
+                        subtotal_label=f"${cost:.2f}",
+                    )
+                )
+            
+            # Add markup
+            raw_total = total_material_cost + total_hardware_cost
+            markup_cost = raw_total * (project.labor_markup - 1)
+            final_total = raw_total * project.labor_markup
+            
+            trace_rows.append(
+                CostTraceLineUI(
+                    category="Project",
+                    label="Labor / shop markup",
+                    quantity_label=f"${raw_total:.2f} base",
+                    unit_price_label=f"{project.labor_markup:.2f}x",
+                    waste_label="-",
+                    formula=f"{raw_total:.2f} x ({project.labor_markup:.2f} - 1)",
+                    subtotal_label=f"${markup_cost:.2f}",
+                )
+            )
+
+            self.cost_trace_title = "Project cost trace (NEW BOM)"
+            self.cost_trace_lines = trace_rows
+            self.cost_trace_total = round(final_total, 2)
+            self.cost_trace_summary = (
+                f"{len(project.cabinets)} cabinets, aggregated materials, "
+                f"purchasing strategies applied"
             )
             self.cost_trace_open = True
 
