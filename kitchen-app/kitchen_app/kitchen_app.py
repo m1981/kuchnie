@@ -26,6 +26,16 @@ def top_bar() -> rx.Component:
             margin_right="2rem"
         ),
 
+        rx.hstack(
+            rx.switch(
+                checked=KitchenState.use_new_bom,
+                on_change=KitchenState.set_use_new_bom,
+            ),
+            rx.text("New BOM", font_size="0.75rem", color="#64748b"),
+            spacing="2",
+            margin_right="1rem",
+        ),
+        
         rx.button(
             rx.icon(tag="receipt-text", size=16),
             "Trace Costs",
