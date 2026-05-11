@@ -7,46 +7,6 @@ from typing import Any
 from kitchen_erp.schemas import BOMPart, BOMAssembly
 
 
-def load_hardware_rules_from_db():
-    """
-    Load hardware rules from database.
-    Falls back to default rules if database is empty or doesn't exist yet.
-    """
-    from kitchen_erp.database import get_session
-    from kitchen_erp.models import HardwareRule
-    from sqlmodel import select
-    from sqlalchemy.exc import OperationalError
-
-    try:
-        with next(get_session()) as session:
-            rules = session.exec(select(HardwareRule)).all()
-
-            if not rules:
-                # Return default rules if database is empty
-                return get_default_hardware_rules()
-
-            # Convert database rules to dictionary format
-            rules_dict = {}
-            for rule in rules:
-                if rule.tag not in rules_dict:
-                    rules_dict[rule.tag] = []
-
-                rules_dict[rule.tag].append({
-                    "name": rule.hardware_name,
-                    "qty_per_unit": rule.qty_per_unit,
-                    "unit": rule.unit,
-                    "price": rule.price
-                })
-
-            return rules_dict
-    except OperationalError:
-        # Fallback to defaults if database/table not initialized yet
-        return get_default_hardware_rules()
-    except Exception:
-        # Fallback for any other errors
-        return get_default_hardware_rules()
-
-
 def get_default_hardware_rules():
     """Default hardware rules (used for initialization)"""
     return {
@@ -81,6 +41,49 @@ def get_default_hardware_rules():
     }
 
 
+def load_hardware_rules_from_db():
+    """
+    Load hardware rules from database.
+    Falls back to default rules if database is empty or doesn't exist yet.
+    """
+    # Local imports to prevent circular dependency issues during app startup
+    from kitchen_erp.database import engine
+    from kitchen_erp.models import HardwareRule
+    from sqlmodel import Session, select
+    from sqlalchemy.exc import OperationalError
+
+    try:
+        # COMMERCIAL GRADE FIX: Use Session(engine) directly.
+        # Using next(get_session()) leaves the generator open and leaks DB connections!
+        with Session(engine) as session:
+            rules = session.exec(select(HardwareRule)).all()
+
+            if not rules:
+                # Return default rules if database is empty
+                return get_default_hardware_rules()
+
+            # Convert database rules to dictionary format
+            rules_dict = {}
+            for rule in rules:
+                if rule.tag not in rules_dict:
+                    rules_dict[rule.tag] = []
+
+                rules_dict[rule.tag].append({
+                    "name": rule.hardware_name,
+                    "qty_per_unit": rule.qty_per_unit,
+                    "unit": rule.unit,
+                    "price": rule.price
+                })
+
+            return rules_dict
+    except OperationalError:
+        # Fallback to defaults if database/table not initialized yet
+        return get_default_hardware_rules()
+    except Exception:
+        # Fallback for any other errors
+        return get_default_hardware_rules()
+
+
 class RulesEngine:
     """
     Applies tag-based rules to automatically add required hardware components.
@@ -89,6 +92,10 @@ class RulesEngine:
     the addition of specific hardware components.
     """
 
+    # COMMERCIAL GRADE FIX: Cache rules at the class level.
+    # This prevents N+1 queries (hitting the DB every time a cabinet is processed).
+    _cached_rules = None
+
     def __init__(self, rules: dict[str, list[dict]] | None = None):
         """
         Initialize the rules engine.
@@ -96,9 +103,21 @@ class RulesEngine:
         Args:
             rules: Optional custom rules dictionary. If None, loads from database.
         """
-        # Ładujemy reguły dopiero w momencie tworzenia instancji silnika,
-        # a nie globalnie podczas importu pliku!
-        self.rules = rules or load_hardware_rules_from_db()
+        if rules is not None:
+            self.rules = rules
+        else:
+            # Only hit the database the very first time a RulesEngine is created
+            if RulesEngine._cached_rules is None:
+                RulesEngine._cached_rules = load_hardware_rules_from_db()
+            self.rules = RulesEngine._cached_rules
+
+    @classmethod
+    def clear_cache(cls):
+        """
+        Call this method if rules are updated in the database during runtime
+        to force the engine to fetch fresh data on the next instantiation.
+        """
+        cls._cached_rules = None
 
     def apply_rules(
         self,
