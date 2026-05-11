@@ -17,7 +17,7 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm) + (2 * width_mm * 100) + (4 * width_mm * depth_mm)) / 1000000",
       "back_m2": "(height_mm * width_mm) / 1000000",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
@@ -40,11 +40,12 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm) + (2 * width_mm * 100)) / 1000000",
       "back_m2": "(height_mm * width_mm) / 1000000",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
   },
+
   "WALL_CABINET": {
     "name": "Wall cabinet",
     "type": "WALL",
@@ -63,7 +64,7 @@
       "depth_max": 400
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
       "back_m2": "(height_mm * width_mm) / 1000000",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
@@ -71,7 +72,7 @@
   "OVEN_BASE": {
     "name": "Oven cabinet",
     "type": "BASE",
-    "tags": ["is_base", "is_appliance", "no_back_panel"],
+    "tags": ["is_base", "is_appliance", "no_back_panel", "has_drawers", "needs_plinth_vent"],
     "default_dimensions": {
       "width_mm": 600,
       "height_mm": 802,
@@ -86,7 +87,7 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm) + (2 * width_mm * 100) + (width_mm * depth_mm)) / 1000000",
       "back_m2": "0",
       "front_m2": "0"
     }
@@ -132,15 +133,15 @@
       "depth_max": 19
     },
     "formulas": {
-      "corpus_m2": "(width_mm * height_mm) / 1000000",
+      "corpus_m2": "0",
       "back_m2": "0",
-      "front_m2": "0"
+      "front_m2": "(width_mm * height_mm) / 1000000"
     }
   },
   "DISHWASHER": {
     "name": "Dishwasher",
     "type": "BASE",
-    "tags": ["is_base", "is_appliance"],
+    "tags": ["is_appliance"],
     "default_dimensions": {
       "width_mm": 600,
       "height_mm": 802,
@@ -155,7 +156,7 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
+      "corpus_m2": "0",
       "back_m2": "0",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
@@ -163,7 +164,7 @@
   "OVEN": {
     "name": "Oven",
     "type": "BASE",
-    "tags": ["is_base", "is_appliance"],
+    "tags": ["is_base", "is_appliance", "no_back_panel", "has_drawers", "needs_plinth_vent"],
     "default_dimensions": {
       "width_mm": 600,
       "height_mm": 802,
@@ -201,7 +202,7 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm)) / 1000000",
       "back_m2": "(height_mm * width_mm) / 1000000",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
@@ -224,7 +225,7 @@
       "depth_max": 600
     },
     "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm) + (width_mm * height_mm)) / 1000000",
+      "corpus_m2": "((2 * height_mm * depth_mm) + (width_mm * depth_mm) + (2 * width_mm * 100) + (width_mm * depth_mm)) / 1000000",
       "back_m2": "(height_mm * width_mm) / 1000000",
       "front_m2": "(height_mm * width_mm) / 1000000"
     }
@@ -324,7 +325,7 @@
   "HOOD": {
     "name": "Hood",
     "type": "WALL",
-    "tags": ["is_wall", "is_appliance"],
+    "tags": ["is_appliance"],
     "default_dimensions": {
       "width_mm": 600,
       "height_mm": 710,

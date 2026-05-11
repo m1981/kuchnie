@@ -1,3 +1,4 @@
+# kitchen_app/admin_state.py
 import reflex as rx
 from pydantic import BaseModel
 from sqlmodel import select
@@ -13,6 +14,8 @@ class MaterialUI(BaseModel):
     category: str
     price_per_unit: float
     unit: str
+    sheet_size_m2: float
+    has_woodgrain: bool
 
 
 class HardwareUI(BaseModel):
@@ -57,7 +60,9 @@ class AdminState(rx.State):
     edit_material_price: float = 0.0
     edit_material_unit: str = "m2"
     edit_material_category: str = "Board"
-    
+    edit_material_sheet_size: float = 5.796
+    edit_material_has_woodgrain: bool = False
+
     edit_hardware_name: str = ""
     edit_hardware_brand: str = ""
     edit_hardware_price: float = 0.0
@@ -89,7 +94,9 @@ class AdminState(rx.State):
                     brand=m.brand or "Generic",
                     category=m.category or "Board",
                     price_per_unit=m.price_per_unit,
-                    unit=m.unit
+                    unit=m.unit,
+                    sheet_size_m2=m.sheet_size_m2,
+                    has_woodgrain=m.has_woodgrain
                 )
                 for m in materials
             ]
@@ -149,6 +156,15 @@ class AdminState(rx.State):
         except ValueError:
             self.edit_material_price = 0.0
     
+    def set_edit_material_sheet_size(self, value: str):
+        try:
+            self.edit_material_sheet_size = float(value) if value else 5.796
+        except ValueError:
+            self.edit_material_sheet_size = 5.796
+
+    def set_edit_material_has_woodgrain(self, value: bool):
+        self.edit_material_has_woodgrain = value
+
     def set_edit_material_unit(self, value: str):
         self.edit_material_unit = value
     
@@ -206,6 +222,8 @@ class AdminState(rx.State):
         self.edit_material_price = 0.0
         self.edit_material_unit = "m2"
         self.edit_material_category = self.material_filter
+        self.edit_material_sheet_size = 5.796
+        self.edit_material_has_woodgrain = False
         self.show_material_form = True
     
     def open_edit_material_form(self, material_id: int):
@@ -220,6 +238,8 @@ class AdminState(rx.State):
                 self.edit_material_price = material.price_per_unit
                 self.edit_material_unit = material.unit
                 self.edit_material_category = material.category or "Board"
+                self.edit_material_sheet_size = material.sheet_size_m2
+                self.edit_material_has_woodgrain = material.has_woodgrain
                 self.show_material_form = True
     
     def save_material(self):
@@ -234,6 +254,8 @@ class AdminState(rx.State):
                     material.price_per_unit = self.edit_material_price
                     material.unit = self.edit_material_unit
                     material.category = self.edit_material_category
+                    material.sheet_size_m2 = self.edit_material_sheet_size
+                    material.has_woodgrain = self.edit_material_has_woodgrain
             else:
                 # Create new
                 material = Material(
@@ -241,7 +263,9 @@ class AdminState(rx.State):
                     brand=self.edit_material_brand,
                     category=self.edit_material_category,
                     price_per_unit=self.edit_material_price,
-                    unit=self.edit_material_unit
+                    unit=self.edit_material_unit,
+                    sheet_size_m2=self.edit_material_sheet_size,
+                    has_woodgrain=self.edit_material_has_woodgrain
                 )
                 session.add(material)
             

@@ -240,37 +240,6 @@ def test_bom_generator_pullout_filler(session: Session, defaults: ProjectDefault
     assert not any("Door hinges" in name for name in part_names)
 
 
-def test_bom_generator_flat_bom(session: Session, defaults: ProjectDefaults):
-    """Test flat BOM generation for backward compatibility"""
-    cabinet = Cabinet(
-        project_id=defaults.project_id,
-        module_kind="DRAWER_BASE",
-        name="Test Cabinet",
-        width_mm=400,
-        height_mm=802,
-        depth_mm=560,
-        door_count=0,
-        drawer_count=2,
-        has_custom_front=True
-    )
-    session.add(cabinet)
-    session.commit()
-    session.refresh(cabinet)
-    
-    generator = BOMGenerator(cabinet, defaults)
-    flat_bom = generator.generate_flat_bom()
-    
-    assert isinstance(flat_bom, list)
-    assert len(flat_bom) > 0
-    
-    # Each item should have required fields
-    for item in flat_bom:
-        assert "name" in item
-        assert "quantity_net" in item
-        assert "unit" in item
-        assert "unit_price" in item
-        assert "cost" in item
-
 
 def test_bom_generator_cost_calculation(session: Session, defaults: ProjectDefaults):
     """Test that BOM generator calculates costs correctly"""

@@ -187,35 +187,6 @@ def test_project_level_aggregation(session: Session, test_project: Project):
     assert total_corpus_m2 > 0
 
 
-def test_flat_bom_conversion_for_ui(session: Session, test_project: Project):
-    """Test converting BOM tree to flat list for UI compatibility"""
-    defaults = session.exec(
-        select(ProjectDefaults).where(ProjectDefaults.project_id == test_project.id)
-    ).first()
-    
-    cabinet = test_project.cabinets[1]  # Drawer base
-    
-    generator = BOMGenerator(cabinet, defaults)
-    flat_bom = generator.generate_flat_bom()
-    
-    # Should be a list of dicts
-    assert isinstance(flat_bom, list)
-    assert len(flat_bom) > 0
-    
-    # Each item should have UI-friendly fields
-    for item in flat_bom:
-        assert "name" in item
-        assert "quantity_net" in item
-        assert "unit" in item
-        assert "unit_price" in item
-        assert "cost" in item
-        
-        # All values should be valid
-        assert item["quantity_net"] >= 0
-        assert item["unit_price"] >= 0
-        assert item["cost"] >= 0
-
-
 def test_recipe_driven_hardware_addition(session: Session, test_project: Project):
     """Test that hardware is automatically added based on recipe tags"""
     defaults = session.exec(

@@ -41,29 +41,30 @@ class PurchasingStrategy(ABC):
 class SheetMaterialStrategy(PurchasingStrategy):
     """
     Strategy for sheet materials (MDF, plywood, etc.) sold in full sheets.
-    
-    Example: Egger boards come in 2800x2070mm = 5.796 m²
-    If you need 7.5 m², you must buy 2 full sheets = 11.592 m²
+    Takes into account woodgrain direction which increases nesting waste.
     """
-    
-    def __init__(self, sheet_size_m2: float = 5.796):
-        """
-        Initialize sheet material strategy.
-        
-        Args:
-            sheet_size_m2: Size of one sheet in square meters (default: 2800x2070mm)
-        """
+
+    def __init__(self, sheet_size_m2: float = 5.796, has_woodgrain: bool = False):
         self.sheet_size_m2 = sheet_size_m2
-    
+        self.has_woodgrain = has_woodgrain
+
     def calculate_purchase_quantity(self, net_quantity: float) -> float:
-        """Calculate number of full sheets needed"""
-        sheets_needed = ceil(net_quantity / self.sheet_size_m2)
+        if net_quantity == 0:
+            return 0
+
+        # Jeśli płyta ma usłojenie (woodgrain), program do nestingu nie może
+        # obracać formatek o 90 stopni. Zwiększamy zapotrzebowanie netto o 15%
+        # przed zaokrągleniem do pełnych arkuszy.
+        effective_net = net_quantity * 1.15 if self.has_woodgrain else net_quantity
+
+        sheets_needed = ceil(effective_net / self.sheet_size_m2)
         return sheets_needed * self.sheet_size_m2
-    
+
     def get_waste_factor(self, net_quantity: float) -> float:
-        """Calculate waste factor based on sheet rounding"""
+        if net_quantity == 0:
+            return 1.0
         purchase_qty = self.calculate_purchase_quantity(net_quantity)
-        return purchase_qty / net_quantity if net_quantity > 0 else 1.0
+        return purchase_qty / net_quantity
 
 
 class LinearMaterialStrategy(PurchasingStrategy):

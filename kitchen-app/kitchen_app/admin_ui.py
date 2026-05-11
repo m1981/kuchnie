@@ -1,3 +1,5 @@
+# kitchen_app/admin_ui.py
+
 import reflex as rx
 from .admin_state import AdminState, MaterialUI, HardwareUI, HardwareRuleUI
 
@@ -163,14 +165,36 @@ def material_form() -> rx.Component:
                 rx.vstack(
                     rx.text("Category", font_size="0.75rem", font_weight="bold"),
                     rx.select(
-                        ["Board", "Panel", "Edge", "Countertop", "Back"],
+                        ["Board", "Panel", "Edge", "Countertop", "Back", "Service"],
                         value=AdminState.edit_material_category,
                         on_change=AdminState.set_edit_material_category,
                     ),
                     width="100%",
                     spacing="1"
                 ),
-                
+                rx.hstack(
+                    rx.vstack(
+                        rx.text("Sheet Size (m2)", font_size="0.75rem", font_weight="bold"),
+                        rx.input(
+                            type="number",
+                            value=AdminState.edit_material_sheet_size.to_string(),
+                            on_change=AdminState.set_edit_material_sheet_size,
+                        ),
+                        flex="1"
+                    ),
+                    rx.vstack(
+                        rx.text("Has Woodgrain?", font_size="0.75rem", font_weight="bold"),
+                        rx.checkbox(
+                            "Yes (adds 15% CNC waste)",
+                            checked=AdminState.edit_material_has_woodgrain,
+                            on_change=AdminState.set_edit_material_has_woodgrain,
+                        ),
+                        flex="1",
+                        justify_content="center"
+                    ),
+                    width="100%",
+                    spacing="3"
+                ),
                 rx.hstack(
                     rx.button(
                         "Cancel",
@@ -330,7 +354,8 @@ def hardware_rule_form() -> rx.Component:
                 rx.vstack(
                     rx.text("Tag", font_size="0.75rem", font_weight="bold"),
                     rx.select(
-                        ["is_base", "is_wall", "has_doors", "has_drawers", "is_pullout", "is_sink", "is_appliance"],
+                        # Zaktualizowana lista tagów
+                        ["is_base", "is_wall", "has_doors", "has_drawers", "is_pullout", "is_sink", "is_appliance", "needs_plinth_vent", "is_panel"],
                         value=AdminState.edit_rule_tag,
                         on_change=AdminState.set_edit_rule_tag,
                     ),
@@ -490,7 +515,8 @@ def admin_page() -> rx.Component:
             rx.hstack(
                 rx.text("Filter by tag:", font_size="0.85rem", font_weight="bold"),
                 rx.select(
-                    ["all", "is_base", "is_wall", "has_doors", "has_drawers", "is_pullout", "is_sink", "is_appliance"],
+                    # Zaktualizowana lista tagów
+                    ["all", "is_base", "is_wall", "has_doors", "has_drawers", "is_pullout", "is_sink", "is_appliance", "needs_plinth_vent", "is_panel"],
                     value=AdminState.rule_filter,
                     on_change=AdminState.set_rule_filter,
                 ),
@@ -547,7 +573,7 @@ def admin_page() -> rx.Component:
                 rx.hstack(
                     rx.text("Category:", font_size="0.85rem", font_weight="bold"),
                     rx.select(
-                        ["Board", "Panel", "Edge", "Countertop", "Back"],
+                        ["Board", "Panel", "Edge", "Countertop", "Back", "Service"],
                         value=AdminState.material_filter,
                         on_change=AdminState.set_material_filter,
                     ),

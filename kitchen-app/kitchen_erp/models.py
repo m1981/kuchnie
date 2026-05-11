@@ -10,7 +10,8 @@ class Material(SQLModel, table=True):
     category: str | None = None   # NEW: e.g., "Board", "Edge", "Back"
     price_per_unit: float
     unit: str
-
+    sheet_size_m2: float = Field(default=5.796) # Domyślnie format 2800x2070
+    has_woodgrain: bool = Field(default=False)  # Czy ma usłojenie (wymusza większy odpad na CNC)
 
 class HardwareSet(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)

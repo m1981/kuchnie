@@ -50,7 +50,11 @@ class BOMGenerator:
         
         # 1. Add corpus materials based on formulas
         formulas = recipe.get("formulas", {})
-        
+        corpus_m2 = 0
+        back_m2 = 0
+        front_m2 = 0
+
+        # 1. Materiały płytowe
         if "corpus_m2" in formulas:
             corpus_m2 = eval_formula(formulas["corpus_m2"], dims)
             if corpus_m2 > 0:
@@ -75,9 +79,15 @@ class BOMGenerator:
         
         if "front_m2" in formulas:
             front_m2 = eval_formula(formulas["front_m2"], dims)
-            if front_m2 > 0 and self.cabinet.has_custom_front:
-                # Only add front material if custom front is enabled
-                front_mat = self.cabinet.local_front_mat or self.defaults.front_mat
+
+            # Szafka dostaje materiał na front TYLKO jeśli:
+            # 1. Przepis na to pozwala (front_m2 > 0) ORAZ
+            # 2. Użytkownik dodał drzwi/szuflady LUB jest to moduł będący samym frontem (Zmywarka, Panel)
+            has_physical_fronts = self.cabinet.door_count > 0 or self.cabinet.drawer_count > 0
+            is_front_only_module = self.cabinet.module_kind in ["DISHWASHER", "SIDE_PANEL"]
+
+            if front_m2 > 0 and (has_physical_fronts or is_front_only_module):
+                front_mat = self.cabinet.override_front_mat or self.defaults.front_mat
                 root.add_child(BOMPart(
                     name=f"Front: {front_mat.name}",
                     material_id=front_mat.id,
@@ -86,17 +96,38 @@ class BOMGenerator:
                     unit_price=front_mat.price_per_unit
                 ))
         
-        # 2. Add edgebanding (simplified - based on perimeter)
-        # This is a rough estimate; real calculation would need detailed edge list
-        perimeter_m = 2 * (dims["width_mm"] + dims["height_mm"]) / 1000
-        root.add_child(BOMPart(
+        # 2. Okleinowanie (Front + Korpus)
+        front_edge_m = 2 * (dims["width_mm"] + dims["height_mm"]) / 1000 if front_m2 > 0 else 0
+        corpus_edge_m = (2 * dims["height_mm"] + 3 * dims["width_mm"]) / 1000 if corpus_m2 > 0 else 0
+        total_edge_m = front_edge_m + corpus_edge_m
+
+        if total_edge_m > 0:
+            root.add_child(BOMPart(
             name="Edge banding: Generic ABS",
-            quantity_net=perimeter_m,
+                quantity_net=total_edge_m,
             unit="lm",
             unit_price=0.80
-        ))
+            ))
         
-        # 3. Apply rules engine to add hardware based on tags
+        # 3. USŁUGI CNC (Cięcie i Okleinowanie)
+        total_board_m2 = corpus_m2 + back_m2 + front_m2
+        if total_board_m2 > 0:
+            root.add_child(BOMPart(
+                name="CNC Service: Cutting & Nesting",
+                quantity_net=total_board_m2,
+                unit="m2",
+                unit_price=15.00  # Ryczałt za cięcie 1m2
+            ))
+
+        if total_edge_m > 0:
+            root.add_child(BOMPart(
+                name="CNC Service: Edgebanding PUR",
+                quantity_net=total_edge_m,
+                unit="lm",
+                unit_price=4.50  # Ryczałt za oklejenie 1mb
+            ))
+
+        # 4. Okucia z Rules Engine
         tags = recipe.get("tags", [])
         multipliers = {}
         
@@ -113,28 +144,7 @@ class BOMGenerator:
         
         return root
     
-    def generate_flat_bom(self) -> list[dict]:
-        """
-        Generate a flat list of BOM items (for backward compatibility).
-        
-        Returns:
-            List of dictionaries with material/hardware information
-        """
-        tree = self.generate()
-        parts = tree.get_all_parts()
-        
-        flat_bom = []
-        for part in parts:
-            flat_bom.append({
-                "name": part.name,
-                "quantity_net": part.quantity_net,
-                "unit": part.unit,
-                "unit_price": part.unit_price,
-                "waste_factor": part.waste_factor,
-                "cost": part.cost
-            })
-        
-        return flat_bom
+
     
     def generate_cost_trace_lines(self):
         """
@@ -153,10 +163,9 @@ class BOMGenerator:
         
         trace_lines = []
         for part in parts:
-            # Determine category based on part name
-            if "Corpus" in part.name or "Back panel" in part.name or "Front" in part.name:
-                category = "Material"
-            elif "Edge banding" in part.name:
+            if "CNC Service" in part.name:
+                category = "Service"
+            elif "Corpus" in part.name or "Back panel" in part.name or "Front" in part.name or "Edge banding" in part.name:
                 category = "Material"
             else:
                 category = "Hardware"
