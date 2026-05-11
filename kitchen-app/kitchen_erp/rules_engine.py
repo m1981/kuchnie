@@ -10,11 +10,12 @@ from kitchen_erp.schemas import BOMPart, BOMAssembly
 def load_hardware_rules_from_db():
     """
     Load hardware rules from database.
-    Falls back to default rules if database is empty.
+    Falls back to default rules if database is empty or doesn't exist yet.
     """
     from kitchen_erp.database import get_session
     from kitchen_erp.models import HardwareRule
     from sqlmodel import select
+    from sqlalchemy.exc import OperationalError
 
     try:
         with next(get_session()) as session:
@@ -38,8 +39,11 @@ def load_hardware_rules_from_db():
                 })
 
             return rules_dict
+    except OperationalError:
+        # Fallback to defaults if database/table not initialized yet
+        return get_default_hardware_rules()
     except Exception:
-        # Fallback to defaults if database not initialized
+        # Fallback for any other errors
         return get_default_hardware_rules()
 
 
@@ -54,25 +58,27 @@ def get_default_hardware_rules():
         ],
         "has_doors": [
             {"name": "Door hinges", "qty_per_unit": 2, "unit": "pcs", "price": 15.00},
-            {"name": "Door bumpers", "qty_per_unit": 1, "unit": "pcs", "price": 0.20}
+            {"name": "Door bumpers", "qty_per_unit": 1, "unit": "pcs", "price": 0.20},
+            # NOWE: Uchwyt dla każdych drzwi
+            {"name": "Handle (Uchwyt)", "qty_per_unit": 1, "unit": "pcs", "price": 25.00}
         ],
         "has_drawers": [
-            {"name": "Drawer System (Blum/Hettich)", "qty_per_unit": 1, "unit": "sets", "price": 150.00}
+            {"name": "Drawer System (Blum/Hettich)", "qty_per_unit": 1, "unit": "sets", "price": 150.00},
+            # NOWE: Uchwyt dla każdej szuflady
+            {"name": "Handle (Uchwyt)", "qty_per_unit": 1, "unit": "pcs", "price": 25.00}
         ],
         "is_pullout": [
-            {"name": "Pull-out mechanism (Cargo)", "qty_per_unit": 1, "unit": "sets", "price": 200.00} # Zaktualizowana realna cena
+            {"name": "Pull-out mechanism (Cargo)", "qty_per_unit": 1, "unit": "sets", "price": 200.00}
         ],
         "is_sink": [
-            {"name": "Sink cabinet mat", "qty_per_unit": 1, "unit": "pcs", "price": 8.00}
+            {"name": "Sink cabinet mat", "qty_per_unit": 1, "unit": "pcs", "price": 8.00},
+            # NOWE: Zestaw koszy na śmieci pod zlew
+            {"name": "Waste sorting system (Kosze)", "qty_per_unit": 1, "unit": "sets", "price": 150.00}
         ],
-        "needs_plinth_vent": [ # Nowy tag dedykowany tylko dla szafek wymagających wentylacji cokołu
+        "needs_plinth_vent": [
             {"name": "Appliance ventilation grille", "qty_per_unit": 1, "unit": "pcs", "price": 5.00}
         ]
     }
-
-
-# Load rules from database (with fallback to defaults)
-HARDWARE_RULES = load_hardware_rules_from_db()
 
 
 class RulesEngine:
@@ -90,6 +96,8 @@ class RulesEngine:
         Args:
             rules: Optional custom rules dictionary. If None, loads from database.
         """
+        # Ładujemy reguły dopiero w momencie tworzenia instancji silnika,
+        # a nie globalnie podczas importu pliku!
         self.rules = rules or load_hardware_rules_from_db()
 
     def apply_rules(

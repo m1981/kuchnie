@@ -8,6 +8,9 @@ sqlite_url = f"sqlite:///{sqlite_file_name}"
 connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, echo=False, connect_args=connect_args)
 
+# DODAJ TĘ LINIJKĘ - wymusza załadowanie wszystkich modeli przed utworzeniem bazy
+import kitchen_erp.models
+
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 

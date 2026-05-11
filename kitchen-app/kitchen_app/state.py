@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import select
 from kitchen_erp.database import get_session, engine, SQLModel
-from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults
+from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule
 from kitchen_erp.schemas import CostTraceLine
 
 MODULE_LABELS = {
@@ -337,19 +337,54 @@ class KitchenState(rx.State):
             left_offset = BASE_ROW_START_X
             base_y = BASE_ROW_Y
             base_h = 802
-            add_module("Drawer base", "DRAWER_BASE", "BASE", left_offset, base_y, 400, base_h, 560, drawers=4, order_index=0)
-            add_module("Sink base", "SINK_BASE", "BASE", left_offset + 400, base_y, 400, base_h, 560, doors=1, order_index=1)
-            add_module("Dishwasher", "DISHWASHER", "BASE", left_offset + 800, base_y, 600, base_h, 560, equipment_price=650, order_index=2)
-            add_module("Oven cabinet", "OVEN", "BASE", left_offset + 1400, base_y, 600, base_h, 560, drawers=1, equipment_price=780, order_index=3)
-            add_module("Pull-out filler", "FILLER", "BASE", left_offset + 2000, base_y, 200, base_h, 560, doors=1, equipment_price=80, order_index=4)
-            add_module("Side panel", "SIDE_PANEL", "BASE", left_offset + 2200, base_y, 50, base_h, 560, equipment_price=35, order_index=5)
-            add_module("Concrete-look worktop", "COUNTERTOP", "DECOR", left_offset, base_y + base_h, 2250, 56, 620, equipment_price=120)
-            add_module("Inset sink", "SINK", "DECOR", left_offset + 410, base_y + base_h + 12, 320, 170, 420, equipment_price=220)
-            add_module("Tall faucet", "FAUCET", "DECOR", left_offset + 565, base_y + base_h + 180, 70, 270, 80, equipment_price=110)
-            add_module("Black cooktop", "COOKTOP", "DECOR", left_offset + 1500, base_y + base_h + 18, 500, 80, 500, equipment_price=420)
-            add_module("Wall cabinet 400", "WALL_CABINET", "WALL", left_offset, WALL_ROW_Y, 400, 620, 310, doors=1, order_index=0)
-            add_module("Wall cabinet 800", "WALL_CABINET", "WALL", left_offset + 400, WALL_ROW_Y, 800, 620, 310, doors=2, order_index=1)
-            add_module("Extractor hood", "HOOD", "WALL", left_offset + 1400, 1480, 600, 710, 420, equipment_price=360, order_index=2)
+
+            add_module("Drawer base", "DRAWER_BASE", "BASE", left_offset, base_y, 400, base_h, 560, drawers=4,
+                       order_index=0)
+            add_module("Sink base", "SINK_BASE", "BASE", left_offset + 400, base_y, 400, base_h, 560, doors=1,
+                       order_index=1)
+
+            # Zmywarka TYLLSNÄS (1399 zł)
+            add_module("Dishwasher", "DISHWASHER", "BASE", left_offset + 800, base_y, 600, base_h, 560,
+                       equipment_price=1399, order_index=2)
+
+            # Piekarnik FRILLESBO (1999 zł)
+            add_module("Oven cabinet", "OVEN", "BASE", left_offset + 1400, base_y, 600, base_h, 560, drawers=1,
+                       equipment_price=1999, order_index=3)
+
+            # Cargo - equipment_price=0, bo RulesEngine sam doda 200 zł za mechanizm!
+            add_module("Pull-out filler", "FILLER", "BASE", left_offset + 2000, base_y, 200, base_h, 560, doors=1,
+                       equipment_price=0, order_index=4)
+
+            # Panel boczny - equipment_price=0, bo recipes.json sam policzy zużycie płyty frontowej!
+            add_module("Side panel", "SIDE_PANEL", "BASE", left_offset + 2200, base_y, 50, base_h, 560,
+                       equipment_price=0, order_index=5)
+
+            # Blat EKBACKEN (299 zł za sztukę). Nasz program liczy blat z m2.
+            # Powierzchnia to 2.25m * 0.62m = 1.395 m2.
+            # 299 zł / 1.395 m2 = ok. 215 zł/m2.
+            add_module("Concrete-look worktop", "COUNTERTOP", "DECOR", left_offset, base_y + base_h, 2250, 56, 620,
+                       equipment_price=215)
+
+            # Zlew VRESJÖN (599) + Syfon (60) + Pokrywka (20) = 679 zł
+            add_module("Inset sink", "SINK", "DECOR", left_offset + 410, base_y + base_h + 12, 320, 170, 420,
+                       equipment_price=679)
+
+            # Bateria ÄLMAREN (199 zł)
+            add_module("Tall faucet", "FAUCET", "DECOR", left_offset + 565, base_y + base_h + 180, 70, 270, 80,
+                       equipment_price=199)
+
+            # Płyta indukcyjna SMAKLIG (1499 zł)
+            add_module("Black cooktop", "COOKTOP", "DECOR", left_offset + 1500, base_y + base_h + 18, 500, 80, 500,
+                       equipment_price=1499)
+
+            add_module("Wall cabinet 400", "WALL_CABINET", "WALL", left_offset, WALL_ROW_Y, 400, 620, 310, doors=1,
+                       order_index=0)
+            add_module("Wall cabinet 800", "WALL_CABINET", "WALL", left_offset + 400, WALL_ROW_Y, 800, 620, 310,
+                       doors=2, order_index=1)
+
+            # Okap RYTMISK (499) + Filtr (179) + Rura (110) = 788 zł
+            add_module("Extractor hood", "HOOD", "WALL", left_offset + 1400, 1480, 600, 710, 420, equipment_price=788,
+                       order_index=2)
 
             self._relayout_project(project)
             project.customer_name = "Reference Kitchen Layout"
@@ -785,17 +820,17 @@ class KitchenState(rx.State):
         specs = {
             "Drawer Base": ("Drawer base", "DRAWER_BASE", "BASE", 400, 802, 560, 0, 4, 0, 0, 90),
             "Sink Base": ("Sink base", "SINK_BASE", "BASE", 400, 802, 560, 1, 0, 0, 0, 90),
-            "Dishwasher": ("Dishwasher", "DISHWASHER", "BASE", 600, 802, 560, 0, 0, 650, 0, 90),
-            "Oven": ("Oven cabinet", "OVEN", "BASE", 600, 802, 560, 0, 1, 780, 0, 90),
-            "Filler": ("Pull-out filler", "FILLER", "BASE", 200, 802, 560, 1, 0, 80, 0, 90),
-            "Side Panel": ("Side panel", "SIDE_PANEL", "BASE", 50, 802, 560, 0, 0, 35, 0, 90),
-            "Countertop": ("Countertop", "COUNTERTOP", "DECOR", 2250, 56, 620, 0, 0, 120, 0, 892),
-            "Sink": ("Inset sink", "SINK", "DECOR", 320, 170, 420, 0, 0, 220, 410, 904),
-            "Faucet": ("Tall faucet", "FAUCET", "DECOR", 70, 270, 80, 0, 0, 110, 565, 1072),
-            "Cooktop": ("Black cooktop", "COOKTOP", "DECOR", 500, 80, 500, 0, 0, 420, 1500, 910),
+            "Dishwasher": ("Dishwasher", "DISHWASHER", "BASE", 600, 802, 560, 0, 0, 1399, 0, 90),  # Zmieniono na 1399
+            "Oven": ("Oven cabinet", "OVEN", "BASE", 600, 802, 560, 0, 1, 1999, 0, 90),  # Zmieniono na 1999
+            "Filler": ("Pull-out filler", "FILLER", "BASE", 200, 802, 560, 1, 0, 0, 0, 90),  # Zmieniono na 0
+            "Side Panel": ("Side panel", "SIDE_PANEL", "BASE", 50, 802, 560, 0, 0, 0, 0, 90),  # Zmieniono na 0
+            "Countertop": ("Countertop", "COUNTERTOP", "DECOR", 2250, 56, 620, 0, 0, 215, 0, 892),  # Zmieniono na 215
+            "Sink": ("Inset sink", "SINK", "DECOR", 320, 170, 420, 0, 0, 679, 410, 904),  # Zmieniono na 679
+            "Faucet": ("Tall faucet", "FAUCET", "DECOR", 70, 270, 80, 0, 0, 199, 565, 1072),  # Zmieniono na 199
+            "Cooktop": ("Black cooktop", "COOKTOP", "DECOR", 500, 80, 500, 0, 0, 1499, 1500, 910),  # Zmieniono na 1499
             "Wall Cabinet 400": ("Wall cabinet 400", "WALL_CABINET", "WALL", 400, 620, 310, 1, 0, 0, 0, 1570),
             "Wall Cabinet 800": ("Wall cabinet 800", "WALL_CABINET", "WALL", 800, 620, 310, 2, 0, 0, 0, 1570),
-            "Hood": ("Extractor hood", "HOOD", "WALL", 600, 710, 420, 0, 0, 360, 0, 1480),
+            "Hood": ("Extractor hood", "HOOD", "WALL", 600, 710, 420, 0, 0, 788, 0, 1480),  # Zmieniono na 788
         }
         if equipment_name not in specs:
             return
@@ -925,9 +960,8 @@ class KitchenState(rx.State):
                              unit="m2"),
                     Material(category="Board", brand="Egger", name="U999 Black", price_per_unit=14.00, unit="m2"),
                     Material(category="Board", brand="Egger", name="H3131 Davos Oak", price_per_unit=18.50, unit="m2"),
-                    Material(category="Board", brand="Egger", name="U708 Light Grey", price_per_unit=13.00, unit="m2"),
-                    Material(category="Board", brand="Egger", name="F204 Marmara Marble", price_per_unit=22.00,
-                             unit="m2"),
+                    Material(category="Board", brand="Egger", name="U708 Light Grey", price_per_unit=43.00, unit="m2"),
+                    Material(category="Board", brand="Egger", name="F204 Marmara Marble", price_per_unit=22.00, unit="m2"),
 
                     # KRONOSPAN (Budget & Standard)
                     Material(category="Board", brand="Krono", name="K101 Front White", price_per_unit=9.50, unit="m2"),

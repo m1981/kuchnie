@@ -139,7 +139,34 @@ class BOMGenerator:
         
         self.rules_engine.apply_rules(tags, root, multipliers)
         
-        # 4. Calculate total cost
+        # ==========================================
+        # 5. COKÓŁ (Plinth) - dla szafek dolnych
+        # ==========================================
+        # Sprawdzamy, czy szafka stoi na podłodze (BASE lub TALL).
+        # Zmywarka też ma type="BASE", więc dostanie swój kawałek cokołu!
+        if self.cabinet.type in ["BASE", "TALL"]:
+            # Długość cokołu to po prostu szerokość szafki w metrach
+            plinth_length_m = dims["width_mm"] / 1000
+
+            if plinth_length_m > 0:
+                # Płyta cokołowa (np. z MDF lub gotowy cokół PCV)
+                root.add_child(BOMPart(
+                    name="Plinth board (Cokół)",
+                    quantity_net=plinth_length_m,
+                    unit="lm",
+                    unit_price=25.00, # Cena za 1 metr bieżący cokołu
+                    waste_factor=1.10 # LinearMaterialStrategy: dodajemy 10% na docinki
+                ))
+
+                # Uszczelka cokołowa (chroni przed wodą z podłogi)
+                root.add_child(BOMPart(
+                    name="Plinth seal (Uszczelka)",
+                    quantity_net=plinth_length_m,
+                    unit="lm",
+                    unit_price=3.50,
+                    waste_factor=1.10
+                ))
+
         root.calculate()
         
         return root
