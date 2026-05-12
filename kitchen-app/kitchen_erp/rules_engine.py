@@ -28,7 +28,7 @@ def get_default_hardware_rules():
             {"name": "Handle (Uchwyt)", "qty_per_unit": 1, "unit": "pcs", "price": 25.00}
         ],
         "is_pullout": [
-            {"name": "Pull-out mechanism (Cargo)", "qty_per_unit": 1, "unit": "sets", "price": 200.00}
+            {"name": "Pull-out mechanism (Cargo)", "qty_per_unit": 1, "unit": "sets", "price": 600.00}
         ],
         "is_sink": [
             {"name": "Sink cabinet mat", "qty_per_unit": 1, "unit": "pcs", "price": 8.00},
