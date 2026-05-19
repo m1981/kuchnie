@@ -4,6 +4,176 @@ Kontynuacja z PLAYBOOK_SYSTEM.md
 
 ---
 
+<a name="playbook-08"></a>
+
+## 🧰 PLAYBOOK #08: MONTAŻ KORPUSÓW I BLEND (Solo Montażysta)
+
+**CEL:** Złożyć i wypoziomować korpusy z dokładnością do 1 mm. Stworzyć idealnie sztywną bazę pod blat kompaktowy HPL i zamaskować krzywizny ścian dewelopera.
+
+### 🔴 ZASADY FUNDAMENTALNE (Dla samotnego wilka)
+
+```
+1. POZIOM TO ŚWIĘTOŚĆ: Blat HPL 12mm nie wybacza krzywizn. Szafki muszą stanowić idealną płaszczyznę.
+2. PRZEKĄTNE: Zanim zablokujesz plecy szafki, mierzysz przekątne. Muszą być równe!
+3. ODCHUDZAJ CIĘŻAR: Szafki górne wieszasz ZAWSZE bez frontów i bez półek.
+4. UKRYWAJ WKRĘTY: Szafki skręcasz ze sobą w miejscach, które zasłoni prowadnik zawiasu.
+```
+
+---
+
+### 📦 KROK 1: Organizacja pracy i składanie "Klocków" (2-3h)
+
+Ponieważ zleciłeś nawierty na CNC, składanie to czysta przyjemność, ale wymaga porządku.
+
+```
+☐ Zabezpieczenie podłogi:
+   ☐ Rozłóż tekturę falistą lub grube koce malarskie.
+   ☐ Ustaw składany stół roboczy (oszczędzaj kręgosłup!).
+
+☐ Segregacja formatek:
+   ☐ Oddziel formatki szafek dolnych od górnych.
+   ☐ Zidentyfikuj szafkę zlewową i pod płytę (te z metalowymi trawersami).
+
+☐ Składanie korpusu (powtarzaj dla każdej szafki):
+   ☐ Połóż dno szafki na stole.
+   ☐ Przyłóż boki. Użyj ŚCISKÓW KĄTOWYCH (90°), aby przytrzymać płyty.
+   ☐ Wkręć konfirmaty (5x50 lub 7x50) w gotowe nawierty z CNC.
+   ☐ Zamontuj wieniec górny (lub metalowe trawersy Egger w szafce zlewowej/indukcyjnej!).
+
+☐ 🔴 KRYTYCZNE: Geometria i Plecy (HDF):
+   ☐ Wsuń plecy HDF (3mm) w wyfrezowany rowek (nut).
+   ☐ Zmierz miarką przekątne szafki (od rogu do rogu).
+   ☐ Jeśli przekątne są równe (np. 85,2 cm i 85,2 cm) = szafka ma idealne kąty proste.
+   ☐ Zablokuj plecy (np. wkrętami od tyłu w niewidocznym miejscu lub specjalnymi stabilizatorami).
+
+☐ Montaż nóżek (zanim postawisz szafkę!):
+   ☐ Przykręć bazy nóżek (np. Camar) do dna szafki.
+   ☐ Wciśnij nóżki.
+   ☐ Wstępnie wyreguluj je na wysokość z projektu (np. 10 cm lub 15 cm).
+```
+
+---
+
+### 📏 KROK 2: Ustawianie i poziomowanie szafek DOLNYCH (1-2h)
+
+To najważniejszy etap dla blatu HPL.
+
+```
+☐ Znalezienie najwyższego punktu podłogi:
+   ☐ Postaw laser 360° na środku kuchni.
+   ☐ Zmierz odległość od linii lasera do podłogi w kilku miejscach.
+   ☐ Znajdź miejsce, gdzie odległość jest NAJMNIEJSZA (to najwyższy punkt podłogi).
+   ☐ Od tego miejsca zaczynasz ustawiać szafki! (Nóżki można wykręcić w górę, ale nie wkręcisz ich w beton).
+
+☐ Ustawianie bazy:
+   ☐ Ustaw pierwszą szafkę (zazwyczaj narożną lub skrajną).
+   ☐ Pamiętaj o PRZESTRZENI SERWISOWEJ z tyłu (np. 5-9 cm luzu na rury).
+   ☐ Wyreguluj nóżki tak, aby szafka była w idealnym poziomie (sprawdzaj laserem i poziomicą 60cm).
+
+☐ Łączenie ciągu dolnego:
+   ☐ Dostaw drugą szafkę.
+   ☐ Wyreguluj jej nóżki, aby zrównała się z pierwszą.
+   ☐ Ściśnij obie szafki mocnymi ściskami stolarskimi (muszą idealnie licować się z przodu!).
+   ☐ Skręć szafki ze sobą (wkręty 4x30).
+      💡 PRO TIP: Wkręcaj pod miejscem, gdzie będzie prowadnik zawiasu, albo za szufladą. Klient nie zobaczy łba wkręta!
+   ☐ Powtórz dla reszty szafek.
+
+☐ 🔴 TEST BLATU HPL:
+   ☐ Połóż długą poziomicę (lub łatę) na połączonych szafkach.
+   ☐ Nie może być ŻADNYCH prześwitów. Blat kompaktowy musi leżeć na płasko, inaczej pęknie przy obciążeniu!
+```
+
+---
+
+### 🧗‍♂️ KROK 3: Wieszanie szafek GÓRNYCH (Solo Mode) (1-2h)
+
+Wieszanie szafek w pojedynkę jest niebezpieczne. Używamy technologii, by to ułatwić.
+
+```
+☐ Wyznaczenie linii szyny montażowej:
+   ☐ Oblicz wysokość: Wysokość szafek dolnych (np. 82cm) + Grubość blatu (1,2cm) + Wysokość panelu ściennego (np. 60cm) = 143,2 cm.
+   ☐ Odlicz od tego wymiar zawieszki (zgodnie z instrukcją Libra H1).
+   ☐ Ustaw laser poziomy na wyliczonej wysokości.
+   ☐ Zaznacz linię na ścianie.
+
+☐ Montaż szyny:
+   ☐ Wywierć otwory w ścianie.
+   ☐ 🔴 UWAGA NA DEWELOPERKĘ: Jeśli ściana to słaby gazobeton lub pustak ceramiczny, użyj kołków Fischer DuoPower lub kotwy chemicznej! Szafka z talerzami waży 50 kg.
+   ☐ Przykręć szynę i sprawdź jej poziom.
+
+☐ Wieszanie (Technika Solo):
+   ☐ Zdejmij fronty z szafki górnej (jeśli założyłeś).
+   ☐ Wyjmij półki.
+   ☐ Szafka waży teraz tylko kilkanaście kilogramów.
+   ☐ Podnieś korpus i zawieś haki (Libra H1) na szynie.
+   ☐ Powtórz dla wszystkich szafek.
+
+☐ Regulacja i łączenie:
+   ☐ Użyj śrubokręta wewnątrz szafki (system Libra H1), aby dociągnąć szafki do ściany i wypoziomować je góra/dół.
+   ☐ Ściśnij szafki ściskami i skręć je ze sobą (tak jak dolne).
+```
+
+---
+
+### 📐 KROK 4: Docinanie i montaż BLEND maskujących (1-2h)
+
+To tutaj wygrywasz z IKEA. Blendy maskują krzywe ściany dewelopera.
+
+```
+☐ Blenda boczna (Pionowa):
+   ☐ Zmierz szczelinę między szafką a ścianą w 3 miejscach (Góra, Środek, Dół).
+   ☐ Np. Góra: 42mm, Środek: 45mm, Dół: 48mm (ściana ucieka!).
+   ☐ Przenieś te wymiary na formatkę blendy (z materiału frontowego PM/TM!).
+   ☐ Naklej taśmę malarską na linię cięcia.
+   ☐ Utnij zagłębiarką z szyną.
+      💡 PRO TIP (Podcięcie): Ustaw tarczę zagłębiarki na kąt 85° (zamiast 90°). Zetnij tył blendy. Dzięki temu do krzywej ściany będzie przylegać tylko ostra, przednia krawędź blendy. Łatwiej ją dopasować!
+
+☐ Montaż blendy bocznej:
+   ☐ Wsuń dociętą blendę w szczelinę (powinna wejść z lekkim oporem).
+   ☐ Przykręć ją od wewnątrz szafki (wkręty 4x30).
+
+☐ Blenda górna (Podsufitowa):
+   ☐ Zmierz szczelinę między szafkami górnymi a sufitem (co 50 cm, sufity zawsze opadają!).
+   ☐ Dotnij blendę zagłębiarką wzdłuż wyznaczonej krzywizny.
+   ☐ Przykręć do wieńców górnych szafek (od środka szafki w górę).
+   ☐ Zasilikonuj styk blendy z sufitem akrylem malarskim (klient będzie mógł to pomalować farbą ścienną).
+```
+
+---
+
+### 🧊 KROK 5: Słupek Lodówkowy (Zabudowa na sztywno)
+
+```
+☐ Ustawienie słupka:
+   ☐ Ustaw słupek w linii z szafkami dolnymi.
+   ☐ Wypoziomuj nóżki.
+   ☐ Skręć z sąsiadującą szafką (stopniowo, sprawdzając pion!).
+
+☐ 🔴 WENTYLACJA (Checklist):
+   ☐ Czy wyciąłeś otwór w cokole dolnym na kratkę? (Min. 200 cm²)
+   ☐ Czy za słupkiem jest min. 5 cm luzu od ściany?
+   ☐ Czy góra słupka ma ujście powietrza?
+
+☐ Przygotowanie pod lodówkę:
+   ☐ Upewnij się, że gniazdko prądowe jest w szafce OBOK, a nie za lodówką!
+   ☐ (Samo wstawienie lodówki i montaż frontów Door-on-Door opisane jest w Playbooku #10).
+```
+
+---
+
+### ✅ KONTROLA JAKOŚCI KORPUSÓW (Zanim położysz blat!)
+
+```
+Zanim przejdziesz do Playbooka #09 (Blat HPL), sprawdź:
+☐ Czy wszystkie szafki dolne są w idealnym poziomie? (Laser)
+☐ Czy ciąg szafek tworzy idealnie prostą linię z przodu?
+☐ Czy metalowe trawersy pod zlew i płytę są zamontowane i dokręcone?
+☐ Czy blendy przylegają do ścian bez rażących szpar?
+☐ Czy odkurzyłeś wióry z szafek i podłogi?
+```
+
+➡️ **NASTĘPNY KROK:** Przejdź do **PLAYBOOK #09: Montaż Blatu HPL**
+
 <a name="playbook-09"></a>
 
 ## 🪵 PLAYBOOK #09: MONTAŻ BLATU HPL (KRYTYCZNY! 3-4 godz.)
@@ -1042,8 +1212,8 @@ Kluczowe zasady:
 KARTA GWARANCYJNA - ZABUDOWA KUCHENNA
 =================================================================
 
-Klient: **********\_\_\_********** Data realizacji: ****\_\_\_****
-Adres: **************************\_**************************
+Klient: ****\*\*****\_\_\_****\*\***** Data realizacji: \***\*\_\_\_\*\***
+Adres: ************\*\*************\_************\*\*************
 
 ZAKRES GWARANCJI:
 ☐ Montaż mebli: 24 miesiące
@@ -1062,11 +1232,11 @@ WYŁĄCZENIA Z GWARANCJI:
 
 KONTAKT SERWISOWY:
 [Twoje Imię Nazwisko]
-Tel: ******\_\_******
-Email: ******\_******
+Tel: **\*\***\_\_**\*\***
+Email: **\*\***\_**\*\***
 
-Podpis klienta: ******\_\_\_\_****** Data: ****\_\_\_****
-Podpis wykonawcy: ******\_\_****** Data: ****\_\_\_****
+Podpis klienta: **\*\***\_\_\_\_**\*\*** Data: \***\*\_\_\_\*\***
+Podpis wykonawcy: **\*\***\_\_**\*\*** Data: \***\*\_\_\_\*\***
 =================================================================
 
 ☐ Klient podpisuje (2 egzemplarze - jeden dla niego, jeden dla Ciebie)
@@ -1166,27 +1336,27 @@ Sąsiedzi często pytają o wykonawców."
 
 ☐ CZASOWO:
 ☐ Czy zmieściłem się w 2 dni montażu? TAK ☐ / NIE ☐
-☐ Jeśli NIE - co mnie opóźniło? **********\_\_\_**********
-☐ Jak mogę przyspieszyć następnym razem? ******\_******
+☐ Jeśli NIE - co mnie opóźniło? ****\*\*****\_\_\_****\*\*****
+☐ Jak mogę przyspieszyć następnym razem? **\*\***\_**\*\***
 
 ☐ BUDŻETOWO:
 ☐ Czy zmieściłem się w kosztach? TAK ☐ / NIE ☐
-☐ Jakie były nieprzewidziane wydatki? ******\_\_\_\_******
+☐ Jakie były nieprzewidziane wydatki? **\*\***\_\_\_\_**\*\***
 ☐ Moja faktyczna marża: **\_\_\_** zł (zaplanowana: **\_** zł)
 
 ☐ JAKOŚCIOWO:
 ☐ Czy klient był zadowolony? TAK ☐ / NIE ☐
-☐ Czy były jakieś reklamacje / uwagi? ********\_********
-☐ Co mogę poprawić w następnym projekcie? ****\_\_\_\_****
+☐ Czy były jakieś reklamacje / uwagi? **\*\*\*\***\_**\*\*\*\***
+☐ Co mogę poprawić w następnym projekcie? \***\*\_\_\_\_\*\***
 
 ☐ MATERIAŁY:
 ☐ Czy CNC dostarczyło bez błędów? TAK ☐ / NIE ☐
 ☐ Czy okucia przyszły kompletne? TAK ☐ / NIE ☐
-☐ Czy trzeba zmienić dostawcę? **********\_\_\_**********
+☐ Czy trzeba zmienić dostawcę? ****\*\*****\_\_\_****\*\*****
 
 ☐ NARZĘDZIA:
 ☐ Czy wszystko działało sprawnie? TAK ☐ / NIE ☐
-☐ Czy trzeba kupić/naprawić coś? **********\_**********
+☐ Czy trzeba kupić/naprawić coś? ****\*\*****\_****\*\*****
 
 ☐ LEKCJE WYNIESIONE:
 (Zapisz w notesie - to Twoja baza wiedzy!)
