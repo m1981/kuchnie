@@ -19,6 +19,7 @@
 ---
 
 <a name="playbook-01"></a>
+
 ## 📱 PLAYBOOK #01: ROZMOWA KWALIFIKACYJNA (15 minut)
 
 **CEL:** Wykluczyć klientów spoza Twojej niszy ZANIM pojedziesz na pomiar.
@@ -69,6 +70,7 @@ Do zobaczenia! [Twoje Imię]
 ---
 
 <a name="playbook-02"></a>
+
 ## 📏 PLAYBOOK #02: POMIAR I INWENTARYZACJA (90 minut u klienta)
 
 **CEL:** Zebrać 100% danych potrzebnych do projektu. Zero powrotów "bo czegoś nie zmierzyłem".
@@ -93,6 +95,7 @@ Do zobaczenia! [Twoje Imię]
 ### 📐 PROCEDURA POMIARU (KROKI 1-12)
 
 #### KROK 1: Przywitanie i edukacja klienta (5 min)
+
 ```
 ☐ "Dzień dobry! Zajmie mi to ok. 60-90 minut. Mogę zadawać pytania?"
 ☐ Wyjaśnienie: "Będę mierzył w 3 punktach, bo deweloperzy rzadko robią proste kąty"
@@ -100,6 +103,7 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 2: Ogólne zdjęcia wnęki (5 min)
+
 ```
 ☐ Zdjęcie panoramiczne całej wnęki
 ☐ Zdjęcie z lewego rogu
@@ -109,15 +113,17 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 3: 🔴 Pomiar SZEROKOŚCI wnęki (3-punktowy!)
+
 ```
 ☐ DÓŁ (10 cm od podłogi): _______ cm
-☐ ŚRODEK (120 cm od podłogi): _______ cm  
+☐ ŚRODEK (120 cm od podłogi): _______ cm
 ☐ GÓRA (240 cm od podłogi): _______ cm
 
 ⚠️ NAJMNIEJSZY WYMIAR = wymiar roboczy dla szafek!
 ```
 
 #### KROK 4: 🔴 Pomiar WYSOKOŚCI wnęki (3-punktowy!)
+
 ```
 ☐ LEWO (przy lewej ścianie): _______ cm
 ☐ ŚRODEK (w połowie szerokości): _______ cm
@@ -127,6 +133,7 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 5: Sprawdzenie PIONÓW ścian (laser!)
+
 ```
 ☐ Lewa ściana: PION OK ☐  /  ODCHYŁKA: ______ cm w którą stronę: _______
 ☐ Prawa ściana: PION OK ☐  /  ODCHYŁKA: ______ cm
@@ -134,6 +141,7 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 6: Sprawdzenie POZIOMU podłogi (laser!)
+
 ```
 ☐ Podłoga POZIOM OK ☐  /  ODCHYŁKA: ______ cm
 ☐ Najniższy punkt: LEWO ☐  ŚRODEK ☐  PRAWO ☐
@@ -141,6 +149,7 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 7: 🔴 INSTALACJE - Odpływ i zawory WODA (bardzo dokładnie!)
+
 ```
 ☐ Odpływ kanalizacyjny:
    - Odległość od LEWEJ ściany: _______ cm
@@ -163,6 +172,7 @@ Do zobaczenia! [Twoje Imię]
 ```
 
 #### KROK 8: INSTALACJE - Elektryka
+
 ```
 ☐ Ilość gniazdek w wnęce: _______ szt.
 
@@ -181,11 +191,12 @@ Dla każdego gniazdka zmierz:
 
 ☐ Czy jest wyprowadzenie na okap? TAK ☐ / NIE ☐
    Gdzie: ______________________________
-   
+
 ☐ Czy jest wyprowadzenie na płytę indukcyjną (400V)? TAK ☐ / NIE ☐
 ```
 
 #### KROK 9: WENTYLACJA
+
 ```
 ☐ Kratka wentylacyjna:
    - Gdzie: GÓRA ☐ / DÓŁ ☐ / BRAK ☐
@@ -198,6 +209,7 @@ Dla każdego gniazdka zmierz:
 ```
 
 #### KROK 10: OKNO (jeśli w wnęce kuchennej)
+
 ```
 ☐ Szerokość okna: _______ cm
 ☐ Wysokość parapetu od podłogi: _______ cm
@@ -206,6 +218,7 @@ Dla każdego gniazdka zmierz:
 ```
 
 #### KROK 11: DOKUMENTACJA FOTOGRAFICZNA (min. 20 zdjęć!)
+
 ```
 ☐ Cała wnęka - 4 kąty
 ☐ Każde gniazdko z PRZYŁOŻONĄ MIARKĄ (czytalne wymiary)
@@ -216,6 +229,7 @@ Dla każdego gniazdka zmierz:
 ```
 
 #### KROK 12: Weryfikacja z klientem
+
 ```
 ☐ "Czy planuje Pan/Pani jakieś zmiany instalacyjne przed montażem?"
 ☐ "Czy gniazdka będą w tych miejscach czy elektryk coś zmieni?"
@@ -227,6 +241,7 @@ Dla każdego gniazdka zmierz:
 ### 🎨 CZĘŚĆ 2: PREZENTACJA MATERIAŁÓW (30 minut)
 
 #### KROK 13: Pokazanie wzorników frontów PET
+
 ```
 ☐ Wyłożenie wzornika Egger PerfectSense na blat/podłogę
 ☐ Przykładanie kolorów do podłogi klienta (np. U702 Kaszmir do dębu)
@@ -238,6 +253,7 @@ Dla każdego gniazdka zmierz:
 ```
 
 #### KROK 14: Pokazanie próbek blatów HPL
+
 ```
 ☐ Wyłożenie próbek na parapecie/stole
 ☐ Edukacja: "To 12mm wodoodporny kompakt, sam go dotnę na miejscu"
@@ -249,13 +265,14 @@ Dla każdego gniazdka zmierz:
 ```
 
 #### KROK 15: Omówienie AGD
+
 ```
 ☐ Czy klient ma już wybrane AGD? TAK ☐ / NIE ☐
 
 Jeśli TAK, spisać DOKŁADNE modele:
 ☐ Lodówka: Marka ________ Model ________ (Do zabudowy? TAK/NIE)
 ☐ Zmywarka: Marka ________ Model ________ (60cm czy 45cm?)
-☐ Piekarnik: Marka ________ Model ________ 
+☐ Piekarnik: Marka ________ Model ________
 ☐ Płyta indukcyjna: Marka ________ Model ________ (Wymiar wycięcia?)
 ☐ Okap: Marka ________ Model ________
 
@@ -263,6 +280,7 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ```
 
 #### KROK 16: Omówienie dodatków
+
 ```
 ☐ Czy klient chce oświetlenie LED? TAK ☐ / NIE ☐
 ☐ Czy klient chce cargo (wysuwane przyprawy)? TAK ☐ / NIE ☐
@@ -275,6 +293,7 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ### 💰 CZĘŚĆ 3: WSTĘPNA WYCENA (15 minut)
 
 #### KROK 17: Edukacja kosztów
+
 ```
 ☐ "Typowy aneks 2,6 mb to koszt ok. 10-12 tys. zł pod klucz"
 ☐ "W cenie: projekt, materiały, montaż, wszystko"
@@ -283,6 +302,7 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ```
 
 #### KROK 18: Porównanie z IKEA (jeśli klient pytał)
+
 ```
 ☐ "IKEA dla tej wnęki wyjdzie ~8 tys. zł + 2 tys. montaż = 10 tys."
 ☐ "ALE: będą szpary (blendy szerokie), szafki nie pod sufit"
@@ -291,13 +311,14 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ```
 
 #### KROK 19: Zbieranie oczekiwań
+
 ```
-☐ Czy klient ma jakieś obawy? 
+☐ Czy klient ma jakieś obawy?
    Odpowiedź: _________________________________
 
 ☐ Co jest dla klienta najważniejsze?
    ☐ CENA
-   ☐ TERMIN  
+   ☐ TERMIN
    ☐ JAKOŚĆ MATERIAŁÓW
    ☐ FUNKCJONALNOŚĆ (dużo szuflad)
    ☐ ESTETYKA
@@ -308,6 +329,7 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ### ✅ CZĘŚĆ 4: ZAKOŃCZENIE I FOLLOW-UP
 
 #### KROK 20: Ustalenia końcowe
+
 ```
 ☐ "Projekt i wycenę dostanie Pan/Pani mailem w ciągu 3-5 dni"
 ☐ Podać adres email klienta: _______________________
@@ -317,6 +339,7 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ```
 
 #### KROK 21: Natychmiastowe działania (W SAMOCHODZIE, zanim odjedziesz!)
+
 ```
 ☐ Sprawdzenie czy wszystkie zdjęcia są ostre
 ☐ Przegranie zdjęć do folderu projektu: [Nazwisko_Osiedle]
@@ -325,10 +348,11 @@ Jeśli TAK, spisać DOKŁADNE modele:
 ```
 
 #### KROK 22: Follow-up tego samego dnia (wieczorem)
+
 ```
-☐ Wysłanie SMS: 
-   "Dzień dobry! Dziękuję za dzisiejsze spotkanie. 
-   Zabieram się za projekt - wycena do [dzień tygodnia]. 
+☐ Wysłanie SMS:
+   "Dzień dobry! Dziękuję za dzisiejsze spotkanie.
+   Zabieram się za projekt - wycena do [dzień tygodnia].
    Pozdrawiam, [Imię]"
 ```
 
@@ -356,7 +380,7 @@ WYMIARY WNĘKI
 
 SZEROKOŚĆ (3 pomiary):
 ├─ Dół (10cm od podłogi):     _______ cm
-├─ Środek (120cm):             _______ cm  
+├─ Środek (120cm):             _______ cm
 └─ Góra (240cm):               _______ cm
    → NAJMNIEJSZY (roboczy):    _______ cm ⬅ UŻYJ TEGO!
 
@@ -376,7 +400,7 @@ PIONY I POZIOMY (laser)
 ŚCIANA PRAWA:     ☐ OK  ☐ Odchyłka: ___cm w stronę: _______
 ŚCIANA TYLNA:     ☐ OK  ☐ Odchyłka: ___cm w stronę: _______
 
-PODŁOGA:          ☐ POZIOM  ☐ Odchyłka: ___cm 
+PODŁOGA:          ☐ POZIOM  ☐ Odchyłka: ___cm
 Najniższy punkt:  ☐ Lewo  ☐ Środek  ☐ Prawo
 
 =================================================================
@@ -453,6 +477,7 @@ AGD - MODELE (jeśli już wybrane)
 
 ☐ Lodówka:  Marka: __________ Model: ____________
             Do zabudowy: ☐ TAK  ☐ NIE
+            Czy montaż (Door-on-Door) czy na suwaki?". ☐ TAK  ☐ NIE
 
 ☐ Zmywarka: Marka: __________ Model: ____________
             Szerokość: ☐ 60cm  ☐ 45cm
@@ -520,6 +545,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ---
 
 <a name="playbook-03"></a>
+
 ## 💻 PLAYBOOK #03: PROJEKTOWANIE W CORPUS LTR (4-8 godzin)
 
 **CEL:** Stworzyć bezbłędny projekt, który przejdzie przez CNC bez poprawek.
@@ -527,6 +553,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ### 🚀 PRZYGOTOWANIE (30 min)
 
 #### KROK 1: Organizacja plików
+
 ```
 ☐ Utworzenie folderu projektu (jeśli jeszcze nie):
    📁 PROJEKTY/
@@ -541,6 +568,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ```
 
 #### KROK 2: Weryfikacja danych pomiarowych
+
 ```
 ☐ Otwarcie formularza pomiarowego
 ☐ Weryfikacja zdjęć (czy wszystkie otwierają się)
@@ -551,6 +579,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ```
 
 #### KROK 3: Analiza instalacji (czerwone flagi!)
+
 ```
 ☐ Czy rury wystają ze ściany? → Zmniejszyć głębokość szafki
 ☐ Czy gniazdka są w nietypowych miejscach? → Otwory w plecach/bokach
@@ -562,6 +591,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ### 🎨 PROJEKTOWANIE (3-6 godzin)
 
 #### KROK 4: Start projektu w Corpus LTR
+
 ```
 ☐ Uruchomienie Corpus LTR
 ☐ Nowy projekt → Kuchnia
@@ -573,6 +603,7 @@ PODPIS MONTERA: ___________________  DATA: __________________
 ```
 
 #### KROK 5: 🔴 ZASTOSOWANIE BLEND MASKUJĄCYCH
+
 ```
 ⚠️ NIGDY "na styk"! Zawsze zostaw luzy:
 
@@ -585,25 +616,27 @@ Corpus automatycznie doda blendy - sprawdź czy są!
 ```
 
 #### KROK 6: Układ szafek DOLNYCH
+
 ```
 ☐ Zacznij od ZLEWU (najważniejszy punkt):
    - Szafka zlewowa zwykle 80cm lub 100cm
    - Centrum zlewu = tam gdzie odpływ (z pomiaru!)
-   
+
 ☐ Dodaj szafki po lewej stronie zlewu:
    - Szafka 60cm (3 szuflady głębokie)
    - Szafka 40cm (2 szuflady)
    - Lub według planu klienta
-   
+
 ☐ Dodaj szafki po prawej stronie zlewu:
    - Szafka pod PŁYTĘ indukcyjną (szuflada płytka!)
    - Szafka pod PIEKARNIK (bez frontu, z blendą)
    - Szafki dodatkowe
-   
+
 ☐ Sprawdź czy suma szerokości szafek = szerokość wnęki MINUS blendy!
 ```
 
 #### KROK 7: Układ szafek GÓRNYCH
+
 ```
 ☐ Górne dokładnie nad dolnymi (symetria!) ← Wygląda profesjonalnie
 ☐ Szafka nad zlewem: zwykle 80cm 1-drzwiowa lub 2-drzwiowa
@@ -613,6 +646,7 @@ Corpus automatycznie doda blendy - sprawdź czy są!
 ```
 
 #### KROK 8: Słupek lodówkowy (jeśli w projekcie)
+
 ```
 ☐ Szerokość: 60cm (standard dla lodówki do zabudowy)
 ☐ Wysokość: Od podłogi do sufitu (zabudowa pełna)
@@ -651,6 +685,7 @@ Panel ścienny        |  Nad blatem               |  HPL 10mm lub
 ```
 
 #### KROK 10: Konstrukcja szafek - Szczegóły techniczne
+
 ```
 ☐ Plecy szafek: Wpuszczane w NUT (frez), nie na gwoździki!
    - Głębokość nutu: 10mm
@@ -673,6 +708,7 @@ Panel ścienny        |  Nad blatem               |  HPL 10mm lub
 ```
 
 #### KROK 11: Wentylacja (nie zapomnij!)
+
 ```
 ☐ Kratka w cokole pod lodówką: 200 cm² (standard)
 ☐ Przestrzeń z tyłu lodówki: min. 5cm od ściany
@@ -695,8 +731,8 @@ Zawiasy LODÓWKI      |  Fronty lodówki     |  155° (ZERO USKOKU!)
 Szuflady (dolne)     |  Szafki dolne       |  Antaro M
                      |  3 szuflady         |  (60cm: kod D-368mm)
 -----------------------------------------------------------------
-Szuflady (ALT)       |  Jeśli płyta 18mm   |  ATM Futura
-                     |  (zamiast 16mm)     |  (jedyne na 18mm)
+Szuflady (ALT)       |  Jeśli płyta 18mm   |
+                     |  (zamiast 16mm)     |  ( na 18mm)
 -----------------------------------------------------------------
 Podnośniki klap      |  Szafki górne       |  Aventos HF top
                      |  otwierane do góry  |  Kod: 20F2200
@@ -715,6 +751,7 @@ Zawieszki górnych    |  Szafki górne       |  Libra H1 Italiana
 ```
 
 #### KROK 13: Dodatkowe akcesoria (jeśli klient chce)
+
 ```
 ☐ Cargo przyprawy (Peka Dispensa): Szafka 15-20cm obok piekarnika
 ☐ Narożnik obrotowy (Peka Le Mans 2): Szafka narożna dolna
@@ -732,7 +769,7 @@ Zawieszki górnych    |  Szafki górne       |  Libra H1 Italiana
 =================================================================
 CHECK #1: WYMIARY
 =================================================================
-☐ Suma szerokości szafek dolnych + blendy = szerokość wnęki? 
+☐ Suma szerokości szafek dolnych + blendy = szerokość wnęki?
 ☐ Suma szerokości szafek górnych + blendy = szerokość wnęki?
 ☐ Wysokość górnych + blenda górna = wysokość do sufitu?
 ☐ Głębokość szafek nie koliduje z rurami?
@@ -760,7 +797,7 @@ CHECK #4: OKUCIA
 =================================================================
 ☐ Zawiasy zwykłe = Blum Clip Top 110°?
 ☐ Zawiasy lodówki = Blum 155° (zero uskoku)?
-☐ Szuflady = Blum Antaro lub ATM Futura?
+☐ Szuflady = Blum Antaro?
 ☐ Podnośniki klap = Blum Aventos HF?
 ☐ Uchwyty krawędziowe zamówione osobno?
 
@@ -785,6 +822,7 @@ CHECK #6: INSTALACJE (czy projekt je omija?)
 ### 📊 GENEROWANIE OUTPUTU (30 min)
 
 #### KROK 15: Eksport plików dla CNC
+
 ```
 ☐ Corpus LTR → Eksport → Pliki DXF
 ☐ Zapisz w folderze: 📁 02_Projekt_Corpus/DXF/
@@ -804,6 +842,7 @@ CHECK #6: INSTALACJE (czy projekt je omija?)
 ```
 
 #### KROK 16: Generowanie wizualizacji 3D dla klienta
+
 ```
 ☐ Corpus LTR → Renderowanie → Wysokiej jakości (Full HD)
 ☐ Widok 1: Perspektywa ogólna (cała kuchnia)
@@ -816,6 +855,7 @@ CHECK #6: INSTALACJE (czy projekt je omija?)
 ```
 
 #### KROK 17: Backup projektu
+
 ```
 ☐ Corpus LTR → Zapisz projekt jako:
    - kuchnia_Kowalski_Jagodno_v1.0.corpus
@@ -823,18 +863,20 @@ CHECK #6: INSTALACJE (czy projekt je omija?)
 ☐ Skopiuj CAŁY folder projektu na:
    ☐ Dysk zewnętrzny
    ☐ Chmura (Google Drive / Dropbox)
-   
+
 ⚠️ Nigdy nie polegaj tylko na jednej kopii!
 ```
 
 ---
 
 ### 📝 NASTĘPNY KROK
+
 Po zakończeniu projektowania → przejdź do **PLAYBOOK #04: Wycena dla klienta**
 
 ---
 
 <a name="playbook-04"></a>
+
 ## 🏭 PLAYBOOK #04: ZAMÓWIENIE W CENTRUM CNC (Krytyczne!)
 
 **CEL:** Przekazać CNC bezbłędne dane i dostać idealnie wycięte formatki.
@@ -842,6 +884,7 @@ Po zakończeniu projektowania → przejdź do **PLAYBOOK #04: Wycena dla klienta
 ### 📞 KROK 1: Wybór centrum CNC (jeśli jeszcze nie masz stałego)
 
 #### Kryteria wyboru (Wrocław i okolice):
+
 ```
 ☐ Odległość od Ciebie: max 50km (częste odbiory)
 ☐ Czy robią dla stolarzy (nie tylko B2C)?
@@ -868,7 +911,7 @@ TEMAT: Zapytanie - formatki meblowe + okleinowanie PUR + nawierty
 
 Dzień dobry,
 
-Nazywam się [Twoje Imię] i prowadzę jednoosobową działalność stolarską 
+Nazywam się [Twoje Imię] i prowadzę jednoosobową działalność stolarską
 we Wrocławiu (kuchnie na wymiar). Szukam centrum CNC do stałej współpracy.
 
 Projekt: Aneks kuchenny, styl nowoczesny
@@ -944,16 +987,16 @@ Email: [Email]
 ☐ Zadzwoń do CNC: "Dzień dobry, wysłałem wczoraj zapytanie mailowe..."
 
 ☐ Pytania weryfikacyjne (KONIECZNIE zadaj!):
-   
+
    Q1: "Czy pliki DXF otworzyły się Państwu bez problemu?"
    → Jeśli problem: poproś o feedback, popraw i wyślij ponownie
-   
+
    Q2: "Czy coś w projekcie Was zdziwiło? Nietypowe wymiary?"
    → Często CNC wyłapią błąd, którego nie widziałeś
-   
+
    Q3: "Czy Egger U702 PM to u Was standard czy trzeba sprowadzać?"
    → Jeśli sprowadzają: +3-5 dni czasu realizacji!
-   
+
    Q4: "Czy mają Państwo projektanta, który może rzucić okiem na pliki?"
    → Jeśli TAK: poproś o weryfikację techniczną (czasem gratis!)
 
@@ -1006,7 +1049,7 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
    ☐ Przedpłata 100% → wyślę przelew po potwierdzeniu
    ☐ Przedpłata 50% → reszta przy odbiorze
    ☐ Za pobraniem przy odbiorze
-   
+
 ☐ Dostałem numer zamówienia / potwierdzenie mailowe
 
 ☐ Dodałem do trackingu zamówień (Excel):
@@ -1019,7 +1062,7 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
 ### 📞 KROK 6: Komunikacja w trakcie produkcji
 
 ```
-☐ Dzień 3 po zamówieniu: 
+☐ Dzień 3 po zamówieniu:
    SMS/Mail do CNC: "Dzień dobry, czy produkcja przebiega zgodnie z planem?"
 
 ☐ Dzień przed odebraniem:
@@ -1054,12 +1097,12 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
       ☐ Nawierty w dobrych miejscach? (porównaj z projektem)
       ☐ Płyta nie pęknięta? (obejrzyj na światło)
       ☐ Kolor się zgadza? (przyłóż wzornik Egger)
-   
+
    [Powtórz dla KAŻDEJ formatki - to 20-30 min, ale uratuje Cię!]
 
 🔴 CO ROBIĆ GDY ZNAJDZIESZ BŁĄD:
 
-❌ NIE ZABIERAJ wadliwej formatki! 
+❌ NIE ZABIERAJ wadliwej formatki!
 ✅ NATYCHMIAST zgłoś pracownikowi CNC:
    "Ta formatka ma błąd - [opisz co]. Proszę o wymianę."
 
@@ -1075,20 +1118,20 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
 
 ```
 ☐ Pakowanie do auta:
-   
+
    🔴 BLATY HPL - TYLKO W PIONIE!
    ☐ Ustaw pionowo (na krawędzi)
    ☐ Zabezpiecz pianką między płyty
    ☐ Przywiąż pasami żeby się nie przewróciły
-   
+
    ☐ Formatki fronty (delikatne! PET łatwo zarysować):
       ☐ Folia bąbelkowa między każdym frontem
       ☐ Pakuj osobno od korpusów
-      
+
    ☐ Formatki korpusy:
       ☐ Można pakować razem
       ☐ Najcięższe na dół, lekkie (półki) na górę
-      
+
    ☐ Plecy HDF 3mm:
       ☐ Wiązka razem (taśma malarska)
       ☐ Chronić przed złamaniem - cienkie!
@@ -1107,7 +1150,7 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
    ☐ Suche pomieszczenie (wilgoć deformuje płyty!)
    ☐ Temperatura 15-25°C (nie mróz, nie gorąco)
    ☐ Z dala od grzejników / bezpośredniego słońca
-   
+
 ☐ Sposób składowania:
    ☐ Fronty PET - w pionie, oddzielone pianką
    ☐ Korpusy - poziomo, max 5-6 sztuk jedna na drugiej
@@ -1120,6 +1163,7 @@ Dostawa (jeśli)                 | 100-200 zł (Wrocław)
 ### 🔄 KROK 10: Feedback do CNC (budowanie relacji!)
 
 #### Jeśli wszystko było OK:
+
 ```
 ☐ Wyślij mail dzień po odbiorze:
 
@@ -1135,6 +1179,7 @@ Pozdrawiam,
 ```
 
 #### Jeśli były drobne problemy:
+
 ```
 ☐ Wyślij konstruktywny feedback:
 
@@ -1156,6 +1201,7 @@ Pozdrawiam,
 ---
 
 <a name="playbook-05"></a>
+
 ## 🔩 PLAYBOOK #05: ZAMÓWIENIE OKUĆ I AKCESORIÓW (1 dzień)
 
 **CEL:** Skompletować wszystkie okucia, LED, wkręty i materiały eksploatacyjne ZANIM formatki przyjadą z CNC.
@@ -1203,13 +1249,13 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
    → Poproś o rabat stały (jeśli planujesz częste zakupy)
 
 ☐ Wyszukaj okucia po kodzie Blum:
-   
+
    Przykład: Zawias Clip Top Blumotion
    ☐ Wpisz w wyszukiwarce: 71B3550
    ☐ Sprawdź opis: "Zawias Clip Top, nakładany, Blumotion, 110°"
    ☐ Sprawdź czy w zestawie są śrubki montażowe! (jeśli nie - dołóż)
    ☐ Dodaj do koszyka: ilość 16 szt (zgodnie z listą)
-   
+
 ☐ Powtórz dla wszystkich okuć z listy
 
 ☐ Dodaj 10% zapasu na kluczowe okucia:
@@ -1220,7 +1266,7 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
    ☐ Czy ilości się zgadzają?
    ☐ Czy kody Blum są prawidłowe?
    ☐ Czy są śrubki montażowe?
-   
+
 ☐ Wybierz dostawę:
    ☐ Kurier (1-2 dni) - jeśli wartość >500zł = gratis
    ☐ Odbiór osobisty (jeśli hurtownia we Wrocławiu)
@@ -1293,11 +1339,11 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
    ☐ Klej Ottocoll M500 (Otto Chemie) - 2 tuby
       → Do klejenia blatu HPL do korpusów (elastyczny!)
       → Cena: ~40 zł/tuba
-   
+
    ☐ Silikon sanitarny bezbarwny (np. Ceresit)
       → Do uszczelniania styków blat-panel ścienny
       → Cena: ~15 zł/tuba
-   
+
 ☐ Wkręty (Würth Assy - najlepsze!):
    ☐ 4x40mm - ilość: 100 szt (mocowanie blend, listew)
    ☐ 5x50mm - ilość: 50 szt (mocowanie cięższych elementów)
@@ -1311,7 +1357,7 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
 ☐ Listwy aluminiowe ochronne:
    ☐ Listwa nad zmywarkę - 60cm lub 80cm (szerokość szafki zlewowej)
    ☐ Cena: ~30-50 zł
-   
+
 ☐ Blaszki termiczne piekarnik:
    ☐ Komplet (boki + tył piekarnika)
    ☐ Cena: ~40 zł
@@ -1447,7 +1493,7 @@ Wydrukuj tę listę i odhaczaj:
 =================================================================
 JEŚLI CZEGOKOLWIEK BRAKUJE:
 =================================================================
-❌ NIE JEDŹ NA MONTAŻ! 
+❌ NIE JEDŹ NA MONTAŻ!
 
 Dokup / zamów uzupełnienie. Lepiej opóźnić montaż o dzień,
 niż jechać bez kluczowego okucia i robić wstyd przed klientem.
@@ -1458,4 +1504,3 @@ niż jechać bez kluczowego okucia i robić wstyd przed klientem.
 ### ✅ GOTOWE!
 
 Materiały skompletowane → Przejdź do **PLAYBOOK #06: Kontrola odbioru materiałów** (już zrobione w ramach kroków powyżej) lub **PLAYBOOK #07: Przygotowanie do montażu**
-

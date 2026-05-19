@@ -5,6 +5,7 @@ Kontynuacja z PLAYBOOK_SYSTEM.md
 ---
 
 <a name="playbook-09"></a>
+
 ## 🪵 PLAYBOOK #09: MONTAŻ BLATU HPL (KRYTYCZNY! 3-4 godz.)
 
 **CEL:** Dociąć i zamontować wodoodporny blat kompaktowy bez pęknięć.
@@ -70,7 +71,7 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Wnieś do pomieszczenia klienta
    ☐ Połóż poziomo na szafkach dolnych (już ustawionych!)
    ☐ Odczekaj 30 minut do temp. pokojowej 18-25°C
-   
+
 ⚠️ DLACZEGO? Zimny blat jest bardziej kruchy - może pęknąć przy cięciu!
 ```
 
@@ -84,7 +85,7 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Dodaj występ z przodu: +3-4 cm (standard)
    ☐ Dodaj zapas z tyłu: +0,5 cm (zabezpieczenie przy ścianie)
    ☐ PRZYKŁAD: Szafki 250cm + występ 4cm + tył 0,5cm = 254,5 cm
-   
+
 ☐ Pomiar GŁĘBOKOŚCI blatu:
    ☐ Standardowa głębokość: 60 cm (szafki 60cm)
    ☐ Jeśli szafki płytsze (np. 55cm bo rury): dostosuj!
@@ -144,14 +145,14 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Otwórz instrukcję montażu zlewu (KONIECZNIE!)
    ☐ Sprawdź wymiary wycięcia (np. 480 x 350 mm)
    ☐ Sprawdź czy jest szablon kartonowy w opakowaniu zlewu
-   
+
 ☐ Wyznaczenie pozycji wycięcia:
-   
+
    🔴 ZASADA MINIMÓW (Instrukcja Egger):
    ☐ Min. 50mm od krawędzi bocznej blatu ← NIE MNIEJ!
    ☐ Min. 300mm od płyty indukcyjnej ← Jeśli w jednym blacie!
    ☐ Min. 300mm od złączenia blatów (jeśli narożnik)
-   
+
    ☐ PRZYKŁAD:
       Blat ma 60cm głębokości
       Zlew ma 50cm głębokości
@@ -165,9 +166,9 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Sprawdzenie czy wymiary się zgadzają (2 razy!)
 
 ☐ 🔴 WIERCENIE NAROŻNIKÓW (kluczowy krok!):
-   
+
    ⚠️ NIGDY NIE ZOSTAWIAJ OSTRYCH KĄTÓW 90°!
-   
+
    ☐ Wiertło 10mm → promień zaokrąglenia 5mm
    ☐ Wywierć otwór w KAŻDYM z 4 narożników prostokąta
    ☐ Otwór na WEWNĄTRZ linii (przy linii, nie na zewnątrz!)
@@ -175,13 +176,13 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Od strony SPODU blatu (dekorem w dół)
 
 ☐ Połączenie narożników:
-   
+
    METODA A - Frezarka (zalecane):
    ☐ Frez 6mm lub 8mm
    ☐ Prowadź frezarką wzdłuż linii między otworami
    ☐ Wolno, równomiernie
    ☐ Odkurzaj na bieżąco
-   
+
    METODA B - Zagłębiarka (dla doświadczonych):
    ☐ Tarcza HM do laminatów
    ☐ Szyna prowadząca (jeśli długi bok)
@@ -208,12 +209,12 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Sprawdź szablon (jeśli w komplecie)
 
 ☐ Wyznaczenie pozycji:
-   
+
    🔴 ZASADY MINIMÓW (Egger Rys. 47, 48, 49):
    ☐ Min. 300mm od zlewu
    ☐ Min. 300mm od ściany bocznej (szafka pionowa / krawędź blatu)
    ☐ Min. 300mm od złączenia blatów (narożnik)
-   
+
    ☐ PRZYKŁAD rozmieszczenia od lewej:
       [Ściana] - 30cm - [Zlew 50cm] - 30cm - [Płyta 60cm] - 30cm - [Ściana]
       = wymaga minimum 200cm szerokości blatu
@@ -235,14 +236,14 @@ INSTRUKCJE AGD (KONIECZNIE!):
    ☐ Gładkie krawędzie
 
 ☐ 🔴 ZABEZPIECZENIE TERMICZNE (KONIECZNIE!):
-   
+
    ⚠️ Instrukcja Egger ostrzega: Płyta NIE MOŻE spoczywać bezpośrednio na krawędzi cięcia HPL!
-   
+
    ☐ Naklejenie osłony termicznej samoprzylepnej:
       ☐ Od SPODU blatu wokół wycięcia
       ☐ Szerokość paska osłony: min. 5cm
       ☐ Ochrona przed wysoką temp. (150°C pod płytą!)
-   
+
    ☐ Montaż płyty indukcyjnej:
       ☐ Użyj fabrycznych wsporników mocujących (blaszki)
       ☐ Płyta wisi NA WSPORNIACH, nie leży na HPL!
@@ -428,7 +429,7 @@ INSTRUKCJE AGD (KONIECZNIE!):
       → Klej cyjanoakrylowy (Pattex sekundowy) + proszek
       → Oszlifować papierem 120
       → Ukryć pod zlewem/płytą (jeśli możliwe)
-   
+
    2. Jeśli duża szczelina / złamanie:
       → BRAK NAPRAWY - wymiana blatu konieczna
       → Zamów nowy blat (strata: ~500-700 zł)
@@ -460,6 +461,7 @@ INSTRUKCJE AGD (KONIECZNIE!):
 ---
 
 <a name="playbook-10"></a>
+
 ## 🧊 PLAYBOOK #10: MONTAŻ AGD - LODÓWKA W ZABUDOWIE
 
 **Źródło:** Bazuje na `SOP-vertical/08-Montaż-AGD.md` + rozszerzenie
@@ -468,11 +470,11 @@ INSTRUKCJE AGD (KONIECZNIE!):
 
 ### 🔴 ZASADY FUNDAMENTALNE
 
-```
-1. Lodówka MUSI oddychać - kratka wentylacyjna koniecznie!
-2. Fronty lodówki = zawiasy 155° (ZERO USKOKU!)
-3. Suwaki/zawieszki montuj ROZEBRANE (nie na gotowo)
-4. Test "na sucho" PRZED finalnym montażem
+**Prawda**: W 2026 roku w kuchniach premium odchodzi się od systemu suwakowego (jest awaryjny, skrzypi i wyrabia MDF). Stosuje się system Door-on-Door (Montaż na sztywno).
+
+W systemie na sztywno **NIE UŻYWASZ ŻADNYCH ZAWIASÓW MEBLOWYCH (Blum) do frontu lodówki**! Front meblowy przykręcasz na sztywno bezpośrednio do drzwi lodówki za pomocą specjalnych, potężnych zawiasów, które są już fabrycznie wbudowane w lodówkę. Cały ciężar frontu MDF wisi na lodówce.
+Zadanie dla Ciebie: W Playbooku #02 (Pomiar) musisz dodać pytanie do klienta: "Czy lodówka ma montaż na sztywno (Door-on-Door) czy na suwaki?". Zawsze doradzaj na sztywno!
+
 ```
 
 ---
@@ -480,37 +482,39 @@ INSTRUKCJE AGD (KONIECZNIE!):
 ### 📏 KROK 1: Weryfikacja wymiarów (test "na sucho")
 
 ```
+
 ☐ Otwórz instrukcję lodówki (KONIECZNIE!):
-   ☐ Sprawdź RZECZYWISTE wymiary (nie katalogowe!)
-   ☐ Przykład: "Wysokość 177cm, szerokość 54cm, głębokość 55cm"
+☐ Sprawdź RZECZYWISTE wymiary (nie katalogowe!)
+☐ Przykład: "Wysokość 177cm, szerokość 54cm, głębokość 55cm"
 
 ☐ Problem: Osiadanie pod ciężarem
-   → Lodówka w kartoniku ma 177,5cm
-   → Po ustawieniu na nóżkach i załadowaniu = 176,8cm!
-   → Różnica 7mm to katastrofa jeśli fronty nie pasują!
+→ Lodówka w kartoniku ma 177,5cm
+→ Po ustawieniu na nóżkach i załadowaniu = 176,8cm!
+→ Różnica 7mm to katastrofa jeśli fronty nie pasują!
 
 ☐ TEST "NA SUCHO" (przed przykręceniem frontów!):
-   
-   1. Wsuń lodówkę do słupka (bez frontów meblowych)
-   2. Zmierz odległość od podłogi do szparybetween górne/dolne drzwi lodówki:
-      ☐ Zmierzona wysokość fugi lodówki: ____ mm (np. 1182 mm)
-   
-   3. Zmierz gdzie będzie fuga między Twoimi frontami MDF:
-      ☐ Planowana fuga frontów: ____ mm (np. 1185 mm)
-   
-   4. PORÓWNAJ:
-      ☐ Czy różnica <3mm? → OK, możesz montować
-      ☐ Czy różnica >5mm? → PROBLEM!
+
+1. Wsuń lodówkę do słupka (bez frontów meblowych)
+2. Zmierz odległość od podłogi do szparybetween górne/dolne drzwi lodówki:
+   ☐ Zmierzona wysokość fugi lodówki: \_\_\_\_ mm (np. 1182 mm)
+
+3. Zmierz gdzie będzie fuga między Twoimi frontami MDF:
+   ☐ Planowana fuga frontów: \_\_\_\_ mm (np. 1185 mm)
+
+4. PORÓWNAJ:
+   ☐ Czy różnica <3mm? → OK, możesz montować
+   ☐ Czy różnica >5mm? → PROBLEM!
 
 ☐ Jeśli fronty nie pasują do fugi lodówki:
-   
-   ROZWIĄZANIE: Podłóż lodówkę formatkami!
-   ☐ Wysuń lodówkę
-   ☐ Przytnij kawałki HDF/OSB/płyty 18mm na wymiar dna słupka
-   ☐ Połóż formatki na dno
-   ☐ Wsuń lodówkę ponownie
-   ☐ Sprawdź czy teraz fugi się zgadzają (test 2)
-   ☐ Reguluj dokładnie (1-2mm ma znaczenie!)
+
+ROZWIĄZANIE: Podłóż lodówkę formatkami!
+☐ Wysuń lodówkę
+☐ Przytnij kawałki HDF/OSB/płyty 18mm na wymiar dna słupka
+☐ Połóż formatki na dno
+☐ Wsuń lodówkę ponownie
+☐ Sprawdź czy teraz fugi się zgadzają (test 2)
+☐ Reguluj dokładnie (1-2mm ma znaczenie!)
+
 ```
 
 ---
@@ -518,29 +522,31 @@ INSTRUKCJE AGD (KONIECZNIE!):
 ### 🔩 KROK 2: Usztywnianie słupka lodówkowego
 
 ```
+
 Problem: Słupek bez pleców + ciężka lodówka = "galareta"
 
 ☐ Montaż szafki przed wsunięciem lodówki:
-   ☐ Słupek złożony (z Playbook #08)
-   ☐ Ustawiony w linii szafek dolnych
-   ☐ JESZCZE NIE przykręcony na sztywno do sąsiedniej szafki
+☐ Słupek złożony (z Playbook #08)
+☐ Ustawiony w linii szafek dolnych
+☐ JESZCZE NIE przykręcony na sztywno do sąsiedniej szafki
 
 ☐ Wsuń lodówkę do słupka:
-   ☐ Powoli (2 osoby!)
-   ☐ Sprawdź czy kabel zasilający nie jest przygnieciony
+☐ Powoli (2 osoby!)
+☐ Sprawdź czy kabel zasilający nie jest przygnieciony
 
 ☐ Przykręcenie słupka do sąsiednich szafek:
-   
-   ZŁOTA ZASADA: Wkręcaj stopniowo!
-   
-   ☐ Wkręć JEDEN wkręt łączący (góra lub dół)
-   ☐ Sprawdź poziomica laserem: czy słupek odzyskał pion?
-   ☐ Jeśli TAK: dołóż kolejne 2-3 wkręty
-   ☐ Jeśli NIE: wykręć, skoryguj ustawienie, wkręć ponownie
-   
-   ☐ Ukrycie wkrętów:
-      ☐ Pod prowadnikiem zawiasu (nie widać!)
-      ☐ Pod krawędzią uchwytu (przykryje)
+
+ZŁOTA ZASADA: Wkręcaj stopniowo!
+
+☐ Wkręć JEDEN wkręt łączący (góra lub dół)
+☐ Sprawdź poziomica laserem: czy słupek odzyskał pion?
+☐ Jeśli TAK: dołóż kolejne 2-3 wkręty
+☐ Jeśli NIE: wykręć, skoryguj ustawienie, wkręć ponownie
+
+☐ Ukrycie wkrętów:
+☐ Pod prowadnikiem zawiasu (nie widać!)
+☐ Pod krawędzią uchwytu (przykryje)
+
 ```
 
 ---
@@ -548,6 +554,7 @@ Problem: Słupek bez pleców + ciężka lodówka = "galareta"
 ### 🚪 KROK 3: Montaż zawiasów 155° (ZERO USKOKU!)
 
 ```
+
 🔴 DLACZEGO NIE ZWYKŁE 110°?
 
 Zwykły zawias Blum Clip Top 110°:
@@ -559,19 +566,20 @@ Zawias Blum 155°:
 → Omija korpus lodówki → bezkolizyjne
 
 ☐ Zakup zawiasów:
-   ☐ Blum 155° (kod: 79B9550) - INNY niż standardowe!
-   ☐ Ilość: zwykle 4 szt (2 na drzwi górne + 2 na dolne)
+☐ Blum 155° (kod: 79B9550) - INNY niż standardowe!
+☐ Ilość: zwykle 4 szt (2 na drzwi górne + 2 na dolne)
 
 ☐ Montaż zawiasów do frontów:
-   ☐ Nawierty z CNC (35mm średnica, 12mm głębokość)
-   ☐ Jeśli brak: wywierć Forstnerem 35mm (OSTROŻNIE na PET!)
-   ☐ Przykręć zawiasy do frontów (śruby z kompletu)
-   ☐ Sprawdź mocowanie (czy nie luzują)
+☐ Nawierty z CNC (35mm średnica, 12mm głębokość)
+☐ Jeśli brak: wywierć Forstnerem 35mm (OSTROŻNIE na PET!)
+☐ Przykręć zawiasy do frontów (śruby z kompletu)
+☐ Sprawdź mocowanie (czy nie luzują)
 
 ☐ Montaż blaszek zawiasów do korpusu słupka:
-   ☐ Nawierty z CNC (jeśli zlecałeś)
-   ☐ Przykręć blaszki do boków korpusu
-   ☐ Wysokość: wg projektu Corpus (sprawdź!)
+☐ Nawierty z CNC (jeśli zlecałeś)
+☐ Przykręć blaszki do boków korpusu
+☐ Wysokość: wg projektu Corpus (sprawdź!)
+
 ```
 
 ---
@@ -579,28 +587,30 @@ Zawias Blum 155°:
 ### 🔗 KROK 4: Montaż suwaków/zawieszek łączących (precyzja!)
 
 ```
+
 Problem: Próba przykręcenia zmontowanego suwaka pod kątem = wyrobienie gwintu w MDF!
 
 ROZWIĄZANIE: Rozbierz suwak na części PRZED montażem!
 
 ☐ Suwak/zawieszka (np. do lodówki Bosch/Siemens):
-   ☐ Rozłóż na części: baza + szyna ruchoma
+☐ Rozłóż na części: baza + szyna ruchoma
 
 ☐ Montaż bazy do frontu MDF:
-   ☐ Przyłóż bazę do frontu (środek wysokości drzwi lodówki)
-   ☐ Zaznacz pozycję ołówkiem
-   ☐ Wkręć śruby PROSTOPADLE (bardzo ważne!)
-   ☐ Sprawdź czy baza mocno trzyma
+☐ Przyłóż bazę do frontu (środek wysokości drzwi lodówki)
+☐ Zaznacz pozycję ołówkiem
+☐ Wkręć śruby PROSTOPADLE (bardzo ważne!)
+☐ Sprawdź czy baza mocno trzyma
 
 ☐ Montaż szyny ruchomej do drzwi lodówki:
-   ☐ Nasuń szynę na bazę (już przykręconą do frontu)
-   ☐ Przykręć szynę do drzwi lodówki (śruby z kompletu)
-   ☐ Reguluj ustawienie: góra/dół, lewo/prawo
+☐ Nasuń szynę na bazę (już przykręconą do frontu)
+☐ Przykręć szynę do drzwi lodówki (śruby z kompletu)
+☐ Reguluj ustawienie: góra/dół, lewo/prawo
 
 ☐ Test:
-   ☐ Otwórz front meblowy → czy drzwi lodówki idą razem z nim?
-   ☐ Zamknij → czy front wraca i domyka lodówkę?
-   ☐ Reguluj dokręcając/poluzowując śruby na szynie
+☐ Otwórz front meblowy → czy drzwi lodówki idą razem z nim?
+☐ Zamknij → czy front wraca i domyka lodówkę?
+☐ Reguluj dokręcając/poluzowując śruby na szynie
+
 ```
 
 ---
@@ -608,32 +618,34 @@ ROZWIĄZANIE: Rozbierz suwak na części PRZED montażem!
 ### 💨 KROK 5: Wentylacja (KRYTYCZNE - uratuje lodówkę!)
 
 ```
+
 🔴 BEZ WENTYLACJI LODÓWKA SPALI SIĘ PO ROKU!
 
 Lodówka w zabudowie = ciepło musi uciekać!
 
 ☐ Kratka wentylacyjna w COKOLE (dół słupka):
-   
-   ☐ Wymiary: min. 200 cm² przekroju
-   ☐ Standardowa kratka: 60cm x 10cm = 600 cm² ✓
-   
-   ☐ Montaż:
-      ☐ Wytnij otwór w cokole (frezarka/wyrzynarka)
-      ☐ Wsadź kratkę (zazwyczaj wpinana na zatrzaski)
-      ☐ Sprawdź czy powietrze swobodnie przepływa
+
+☐ Wymiary: min. 200 cm² przekroju
+☐ Standardowa kratka: 60cm x 10cm = 600 cm² ✓
+
+☐ Montaż:
+☐ Wytnij otwór w cokole (frezarka/wyrzynarka)
+☐ Wsadź kratkę (zazwyczaj wpinana na zatrzaski)
+☐ Sprawdź czy powietrze swobodnie przepływa
 
 ☐ Ujście ciepłego powietrza GÓRA słupka:
-   
-   Opcja A: Szczelina między sufitem szafki a sufitem pomieszczenia
-   ☐ Min. 3cm wolnej przestrzeni ✓
-   
-   Opcja B: Kratka w górnej półce słupka (jeśli zabudowa do sufitu)
-   ☐ Wytnij otwór w półce (10x60 cm)
-   ☐ Załóż kratkę
+
+Opcja A: Szczelina między sufitem szafki a sufitem pomieszczenia
+☐ Min. 3cm wolnej przestrzeni ✓
+
+Opcja B: Kratka w górnej półce słupka (jeśli zabudowa do sufitu)
+☐ Wytnij otwór w półce (10x60 cm)
+☐ Załóż kratkę
 
 ☐ Przestrzeń Z TYŁU lodówki:
-   ☐ Min. 5cm od ściany
-   ☐ Sprawdź czy lodówka nie dotyka tylnej ścianki szafki!
+☐ Min. 5cm od ściany
+☐ Sprawdź czy lodówka nie dotyka tylnej ścianki szafki!
+
 ```
 
 ---
@@ -641,20 +653,22 @@ Lodówka w zabudowie = ciepło musi uciekać!
 ### ⚡ KROK 6: Zasilanie elektryczne
 
 ```
+
 ☐ Gniazdko:
-   ☐ Powinno być w SZAFCE OBOK (nie w słupku lodówkowym!)
-   ☐ Najlepiej: nad piekarnikiem lub w szafce zlewowej
-   ☐ Wysokość: 100-120cm od podłogi (wygodny dostęp)
+☐ Powinno być w SZAFCE OBOK (nie w słupku lodówkowym!)
+☐ Najlepiej: nad piekarnikiem lub w szafce zlewowej
+☐ Wysokość: 100-120cm od podłogi (wygodny dostęp)
 
 ☐ Kabel lodówki:
-   ☐ Wyprowadź przez otwór w boku słupka (CNC powinno zrobić)
-   ☐ Jeśli brak: wywierć otwór 50mm
-   ☐ Podłącz do gniazdka
-   ☐ Sprawdź czy kabel nie jest przytrzaśnięty pod nóżkami!
+☐ Wyprowadź przez otwór w boku słupka (CNC powinno zrobić)
+☐ Jeśli brak: wywierć otwór 50mm
+☐ Podłącz do gniazdka
+☐ Sprawdź czy kabel nie jest przytrzaśnięty pod nóżkami!
 
 ☐ Test:
-   ☐ Włącz lodówkę → czy dioda świeci?
-   ☐ Odczekaj 10 min → czy słychać pracę kompresora?
+☐ Włącz lodówkę → czy dioda świeci?
+☐ Odczekaj 10 min → czy słychać pracę kompresora?
+
 ```
 
 ---
@@ -662,20 +676,22 @@ Lodówka w zabudowie = ciepło musi uciekać!
 ### ✅ KROK 7: Finalne regulacje i test
 
 ```
+
 ☐ Regulacja frontów:
-   ☐ Fuga między góra/dół: 3mm (równo!)
-   ☐ Fuga z sąsiednimi szafkami: 3mm
-   ☐ Głębokość: fronty w jednej linii z resztą kuchni
+☐ Fuga między góra/dół: 3mm (równo!)
+☐ Fuga z sąsiednimi szafkami: 3mm
+☐ Głębokość: fronty w jednej linii z resztą kuchni
 
 ☐ Test działania:
-   ☐ Otwórz górny front → drzwi chłodziarki otwierają się razem?
-   ☐ Otwórz dolny front → drzwi zamrażarki otwierają się razem?
-   ☐ Zamknij → czy fronty domykają drzwi lodówki (słychać klik)?
-   ☐ Czy fronty nie zahaczają o korpus słupka? (test wielokrotny!)
+☐ Otwórz górny front → drzwi chłodziarki otwierają się razem?
+☐ Otwórz dolny front → drzwi zamrażarki otwierają się razem?
+☐ Zamknij → czy fronty domykają drzwi lodówki (słychać klik)?
+☐ Czy fronty nie zahaczają o korpus słupka? (test wielokrotny!)
 
 ☐ Sprawdzenie wentylacji:
-   ☐ Włóż rękę pod kratkę w cokole → czy czujesz ruch powietrza?
-   ☐ Odczekaj 30 min pracy lodówki → czy nie ma przegrzania?
+☐ Włóż rękę pod kratkę w cokole → czy czujesz ruch powietrza?
+☐ Odczekaj 30 min pracy lodówki → czy nie ma przegrzania?
+
 ```
 
 ---
@@ -683,13 +699,15 @@ Lodówka w zabudowie = ciepło musi uciekać!
 ### 📸 KROK 8: Edukacja klienta
 
 ```
+
 ☐ Pokazać klientowi:
-   ☐ Gdzie jest kratka wentylacyjna (NIE ZASŁANIAĆ!)
-   ☐ Gdzie jest gniazdko zasilające
-   ☐ Jak regulować temperaturę w lodówce
-   ☐ Żeby nie przepełniać lodówki (blokuje wentylację wewnętrzną)
+☐ Gdzie jest kratka wentylacyjna (NIE ZASŁANIAĆ!)
+☐ Gdzie jest gniazdko zasilające
+☐ Jak regulować temperaturę w lodówce
+☐ Żeby nie przepełniać lodówki (blokuje wentylację wewnętrzną)
 
 ☐ Zostawić instrukcję lodówki!
+
 ```
 
 ---
@@ -702,37 +720,32 @@ Lodówka w zabudowie = ciepło musi uciekać!
 ### 🔴 KLUCZOWA ZASADA
 
 ```
+
 ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 
-❌ ZŁE: Zwykłe zawiasy meblowe
-   → Front przymocowany sztywno do drzwi zmywarki
-   → Przy otwieraniu: cały ciężar frontu obciąża zawias zmywarki
-   → Zawias pęka po 3 miesiącach!
+Weryfikacja modelu zmywarki przed zakupem
+Klient MUSI kupić zmywarkę z fabrycznie wbudowanym systemem ślizgowym (np. w Bosch/Siemens nazywa się to VarioHinge / Zawiasy Vario, w Electrolux PerfectFit). Wtedy front przykręcasz bezpośrednio do mechanizmu zmywarki, a on sam "ślizga się" do góry przy otwieraniu, omijając cokół. Jeśli klient kupi zwykłą zmywarkę, będziesz musiał wycinać dziurę w cokole!
 
-✅ DOBRE: Zawiasy ślizgowe (sliding hinges)
-   → Front przymocowany do wysuwającej się szyny
-   → Przy otwieraniu: ciężar frontu przejmuje szyna
-   → Zawias zmywarki lekko pracuje = trwa latami
 ```
-
-**Źródło:** https://www.tiktok.com/@agdprestige/video/7440929987374386454
 
 ---
 
 ### 🔩 KROK 1: Przygotowanie zawiasów ślizgowych
 
 ```
+
 ☐ Zakup zestawu:
-   ☐ Nazwa: "Zawiasy ślizgowe do zmywarki" / "Sliding door kit"
-   ☐ Dostawca: Meblight.pl, Viyar.pl
-   ☐ Cena: ~50-80 zł komplet
-   ☐ W zestawie: 2 szyny + mocowania + śruby
+☐ Nazwa: "Zawiasy ślizgowe do zmywarki" / "Sliding door kit"
+☐ Dostawca: Meblight.pl, Viyar.pl
+☐ Cena: ~50-80 zł komplet
+☐ W zestawie: 2 szyny + mocowania + śruby
 
 ☐ Zawartość zestawu sprawdź:
-   ☐ Szyna lewa + prawa (para!)
-   ☐ Linkidocczące do drzwi zmywarki
-   ☐ Blaszki mocujące do frontu
-   ☐ Śruby
+☐ Szyna lewa + prawa (para!)
+☐ Linkidocczące do drzwi zmywarki
+☐ Blaszki mocujące do frontu
+☐ Śruby
+
 ```
 
 ---
@@ -740,17 +753,19 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🚪 KROK 2: Montaż zawiasów do frontu MDF
 
 ```
+
 ☐ Front zmywarki:
-   ☐ Szerokość: 60cm lub 45cm (wg modelu zmywarki)
-   ☐ Wysokość: taka jak pozostałe szafki dolne (np. 72cm)
+☐ Szerokość: 60cm lub 45cm (wg modelu zmywarki)
+☐ Wysokość: taka jak pozostałe szafki dolne (np. 72cm)
 
 ☐ Montaż blaszek zawiasów do frontu:
-   ☐ Odwróć front spodem do góry
-   ☐ Przyłóż blaszki zawiasów (lewo + prawo)
-   ☐ Pozycja: ~15cm od góry frontu
-   ☐ Zaznacz ołówkiem
-   ☐ Przykręć śrubami (z kompletu)
-   ☐ Sprawdź mocowanie (czy nie luzują)
+☐ Odwróć front spodem do góry
+☐ Przyłóż blaszki zawiasów (lewo + prawo)
+☐ Pozycja: ~15cm od góry frontu
+☐ Zaznacz ołówkiem
+☐ Przykręć śrubami (z kompletu)
+☐ Sprawdź mocowanie (czy nie luzują)
+
 ```
 
 ---
@@ -758,16 +773,18 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🔗 KROK 3: Montaż szyn ślizgowych do zmywarki
 
 ```
+
 ☐ Wysuń kosz zmywarki (całkowicie!)
 ☐ Znajdź punkty montażowe szyn:
-   ☐ Zwykle po bokach drzwi zmywarki (góra)
-   ☐ Sprawdź instrukcję zmywarki (czasem są specjalne otwory)
+☐ Zwykle po bokach drzwi zmywarki (góra)
+☐ Sprawdź instrukcję zmywarki (czasem są specjalne otwory)
 
 ☐ Przykręć szyny ślizgowe:
-   ☐ Lewa szyna do lewego boku drzwi
-   ☐ Prawa szyna do prawego boku
-   ☐ Śruby z kompletu
-   ☐ Upewnij się że szyny są w poziomie!
+☐ Lewa szyna do lewego boku drzwi
+☐ Prawa szyna do prawego boku
+☐ Śruby z kompletu
+☐ Upewnij się że szyny są w poziomie!
+
 ```
 
 ---
@@ -775,24 +792,26 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🔌 KROK 4: Instalacje (woda, prąd)
 
 ```
+
 ☐ Sprawdź przed wsunięciem zmywarki:
-   ☐ Zawór wody: Czy jest i czy odkręcony?
-   ☐ Odpływ: Czy syfon ma wolne wyjście na zmywarkę?
-   ☐ Gniazdko: Czy jest w szafce obok lub za zmywarką?
+☐ Zawór wody: Czy jest i czy odkręcony?
+☐ Odpływ: Czy syfon ma wolne wyjście na zmywarkę?
+☐ Gniazdko: Czy jest w szafce obok lub za zmywarką?
 
 ☐ Wsuń zmywarkę do szafki:
-   ☐ Wolno (uważaj na kabel i wąż!)
-   ☐ Pozostaw ~2cm luzu z przodu (na regulację)
+☐ Wolno (uważaj na kabel i wąż!)
+☐ Pozostaw ~2cm luzu z przodu (na regulację)
 
 ☐ Podłączenia:
-   ☐ Wąż wody do zaworu (dokręć ręcznie + klucz lekko)
-   ☐ Wąż odpływowy do syfona (zabezpiecz opaską zaciskową)
-   ☐ Kabel zasilający do gniazdka
+☐ Wąż wody do zaworu (dokręć ręcznie + klucz lekko)
+☐ Wąż odpływowy do syfona (zabezpiecz opaską zaciskową)
+☐ Kabel zasilający do gniazdka
 
 ☐ Test szczelności:
-   ☐ Odkręć zawór wody
-   ☐ Uruchom zmywarkę (krótki program)
-   ☐ Sprawdź czy pod zmywarką nie cieknie woda!
+☐ Odkręć zawór wody
+☐ Uruchom zmywarkę (krótki program)
+☐ Sprawdź czy pod zmywarką nie cieknie woda!
+
 ```
 
 ---
@@ -800,18 +819,20 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🛡️ KROK 5: Ochrona nad zmywarką (KONIECZNIE!)
 
 ```
+
 🔴 PARA Z ZMYWARKI = WRÓG #1 BLATÓW!
 
 ☐ Listwa aluminiowa ochronna:
-   ☐ Szerokość: 60cm (szerokość zmywarki)
-   ☐ Przykręć DO SPODU blatu nad zmywarką
-   ☐ Pozycja: bezpośrednio nad szczeliną między zmywarką a blatem
-   ☐ Funkcja: odbija parę wodną (nie wnika w blat HPL!)
+☐ Szerokość: 60cm (szerokość zmywarki)
+☐ Przykręć DO SPODU blatu nad zmywarką
+☐ Pozycja: bezpośrednio nad szczeliną między zmywarką a blatem
+☐ Funkcja: odbija parę wodną (nie wnika w blat HPL!)
 
 ☐ Sprawdź szczelność:
-   ☐ Uruchom zmywarkę na max temp
-   ☐ Po 10 min otwórz szufladę zmywarki lekko
-   ☐ Sprawdź czy para nie ucieka do góry (powinna wychodzić z przodu)
+☐ Uruchom zmywarkę na max temp
+☐ Po 10 min otwórz szufladę zmywarki lekko
+☐ Sprawdź czy para nie ucieka do góry (powinna wychodzić z przodu)
+
 ```
 
 ---
@@ -819,23 +840,25 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🔗 KROK 6: Połączenie frontu z drzwiami zmywarki
 
 ```
+
 ☐ Przyłóż front do drzwi zmywarki:
-   ☐ Wyrównaj do linii z sąsiednimi frontami
-   ☐ Fuga 3mm po bokach
+☐ Wyrównaj do linii z sąsiednimi frontami
+☐ Fuga 3mm po bokach
 
 ☐ Połącz szyny ślizgowe z blaaszkami na froncie:
-   ☐ Zasuń szyny w blaszki (klik!)
-   ☐ Dokręć śruby regulacyjne
+☐ Zasuń szyny w blaszki (klik!)
+☐ Dokręć śruby regulacyjne
 
 ☐ Regulacja:
-   ☐ Góra-dół: śruby pionowe na blaszach
-   ☐ Lewo-prawo: śruby poziome
-   ☐ Cel: fuga równa 3mm dookoła
+☐ Góra-dół: śruby pionowe na blaszach
+☐ Lewo-prawo: śruby poziome
+☐ Cel: fuga równa 3mm dookoła
 
 ☐ Test:
-   ☐ Otwórz zmywarkę → front przesuwa się płynnie na szynach?
-   ☐ Zamknij → front wraca i domyka drzwi?
-   ☐ Czy front nie zahacza o blat?
+☐ Otwórz zmywarkę → front przesuwa się płynnie na szynach?
+☐ Zamknij → front wraca i domyka drzwi?
+☐ Czy front nie zahacza o blat?
+
 ```
 
 ---
@@ -843,12 +866,14 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### ✅ KROK 7: Finalne sprawdzenie
 
 ```
+
 ☐ Test wielokrotny otwarcie/zamknięcie (20x)
 ☐ Sprawdź czy śruby zawiasów nie luzują
 ☐ Sprawdź szczelność wody (pod zmywarką)
 ☐ Edukacja klienta:
-   ☐ Jak otwierać zmywarkę (delikatnie, nie szarpać!)
-   ☐ Gdzie jest zawór wody (wyłączyć przy wyjeździe)
+☐ Jak otwierać zmywarkę (delikatnie, nie szarpać!)
+☐ Gdzie jest zawór wody (wyłączyć przy wyjeździe)
+
 ```
 
 ---
@@ -861,29 +886,31 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🧹 KROK 1: Finalne sprzątanie (1h)
 
 ```
+
 ☐ Odkurzenie:
-   ☐ Wnętrza WSZYSTKICH szafek (góra + dół)
-   ☐ Szuflady (wewnątrz i pod prowadnicami)
-   ☐ Cokół (pod szafkami dolnymi)
-   ☐ Podłoga wokół kuchni
+☐ Wnętrza WSZYSTKICH szafek (góra + dół)
+☐ Szuflady (wewnątrz i pod prowadnicami)
+☐ Cokół (pod szafkami dolnymi)
+☐ Podłoga wokół kuchni
 
 ☐ Przetarcie frontów PET:
-   ☐ Ściereczka mikrofibrowa + woda (BEZ chemii!)
-   ☐ Delikatnie (PET nie lubi agresywnego tarcia)
-   ☐ Wypoleruj do połysku
+☐ Ściereczka mikrofibrowa + woda (BEZ chemii!)
+☐ Delikatnie (PET nie lubi agresywnego tarcia)
+☐ Wypoleruj do połysku
 
 ☐ Czyszczenie blatu HPL:
-   ☐ Mikrofiber + woda + kropla płynu do naczyń
-   ☐ Wysusz do sucha (bez smug)
+☐ Mikrofiber + woda + kropla płynu do naczyń
+☐ Wysusz do sucha (bez smug)
 
 ☐ Szyby (jeśli witryny):
-   ☐ Płyn do szyb (Mr. Muscle)
-   ☐ Gazeta (najlepiej wyciera bez smug!)
+☐ Płyn do szyb (Mr. Muscle)
+☐ Gazeta (najlepiej wyciera bez smug!)
 
 ☐ Wyniesienie śmieci:
-   ☐ Worki z odpadami (trociny, kartony)
-   ☐ Pozostałości folii, opakowań
-   ☐ Zostawienie miejsca CZYSTEGO!
+☐ Worki z odpadami (trociny, kartony)
+☐ Pozostałości folii, opakowań
+☐ Zostawienie miejsca CZYSTEGO!
+
 ```
 
 ---
@@ -893,42 +920,44 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 #### Checklist przed odbiorem z klientem:
 
 ```
+
 ☐ KORPUSY:
-   ☐ Wszystkie szafki stabilne (nie chwieje się)
-   ☐ Poziom dolnych i górnych OK (laser)
-   ☐ Plecy wpuszczone (nie odpadają)
+☐ Wszystkie szafki stabilne (nie chwieje się)
+☐ Poziom dolnych i górnych OK (laser)
+☐ Plecy wpuszczone (nie odpadają)
 
 ☐ FRONTY:
-   ☐ Fugi równe 3mm (sprawdź w 10 miejscach!)
-   ☐ Fronty w jednej linii (głębokość)
-   ☐ Zawiasy dobrze regulowane
+☐ Fugi równe 3mm (sprawdź w 10 miejscach!)
+☐ Fronty w jednej linii (głębokość)
+☐ Zawiasy dobrze regulowane
 
 ☐ SZUFLADY:
-   ☐ Każda szuflada wysuwa się i wsuwa płynnie
-   ☐ Ciche domykanie Blumotion działa
-   ☐ Szuflady nie zahaczają o siebie
+☐ Każda szuflada wysuwa się i wsuwa płynnie
+☐ Ciche domykanie Blumotion działa
+☐ Szuflady nie zahaczają o siebie
 
 ☐ BLAT HPL:
-   ☐ Blat dobrze przyklejony (nie chwieje się)
-   ☐ Zlew szczelny (test wodą - odkręć kurki!)
-   ☐ Płyta indukcyjna zamontowana (test - włącz!)
-   ☐ Panel ścienny dobrze przyklejony
+☐ Blat dobrze przyklejony (nie chwieje się)
+☐ Zlew szczelny (test wodą - odkręć kurki!)
+☐ Płyta indukcyjna zamontowana (test - włącz!)
+☐ Panel ścienny dobrze przyklejony
 
 ☐ AGD:
-   ☐ Lodówka włączona, wentylacja OK
-   ☐ Zmywarka testowana, szczelna
-   ☐ Piekarnik podłączony (jeśli w pakiecie)
-   ☐ Okap działa (test wyciągu)
+☐ Lodówka włączona, wentylacja OK
+☐ Zmywarka testowana, szczelna
+☐ Piekarnik podłączony (jeśli w pakiecie)
+☐ Okap działa (test wyciągu)
 
 ☐ OŚWIETLENIE LED:
-   ☐ Wszystkie taśmy świecą równomiernie
-   ☐ Włącznik działa
-   ☐ Kable ukryte (nie widać z zewnątrz)
+☐ Wszystkie taśmy świecą równomiernie
+☐ Włącznik działa
+☐ Kable ukryte (nie widać z zewnątrz)
 
 ☐ AKCESORIA OCHRONNE:
-   ☐ Listwa nad zmywarką przykręcona
-   ☐ Blaszki termiczne przy piekarniku
-   ☐ Mata aluminiowa pod zlewem
+☐ Listwa nad zmywarką przykręcona
+☐ Blaszki termiczne przy piekarniku
+☐ Mata aluminiowa pod zlewem
+
 ```
 
 ---
@@ -936,23 +965,25 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 📸 KROK 3: Sesja zdjęciowa (portfolio!)
 
 ```
+
 ☐ Przygotuj scenę:
-   ☐ Zapal oświetlenie LED
-   ☐ Otwórz jedną szufladę (pokazać wnętrze Blum)
-   ☐ Połóż dekoracje (jeśli klient ma: wazon, owoce)
+☐ Zapal oświetlenie LED
+☐ Otwórz jedną szufladę (pokazać wnętrze Blum)
+☐ Połóż dekoracje (jeśli klient ma: wazon, owoce)
 
 ☐ Zdjęcia obowiązkowe:
-   ☐ Widok ogólny - cała kuchnia (3-4 kąty)
-   ☐ Zbliżenie frontów (tekstura PET)
-   ☐ Blat + panel ścienny (detal)
-   ☐ Otwarta szuflada Blum Antaro (okucia premium!)
-   ☐ Lodówka z otwartym frontem (zabudowa)
-   ☐ LED świecące w nocy (efekt wow!)
+☐ Widok ogólny - cała kuchnia (3-4 kąty)
+☐ Zbliżenie frontów (tekstura PET)
+☐ Blat + panel ścienny (detal)
+☐ Otwarta szuflada Blum Antaro (okucia premium!)
+☐ Lodówka z otwartym frontem (zabudowa)
+☐ LED świecące w nocy (efekt wow!)
 
 ☐ Wideo panoramiczne (30 sek):
-   ☐ Telefon w poziomie
-   ☐ Wolny ruch od lewej do prawej
-   ☐ Do Instagrama / TikToka
+☐ Telefon w poziomie
+☐ Wolny ruch od lewej do prawej
+☐ Do Instagrama / TikToka
+
 ```
 
 ---
@@ -962,39 +993,41 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 #### Siedź z klientem, przejdźcie przez kuchnię razem:
 
 ```
+
 ☐ FRONTY PET (PerfectSense):
-   ☐ Wydrukuj: "Zalecenia pielęgnacji Egger" (PDF z ich strony)
-   ☐ Daj klientowi do podpisu (otrzymał instrukcję!)
-   
-   Kluczowe zasady:
-   ☐ Myć TYLKO miękką ściereczką + woda + mydło
-   ☐ NIE używać mleczek typu Cif (mikrogranulki rysują!)
-   ☐ NIE używać gąbek szorujących (niszczy powłokę AF)
-   ☐ NIE używać acetonu / rozpuszczalników
+☐ Wydrukuj: "Zalecenia pielęgnacji Egger" (PDF z ich strony)
+☐ Daj klientowi do podpisu (otrzymał instrukcję!)
+
+Kluczowe zasady:
+☐ Myć TYLKO miękką ściereczką + woda + mydło
+☐ NIE używać mleczek typu Cif (mikrogranulki rysują!)
+☐ NIE używać gąbek szorujących (niszczy powłokę AF)
+☐ NIE używać acetonu / rozpuszczalników
 
 ☐ BLAT HPL:
-   ☐ Wydrukuj: "Instrukcja użytkowania blatów HPL"
-   
-   Kluczowe zasady:
-   ☐ NIE kroić nożem bezpośrednio (używać deski!)
-   ☐ NIE stawiać gorących garnków prosto z kuchenki (podkładka!)
-   ☐ Rozlane płyny wycierać OD RAZU (mimo że wodoodporny)
-   ☐ Czyszczenie: mikrofibra + woda + płyn do naczyń
+☐ Wydrukuj: "Instrukcja użytkowania blatów HPL"
+
+Kluczowe zasady:
+☐ NIE kroić nożem bezpośrednio (używać deski!)
+☐ NIE stawiać gorących garnków prosto z kuchenki (podkładka!)
+☐ Rozlane płyny wycierać OD RAZU (mimo że wodoodporny)
+☐ Czyszczenie: mikrofibra + woda + płyn do naczyń
 
 ☐ OKUCIA BLUM:
-   ☐ Pokazać jak regulować zawiasy (jeśli kiedyś trzeba)
-   ☐ Pokazać jak wyjąć szufladę Antaro (przycisk po bokach)
-   ☐ Nie smarować! (Blumotion jest bezobsługowy)
+☐ Pokazać jak regulować zawiasy (jeśli kiedyś trzeba)
+☐ Pokazać jak wyjąć szufladę Antaro (przycisk po bokach)
+☐ Nie smarować! (Blumotion jest bezobsługowy)
 
 ☐ AGD:
-   ☐ Lodówka: gdzie jest gniazdko (wyłączyć przy wyjeździe)
-   ☐ Zmywarka: gdzie zawór wody (zamykać przy dłuższej nieobecności)
-   ☐ Płyta indukcyjna: jak działa zabezpieczenie (nie nagle rozgrzewać pustego garnka)
-   ☐ Piekarnik: pierwsza rozgrzewka (45 min pusta, przewietrz - zapach fabryczny)
+☐ Lodówka: gdzie jest gniazdko (wyłączyć przy wyjeździe)
+☐ Zmywarka: gdzie zawór wody (zamykać przy dłuższej nieobecności)
+☐ Płyta indukcyjna: jak działa zabezpieczenie (nie nagle rozgrzewać pustego garnka)
+☐ Piekarnik: pierwsza rozgrzewka (45 min pusta, przewietrz - zapach fabryczny)
 
 ☐ WENTYLACJA LODÓWKI:
-   ☐ Pokazać kratkę w cokole
-   ☐ NIE ZASŁANIAĆ! (klient czasem chce wstawić tam buty)
+☐ Pokazać kratkę w cokole
+☐ NIE ZASŁANIAĆ! (klient czasem chce wstawić tam buty)
+
 ```
 
 ---
@@ -1002,23 +1035,26 @@ ZMYWARKA MUSI MIEĆ ZAWIASY ŚLIZGOWE!
 ### 🔧 KROK 5: Karta gwarancyjna
 
 ```
+
 ☐ Wypełnij kartę gwarancyjną (przygotuj wzór wcześniej!):
 
 =================================================================
 KARTA GWARANCYJNA - ZABUDOWA KUCHENNA
 =================================================================
 
-Klient: _______________________ Data realizacji: ___________
-Adres: _____________________________________________________
+Klient: **********\_\_\_********** Data realizacji: ****\_\_\_****
+Adres: **************************\_**************************
 
 ZAKRES GWARANCJI:
 ☐ Montaż mebli: 24 miesiące
 ☐ Gwarancje producentów materiałów:
-   - Egger PET/HPL: 2 lata (zgodnie z kartą produktu)
-   - Blum okucia: gwarancja dożywotnia (www.blum.com)
-   - AGD: gwarancja producenta (karty w komplecie)
+
+- Egger PET/HPL: 2 lata (zgodnie z kartą produktu)
+- Blum okucia: gwarancja dożywotnia (www.blum.com)
+- AGD: gwarancja producenta (karty w komplecie)
 
 WYŁĄCZENIA Z GWARANCJI:
+
 - Uszkodzenia mechaniczne (uderzenia, zarysowania)
 - Niewłaściwa pielęgnacja (Cif, aceton, etc.)
 - Zatopienie (zalanie wodą szafek)
@@ -1026,14 +1062,15 @@ WYŁĄCZENIA Z GWARANCJI:
 
 KONTAKT SERWISOWY:
 [Twoje Imię Nazwisko]
-Tel: ______________
-Email: _____________
+Tel: ******\_\_******
+Email: ******\_******
 
-Podpis klienta: ________________ Data: ___________
-Podpis wykonawcy: ______________ Data: ___________
+Podpis klienta: ******\_\_\_\_****** Data: ****\_\_\_****
+Podpis wykonawcy: ******\_\_****** Data: ****\_\_\_****
 =================================================================
 
 ☐ Klient podpisuje (2 egzemplarze - jeden dla niego, jeden dla Ciebie)
+
 ```
 
 ---
@@ -1041,26 +1078,28 @@ Podpis wykonawcy: ______________ Data: ___________
 ### 💰 KROK 6: PŁATNOŚĆ KOŃCOWA 50%
 
 ```
+
 ☐ Przypomnienie:
-   "Panie [Nazwisko], pozostała kwota do zapłaty to [kwota] zł."
+"Panie [Nazwisko], pozostała kwota do zapłaty to [kwota] zł."
 
 ☐ Forma płatności:
-   ☐ Przelew tradycyjny:
-      → Podaj numer konta
-      → Wyślij SMS z potwierdzeniem kwoty
-   
-   ☐ BLIK / Przelewy24:
-      → Wygeneruj link do płatności
-      → Klient płaci z telefonu (od ręki!)
-   
-   ☐ Gotówka:
-      → Przelicz przy kliencie
-      → Wypisz POKWITOWANIE (też 2 egz.)
+☐ Przelew tradycyjny:
+→ Podaj numer konta
+→ Wyślij SMS z potwierdzeniem kwoty
+
+☐ BLIK / Przelewy24:
+→ Wygeneruj link do płatności
+→ Klient płaci z telefonu (od ręki!)
+
+☐ Gotówka:
+→ Przelicz przy kliencie
+→ Wypisz POKWITOWANIE (też 2 egz.)
 
 ☐ Wystawienie faktury:
-   ☐ Jeśli klient firmowy (B2B): faktura VAT
-   ☐ Jeśli klient prywatny (B2C): paragon fiskalny lub faktura na życzenie
-   ☐ Wysłanie faktury mailem (tego samego dnia!)
+☐ Jeśli klient firmowy (B2B): faktura VAT
+☐ Jeśli klient prywatny (B2C): paragon fiskalny lub faktura na życzenie
+☐ Wysłanie faktury mailem (tego samego dnia!)
+
 ```
 
 ---
@@ -1070,29 +1109,31 @@ Podpis wykonawcy: ______________ Data: ___________
 #### Najlepszy moment: Klient jest zachwycony, stoi w nowej kuchni!
 
 ```
+
 ☐ Rozmowa:
-   "Panie [Nazwisko], jeśli jest Pan zadowolony z kuchni, 
-   będę wdzięczny za krótką opinię. To bardzo pomaga mi zdobywać 
-   nowych klientów na osiedlu."
+"Panie [Nazwisko], jeśli jest Pan zadowolony z kuchni,
+będę wdzięczny za krótką opinię. To bardzo pomaga mi zdobywać
+nowych klientów na osiedlu."
 
 ☐ Google Maps (NAJWAŻNIEJSZE!):
-   ☐ Wyślij klientowi link SMS:
-      "Dziękuję za wspaniałą współpracę! Jeśli ma Pan chwilę,
-      proszę o opinię: [link Google Maps]. Pozdrawiam!"
-   
-   ☐ Jak uzyskać link:
-      → Google Moja Firma → "Udostępnij formularz opinii"
-      → Skopiuj krótki link (np. g.page/xyz/review)
+☐ Wyślij klientowi link SMS:
+"Dziękuję za wspaniałą współpracę! Jeśli ma Pan chwilę,
+proszę o opinię: [link Google Maps]. Pozdrawiam!"
+
+☐ Jak uzyskać link:
+→ Google Moja Firma → "Udostępnij formularz opinii"
+→ Skopiuj krótki link (np. g.page/xyz/review)
 
 ☐ Facebook - grupa osiedlowa:
-   "Jeśli nie ma Pan nic przeciwko, bardzo pomogłoby mi 
-   krótkie zdanie na grupie osiedlowej, żekuchnia się udała. 
-   Sąsiedzi często pytają o wykonawców."
-   
-   ☐ Klient wrzuca post + Twoje zdjęcia (za jego zgodą!)
+"Jeśli nie ma Pan nic przeciwko, bardzo pomogłoby mi
+krótkie zdanie na grupie osiedlowej, żekuchnia się udała.
+Sąsiedzi często pytają o wykonawców."
+
+☐ Klient wrzuca post + Twoje zdjęcia (za jego zgodą!)
 
 ☐ Wizytówki dla sąsiadów:
-   ☐ Zostaw 10 sztuk: "Jeśli któryś sąsiad zapyta, proszę polecić!"
+☐ Zostaw 10 sztuk: "Jeśli któryś sąsiad zapyta, proszę polecić!"
+
 ```
 
 ---
@@ -1100,17 +1141,19 @@ Podpis wykonawcy: ______________ Data: ___________
 ### 📁 KROK 8: Dokumentacja projektu (dla siebie)
 
 ```
+
 ☐ Zrób backup wszystkich plików:
-   📁 [Nazwisko_Osiedle_2026-04]/
-      ├─ 01_Pomiar/ (zdjęcia, formularz)
-      ├─ 02_Projekt/ (Corpus, wizualizacje)
-      ├─ 03_Wycena/ (oferta, umowa podpisana)
-      ├─ 04_Zamowienia/ (faktury CNC, okucia, LED)
-      ├─ 05_Realizacja/ (zdjęcia montażu, finalne zdjęcia)
-      └─ 06_Gwarancja/ (karta gwarancyjna, instrukcje dla klienta)
+📁 [Nazwisko_Osiedle_2026-04]/
+├─ 01_Pomiar/ (zdjęcia, formularz)
+├─ 02_Projekt/ (Corpus, wizualizacje)
+├─ 03_Wycena/ (oferta, umowa podpisana)
+├─ 04_Zamowienia/ (faktury CNC, okucia, LED)
+├─ 05_Realizacja/ (zdjęcia montażu, finalne zdjęcia)
+└─ 06_Gwarancja/ (karta gwarancyjna, instrukcje dla klienta)
 
 ☐ Upload do chmury (Google Drive / Dropbox)
 ☐ Skopiuj na dysk zewnętrzny (backup 2)
+
 ```
 
 ---
@@ -1120,34 +1163,38 @@ Podpis wykonawcy: ______________ Data: ___________
 #### Usiądź spokojnie, przeanalizuj co poszło dobrze i co źle:
 
 ```
+
 ☐ CZASOWO:
-   ☐ Czy zmieściłem się w 2 dni montażu? TAK ☐ / NIE ☐
-   ☐ Jeśli NIE - co mnie opóźniło? _______________________
-   ☐ Jak mogę przyspieszyć następnym razem? _____________
+☐ Czy zmieściłem się w 2 dni montażu? TAK ☐ / NIE ☐
+☐ Jeśli NIE - co mnie opóźniło? **********\_\_\_**********
+☐ Jak mogę przyspieszyć następnym razem? ******\_******
 
 ☐ BUDŻETOWO:
-   ☐ Czy zmieściłem się w kosztach? TAK ☐ / NIE ☐
-   ☐ Jakie były nieprzewidziane wydatki? ________________
-   ☐ Moja faktyczna marża: _______ zł (zaplanowana: _____ zł)
+☐ Czy zmieściłem się w kosztach? TAK ☐ / NIE ☐
+☐ Jakie były nieprzewidziane wydatki? ******\_\_\_\_******
+☐ Moja faktyczna marża: **\_\_\_** zł (zaplanowana: **\_** zł)
 
 ☐ JAKOŚCIOWO:
-   ☐ Czy klient był zadowolony? TAK ☐ / NIE ☐
-   ☐ Czy były jakieś reklamacje / uwagi? _________________
-   ☐ Co mogę poprawić w następnym projekcie? ____________
+☐ Czy klient był zadowolony? TAK ☐ / NIE ☐
+☐ Czy były jakieś reklamacje / uwagi? ********\_********
+☐ Co mogę poprawić w następnym projekcie? ****\_\_\_\_****
 
 ☐ MATERIAŁY:
-   ☐ Czy CNC dostarczyło bez błędów? TAK ☐ / NIE ☐
-   ☐ Czy okucia przyszły kompletne? TAK ☐ / NIE ☐
-   ☐ Czy trzeba zmienić dostawcę? _______________________
+☐ Czy CNC dostarczyło bez błędów? TAK ☐ / NIE ☐
+☐ Czy okucia przyszły kompletne? TAK ☐ / NIE ☐
+☐ Czy trzeba zmienić dostawcę? **********\_\_\_**********
 
 ☐ NARZĘDZIA:
-   ☐ Czy wszystko działało sprawnie? TAK ☐ / NIE ☐
-   ☐ Czy trzeba kupić/naprawić coś? _____________________
+☐ Czy wszystko działało sprawnie? TAK ☐ / NIE ☐
+☐ Czy trzeba kupić/naprawić coś? **********\_**********
 
 ☐ LEKCJE WYNIESIONE:
-   (Zapisz w notesie - to Twoja baza wiedzy!)
-   ___________________________________________________________
-   ___________________________________________________________
+(Zapisz w notesie - to Twoja baza wiedzy!)
+
+---
+
+---
+
 ```
 
 ---
@@ -1155,16 +1202,18 @@ Podpis wykonawcy: ______________ Data: ___________
 ### 🔄 KROK 10: Follow-up po 7 dniach
 
 ```
+
 ☐ Wyślij SMS:
-   "Dzień dobry Panie [Nazwisko]!
-   Tydzień temu zakończyliśmy montaż. Jak się sprawuje kuchnia?
-   Czy wszystko działa bez zarzutu?
-   Pozdrawiam, [Imię]"
+"Dzień dobry Panie [Nazwisko]!
+Tydzień temu zakończyliśmy montaż. Jak się sprawuje kuchnia?
+Czy wszystko działa bez zarzutu?
+Pozdrawiam, [Imię]"
 
 ☐ Reakcja klienta:
-   ☐ Wszystko OK → Dodaj do bazy zadowolonych klientów
-   ☐ Drobny problem → Umów wizytę serwisową (błyskawicznie!)
-   ☐ Poważny problem → Reakcja w 24h (gwarancja!)
+☐ Wszystko OK → Dodaj do bazy zadowolonych klientów
+☐ Drobny problem → Umów wizytę serwisową (błyskawicznie!)
+☐ Poważny problem → Reakcja w 24h (gwarancja!)
+
 ```
 
 ---
@@ -1172,6 +1221,7 @@ Podpis wykonawcy: ______________ Data: ___________
 ## 🎉 PROJEKT ZAKOŃCZONY!
 
 ```
+
 ✅ Kuchnia odebrana
 ✅ Klient zadowolony
 ✅ Płatność otrzymana
@@ -1180,6 +1230,7 @@ Podpis wykonawcy: ______________ Data: ___________
 ✅ Lekcje wyciągnięte
 
 → GOTOWY NA KOLEJNEGO KLIENTA! 🚀
+
 ```
 
 ---
@@ -1209,3 +1260,4 @@ Chcesz żebym:
 - Stworzył wersję PDF "Biblii Montażysty" do druku?
 - Dodał więcej diagramów/schematów?
 
+```
