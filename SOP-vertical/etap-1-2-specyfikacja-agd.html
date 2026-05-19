@@ -77,56 +77,52 @@
             <h1>ETAP 1.2: WYWIAD I SPECYFIKACJA AGD</h1>
             <p>
                 <em
-                    >Cel: Zamrożenie decyzji klienta. Koniec z "a może jednak inna lodówka".
-                    Projektujesz pod konkretne modele, opierając się na Kartach Technologicznych
-                    (Installation Manual).</em
+                    >Cel: Zamrożenie decyzji klienta. Projektujesz pod konkretne modele, opierając
+                    się na Kartach Technologicznych.</em
                 >
             </p>
 
-            <div class="warning-box" style="margin-bottom: 20px">
-                ⚠️ <strong>ZASADA ZERO:</strong> Nie zaczynasz projektowania (Etap 1.3), dopóki
-                klient nie poda Ci dokładnych modeli sprzętu AGD. Zmiana modelu w trakcie produkcji
-                to katastrofa.
+            <div
+                class="warning-box"
+                style="
+                    margin-bottom: 20px;
+                    background-color: #fadbd8;
+                    padding: 15px;
+                    border-left: 4px solid #e74c3c;
+                "
+            >
+                ⚠️ <strong>ZASADA ZERO:</strong> Nie zaczynasz projektowania, dopóki klient nie poda
+                Ci dokładnych modeli sprzętu AGD.
             </div>
 
             <div class="sop-section">
-                <h2>KARTA KONTROLNA AGD (Do wypełnienia przed projektem)</h2>
+                <h2>KARTA KONTROLNA AGD</h2>
 
                 <div class="agd-card">
-                    <h3>🧊 Lodówka (Zabudowa / Wolnostojąca)</h3>
+                    <h3>🧊 Lodówka (Zabudowa)</h3>
                     Model:
                     <input type="text" class="input-line" placeholder="np. Samsung BRB26602FWW" />
-                    <label
-                        ><input type="radio" name="lodowka_typ" value="zabudowa" /> Do
-                        zabudowy</label
-                    >
-                    <label style="margin-left: 15px"
-                        ><input type="radio" name="lodowka_typ" value="wolnostojaca" />
-                        Wolnostojąca</label
-                    >
-
-                    <div class="critical-check">
-                        <strong>Krytyczne punkty z instrukcji:</strong><br />
-                        <label
-                            ><input type="checkbox" /> Sprawdzono schemat wentylacji (wymagany
-                            przekrój kratki w cokole i wylot górą).</label
-                        ><br />
-                        <label
-                            ><input type="checkbox" /> Sprawdzono wysokość dolnego frontu (aby fuga
-                            zgrała się z sąsiednimi szafkami).</label
-                        ><br />
-                        <label
-                            ><input type="checkbox" /> System montażu frontu: [ ] Suwaki czy [ ]
-                            Zawiasy nożycowe (Door-on-Door)?</label
-                        ><br /><br />
+                    <div style="margin-top: 10px; margin-bottom: 10px">
                         <strong>Kierunek otwierania (patrząc od przodu):</strong><br />
                         <label
                             ><input type="radio" name="lodowka_kierunek" value="lewe" /> Zawiasy po
                             LEWEJ</label
-                        ><br />
-                        <label
+                        >
+                        <label style="margin-left: 15px"
                             ><input type="radio" name="lodowka_kierunek" value="prawe" /> Zawiasy po
                             PRAWEJ</label
+                        >
+                    </div>
+                    <div class="critical-check">
+                        <strong>Krytyczne punkty z instrukcji:</strong><br />
+                        <label
+                            ><input type="checkbox" /> Sprawdzono schemat wentylacji (kratka w
+                            cokole i wylot górą).</label
+                        ><br />
+                        <label
+                            ><input type="checkbox" /> System montażu frontu:
+                            <strong>Tylko na sztywno (Door-on-Door)!</strong> Unikamy
+                            suwaków.</label
                         >
                     </div>
                 </div>
@@ -144,16 +140,15 @@
                     <div class="critical-check">
                         <strong>Krytyczne punkty z instrukcji:</strong><br />
                         <label
-                            ><input type="checkbox" /> Czy to model z zawiasem ślizgowym (VarioHinge
-                            / Sliding)? (Wymagane przy niskich cokołach).</label
+                            ><input type="checkbox" />
+                            <strong
+                                >Czy to model z zawiasem ślizgowym (VarioHinge / Sliding)?</strong
+                            >
+                            (Wymagane przy niskich cokołach 10cm!).</label
                         ><br />
                         <label
-                            ><input type="checkbox" /> Sprawdzono max. dopuszczalny ciężar frontu
-                            (ważne przy ciężkich frontach z MDF/Lustra).</label
-                        ><br />
-                        <label
-                            ><input type="checkbox" /> Sprawdzono minimalną wysokość cokołu, aby
-                            front nie haczył przy otwieraniu.</label
+                            ><input type="checkbox" /> Sprawdzono max. dopuszczalny ciężar
+                            frontu.</label
                         >
                     </div>
                 </div>
