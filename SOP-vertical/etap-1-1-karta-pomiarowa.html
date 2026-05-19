@@ -85,7 +85,11 @@
             <!-- SEKCJA B: GEOMETRIA POMIESZCZENIA          -->
             <!-- ========================================== -->
             <h2 class="section-header">📐 B. GEOMETRIA POMIESZCZENIA</h2>
-
+            <strong>🧱 Rodzaj ściany nośnej (pod szafki górne):</strong><br />
+            <label><input type="radio" name="sciana" value="zelbet" /> Żelbet / Beton</label>
+            <label><input type="radio" name="sciana" value="silikat" /> Silikat / Cegła</label>
+            <label><input type="radio" name="sciana" value="gazobeton" /> Gazobeton (Ytong)</label>
+            <label><input type="radio" name="sciana" value="gk" /> Karton-Gips (GK) ⚠️</label>
             <div class="cad-rules">
                 <div class="rules-grid">
                     <div class="rule-card">
@@ -207,6 +211,10 @@
                 "
             >
                 <strong>🪟 Detale Okna i Parapetu (Analiza Kolizji):</strong><br />
+                <label
+                    ><input type="checkbox" /> Czy bateria zlewozmywakowa zablokuje otwarcie
+                    okna?</label
+                ><br /><br />
                 Wysokość od podłogi do spodu parapetu: <input type="text" class="input-small" /> mm
                 | Głębokość parapetu: <input type="text" class="input-small" /> mm | Oś okna (od
                 narożnika): <input type="text" class="input-small" /> mm

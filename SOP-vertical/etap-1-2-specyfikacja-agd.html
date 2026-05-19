@@ -118,6 +118,15 @@
                         <label
                             ><input type="checkbox" /> System montażu frontu: [ ] Suwaki czy [ ]
                             Zawiasy nożycowe (Door-on-Door)?</label
+                        ><br /><br />
+                        <strong>Kierunek otwierania (patrząc od przodu):</strong><br />
+                        <label
+                            ><input type="radio" name="lodowka_kierunek" value="lewe" /> Zawiasy po
+                            LEWEJ</label
+                        ><br />
+                        <label
+                            ><input type="radio" name="lodowka_kierunek" value="prawe" /> Zawiasy po
+                            PRAWEJ</label
                         >
                     </div>
                 </div>
@@ -185,6 +194,15 @@
                             ><input type="checkbox" /> Jeśli gazowa: Czy zawór gazu jest dostępny w
                             szafce obok?</label
                         >
+                        <br />
+                        <label
+                            ><input type="radio" name="indukcja_prad" value="230V" /> 230V (Zwykła
+                            wtyczka)</label
+                        >
+                        <label
+                            ><input type="radio" name="indukcja_prad" value="400V" /> 400V (Siła -
+                            kable bez wtyczki)</label
+                        >
                     </div>
                 </div>
 
@@ -199,7 +217,9 @@
                         ><input type="radio" name="okap_tryb" value="pochlaniacz" /> Pochłaniacz
                         (filtry węglowe)</label
                     >
-
+                    <br />Średnica wylotu powietrza:
+                    <input type="text" class="input-line" style="width: 50px" /> mm (np. 120,
+                    150)<br />
                     <div class="critical-check">
                         <strong>Krytyczne punkty z instrukcji:</strong><br />
                         <label
