@@ -33,6 +33,9 @@
 ☐ Jaki budżet przewiduje Pan na kuchnię? (12-20k = TAK, <10k = raczej IKEA)
 ☐ Kiedy potrzebuje Pan kuchnię? (Za 4+ tygodnie = TAK, "na wczoraj" = NIE)
 ☐ 🔴 ZŁOTE PYTANIE AGD: Czy sprzęt jest już kupiony? (Jeśli zmywarka/lodówka z IKEA = NIE PODEJMUJĘ SIĘ. Wymagają nietypowych zawiasów i frontów).
+☐ 🔴 ZŁOTE PYTANIE MARKETINGOWE: "Skąd Pan/Pani o mnie wie?"
+
+- Zapisz odpowiedź (Grupa FB osiedla / Polecenie / Ulotka). Jeśli ulotki nie działają, przestajesz je drukować i oszczędzasz czas!
 ```
 
 ### 🚫 RED FLAGS (Odmów grzecznie lub przekieruj)
@@ -94,6 +97,32 @@
 ☐ Wybór panelu ściennego (Splashback): Płyta 10mm w kolorze frontów lub blatu.
 ☐ Potwierdzenie: "Zastosujemy blat wodoodporny 12mm ze zlewem podwieszanym."
 ```
+
+---
+
+<a name="playbook-02b"></a>
+
+## 💰 PLAYBOOK #02b: WYCENA I ZALICZKA (Ochrona kapitału)
+
+**CEL:** Zabezpieczyć marżę i nie kredytować klienta z własnej kieszeni.
+
+### 📊 Struktura Wyceny (Twój wzór na zysk):
+
+```
+☐ Koszt materiałów z CNC (Formatki, cięcie, PUR, nawierty)
+☐ Koszt blatów HPL i paneli ściennych
+☐ Koszt okuć (Blum) i oświetlenia (LED)
+☐ Koszt chemii i wkrętów (ok. 300-400 zł)
+**= SUMA KOSZTÓW BAZOWYCH**
+
+☐ **Twoja Marża Materiałowa:** Dodaj 20-30% do sumy kosztów bazowych (za logistykę i ryzyko).
+☐ **Twoja Robocizna:** Dodaj 2000 - 2500 zł (za 2 dni montażu).
+**= CENA DLA KLIENTA**
+```
+
+### 🔴 ZŁOTA ZASADA ZALICZKI:
+
+❌ NIGDY nie klikaj "Zamów" w CNC, dopóki na Twoim koncie nie zaksięguje się **50% zaliczki** od klienta. Zaliczka musi pokryć 100% kosztów materiałowych!
 
 ---
 
@@ -327,8 +356,8 @@ Daj to klientowi do podpisu. Chroni Cię to przed fałszywymi oskarżeniami o za
 =================================================================
 PROTOKÓŁ ODBIORU I KARTA GWARANCYJNA
 =================================================================
-Klient: **********\_\_\_********** Data realizacji: ****\_\_\_\_****
-Adres: **************************\_\_**************************
+Klient: ****\*\*****\_\_\_****\*\***** Data realizacji: \***\*\_\_\_\_\*\***
+Adres: ************\*\*************\_\_************\*\*************
 
 OŚWIADCZENIE KLIENTA:
 ☐ Potwierdzam odbiór zabudowy kuchennej bez zastrzeżeń wizualnych.
@@ -339,8 +368,8 @@ ZAKRES GWARANCJI:
 ☐ Montaż mebli: 24 miesiące
 ☐ Gwarancje producentów materiałów (Egger, Swiss Krono, Blum) wg kart produktów.
 
-Podpis klienta: ********\_\_\_\_******** Data: ****\_\_\_\_****
-Podpis wykonawcy: ********\_\_******** Data: ****\_\_\_\_****
+Podpis klienta: **\*\*\*\***\_\_\_\_**\*\*\*\*** Data: \***\*\_\_\_\_\*\***
+Podpis wykonawcy: **\*\*\*\***\_\_**\*\*\*\*** Data: \***\*\_\_\_\_\*\***
 =================================================================
 ```
 
@@ -351,4 +380,8 @@ Podpis wykonawcy: ********\_\_******** Data: ****\_\_\_\_****
 ☐ Zrób zdjęcia do portfolio (zapal LEDy, otwórz szufladę Blum).
 ☐ Wyślij klientowi SMS z linkiem do Google Maps z prośbą o opinię.
 ☐ Zostaw 5 wizytówek dla sąsiadów z osiedla.
+☐ 🎁 Uruchom Program Poleceń:
+
+- Wręcz klientowi 3 specjalne wizytówki z napisem: _"Polecenie od sąsiada: 500 zł zniżki na montaż kuchni"_.
+- Powiedz: _"Jeśli ktoś z sąsiadów z pionu lub klatki przyjdzie z tą wizytówką, oboje zyskujecie. Pan dostaje ode mnie dobrą butelkę wina/whisky, a sąsiad 500 zł rabatu"_.
 ```
