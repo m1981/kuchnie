@@ -23,11 +23,11 @@
 - **Oferta startowa:** Zaoferuj darmowy pomiar i projekt dla pierwszych 3 osób z osiedla w zamian za możliwość zrobienia profesjonalnych zdjęć do portfolio.
 - **Komunikat:** _"Specjalizuję się w aneksach w nowych mieszkaniach. Znam standardy wrocławskich deweloperów. Robię to, czego IKEA nie potrafi dopasować."_
 
-## 4. ZASADY PRACY Z KLIENTEM (Wzorniki EGGER)
+## 4. ZASADY PRACY Z KLIENTEM (Pakiety Stylistyczne)
 
-Nie pokazuj klientowi całego katalogu, bo dostanie paraliżu decyzyjnego. Ty jesteś reżyserem spotkania.
+Nie pokazuj klientowi całego katalogu, bo dostanie paraliżu decyzyjnego. Ty jesteś reżyserem spotkania. Pracujesz na hybrydzie: SWISS KRONO (fronty/korpusy) + EGGER (blaty 12mm).
 
-- **Krok 1:** Pokazujesz matowe fronty PerfectSense (Część A katalogu).
-- **Krok 2:** Pokazujesz blaty kompaktowe 12 mm (Część A).
-- **Krok 3:** Tłumaczysz "Dopasowanie Produktowe" – pokazujesz, że wnętrza szafek (Część B) będą w tym samym kolorze co drogie fronty.
-- **Krok 4:** Jeśli klient chce ocieplić wnętrze, pokazujesz dekory drewna Feelwood (Część C).
+- **Krok 1 (Wybór Pakietu):** Pytasz o styl (Scandi, Włoski, Loft) i pokazujesz 3 gotowe moodboardy.
+- **Krok 2 (Fronty Premium):** Pokazujesz próbki SWISS KRONO BE.VELVET (struktura EM). Tłumaczysz, że to powłoka anti-fingerprint.
+- **Krok 3 (Blaty Premium):** Pokazujesz próbki blatów kompaktowych EGGER 12 mm. Tłumaczysz, że są w 100% wodoodporne i pozwalają na zlew podwieszany.
+- **Krok 4 (Efekt Monolitu):** Informujesz, że wnętrza szafek (korpusy) będą idealnie dopasowane kolorystycznie do frontów (używając tańszej płyty Swiss Krono w strukturze VL/Mat).

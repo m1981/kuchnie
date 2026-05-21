@@ -1,13 +1,13 @@
 # STANDARDY MATERIAŁOWE I OKUCIA (Wrocław 2026)
 
-## 1. ZŁOTY STANDARD TECHNOLOGICZNY (Style: Nowoczesny i Skandynawski)
+## 1. ZŁOTY STANDARD TECHNOLOGICZNY (Hybryda na 2026)
 
-- **Fronty (Premium):** Egger PerfectSense PM (na MDF) - głęboki mat, anti-fingerprint.
-- **Fronty (Optymalizacja):** Egger PerfectSense TM (na wiórze) - ten sam wygląd, niższa cena i waga.
-- **Korpusy:** Płyta wiórowa laminowana 18mm. Zawsze dobierana pod kolor frontu (np. Egger U702 ST9 Kaszmir do frontów Kaszmir).
-- **Boki widoczne:** ZAWSZE z materiału frontowego (PM/TM), nigdy ze zwykłej płyty korpusowej (ST9).
-- **Blaty:** Cienkie Blaty Kompaktowe HPL (10-12 mm). W 100% wodoodporne, rdzeń czarny, zlew podwieszany.
-- **Ściana nad blatem:** Płyta kompaktowa HPL (10 mm) lub laminowana (10 mm). Unikamy szkła Lacobel (ryzyko błędów przy gniazdkach).
+- **Fronty (Premium):** SWISS KRONO BE.VELVET (struktura EM) - głęboki mat, anti-fingerprint.
+- **Fronty (Drewnopodobne):** SWISS KRONO Sensesation (struktura CX) - synchroniczne pory drewna.
+- **Korpusy:** Płyta wiórowa laminowana SWISS KRONO 18mm (struktura VL/Mat). Zawsze dobierana pod kolor frontu (np. U119 VL do frontów U119 EM).
+- **Boki widoczne:** ZAWSZE z materiału frontowego (EM), nigdy ze zwykłej płyty korpusowej (VL).
+- **Blaty:** Cienkie Blaty Kompaktowe EGGER HPL (12 mm). W 100% wodoodporne, zlew podwieszany.
+- **Ściana nad blatem:** Płyta laminowana 10mm (w kolorze frontów lub blatu). Unikamy szkła Lacobel.
 - **Uchwyty:** Krawędziowe (nakładane na rant). Unikamy Tip-On w dolnych szafkach.
 
 ## 2. OKUCIA I OSPRZĘT (Sprawdzone modele)

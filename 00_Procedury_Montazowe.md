@@ -8,11 +8,15 @@
 
 ## 2. PROCEDURA ZAMÓWIEŃ CNC (Checklista przed wysłaniem)
 
-Centra CNC tną z dokładnością do 0,1 mm. Błąd w pliku to Twój koszt.
+## 2. PROCEDURA ZAMÓWIEŃ CNC (Checklista przed wysłaniem)
+
+Centra CNC tną z dokładnością do 0,1 mm. Błąd w pliku to Twój koszt. Stosuj strategię "Shift-Left" - zlecaj maszynie wszystko, co się da.
 
 - [ ] Czy wygenerowałem pliki z nawiertami (konfirmaty, zawiasy, podpórki)?
 - [ ] Czy zaznaczyłem oklejanie krawędzi klejem **PUR** (wodoodpornym)?
-- [ ] Czy boki widoczne szafek skrajnych są z materiału frontowego?
+- [ ] Czy boki widoczne szafek skrajnych są z materiału frontowego (BE.VELVET)?
+- [ ] Czy wygenerowałem otwory wentylacyjne (cokół, wieńce) dla lodówki?
+- [ ] 🔴 **Czy dodałem do zamówienia szablon z MDF do wyfrezowania otworu pod zlew?**
 - [ ] Czy usłojenie drewna (jeśli występuje) idzie w dobrym kierunku (pion/poziom)?
 
 ## 3. MOBILNY WARSZTAT (Niezbędne narzędzia)
@@ -36,7 +40,7 @@ Centra CNC tną z dokładnością do 0,1 mm. Błąd w pliku to Twój koszt.
 
 Ten materiał nie wybacza błędów. Traktuj go jak kamień, nie jak drewno.
 
-- **Cięcie:** Zawsze dekorem do góry. Używaj tarczy z węglika spiekanego (HM) z dużą liczbą zębów (trapezowo-płaski).
-- **Wycięcia (Zlew/Indukcja):** ZAKAZ ostrych kątów! Wewnętrzne narożniki muszą mieć promień min. 5 mm (najpierw wiercisz wiertłem 10mm w rogach, potem tniesz zagłębiarką).
+- **Cięcie na długość:** Zawsze dekorem do góry. Używaj zagłębiarki z tarczą z węglika spiekanego (HM) z dużą liczbą zębów.
+- **Wycięcia (Zlew/Indukcja):** ZAKAZ ostrych kątów i cięcia "z ręki"! Używasz **szablonu z MDF** (zamówionego z CNC). Mocujesz szablon ściskami do blatu i idealnie wycinasz otwór frezarką górnowrzecionową z frezem kopiującym.
 - **Szafki pod zlew/płytę:** Wyrzuć wiórowe wieńce przednie. Stosuj metalowe trawersy (aluminiowe profile), by blat nie stracił sztywności.
-- **Klejenie:** Blat "oddycha". Nie kręć go na sztywno wkrętami. Używaj elastycznego kleju (np. Ottocoll M500, Mamut).
+- **Klejenie:** Blat "oddycha". Nie kręć go na sztywno wkrętami. Używaj elastycznego kleju (np. Ottocoll M500) nakładanego punktowo.
