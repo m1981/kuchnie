@@ -35,6 +35,7 @@
 ☐ Jaki budżet przewiduje Pan na kuchnię? (12-20k = TAK, <10k = raczej IKEA)
 ☐ Czy wykończenie jest zakończone? (Podłogi, ściany gotowe = TAK)
 ☐ Kiedy potrzebuje Pan kuchnię? (Za 4+ tygodnie = TAK, "na wczoraj" = NIE)
+☐ 🔴 ZŁOTE PYTANIE AGD: Czy sprzęt jest już kupiony? (Jeśli zmywarka/lodówka z IKEA = NIE PODEJMUJĘ SIĘ. Wymagają nietypowych zawiasów i frontów).
 ```
 
 ### 🚫 RED FLAGS (Odmów grzecznie lub przekieruj)
@@ -43,6 +44,7 @@
 ❌ "Chcę białą kuchnię high-gloss jak u sąsiada" (Lakier, palcuje się)
 ❌ "Chcę kuchnię klasyczną z frezowanymi frontami" (Poza Twoją niszą)
 ❌ "Mam już granitowy blat u kamieniarza" (Zależność od podwykonawcy)
+❌ "Kupiłem całe AGD w IKEA, chcę tylko szafki" (Problemy montażowe)
 ❌ "Potrzebuję za 2 tygodnie na imprezę" (CNC nie zdąży)
 ❌ "Mam budżet 7000 zł all inclusive" (Nierealne dla modelu na miarę)
 ❌ "Dom 150m², kuchnia 25m² z wyspą" (Za duże dla solo)
@@ -240,28 +242,40 @@ Dla każdego gniazdka zmierz:
 
 ### 🎨 CZĘŚĆ 2: PREZENTACJA MATERIAŁÓW (30 minut)
 
-#### KROK 13: Pokazanie wzorników frontów PET
+#### KROK 13: Wybór Pakietu Stylistycznego (Metoda Lejka - Top-to-Bottom)
+
+⚠️ Złota zasada: NIE POKAZUJ całego wzornika! Dajesz wybór z 3 gotowych, sprawdzonych pakietów.
 
 ```
-☐ Wyłożenie wzornika Egger PerfectSense na blat/podłogę
-☐ Przykładanie kolorów do podłogi klienta (np. U702 Kaszmir do dębu)
-☐ Edukacja: "To powłoka anti-fingerprint, nie palcuje się jak lakier"
-☐ Wybór 2-3 kolorów przez klienta:
-   1. _________________________
-   2. _________________________
-   3. _________________________
+☐ Pytanie: "W jakim klimacie robimy mieszkanie? Skandynawia, Włochy czy Loft?"
+☐ Wyciągasz TYLKO 3 gotowe zestawy (moodboardy), które masz spięte w teczce:
 ```
 
-#### KROK 14: Pokazanie próbek blatów HPL
+📦 PAKIET 1: SCANDI / JAPANDI (Jasno i naturalnie)
+
+- Fronty dół: SWISS KRONO K101 EM (Biel) lub U119 EM (Beż)
+- Fronty góra: SWISS KRONO D20270 CX (Dąb Eden)
+- Blat: EGGER Kompakt 12mm (Jasny kamień/Biel)
+
+📦 PAKIET 2: CIEPŁY WŁOSKI (Elegancja i barwy ziemi)
+
+- Fronty: SWISS KRONO U3189 EM (Trufla)
+- Blat: EGGER Kompakt 12mm (Ciemny Marmur)
+
+📦 PAKIET 3: NOWOCZESNY LOFT (Monolit i czerń)
+
+- Fronty: SWISS KRONO U164 EM (Antracyt)
+- Blat: EGGER Kompakt 12mm (Czarny z czarnym rdzeniem)
+
+☐ Klient wybiera jeden z 3 pakietów. (Czas trwania: max 10 minut).
+
+#### KROK 14: Ustalenie detali do wybranego pakietu
 
 ```
-☐ Wyłożenie próbek na parapecie/stole
-☐ Edukacja: "To 12mm wodoodporny kompakt, sam go dotnę na miejscu"
-☐ Edukacja: "Wygląda jak spiek kwarcowy, ale jest 5x tańszy"
-☐ Przykładanie do frontów (kontrast lub ton w ton)
-☐ Wybór przez klienta:
-   - Blat: _________________________
-   - Panel ścienny: _________________ (ten sam lub inny)
+☐ Wybór panelu ściennego (Splashback):
+   - Płyta laminowana 10mm w kolorze frontów (efekt monolitu) LUB
+   - Płyta laminowana 10mm w dekorze drewna (ocieplenie)
+☐ Potwierdzenie z klientem: "Zastosujemy blat wodoodporny 12mm, co pozwala nam na montaż eleganckiego zlewu podwieszanego."
 ```
 
 #### KROK 15: Omówienie AGD
@@ -475,7 +489,7 @@ PANEL ŚCIENNY:                 _______________________
 AGD - MODELE (jeśli już wybrane)
 =================================================================
 
-☐ Lodówka:  Marka: __________ Model: ____________
+[//]: # (☐ Lodówka:  Marka: __________ Model: ____________)
             Do zabudowy: ☐ TAK  ☐ NIE
             Czy montaż (Door-on-Door) czy na suwaki?". ☐ TAK  ☐ NIE
 
@@ -658,26 +672,23 @@ Corpus automatycznie doda blendy - sprawdź czy są!
 
 ```
 =================================================================
-MATERIAŁ             |  GDZIE                    |  CO WYBRAĆ
+MATERIAŁ             |  GDZIE                    |  CO WYBRAĆ (Twój Standard)
 =================================================================
-Fronty i boki        |  Wszystkie fronty +       |  Egger U702 PM
-widoczne             |  zewnętrzne boki słupków  |  (PerfectSense)
+Fronty i boki        |  Wszystkie fronty +       |  SWISS KRONO BE.VELVET
+widoczne             |  zewnętrzne boki słupków  |  (struktura EM, np. U119 EM)
 -----------------------------------------------------------------
-Korpusy (wnętrza)    |  Dno, boki wewnętrzne,    |  Egger U702 ST9
-                     |  półki, wieńce            |  (mat, tania)
+Korpusy (wnętrza)    |  Dno, boki wewnętrzne,    |  SWISS KRONO Wiórowa
+                     |  półki, wieńce            |  (struktura VL, np. U119 VL)
 -----------------------------------------------------------------
-Plecy szafek         |  Tylna ścianka            |  HDF 3mm biały
+Plecy szafek         |  Tylna ścianka            |  HDF 3mm (dopasowany kolor)
 -----------------------------------------------------------------
-Blat                 |  Powierzchnia robocza     |  HPL Kompakt 12mm
-                     |                           |  (np. F461 Halifax)
------------------------------------------------------------------
-Panel ścienny        |  Nad blatem               |  HPL 10mm lub
-                     |                           |  laminowana
+Blat                 |  Powierzchnia robocza     |  EGGER Kompakt 12mm
+                     |  (pod zlew podwieszany)   |  (np. W1101 ST76)
 =================================================================
 
 🔴 PUŁAPKA #1: Bok słupka lodówkowego widoczny z salonu
-   ❌ ZŁE: Egger U702 ST9 (tania, widać strukturę)
-   ✅ DOBRE: Egger U702 PM (matowa, premium)
+   ❌ ZŁE: Swiss Krono VL (tania, widać strukturę)
+   ✅ DOBRE: Swiss Krono EM (matowa, premium, anti-fingerprint)
 
 🔴 PUŁAPKA #2: Kierunek usłojenia drewna
    ❌ ZŁE: Poziome słoje na froncie pionowym (wygląda tanio)
@@ -705,6 +716,16 @@ Panel ścienny        |  Nad blatem               |  HPL 10mm lub
    ☐ Bez frontu (front = blenda maskownicza)
    ☐ Wzmocnione boki (piekarnik waży 25-30kg)
    ☐ Blaszki termiczne po bokach
+```
+
+### KROK 10b: 🔴 SZABLON DO FREZOWANIA BLATU (Twój as w rękawie)
+
+```
+☐ Zaprojektuj w Corpusie dodatkową formatkę z taniego MDF 18mm.
+☐ Wymiar formatki: ok. 80x60 cm.
+☐ Wytnij w niej otwór odpowiadający wymiarom wycięcia pod zlew podwieszany (wymiar z instrukcji zlewu + 1mm luzu na frez).
+☐ Zleć to na CNC razem z kuchnią.
+   → Na montażu przykleisz ten szablon ściskami do blatu Egger i idealnie wyfrezujesz otwór frezarką z pierścieniem kopiującym. Zero błędów!
 ```
 
 #### KROK 11: Wentylacja (nie zapomnij!)
@@ -902,81 +923,42 @@ Przykłady CNC Wrocław (do sprawdzenia):
 
 ---
 
-### 📧 KROK 2: Przygotowanie zapytania ofertowego
+### 📧 KROK 2: Zlecenie produkcji (Model B2B - Stałe Stawki)
 
-#### Template emaila do CNC (skopiuj i dostosuj):
+⚠️ Złota zasada: Jako stały klient (JDG) nie prosisz o wycenę każdej kuchni. Ustalasz z CNC (np. Intar) stały cennik ryczałtowy na początku współpracy.
 
-```
-TEMAT: Zapytanie - formatki meblowe + okleinowanie PUR + nawierty
+#### Template emaila do CNC (Szybkie zlecenie):
+
+TEMAT: ZLECENIE PRODUKCJI - [Nazwisko Klienta] - [Data docelowa]
 
 Dzień dobry,
+Przesyłam pliki do zlecenia produkcyjnego według naszych stałych stawek B2B.
 
-Nazywam się [Twoje Imię] i prowadzę jednoosobową działalność stolarską
-we Wrocławiu (kuchnie na wymiar). Szukam centrum CNC do stałej współpracy.
-
-Projekt: Aneks kuchenny, styl nowoczesny
-Klient: [Nazwisko] - Osiedle [Nazwa], Wrocław
-
+```
 =================================================================
-ZAKRES ZLECENIA:
+SPECYFIKACJA MATERIAŁOWA:
 =================================================================
-1. Cięcie płyt według załączonych plików DXF
-2. Okleinowanie krawędzi ABS - KLEJ PUR (wodoodporny)
-3. Nawiercanie otworów według projektu:
-   - Pod zawiasy (35mm średnica, 12mm głębokość)
-   - Pod konfirmaty (5mm średnica)
-   - Pod półki (5mm, moduł 32mm)
-4. Frezowanie pleców (nut 10mm pod HDF 3mm)
+☐ FRONTY: SWISS KRONO [Kod np. U119 EM] BE.VELVET 18mm
+☐ KORPUSY: SWISS KRONO [Kod np. U119 VL] 18mm
+☐ PLECY: HDF 3mm [Kolor]
+☐ OBRZEŻE: Dopasowane ABS 1mm
 
 =================================================================
-MATERIAŁY (załączam specyfikację):
+WYTYCZNE TECHNICZNE:
 =================================================================
-☐ Płyta laminowana Egger U702 PM (PerfectSense) 18mm - Fronty
-☐ Płyta laminowana Egger U702 ST9 (mat) 18mm - Korpusy
-☐ HDF biały 3mm - Plecy szafek
-☐ Obrzeże ABS 1mm (Egger dopasowane do płyt)
+1. Okleinowanie krawędzi ABS - WYŁĄCZNIE KLEJ PUR.
+2. Nawiercanie otworów według załączonych plików DXF.
+3. Frezowanie pleców (nut 10mm pod HDF 3mm).
 
 Załączniki:
-- Lista_formatek_Kowalski.xlsx (szczegółowa lista cięć)
-- Pliki DXF w archiwum ZIP (geometria cięć + nawierty)
+- Lista_formatek_[Nazwisko].xlsx
+- Pliki DXF w archiwum ZIP
 
-=================================================================
-PYTANIA:
-=================================================================
-1. Czy macie Państwo Egger U702 PM i ST9 na stanie?
-   (jeśli nie - jaki czas sprowadzenia?)
+Proszę o potwierdzenie przyjęcia do realizacji i planowanej daty odbioru.
 
-2. Czy okleinowanie klejem PUR jest w standardzie?
-   (jeśli nie - jaka dopłata?)
-
-3. Czy nawiercanie otworów jest wliczone w cenę cięcia?
-   (jeśli nie - ile kosztuje?)
-
-4. Jaki czas realizacji od akceptacji zamówienia?
-
-5. Czy mogę odebrać osobiście czy tylko dostawa?
-   (jeśli dostawa - jaki koszt do Wrocławia?)
-
-6. Jakie warunki płatności? (przedpłata / za pobraniem?)
-
-7. Proszę o wycenę w podziale:
-   - Materiał (płyty + ABS)
-   - Usługa cięcia
-   - Usługa okleinowania PUR
-   - Usługa nawiercania
-   - Dostawa (jeśli)
-   - RAZEM netto + VAT
-
-=================================================================
-TERMIN:
-=================================================================
-Potrzebuję wycenę do: [Data - np. 2 dni]
-Termin realizacji docelowy: [Data montażu minus 5 dni]
-
-Pozdrawiam serdecznie,
+Pozdrawiam,
 [Twoje Imię Nazwisko]
-Tel: [Numer]
-Email: [Email]
+
 ```
 
 ---
@@ -1228,58 +1210,30 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
 
 ---
 
-### 🛒 KROK 2: Zamówienie OKUĆ (Hurtownia online)
+### 🛒 KROK 2: Zamówienie OKUĆ (Automatyzacja "Koszyki Szablonowe")
 
-#### Sprawdzone sklepy (Polska 2026):
+⚠️ Złota zasada: Nie trać czasu na ręczne wklepywanie kodów przy każdym projekcie.
 
-```
-1. Meblight.pl - Okucia Blum (szybka wysyłka, dobre ceny)
-2. Viyar.pl - Okucia + akcesoria meblowe
-3. Intar.pl - Okucia + LED Häfele
-4. Meblownia.pl - LED Häfele Loox (specjalizacja)
-```
+#### Procedura "1-Click Ordering":
 
-#### Procedura zamówienia online:
+☐ KROK JEDNORAZOWY (Zrób to dzisiaj):
 
-```
-☐ Wejdź na Meblight.pl (lub inny sklep)
+1. Wejdź na Meblight.pl / Viyar.pl.
+2. Skompletuj koszyk dla "Typowego Aneksu 2,6 mb" (16 zawiasów, 6 szuflad Antaro, nóżki, wkręty, zawieszki).
+3. Zapisz ten koszyk na swoim koncie pod nazwą: "STANDARD ANEKS".
 
-☐ Rejestracja konta FIRMOWEGO (JDG):
-   → Podaj NIP - dostaniesz ceny netto!
-   → Poproś o rabat stały (jeśli planujesz częste zakupy)
+☐ PROCEDURA DLA NOWEGO KLIENTA:
 
-☐ Wyszukaj okucia po kodzie Blum:
-
-   Przykład: Zawias Clip Top Blumotion
-   ☐ Wpisz w wyszukiwarce: 71B3550
-   ☐ Sprawdź opis: "Zawias Clip Top, nakładany, Blumotion, 110°"
-   ☐ Sprawdź czy w zestawie są śrubki montażowe! (jeśli nie - dołóż)
-   ☐ Dodaj do koszyka: ilość 16 szt (zgodnie z listą)
-
-☐ Powtórz dla wszystkich okuć z listy
-
-☐ Dodaj 10% zapasu na kluczowe okucia:
-   → Zawiasy: +2 szt (zawsze się przyda)
-   → Prowadnice: +1 para (jeśli zepsuje się na montażu)
-
-☐ KOSZYK - sprawdź PRZED złożeniem zamówienia:
-   ☐ Czy ilości się zgadzają?
-   ☐ Czy kody Blum są prawidłowe?
-   ☐ Czy są śrubki montażowe?
-
-☐ Wybierz dostawę:
-   ☐ Kurier (1-2 dni) - jeśli wartość >500zł = gratis
-   ☐ Odbiór osobisty (jeśli hurtownia we Wrocławiu)
-
-☐ Złóż zamówienie → Dostaniesz potwierdzenie na email
-
-☐ Płatność:
-   ☐ Przelew tradycyjny (zwykle wymagana przedpłata 100%)
-   ☐ Płatność online (Przelewy24) - szybciej zrealizują
+1. Zaloguj się do hurtowni.
+2. Kliknij "Wczytaj koszyk: STANDARD ANEKS".
+3. Szybka korekta (np. dodaj 2 zawiasy, jeśli kuchnia jest większa).
+4. Kliknij "Zamawiam i Płacę".
+   → Czas zamówienia spada z 40 minut do 3 minut!
 
 ☐ Tracking:
-   Dodaj do Excela:
-   | Sklep | Nr zamówienia | Kwota | Termin dostawy | Status |
+Dodaj do Excela:
+| Sklep | Nr zamówienia | Kwota | Termin dostawy | Status |
+
 ```
 
 ---
@@ -1289,43 +1243,45 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
 #### Sklep specjalistyczny: Meblownia.pl
 
 ```
+
 ☐ Wejdź na Meblownia.pl → kategoria "Oświetlenie LED Häfele Loox"
 
 ☐ Zasilacz:
-   ☐ Häfele Loox5 12V 40W - kod: 833.72.935
-   ☐ Ilość: 1 szt (starczy na 3-4m taśmy LED)
-   ☐ Cena: ~100 zł
+☐ Häfele Loox5 12V 40W - kod: 833.72.935
+☐ Ilość: 1 szt (starczy na 3-4m taśmy LED)
+☐ Cena: ~100 zł
 
 ☐ Taśmy LED:
-   ☐ Häfele Loox LED 3000K (ciepła biel) - kod: [sprawdź na stronie]
-   ☐ Długość: zmierz w projekcie Corpus (pod szafki górne)
-   ☐ Przykład: 2,5 mb → zamów 3 mb (zapas 0,5m)
-   ☐ Cena: ~60-80 zł/mb
+☐ Häfele Loox LED 3000K (ciepła biel) - kod: [sprawdź na stronie]
+☐ Długość: zmierz w projekcie Corpus (pod szafki górne)
+☐ Przykład: 2,5 mb → zamów 3 mb (zapas 0,5m)
+☐ Cena: ~60-80 zł/mb
 
 ☐ Profile aluminiowe + osłonki mleczne:
-   ☐ Profil + osłonka (komplet) - kod: [sprawdź]
-   ☐ Długość: taka sama jak taśmy LED
-   ☐ Cena: ~40-50 zł/mb
+☐ Profil + osłonka (komplet) - kod: [sprawdź]
+☐ Długość: taka sama jak taśmy LED
+☐ Cena: ~40-50 zł/mb
 
 ☐ Włącznik dotykowy / czujnik ruchu:
-   ☐ Intar.pl → kod: 22150 (włącznik dotykowy chrom)
-   ☐ Ilość: 1 szt
-   ☐ Cena: ~30 zł
+☐ Intar.pl → kod: 22150 (włącznik dotykowy chrom)
+☐ Ilość: 1 szt
+☐ Cena: ~30 zł
 
 ☐ Rozdzielacz 6-punktowy:
-   ☐ Intar.pl → kod: 21989
-   ☐ Ilość: 1 szt (jeśli podłączasz wiele taśm)
-   ☐ Cena: ~50 zł
+☐ Intar.pl → kod: 21989
+☐ Ilość: 1 szt (jeśli podłączasz wiele taśm)
+☐ Cena: ~50 zł
 
 ☐ Adapter Multi-White (opcja - zmiana barwy światła):
-   ☐ Meblownia.pl → kod: 833.95.745
-   ☐ Cena: ~80 zł
+☐ Meblownia.pl → kod: 833.95.745
+☐ Cena: ~80 zł
 
 ☐ Kable połączeniowe:
-   ☐ Sprawdź w zestawie czy są!
-   ☐ Jeśli nie - dołącz 3-5m kabla
+☐ Sprawdź w zestawie czy są!
+☐ Jeśli nie - dołącz 3-5m kabla
 
 ☐ RAZEM koszt LED: ~400-600 zł
+
 ```
 
 ---
@@ -1335,56 +1291,58 @@ Zawieszki Libra H1            | [Italiana] | 8     | Viyar.pl
 #### Lista "drobnych" materiałów (które CNC nie dostarczy):
 
 ```
-☐ Kleje i silikony:
-   ☐ Klej Ottocoll M500 (Otto Chemie) - 2 tuby
-      → Do klejenia blatu HPL do korpusów (elastyczny!)
-      → Cena: ~40 zł/tuba
 
-   ☐ Silikon sanitarny bezbarwny (np. Ceresit)
-      → Do uszczelniania styków blat-panel ścienny
-      → Cena: ~15 zł/tuba
+☐ Kleje i silikony:
+☐ Klej Ottocoll M500 (Otto Chemie) - 2 tuby
+→ Do klejenia blatu HPL do korpusów (elastyczny!)
+→ Cena: ~40 zł/tuba
+
+☐ Silikon sanitarny bezbarwny (np. Ceresit)
+→ Do uszczelniania styków blat-panel ścienny
+→ Cena: ~15 zł/tuba
 
 ☐ Wkręty (Würth Assy - najlepsze!):
-   ☐ 4x40mm - ilość: 100 szt (mocowanie blend, listew)
-   ☐ 5x50mm - ilość: 50 szt (mocowanie cięższych elementów)
-   ☐ Łeb: Torx (nie krzyżak - nie wyślizguje się!)
-   ☐ Cena: ~30 zł/opakowanie
+☐ 4x40mm - ilość: 100 szt (mocowanie blend, listew)
+☐ 5x50mm - ilość: 50 szt (mocowanie cięższych elementów)
+☐ Łeb: Torx (nie krzyżak - nie wyślizguje się!)
+☐ Cena: ~30 zł/opakowanie
 
 ☐ Konfirmaty (jeśli CNC nie dostarczy):
-   ☐ 7x50mm - ilość: 100 szt
-   ☐ Cena: ~20 zł/opakowanie
+☐ 7x50mm - ilość: 100 szt
+☐ Cena: ~20 zł/opakowanie
 
 ☐ Listwy aluminiowe ochronne:
-   ☐ Listwa nad zmywarkę - 60cm lub 80cm (szerokość szafki zlewowej)
-   ☐ Cena: ~30-50 zł
+☐ Listwa nad zmywarkę - 60cm lub 80cm (szerokość szafki zlewowej)
+☐ Cena: ~30-50 zł
 
 ☐ Blaszki termiczne piekarnik:
-   ☐ Komplet (boki + tył piekarnika)
-   ☐ Cena: ~40 zł
+☐ Komplet (boki + tył piekarnika)
+☐ Cena: ~40 zł
 
 ☐ Mata aluminiowa ociekowa pod zlew:
-   ☐ Wymiar: 60x60 cm lub 80x60 cm (dno szafki zlewowej)
-   ☐ Cena: ~50 zł
+☐ Wymiar: 60x60 cm lub 80x60 cm (dno szafki zlewowej)
+☐ Cena: ~50 zł
 
 ☐ Osłona termiczna samoprzylepna:
-   ☐ Pod płytę indukcyjną (od spodu blatu)
-   ☐ Wymiar: 60x50 cm
-   ☐ Cena: ~30 zł
+☐ Pod płytę indukcyjną (od spodu blatu)
+☐ Wymiar: 60x50 cm
+☐ Cena: ~30 zł
 
 ☐ Taśma ścierna:
-   ☐ Ziarno 120 - do wygładzania krawędzi cięć HPL
-   ☐ Cena: ~10 zł
+☐ Ziarno 120 - do wygładzania krawędzi cięć HPL
+☐ Cena: ~10 zł
 
 ☐ Ściereczki mikrofibrowe:
-   ☐ Do czyszczenia frontów PET
-   ☐ Ilość: 5 szt
-   ☐ Cena: ~20 zł
+☐ Do czyszczenia frontów PET
+☐ Ilość: 5 szt
+☐ Cena: ~20 zł
 
 ☐ Środek do czyszczenia frontów PET:
-   ☐ Mr. Muscle do szyb (lub podobny - bez ścierniwa!)
-   ☐ Cena: ~10 zł
+☐ Mr. Muscle do szyb (lub podobny - bez ścierniwa!)
+☐ Cena: ~10 zł
 
 RAZEM: ~300-400 zł
+
 ```
 
 ---
@@ -1394,50 +1352,51 @@ RAZEM: ~300-400 zł
 #### Checklist odbiorów (każda paczka osobno!):
 
 ```
+
 =================================================================
 DOSTAWA #1: OKUCIA (Meblight.pl / Viyar.pl)
 =================================================================
-☐ Data dostawy: __________
+☐ Data dostawy: ****\_\_****
 ☐ Sprawdź paczkę PRZED podpisaniem WZ kurierowi!
 
 ☐ Otwórz karton:
-   ☐ Czy ilość paczuszek się zgadza? (porównaj z zamówieniem)
-   ☐ Czy są instrukcje montażu Blum? (przydatne!)
-   ☐ Czy są śrubki montażowe? (otw każdą paczkę zawiasów!)
+☐ Czy ilość paczuszek się zgadza? (porównaj z zamówieniem)
+☐ Czy są instrukcje montażu Blum? (przydatne!)
+☐ Czy są śrubki montażowe? (otw każdą paczkę zawiasów!)
 
 ☐ Weryfikacja zawiasów:
-   ☐ Policz fizycznie: czy jest 16 zawiasów? (zgodnie z listą)
-   ☐ Sprawdź kod na opakowaniu: 71B3550? (nie pomylili?)
-   ☐ Test: otwórz jedną sztukę - czy Blumotion działa (ciche)?)
+☐ Policz fizycznie: czy jest 16 zawiasów? (zgodnie z listą)
+☐ Sprawdź kod na opakowaniu: 71B3550? (nie pomylili?)
+☐ Test: otwórz jedną sztukę - czy Blumotion działa (ciche)?)
 
 ☐ Weryfikacja prowadnic szuflad:
-   ☐ Czy długość się zgadza? (368mm zgodnie z projektem)
-   ☐ Czy jest lewy + prawy w komplecie? (para!)
-   ☐ Czy są klipy mocujące?
+☐ Czy długość się zgadza? (368mm zgodnie z projektem)
+☐ Czy jest lewy + prawy w komplecie? (para!)
+☐ Czy są klipy mocujące?
 
 ☐ Jeśli coś nie gra:
-   ☐ Zrób zdjęcie
-   ☐ Natychmiast mail/telefon do sklepu: "Reklamacja zamówienia #XXXX"
-   ☐ Poproś o wymianę ekspresową
+☐ Zrób zdjęcie
+☐ Natychmiast mail/telefon do sklepu: "Reklamacja zamówienia #XXXX"
+☐ Poproś o wymianę ekspresową
 
 ☐ Jeśli OK:
-   ☐ Opisz karton: "PROJEKT KOWALSKI - OKUCIA"
-   ☐ Schowaj w magazynie (sucho, bezpiecznie)
+☐ Opisz karton: "PROJEKT KOWALSKI - OKUCIA"
+☐ Schowaj w magazynie (sucho, bezpiecznie)
 
 =================================================================
 DOSTAWA #2: LED (Meblownia.pl)
 =================================================================
-☐ Data dostawy: __________
+☐ Data dostawy: ****\_\_****
 ☐ Sprawdź zawartość:
-   ☐ Zasilacz - czy 40W? (etykieta na urządzeniu)
-   ☐ Taśmy LED - czy długość OK? (3mb zamówiłem - sprawdź metraż)
-   ☐ Profile aluminiowe - czy osłonki mleczne w komplecie?
-   ☐ Włącznik - czy dotykowy (nie zwykły przycisk)?
-   ☐ Rozdzielacz - czy 6 wyjść?
+☐ Zasilacz - czy 40W? (etykieta na urządzeniu)
+☐ Taśmy LED - czy długość OK? (3mb zamówiłem - sprawdź metraż)
+☐ Profile aluminiowe - czy osłonki mleczne w komplecie?
+☐ Włącznik - czy dotykowy (nie zwykły przycisk)?
+☐ Rozdzielacz - czy 6 wyjść?
 
 ☐ Test zasilacza (opcja - jeśli masz multimetr):
-   ☐ Podłącz do prądu → Czy świeci dioda?
-   ☐ Wyjście 12V - zmierz multimetrem
+☐ Podłącz do prądu → Czy świeci dioda?
+☐ Wyjście 12V - zmierz multimetrem
 
 ☐ Opisz karton: "PROJEKT KOWALSKI - LED"
 
@@ -1447,6 +1406,7 @@ DOSTAWA #3: Drobne materiały (Castorama/Leroy)
 ☐ Zakupy zrobione: TAK ☐ / NIE ☐
 ☐ Sprawdź paragony - czy wszystko kupione?
 ☐ Schowaj w skrzynce narzędziowej (blisko montażu)
+
 ```
 
 ---
@@ -1456,33 +1416,34 @@ DOSTAWA #3: Drobne materiały (Castorama/Leroy)
 #### Dzień przed wyjazdem do klienta - FINALNA KONTROLA:
 
 ```
+
 Wydrukuj tę listę i odhaczaj:
 
 ☐ OKUCIA - komplet
-   ☐ Zawiasy (ilość zgodna z listą)
-   ☐ Prowadnice szuflad (pary!)
-   ☐ Podnośniki Aventos (jeśli w projekcie)
-   ☐ Uchwyty krawędziowe
-   ☐ Nóżki regulowane
-   ☐ Zawieszki Libra H1
+☐ Zawiasy (ilość zgodna z listą)
+☐ Prowadnice szuflad (pary!)
+☐ Podnośniki Aventos (jeśli w projekcie)
+☐ Uchwyty krawędziowe
+☐ Nóżki regulowane
+☐ Zawieszki Libra H1
 
 ☐ LED - komplet
-   ☐ Zasilacz
-   ☐ Taśmy LED
-   ☐ Profile + osłonki
-   ☐ Włącznik
-   ☐ Rozdzielacz
-   ☐ Kable
+☐ Zasilacz
+☐ Taśmy LED
+☐ Profile + osłonki
+☐ Włącznik
+☐ Rozdzielacz
+☐ Kable
 
 ☐ Materiały eksploatacyjne - komplet
-   ☐ Klej Ottocoll M500 (2 tuby)
-   ☐ Silikon
-   ☐ Wkręty Würth
-   ☐ Konfirmaty
-   ☐ Listwy ochronne
-   ☐ Blaszki termiczne
-   ☐ Mata aluminiowa
-   ☐ Osłona termiczna
+☐ Klej Ottocoll M500 (2 tuby)
+☐ Silikon
+☐ Wkręty Würth
+☐ Konfirmaty
+☐ Listwy ochronne
+☐ Blaszki termiczne
+☐ Mata aluminiowa
+☐ Osłona termiczna
 
 ☐ Formatki z CNC - komplet (sprawdzone przy odbiorze!)
 
@@ -1497,6 +1458,7 @@ JEŚLI CZEGOKOLWIEK BRAKUJE:
 
 Dokup / zamów uzupełnienie. Lepiej opóźnić montaż o dzień,
 niż jechać bez kluczowego okucia i robić wstyd przed klientem.
+
 ```
 
 ---
@@ -1504,3 +1466,4 @@ niż jechać bez kluczowego okucia i robić wstyd przed klientem.
 ### ✅ GOTOWE!
 
 Materiały skompletowane → Przejdź do **PLAYBOOK #06: Kontrola odbioru materiałów** (już zrobione w ramach kroków powyżej) lub **PLAYBOOK #07: Przygotowanie do montażu**
+```
