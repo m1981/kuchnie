@@ -1,2 +1,7 @@
+.venv
 .husky
 node_modules
+.aider*
+.synthadoc/
+log.md
+.synthadoc/extracted/
