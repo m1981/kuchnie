@@ -19,9 +19,8 @@ help: ## Display this help
 
 ##@ Setup & Server
 .PHONY: install
-install: ## Install Synthadoc using uv (run once)
-	uv venv
-	uv pip install -e ~/synthadoc
+install: ## Install Synthadoc globally using uv tool
+	uv tool install -e ~/synthadoc
 
 .PHONY: up
 up: ## Start the Synthadoc background server
