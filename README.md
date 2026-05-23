@@ -1,130 +1,78 @@
 # 🧠 Synthadoc: Kitchen Company Brain (Mac M2 Guide)
 
-This document contains all the commands needed to install, run, and maintain our AI-powered knowledge base using Synthadoc and Google Gemini.
+This document contains the streamlined workflow for our AI-powered knowledge base using Synthadoc, Google Gemini, and our custom automation scripts.
 
-## 1. First-Time Installation (Using `uv`)
+## 1. First-Time Setup
 
-We use `uv` because it is lightning-fast on Mac M2. These steps assume you have your terminal open in your `kuchnie` repository (`~/PycharmProjects/kuchnie`).
+We use `uv` to install Synthadoc globally so it is available everywhere without needing virtual environments.
 
 ```bash
-# 1. Install uv (if you don't have it already)
+# 1. Install uv (if you don't have it)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. Clone the Synthadoc engine to your home folder (outside this repo)
+# 2. Clone the engine to your home folder
 cd ~
 git clone https://github.com/paulmchen/synthadoc.git
 
-# 3. Go back to your kitchen repo
+# 3. Go to this kitchen repo and install globally
 cd ~/PycharmProjects/kuchnie
+make install
 
-# 4. Create a blazing fast virtual environment using uv
-uv venv
-
-# 5. Activate the environment
-source .venv/bin/activate
-
-# 6. Install Synthadoc into this environment
-uv pip install -e ~/synthadoc
-
-# 7. Verify installation
-synthadoc --version
+# 4. Create your secret API key file
+echo "GEMINI_API_KEY=..." > .env
 ```
 
 ---
 
-## 2. 🌅 Daily Start-Up (After a Mac Restart)
+## 2. 🌅 Daily Workflow (The "Make" System)
 
-When you restart your Mac or open a fresh terminal window, the background server is dead and your API key is forgotten. **Run these 3 commands to wake the AI back up:**
+You no longer need to memorize long commands or activate environments. Everything is handled by the `Makefile`.
+
+**1. Start the AI Engine (Run this once after restarting your Mac):**
 
 ```bash
-# 1. Go to your repo and activate the Python environment
-cd ~/PycharmProjects/kuchnie
-source .venv/bin/activate
-
-# 2. Give it the API key (Replace with your actual key)
-export GEMINI_API_KEY="..."
-
-# 3. Start the background engine
-synthadoc serve --background
+make up
 ```
 
-_You can now close the terminal or keep working. The AI is running silently in the background._
+_(This automatically loads your API key from `.env` and starts the server in the background)._
+
+**2. Sync New Files (The Smart Way):**
+When you add new SOPs or cheat sheets, just run:
+
+```bash
+make sync
+```
+
+_(This runs our custom `sync.sh` script. It automatically finds new files, skips private client folders, and filters out massive PDFs over 100KB to save tokens)._
+
+**3. Check Progress:**
+
+```bash
+make status
+```
+
+**4. Weekly Maintenance:**
+
+```bash
+make maintain
+```
+
+_(This tells the AI to check its own work for contradictions and rebuild the Table of Contents)._
 
 ---
 
-## 3. 🛡️ Safety: Preventing Accidental Ingestion
+## 3. 🛡️ Safety & Exclusions
 
-Because this repository contains Python code (`kitchen-app/`) and private client data (`06_Realizacje/`), we must ensure the AI never accidentally ingests them. We use two methods to protect the repo:
+Our repository contains code (`kitchen-app/`) and private client data (`06_Realizacje/`). We protect it using two layers:
 
-### Method A: The "AI Bouncer" (`wiki/purpose.md`)
-
-Open `wiki/purpose.md` in Obsidian and add these exact rules to the bottom. If a file is accidentally ingested, the AI will read this and immediately reject it (costing zero tokens).
-
-```markdown
-## STRICT EXCLUSIONS (DO NOT INGEST):
-
-- **Codebases:** Ignore all Python files, JavaScript, HTML, CSS, and anything from the `kitchen-app/` or `node_modules/` folders.
-- **Client Data:** Ignore specific client measurements, invoices, or floor plans (e.g., anything from `06_Realizacje/` or `sciagi/legnicka-52/`).
-```
-
-### Method B: Manifest Ingestion (The Bulletproof Way)
-
-Instead of running `--batch` on folders, you can create a text file named `to_ingest.txt` in your root folder and list exactly what you want to feed the AI:
-
-```text
-# to_ingest.txt
-00_Dokumenty_Strategiczne/
-07_SOP_Montaz/
-08_Szkolenia_Corpus/
-03_Materialy_i_Katalogi/Egger/
-```
-
-Then, run this single command. The engine will _only_ look at the paths in this file:
-
-```bash
-synthadoc ingest --file to_ingest.txt
-```
+1. **The Script Layer (`sync.sh`):** Automatically ignores `04_Podwykonawcy_CRM`, `06_Realizacje`, and any PDF larger than 100KB. (Run `make sync-dry` to see what it plans to ingest without actually doing it).
+2. **The AI Layer (`wiki/purpose.md`):** If a bad file slips through, the AI reads the `STRICT EXCLUSIONS` section at the bottom of `purpose.md` and immediately rejects it.
 
 ---
 
-## 4. 📚 The Ingestion Workflow (Feeding the AI)
+## 4. 🔍 Asking Questions (Querying)
 
-If you prefer manual batching instead of the manifest file above, feed the AI in this specific order so it builds a clean "tree" of knowledge.
-
-**Phase 1: The Trunk (Core Rules & SOPs)**
-
-```bash
-synthadoc ingest --batch 00_Dokumenty_Strategiczne/
-synthadoc ingest --batch 07_SOP_Montaz/
-synthadoc ingest --batch 08_Szkolenia_Corpus/
-```
-
-**Phase 2: The Branches (Visual Cheat Sheets)**
-
-```bash
-synthadoc ingest --batch 05_Montaz_i_Sprzet/
-synthadoc ingest --batch 03_Materialy_i_Katalogi/Sciagi_i_Wzorniki/
-```
-
-**Phase 3: The Leaves (Heavy Catalogs - Takes time)**
-
-```bash
-synthadoc ingest --batch 03_Materialy_i_Katalogi/Egger/
-synthadoc ingest --batch 03_Materialy_i_Katalogi/Krono/
-```
-
-**Phase 4: Specific Business Logic (Do not batch the whole folder)**
-
-```bash
-synthadoc ingest 01_Biznes_i_Sprzedaz/Skrypty_Sprzedazowe/ja-vs-ikea.md
-synthadoc ingest 01_Biznes_i_Sprzedaz/Marketing_i_Portfolio/00-reklama.md
-```
-
----
-
-## 5. 🔍 Asking Questions (Querying)
-
-You don't have to open Obsidian to ask a question. You can ask the AI directly from your terminal. It will answer based _only_ on your company files.
+You can ask the AI directly from your terminal. It will answer based _only_ on your company files.
 
 ```bash
 # Ask a quick question
@@ -136,55 +84,25 @@ synthadoc query "Podsumuj różnice między HPL a blatem kompaktowym" --save
 
 ---
 
-## 6. 🛠️ Maintenance & Monitoring
+## 5. 🛑 Git Best Practices
 
-Use these commands to check on the AI and keep the wiki healthy.
-
-**Check what the AI is currently doing:**
-
-```bash
-synthadoc jobs list
-```
-
-**Retry a job if it failed (e.g., internet disconnected):**
-
-```bash
-synthadoc jobs retry <job-id>
-```
-
-**Run the Linter (Finds contradictions and broken links):**
-_Run this once a week or after a massive catalog upload._
-
-```bash
-synthadoc lint run
-```
-
-**Rebuild the Table of Contents (`index.md`):**
-_Run this after adding a lot of new files so the AI updates the main dashboard._
-
-```bash
-synthadoc scaffold
-```
-
----
-
-## 7. 🛑 Git Best Practices
-
-To keep your GitHub/GitLab repository clean, ensure your `.gitignore` file in the `kuchnie` folder contains these exact lines:
+To keep your GitHub/GitLab repository clean, ensure your `.gitignore` file contains these exact lines:
 
 ```text
-# Python virtual environment
-.venv/
+# Secrets
+.env
 
 # Synthadoc hidden database and logs
 .synthadoc/
 log.md
 
-# (Optional) Ignore raw extracted text cache
-.synthadoc/extracted/
+# Sync script artifacts
+to_ingest_big.txt
+dry_run_manifest.txt
 ```
 
 **What you SHOULD commit to Git:**
 
 - `wiki/` (This contains all the Markdown files the AI generated. Commit this so your knowledge base is backed up!)
 - `AGENTS.md` (Your custom AI instructions).
+- `sync.sh` and `Makefile` (Our automation tools).
