@@ -1,5 +1,3 @@
-# AGENTS.md — Projektowanie, sprzedaż i montaż mebli kuchennych. Standardy, materiały, ergonomia i instrukcje montażu. Wiki
-
 ## Purpose
 
 This wiki captures knowledge about: Projektowanie, sprzedaż i montaż mebli kuchennych. Standardy, materiały, ergonomia i instrukcje montażu..
