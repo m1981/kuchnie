@@ -52,9 +52,44 @@ _You can now close the terminal or keep working. The AI is running silently in t
 
 ---
 
-## 3. 📚 The Ingestion Workflow (Feeding the AI)
+## 3. 🛡️ Safety: Preventing Accidental Ingestion
 
-Do **NOT** ingest the whole repository at once. Feed the AI in this specific order so it builds a clean "tree" of knowledge.
+Because this repository contains Python code (`kitchen-app/`) and private client data (`06_Realizacje/`), we must ensure the AI never accidentally ingests them. We use two methods to protect the repo:
+
+### Method A: The "AI Bouncer" (`wiki/purpose.md`)
+
+Open `wiki/purpose.md` in Obsidian and add these exact rules to the bottom. If a file is accidentally ingested, the AI will read this and immediately reject it (costing zero tokens).
+
+```markdown
+## STRICT EXCLUSIONS (DO NOT INGEST):
+
+- **Codebases:** Ignore all Python files, JavaScript, HTML, CSS, and anything from the `kitchen-app/` or `node_modules/` folders.
+- **Client Data:** Ignore specific client measurements, invoices, or floor plans (e.g., anything from `06_Realizacje/` or `sciagi/legnicka-52/`).
+```
+
+### Method B: Manifest Ingestion (The Bulletproof Way)
+
+Instead of running `--batch` on folders, you can create a text file named `to_ingest.txt` in your root folder and list exactly what you want to feed the AI:
+
+```text
+# to_ingest.txt
+00_Dokumenty_Strategiczne/
+07_SOP_Montaz/
+08_Szkolenia_Corpus/
+03_Materialy_i_Katalogi/Egger/
+```
+
+Then, run this single command. The engine will _only_ look at the paths in this file:
+
+```bash
+synthadoc ingest --file to_ingest.txt
+```
+
+---
+
+## 4. 📚 The Ingestion Workflow (Feeding the AI)
+
+If you prefer manual batching instead of the manifest file above, feed the AI in this specific order so it builds a clean "tree" of knowledge.
 
 **Phase 1: The Trunk (Core Rules & SOPs)**
 
@@ -87,7 +122,7 @@ synthadoc ingest 01_Biznes_i_Sprzedaz/Marketing_i_Portfolio/00-reklama.md
 
 ---
 
-## 4. 🔍 Asking Questions (Querying)
+## 5. 🔍 Asking Questions (Querying)
 
 You don't have to open Obsidian to ask a question. You can ask the AI directly from your terminal. It will answer based _only_ on your company files.
 
@@ -101,7 +136,7 @@ synthadoc query "Podsumuj różnice między HPL a blatem kompaktowym" --save
 
 ---
 
-## 5. 🛠️ Maintenance & Monitoring
+## 6. 🛠️ Maintenance & Monitoring
 
 Use these commands to check on the AI and keep the wiki healthy.
 
@@ -133,7 +168,7 @@ synthadoc scaffold
 
 ---
 
-## 6. 🛑 Git Best Practices
+## 7. 🛑 Git Best Practices
 
 To keep your GitHub/GitLab repository clean, ensure your `.gitignore` file in the `kuchnie` folder contains these exact lines:
 
