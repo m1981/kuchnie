@@ -72,6 +72,7 @@ reset-wiki: ## ⚠️ DANGER: Delete the entire AI brain and start from scratch
 	@echo "$(BLUE)Waiting for server to release database locks...$(RESET)"
 	sleep 2
 	rm -rf .synthadoc wiki AGENTS.md log.md
+	synthadoc uninstall temp-wiki
 	@echo "$(BLUE)Re-initializing wiki...$(RESET)"
 	synthadoc install temp-wiki --target . --domain "Projektowanie, sprzedaż i montaż mebli kuchennych. Standardy, materiały, ergonomia i instrukcje montażu."
 	mv temp-wiki/.synthadoc ./
