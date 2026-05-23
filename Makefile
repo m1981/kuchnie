@@ -58,3 +58,20 @@ status: ## Check the status of ingestion jobs
 maintain: ## Run linter (check contradictions) and rebuild index
 	synthadoc lint run
 	synthadoc scaffold
+
+
+##@ Danger Zone
+.PHONY: reset-wiki
+reset-wiki: ## ⚠️ DANGER: Delete the entire AI brain and start from scratch
+	@echo "$(YELLOW)====================================================$(RESET)"
+	@echo "$(YELLOW)⚠️ WARNING: This will delete all AI-generated pages!$(RESET)"
+	@echo "$(YELLOW)Your original files will be safe, but the wiki will be wiped.$(RESET)"
+	@echo "$(YELLOW)====================================================$(RESET)"
+	@echo "Are you sure you want to rebuild from scratch? [y/N] " && read ans && [ $${ans:-N} = y ]
+	$(MAKE) down
+	@echo "$(BLUE)Waiting for server to release database locks...$(RESET)"
+	sleep 2
+	rm -rf .synthadoc wiki AGENTS.md log.md
+	synthadoc install . --domain "Projektowanie, sprzedaż i montaż mebli kuchennych. Standardy, materiały, ergonomia i instrukcje montażu."
+	$(MAKE) up
+	@echo "$(GREEN)Wiki reset successfully! Run 'make sync' to rebuild the brain.$(RESET)"
