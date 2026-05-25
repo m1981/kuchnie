@@ -33,10 +33,9 @@ class SceneCompositor:
             uv_path: str,
             mask_path: str,
             zones: List[ZoneConfig],
-            out_path: str,
-            uv_scale_mm: float = 1000.0  # NEW: 1.0 UV unit = 1000mm by default
-    ) -> None:
-        """Executes the compositing pipeline for multiple zones in a single pass."""
+        out_path: str = None, # Make out_path optional
+        uv_scale_mm: float = 1000.0
+    ): # Removed -> None
 
         base_pass = self.reader.read_color(base_path)
         id_mask = self.reader.read_color(mask_path)
@@ -60,4 +59,9 @@ class SceneCompositor:
             zone_mask = self.masker.extract(id_mask, zone.mask_color)
             current_composite = self.blender.multiply(current_composite, warped_tex, zone_mask)
 
-        self.writer.write(out_path, current_composite)
+        # If an out_path is provided (like in our CLI/tests), write it to disk
+        if out_path:
+            self.writer.write(out_path, current_composite)
+
+        # ALWAYS return the final image array!
+        return current_composite

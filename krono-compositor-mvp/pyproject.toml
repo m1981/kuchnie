@@ -13,9 +13,11 @@ authors = [
     {name = "Your Name", email = "your.email@example.com"}
 ]
 dependencies = [
+    "fastapi>=0.136.3",
     "numpy>=1.24.0",
     # Using headless because this is a server-side engine (no GUI needed)
-    "opencv-python-headless>=4.8.0"
+    "opencv-python-headless>=4.8.0",
+    "uvicorn>=0.48.0",
 ]
 
 [project.optional-dependencies]
