@@ -1,3 +1,4 @@
+from typing import List
 from compositor.domain.interfaces import (
     ImageReader,
     ImageWriter,
@@ -5,16 +6,11 @@ from compositor.domain.interfaces import (
     UVWarper,
     MaskExtractor,
     ImageBlender,
-    ColorBGR
+    ZoneConfig
 )
 
 
 class SceneCompositor:
-    """
-    Orchestrates the 2.5D compositing pipeline.
-    Relies entirely on injected dependencies (Interfaces) to do the actual work.
-    """
-
     def __init__(
             self,
             reader: ImageReader,
@@ -31,37 +27,40 @@ class SceneCompositor:
         self.masker = masker
         self.blender = blender
 
-    def render_zone(
+    def render_scene(
             self,
             base_path: str,
             uv_path: str,
             mask_path: str,
-            tex_path: str,
-            target_color: ColorBGR,
-            out_path: str,
-            scale: float = 1.0
+            zones: List[ZoneConfig],
+            out_path: str
     ) -> None:
-        """Executes the compositing pipeline for a single zone."""
+        """Executes the compositing pipeline for multiple zones in a single pass."""
 
-        # 1. Load Assets
+        # 1. Load Static Assets ONCE
         base_pass = self.reader.read_color(base_path)
         id_mask = self.reader.read_color(mask_path)
-        texture = self.reader.read_color(tex_path)
         uv_map = self.reader.read_uv(uv_path)
 
-        # 2. Tile/Scale Texture
-        # We pass the base_pass shape so the tiler knows the target resolution
         target_shape = base_pass.shape[:2]
-        tiled_tex = self.tiler.tile(texture, target_shape, scale)
 
-        # 3. Warp Texture into 3D perspective
-        warped_tex = self.warper.warp(tiled_tex, uv_map)
+        # This variable will accumulate our layers. It starts as the base pass.
+        current_composite = base_pass
 
-        # 4. Extract Alpha Mask for the target zone
-        zone_mask = self.masker.extract(id_mask, target_color)
+        # 2. Process each zone sequentially
+        for zone in zones:
+            # Load specific texture
+            texture = self.reader.read_color(zone.texture_path)
 
-        # 5. Blend
-        final_image = self.blender.multiply(base_pass, warped_tex, zone_mask)
+            # Tile & Warp
+            tiled_tex = self.tiler.tile(texture, target_shape, zone.scale)
+            warped_tex = self.warper.warp(tiled_tex, uv_map)
 
-        # 6. Output
-        self.writer.write(out_path, final_image)
+            # Extract Mask
+            zone_mask = self.masker.extract(id_mask, zone.mask_color)
+
+            # Blend over the CURRENT composite (not the original base pass)
+            current_composite = self.blender.multiply(current_composite, warped_tex, zone_mask)
+
+        # 3. Output the final accumulated image ONCE
+        self.writer.write(out_path, current_composite)

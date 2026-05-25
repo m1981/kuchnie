@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Protocol, Tuple
+from dataclasses import dataclass
 
 # --- Domain Type Aliases for clarity ---
 Image = np.ndarray      # Standard 8-bit BGR image
@@ -55,3 +56,10 @@ class ImageBlender(Protocol):
         constrained by the 'mask'.
         """
         ...
+
+@dataclass(frozen=True)
+class ZoneConfig:
+    """Represents the configuration for a single configurable zone in the scene."""
+    mask_color: ColorBGR
+    texture_path: str
+    scale: float = 1.0
