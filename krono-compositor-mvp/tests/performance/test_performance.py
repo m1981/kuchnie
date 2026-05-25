@@ -45,15 +45,8 @@ def test_full_pipeline_with_real_files(tmp_path: Path):
         blender=OpenCVImageBlender()
     )
 
-    zones = [ZoneConfig(mask_color=(0, 0, 255), texture_path=tex_path, scale=1.0)]
-
-    compositor.render_scene(
-        base_path=base_path,
-        uv_path=uv_path,
-        mask_path=mask_path,
-        zones=zones,
-        out_path=out_path
-    )
+    zones = [ZoneConfig(mask_color=(0, 0, 255), texture_path=tex_path, texture_width_mm=1000.0)]
+    compositor.render_scene(base_path, uv_path, mask_path, zones, out_path, uv_scale_mm=1000.0)
 
     # 3. ASSERT
     assert os.path.exists(out_path), "The output file was not created on disk!"

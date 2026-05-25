@@ -46,15 +46,15 @@ def test_full_pipeline_with_real_files(tmp_path: Path):
     )
 
     # Create the zone configuration list
-    zones = [ZoneConfig(mask_color=(0, 0, 255), texture_path=tex_path, scale=1.0)]
+    zones = [ZoneConfig(mask_color=(0, 0, 255), texture_path=tex_path, texture_width_mm=1000.0)]
 
-    # Call the NEW method: render_scene
     compositor.render_scene(
         base_path=base_path,
         uv_path=uv_path,
         mask_path=mask_path,
         zones=zones,
-        out_path=out_path
+        out_path=out_path,
+        uv_scale_mm=1000.0 # Add this line
     )
 
     # 3. ASSERT

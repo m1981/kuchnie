@@ -62,4 +62,6 @@ class ZoneConfig:
     """Represents the configuration for a single configurable zone in the scene."""
     mask_color: ColorBGR
     texture_path: str
-    scale: float = 1.0
+    texture_width_mm: float  # NEW: Physical width of the texture
+    # We remove the old 'scale' property
+
