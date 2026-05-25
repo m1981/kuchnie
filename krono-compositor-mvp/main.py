@@ -16,17 +16,22 @@ def main():
         warper=OpenCVUVWarper(), masker=OpenCVMaskExtractor(), blender=OpenCVImageBlender()
     )
 
-    # Real-world physical configuration!
+    # Configure our 3 Kitchen Zones!
     kitchen_configuration = [
         ZoneConfig(
-            mask_color=(0, 0, 255),
-            texture_path="assets/textures/krono_oak.jpg",
-            texture_width_mm=1200.0  # This Krono texture represents 1.2 meters of wood
+            mask_color=(0, 0, 255),  # RED mask = Lower Cabinets
+            texture_path="assets/textures/wood_oak.jpg",
+            texture_width_mm=1200.0
         ),
         ZoneConfig(
-            mask_color=(0, 255, 0),
-            texture_path="assets/textures/krono_oak.jpg",
-            texture_width_mm=600.0  # Same texture, but scaled to represent 60cm
+            mask_color=(255, 0, 0),  # BLUE mask = Upper Cabinets
+            texture_path="assets/textures/wood_oak.jpg",
+            texture_width_mm=600.0  # Same wood, but scaled smaller!
+        ),
+        ZoneConfig(
+            mask_color=(0, 255, 0),  # GREEN mask = Countertop
+            texture_path="assets/textures/marble_white.jpg",
+            texture_width_mm=2000.0  # Large marble slab
         )
     ]
 
@@ -39,11 +44,11 @@ def main():
             mask_path="assets/id_mask.png",
             zones=kitchen_configuration,
             out_path="assets/final_render.jpg",
-            uv_scale_mm=1000.0  # The 3D scene was exported where 1 UV unit = 1 meter
+            uv_scale_mm=1000.0
         )
 
         end_time = time.perf_counter()
-        print(f"Success! Physically scaled multi-zone image saved.")
+        print(f"Success! 3-Zone Kitchen rendered.")
         print(f"Execution time: {(end_time - start_time) * 1000:.2f} ms")
 
     except FileNotFoundError as e:

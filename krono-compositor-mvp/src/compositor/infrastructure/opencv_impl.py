@@ -56,7 +56,7 @@ class OpenCVTextureTiler:
 class OpenCVUVWarper:
     """Warps a 2D texture into 3D perspective using a UV Map."""
 
-    def warp(self, texture: Image, uv_map: UVMap) -> Image:
+    def warp(self, texture: Image, uv_map: UVMap, repetition_factor: float = 1.0) -> Image:
         tex_h, tex_w = texture.shape[:2]
 
         # OpenCV loads EXR as BGR.
@@ -67,9 +67,9 @@ class OpenCVUVWarper:
         # Invert V channel (Blender origin is bottom-left, OpenCV is top-left)
         v_channel = 1.0 - v_channel
 
-        # Convert normalized UVs [0.0, 1.0] to absolute texture pixel coordinates
-        map_x = (u_channel * tex_w).astype(np.float32)
-        map_y = (v_channel * tex_h).astype(np.float32)
+        # THE FIX: Multiply the UV channels by the repetition factor before mapping to pixels
+        map_x = (u_channel * repetition_factor * tex_w).astype(np.float32)
+        map_y = (v_channel * repetition_factor * tex_h).astype(np.float32)
 
         # cv2.BORDER_WRAP is the magic here: if UVs go beyond 1.0, it loops the texture seamlessly!
         warped = cv2.remap(

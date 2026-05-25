@@ -48,11 +48,15 @@ class SceneCompositor:
         for zone in zones:
             texture = self.reader.read_color(zone.texture_path)
 
-            # NEW: Calculate the physical scale dynamically
-            calculated_scale = zone.texture_width_mm / uv_scale_mm
+            # 1. Calculate how many times the texture should repeat
+            repetition_factor = uv_scale_mm / zone.texture_width_mm
 
-            tiled_tex = self.tiler.tile(texture, target_shape, calculated_scale)
-            warped_tex = self.warper.warp(tiled_tex, uv_map)
+            # 2. We can leave the tiler scale at 1.0 for now (optimization for later)
+            tiled_tex = self.tiler.tile(texture, target_shape, scale=1.0)
+
+            # 3. Pass the repetition factor to the warper!
+            warped_tex = self.warper.warp(tiled_tex, uv_map, repetition_factor)
+
             zone_mask = self.masker.extract(id_mask, zone.mask_color)
             current_composite = self.blender.multiply(current_composite, warped_tex, zone_mask)
 
