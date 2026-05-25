@@ -1,5 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles # NEW IMPORT
+from fastapi.responses import FileResponse  # NEW IMPORT
 from compositor.presentation.api import router
 
 # Initialize FastAPI App
@@ -12,9 +14,13 @@ app = FastAPI(
 # Register our routes
 app.include_router(router)
 
+# NEW: Mount the static folder so the browser can access it
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# NEW: Serve the index.html on the root URL
 @app.get("/")
-def health_check():
-    return {"status": "Engine is running!"}
+def serve_frontend():
+    return FileResponse("static/index.html")
 
 if __name__ == "__main__":
     print("Starting FastAPI server on http://localhost:8000")
