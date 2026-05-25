@@ -1,8 +1,8 @@
+# src/compositor/presentation/api.py
 import os
-import tempfile
+import cv2
 import logging
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
 from typing import List
 
 from compositor.application.scene_compositor import SceneCompositor
@@ -11,9 +11,9 @@ from compositor.infrastructure.opencv_impl import (
     OpenCVImageIO, OpenCVTextureTiler, OpenCVUVWarper,
     OpenCVMaskExtractor, OpenCVImageBlender
 )
-from compositor.presentation.schemas import RenderRequest
+from compositor.presentation.schemas import RenderRequest, ZoneType, AllowedZone
+from compositor.presentation.catalog_db import CATALOG
 
-# --- Setup Smart Logging ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api_logger")
 
@@ -28,79 +28,72 @@ def get_compositor() -> SceneCompositor:
     )
 
 
-def cleanup_temp_file(path: str):
-    """Background task to delete the image after the browser downloads it."""
-    try:
-        os.remove(path)
-        logger.info(f"Cleaned up temp file: {path}")
-    except Exception as e:
-        logger.error(f"Failed to clean up {path}: {e}")
+@router.get("/catalog")
+def get_catalog():
+    """Returns the full catalog of materials, price groups, and scenes."""
+    return CATALOG
 
 
-@router.post("/render", response_class=FileResponse)
-def render_image(
-        request: RenderRequest,
-        background_tasks: BackgroundTasks,  # Added for cleanup
-        compositor: SceneCompositor = Depends(get_compositor)
-):
-    logger.info(f"--- New Render Request: {request.scene_id} ---")
+@router.post("/render")
+def render_image(request: RenderRequest, compositor: SceneCompositor = Depends(get_compositor)):
+    logger.info(f"--- Render Request: {request.scene_id} | Angle: {request.angle_id} ---")
 
-    base_path = "assets/base_pass.png"
-    uv_path = "assets/uv_pass.exr"
-    mask_path = "assets/id_mask.png"
+    # 1. Dynamic Path Resolution
+    scene_dir = f"assets/scenes/{request.scene_id}/{request.angle_id}"
+    base_path = f"{scene_dir}/base_pass.png"
+    uv_path = f"{scene_dir}/uv_pass.exr"
+    mask_path = f"{scene_dir}/id_mask.png"
 
+    if not os.path.exists(base_path):
+        raise HTTPException(status_code=404, detail=f"Scene assets not found at {scene_dir}")
+
+    # 2. Business Logic Validation & Domain Mapping
     domain_zones: List[ZoneConfig] = []
+
     for zone_req in request.zones:
+        # Find material in catalog
+        material = next((m for m in CATALOG["materials"] if m["id"] == zone_req.texture_id), None)
+        if not material:
+            raise HTTPException(status_code=404, detail=f"Material '{zone_req.texture_id}' not found in catalog.")
+
+        # Validate Constraints ("dostępny tylko jako front")
+        if material["allowed_zone"] == AllowedZone.FRONT_ONLY and zone_req.zone_type != ZoneType.FRONT:
+            raise HTTPException(status_code=400, detail=f"Material '{material['name']}' is only available for Fronts.")
+        if material["allowed_zone"] == AllowedZone.COUNTERTOP_ONLY and zone_req.zone_type != ZoneType.COUNTERTOP:
+            raise HTTPException(status_code=400,
+                                detail=f"Material '{material['name']}' is only available for Countertops.")
+
+        # Resolve texture path
         tex_path = f"assets/textures/{zone_req.texture_id}.jpg"
+
+        # THE FIX: Remove the silent fallback and raise a 500 error
+        if not os.path.exists(tex_path):
+            logger.error(f"Missing asset on disk: {tex_path}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Server configuration error: Texture file for '{material['name']}' is missing."
+            )
+
         domain_zones.append(
             ZoneConfig(
                 mask_color=zone_req.get_bgr_tuple(),
                 texture_path=tex_path,
-                texture_width_mm=zone_req.texture_width_mm
+                texture_width_mm=material["texture_width_mm"]  # Backend is now the source of truth for physical size!
             )
         )
 
-    # Create temp file in the local project directory to avoid macOS /var/folders permission issues
-    temp_dir = os.path.join(os.getcwd(), "assets", "temp")
-    os.makedirs(temp_dir, exist_ok=True)
-
-    temp_out = tempfile.NamedTemporaryFile(dir=temp_dir, delete=False, suffix=".jpg")
-    temp_out.close()
-
-    logger.info(f"Target output path: {temp_out.name}")
-
     try:
-        # Execute Engine
-        compositor.render_scene(
-            base_path=base_path,
-            uv_path=uv_path,
-            mask_path=mask_path,
-            zones=domain_zones,
-            out_path=temp_out.name,
-            uv_scale_mm=request.uv_scale_mm
+        final_image_array = compositor.render_scene(
+            base_path=base_path, uv_path=uv_path, mask_path=mask_path,
+            zones=domain_zones, out_path=None, uv_scale_mm=request.uv_scale_mm
         )
 
-        # --- SMART DEBUG CHECKS ---
-        if not os.path.exists(temp_out.name):
-            logger.error("File does not exist after render!")
-            raise HTTPException(status_code=500, detail="Engine failed to create file.")
+        success, encoded_image = cv2.imencode('.jpg', final_image_array)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to encode image.")
 
-        file_size = os.path.getsize(temp_out.name)
-        logger.info(f"Render complete. File size: {file_size} bytes")
-
-        if file_size == 0:
-            logger.error("File size is 0 bytes! OpenCV failed to encode the JPEG.")
-            raise HTTPException(status_code=500, detail="Engine created an empty file.")
-
-        # Schedule cleanup after response is sent
-        background_tasks.add_task(cleanup_temp_file, temp_out.name)
-
-        return FileResponse(
-            path=temp_out.name,
-            media_type="image/jpeg",
-            filename="render.jpg"
-        )
+        return Response(content=encoded_image.tobytes(), media_type="image/jpeg")
 
     except Exception as e:
-        logger.error(f"Render failed with exception: {str(e)}")
+        logger.error(f"Render failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
