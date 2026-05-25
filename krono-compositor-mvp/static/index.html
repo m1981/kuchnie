@@ -1,16 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Krono 2.5D Configurator</title>
-        <!-- Tailwind CSS (CDN) -->
+        <title>Krono Swiss - Konfigurator 2.5D</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <!-- Alpine.js (CDN) -->
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
         <style>
-            /* Custom scrollbar for a premium feel */
             ::-webkit-scrollbar {
                 width: 6px;
             }
@@ -21,100 +17,107 @@
                 background: #cbd5e1;
                 border-radius: 10px;
             }
-            ::-webkit-scrollbar-thumb:hover {
-                background: #94a3b8;
-            }
         </style>
     </head>
     <body class="bg-slate-50 text-slate-800 h-screen overflow-hidden font-sans antialiased">
-        <!-- Alpine Component Scope -->
         <div
             x-data="kitchenConfigurator()"
             x-init="init()"
             class="flex flex-col md:flex-row h-full"
         >
-            <!-- LEFT PANEL: The Rendered Image (70%) -->
+            <!-- LEFT PANEL: The Rendered Image with ZOOM -->
             <div
-                class="w-full md:w-2/3 lg:w-3/4 h-[50vh] md:h-full bg-slate-200 relative flex items-center justify-center p-4 md:p-8"
+                class="w-full md:w-2/3 lg:w-3/4 h-[50vh] md:h-full bg-slate-200 relative flex flex-col"
             >
-                <!-- Loading Overlay -->
+                <!-- Top Bar: Scene & Angle Selection -->
                 <div
-                    x-show="isLoading"
-                    x-transition.opacity.duration.300ms
-                    class="absolute inset-0 bg-slate-900/20 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-xl m-4 md:m-8"
+                    class="absolute top-0 inset-x-0 p-4 z-20 flex justify-between items-center pointer-events-none"
                 >
-                    <svg
-                        class="animate-spin h-10 w-10 text-white mb-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+                    <div
+                        class="bg-white/90 backdrop-blur shadow-sm rounded-lg p-2 pointer-events-auto flex space-x-2"
                     >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        ></circle>
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                    </svg>
-                    <span class="text-white font-medium tracking-wide"
-                        >Rendering with OpenCV...</span
+                        <template x-if="catalog">
+                            <select
+                                x-model="activeAngle"
+                                @change="renderKitchen()"
+                                class="bg-transparent font-medium text-sm outline-none cursor-pointer"
+                            >
+                                <template
+                                    x-for="angle in catalog.scenes[0].angles"
+                                    :key="angle.angle_id"
+                                >
+                                    <option :value="angle.angle_id" x-text="angle.name"></option>
+                                </template>
+                            </select>
+                        </template>
+                    </div>
+                    <div
+                        class="bg-white/90 backdrop-blur shadow-sm rounded-lg px-3 py-1.5 pointer-events-auto text-xs font-bold text-slate-500"
                     >
+                        Najedź myszką, aby przybliżyć (Zoom)
+                    </div>
                 </div>
 
-                <!-- The Actual Image -->
-                <img
-                    x-show="imageUrl"
-                    :src="imageUrl"
-                    class="max-w-full max-h-full object-contain shadow-2xl rounded-xl transition-opacity duration-500"
-                    :class="isLoading ? 'opacity-50' : 'opacity-100'"
-                    alt="Kitchen Render"
-                />
-
-                <!-- Placeholder before first load -->
+                <!-- Image Container (Handles Zoom Logic) -->
                 <div
-                    x-show="!imageUrl && !isLoading"
-                    class="text-slate-400 flex flex-col items-center"
+                    class="flex-1 relative overflow-hidden flex items-center justify-center p-8"
+                    @mousemove="updateZoom($event)"
+                    @mouseenter="isZoomed = true"
+                    @mouseleave="isZoomed = false"
                 >
-                    <svg
-                        class="w-16 h-16 mb-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <!-- Loading Spinner -->
+                    <div
+                        x-show="isLoading"
+                        class="absolute inset-0 bg-slate-900/10 backdrop-blur-sm flex flex-col items-center justify-center z-10"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        ></path>
-                    </svg>
-                    <p>Initializing Engine...</p>
+                        <svg
+                            class="animate-spin h-10 w-10 text-slate-800 mb-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    </div>
+
+                    <!-- The Rendered Image -->
+                    <img
+                        x-show="imageUrl"
+                        :src="imageUrl"
+                        class="max-w-full max-h-full object-contain shadow-2xl transition-transform duration-200 ease-out cursor-crosshair"
+                        :style="isZoomed ? `transform: scale(2.5); transform-origin: ${zoomX}% ${zoomY}%;` : 'transform: scale(1);'"
+                        :class="isLoading ? 'opacity-50' : 'opacity-100'"
+                        alt="Kitchen Render"
+                    />
                 </div>
             </div>
 
-            <!-- RIGHT PANEL: Controls (30%) -->
+            <!-- RIGHT PANEL: Controls -->
             <div
                 class="w-full md:w-1/3 lg:w-1/4 h-[50vh] md:h-full bg-white border-l border-slate-200 flex flex-col shadow-xl z-20"
             >
-                <!-- Header -->
                 <div class="p-6 border-b border-slate-100">
                     <h1 class="text-2xl font-bold text-slate-900">Krono Swiss</h1>
-                    <p class="text-sm text-slate-500 mt-1">2.5D Kitchen Configurator</p>
+                    <p class="text-sm text-slate-500 mt-1">Konfigurator Wnętrz 2.5D</p>
                 </div>
 
-                <!-- Scrollable Content -->
-                <div class="flex-1 overflow-y-auto p-6">
-                    <!-- Zone Selection Tabs -->
+                <div class="flex-1 overflow-y-auto p-6" x-show="catalog">
+                    <!-- 1. Zone Selection -->
                     <div class="mb-8">
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                            1. Select Zone
+                            1. Wybierz Element
                         </h2>
                         <div class="flex flex-col space-y-2">
                             <template x-for="zone in zones" :key="zone.id">
@@ -124,7 +127,6 @@
                                     :class="activeZoneId === zone.id ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'"
                                 >
                                     <span x-text="zone.name"></span>
-                                    <!-- Small color indicator of current material -->
                                     <span
                                         class="w-4 h-4 rounded-full border border-slate-300 shadow-inner"
                                         :style="`background-color: ${getMaterialColor(zone.texture_id)}`"
@@ -134,35 +136,53 @@
                         </div>
                     </div>
 
-                    <!-- Material Selection Grid -->
+                    <!-- 2. Price Group Tabs -->
+                    <div class="mb-4">
+                        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                            2. Grupa Cenowa
+                        </h2>
+                        <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
+                            <template x-for="group in catalog.price_groups" :key="group.id">
+                                <button
+                                    @click="activePriceGroup = group.id"
+                                    class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
+                                    :class="activePriceGroup === group.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                                    x-text="group.name"
+                                ></button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- 3. Material Grid (Smart Filtered) -->
                     <div>
                         <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
-                            2. Select Material
-                            <span
-                                class="text-slate-500 font-normal normal-case"
-                                x-text="`for ${getActiveZoneName()}`"
-                            ></span>
+                            3. Wybierz Dekor
                         </h2>
+
+                        <div
+                            x-show="filteredMaterials.length === 0"
+                            class="text-sm text-slate-500 italic p-4 text-center bg-slate-50 rounded-lg"
+                        >
+                            Brak dekorów w tej grupie cenowej dla wybranego elementu.
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
-                            <template x-for="mat in materials" :key="mat.id">
+                            <template x-for="mat in filteredMaterials" :key="mat.id">
                                 <button
                                     @click="applyMaterial(mat.id)"
                                     class="group relative aspect-square rounded-xl border-2 overflow-hidden transition-all duration-200"
                                     :class="isMaterialActive(mat.id) ? 'border-blue-500 shadow-md' : 'border-slate-200 hover:border-slate-300'"
                                 >
-                                    <!-- Fake Swatch Color (In a real app, this would be an img src) -->
                                     <div
                                         class="absolute inset-0 w-full h-full"
-                                        :style="`background-color: ${mat.color}`"
+                                        :style="`background-color: ${mat.hex_color}`"
                                     ></div>
 
-                                    <!-- Label -->
                                     <div
-                                        class="absolute bottom-0 inset-x-0 bg-white/90 backdrop-blur text-xs font-medium p-2 text-center border-t border-slate-100"
+                                        class="absolute bottom-0 inset-x-0 bg-white/90 backdrop-blur text-[10px] font-medium p-2 text-center border-t border-slate-100 leading-tight"
                                         x-text="mat.name"
                                     ></div>
 
-                                    <!-- Active Checkmark -->
                                     <div
                                         x-show="isMaterialActive(mat.id)"
                                         class="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 shadow-sm"
@@ -186,127 +206,125 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Footer Actions -->
-                <div class="p-6 border-t border-slate-100 bg-slate-50">
-                    <button
-                        @click="randomize()"
-                        class="w-full py-3 px-4 bg-white border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm flex justify-center items-center space-x-2"
-                    >
-                        <svg
-                            class="w-5 h-5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                            ></path>
-                        </svg>
-                        <span>Randomize Kitchen</span>
-                    </button>
-                </div>
             </div>
         </div>
 
-        <!-- Alpine.js Logic -->
         <script>
             function kitchenConfigurator() {
                 return {
+                    catalog: null,
                     isLoading: false,
                     imageUrl: null,
-                    activeZoneId: 'lower', // Default selected tab
 
-                    // Our available materials (matching the files in assets/textures/)
-                    materials: [
-                        { id: 'wood_oak', name: 'Krono Oak', color: '#8B5A2B', width_mm: 1200.0 },
-                        {
-                            id: 'marble_white',
-                            name: 'White Marble',
-                            color: '#F3F4F6',
-                            width_mm: 2000.0
-                        }
-                    ],
+                    // State
+                    activeScene: 'kitchen_01',
+                    activeAngle: 'main',
+                    activeZoneId: 'lower',
+                    activePriceGroup: 1,
 
-                    // The current state of the kitchen
+                    // Zoom State
+                    isZoomed: false,
+                    zoomX: 50,
+                    zoomY: 50,
+
+                    // Our Kitchen Zones mapped to the backend payload requirements
                     zones: [
                         {
                             id: 'upper',
-                            name: 'Upper Cabinets',
+                            name: 'Szafki Górne',
+                            type: 'FRONT',
                             mask_color_hex: '#0000FF',
-                            texture_id: 'wood_oak'
+                            texture_id: 'dab_szlachetny'
                         },
                         {
                             id: 'lower',
-                            name: 'Lower Cabinets',
+                            name: 'Szafki Dolne',
+                            type: 'FRONT',
                             mask_color_hex: '#FF0000',
-                            texture_id: 'wood_oak'
+                            texture_id: 'zielony_kamienny'
                         },
                         {
                             id: 'counter',
-                            name: 'Countertop',
+                            name: 'Blat Roboczy',
+                            type: 'COUNTERTOP',
                             mask_color_hex: '#00FF00',
-                            texture_id: 'marble_white'
+                            texture_id: 'marmur_bianco'
                         }
                     ],
 
-                    // Initialization
-                    init() {
+                    async init() {
+                        // 1. Fetch the catalog from our new API endpoint
+                        const res = await fetch('/api/v1/catalog');
+                        this.catalog = await res.json();
+
+                        // 2. Render the initial kitchen
                         this.renderKitchen();
                     },
 
-                    // Helpers for the UI
-                    getActiveZoneName() {
-                        return this.zones.find((z) => z.id === this.activeZoneId).name;
+                    // --- SMART FILTERING LOGIC ---
+                    get filteredMaterials() {
+                        if (!this.catalog) return [];
+                        const currentZone = this.zones.find((z) => z.id === this.activeZoneId);
+
+                        return this.catalog.materials.filter((m) => {
+                            // Rule 1: Must match selected Price Group
+                            if (m.price_group !== this.activePriceGroup) return false;
+
+                            // Rule 2: Business Constraints (Front Only / Countertop Only)
+                            if (m.allowed_zone === 'FRONT_ONLY' && currentZone.type !== 'FRONT')
+                                return false;
+                            if (
+                                m.allowed_zone === 'COUNTERTOP_ONLY' &&
+                                currentZone.type !== 'COUNTERTOP'
+                            )
+                                return false;
+
+                            return true;
+                        });
                     },
+
+                    // --- ZOOM LOGIC ---
+                    updateZoom(event) {
+                        if (!this.isZoomed) return;
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        // Calculate mouse position as a percentage of the container
+                        this.zoomX = ((event.clientX - rect.left) / rect.width) * 100;
+                        this.zoomY = ((event.clientY - rect.top) / rect.height) * 100;
+                    },
+
+                    // --- UI HELPERS ---
                     isMaterialActive(materialId) {
-                        const activeZone = this.zones.find((z) => z.id === this.activeZoneId);
-                        return activeZone.texture_id === materialId;
+                        return (
+                            this.zones.find((z) => z.id === this.activeZoneId).texture_id ===
+                            materialId
+                        );
                     },
                     getMaterialColor(materialId) {
-                        return this.materials.find((m) => m.id === materialId).color;
+                        if (!this.catalog) return '#ccc';
+                        const mat = this.catalog.materials.find((m) => m.id === materialId);
+                        return mat ? mat.hex_color : '#ccc';
                     },
 
-                    // Actions
+                    // --- ACTIONS ---
                     applyMaterial(materialId) {
-                        if (this.isMaterialActive(materialId)) return; // Don't re-render if same
-
-                        // Update state
+                        if (this.isMaterialActive(materialId)) return;
                         const zoneIndex = this.zones.findIndex((z) => z.id === this.activeZoneId);
                         this.zones[zoneIndex].texture_id = materialId;
-
-                        // Trigger API call
                         this.renderKitchen();
                     },
 
-                    randomize() {
-                        this.zones.forEach((zone) => {
-                            const randomMat =
-                                this.materials[Math.floor(Math.random() * this.materials.length)];
-                            zone.texture_id = randomMat.id;
-                        });
-                        this.renderKitchen();
-                    },
-
-                    // The Core API Call
                     async renderKitchen() {
                         this.isLoading = true;
 
-                        // Build the payload exactly as our Pydantic schema expects
                         const payload = {
-                            scene_id: 'kitchen_01',
+                            scene_id: this.activeScene,
+                            angle_id: this.activeAngle,
                             uv_scale_mm: 1000.0,
-                            zones: this.zones.map((z) => {
-                                const mat = this.materials.find((m) => m.id === z.texture_id);
-                                return {
-                                    mask_color_hex: z.mask_color_hex,
-                                    texture_id: z.texture_id,
-                                    texture_width_mm: mat.width_mm
-                                };
-                            })
+                            zones: this.zones.map((z) => ({
+                                mask_color_hex: z.mask_color_hex,
+                                texture_id: z.texture_id,
+                                zone_type: z.type
+                            }))
                         };
 
                         try {
@@ -316,18 +334,17 @@
                                 body: JSON.stringify(payload)
                             });
 
-                            if (!response.ok) throw new Error('Render failed');
+                            if (!response.ok) {
+                                const err = await response.json();
+                                throw new Error(err.detail || 'Render failed');
+                            }
 
-                            // Convert the raw JPEG bytes into a browser-readable Blob URL
                             const blob = await response.blob();
-
-                            // Clean up old blob to prevent memory leaks
                             if (this.imageUrl) URL.revokeObjectURL(this.imageUrl);
-
                             this.imageUrl = URL.createObjectURL(blob);
                         } catch (error) {
-                            console.error('Error rendering kitchen:', error);
-                            alert('Failed to render kitchen. Check console.');
+                            console.error('Error:', error);
+                            alert('Błąd: ' + error.message);
                         } finally {
                             this.isLoading = false;
                         }
