@@ -275,10 +275,6 @@ Func DoBackup()
         TrayTip("Corpus6 Guard", "Backup #" & $g_iBackupCount & " saved!", 1)
 
         CleanOldBackups($sBaseName)
-    Else
-        WriteLog("ERROR", "BACKUP", "FileCopy FAILED - check permissions on backup folder")
-        TrayTip("Corpus6 Guard", "ERROR: Backup failed!", 3, 2)
-    EndIf
 EndFunc
 
 
