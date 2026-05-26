@@ -33,10 +33,11 @@ class SceneCompositor:
             uv_path: str,
             mask_path: str,
             zones: List[ZoneConfig],
-        out_path: str = None, # Make out_path optional
-        uv_scale_mm: float = 1000.0
-    ): # Removed -> None
-
+            out_path: str = None,
+            uv_scale_mm: float = 1000.0,
+            reflection_path: str = None,  # NEW
+            handle_path: str = None  # NEW
+    ):
         base_pass = self.reader.read_color(base_path)
         id_mask = self.reader.read_color(mask_path)
         uv_map = self.reader.read_uv(uv_path)
@@ -44,24 +45,33 @@ class SceneCompositor:
         target_shape = base_pass.shape[:2]
         current_composite = base_pass
 
+        # 1. Process all Krono/Egger Textures
         for zone in zones:
             texture = self.reader.read_color(zone.texture_path)
-
-            # 1. Calculate how many times the texture should repeat
             repetition_factor = uv_scale_mm / zone.texture_width_mm
-
-            # 2. We can leave the tiler scale at 1.0 for now (optimization for later)
             tiled_tex = self.tiler.tile(texture, target_shape, scale=1.0)
-
-            # 3. Pass the repetition factor to the warper!
             warped_tex = self.warper.warp(tiled_tex, uv_map, repetition_factor)
-
             zone_mask = self.masker.extract(id_mask, zone.mask_color)
             current_composite = self.blender.multiply(current_composite, warped_tex, zone_mask)
 
-        # If an out_path is provided (like in our CLI/tests), write it to disk
+        # 2. Apply Photorealistic Reflections (If provided)
+        if reflection_path:
+            try:
+                reflection_pass = self.reader.read_color(reflection_path)
+                current_composite = self.blender.screen(current_composite, reflection_pass)
+            except FileNotFoundError:
+                pass  # Fail gracefully if scene doesn't have reflections
+
+        # 3. Apply Handles and Shadows (If provided)
+        if handle_path:
+            try:
+                # MUST use read_rgba to keep the transparent shadows!
+                handle_pass = self.reader.read_rgba(handle_path)
+                current_composite = self.blender.alpha_composite(current_composite, handle_pass)
+            except FileNotFoundError:
+                pass
+
         if out_path:
             self.writer.write(out_path, current_composite)
 
-        # ALWAYS return the final image array!
         return current_composite

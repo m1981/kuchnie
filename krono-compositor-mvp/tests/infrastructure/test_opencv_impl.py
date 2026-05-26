@@ -53,6 +53,52 @@ class TestOpenCVImageBlender:
         # Should remain exactly the base image (100)
         np.testing.assert_array_equal(result[:, 2:], 100)
 
+    def test_screen_blend_math_is_correct(self, dummy_base_image):
+        # Arrange
+        blender = OpenCVImageBlender()
+        # Base is 100 (from fixture). 100/255 = 0.392
+
+        # Create a reflection layer that is dark gray (50)
+        # 50/255 = 0.196
+        reflection = np.full((4, 4, 3), 50, dtype=np.uint8)
+
+        # Act
+        result = blender.screen(dummy_base_image, reflection)
+
+        # Assert
+        assert result.dtype == np.uint8
+        assert result.shape == (4, 4, 3)
+
+        # Screen Math: 1.0 - (1.0 - Base) * (1.0 - Layer)
+        # 1.0 - (1.0 - 0.392) * (1.0 - 0.196)
+        # 1.0 - (0.608 * 0.804) = 1.0 - 0.4888 = 0.5112
+        # 0.5112 * 255 = 130.3 -> truncated to 130
+        expected_value = 130
+        np.testing.assert_array_equal(result, expected_value)
+
+    def test_alpha_composite_math_is_correct(self, dummy_base_image):
+        # Arrange
+        blender = OpenCVImageBlender()
+        # Base is 100 (RGB)
+
+        # Create an RGBA layer (e.g., a Handle)
+        # RGB = 200, Alpha = 128 (~50% opacity)
+        rgba_layer = np.full((4, 4, 4), 200, dtype=np.uint8)
+        rgba_layer[:, :, 3] = 128
+
+        # Act
+        result = blender.alpha_composite(dummy_base_image, rgba_layer)
+
+        # Assert
+        assert result.dtype == np.uint8
+        assert result.shape == (4, 4, 3)  # Output must be RGB, not RGBA!
+
+        # Alpha Math: Foreground * Alpha + Background * (1 - Alpha)
+        # Alpha float = 128 / 255.0 = 0.5019
+        # (200 * 0.5019) + (100 * (1.0 - 0.5019))
+        # 100.38 + 49.81 = 150.19 -> truncated to 150
+        expected_value = 150
+        np.testing.assert_array_equal(result, expected_value)
 
 class TestOpenCVTextureTiler:
     def test_tile_scales_image_correctly(self, dummy_texture):

@@ -15,8 +15,13 @@ class OpenCVImageIO:
 
     def read_color(self, path: str) -> Image:
         img = cv2.imread(path, cv2.IMREAD_COLOR)
-        if img is None:
-            raise FileNotFoundError(f"Failed to load color image at: {path}")
+        if img is None: raise FileNotFoundError(f"Failed to load color image at: {path}")
+        return img
+
+    def read_rgba(self, path: str) -> Image:
+        # IMREAD_UNCHANGED forces OpenCV to keep the 4th Alpha channel
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+        if img is None: raise FileNotFoundError(f"Failed to load RGBA image at: {path}")
         return img
 
     def read_uv(self, path: str) -> UVMap:
@@ -111,7 +116,28 @@ class OpenCVImageBlender:
         # Composite using the alpha mask
         # Where mask is 1.0, use blended. Where mask is 0.0, use original base.
         final_f = (blended_f * mask) + (base_f * (1.0 - mask))
+        return (final_f * 255.0).clip(0, 255).astype(np.uint8)
 
-        # Convert back to 8-bit integer [0, 255]
-        final_img = (final_f * 255.0).clip(0, 255).astype(np.uint8)
-        return final_img
+    def screen(self, base: Image, layer: Image) -> Image:
+        base_f = base.astype(np.float32) / 255.0
+        layer_f = layer.astype(np.float32) / 255.0
+
+        # Screen Math: 1 - (1 - a) * (1 - b)
+        # This adds light without blowing out to pure white instantly
+        screen_f = 1.0 - ((1.0 - base_f) * (1.0 - layer_f))
+
+        return (screen_f * 255.0).clip(0, 255).astype(np.uint8)
+
+    def alpha_composite(self, base: Image, rgba_layer: Image) -> Image:
+        # Extract RGB and Alpha channels from the RGBA layer
+        layer_rgb = rgba_layer[:, :, :3].astype(np.float32) / 255.0
+
+        # Extract Alpha, normalize to [0, 1], and add channel dimension for broadcasting
+        layer_alpha = (rgba_layer[:, :, 3].astype(np.float32) / 255.0)[..., np.newaxis]
+
+        base_f = base.astype(np.float32) / 255.0
+
+        # Standard Alpha Blending Math
+        composite_f = (layer_rgb * layer_alpha) + (base_f * (1.0 - layer_alpha))
+
+        return (composite_f * 255.0).clip(0, 255).astype(np.uint8)

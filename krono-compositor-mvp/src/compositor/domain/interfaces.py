@@ -15,7 +15,9 @@ class ImageReader(Protocol):
     def read_color(self, path: str) -> Image:
         """Reads a standard 8-bit image (e.g., PNG, JPG) in BGR format."""
         ...
-
+    def read_rgba(self, path: str) -> Image:
+        """Reads an image keeping the Alpha channel (4 channels)."""
+        ...
     def read_uv(self, path: str) -> UVMap:
         """Reads a high bit-depth UV map (e.g., EXR) in float32 format."""
         ...
@@ -51,10 +53,14 @@ class MaskExtractor(Protocol):
 
 class ImageBlender(Protocol):
     def multiply(self, base: Image, layer: Image, mask: Mask) -> Image:
-        """
-        Blends the 'layer' over the 'base' using a Multiply blend mode,
-        constrained by the 'mask'.
-        """
+        ...
+
+    def screen(self, base: Image, layer: Image) -> Image:
+        """Blends a reflection/specular layer over the base."""
+        ...
+
+    def alpha_composite(self, base: Image, rgba_layer: Image) -> Image:
+        """Overlays an RGBA image (with transparency) onto an RGB base."""
         ...
 
 @dataclass(frozen=True)
