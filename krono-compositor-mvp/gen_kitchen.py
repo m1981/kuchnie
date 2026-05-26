@@ -18,8 +18,6 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
 scene.render.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
-scene.cycles.samples = 64
-scene.cycles.use_denoising = True
 
 scene.render.resolution_x = 800
 scene.render.resolution_y = 600
@@ -64,7 +62,8 @@ def setup_front_materials(obj, hex_color):
 
     refl_node = nodes.new('ShaderNodeBsdfPrincipled')
     refl_node.inputs['Base Color'].default_value = (0.0, 0.0, 0.0, 1.0)
-    refl_node.inputs['Roughness'].default_value = 0.1
+    # TWEAK: Lower roughness for a smoother, cleaner laminate reflection
+    refl_node.inputs['Roughness'].default_value = 0.05
 
     obj['mat_out'] = out_node.name
     obj['mat_base'] = base_node.name
@@ -195,7 +194,7 @@ if base_cabinets and 'countertop' in layout_data:
     setup_front_materials(ct, ct_data['id_hex'])
 
 # ==========================================
-# 4. CAMERA & LIGHTING
+# 4. CAMERA & LIGHTING (STUDIO SETUP)
 # ==========================================
 cam_data = bpy.data.cameras.new("Camera")
 cam_obj = bpy.data.objects.new("Camera", cam_data)
@@ -222,17 +221,40 @@ bg_node = world.node_tree.nodes.get("Background")
 bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
 bg_node.inputs[1].default_value = 0.5
 
-sun_data = bpy.data.lights.new("Sun", 'SUN')
-sun_data.energy = 3.0
-sun_data.angle = math.radians(5.0)
-sun_obj = bpy.data.objects.new("Sun", sun_data)
-scene.collection.objects.link(sun_obj)
-sun_obj.rotation_euler = (math.radians(60), math.radians(0), math.radians(45))
+# --- THE FIX: MASSIVE AREA LIGHT (SOFTBOX) INSTEAD OF SUN ---
+area_data = bpy.data.lights.new("Softbox", 'AREA')
+area_data.energy = 2000.0 # High energy for clean reflections
+area_data.shape = 'RECTANGLE'
+area_data.size = 4.0      # 4 meters wide
+area_data.size_y = 2.0    # 2 meters tall
+area_obj = bpy.data.objects.new("Softbox", area_data)
+scene.collection.objects.link(area_obj)
+
+# Place the softbox right above and slightly behind the camera, pointing at the cabinets
+area_obj.location = (center_x, -distance + 1.0, distance * 0.8)
+tt_light = area_obj.constraints.new(type='TRACK_TO')
+tt_light.target = empty_target
+tt_light.track_axis = 'TRACK_NEGATIVE_Z'
+tt_light.up_axis = 'UP_Y'
 
 
 # ==========================================
 # 5. SEQUENTIAL RENDER PIPELINE
 # ==========================================
+
+# Switch helper functions to lock down render mathematics based on layer needs
+def configure_engine_for_art():
+    scene.cycles.samples = 64
+    scene.cycles.use_denoising = True
+    scene.render.filter_size = 1.5
+    scene.render.dither_intensity = 1.0 # Art wants dither gradient
+
+def configure_engine_for_math():
+    scene.cycles.samples = 1            # Never blur light bounces. We only need the precise value.
+    scene.cycles.use_denoising = False  # NEVER AI smudge coordinates!
+    scene.render.filter_size = 0.0      # MUST disable Anti-aliasing perfectly sharp masking.
+    scene.render.dither_intensity = 0.0 # <--- ADD THIS FIX FOR MATH. NEUTRALIZE PIXEL SHAKING!
+
 def switch_front_materials(pass_name):
     for obj in fronts_collection.objects:
         if obj.data.materials:
@@ -256,6 +278,7 @@ def set_shadow_catchers(active):
 
 # --- PASS 1: BASE PASS ---
 print("Rendering Base Pass...")
+configure_engine_for_art()
 switch_front_materials('base')
 set_handles_visibility(False)
 set_shadow_catchers(False)
@@ -269,6 +292,7 @@ bpy.ops.render.render(write_still=True)
 
 # --- PASS 2: UV PASS ---
 print("Rendering UV Pass...")
+configure_engine_for_math()  # Lock out blurring
 switch_front_materials('uv')
 set_handles_visibility(False)
 scene.view_settings.view_transform = 'Raw'
@@ -281,10 +305,10 @@ bpy.ops.render.render(write_still=True)
 
 # --- PASS 3: ID MASK ---
 print("Rendering ID Mask Pass...")
+configure_engine_for_math() # Lock out blurring
 switch_front_materials('id')
 set_handles_visibility(False)
 scene.view_settings.view_transform = 'Raw'
-scene.render.filter_size = 0.0
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
 scene.render.image_settings.color_depth = '8'
@@ -294,14 +318,13 @@ bpy.ops.render.render(write_still=True)
 
 # --- PASS 4: REFLECTION PASS ---
 print("Rendering Reflection Pass...")
+configure_engine_for_art()
 switch_front_materials('reflection')
 set_handles_visibility(False)
 
-# --- ADD THESE TWO LINES TO FIX THE REFLECTIONS ---
+# --- THE FIX: TURN WORLD BLACK FOR REFLECTIONS ---
 bg_node = scene.world.node_tree.nodes.get("Background")
-bg_node.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0) # Turn world black!
-
-scene.render.filter_size = 1.5
+bg_node.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
 scene.view_settings.view_transform = 'Standard'
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
@@ -310,14 +333,13 @@ scene.render.image_settings.color_mode = 'RGB'
 scene.render.filepath = os.path.join(OUTPUT_DIR, "reflection_pass.png")
 bpy.ops.render.render(write_still=True)
 
-# --- ADD THIS LINE TO TURN THE WORLD WHITE AGAIN FOR THE HANDLE PASS ---
-bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
-
 # --- PASS 5: HANDLE PASS ---
 print("Rendering Handle Pass (Shadow Catcher)...")
+configure_engine_for_art()
 switch_front_materials('base')
 set_handles_visibility(True)
 set_shadow_catchers(True)
+bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
 scene.render.image_settings.color_depth = '8'
