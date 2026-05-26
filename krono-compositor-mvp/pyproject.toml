@@ -20,8 +20,9 @@ dependencies = [
     "uvicorn>=0.48.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
+    "bpy>=5.0.1",
     "pytest>=7.0",
     "mypy>=1.5.0",
     "pytest-cov>=7.1.0",
@@ -70,8 +71,4 @@ exclude_lines = [
 "tests/**/*.py" = ["E402"]
 "src/main.py" = ["E402"]
 
-[dependency-groups]
-dev = [
-    "bpy>=5.0.1",
-]
 
