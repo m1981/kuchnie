@@ -34,13 +34,14 @@
                     class="absolute top-0 inset-x-0 p-4 z-20 flex justify-between items-center pointer-events-none"
                 >
                     <div
-                        class="bg-white/90 backdrop-blur shadow-sm rounded-lg p-2 pointer-events-auto flex space-x-2"
+                        class="bg-white/90 backdrop-blur shadow-sm rounded-lg p-2 pointer-events-auto flex items-center space-x-3"
                     >
+                        <!-- Angle Selector -->
                         <template x-if="catalog">
                             <select
                                 x-model="activeAngle"
                                 @change="renderKitchen()"
-                                class="bg-transparent font-medium text-sm outline-none cursor-pointer"
+                                class="bg-transparent font-medium text-sm outline-none cursor-pointer text-slate-700"
                             >
                                 <template
                                     x-for="angle in catalog.scenes[0].angles"
@@ -50,6 +51,19 @@
                                 </template>
                             </select>
                         </template>
+
+                        <!-- Divider -->
+                        <div class="w-px h-4 bg-slate-300"></div>
+
+                        <!-- NEW: Handle Selector -->
+                        <select
+                            x-model="activeHandle"
+                            @change="renderKitchen()"
+                            class="bg-transparent font-medium text-sm outline-none cursor-pointer text-slate-700"
+                        >
+                            <option value="edge_pull">Uchwyty Krawędziowe</option>
+                            <option value="">Bez Uchwytów (Tip-On)</option>
+                        </select>
                     </div>
                     <div
                         class="bg-white/90 backdrop-blur shadow-sm rounded-lg px-3 py-1.5 pointer-events-auto text-xs font-bold text-slate-500"
@@ -221,6 +235,7 @@
                     activeAngle: 'main',
                     activeZoneId: 'lower',
                     activePriceGroup: 1,
+                    activeHandle: 'edge_pull',
 
                     // Zoom State
                     isZoomed: false,
@@ -320,6 +335,7 @@
                             scene_id: this.activeScene,
                             angle_id: this.activeAngle,
                             uv_scale_mm: 1000.0,
+                            handle_id: this.activeHandle || null,
                             zones: this.zones.map((z) => ({
                                 mask_color_hex: z.mask_color_hex,
                                 texture_id: z.texture_id,
