@@ -19,6 +19,7 @@ scene = bpy.context.scene
 scene.render.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
 scene.cycles.samples = 64
+scene.cycles.use_denoising = True
 
 scene.render.resolution_x = 800
 scene.render.resolution_y = 600
@@ -295,6 +296,11 @@ bpy.ops.render.render(write_still=True)
 print("Rendering Reflection Pass...")
 switch_front_materials('reflection')
 set_handles_visibility(False)
+
+# --- ADD THESE TWO LINES TO FIX THE REFLECTIONS ---
+bg_node = scene.world.node_tree.nodes.get("Background")
+bg_node.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0) # Turn world black!
+
 scene.render.filter_size = 1.5
 scene.view_settings.view_transform = 'Standard'
 scene.render.film_transparent = True
@@ -303,6 +309,9 @@ scene.render.image_settings.color_depth = '8'
 scene.render.image_settings.color_mode = 'RGB'
 scene.render.filepath = os.path.join(OUTPUT_DIR, "reflection_pass.png")
 bpy.ops.render.render(write_still=True)
+
+# --- ADD THIS LINE TO TURN THE WORLD WHITE AGAIN FOR THE HANDLE PASS ---
+bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
 
 # --- PASS 5: HANDLE PASS ---
 print("Rendering Handle Pass (Shadow Catcher)...")
