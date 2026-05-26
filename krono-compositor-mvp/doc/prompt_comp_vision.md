@@ -32,12 +32,3 @@ The system will take pre-rendered artifacts (Base Pass, UV Pass, ID Masks) gener
 4.  **Masking:** Extract the specific zone from `id_mask.png` and apply it as an alpha mask to the warped texture.
 5.  **Blending:** Blend the masked, warped texture with the `base_pass.png` using a Multiply blend mode (for shadows).
 6.  **Output:** Save the final composited image to disk.
-
-**Requirements & Deliverables:**
-
-1.  **Pure Python Walking Skeleton:** A set of scripts/classes that execute the pipeline from start to finish, reading files from disk and saving an output image.
-2.  **SOLID Architecture:** The code must be heavily decoupled. Use Interface Segregation (e.g., separate interfaces for `ImageLoader`, `TextureWarper`, `ImageBlender`) so that each class has a single responsibility and depends only on the interfaces it actually uses.
-3.  **Real Texture Handling:** The logic must be robust enough to handle real Krono Swiss textures (handling scaling/tiling before warping).
-
-**First Task:**
-Please confirm you understand these updated requirements. Then, outline the proposed class/interface structure (following SOLID and ISP) before writing any implementation code.
