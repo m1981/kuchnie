@@ -1,34 +1,31 @@
-{
-    "scene_name": "linear_kitchen_01",
-    "cabinets": [
-        {
-            "type": "tall",
-            "width_mm": 600,
-            "height_mm": 2000,
-            "depth_mm": 600,
-            "id_hex": "#FF0000",
-            "handle": "edge_pull"
-        },
-        {
-            "type": "base",
-            "width_mm": 800,
-            "height_mm": 820,
-            "depth_mm": 600,
-            "id_hex": "#00FF00",
-            "handle": "edge_pull"
-        },
-        {
-            "type": "base",
-            "width_mm": 600,
-            "height_mm": 820,
-            "depth_mm": 600,
-            "id_hex": "#0000FF",
-            "handle": "edge_pull"
-        }
-    ],
-    "countertop": {
-        "thickness_mm": 40,
-        "overhang_mm": 20,
-        "id_hex": "#FFFF00"
+// Frontend Configuration Fix
+zones: [
+    { 
+        id: 'tall', 
+        name: 'Szafa Wysoka', 
+        type: 'FRONT', 
+        mask_color_hex: '#FF0000', // RED maps to the Tall Cabinet
+        texture_id: 'dab_szlachetny' 
+    },
+    { 
+        id: 'base_mid', 
+        name: 'Szafka Środkowa (Dolne)', 
+        type: 'FRONT', 
+        mask_color_hex: '#00FF00', // GREEN maps to the Middle Cabinet
+        texture_id: 'zielony_kamienny' 
+    },
+    { 
+        id: 'base_right', 
+        name: 'Szafka Prawa (Dolne)', 
+        type: 'FRONT', 
+        mask_color_hex: '#0000FF', // BLUE maps to the Right Cabinet
+        texture_id: 'zielony_kamienny' 
+    },
+    { 
+        id: 'counter', 
+        name: 'Blat Roboczy', 
+        type: 'COUNTERTOP', 
+        mask_color_hex: '#FFFF00', // YELLOW maps to the Countertop
+        texture_id: 'marmur_bianco' 
     }
-}
+]

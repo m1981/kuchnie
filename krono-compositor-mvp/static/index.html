@@ -233,7 +233,7 @@
                     // State
                     activeScene: 'kitchen_01',
                     activeAngle: 'main',
-                    activeZoneId: 'lower',
+                    activeZoneId: 'counter',
                     activePriceGroup: 1,
                     activeHandle: 'edge_pull',
 
@@ -245,24 +245,31 @@
                     // Our Kitchen Zones mapped to the backend payload requirements
                     zones: [
                         {
-                            id: 'upper',
-                            name: 'Szafki Górne',
+                            id: 'tall',
+                            name: 'Szafa Wysoka (Lewa)',
+                            type: 'FRONT',
+                            mask_color_hex: '#FF0000',
+                            texture_id: 'dab_szlachetny'
+                        },
+                        {
+                            id: 'base_mid',
+                            name: 'Szafka Środkowa',
+                            type: 'FRONT',
+                            mask_color_hex: '#00FF00',
+                            texture_id: 'dab_szlachetny'
+                        },
+                        {
+                            id: 'base_right',
+                            name: 'Szafka Prawa',
                             type: 'FRONT',
                             mask_color_hex: '#0000FF',
                             texture_id: 'dab_szlachetny'
                         },
                         {
-                            id: 'lower',
-                            name: 'Szafki Dolne',
-                            type: 'FRONT',
-                            mask_color_hex: '#FF0000',
-                            texture_id: 'zielony_kamienny'
-                        },
-                        {
                             id: 'counter',
                             name: 'Blat Roboczy',
                             type: 'COUNTERTOP',
-                            mask_color_hex: '#00FF00',
+                            mask_color_hex: '#FFFF00',
                             texture_id: 'marmur_bianco'
                         }
                     ],
