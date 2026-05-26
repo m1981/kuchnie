@@ -26,4 +26,5 @@ class RenderRequest(BaseModel):
     scene_id: str = Field(..., description="ID of the scene")
     angle_id: str = Field(..., description="ID of the camera angle")
     uv_scale_mm: float = Field(1000.0, gt=0)
+    handle_id: str = Field(None, description="ID of the handle style (e.g., 'black_matte')") # NEW
     zones: List[ZoneRequest]

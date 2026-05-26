@@ -44,6 +44,20 @@ def render_image(request: RenderRequest, compositor: SceneCompositor = Depends(g
     uv_path = f"{scene_dir}/uv_pass.exr"
     mask_path = f"{scene_dir}/id_mask.png"
 
+    # NEW: Resolve Reflection Pass (Optional, but highly recommended for realism)
+    reflection_path = f"{scene_dir}/reflection_pass.png"
+    if not os.path.exists(reflection_path):
+        reflection_path = None # Fail gracefully if the 3D artist didn't provide one
+
+    # NEW: Resolve Handle Pass based on user request
+    handle_path = None
+    if request.handle_id:
+        # Handles are usually specific to the scene/angle because of perspective
+        handle_path = f"{scene_dir}/handles/{request.handle_id}.png"
+        if not os.path.exists(handle_path):
+            logger.warning(f"Requested handle '{request.handle_id}' not found at {handle_path}")
+            handle_path = None
+
     if not os.path.exists(base_path):
         raise HTTPException(status_code=404, detail=f"Scene assets not found at {scene_dir}")
 
@@ -85,7 +99,11 @@ def render_image(request: RenderRequest, compositor: SceneCompositor = Depends(g
     try:
         final_image_array = compositor.render_scene(
             base_path=base_path, uv_path=uv_path, mask_path=mask_path,
-            zones=domain_zones, out_path=None, uv_scale_mm=request.uv_scale_mm
+            zones=domain_zones,
+            out_path=None,
+            uv_scale_mm=request.uv_scale_mm,
+            reflection_path=reflection_path, # NEW
+            handle_path=handle_path          # NEW
         )
 
         success, encoded_image = cv2.imencode('.jpg', final_image_array)
