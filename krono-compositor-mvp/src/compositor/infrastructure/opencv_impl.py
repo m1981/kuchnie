@@ -91,12 +91,16 @@ class OpenCVMaskExtractor:
     """Isolates a specific color zone from an ID mask."""
 
     def extract(self, id_mask: Image, target_color: ColorBGR) -> Mask:
-        # Create a boolean mask where pixels exactly match the target color
-        # Note: ID masks from 3D software should be rendered WITHOUT anti-aliasing for this to work perfectly.
-        binary_mask = cv2.inRange(id_mask, target_color, target_color)
+        # Provide +/- 5 color threshold tolerance for JPG compression / Dither noise safety
+        # Make sure numpy doesn't integer overflow beyond 0 and 255.
+        target = np.array(target_color, dtype=np.int16)
+        lower_bound = np.clip(target - 5, 0, 255).astype(np.uint8)
+        upper_bound = np.clip(target + 5, 0, 255).astype(np.uint8)
 
-        # Convert to float32 [0.0, 1.0] and add channel dimension (H, W) -> (H, W, 1)
-        # This shape is required for NumPy broadcasting during the blending phase.
+        # Check against the boundaries instead of single pixel values
+        binary_mask = cv2.inRange(id_mask, lower_bound, upper_bound)
+
+        # Format the mask correctly back to our Compositor expected inputs
         float_mask = (binary_mask.astype(np.float32) / 255.0)[..., np.newaxis]
         return float_mask
 
