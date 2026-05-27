@@ -3,27 +3,25 @@ import streamlit as st
 from dotenv import load_dotenv
 from agent import process_chat_turn
 
-# Load environment variables (.env)
 load_dotenv()
 
 st.set_page_config(page_title="Kitchen Cabinet Agent", layout="wide")
 
-# --- SIDEBAR (From your sketch) ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("Context & Settings")
 
-    # 1. Prompt Templates Dropdown
     template_options = {
-        "General Assistant": "You are a helpful assistant for a kitchen cabinet builder.",
-        "Design Mode": "You are an expert kitchen designer. Focus on ergonomics, spacing, and aesthetics. Always check the repo map for design guidelines.",
-        "Assembly Mode": "You are a master carpenter. Focus on structural integrity, hardware installation, and step-by-step assembly instructions."
+        "General Assistant": "You are a helpful assistant for a kitchen cabinet builder. Read files to answer questions, but NEVER edit or create files unless the user explicitly asks you to.",
+
+        "Design Mode": "You are an expert kitchen designer. Focus on ergonomics, spacing, and aesthetics. Always check the repo map for design guidelines. NEVER edit files unless explicitly requested.",
+
+        "Assembly Mode": "You are a master carpenter. Focus on structural integrity, hardware installation, and step-by-step assembly instructions. Answer the user's questions based on the files, but DO NOT modify the files yourself unless told to do so."
     }
     selected_mode = st.selectbox("Prompt Template", list(template_options.keys()))
     current_system_prompt = template_options[selected_mode]
 
     st.divider()
-
-    # 2. Tasks Checklist
     st.header("Tasks")
     st.checkbox("Design layout")
     st.checkbox("Calculate materials")
@@ -32,45 +30,77 @@ with st.sidebar:
     st.divider()
     if st.button("Clear Chat History"):
         st.session_state.history = []
+        st.session_state.ui_messages = []  # Clear UI state too
         st.rerun()
 
-# --- MAIN CHAT AREA ---
-st.title("🪚 Kitchen Cabinet Assistant")
-st.caption("Your local knowledge base agent.")
-
-# Initialize chat history in Streamlit session state
+# --- STATE MANAGEMENT ---
+# 1. API State (Strict Gemini format)
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Render existing chat history
-for msg in st.session_state.history:
-    # We only want to display standard text messages in the UI,
-    # not the raw JSON function calls/responses.
-    part = msg.parts[0]
-    if part.text:
-        role = "user" if msg.role == "user" else "assistant"
-        with st.chat_message(role):
-            st.markdown(part.text)
+# 2. UI State (For rendering Streamlit chat bubbles and expanders)
+if "ui_messages" not in st.session_state:
+    st.session_state.ui_messages = []
 
-# Chat input
+# --- MAIN CHAT AREA ---
+st.title("🪚 Kitchen Cabinet Assistant")
+st.caption(f"Current Mode: **{selected_mode}**")
+
+# Render existing UI history
+for msg in st.session_state.ui_messages:
+    with st.chat_message(msg["role"]):
+
+        # If this message has tool logs, render the expanders first
+        if "tools" in msg and msg["tools"]:
+            for tool in msg["tools"]:
+                with st.expander(f"🛠️ Agent used tool: `{tool['name']}`"):
+                    st.markdown(f"**Arguments:** `{tool['args']}`")
+                    st.markdown("**Raw Output:**")
+
+                    # Use st.text to render raw content safely without markdown formatting issues
+                    if "content" in tool["result"]:
+                        st.text(tool["result"]["content"])
+                    else:
+                        st.json(tool["result"])
+
+        # Render the actual text response
+        st.markdown(msg["content"])
+
+# --- CHAT INPUT ---
 if prompt := st.chat_input("Ask about your kitchen designs..."):
 
-    # Display user message immediately
+    # 1. Add user message to UI state and render it
+    st.session_state.ui_messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Process with the Agent
+    # 2. Process with Agent
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            # Pass the system prompt from the sidebar into the agent
-            response_text, tool_used = process_chat_turn(
+        with st.spinner("Thinking and reading files..."):
+
+            final_text, tool_logs = process_chat_turn(
                 user_message=prompt,
                 history=st.session_state.history,
                 system_instruction=current_system_prompt
             )
 
-            # If the agent used a tool, show a small badge in the UI
-            if tool_used:
-                st.caption(f"🛠️ *Agent used tool: `{tool_used}`*")
+            # 3. Render the tool expanders immediately for the new response
+            if tool_logs:
+                for tool in tool_logs:
+                    with st.expander(f"🛠️ Agent used tool: `{tool['name']}`"):
+                        st.markdown(f"**Arguments:** `{tool['args']}`")
+                        st.markdown("**Raw Output:**")
+                        if "content" in tool["result"]:
+                            st.text(tool["result"]["content"])
+                        else:
+                            st.json(tool["result"])
 
-            st.markdown(response_text)
+            # 4. Render the final text
+            st.markdown(final_text)
+
+            # 5. Save the assistant's response and tool logs to UI state
+            st.session_state.ui_messages.append({
+                "role": "assistant",
+                "content": final_text,
+                "tools": tool_logs
+            })

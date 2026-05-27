@@ -31,7 +31,8 @@ get_repo_map_fn = {
 
 edit_file_fn = {
     "name": "edit_file",
-    "description": "Edits an existing file using exact search and replace. You MUST provide the exact existing text you want to replace.",
+    # ADDED STRICT GUARDRAILS TO THE DESCRIPTION:
+    "description": "Edits an existing file using exact search and replace. ONLY use this tool if the user EXPLICITLY asks you to update, change, or edit a file. DO NOT proactively edit files to add information unless commanded.",
     "parameters": {
         "type": "object",
         "properties": {
