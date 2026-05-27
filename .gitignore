@@ -1,3 +1,5 @@
+.env
+
 .venv
 .husky
 node_modules
