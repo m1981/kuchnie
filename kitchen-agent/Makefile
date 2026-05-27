@@ -16,5 +16,5 @@ help: ## Display this help
 .PHONY: test-cov
 test-cov: ## Run UNIT tests with strict coverage (Fail under 80%, excludes UI and integration tests)
 	@echo "$(GREEN)Running Unit Tests with Coverage Check...$(RESET)"
-	uv run pytest --cov=src  --cov-report=term-missing
+	uv run pytest -m "not integration" --cov=src  --cov-report=term-missing
 
