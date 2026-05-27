@@ -43,10 +43,15 @@ def test_agent_preserves_thought_signature_and_id(mock_generate_content):
         history = []
 
         # --- Act ---
-        final_text, tool_used = process_chat_turn("What is in dummy.md?", history)
+        # Rename variable to tool_logs to reflect the new list structure
+        final_text, tool_logs = process_chat_turn("What is in dummy.md?", history)
 
     # --- Assert ---
-    assert tool_used == "read_file"
+    # Check that exactly one tool was used
+    assert len(tool_logs) == 1
+    # Check that the name of the tool used was "read_file"
+    assert tool_logs[0]["name"] == "read_file"
+
     assert final_text == "The file contains wood."
 
     # Verify the mock was called exactly twice

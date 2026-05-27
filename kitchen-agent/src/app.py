@@ -21,6 +21,12 @@ with st.sidebar:
     selected_mode = st.selectbox("Prompt Template", list(template_options.keys()))
     current_system_prompt = template_options[selected_mode]
 
+    # --- NEW: Expander to show the raw system prompt ---
+    with st.expander("👀 View Active Prompt"):
+        st.caption("This is the hidden instruction sent to the LLM:")
+        st.info(current_system_prompt)
+    # ---------------------------------------------------
+
     st.divider()
     st.header("Tasks")
     st.checkbox("Design layout")
