@@ -289,13 +289,7 @@
 									{/if}
 								</div>
 
-								{#if msg.role === 'assistant'}
-									<Markdown content={msg.content} />
-								{:else}
-									<div class="text-sm leading-6 whitespace-pre-wrap">
-										{msg.content}
-									</div>
-								{/if}
+								<Markdown content={msg.content} variant={msg.role} />
 
 								{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
 									<div class="mt-4 space-y-2 border-t border-line pt-3">
