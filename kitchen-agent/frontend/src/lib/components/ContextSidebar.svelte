@@ -1,43 +1,42 @@
 <script lang="ts">
 	/**
-	 * ContextSidebar – right panel with three modes:
+	 * ContextSidebar – right panel with two tabs:
 	 *   1. "Context" – select files to inject as context into the next message
-	 *   2. "Editor"  – inline markdown editor for the selected file
+	 *   2. "Editor"  – inline Markdown editor for the selected file
 	 *
-	 * Emits:
-	 *   oncontextchange(filepaths: string[]) – called when the selection changes
+	 * Props:
+	 *   oncontextchange(filepaths: string[]) – emitted when the selection changes
 	 */
 
+	import { api, type FileItem } from '$lib/api';
 	import FileEditor from './FileEditor.svelte';
 
-	type FileItem = { path: string; name: string };
 	type Props = {
 		oncontextchange: (paths: string[]) => void;
 	};
 
 	let { oncontextchange }: Props = $props();
 
-	// ---- state ----
+	// ── State ────────────────────────────────────────────────────────────────
 	let files = $state<FileItem[]>([]);
 	let selectedPaths = $state<Set<string>>(new Set());
 	let editingFile = $state<string | null>(null);
 	let loading = $state(true);
 	let tab = $state<'context' | 'editor'>('context');
 
+	// ── Load files ───────────────────────────────────────────────────────────
 	$effect(() => {
-		fetch('http://127.0.0.1:8000/api/files')
-			.then((r) => r.json())
-			.then((data: FileItem[]) => {
-				files = data;
-			})
+		api
+			.listFiles()
+			.then((data) => (files = data))
 			.catch(() => {})
 			.finally(() => (loading = false));
 	});
 
+	// ── Handlers ─────────────────────────────────────────────────────────────
 	function toggleFile(path: string) {
 		const next = new Set(selectedPaths);
-		if (next.has(path)) next.delete(path);
-		else next.add(path);
+		next.has(path) ? next.delete(path) : next.add(path);
 		selectedPaths = next;
 		oncontextchange(Array.from(next));
 	}
@@ -52,11 +51,10 @@
 		tab = 'context';
 	}
 
-	// Refresh file list after editor saves (title might update etc.)
 	function refreshFiles() {
-		fetch('http://127.0.0.1:8000/api/files')
-			.then((r) => r.json())
-			.then((data: FileItem[]) => (files = data))
+		api
+			.listFiles()
+			.then((data) => (files = data))
 			.catch(() => {});
 	}
 </script>
@@ -82,12 +80,13 @@
 		</button>
 	</div>
 
+	<!-- Context tab -->
 	{#if tab === 'context'}
 		<div class="flex flex-col overflow-hidden p-3">
 			<p class="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
 				Inject into next message
 			</p>
-			<p class="mb-3 text-xs text-muted leading-4">
+			<p class="mb-3 text-xs leading-4 text-muted">
 				Tick files to add their full content to the context window before sending your next message.
 			</p>
 
@@ -136,6 +135,7 @@
 			{/if}
 		</div>
 
+	<!-- Editor tab -->
 	{:else if tab === 'editor'}
 		<div class="flex flex-1 flex-col overflow-hidden">
 			{#if !editingFile}
@@ -160,7 +160,7 @@
 					{/if}
 				</div>
 			{:else}
-				<FileEditor filepath={editingFile} onclose={closeEditor} />
+				<FileEditor filepath={editingFile} onclose={closeEditor} onsave={refreshFiles} />
 			{/if}
 		</div>
 	{/if}

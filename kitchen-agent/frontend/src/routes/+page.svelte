@@ -1,38 +1,18 @@
 <script lang="ts">
+	import { api, type FileItem, type Message, type SessionSummary, type ToolLog } from '$lib/api';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
 	import { createSidebarResize } from '$lib/sidebar-resize.svelte';
 
 	// ---------------------------------------------------------------------------
-	// Types
+	// Local-only types
 	// ---------------------------------------------------------------------------
 
-	type ToolLog = {
-		name: string;
-		args: Record<string, unknown>;
-		result: { content?: string; [key: string]: unknown };
-	};
-
-	type Message = {
-		role: 'user' | 'assistant';
-		content: string;
-		tools?: ToolLog[];
-		images?: string[]; // preview data-URLs for user messages
-	};
-
-	type SessionSummary = {
-		id: string;
-		title: string;
-		updated_at: string;
-	};
-
 	type PastedImage = {
-		dataUrl: string;   // for preview
+		dataUrl: string;  // for in-UI preview only
 		mimeType: string;
-		base64: string;    // raw base64 for API
+		base64: string;   // raw base64 sent to the API
 	};
-
-	type FileItem = { path: string; name: string };
 
 	// ---------------------------------------------------------------------------
 	// Prompt templates / modes
@@ -45,12 +25,14 @@
 			'You are an expert kitchen designer. Focus on ergonomics, spacing, and aesthetics. Always check the repo map for design guidelines. NEVER edit files unless explicitly requested.',
 		'Assembly Mode':
 			"You are a master carpenter. Focus on structural integrity, hardware installation, and step-by-step assembly instructions. Answer the user's questions based on the files, but DO NOT modify the files yourself unless told to do so."
-	};
+	} as const;
 
-	const modeMeta: Record<keyof typeof templates, { label: string; eyebrow: string }> = {
-		'General Assistant': { label: 'General', eyebrow: 'Workspace help' },
-		'Design Mode': { label: 'Design', eyebrow: 'Ergonomics and layout' },
-		'Assembly Mode': { label: 'Assembly', eyebrow: 'Build and fitting' }
+	type TemplateName = keyof typeof templates;
+
+	const modeMeta: Record<TemplateName, { label: string; eyebrow: string }> = {
+		'General Assistant': { label: 'General',  eyebrow: 'Workspace help' },
+		'Design Mode':       { label: 'Design',   eyebrow: 'Ergonomics and layout' },
+		'Assembly Mode':     { label: 'Assembly', eyebrow: 'Build and fitting' }
 	};
 
 	const starterPrompts = [
@@ -64,12 +46,12 @@
 	// State
 	// ---------------------------------------------------------------------------
 
-	let sessionId = $state(crypto.randomUUID());
-	let currentMessage = $state('');
-	let messages = $state<Message[]>([]);
-	let isLoading = $state(false);
-	let savedSessions = $state<SessionSummary[]>([]);
-	let selectedTemplateName = $state<keyof typeof templates>('General Assistant');
+	let sessionId            = $state(crypto.randomUUID());
+	let currentMessage       = $state('');
+	let messages             = $state<Message[]>([]);
+	let isLoading            = $state(false);
+	let savedSessions        = $state<SessionSummary[]>([]);
+	let selectedTemplateName = $state<TemplateName>('General Assistant');
 
 	// Layout
 	const sidebarResize = createSidebarResize();
@@ -79,12 +61,12 @@
 	let pastedImages = $state<PastedImage[]>([]);
 
 	// Highlight → Append
-	let appendTarget = $state<string>('');
-	let appendFiles = $state<FileItem[]>([]);
-	let appendPopup = $state<{ text: string; x: number; y: number } | null>(null);
-	let appendStatus = $state('');
+	let appendTarget  = $state('');
+	let appendFiles   = $state<FileItem[]>([]);
+	let appendPopup   = $state<{ text: string; x: number; y: number } | null>(null);
+	let appendStatus  = $state('');
 
-	// Fork UI
+	// Fork
 	let forkStatus = $state('');
 
 	// ---------------------------------------------------------------------------
@@ -92,10 +74,10 @@
 	// ---------------------------------------------------------------------------
 
 	const activePrompt = $derived(templates[selectedTemplateName]);
-	const activeMode = $derived(modeMeta[selectedTemplateName]);
+	const activeMode   = $derived(modeMeta[selectedTemplateName]);
 
 	// ---------------------------------------------------------------------------
-	// Lifecycle / effects
+	// Lifecycle
 	// ---------------------------------------------------------------------------
 
 	$effect(() => {
@@ -105,8 +87,7 @@
 
 	async function fetchSessions() {
 		try {
-			const res = await fetch('http://127.0.0.1:8000/api/sessions');
-			if (res.ok) savedSessions = await res.json();
+			savedSessions = await api.getSessions();
 		} catch (e) {
 			console.error('Failed to fetch sessions', e);
 		}
@@ -114,8 +95,7 @@
 
 	async function fetchFileList() {
 		try {
-			const res = await fetch('http://127.0.0.1:8000/api/files');
-			if (res.ok) appendFiles = await res.json();
+			appendFiles = await api.listFiles();
 		} catch (e) {
 			console.error('Failed to fetch file list', e);
 		}
@@ -127,35 +107,25 @@
 
 	async function loadSession(id: string) {
 		try {
-			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${id}`);
-			if (res.ok) {
-				const data = await res.json();
-				sessionId = id as ReturnType<typeof crypto.randomUUID>;
-				messages = data.ui_messages || [];
-			}
+			const data = await api.getSession(id);
+			sessionId = id as ReturnType<typeof crypto.randomUUID>;
+			messages  = data.ui_messages || [];
 		} catch (e) {
 			console.error('Failed to load session', e);
 		}
 	}
 
 	function startNewChat() {
-		sessionId = crypto.randomUUID();
-		messages = [];
+		sessionId      = crypto.randomUUID();
+		messages       = [];
 		currentMessage = '';
-		pastedImages = [];
+		pastedImages   = [];
 	}
 
 	async function forkSession(turnIndex: number) {
 		forkStatus = '';
 		try {
-			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${sessionId}/fork`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ turn_index: turnIndex })
-			});
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const data = await res.json();
-			// Switch to the forked session
+			const data = await api.forkSession(sessionId, turnIndex);
 			await loadSession(data.new_session_id);
 			await fetchSessions();
 			forkStatus = `Forked at turn ${turnIndex}`;
@@ -166,13 +136,11 @@
 
 	async function exportSession() {
 		try {
-			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${sessionId}/export`);
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const md = await res.text();
+			const md   = await api.exportSession(sessionId);
 			const blob = new Blob([md], { type: 'text/markdown' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
+			const url  = URL.createObjectURL(blob);
+			const a    = document.createElement('a');
+			a.href     = url;
 			a.download = `session-${sessionId.substring(0, 8)}.md`;
 			a.click();
 			URL.revokeObjectURL(url);
@@ -189,8 +157,8 @@
 		currentMessage = prompt;
 	}
 
-	function formatToolResult(tool: ToolLog) {
-		return tool.result.content || JSON.stringify(tool.result, null, 2);
+	function formatToolResult(tool: ToolLog): string {
+		return (tool.result.content as string | undefined) ?? JSON.stringify(tool.result, null, 2);
 	}
 
 	function handleContextChange(paths: string[]) {
@@ -205,20 +173,18 @@
 		const items = event.clipboardData?.items;
 		if (!items) return;
 		for (const item of Array.from(items)) {
-			if (item.type.startsWith('image/')) {
-				event.preventDefault();
-				const file = item.getAsFile();
-				if (!file) continue;
-				const reader = new FileReader();
-				reader.onload = (e) => {
-					const dataUrl = e.target?.result as string;
-					// dataUrl = "data:image/png;base64,AAAA..."
-					const [header, base64] = dataUrl.split(',');
-					const mimeType = header.split(':')[1].split(';')[0];
-					pastedImages = [...pastedImages, { dataUrl, mimeType, base64 }];
-				};
-				reader.readAsDataURL(file);
-			}
+			if (!item.type.startsWith('image/')) continue;
+			event.preventDefault();
+			const file = item.getAsFile();
+			if (!file) continue;
+			const reader = new FileReader();
+			reader.onload = (e) => {
+				const dataUrl          = e.target?.result as string;
+				const [header, base64] = dataUrl.split(',');
+				const mimeType         = header.split(':')[1].split(';')[0];
+				pastedImages = [...pastedImages, { dataUrl, mimeType, base64 }];
+			};
+			reader.readAsDataURL(file);
 		}
 	}
 
@@ -231,32 +197,21 @@
 	// ---------------------------------------------------------------------------
 
 	function handleMouseUp(event: MouseEvent) {
-		const selection = window.getSelection();
-		const text = selection?.toString().trim();
-		if (!text || text.length < 5) {
-			appendPopup = null;
-			return;
-		}
+		const text = window.getSelection()?.toString().trim();
+		if (!text || text.length < 5) { appendPopup = null; return; }
 		appendPopup = { text, x: event.clientX, y: event.clientY - 48 };
 	}
 
-	function dismissAppendPopup() {
-		appendPopup = null;
-	}
+	function dismissAppendPopup() { appendPopup = null; }
 
 	async function appendToDoc() {
 		if (!appendPopup || !appendTarget) return;
 		const snippet = `\n## Snippet (from chat)\n\n${appendPopup.text}\n`;
 		appendStatus = '';
 		try {
-			const res = await fetch('http://127.0.0.1:8000/api/files/append', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ filepath: appendTarget, content: snippet })
-			});
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			await api.appendToFile(appendTarget, snippet);
 			appendStatus = `✓ Added to ${appendTarget}`;
-			appendPopup = null;
+			appendPopup  = null;
 			setTimeout(() => (appendStatus = ''), 3000);
 		} catch (e) {
 			appendStatus = `Failed: ${e}`;
@@ -270,42 +225,41 @@
 	async function sendMessage() {
 		if (!currentMessage.trim() || isLoading) return;
 
-		const promptToSend = currentMessage.trim();
-		const imagesToSend = [...pastedImages];
+		const promptToSend  = currentMessage.trim();
+		const imagesToSend  = [...pastedImages];
 
 		messages.push({
-			role: 'user',
+			role:    'user',
 			content: promptToSend,
-			images: imagesToSend.map((i) => i.dataUrl)
+			images:  imagesToSend.map((i) => i.dataUrl)
 		});
 		currentMessage = '';
-		pastedImages = [];
-		isLoading = true;
+		pastedImages   = [];
+		isLoading      = true;
 
 		try {
-			const response = await fetch('http://127.0.0.1:8000/api/chat', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					session_id: sessionId,
-					message: promptToSend,
-					system_prompt: activePrompt,
-					images:
-						imagesToSend.length > 0
-							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
-							: null,
-					context_files: contextFiles.length > 0 ? contextFiles : null
-				})
+			const data = await api.chat({
+				session_id:    sessionId,
+				message:       promptToSend,
+				system_prompt: activePrompt,
+				images:
+					imagesToSend.length > 0
+						? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
+						: null,
+				context_files: contextFiles.length > 0 ? contextFiles : null
 			});
 
-			if (!response.ok) throw new Error(`API Error: ${response.status}`);
+			messages.push({
+				role:    'assistant',
+				content: data.text,
+				tools:   data.tools_used
+			});
 
-			const data = await response.json();
-			messages.push({ role: 'assistant', content: data.text, tools: data.tools_used });
 			fetchSessions();
 		} catch (error) {
-			console.error('Fetch failed:', error);
-			messages.push({ role: 'assistant', content: 'Error connecting to API.' });
+			const msg =
+				error instanceof Error ? error.message : 'Unknown error connecting to API.';
+			messages.push({ role: 'assistant', content: `⚠️ Error: ${msg}` });
 		} finally {
 			isLoading = false;
 		}
@@ -319,8 +273,7 @@
 	}
 
 	function handleSidebarResizeKeydown(event: KeyboardEvent, side: 'left' | 'right') {
-		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home') return;
-
+		if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return;
 		event.preventDefault();
 		const step = event.shiftKey ? 40 : 16;
 
@@ -328,7 +281,6 @@
 			side === 'left' ? sidebarResize.resetLeft() : sidebarResize.resetRight();
 			return;
 		}
-
 		const direction = event.key === 'ArrowRight' ? 1 : -1;
 		if (side === 'left') {
 			sidebarResize.resizeLeftBy(direction * step);
@@ -348,7 +300,6 @@
 <div
 	class="flex h-screen overflow-hidden bg-surface text-ink"
 	onclick={(e) => {
-		// dismiss popup if clicking outside it
 		if (appendPopup && !(e.target as HTMLElement).closest('.append-popup')) {
 			dismissAppendPopup();
 		}
@@ -385,9 +336,9 @@
 		<div class="min-h-0 flex-1">
 			<div class="mb-3 flex items-center justify-between">
 				<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
-				<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted"
-					>{savedSessions.length}</span
-				>
+				<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
+					{savedSessions.length}
+				</span>
 			</div>
 
 			<div class="space-y-1.5 overflow-y-auto pr-1">
@@ -406,13 +357,12 @@
 							: 'text-muted hover:bg-surface hover:text-ink'}"
 					>
 						<span class="block truncate font-medium">{session.title}</span>
-						<span class="mt-0.5 block truncate text-xs opacity-70"
-							>{session.id.substring(0, 8)}</span
-						>
+						<span class="mt-0.5 block truncate text-xs opacity-70">{session.id.substring(0, 8)}</span>
 					</button>
 				{/each}
 			</div>
 		</div>
+
 		<button
 			type="button"
 			aria-label="Resize conversation sidebar"
@@ -451,7 +401,7 @@
 					<!-- Mode switcher -->
 					<div class="flex rounded-md border border-line bg-surface p-1">
 						{#each Object.keys(templates) as templateName (templateName)}
-							{@const typedName = templateName as keyof typeof templates}
+							{@const typedName = templateName as TemplateName}
 							<button
 								onclick={() => (selectedTemplateName = typedName)}
 								class="rounded px-3 py-1.5 text-sm font-medium transition {selectedTemplateName ===
@@ -464,7 +414,7 @@
 						{/each}
 					</div>
 
-					<!-- Sidebar toggle -->
+					<!-- Context sidebar toggle -->
 					<button
 						onclick={sidebarResize.toggleRight}
 						class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
@@ -479,6 +429,7 @@
 		<!-- Chat area -->
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
+
 				<!-- System prompt expander -->
 				<details class="group rounded-md border border-line bg-panel shadow-sm">
 					<summary
@@ -492,11 +443,11 @@
 						<span class="hidden text-xs font-medium text-accent group-open:inline">Collapse</span>
 					</summary>
 					<div class="border-t border-line bg-surface px-4 py-3">
-						<p class="text-sm leading-6 whitespace-pre-wrap text-ink">{activePrompt}</p>
+						<p class="whitespace-pre-wrap text-sm leading-6 text-ink">{activePrompt}</p>
 					</div>
 				</details>
 
-				<!-- Context injection status pill -->
+				<!-- Context injection status -->
 				{#if contextFiles.length > 0}
 					<div
 						class="flex items-center gap-2 rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs font-medium text-accent"
@@ -506,7 +457,7 @@
 					</div>
 				{/if}
 
-				<!-- Fork/append status -->
+				<!-- Status pills -->
 				{#if forkStatus}
 					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
 						{forkStatus}
@@ -565,7 +516,6 @@
 												{msg.tools.length} tools
 											</span>
 										{/if}
-										<!-- Fork button per turn -->
 										<button
 											onclick={() => forkSession(messageIndex)}
 											title="Fork conversation from this turn"
@@ -608,26 +558,20 @@
 														<span class="ml-2 text-xs text-muted">Args and result</span>
 													</span>
 													<span class="text-xs font-medium text-accent group-open:hidden">View</span>
-													<span class="hidden text-xs font-medium text-accent group-open:inline"
-														>Hide</span
-													>
+													<span class="hidden text-xs font-medium text-accent group-open:inline">Hide</span>
 												</summary>
 												<div class="space-y-3 border-t border-line px-3 py-3">
 													<div>
 														<p class="mb-1 text-xs font-semibold text-muted uppercase">Args</p>
 														<pre
-															class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{JSON.stringify(
-																tool.args,
-																null,
-																2
-															)}</pre>
+															class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
+														>{JSON.stringify(tool.args, null, 2)}</pre>
 													</div>
 													<div>
 														<p class="mb-1 text-xs font-semibold text-muted uppercase">Result</p>
 														<pre
-															class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{formatToolResult(
-																tool
-															)}</pre>
+															class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
+														>{formatToolResult(tool)}</pre>
 													</div>
 												</div>
 											</details>
@@ -646,7 +590,7 @@
 								</p>
 								<div class="mt-3 flex items-center gap-3 text-sm text-muted">
 									<span class="h-2 w-2 animate-pulse rounded-full bg-accent"></span>
-									Thinking, reading files, and preparing the answer...
+									Thinking, reading files, and preparing the answer…
 								</div>
 							</div>
 						</article>
@@ -670,7 +614,7 @@
 								/>
 								<button
 									onclick={() => removeImage(i)}
-									class="absolute -top-1.5 -right-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-ink text-white text-xs group-hover:flex"
+									class="absolute -top-1.5 -right-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-ink text-xs text-white group-hover:flex"
 									aria-label="Remove image"
 								>
 									✕
@@ -685,7 +629,10 @@
 						Active mode:
 						<span class="font-semibold text-ink">{selectedTemplateName}</span>
 						{#if contextFiles.length > 0}
-							· <span class="text-accent">{contextFiles.length} context file{contextFiles.length > 1 ? 's' : ''}</span>
+							·
+							<span class="text-accent">
+								{contextFiles.length} context file{contextFiles.length > 1 ? 's' : ''}
+							</span>
 						{/if}
 					</p>
 					<button
@@ -724,7 +671,10 @@
 	<!-- RIGHT SIDEBAR — context injection + file editor                        -->
 	<!-- ===================================================================== -->
 	{#if sidebarResize.showRight}
-		<div class="relative hidden h-full shrink-0 lg:block" style="width: {sidebarResize.rightWidth}px;">
+		<div
+			class="relative hidden h-full shrink-0 lg:block"
+			style="width: {sidebarResize.rightWidth}px;"
+		>
 			<button
 				type="button"
 				aria-label="Resize context sidebar"
@@ -747,7 +697,7 @@
 			style="left: {appendPopup.x}px; top: {appendPopup.y}px; min-width: 220px; max-width: 300px;"
 		>
 			<p class="mb-2 text-xs font-semibold text-ink">📋 Add to docs</p>
-			<p class="mb-3 line-clamp-2 text-xs text-muted italic">"{appendPopup.text}"</p>
+			<p class="mb-3 line-clamp-2 text-xs italic text-muted">"{appendPopup.text}"</p>
 			<div class="flex items-center gap-2">
 				<select
 					bind:value={appendTarget}

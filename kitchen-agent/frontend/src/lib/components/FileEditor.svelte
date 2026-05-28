@@ -1,16 +1,23 @@
 <script lang="ts">
 	/**
 	 * FileEditor – inline Markdown editor for a single knowledge-base file.
-	 * Fetches content from GET /api/files/{path}, saves via PUT /api/files/{path}.
+	 *
+	 * Fetches content via api.readFile, saves via api.writeFile.
+	 * Calls onclose() when the user clicks ✕.
+	 * Calls onsave()  after a successful save (so the parent can refresh lists).
 	 */
+
+	import { api } from '$lib/api';
 
 	type Props = {
 		filepath: string;
 		onclose: () => void;
+		onsave?: () => void;
 	};
 
-	let { filepath, onclose }: Props = $props();
+	let { filepath, onclose, onsave }: Props = $props();
 
+	// ── State ────────────────────────────────────────────────────────────────
 	let content = $state('');
 	let original = $state('');
 	let loading = $state(true);
@@ -20,39 +27,35 @@
 
 	const isDirty = $derived(content !== original);
 
+	// ── Load on filepath change ───────────────────────────────────────────────
 	$effect(() => {
 		if (!filepath) return;
 		loading = true;
 		error = '';
 		saved = false;
-		fetch(`http://127.0.0.1:8000/api/files/${filepath}`)
-			.then((r) => {
-				if (!r.ok) throw new Error(`HTTP ${r.status}`);
-				return r.json();
-			})
+
+		api
+			.readFile(filepath)
 			.then((data) => {
 				content = data.content;
 				original = data.content;
 			})
-			.catch((e) => (error = String(e)))
+			.catch((e: unknown) => (error = String(e)))
 			.finally(() => (loading = false));
 	});
 
+	// ── Save ─────────────────────────────────────────────────────────────────
 	async function save() {
 		saving = true;
 		error = '';
 		saved = false;
 		try {
-			const r = await fetch(`http://127.0.0.1:8000/api/files/${filepath}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ content })
-			});
-			if (!r.ok) throw new Error(`HTTP ${r.status}`);
+			await api.writeFile(filepath, content);
 			original = content;
 			saved = true;
+			onsave?.();
 			setTimeout(() => (saved = false), 2000);
-		} catch (e) {
+		} catch (e: unknown) {
 			error = String(e);
 		} finally {
 			saving = false;
