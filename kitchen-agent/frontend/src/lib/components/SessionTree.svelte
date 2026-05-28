@@ -23,6 +23,7 @@
 	// ── Error toast for failed operations ────────────────────────────────────
 	let opError = $state('');
 	let opErrorTimer: ReturnType<typeof setTimeout>;
+	let archivedExpanded = $state(false);
 
 	function showError(msg: string) {
 		clearTimeout(opErrorTimer);
@@ -59,30 +60,26 @@
 		}
 	}
 
-	// Derived counts for the header badge.
-	const total = $derived(sessionStore.flat.length);
-	const visibleRoots = $derived(
-		sessionStore.tree.filter((n) => n.archived_at === null)
+	// Derived counts for the header badges.
+	const activeCount = $derived(sessionStore.flat.filter((n) => n.archived_at === null).length);
+	const visibleRoots = $derived(sessionStore.tree.filter((n) => n.archived_at === null));
+	const archivedRoots = $derived(sessionStore.tree.filter((n) => n.archived_at !== null));
+	const archivedCount = $derived(sessionStore.flat.filter((n) => n.archived_at !== null).length);
+	const activeArchived = $derived(
+		activeId !== null && sessionStore.flat.some((n) => n.id === activeId && n.archived_at !== null)
 	);
-	const archivedCount = $derived(
-		sessionStore.flat.filter((n) => n.archived_at !== null).length
-	);
+
+	$effect(() => {
+		if (activeArchived) archivedExpanded = true;
+	});
 </script>
 
 <!-- Header row -->
 <div class="mb-2 flex items-center justify-between">
 	<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
 	<div class="flex items-center gap-1.5">
-		{#if archivedCount > 0}
-			<span
-				class="rounded-full border border-line bg-surface px-1.5 py-0.5 text-[10px] text-muted"
-				title="{archivedCount} archived"
-			>
-				{archivedCount} archived
-			</span>
-		{/if}
 		<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
-			{total}
+			{activeCount}
 		</span>
 	</div>
 </div>
@@ -105,32 +102,77 @@
 		{/each}
 	</div>
 
-<!-- Error state -->
+	<!-- Error state -->
 {:else if sessionStore.fetchState.status === 'error'}
 	<p class="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
 		{sessionStore.fetchState.error}
 	</p>
 
-<!-- Empty state -->
+	<!-- Empty state -->
 {:else if sessionStore.tree.length === 0}
 	<p class="rounded-md border border-dashed border-line bg-surface p-3 text-sm text-muted">
 		No saved conversations yet.
 	</p>
 
-<!-- Tree -->
+	<!-- Tree -->
 {:else}
-	<div class="space-y-0.5 overflow-y-auto pr-1">
-		<!-- Active / non-archived roots first, then archived (greyed) roots -->
-		{#each sessionStore.tree as root (root.id)}
-			<SessionTreeNode
-				node={root}
-				depth={0}
-				{activeId}
-				{onload}
-				onarchive={handleArchive}
-				onunarchive={handleUnarchive}
-				ondelete={handleDelete}
-			/>
-		{/each}
+	<div class="flex min-h-0 flex-col overflow-y-auto pr-1">
+		<div class="space-y-0.5">
+			{#each visibleRoots as root (root.id)}
+				<SessionTreeNode
+					node={root}
+					depth={0}
+					{activeId}
+					{onload}
+					onarchive={handleArchive}
+					onunarchive={handleUnarchive}
+					ondelete={handleDelete}
+				/>
+			{/each}
+		</div>
+
+		{#if archivedRoots.length > 0}
+			<div class="mt-3 border-t border-line pt-2">
+				<button
+					type="button"
+					onclick={() => (archivedExpanded = !archivedExpanded)}
+					class="group flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-semibold tracking-[0.14em] text-muted uppercase transition hover:bg-surface hover:text-ink focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
+					aria-expanded={archivedExpanded}
+				>
+					<svg
+						width="10"
+						height="10"
+						viewBox="0 0 10 10"
+						fill="currentColor"
+						class="shrink-0 transition-transform {archivedExpanded ? 'rotate-90' : ''}"
+						aria-hidden="true"
+					>
+						<path d="M3 2 L7 5 L3 8 Z" />
+					</svg>
+					<span class="min-w-0 flex-1 truncate">Archived</span>
+					<span
+						class="rounded-full border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium tracking-normal text-muted"
+					>
+						{archivedCount}
+					</span>
+				</button>
+
+				{#if archivedExpanded}
+					<div class="mt-1 space-y-0.5">
+						{#each archivedRoots as root (root.id)}
+							<SessionTreeNode
+								node={root}
+								depth={0}
+								{activeId}
+								{onload}
+								onarchive={handleArchive}
+								onunarchive={handleUnarchive}
+								ondelete={handleDelete}
+							/>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		{/if}
 	</div>
 {/if}

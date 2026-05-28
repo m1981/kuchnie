@@ -26,33 +26,43 @@
 		ondelete: (id: string) => void;
 	};
 
-	let {
-		node,
-		depth = 0,
-		activeId,
-		onload,
-		onarchive,
-		onunarchive,
-		ondelete
-	}: Props = $props();
+	let { node, depth = 0, activeId, onload, onarchive, onunarchive, ondelete }: Props = $props();
 
-	let expanded = $state(true);
+	let expanded = $state(false);
+
+	function countDescendants(node: SessionNode): number {
+		return node.children.reduce((total, child) => total + 1 + countDescendants(child), 0);
+	}
+
+	function containsSession(node: SessionNode, id: string | null): boolean {
+		if (id === null) return false;
+		if (node.id === id) return true;
+		return node.children.some((child) => containsSession(child, id));
+	}
 
 	const isActive = $derived(node.id === activeId);
 	const isArchived = $derived(node.archived_at !== null);
 	const hasChildren = $derived(node.children.length > 0);
 	const isForked = $derived(node.parent_id !== null);
 	const displayTitle = $derived(node.title ?? node.id.slice(0, 8));
+	const branchCount = $derived(countDescendants(node));
+	const activeInBranch = $derived(containsSession(node, activeId));
+
+	$effect(() => {
+		if (activeInBranch && hasChildren) expanded = true;
+	});
 </script>
 
 <div>
 	<!-- ── This node ─────────────────────────────────────────────────────── -->
 	<div
 		class="group flex items-center gap-1 rounded-md px-2 py-1.5 transition
-		       {isActive
+	       {isActive
 			? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]'
-			: 'hover:bg-surface'}
-		       {isArchived ? 'opacity-40' : ''}"
+			: hasChildren && depth === 0
+				? 'bg-surface/60 hover:bg-surface'
+				: 'hover:bg-surface'}
+	       {isArchived ? 'opacity-40' : ''}"
 		style="padding-left: {8 + depth * 14}px"
 	>
 		<!-- Expand / collapse caret (only when children exist) -->
@@ -60,9 +70,10 @@
 			<button
 				onclick={() => (expanded = !expanded)}
 				class="flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted
-				       hover:text-ink focus:outline-none"
-				aria-label={expanded ? 'Collapse' : 'Expand'}
+			       hover:text-ink focus:outline-none"
+				aria-label={expanded ? 'Collapse branch group' : 'Expand branch group'}
 				aria-expanded={expanded}
+				title={expanded ? 'Collapse branch group' : 'Expand branch group'}
 			>
 				<svg
 					width="10"
@@ -102,6 +113,17 @@
 				aria-label="Forked at turn {node.fork_turn_index}"
 			>
 				⎇{node.fork_turn_index}
+			</span>
+		{/if}
+
+		{#if hasChildren}
+			<span
+				class="shrink-0 rounded-full border border-line bg-panel px-1.5 py-0 text-[10px]
+				       font-medium text-muted"
+				title="{branchCount} branched chat{branchCount === 1 ? '' : 's'}"
+				aria-label="{branchCount} branched chat{branchCount === 1 ? '' : 's'}"
+			>
+				{branchCount}
 			</span>
 		{/if}
 

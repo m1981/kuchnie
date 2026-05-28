@@ -14,6 +14,7 @@ Design notes
 """
 
 import json
+import re
 import sqlite3
 import uuid
 from datetime import datetime
@@ -21,6 +22,9 @@ from pathlib import Path
 
 from src.config import settings
 from src.exporter import export_session_to_markdown
+
+
+LEGACY_FORK_TITLE_RE = re.compile(r"^(?P<parent_title>.+) \(fork @ turn (?P<turn>\d+)\)$")
 
 
 class DatabaseManager:
@@ -86,7 +90,86 @@ class DatabaseManager:
                 )
                 """
             )
+            self._backfill_legacy_fork_lineage(conn)
             conn.commit()
+
+    def _backfill_legacy_fork_lineage(self, conn: sqlite3.Connection) -> None:
+        """
+        Populates lineage for old fork rows created before parent_id existed.
+
+        Early builds only encoded branches in titles, e.g.
+        ``Kitchen plan (fork @ turn 2)``.  The tree UI needs real lineage, so
+        when the parent title still exists we repair those rows in place.
+        """
+        rows = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT id, title, updated_at, parent_id, root_id
+                FROM sessions
+                ORDER BY updated_at ASC, id ASC
+                """
+            )
+        ]
+
+        by_title: dict[str, list[dict]] = {}
+        for row in rows:
+            by_title.setdefault(row["title"] or "", []).append(row)
+
+        updates: list[tuple[str, int, str, str]] = []
+        for row in rows:
+            if row["parent_id"] is not None:
+                continue
+
+            match = LEGACY_FORK_TITLE_RE.match(row["title"] or "")
+            if match is None:
+                continue
+
+            candidates = [
+                candidate
+                for candidate in by_title.get(match.group("parent_title"), [])
+                if candidate["id"] != row["id"]
+            ]
+            if not candidates:
+                continue
+
+            parent = self._choose_legacy_fork_parent(row, candidates)
+            turn_index = int(match.group("turn"))
+            root_id = parent["root_id"] or parent["id"]
+            updates.append((parent["id"], turn_index, root_id, row["id"]))
+
+            # Keep in-memory rows current so nested legacy forks inherit root_id.
+            row["parent_id"] = parent["id"]
+            row["root_id"] = root_id
+
+        if updates:
+            conn.executemany(
+                """
+                UPDATE sessions
+                SET parent_id = ?, fork_turn_index = ?, root_id = ?
+                WHERE id = ? AND parent_id IS NULL
+                """,
+                updates,
+            )
+
+    @staticmethod
+    def _choose_legacy_fork_parent(row: dict, candidates: list[dict]) -> dict:
+        """Choose the closest existing parent title match for a legacy fork."""
+        row_updated_at = row["updated_at"]
+        older_candidates = [
+            candidate
+            for candidate in candidates
+            if row_updated_at and candidate["updated_at"] and candidate["updated_at"] <= row_updated_at
+        ]
+        pool = older_candidates or candidates
+        return max(
+            pool,
+            key=lambda candidate: (
+                candidate["updated_at"] is not None,
+                candidate["updated_at"] or "",
+                candidate["id"],
+            ),
+        )
 
     # ── CRUD ──────────────────────────────────────────────────────────────────
 

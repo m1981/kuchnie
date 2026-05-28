@@ -41,6 +41,20 @@ function flatten(nodes: SessionNode[]): SessionNode[] {
 	return result;
 }
 
+function normalizeTree(value: unknown): SessionNode[] {
+	if (!Array.isArray(value)) {
+		throw new Error('Invalid session tree response.');
+	}
+	return value.map(normalizeNode);
+}
+
+function normalizeNode(node: SessionNode): SessionNode {
+	return {
+		...node,
+		children: Array.isArray(node.children) ? node.children.map(normalizeNode) : []
+	};
+}
+
 /** Remove a node by ID anywhere in the tree (used for optimistic delete). */
 function removeById(nodes: SessionNode[], id: string): SessionNode[] {
 	return nodes
@@ -90,13 +104,13 @@ function createSessionStore() {
 			activeId = id;
 		},
 
-		async refresh() {
-			fetchState = { status: 'loading' };
-			try {
-				tree = await api.getSessionTree();
-				fetchState = { status: 'success', data: tree };
-			} catch (e) {
-				fetchState = { status: 'error', error: String(e) };
+			async refresh() {
+				fetchState = { status: 'loading' };
+				try {
+					tree = normalizeTree(await api.getSessionTree());
+					fetchState = { status: 'success', data: tree };
+				} catch (e) {
+					fetchState = { status: 'error', error: String(e) };
 			}
 		},
 
