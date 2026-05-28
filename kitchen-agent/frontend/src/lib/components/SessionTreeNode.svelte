@@ -1,0 +1,134 @@
+<script lang="ts">
+	/**
+	 * SessionTreeNode
+	 * ================
+	 * Renders one node in the session tree and, recursively, its children.
+	 * Uses <svelte:self> for the recursive step so no circular import is needed.
+	 *
+	 * Visual behaviour:
+	 *   - Active session → accent left-border highlight.
+	 *   - Archived node  → dimmed + italic title.
+	 *   - Fork indicator → small ⎇ badge with fork_turn_index.
+	 *   - Children       → indented below with a subtle tree line.
+	 *   - ⋯ context menu → archive / restore / delete.
+	 */
+	import SessionContextMenu from './SessionContextMenu.svelte';
+	import type { SessionNode } from '$lib/api';
+
+	type Props = {
+		node: SessionNode;
+		depth?: number;
+		activeId: string | null;
+		onload: (id: string) => void;
+		onarchive: (id: string) => void;
+		onunarchive: (id: string) => void;
+		ondelete: (id: string) => void;
+	};
+
+	let {
+		node,
+		depth = 0,
+		activeId,
+		onload,
+		onarchive,
+		onunarchive,
+		ondelete
+	}: Props = $props();
+
+	let expanded = $state(true);
+
+	const isActive = $derived(node.id === activeId);
+	const isArchived = $derived(node.archived_at !== null);
+	const hasChildren = $derived(node.children.length > 0);
+	const isForked = $derived(node.parent_id !== null);
+	const displayTitle = $derived(node.title ?? node.id.slice(0, 8));
+</script>
+
+<div>
+	<!-- ── This node ─────────────────────────────────────────────────────── -->
+	<div
+		class="group flex items-center gap-1 rounded-md px-2 py-1.5 transition
+		       {isActive
+			? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]'
+			: 'hover:bg-surface'}
+		       {isArchived ? 'opacity-40' : ''}"
+		style="padding-left: {8 + depth * 14}px"
+	>
+		<!-- Expand / collapse caret (only when children exist) -->
+		{#if hasChildren}
+			<button
+				onclick={() => (expanded = !expanded)}
+				class="flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted
+				       hover:text-ink focus:outline-none"
+				aria-label={expanded ? 'Collapse' : 'Expand'}
+				aria-expanded={expanded}
+			>
+				<svg
+					width="10"
+					height="10"
+					viewBox="0 0 10 10"
+					fill="currentColor"
+					class="transition-transform {expanded ? 'rotate-90' : ''}"
+					aria-hidden="true"
+				>
+					<path d="M3 2 L7 5 L3 8 Z" />
+				</svg>
+			</button>
+		{:else}
+			<!-- Leaf connector dot -->
+			<span class="flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden="true">
+				<span class="h-1 w-1 rounded-full bg-line"></span>
+			</span>
+		{/if}
+
+		<!-- Title button -->
+		<button
+			onclick={() => onload(node.id)}
+			class="min-w-0 flex-1 truncate text-left text-sm
+			       {isActive ? 'font-semibold text-ink' : 'font-medium text-muted hover:text-ink'}
+			       {isArchived ? 'italic' : ''}"
+			title={displayTitle}
+		>
+			{displayTitle}
+		</button>
+
+		<!-- Fork badge -->
+		{#if isForked && node.fork_turn_index !== null}
+			<span
+				class="shrink-0 rounded-full border border-line bg-surface px-1.5 py-0 text-[10px]
+				       font-medium text-muted"
+				title="Forked at turn {node.fork_turn_index}"
+				aria-label="Forked at turn {node.fork_turn_index}"
+			>
+				⎇{node.fork_turn_index}
+			</span>
+		{/if}
+
+		<!-- Context menu -->
+		<SessionContextMenu {node} {onarchive} {onunarchive} {ondelete} />
+	</div>
+
+	<!-- ── Children ──────────────────────────────────────────────────────── -->
+	{#if expanded && hasChildren}
+		<div class="relative">
+			<!-- Subtle vertical tree line -->
+			<div
+				class="absolute top-0 bottom-0 w-px bg-line"
+				style="left: {8 + depth * 14 + 6}px"
+				aria-hidden="true"
+			></div>
+
+			{#each node.children as child (child.id)}
+				<svelte:self
+					node={child}
+					depth={depth + 1}
+					{activeId}
+					{onload}
+					{onarchive}
+					{onunarchive}
+					{ondelete}
+				/>
+			{/each}
+		</div>
+	{/if}
+</div>
