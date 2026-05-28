@@ -44,11 +44,14 @@ def client(data_dir, monkeypatch):
 def test_list_files_returns_md_files(client):
     resp = client.get("/api/files")
     assert resp.status_code == 200
-    paths = [item["path"] for item in resp.json()]
-    # Both files should appear (path contains the name)
-    names = [item["name"] for item in resp.json()]
+    items = resp.json()
+    names = [item["name"] for item in items]
+    paths = [item["path"] for item in items]
     assert "materials.md" in names
     assert "hardware.md" in names
+    # paths must be relative to DATA_DIR — no 'data/' prefix
+    for path in paths:
+        assert not path.startswith("data/"), f"Expected relative path, got: {path}"
 
 
 def test_list_files_empty_dir(tmp_path, monkeypatch):

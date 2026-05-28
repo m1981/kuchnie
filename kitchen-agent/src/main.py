@@ -138,11 +138,15 @@ def _resolve_data_path(filepath: str) -> Path:
 
 @app.get("/api/files", response_model=List[FileListItem])
 def list_files():
-    """Returns a flat list of all markdown files in the data/ directory."""
+    """Returns a flat list of all markdown files in the data/ directory.
+
+    The `path` field is relative to DATA_DIR (e.g. '03_Finishes/paint.md'),
+    so the frontend can pass it directly to GET/PUT /api/files/{path}.
+    """
     if not DATA_DIR.exists():
         return []
     items = [
-        FileListItem(path=p.as_posix(), name=p.name)
+        FileListItem(path=p.relative_to(DATA_DIR).as_posix(), name=p.name)
         for p in sorted(DATA_DIR.rglob("*.md"))
     ]
     return items
