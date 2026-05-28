@@ -59,7 +59,9 @@ def export_session_to_markdown(ui_messages: list[dict[str, Any]], title: str) ->
     Returns:
         A Markdown string.
     """
-    safe_title = title.strip() if title else "Untitled Session"
+    safe_title = title.strip() if title else ""
+    if not safe_title:
+        safe_title = "Untitled Session"
     sections = [f"# {safe_title}"]
     for message in ui_messages:
         sections.append(_render_message(message))
