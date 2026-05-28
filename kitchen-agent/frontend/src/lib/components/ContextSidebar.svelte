@@ -61,7 +61,7 @@
 	}
 </script>
 
-<aside class="flex h-full w-72 shrink-0 flex-col border-l border-line bg-panel/90">
+<aside class="flex h-full w-full shrink-0 flex-col border-l border-line bg-panel/90">
 	<!-- Tab bar -->
 	<div class="flex border-b border-line">
 		<button

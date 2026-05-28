@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
+	import { createSidebarResize } from '$lib/sidebar-resize.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Types
@@ -70,8 +71,8 @@
 	let savedSessions = $state<SessionSummary[]>([]);
 	let selectedTemplateName = $state<keyof typeof templates>('General Assistant');
 
-	// Right sidebar
-	let showSidebar = $state(true);
+	// Layout
+	const sidebarResize = createSidebarResize();
 	let contextFiles = $state<string[]>([]);
 
 	// Pasted images
@@ -316,6 +317,25 @@
 			sendMessage();
 		}
 	}
+
+	function handleSidebarResizeKeydown(event: KeyboardEvent, side: 'left' | 'right') {
+		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home') return;
+
+		event.preventDefault();
+		const step = event.shiftKey ? 40 : 16;
+
+		if (event.key === 'Home') {
+			side === 'left' ? sidebarResize.resetLeft() : sidebarResize.resetRight();
+			return;
+		}
+
+		const direction = event.key === 'ArrowRight' ? 1 : -1;
+		if (side === 'left') {
+			sidebarResize.resizeLeftBy(direction * step);
+		} else {
+			sidebarResize.resizeRightBy(direction * -step);
+		}
+	}
 </script>
 
 <svelte:head>
@@ -339,7 +359,8 @@
 	<!-- LEFT SIDEBAR — session list                                            -->
 	<!-- ===================================================================== -->
 	<aside
-		class="hidden w-64 shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] lg:flex lg:flex-col"
+		class="relative hidden shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] lg:flex lg:flex-col"
+		style="width: {sidebarResize.leftWidth}px;"
 	>
 		<div class="mb-5">
 			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Kitchen Agent</p>
@@ -392,6 +413,15 @@
 				{/each}
 			</div>
 		</div>
+		<button
+			type="button"
+			aria-label="Resize conversation sidebar"
+			class="absolute top-0 -right-1 z-20 h-full w-2 cursor-col-resize touch-none transition hover:bg-accent/30 focus:bg-accent/30 focus:outline-none"
+			onmousedown={sidebarResize.startLeftDrag}
+			ondblclick={sidebarResize.resetLeft}
+			onkeydown={(event) => handleSidebarResizeKeydown(event, 'left')}
+			title="Drag to resize. Double-click to reset."
+		></button>
 	</aside>
 
 	<!-- ===================================================================== -->
@@ -436,11 +466,11 @@
 
 					<!-- Sidebar toggle -->
 					<button
-						onclick={() => (showSidebar = !showSidebar)}
+						onclick={sidebarResize.toggleRight}
 						class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
 						title="Toggle context sidebar"
 					>
-						{showSidebar ? '▶ Hide panel' : '◀ Context'}
+						{sidebarResize.showRight ? '▶ Hide panel' : '◀ Context'}
 					</button>
 				</div>
 			</div>
@@ -693,8 +723,19 @@
 	<!-- ===================================================================== -->
 	<!-- RIGHT SIDEBAR — context injection + file editor                        -->
 	<!-- ===================================================================== -->
-	{#if showSidebar}
-		<ContextSidebar oncontextchange={handleContextChange} />
+	{#if sidebarResize.showRight}
+		<div class="relative hidden h-full shrink-0 lg:block" style="width: {sidebarResize.rightWidth}px;">
+			<button
+				type="button"
+				aria-label="Resize context sidebar"
+				class="absolute top-0 -left-1 z-20 h-full w-2 cursor-col-resize touch-none transition hover:bg-accent/30 focus:bg-accent/30 focus:outline-none"
+				onmousedown={sidebarResize.startRightDrag}
+				ondblclick={sidebarResize.resetRight}
+				onkeydown={(event) => handleSidebarResizeKeydown(event, 'right')}
+				title="Drag to resize. Double-click to reset."
+			></button>
+			<ContextSidebar oncontextchange={handleContextChange} />
+		</div>
 	{/if}
 
 	<!-- ===================================================================== -->
