@@ -1,21 +1,29 @@
-<script>
-    // --- STATE ---
-    let sessionId = "test-session-1";
-    let currentMessage = "";
-    let messages = [];
-    let isLoading = false;
+<script lang="ts">
+    // --- STATE (Using Svelte 5 Runes) ---
+    let sessionId = $state("test-session-1");
+    let currentMessage = $state("");
+
+    // Define a basic type for our messages array
+    type Message = { role: string; content: string; tools?: any[] };
+    let messages = $state<Message[]>([]);
+
+    let isLoading = $state(false);
 
     // --- LOGIC ---
     async function sendMessage() {
         if (!currentMessage.trim()) return;
 
         // 1. Add user message to UI immediately
-        messages = [...messages, { role: "user", content: currentMessage }];
+        // Svelte 5 allows direct mutation of $state arrays!
+        messages.push({ role: "user", content: currentMessage });
+
         let promptToSend = currentMessage;
         currentMessage = ""; // Clear input
         isLoading = true;
 
         try {
+            console.log("Sending request to FastAPI...");
+
             // 2. Call our FastAPI backend
             const response = await fetch("http://127.0.0.1:8000/api/chat", {
                 method: "POST",
@@ -27,26 +35,30 @@
                 })
             });
 
-            if (!response.ok) throw new Error("API Error");
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
 
             const data = await response.json();
+            console.log("Received data from FastAPI:", data);
 
             // 3. Add assistant response to UI
-            messages = [...messages, { 
-                role: "assistant", 
-                content: data.text, 
-                tools: data.tools_used 
-            }];
+            messages.push({
+                role: "assistant",
+                content: data.text,
+                tools: data.tools_used
+            });
+
         } catch (error) {
-            console.error(error);
-            messages = [...messages, { role: "assistant", content: "❌ Error connecting to API." }];
+            console.error("Fetch failed:", error);
+            messages.push({ role: "assistant", content: "❌ Error connecting to API. Check browser console." });
         } finally {
             isLoading = false;
         }
     }
 
     // Handle Enter key
-    function handleKeydown(event) {
+    function handleKeydown(event: KeyboardEvent) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             sendMessage();
@@ -56,7 +68,7 @@
 
 <!-- --- UI (HTML + TailwindCSS) --- -->
 <main class="max-w-4xl mx-auto p-6 h-screen flex flex-col font-sans text-gray-800">
-    
+
     <!-- Header -->
     <header class="mb-6 border-b pb-4">
         <h1 class="text-3xl font-bold">🪚 Kitchen Cabinet Assistant</h1>
@@ -72,7 +84,7 @@
         {#each messages as msg}
             <div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}">
                 <div class="max-w-[80%] rounded-lg p-4 {msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 border'}">
-                    
+
                     <!-- Render Tool Logs (Expanders) -->
                     {#if msg.tools && msg.tools.length > 0}
                         <div class="mb-3 space-y-2">
@@ -107,15 +119,18 @@
     <!-- Input Area -->
     <div class="border-t pt-4">
         <div class="flex gap-2">
-            <textarea 
+            <!-- UPDATED: onkeydown instead of on:keydown -->
+            <textarea
                 bind:value={currentMessage}
-                on:keydown={handleKeydown}
-                placeholder="Ask about your kitchen designs..." 
+                onkeydown={handleKeydown}
+                placeholder="Ask about your kitchen designs..."
                 class="flex-1 border rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                 rows="2"
             ></textarea>
-            <button 
-                on:click={sendMessage}
+
+            <!-- UPDATED: onclick instead of on:click -->
+            <button
+                onclick={sendMessage}
                 disabled={isLoading}
                 class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
             >
