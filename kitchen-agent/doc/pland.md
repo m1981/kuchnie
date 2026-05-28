@@ -63,7 +63,7 @@ The following features have been architected but not yet coded. They are the pri
 
 - ✅ **Forking/Branching:** ~~Ability to slice the `api_history_json` array at a specific turn, generate a new `session_id`, and branch the conversation to explore different design angles.~~ **DONE** — see `DatabaseManager.fork_session()` and `POST /api/sessions/{id}/fork`.
 - ✅ **Exporting:** ~~Save a chat session as a formatted `.md` file.~~ **DONE** — see `DatabaseManager.export_session()`, `src/exporter.py`, and `GET /api/sessions/{id}/export`.
-- **Prompt Logging:** Append every user prompt to a running `data/prompt_log.md` file.
+- ✅ **Prompt Logging:** ~~Append every user prompt to a running `data/prompt_log.md` file.~~ **DONE** — see `src/prompt_logger.py` (`log_prompt()`), wired into `POST /api/chat`.
 
 ### B. UI & Workspace Enhancements (Svelte + FastAPI)
 

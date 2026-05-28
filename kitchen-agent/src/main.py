@@ -9,6 +9,7 @@ import json
 
 from src.agent import process_chat_turn
 from src.db import DatabaseManager
+from src.prompt_logger import log_prompt
 from src.serializers import dehydrate_history, hydrate_history
 
 app = FastAPI(title="Kitchen Cabinet Agent API")
@@ -99,6 +100,9 @@ def chat(request: ChatRequest):
 
     # 2. Add user message to UI state
     ui_messages.append({"role": "user", "content": request.message})
+
+    # Log the prompt to the running prompt log
+    log_prompt(request.message)
 
     # 3. Process with Agent
     try:
