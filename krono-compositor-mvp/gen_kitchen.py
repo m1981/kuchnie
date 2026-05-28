@@ -21,7 +21,7 @@ scene.cycles.device = 'CPU'
 
 scene.render.resolution_x = 800
 scene.render.resolution_y = 600
-scene.render.resolution_percentage = 100
+scene.render.resolution_percentage = 200
 
 # Organize our geometry into collections
 fronts_collection = bpy.data.collections.new("Fronts")

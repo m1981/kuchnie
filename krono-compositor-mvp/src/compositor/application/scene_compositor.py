@@ -1,4 +1,5 @@
 from typing import List
+import cv2
 from compositor.domain.interfaces import (
     ImageReader,
     ImageWriter,
@@ -71,7 +72,15 @@ class SceneCompositor:
             except FileNotFoundError:
                 pass
 
-        if out_path:
-            self.writer.write(out_path, current_composite)
+        # ==========================================
+        # THE FIX: SUPER-SAMPLING ANTI-ALIASING (SSAA)
+        # ==========================================
+        # Shrink the image by 50% using INTER_AREA.
+        # This averages 4 pixels into 1, creating perfect, smooth edges.
+        h, w = current_composite.shape[:2]
+        final_composite = cv2.resize(current_composite, (w // 2, h // 2), interpolation=cv2.INTER_AREA)
 
-        return current_composite
+        if out_path:
+            self.writer.write(out_path, final_composite)
+
+        return final_composite # Return the smooth, downscaled image!
