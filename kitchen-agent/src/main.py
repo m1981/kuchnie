@@ -42,6 +42,14 @@ class ChatResponse(BaseModel):
     tools_used: List[ToolLog]
 
 
+class ForkRequest(BaseModel):
+    turn_index: int
+
+
+class ForkResponse(BaseModel):
+    new_session_id: str
+
+
 # --- API Endpoints ---
 
 @app.get("/api/sessions")
@@ -57,6 +65,16 @@ def get_session(session_id: str):
     if not ui_json or ui_json == "[]":
         return {"ui_messages": []}
     return {"ui_messages": json.loads(ui_json)}
+
+
+@app.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)
+def fork_session(session_id: str, request: ForkRequest):
+    """Forks a session at the given turn_index, returning the new session ID."""
+    try:
+        new_id = db.fork_session(session_id, request.turn_index)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ForkResponse(new_session_id=new_id)
 
 
 @app.post("/api/chat", response_model=ChatResponse)

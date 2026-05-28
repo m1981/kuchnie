@@ -39,6 +39,10 @@ We recently migrated from Streamlit to a headless FastAPI + SvelteKit architectu
 3.  `edit_file(filepath, search_text, replace_text)`: Safe search-and-replace to prevent the LLM from accidentally deleting file contents.
 4.  `create_file(filepath, content)`: Safely creates new files and directories (fails if file already exists).
 
+### 🌿 Session Management
+
+- **Forking/Branching:** `POST /api/sessions/{session_id}/fork` with `{turn_index}` slices both `api_history_json` and `ui_history_json` inclusively up to the given turn and creates a new session with a derived title. Original session is untouched. Implemented in `DatabaseManager.fork_session()`.
+
 ## 5. Database Schema (SQLite)
 
 **Table:** `sessions`
@@ -57,7 +61,7 @@ The following features have been architected but not yet coded. They are the pri
 
 ### A. Advanced Chat Management
 
-- **Forking/Branching:** Ability to slice the `api_history_json` array at a specific turn, generate a new `session_id`, and branch the conversation to explore different design angles.
+- ✅ **Forking/Branching:** ~~Ability to slice the `api_history_json` array at a specific turn, generate a new `session_id`, and branch the conversation to explore different design angles.~~ **DONE** — see `DatabaseManager.fork_session()` and `POST /api/sessions/{id}/fork`.
 - **Exporting:** Save a chat session as a formatted `.md` file.
 - **Prompt Logging:** Append every user prompt to a running `data/prompt_log.md` file.
 

@@ -1,6 +1,8 @@
 # src/db.py
 import sqlite3
 import os
+import json
+import uuid
 from datetime import datetime
 
 class DatabaseManager:
@@ -57,3 +59,43 @@ class DatabaseManager:
         with self._get_connection() as conn:
             cursor = conn.execute("SELECT id, title, updated_at FROM sessions ORDER BY updated_at DESC")
             return [dict(row) for row in cursor.fetchall()]
+
+    def fork_session(self, source_session_id: str, turn_index: int) -> str:
+        """
+        Creates a new session by slicing the source session's histories up to
+        and including `turn_index`. Returns the new session ID.
+
+        Raises:
+            ValueError: if source_session_id does not exist or turn_index < 0.
+        """
+        if turn_index < 0:
+            raise ValueError(f"turn_index must be >= 0, got {turn_index}")
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT title, api_history_json, ui_history_json FROM sessions WHERE id = ?",
+                (source_session_id,),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError(f"Source session not found: {source_session_id}")
+
+            source_title = row["title"] or ""
+            source_api = json.loads(row["api_history_json"]) if row["api_history_json"] else []
+            source_ui = json.loads(row["ui_history_json"]) if row["ui_history_json"] else []
+
+        # Inclusive slice; Python list slicing naturally clamps beyond length.
+        slice_end = turn_index + 1
+        new_api = source_api[:slice_end]
+        new_ui = source_ui[:slice_end]
+
+        new_id = str(uuid.uuid4())
+        new_title = f"{source_title} (fork @ turn {turn_index})"
+
+        self.save_session(
+            session_id=new_id,
+            title=new_title,
+            api_history_json=json.dumps(new_api),
+            ui_history_json=json.dumps(new_ui),
+        )
+        return new_id
