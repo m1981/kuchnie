@@ -1,11 +1,30 @@
 # src/app.py
 import streamlit as st
+import uuid
+import json
 from dotenv import load_dotenv
+
 from agent import process_chat_turn
+from db import DatabaseManager
+from serializers import dehydrate_history, hydrate_history
 
 load_dotenv()
 
+# NEW: Initialize Database
+db = DatabaseManager()
+
 st.set_page_config(page_title="Kitchen Cabinet Agent", layout="wide")
+
+# --- STATE MANAGEMENT ---
+# NEW: Track the current session ID
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "ui_messages" not in st.session_state:
+    st.session_state.ui_messages = []
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -34,23 +53,55 @@ with st.sidebar:
     st.checkbox("Order hardware")
 
     st.divider()
-    if st.button("Clear Chat History"):
+
+    # --- NEW: PERSISTENCE UI ---
+    st.header("💾 Chat History")
+
+    # Save Button
+    if st.button("Save Current Chat", use_container_width=True):
+        if st.session_state.ui_messages:
+            # Generate a title based on the first user message
+            first_msg = next((m["content"] for m in st.session_state.ui_messages if m["role"] == "user"), "New Chat")
+            title = first_msg[:30] + "..." if len(first_msg) > 30 else first_msg
+
+            # Dehydrate and Save
+            api_json = dehydrate_history(st.session_state.history)
+            ui_json = json.dumps(st.session_state.ui_messages)
+
+            db.save_session(st.session_state.session_id, title, api_json, ui_json)
+            st.toast("Chat saved successfully!", icon="✅")
+        else:
+            st.toast("Nothing to save yet.", icon="⚠️")
+
+    # Load Dropdown
+    saved_sessions = db.list_sessions()
+    if saved_sessions:
+        # Create a dictionary mapping titles to IDs for the selectbox
+        session_dict = {f"{s['title']} ({s['updated_at'][:10]})": s['id'] for s in saved_sessions}
+
+        selected_session_name = st.selectbox("Load Previous Chat", ["-- Select --"] + list(session_dict.keys()))
+
+        if selected_session_name != "-- Select --":
+            if st.button("Load Selected Chat", type="primary", use_container_width=True):
+                load_id = session_dict[selected_session_name]
+                api_json, ui_json = db.load_session(load_id)
+
+                # Hydrate and restore state
+                st.session_state.session_id = load_id
+                st.session_state.history = hydrate_history(api_json)
+                st.session_state.ui_messages = json.loads(ui_json)
+                st.rerun()
+
+    st.divider()
+    if st.button("Start New Chat", use_container_width=True):
+        st.session_state.session_id = str(uuid.uuid4())
         st.session_state.history = []
-        st.session_state.ui_messages = []  # Clear UI state too
+        st.session_state.ui_messages = []
         st.rerun()
-
-# --- STATE MANAGEMENT ---
-# 1. API State (Strict Gemini format)
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-# 2. UI State (For rendering Streamlit chat bubbles and expanders)
-if "ui_messages" not in st.session_state:
-    st.session_state.ui_messages = []
 
 # --- MAIN CHAT AREA ---
 st.title("🪚 Kitchen Cabinet Assistant")
-st.caption(f"Current Mode: **{selected_mode}**")
+st.caption(f"Current Mode: **{selected_mode}** | Session: `{st.session_state.session_id[:8]}`")
 
 # Render existing UI history
 for msg in st.session_state.ui_messages:

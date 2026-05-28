@@ -42,3 +42,26 @@ def edit_file(filepath: str, search_text: str, replace_text: str) -> dict:
 
     except Exception as e:
         return {"error": str(e)}
+
+
+def create_file(filepath: str, content: str) -> dict:
+    """
+    Creates a new file with the given content.
+    Fails if the file already exists to prevent accidental overwrites.
+    """
+    try:
+        if os.path.exists(filepath):
+            return {"error": f"File already exists at {filepath}. Use edit_file instead."}
+
+        # Ensure the directory exists (e.g., if LLM creates 'data/03_Finishes/paint.md')
+        directory = os.path.dirname(filepath)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        return {"success": f"Successfully created {filepath}."}
+
+    except Exception as e:
+        return {"error": str(e)}

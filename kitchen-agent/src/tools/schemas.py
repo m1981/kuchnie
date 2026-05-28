@@ -52,3 +52,23 @@ edit_file_fn = {
         "required": ["filepath", "search_text", "replace_text"],
     },
 }
+
+
+create_file_fn = {
+    "name": "create_file",
+    "description": "Creates a brand new markdown file. Use this when starting a new topic that doesn't fit in existing files. DO NOT use this to update existing files.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "filepath": {
+                "type": "string",
+                "description": "Path to the new file, e.g., 'data/03_Finishes/paint.md'",
+            },
+            "content": {
+                "type": "string",
+                "description": "The full markdown content to write into the new file.",
+            }
+        },
+        "required": ["filepath", "content"],
+    },
+}

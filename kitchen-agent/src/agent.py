@@ -6,10 +6,10 @@ from google import genai
 from google.genai import types
 
 # Import our schemas
-from tools.schemas import read_file_fn, get_repo_map_fn, edit_file_fn
+from tools.schemas import read_file_fn, get_repo_map_fn, edit_file_fn, create_file_fn
 
 # Import our actual Python functions
-from tools.file_ops import read_file, edit_file
+from tools.file_ops import read_file, edit_file, create_file
 from tools.repo_map import get_repo_map
 
 # --- SET UP LOGGING ---
@@ -30,13 +30,15 @@ FUNCTION_MAP = {
     "read_file": read_file,
     "get_repo_map": get_repo_map,
     "edit_file": edit_file,
+    "create_file": create_file,
 }
 
 # Configure the tools for Gemini
 gemini_tools = types.Tool(function_declarations=[
     read_file_fn,
     get_repo_map_fn,
-    edit_file_fn
+    edit_file_fn,
+    create_file_fn
 ])
 
 
