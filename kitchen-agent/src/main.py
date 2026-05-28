@@ -1,6 +1,7 @@
 # src/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uuid
@@ -65,6 +66,16 @@ def get_session(session_id: str):
     if not ui_json or ui_json == "[]":
         return {"ui_messages": []}
     return {"ui_messages": json.loads(ui_json)}
+
+
+@app.get("/api/sessions/{session_id}/export", response_class=PlainTextResponse)
+def export_session(session_id: str):
+    """Exports a session as a Markdown document."""
+    try:
+        markdown = db.export_session(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return PlainTextResponse(content=markdown, media_type="text/markdown")
 
 
 @app.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)

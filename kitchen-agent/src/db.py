@@ -5,6 +5,8 @@ import json
 import uuid
 from datetime import datetime
 
+from src.exporter import export_session_to_markdown
+
 class DatabaseManager:
     def __init__(self, db_path: str = "data/chats.db"):
         self.db_path = db_path
@@ -99,3 +101,24 @@ class DatabaseManager:
             ui_history_json=json.dumps(new_ui),
         )
         return new_id
+
+    def export_session(self, session_id: str) -> str:
+        """
+        Renders a session as a Markdown document.
+
+        Raises:
+            ValueError: if session_id does not exist.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT title, ui_history_json FROM sessions WHERE id = ?",
+                (session_id,),
+            )
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError(f"Session not found: {session_id}")
+
+            title = row["title"] or ""
+            ui_messages = json.loads(row["ui_history_json"]) if row["ui_history_json"] else []
+
+        return export_session_to_markdown(ui_messages, title)
