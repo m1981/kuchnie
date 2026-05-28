@@ -6,11 +6,16 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uuid
 import json
+from pathlib import Path
 
 from src.agent import process_chat_turn
 from src.db import DatabaseManager
 from src.prompt_logger import log_prompt
 from src.serializers import dehydrate_history, hydrate_history
+from src.tools.file_ops import append_to_file
+from src.tools.repo_map import get_repo_map
+
+DATA_DIR = Path("data")
 
 app = FastAPI(title="Kitchen Cabinet Agent API")
 
@@ -27,10 +32,18 @@ db = DatabaseManager()
 
 
 # --- Pydantic Models (Data Validation) ---
+
+class ChatImagePart(BaseModel):
+    mime_type: str   # e.g. "image/jpeg"
+    data: str        # base64-encoded bytes
+
+
 class ChatRequest(BaseModel):
     session_id: str
     message: str
     system_prompt: Optional[str] = None
+    images: Optional[List[ChatImagePart]] = None  # base64 image attachments
+    context_files: Optional[List[str]] = None     # filepaths to inject as context
 
 
 class ToolLog(BaseModel):
@@ -50,6 +63,25 @@ class ForkRequest(BaseModel):
 
 class ForkResponse(BaseModel):
     new_session_id: str
+
+
+class FileReadResponse(BaseModel):
+    filepath: str
+    content: str
+
+
+class FileWriteRequest(BaseModel):
+    content: str
+
+
+class FileAppendRequest(BaseModel):
+    filepath: str
+    content: str
+
+
+class FileListItem(BaseModel):
+    path: str
+    name: str
 
 
 # --- API Endpoints ---
@@ -89,6 +121,75 @@ def fork_session(session_id: str, request: ForkRequest):
     return ForkResponse(new_session_id=new_id)
 
 
+# ---------------------------------------------------------------------------
+# File Management Endpoints
+# ---------------------------------------------------------------------------
+
+def _resolve_data_path(filepath: str) -> Path:
+    """
+    Resolves `filepath` relative to DATA_DIR and guards against path traversal.
+    Raises HTTPException(400) if the resolved path escapes DATA_DIR.
+    """
+    resolved = (DATA_DIR / filepath).resolve()
+    if not str(resolved).startswith(str(DATA_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="Path traversal not allowed.")
+    return resolved
+
+
+@app.get("/api/files", response_model=List[FileListItem])
+def list_files():
+    """Returns a flat list of all markdown files in the data/ directory."""
+    if not DATA_DIR.exists():
+        return []
+    items = [
+        FileListItem(path=p.as_posix(), name=p.name)
+        for p in sorted(DATA_DIR.rglob("*.md"))
+    ]
+    return items
+
+
+@app.get("/api/files/{filepath:path}", response_model=FileReadResponse)
+def read_file_endpoint(filepath: str):
+    """Returns the raw text content of a single markdown file."""
+    resolved = _resolve_data_path(filepath)
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
+    return FileReadResponse(filepath=filepath, content=resolved.read_text(encoding="utf-8"))
+
+
+@app.put("/api/files/{filepath:path}")
+def write_file_endpoint(filepath: str, request: FileWriteRequest):
+    """Overwrites a markdown file with new content (manual editor save)."""
+    resolved = _resolve_data_path(filepath)
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
+    resolved.write_text(request.content, encoding="utf-8")
+    return {"success": f"Saved {filepath}."}
+
+
+@app.post("/api/files/append")
+def append_to_file_endpoint(request: FileAppendRequest):
+    """Appends a snippet to a markdown file. Used by Highlight -> Add to Docs."""
+    _resolve_data_path(request.filepath)  # path-traversal guard only
+    result = append_to_file(request.filepath, request.content)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@app.get("/api/repo-map")
+def repo_map_endpoint():
+    """Returns the structured repo map (headers only) for the context sidebar."""
+    result = get_repo_map()
+    if "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Chat
+# ---------------------------------------------------------------------------
+
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     """Processes a chat message and saves the state."""
@@ -109,7 +210,9 @@ def chat(request: ChatRequest):
         final_text, tool_logs = process_chat_turn(
             user_message=request.message,
             history=history,
-            system_instruction=request.system_prompt
+            system_instruction=request.system_prompt,
+            images=[img.model_dump() for img in request.images] if request.images else None,
+            context_files=request.context_files or None,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

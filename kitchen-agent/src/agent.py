@@ -6,10 +6,10 @@ from google import genai
 from google.genai import types
 
 # Import our schemas
-from tools.schemas import read_file_fn, get_repo_map_fn, edit_file_fn, create_file_fn
+from tools.schemas import read_file_fn, get_repo_map_fn, edit_file_fn, create_file_fn, search_knowledge_base_fn
 
 # Import our actual Python functions
-from tools.file_ops import read_file, edit_file, create_file
+from tools.file_ops import read_file, edit_file, create_file, search_knowledge_base
 from tools.repo_map import get_repo_map
 
 # --- SET UP LOGGING ---
@@ -31,6 +31,7 @@ FUNCTION_MAP = {
     "get_repo_map": get_repo_map,
     "edit_file": edit_file,
     "create_file": create_file,
+    "search_knowledge_base": search_knowledge_base,
 }
 
 # Configure the tools for Gemini
@@ -38,20 +39,66 @@ gemini_tools = types.Tool(function_declarations=[
     read_file_fn,
     get_repo_map_fn,
     edit_file_fn,
-    create_file_fn
+    create_file_fn,
+    search_knowledge_base_fn,
 ])
 
 
-def process_chat_turn(user_message: str, history: list, system_instruction: str = None) -> tuple[str, list]:
+def process_chat_turn(
+    user_message: str,
+    history: list,
+    system_instruction: str = None,
+    images: list[dict] | None = None,
+    context_files: list[str] | None = None,
+) -> tuple[str, list]:
     """
     Handles a single turn of conversation, allowing for MULTIPLE tool calls.
     Mutates the `history` list in place.
+
+    Args:
+        user_message:      Plain text from the user.
+        history:           Gemini conversation history (mutated in place).
+        system_instruction: Optional system prompt override.
+        images:            List of {mime_type, data} dicts (base64-encoded).
+        context_files:     List of file paths whose contents will be prepended
+                           as context to the user message.
+
     Returns: (Final text response, List of dictionaries containing tool execution details)
     """
+    import base64
+
     logger.info(f"User asked: '{user_message}'")
 
+    # --- Build the user parts list ---
+    user_parts: list[types.Part] = []
+
+    # 1a. Inject selected context files as readable text before the message
+    if context_files:
+        context_snippets: list[str] = []
+        for fp in context_files:
+            result = read_file(fp)
+            if "content" in result:
+                context_snippets.append(f"=== {fp} ===\n{result['content']}")
+            else:
+                logger.warning(f"Context file not readable: {fp} — {result.get('error')}")
+        if context_snippets:
+            context_block = "[Context files injected by user]\n\n" + "\n\n".join(context_snippets)
+            user_parts.append(types.Part(text=context_block))
+
+    # 1b. The user's text message
+    user_parts.append(types.Part(text=user_message))
+
+    # 1c. Optional inline images (pasted via Ctrl+V)
+    if images:
+        for img in images:
+            try:
+                raw_bytes = base64.b64decode(img["data"])
+                user_parts.append(types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"]))
+            except Exception as e:
+                logger.warning(f"Failed to decode image: {e}")
+
     # 1. Append user message to history
-    history.append(types.Content(role="user", parts=[types.Part(text=user_message)]))
+    history.append(types.Content(role="user", parts=user_parts))
 
     # 2. Create config dynamically to include the system instruction (Prompt Template)
     config = types.GenerateContentConfig(

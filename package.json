@@ -20,5 +20,13 @@
     },
     "lint-staged": {
         "*.{html,css,js,md}": "prettier --write"
+    },
+    "dependencies": {
+        "highlight.js": "^11.11.1",
+        "marked": "^18.0.4",
+        "marked-highlight": "^2.2.4",
+        "mermaid": "^11.15.0",
+        "prettier-plugin-svelte": "^4.0.1",
+        "prettier-plugin-tailwindcss": "^0.8.0"
     }
 }

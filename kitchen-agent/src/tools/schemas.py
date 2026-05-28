@@ -54,6 +54,29 @@ edit_file_fn = {
 }
 
 
+search_knowledge_base_fn = {
+    "name": "search_knowledge_base",
+    "description": (
+        "Searches all markdown files in the knowledge base for lines that match a regex pattern. "
+        "Use this to find specific terms, part numbers, or topics without reading every file manually. "
+        "Supports OR logic with the pipe character (e.g., 'hinge|blum|runner'). "
+        "Returns file path, line number, and matching line content."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": (
+                    "A regex pattern to search for, e.g., 'Blum|hinge' or '18mm'. "
+                    "Matching is case-insensitive."
+                ),
+            }
+        },
+        "required": ["query"],
+    },
+}
+
 create_file_fn = {
     "name": "create_file",
     "description": "Creates a brand new markdown file. Use this when starting a new topic that doesn't fit in existing files. DO NOT use this to update existing files.",

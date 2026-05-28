@@ -1,19 +1,22 @@
 <script lang="ts">
 	import Markdown from '$lib/components/Markdown.svelte';
+	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
+
+	// ---------------------------------------------------------------------------
+	// Types
+	// ---------------------------------------------------------------------------
 
 	type ToolLog = {
 		name: string;
 		args: Record<string, unknown>;
-		result: {
-			content?: string;
-			[key: string]: unknown;
-		};
+		result: { content?: string; [key: string]: unknown };
 	};
 
 	type Message = {
 		role: 'user' | 'assistant';
 		content: string;
 		tools?: ToolLog[];
+		images?: string[]; // preview data-URLs for user messages
 	};
 
 	type SessionSummary = {
@@ -21,6 +24,18 @@
 		title: string;
 		updated_at: string;
 	};
+
+	type PastedImage = {
+		dataUrl: string;   // for preview
+		mimeType: string;
+		base64: string;    // raw base64 for API
+	};
+
+	type FileItem = { path: string; name: string };
+
+	// ---------------------------------------------------------------------------
+	// Prompt templates / modes
+	// ---------------------------------------------------------------------------
 
 	const templates = {
 		'General Assistant':
@@ -44,18 +59,47 @@
 		'Summarize material choices for durable kitchen cabinet fronts.'
 	];
 
-	let sessionId: string = $state(crypto.randomUUID());
+	// ---------------------------------------------------------------------------
+	// State
+	// ---------------------------------------------------------------------------
+
+	let sessionId = $state(crypto.randomUUID());
 	let currentMessage = $state('');
 	let messages = $state<Message[]>([]);
 	let isLoading = $state(false);
 	let savedSessions = $state<SessionSummary[]>([]);
 	let selectedTemplateName = $state<keyof typeof templates>('General Assistant');
 
+	// Right sidebar
+	let showSidebar = $state(true);
+	let contextFiles = $state<string[]>([]);
+
+	// Pasted images
+	let pastedImages = $state<PastedImage[]>([]);
+
+	// Highlight → Append
+	let appendTarget = $state<string>('');
+	let appendFiles = $state<FileItem[]>([]);
+	let appendPopup = $state<{ text: string; x: number; y: number } | null>(null);
+	let appendStatus = $state('');
+
+	// Fork UI
+	let forkStatus = $state('');
+
+	// ---------------------------------------------------------------------------
+	// Derived
+	// ---------------------------------------------------------------------------
+
 	const activePrompt = $derived(templates[selectedTemplateName]);
 	const activeMode = $derived(modeMeta[selectedTemplateName]);
 
+	// ---------------------------------------------------------------------------
+	// Lifecycle / effects
+	// ---------------------------------------------------------------------------
+
 	$effect(() => {
 		fetchSessions();
+		fetchFileList();
 	});
 
 	async function fetchSessions() {
@@ -67,12 +111,25 @@
 		}
 	}
 
+	async function fetchFileList() {
+		try {
+			const res = await fetch('http://127.0.0.1:8000/api/files');
+			if (res.ok) appendFiles = await res.json();
+		} catch (e) {
+			console.error('Failed to fetch file list', e);
+		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// Session management
+	// ---------------------------------------------------------------------------
+
 	async function loadSession(id: string) {
 		try {
 			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${id}`);
 			if (res.ok) {
 				const data = await res.json();
-				sessionId = id;
+				sessionId = id as ReturnType<typeof crypto.randomUUID>;
 				messages = data.ui_messages || [];
 			}
 		} catch (e) {
@@ -84,7 +141,48 @@
 		sessionId = crypto.randomUUID();
 		messages = [];
 		currentMessage = '';
+		pastedImages = [];
 	}
+
+	async function forkSession(turnIndex: number) {
+		forkStatus = '';
+		try {
+			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${sessionId}/fork`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ turn_index: turnIndex })
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const data = await res.json();
+			// Switch to the forked session
+			await loadSession(data.new_session_id);
+			await fetchSessions();
+			forkStatus = `Forked at turn ${turnIndex}`;
+		} catch (e) {
+			forkStatus = `Fork failed: ${e}`;
+		}
+	}
+
+	async function exportSession() {
+		try {
+			const res = await fetch(`http://127.0.0.1:8000/api/sessions/${sessionId}/export`);
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const md = await res.text();
+			const blob = new Blob([md], { type: 'text/markdown' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `session-${sessionId.substring(0, 8)}.md`;
+			a.click();
+			URL.revokeObjectURL(url);
+		} catch (e) {
+			console.error('Export failed:', e);
+		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// Helpers
+	// ---------------------------------------------------------------------------
 
 	function useStarterPrompt(prompt: string) {
 		currentMessage = prompt;
@@ -94,12 +192,93 @@
 		return tool.result.content || JSON.stringify(tool.result, null, 2);
 	}
 
+	function handleContextChange(paths: string[]) {
+		contextFiles = paths;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Image paste (Ctrl+V)
+	// ---------------------------------------------------------------------------
+
+	function handlePaste(event: ClipboardEvent) {
+		const items = event.clipboardData?.items;
+		if (!items) return;
+		for (const item of Array.from(items)) {
+			if (item.type.startsWith('image/')) {
+				event.preventDefault();
+				const file = item.getAsFile();
+				if (!file) continue;
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					const dataUrl = e.target?.result as string;
+					// dataUrl = "data:image/png;base64,AAAA..."
+					const [header, base64] = dataUrl.split(',');
+					const mimeType = header.split(':')[1].split(';')[0];
+					pastedImages = [...pastedImages, { dataUrl, mimeType, base64 }];
+				};
+				reader.readAsDataURL(file);
+			}
+		}
+	}
+
+	function removeImage(index: number) {
+		pastedImages = pastedImages.filter((_, i) => i !== index);
+	}
+
+	// ---------------------------------------------------------------------------
+	// Highlight → Add to Docs
+	// ---------------------------------------------------------------------------
+
+	function handleMouseUp(event: MouseEvent) {
+		const selection = window.getSelection();
+		const text = selection?.toString().trim();
+		if (!text || text.length < 5) {
+			appendPopup = null;
+			return;
+		}
+		appendPopup = { text, x: event.clientX, y: event.clientY - 48 };
+	}
+
+	function dismissAppendPopup() {
+		appendPopup = null;
+	}
+
+	async function appendToDoc() {
+		if (!appendPopup || !appendTarget) return;
+		const snippet = `\n## Snippet (from chat)\n\n${appendPopup.text}\n`;
+		appendStatus = '';
+		try {
+			const res = await fetch('http://127.0.0.1:8000/api/files/append', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ filepath: appendTarget, content: snippet })
+			});
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			appendStatus = `✓ Added to ${appendTarget}`;
+			appendPopup = null;
+			setTimeout(() => (appendStatus = ''), 3000);
+		} catch (e) {
+			appendStatus = `Failed: ${e}`;
+		}
+	}
+
+	// ---------------------------------------------------------------------------
+	// Send message
+	// ---------------------------------------------------------------------------
+
 	async function sendMessage() {
 		if (!currentMessage.trim() || isLoading) return;
 
 		const promptToSend = currentMessage.trim();
-		messages.push({ role: 'user', content: promptToSend });
+		const imagesToSend = [...pastedImages];
+
+		messages.push({
+			role: 'user',
+			content: promptToSend,
+			images: imagesToSend.map((i) => i.dataUrl)
+		});
 		currentMessage = '';
+		pastedImages = [];
 		isLoading = true;
 
 		try {
@@ -109,13 +288,16 @@
 				body: JSON.stringify({
 					session_id: sessionId,
 					message: promptToSend,
-					system_prompt: activePrompt
+					system_prompt: activePrompt,
+					images:
+						imagesToSend.length > 0
+							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
+							: null,
+					context_files: contextFiles.length > 0 ? contextFiles : null
 				})
 			});
 
-			if (!response.ok) {
-				throw new Error(`API Error: ${response.status}`);
-			}
+			if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
 			const data = await response.json();
 			messages.push({ role: 'assistant', content: data.text, tools: data.tools_used });
@@ -140,9 +322,24 @@
 	<title>Kitchen Agent</title>
 </svelte:head>
 
-<div class="flex h-screen overflow-hidden bg-surface text-ink">
+<!-- Dismiss popup on click-away -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="flex h-screen overflow-hidden bg-surface text-ink"
+	onclick={(e) => {
+		// dismiss popup if clicking outside it
+		if (appendPopup && !(e.target as HTMLElement).closest('.append-popup')) {
+			dismissAppendPopup();
+		}
+	}}
+	onmouseup={handleMouseUp}
+>
+	<!-- ===================================================================== -->
+	<!-- LEFT SIDEBAR — session list                                            -->
+	<!-- ===================================================================== -->
 	<aside
-		class="hidden w-72 shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] lg:flex lg:flex-col"
+		class="hidden w-64 shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] lg:flex lg:flex-col"
 	>
 		<div class="mb-5">
 			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Kitchen Agent</p>
@@ -151,10 +348,17 @@
 
 		<button
 			onclick={startNewChat}
-			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
+			class="mb-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
 		>
 			<span aria-hidden="true">+</span>
 			New chat
+		</button>
+
+		<button
+			onclick={exportSession}
+			class="mb-5 flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-sm transition hover:border-accent hover:text-ink"
+		>
+			⬇ Export session
 		</button>
 
 		<div class="min-h-0 flex-1">
@@ -190,7 +394,11 @@
 		</div>
 	</aside>
 
+	<!-- ===================================================================== -->
+	<!-- MAIN AREA                                                              -->
+	<!-- ===================================================================== -->
 	<main class="flex min-w-0 flex-1 flex-col">
+		<!-- Header -->
 		<header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
 			<div
 				class="mx-auto flex max-w-5xl flex-col gap-3 md:flex-row md:items-center md:justify-between"
@@ -209,25 +417,39 @@
 					</div>
 				</div>
 
-				<div class="flex rounded-md border border-line bg-surface p-1">
-					{#each Object.keys(templates) as templateName (templateName)}
-						{@const typedName = templateName as keyof typeof templates}
-						<button
-							onclick={() => (selectedTemplateName = typedName)}
-							class="rounded px-3 py-1.5 text-sm font-medium transition {selectedTemplateName ===
-							typedName
-								? 'bg-panel text-ink shadow-sm'
-								: 'text-muted hover:text-ink'}"
-						>
-							{modeMeta[typedName].label}
-						</button>
-					{/each}
+				<div class="flex items-center gap-3">
+					<!-- Mode switcher -->
+					<div class="flex rounded-md border border-line bg-surface p-1">
+						{#each Object.keys(templates) as templateName (templateName)}
+							{@const typedName = templateName as keyof typeof templates}
+							<button
+								onclick={() => (selectedTemplateName = typedName)}
+								class="rounded px-3 py-1.5 text-sm font-medium transition {selectedTemplateName ===
+								typedName
+									? 'bg-panel text-ink shadow-sm'
+									: 'text-muted hover:text-ink'}"
+							>
+								{modeMeta[typedName].label}
+							</button>
+						{/each}
+					</div>
+
+					<!-- Sidebar toggle -->
+					<button
+						onclick={() => (showSidebar = !showSidebar)}
+						class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
+						title="Toggle context sidebar"
+					>
+						{showSidebar ? '▶ Hide panel' : '◀ Context'}
+					</button>
 				</div>
 			</div>
 		</header>
 
+		<!-- Chat area -->
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
+				<!-- System prompt expander -->
 				<details class="group rounded-md border border-line bg-panel shadow-sm">
 					<summary
 						class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm"
@@ -244,6 +466,29 @@
 					</div>
 				</details>
 
+				<!-- Context injection status pill -->
+				{#if contextFiles.length > 0}
+					<div
+						class="flex items-center gap-2 rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs font-medium text-accent"
+					>
+						📎 {contextFiles.length} file{contextFiles.length > 1 ? 's' : ''} will be injected into
+						your next message.
+					</div>
+				{/if}
+
+				<!-- Fork/append status -->
+				{#if forkStatus}
+					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
+						{forkStatus}
+					</p>
+				{/if}
+				{#if appendStatus}
+					<p class="rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs text-accent">
+						{appendStatus}
+					</p>
+				{/if}
+
+				<!-- Starter prompts -->
 				{#if messages.length === 0}
 					<div class="rounded-md border border-dashed border-line bg-panel p-5 shadow-sm">
 						<p class="text-sm font-semibold text-ink">Start with a practical kitchen workflow</p>
@@ -260,6 +505,7 @@
 					</div>
 				{/if}
 
+				<!-- Messages -->
 				<div class="space-y-5">
 					{#each messages as msg, messageIndex (`${msg.role}-${messageIndex}`)}
 						<article
@@ -271,6 +517,7 @@
 									? 'max-w-[min(760px,88%)] rounded-md bg-ink px-4 py-3 text-white shadow-sm'
 									: 'w-full max-w-4xl rounded-md border border-line bg-panel p-4 shadow-sm'}
 							>
+								<!-- Role label + badges -->
 								<div class="mb-2 flex items-center justify-between gap-3">
 									<p
 										class={msg.role === 'user'
@@ -280,17 +527,41 @@
 										{msg.role === 'user' ? 'You' : 'Assistant'}
 									</p>
 
-									{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
-										<span
-											class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted"
+									<div class="flex items-center gap-2">
+										{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
+											<span
+												class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted"
+											>
+												{msg.tools.length} tools
+											</span>
+										{/if}
+										<!-- Fork button per turn -->
+										<button
+											onclick={() => forkSession(messageIndex)}
+											title="Fork conversation from this turn"
+											class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-ink"
 										>
-											{msg.tools.length} tools
-										</span>
-									{/if}
+											⎇ Fork
+										</button>
+									</div>
 								</div>
+
+								<!-- User image previews -->
+								{#if msg.role === 'user' && msg.images && msg.images.length > 0}
+									<div class="mb-2 flex flex-wrap gap-2">
+										{#each msg.images as imgUrl, i (i)}
+											<img
+												src={imgUrl}
+												alt="Attached image {i + 1}"
+												class="h-20 w-20 rounded border border-white/20 object-cover"
+											/>
+										{/each}
+									</div>
+								{/if}
 
 								<Markdown content={msg.content} variant={msg.role} />
 
+								<!-- Tool logs -->
 								{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
 									<div class="mt-4 space-y-2 border-t border-line pt-3">
 										<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
@@ -306,13 +577,11 @@
 														<span class="font-semibold text-ink">{tool.name}</span>
 														<span class="ml-2 text-xs text-muted">Args and result</span>
 													</span>
-													<span class="text-xs font-medium text-accent group-open:hidden">View</span
-													>
+													<span class="text-xs font-medium text-accent group-open:hidden">View</span>
 													<span class="hidden text-xs font-medium text-accent group-open:inline"
 														>Hide</span
 													>
 												</summary>
-
 												<div class="space-y-3 border-t border-line px-3 py-3">
 													<div>
 														<p class="mb-1 text-xs font-semibold text-muted uppercase">Args</p>
@@ -356,12 +625,38 @@
 			</div>
 		</section>
 
+		<!-- Footer / input area -->
 		<footer class="border-t border-line bg-panel/95 px-4 py-4 backdrop-blur md:px-6">
 			<div class="mx-auto max-w-5xl">
+				<!-- Image previews -->
+				{#if pastedImages.length > 0}
+					<div class="mb-2 flex flex-wrap gap-2">
+						{#each pastedImages as img, i (i)}
+							<div class="group relative">
+								<img
+									src={img.dataUrl}
+									alt="Pasted image {i + 1}"
+									class="h-16 w-16 rounded border border-line object-cover shadow-sm"
+								/>
+								<button
+									onclick={() => removeImage(i)}
+									class="absolute -top-1.5 -right-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-ink text-white text-xs group-hover:flex"
+									aria-label="Remove image"
+								>
+									✕
+								</button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+
 				<div class="mb-2 flex items-center justify-between gap-3">
 					<p class="text-xs font-medium text-muted">
 						Active mode:
 						<span class="font-semibold text-ink">{selectedTemplateName}</span>
+						{#if contextFiles.length > 0}
+							· <span class="text-accent">{contextFiles.length} context file{contextFiles.length > 1 ? 's' : ''}</span>
+						{/if}
 					</p>
 					<button
 						onclick={startNewChat}
@@ -377,7 +672,8 @@
 						id="message-input"
 						bind:value={currentMessage}
 						onkeydown={handleKeydown}
-						placeholder="Ask about layouts, materials, fittings, assembly, or kitchen documentation..."
+						onpaste={handlePaste}
+						placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
 						class="max-h-40 min-h-16 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
 						rows="2"
 					></textarea>
@@ -393,4 +689,48 @@
 			</div>
 		</footer>
 	</main>
+
+	<!-- ===================================================================== -->
+	<!-- RIGHT SIDEBAR — context injection + file editor                        -->
+	<!-- ===================================================================== -->
+	{#if showSidebar}
+		<ContextSidebar oncontextchange={handleContextChange} />
+	{/if}
+
+	<!-- ===================================================================== -->
+	<!-- FLOATING POPUP — Highlight → Add to Docs                              -->
+	<!-- ===================================================================== -->
+	{#if appendPopup}
+		<div
+			class="append-popup fixed z-50 rounded-md border border-line bg-panel p-3 shadow-lg"
+			style="left: {appendPopup.x}px; top: {appendPopup.y}px; min-width: 220px; max-width: 300px;"
+		>
+			<p class="mb-2 text-xs font-semibold text-ink">📋 Add to docs</p>
+			<p class="mb-3 line-clamp-2 text-xs text-muted italic">"{appendPopup.text}"</p>
+			<div class="flex items-center gap-2">
+				<select
+					bind:value={appendTarget}
+					class="min-w-0 flex-1 rounded border border-line bg-surface px-2 py-1 text-xs text-ink focus:outline-none"
+				>
+					<option value="">Select file…</option>
+					{#each appendFiles as file (file.path)}
+						<option value={file.path}>{file.name}</option>
+					{/each}
+				</select>
+				<button
+					onclick={appendToDoc}
+					disabled={!appendTarget}
+					class="rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-accent-strong disabled:opacity-40"
+				>
+					Add
+				</button>
+				<button
+					onclick={dismissAppendPopup}
+					class="rounded px-1.5 py-1 text-xs text-muted transition hover:text-ink"
+				>
+					✕
+				</button>
+			</div>
+		</div>
+	{/if}
 </div>
