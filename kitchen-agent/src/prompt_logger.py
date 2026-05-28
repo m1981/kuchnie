@@ -1,32 +1,37 @@
 """
-Prompt logging.
+src/prompt_logger.py
+====================
+Pure function that appends every user prompt to a running Markdown log file.
 
-Pure function that appends every user prompt to a running Markdown log
-file, creating the file and any parent directories as needed.
+No DB or HTTP concerns — just file I/O.  The default log path comes from
+``settings.prompt_log_path`` so it is configurable without touching code.
 """
-import os
+
 from datetime import datetime
+from pathlib import Path
+
+from src.config import settings
 
 
-def log_prompt(prompt: str, log_path: str = "data/prompt_log.md") -> None:
+def log_prompt(prompt: str, log_path: Path | str | None = None) -> None:
     """
-    Appends a timestamped Markdown entry for the given prompt.
+    Appends a timestamped Markdown entry for *prompt* to the log file.
 
-    Empty or whitespace-only prompts are ignored.
+    Empty or whitespace-only prompts are silently ignored.
 
     Args:
-        prompt: The user prompt to log.
-        log_path: Destination Markdown file (created if missing).
+        prompt:   The user prompt to record.
+        log_path: Override for the log file path (defaults to
+                  ``settings.prompt_log_path``).  Useful in tests.
     """
     if not prompt or not prompt.strip():
         return
 
-    parent = os.path.dirname(log_path)
-    if parent:
-        os.makedirs(parent, exist_ok=True)
+    target = Path(log_path) if log_path is not None else settings.prompt_log_path
+    target.parent.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     entry = f"## {timestamp}\n\n{prompt.strip()}\n\n"
 
-    with open(log_path, "a", encoding="utf-8") as f:
+    with target.open("a", encoding="utf-8") as f:
         f.write(entry)

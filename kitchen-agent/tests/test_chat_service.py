@@ -1,0 +1,145 @@
+"""
+tests/test_chat_service.py
+==========================
+Unit tests for ChatService — the business-logic layer between the HTTP
+handler and the agent.
+
+All external I/O (DB, agent, prompt logger) is mocked so these tests run
+instantly without network or disk access.
+"""
+import json
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from src.chat_service import ChatService, _make_title
+from src.db import DatabaseManager
+
+
+# ---------------------------------------------------------------------------
+# _make_title helper
+# ---------------------------------------------------------------------------
+
+def test_make_title_short_message() -> None:
+    msgs = [{"role": "user", "content": "Hello"}]
+    assert _make_title(msgs) == "Hello"
+
+
+def test_make_title_long_message_truncated() -> None:
+    msgs = [{"role": "user", "content": "A" * 40}]
+    title = _make_title(msgs)
+    assert title.endswith("...")
+    assert len(title) == 33  # 30 chars + "..."
+
+
+def test_make_title_no_user_message() -> None:
+    msgs = [{"role": "assistant", "content": "Hi"}]
+    assert _make_title(msgs) == "New Chat"
+
+
+def test_make_title_empty_list() -> None:
+    assert _make_title([]) == "New Chat"
+
+
+# ---------------------------------------------------------------------------
+# ChatService.handle_turn
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def db(tmp_path):
+    return DatabaseManager(db_path=str(tmp_path / "test.db"))
+
+
+@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.process_chat_turn")
+def test_handle_turn_saves_session(
+    mock_agent: MagicMock,
+    mock_log: MagicMock,
+    db: DatabaseManager,
+) -> None:
+    """After handle_turn the session should exist in the DB."""
+    mock_agent.return_value = ("Great, noted!", [])
+
+    service = ChatService(db)
+    session_id = "test-session-001"
+
+    text, tools = service.handle_turn(
+        session_id=session_id,
+        user_message="What hinges should I use?",
+    )
+
+    assert text == "Great, noted!"
+    assert tools == []
+
+    # The session must now exist in the DB.
+    _, ui_json = db.load_session(session_id)
+    ui_messages = json.loads(ui_json)
+    assert len(ui_messages) == 2
+    assert ui_messages[0] == {"role": "user", "content": "What hinges should I use?"}
+    assert ui_messages[1]["role"] == "assistant"
+    assert ui_messages[1]["content"] == "Great, noted!"
+
+
+@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.process_chat_turn")
+def test_handle_turn_appends_to_existing_history(
+    mock_agent: MagicMock,
+    mock_log: MagicMock,
+    db: DatabaseManager,
+) -> None:
+    """A second turn must append to (not replace) the existing UI history."""
+    mock_agent.return_value = ("Answer 1", [])
+    service = ChatService(db)
+
+    service.handle_turn("sess-1", "Turn 1")
+
+    mock_agent.return_value = ("Answer 2", [])
+    service.handle_turn("sess-1", "Turn 2")
+
+    _, ui_json = db.load_session("sess-1")
+    ui_messages = json.loads(ui_json)
+    assert len(ui_messages) == 4  # user1, assistant1, user2, assistant2
+    assert ui_messages[2]["content"] == "Turn 2"
+    assert ui_messages[3]["content"] == "Answer 2"
+
+
+@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.process_chat_turn")
+def test_handle_turn_logs_prompt(
+    mock_agent: MagicMock,
+    mock_log: MagicMock,
+    db: DatabaseManager,
+) -> None:
+    """log_prompt must be called with the user message."""
+    mock_agent.return_value = ("ok", [])
+    service = ChatService(db)
+
+    service.handle_turn("sess-log", "Log me please")
+
+    mock_log.assert_called_once_with("Log me please")
+
+
+@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.process_chat_turn")
+def test_handle_turn_passes_images_and_context(
+    mock_agent: MagicMock,
+    mock_log: MagicMock,
+    db: DatabaseManager,
+) -> None:
+    """Extra kwargs (images, context_files) must be forwarded to the agent."""
+    mock_agent.return_value = ("done", [])
+    service = ChatService(db)
+
+    images = [{"mime_type": "image/png", "data": "abc123"}]
+    context = ["data/materials.md"]
+
+    service.handle_turn(
+        "sess-kwargs",
+        "Here is an image",
+        images=images,
+        context_files=context,
+    )
+
+    _call_kwargs = mock_agent.call_args[1]
+    assert _call_kwargs["images"] == images
+    assert _call_kwargs["context_files"] == context

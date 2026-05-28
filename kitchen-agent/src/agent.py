@@ -1,32 +1,58 @@
-# src/agent.py
-import os
+"""
+src/agent.py
+============
+Gemini agentic loop.
+
+``process_chat_turn`` drives a single conversational turn.  It may call
+zero or more tools before the model produces a final text response.
+
+Design notes
+------------
+* The function mutates the *history* list in place AND returns the final text
+  plus tool logs.  This dual approach is intentional: the caller (main.py)
+  owns the history list and passes it around; returning it again would require
+  a copy which is wasteful for large histories.
+* Model name and temperature come from ``settings`` — no magic strings here.
+* All tool execution is synchronous.  The FastAPI handler wraps the whole call
+  inside ``asyncio.run_in_executor`` so the event loop is never blocked.
+"""
+
+import base64
 import logging
+from typing import Any
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-# Import our schemas
-from tools.schemas import read_file_fn, get_repo_map_fn, edit_file_fn, create_file_fn, search_knowledge_base_fn
-
-# Import our actual Python functions
-from tools.file_ops import read_file, edit_file, create_file, search_knowledge_base
-from tools.repo_map import get_repo_map
-
-# --- SET UP LOGGING ---
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%H:%M:%S"
+from src.config import settings
+from src.tools.file_ops import (
+    create_file,
+    edit_file,
+    read_file,
+    search_knowledge_base,
 )
-logger = logging.getLogger(__name__)
+from src.tools.repo_map import get_repo_map
+from src.tools.schemas import (
+    create_file_fn,
+    edit_file_fn,
+    get_repo_map_fn,
+    read_file_fn,
+    search_knowledge_base_fn,
+)
 
 load_dotenv()
 
-# Initialize client
-client = genai.Client()
+logger = logging.getLogger(__name__)
 
-# Map the string name from the schema to the actual Python function
-FUNCTION_MAP = {
+# ---------------------------------------------------------------------------
+# Gemini client & tool registry
+# ---------------------------------------------------------------------------
+
+_client = genai.Client()
+
+# Maps the string name declared in the schema to the real Python callable.
+FUNCTION_MAP: dict[str, Any] = {
     "read_file": read_file,
     "get_repo_map": get_repo_map,
     "edit_file": edit_file,
@@ -34,125 +60,132 @@ FUNCTION_MAP = {
     "search_knowledge_base": search_knowledge_base,
 }
 
-# Configure the tools for Gemini
-gemini_tools = types.Tool(function_declarations=[
-    read_file_fn,
-    get_repo_map_fn,
-    edit_file_fn,
-    create_file_fn,
-    search_knowledge_base_fn,
-])
+_gemini_tools = types.Tool(
+    function_declarations=[
+        read_file_fn,
+        get_repo_map_fn,
+        edit_file_fn,
+        create_file_fn,
+        search_knowledge_base_fn,
+    ]
+)
 
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 def process_chat_turn(
     user_message: str,
     history: list,
-    system_instruction: str = None,
+    system_instruction: str | None = None,
     images: list[dict] | None = None,
     context_files: list[str] | None = None,
-) -> tuple[str, list]:
+) -> tuple[str, list[dict]]:
     """
-    Handles a single turn of conversation, allowing for MULTIPLE tool calls.
-    Mutates the `history` list in place.
+    Handles a single conversational turn, allowing for multiple tool calls.
+
+    Mutates *history* in place by appending all new turns (user message,
+    model tool calls, tool responses, and the final model answer).
 
     Args:
-        user_message:      Plain text from the user.
-        history:           Gemini conversation history (mutated in place).
-        system_instruction: Optional system prompt override.
-        images:            List of {mime_type, data} dicts (base64-encoded).
-        context_files:     List of file paths whose contents will be prepended
-                           as context to the user message.
+        user_message:       Plain text from the user.
+        history:            Gemini conversation history (mutated in place).
+        system_instruction: Optional system-prompt override.
+        images:             List of ``{mime_type, data}`` dicts (base64-encoded).
+        context_files:      File paths whose contents are prepended as context.
 
-    Returns: (Final text response, List of dictionaries containing tool execution details)
+    Returns:
+        A tuple of ``(final_text, tool_logs)`` where *tool_logs* is a list of
+        dicts with keys ``name``, ``args``, and ``result``.
     """
-    import base64
+    logger.info("User asked: '%s'", user_message)
 
-    logger.info(f"User asked: '{user_message}'")
+    # ── Build the user-turn parts list ───────────────────────────────────────
 
-    # --- Build the user parts list ---
     user_parts: list[types.Part] = []
 
-    # 1a. Inject selected context files as readable text before the message
+    # 1a. Inject selected context files as readable text before the message.
     if context_files:
-        context_snippets: list[str] = []
+        snippets: list[str] = []
         for fp in context_files:
             result = read_file(fp)
             if "content" in result:
-                context_snippets.append(f"=== {fp} ===\n{result['content']}")
+                snippets.append(f"=== {fp} ===\n{result['content']}")
             else:
-                logger.warning(f"Context file not readable: {fp} — {result.get('error')}")
-        if context_snippets:
-            context_block = "[Context files injected by user]\n\n" + "\n\n".join(context_snippets)
-            user_parts.append(types.Part(text=context_block))
+                logger.warning("Context file not readable: %s — %s", fp, result.get("error"))
+        if snippets:
+            block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
+            user_parts.append(types.Part(text=block))
 
-    # 1b. The user's text message
+    # 1b. The user's text message.
     user_parts.append(types.Part(text=user_message))
 
-    # 1c. Optional inline images (pasted via Ctrl+V)
+    # 1c. Optional inline images (pasted via Ctrl+V).
     if images:
         for img in images:
             try:
                 raw_bytes = base64.b64decode(img["data"])
-                user_parts.append(types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"]))
-            except Exception as e:
-                logger.warning(f"Failed to decode image: {e}")
+                user_parts.append(
+                    types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"])
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to decode image: %s", exc)
 
-    # 1. Append user message to history
     history.append(types.Content(role="user", parts=user_parts))
 
-    # 2. Create config dynamically to include the system instruction (Prompt Template)
+    # ── Gemini config (built once per turn) ──────────────────────────────────
+
     config = types.GenerateContentConfig(
-        tools=[gemini_tools],
-        temperature=0.2,  # Low temperature for factual, grounded answers
-        system_instruction=system_instruction
+        tools=[_gemini_tools],
+        temperature=settings.gemini_temperature,
+        system_instruction=system_instruction,
     )
 
-    tools_used_this_turn = []
+    tools_used: list[dict] = []
 
-    # 3. The Agentic Loop
+    # ── Agentic loop ─────────────────────────────────────────────────────────
+
     while True:
-        logger.info("Calling Gemini API...")
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
+        logger.info("Calling Gemini API (model=%s)…", settings.gemini_model)
+        response = _client.models.generate_content(
+            model=settings.gemini_model,
             contents=history,
             config=config,
         )
 
-        part = response.candidates[0].content.parts[0]
+        candidate = response.candidates[0]
+        if not candidate.content.parts:
+            # Safety / refusal — treat as empty final response.
+            logger.warning("Gemini returned a candidate with no parts.")
+            history.append(types.Content(role="model", parts=[types.Part(text="")]))
+            return "", tools_used
 
-        # 4. Check if Gemini wants to use a tool
+        part = candidate.content.parts[0]
+
+        # ── Tool call branch ─────────────────────────────────────────────────
         if part.function_call:
             fc = part.function_call
-            tool_name = fc.name
-            tool_args = fc.args
+            logger.info("🛠  Model requested tool: %s | args: %s", fc.name, fc.args)
 
-            logger.info(f"🛠️ Model requested tool: {tool_name} | Args: {tool_args}")
-
-            # CRITICAL FIX: Append the EXACT part returned by the model to preserve the thought_signature.
+            # Append the EXACT model part to preserve thought_signature.
             history.append(types.Content(role="model", parts=[part]))
 
-            # Execute the real Python function
-            if tool_name in FUNCTION_MAP:
+            # Execute the tool.
+            tool_fn = FUNCTION_MAP.get(fc.name)
+            if tool_fn is not None:
                 try:
-                    result = FUNCTION_MAP[tool_name](**tool_args)
-                except Exception as e:
-                    result = {"error": str(e)}
-                    logger.error(f"Tool execution failed: {e}")
+                    result: dict = tool_fn(**fc.args)
+                except Exception as exc:  # noqa: BLE001
+                    result = {"error": str(exc)}
+                    logger.error("Tool execution failed (%s): %s", fc.name, exc)
             else:
-                result = {"error": f"Unknown tool: {tool_name}"}
-                logger.warning(f"Model tried to use unknown tool: {tool_name}")
+                result = {"error": f"Unknown tool: {fc.name}"}
+                logger.warning("Model tried unknown tool: %s", fc.name)
 
-            # Save the detailed tool execution data for the Streamlit UI
-            tools_used_this_turn.append({
-                "name": tool_name,
-                "args": tool_args,
-                "result": result
-            })
+            tools_used.append({"name": fc.name, "args": dict(fc.args), "result": result})
+            logger.info("✅ Tool result snippet: %.120s", str(result))
 
-            result_str = str(result)
-            logger.info(f"✅ Tool result snippet: {result_str[:100]}...")
-
-            # Append the tool result back to history (CRITICAL: must include fc.id)
+            # Feed the result back into the conversation.
             history.append(
                 types.Content(
                     role="user",
@@ -167,16 +200,13 @@ def process_chat_turn(
                     ],
                 )
             )
+            # Loop → call Gemini again with updated history.
 
-            # The loop continues! It will call Gemini again with the new history.
-
+        # ── Final text branch ────────────────────────────────────────────────
         else:
-            # 5. No tool was called, meaning we have our final text response!
-            final_text = response.text
+            final_text: str = response.text or ""
             logger.info("💬 Model provided final text response.")
-
-            # Append final answer to history
-            history.append(types.Content(role="model", parts=[types.Part(text=final_text)]))
-
-            # Return the detailed list instead of a string
-            return final_text, tools_used_this_turn
+            history.append(
+                types.Content(role="model", parts=[types.Part(text=final_text)])
+            )
+            return final_text, tools_used

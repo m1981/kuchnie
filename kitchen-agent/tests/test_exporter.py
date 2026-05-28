@@ -1,71 +1,54 @@
 """
+tests/test_exporter.py
+======================
 TDD suite for Markdown export of chat sessions.
 
-Covers the pure rendering function and the DatabaseManager integration.
+Covers:
+ - Pure rendering function (all branches)
+ - DatabaseManager integration (export_session)
+ - Unknown-role fallback rendering (line 50)
 """
 import json
+from pathlib import Path
+
 import pytest
 
-from src.exporter import export_session_to_markdown
+from src.exporter import export_session_to_markdown, _render_message
 from src.db import DatabaseManager
 
 
-# --- Pure function tests ---
+# ---------------------------------------------------------------------------
+# Pure function tests
+# ---------------------------------------------------------------------------
 
-def test_export_empty_session_has_title_only():
-    """An empty session renders just the document title."""
-
-    # 1. Arrange
-    ui_messages = []
-    title = "Empty Chat"
-
-    # 2. Act
-    result = export_session_to_markdown(ui_messages, title)
-
-    # 3. Assert
+def test_export_empty_session_has_title_only() -> None:
+    result = export_session_to_markdown([], "Empty Chat")
     assert result.startswith("# Empty Chat")
     assert "## User" not in result
     assert "## Assistant" not in result
 
 
-def test_export_single_user_turn():
-    """A user-only message renders a User section."""
-
-    # 1. Arrange
+def test_export_single_user_turn() -> None:
     ui_messages = [{"role": "user", "content": "Hello there"}]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "Greeting")
-
-    # 3. Assert
     assert "# Greeting" in result
     assert "## User" in result
     assert "Hello there" in result
 
 
-def test_export_full_user_assistant_exchange():
-    """Both user and assistant sections appear with their content."""
-
-    # 1. Arrange
+def test_export_full_user_assistant_exchange() -> None:
     ui_messages = [
         {"role": "user", "content": "What is 2+2?"},
         {"role": "assistant", "content": "4", "tools": []},
     ]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "Math")
-
-    # 3. Assert
     assert "## User" in result
     assert "What is 2+2?" in result
     assert "## Assistant" in result
     assert "\n4" in result
 
 
-def test_export_renders_tool_calls_as_details_blocks():
-    """Tool invocations are rendered inside <details> blocks."""
-
-    # 1. Arrange
+def test_export_renders_tool_calls_as_details_blocks() -> None:
     ui_messages = [
         {"role": "user", "content": "Read foo.md"},
         {
@@ -80,11 +63,7 @@ def test_export_renders_tool_calls_as_details_blocks():
             ],
         },
     ]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "File Read")
-
-    # 3. Assert
     assert "<details>" in result
     assert "</details>" in result
     assert "read_file" in result
@@ -92,21 +71,14 @@ def test_export_renders_tool_calls_as_details_blocks():
     assert "# Foo" in result
 
 
-def test_export_preserves_turn_order():
-    """Turns appear in the order they were provided."""
-
-    # 1. Arrange
+def test_export_preserves_turn_order() -> None:
     ui_messages = [
         {"role": "user", "content": "FIRST_USER_MSG"},
         {"role": "assistant", "content": "FIRST_ASSISTANT_MSG", "tools": []},
         {"role": "user", "content": "SECOND_USER_MSG"},
         {"role": "assistant", "content": "SECOND_ASSISTANT_MSG", "tools": []},
     ]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "Ordered")
-
-    # 3. Assert
     positions = [
         result.index("FIRST_USER_MSG"),
         result.index("FIRST_ASSISTANT_MSG"),
@@ -116,49 +88,43 @@ def test_export_preserves_turn_order():
     assert positions == sorted(positions)
 
 
-def test_export_special_markdown_chars_preserved():
-    """Markdown content inside messages is passed through verbatim."""
-
-    # 1. Arrange
+def test_export_special_markdown_chars_preserved() -> None:
     content = "Here is `code`, **bold**, and a [link](http://x.test)."
     ui_messages = [{"role": "user", "content": content}]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "Markdown")
-
-    # 3. Assert
     assert content in result
 
 
-def test_export_handles_missing_tools_key():
-    """Assistant messages without a 'tools' key render without error."""
-
-    # 1. Arrange
+def test_export_handles_missing_tools_key() -> None:
     ui_messages = [{"role": "assistant", "content": "No tools here"}]
-
-    # 2. Act
     result = export_session_to_markdown(ui_messages, "Toolless")
-
-    # 3. Assert
     assert "## Assistant" in result
     assert "No tools here" in result
     assert "<details>" not in result
 
 
-def test_export_falls_back_for_empty_title():
-    """An empty or whitespace title falls back to 'Untitled Session'."""
-
-    # 1. Arrange / 2. Act
+def test_export_falls_back_for_empty_title() -> None:
     result = export_session_to_markdown([], "   ")
-
-    # 3. Assert
     assert "# Untitled Session" in result
 
 
-# --- DatabaseManager integration tests ---
+# ---------------------------------------------------------------------------
+# Unknown role fallback (line 50)
+# ---------------------------------------------------------------------------
+
+def test_render_message_unknown_role() -> None:
+    """A message with an unrecognised role falls back to '## <Role>'."""
+    msg = {"role": "system", "content": "You are a bot."}
+    output = _render_message(msg)
+    assert output.startswith("## System")
+    assert "You are a bot." in output
+
+
+# ---------------------------------------------------------------------------
+# DatabaseManager integration tests
+# ---------------------------------------------------------------------------
 
 def _seed(db: DatabaseManager) -> str:
-    """Helper: seeds a session with one user/assistant exchange."""
     session_id = "exp-session-1"
     ui_messages = [
         {"role": "user", "content": "Hello"},
@@ -173,17 +139,10 @@ def _seed(db: DatabaseManager) -> str:
     return session_id
 
 
-def test_db_export_session_returns_markdown(tmp_path):
-    """DatabaseManager.export_session returns a non-empty markdown string."""
-
-    # 1. Arrange
+def test_db_export_session_returns_markdown(tmp_path: Path) -> None:
     db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
     session_id = _seed(db)
-
-    # 2. Act
     result = db.export_session(session_id)
-
-    # 3. Assert
     assert isinstance(result, str)
     assert "# Export Test" in result
     assert "## User" in result
@@ -192,21 +151,13 @@ def test_db_export_session_returns_markdown(tmp_path):
     assert "Hi back" in result
 
 
-def test_db_export_nonexistent_session_raises(tmp_path):
-    """Exporting an unknown session raises ValueError."""
-
-    # 1. Arrange
+def test_db_export_nonexistent_session_raises(tmp_path: Path) -> None:
     db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
-
-    # 2. Act / 3. Assert
     with pytest.raises(ValueError):
         db.export_session("does-not-exist")
 
 
-def test_db_export_empty_session(tmp_path):
-    """Exporting a session with no UI messages still renders the title."""
-
-    # 1. Arrange
+def test_db_export_empty_session(tmp_path: Path) -> None:
     db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
     db.save_session(
         session_id="empty-1",
@@ -214,9 +165,5 @@ def test_db_export_empty_session(tmp_path):
         api_history_json="[]",
         ui_history_json="[]",
     )
-
-    # 2. Act
     result = db.export_session("empty-1")
-
-    # 3. Assert
     assert "# Empty One" in result

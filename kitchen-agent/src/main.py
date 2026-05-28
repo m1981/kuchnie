@@ -1,60 +1,102 @@
-# src/main.py
-from fastapi import FastAPI, HTTPException
+"""
+src/main.py
+===========
+FastAPI application — HTTP layer only.
+
+Responsibilities
+----------------
+* Declare routes and Pydantic request / response models.
+* Validate input and translate service/domain errors into HTTP responses.
+* Delegate all business logic to ``ChatService`` and ``DatabaseManager``.
+
+No business logic lives here.
+
+Async strategy
+--------------
+The Gemini SDK call and all SQLite operations are synchronous (blocking I/O).
+We run them inside ``asyncio.get_event_loop().run_in_executor(None, ...)`` so
+that the FastAPI event loop is never blocked and can serve other requests while
+the model is thinking.
+"""
+
+import asyncio
+import json
+import logging
+from functools import partial
+from pathlib import Path
+from typing import Any
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-import uuid
-import json
-from pathlib import Path
 
-from src.agent import process_chat_turn
+from src.chat_service import ChatService
+from src.config import settings
 from src.db import DatabaseManager
-from src.prompt_logger import log_prompt
-from src.serializers import dehydrate_history, hydrate_history
 from src.tools.file_ops import append_to_file
 from src.tools.repo_map import get_repo_map
 
-DATA_DIR = Path("data")
+logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Kitchen Cabinet Agent API")
+# ---------------------------------------------------------------------------
+# Application
+# ---------------------------------------------------------------------------
 
-# Allow Svelte frontend to talk to this API
+app = FastAPI(
+    title="Kitchen Cabinet Agent API",
+    description="AI agent for kitchen cabinet design, materials and assembly.",
+    version="1.0.0",
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this to localhost:5173
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-db = DatabaseManager()
+# ---------------------------------------------------------------------------
+# Dependency injection
+# ---------------------------------------------------------------------------
+
+def get_db() -> DatabaseManager:
+    """FastAPI dependency: returns a DatabaseManager instance."""
+    return DatabaseManager()
 
 
-# --- Pydantic Models (Data Validation) ---
+def get_chat_service(db: DatabaseManager = Depends(get_db)) -> ChatService:
+    """FastAPI dependency: returns a ChatService wired to the DB."""
+    return ChatService(db)
+
+
+# ---------------------------------------------------------------------------
+# Pydantic models
+# ---------------------------------------------------------------------------
 
 class ChatImagePart(BaseModel):
-    mime_type: str   # e.g. "image/jpeg"
-    data: str        # base64-encoded bytes
+    mime_type: str  # e.g. "image/jpeg"
+    data: str       # base64-encoded bytes
 
 
 class ChatRequest(BaseModel):
     session_id: str
     message: str
-    system_prompt: Optional[str] = None
-    images: Optional[List[ChatImagePart]] = None  # base64 image attachments
-    context_files: Optional[List[str]] = None     # filepaths to inject as context
+    system_prompt: str | None = None
+    images: list[ChatImagePart] | None = None
+    context_files: list[str] | None = None
 
 
 class ToolLog(BaseModel):
     name: str
-    args: Dict[str, Any]
-    result: Dict[str, Any]
+    args: dict[str, Any]
+    result: dict[str, Any]
 
 
 class ChatResponse(BaseModel):
     text: str
-    tools_used: List[ToolLog]
+    tools_used: list[ToolLog]
 
 
 class ForkRequest(BaseModel):
@@ -84,86 +126,108 @@ class FileListItem(BaseModel):
     name: str
 
 
-# --- API Endpoints ---
+# ---------------------------------------------------------------------------
+# Path helpers
+# ---------------------------------------------------------------------------
+
+def _resolve_data_path(filepath: str) -> Path:
+    """
+    Resolves *filepath* relative to ``settings.data_dir`` and guards against
+    path-traversal attacks.
+
+    Raises:
+        HTTPException 400: when the resolved path escapes the data directory.
+    """
+    resolved = (settings.data_dir / filepath).resolve()
+    if not str(resolved).startswith(str(settings.data_dir.resolve())):
+        raise HTTPException(status_code=400, detail="Path traversal not allowed.")
+    return resolved
+
+
+# ---------------------------------------------------------------------------
+# Session endpoints
+# ---------------------------------------------------------------------------
 
 @app.get("/api/sessions")
-def get_sessions():
+def get_sessions(db: DatabaseManager = Depends(get_db)) -> list[dict]:
     """Returns a list of all saved chat sessions."""
     return db.list_sessions()
 
 
 @app.get("/api/sessions/{session_id}")
-def get_session(session_id: str):
+def get_session(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> dict:
     """Loads a specific chat session."""
-    api_json, ui_json = db.load_session(session_id)
-    if not ui_json or ui_json == "[]":
-        return {"ui_messages": []}
-    return {"ui_messages": json.loads(ui_json)}
+    _, ui_json = db.load_session(session_id)
+    ui_messages = json.loads(ui_json) if ui_json and ui_json != "[]" else []
+    return {"ui_messages": ui_messages}
 
 
-@app.get("/api/sessions/{session_id}/export", response_class=PlainTextResponse)
-def export_session(session_id: str):
+@app.get(
+    "/api/sessions/{session_id}/export",
+    response_class=PlainTextResponse,
+)
+def export_session(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> PlainTextResponse:
     """Exports a session as a Markdown document."""
     try:
         markdown = db.export_session(session_id)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return PlainTextResponse(content=markdown, media_type="text/markdown")
 
 
 @app.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)
-def fork_session(session_id: str, request: ForkRequest):
-    """Forks a session at the given turn_index, returning the new session ID."""
+def fork_session(
+    session_id: str,
+    request: ForkRequest,
+    db: DatabaseManager = Depends(get_db),
+) -> ForkResponse:
+    """Forks a session at *turn_index*, returning the new session ID."""
     try:
         new_id = db.fork_session(session_id, request.turn_index)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ForkResponse(new_session_id=new_id)
 
 
 # ---------------------------------------------------------------------------
-# File Management Endpoints
+# File-management endpoints
 # ---------------------------------------------------------------------------
 
-def _resolve_data_path(filepath: str) -> Path:
-    """
-    Resolves `filepath` relative to DATA_DIR and guards against path traversal.
-    Raises HTTPException(400) if the resolved path escapes DATA_DIR.
-    """
-    resolved = (DATA_DIR / filepath).resolve()
-    if not str(resolved).startswith(str(DATA_DIR.resolve())):
-        raise HTTPException(status_code=400, detail="Path traversal not allowed.")
-    return resolved
-
-
-@app.get("/api/files", response_model=List[FileListItem])
-def list_files():
-    """Returns a flat list of all markdown files in the data/ directory.
-
-    The `path` field is relative to DATA_DIR (e.g. '03_Finishes/paint.md'),
-    so the frontend can pass it directly to GET/PUT /api/files/{path}.
-    """
-    if not DATA_DIR.exists():
+@app.get("/api/files", response_model=list[FileListItem])
+def list_files() -> list[FileListItem]:
+    """Returns a flat list of all Markdown files in the data directory."""
+    if not settings.data_dir.exists():
         return []
-    items = [
-        FileListItem(path=p.relative_to(DATA_DIR).as_posix(), name=p.name)
-        for p in sorted(DATA_DIR.rglob("*.md"))
+    return [
+        FileListItem(
+            path=p.relative_to(settings.data_dir).as_posix(),
+            name=p.name,
+        )
+        for p in sorted(settings.data_dir.rglob("*.md"))
     ]
-    return items
 
 
 @app.get("/api/files/{filepath:path}", response_model=FileReadResponse)
-def read_file_endpoint(filepath: str):
-    """Returns the raw text content of a single markdown file."""
+def read_file_endpoint(filepath: str) -> FileReadResponse:
+    """Returns the raw text content of a single Markdown file."""
     resolved = _resolve_data_path(filepath)
     if not resolved.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
-    return FileReadResponse(filepath=filepath, content=resolved.read_text(encoding="utf-8"))
+    return FileReadResponse(
+        filepath=filepath,
+        content=resolved.read_text(encoding="utf-8"),
+    )
 
 
 @app.put("/api/files/{filepath:path}")
-def write_file_endpoint(filepath: str, request: FileWriteRequest):
-    """Overwrites a markdown file with new content (manual editor save)."""
+def write_file_endpoint(filepath: str, request: FileWriteRequest) -> dict:
+    """Overwrites a Markdown file with new content (manual editor save)."""
     resolved = _resolve_data_path(filepath)
     if not resolved.exists():
         raise HTTPException(status_code=404, detail=f"File not found: {filepath}")
@@ -172,8 +236,8 @@ def write_file_endpoint(filepath: str, request: FileWriteRequest):
 
 
 @app.post("/api/files/append")
-def append_to_file_endpoint(request: FileAppendRequest):
-    """Appends a snippet to a markdown file. Used by Highlight -> Add to Docs."""
+def append_to_file_endpoint(request: FileAppendRequest) -> dict:
+    """Appends a snippet to a Markdown file (Highlight → Add to Docs)."""
     _resolve_data_path(request.filepath)  # path-traversal guard only
     result = append_to_file(request.filepath, request.content)
     if "error" in result:
@@ -182,60 +246,49 @@ def append_to_file_endpoint(request: FileAppendRequest):
 
 
 @app.get("/api/repo-map")
-def repo_map_endpoint():
-    """Returns the structured repo map (headers only) for the context sidebar."""
-    result = get_repo_map()
+def repo_map_endpoint() -> dict:
+    """Returns the structured repo map (headings only) for the context sidebar."""
+    result = get_repo_map(base_dir=str(settings.data_dir))
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return result
 
 
 # ---------------------------------------------------------------------------
-# Chat
+# Chat endpoint  (async — runs blocking work in thread-pool executor)
 # ---------------------------------------------------------------------------
 
 @app.post("/api/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
-    """Processes a chat message and saves the state."""
+async def chat(
+    request: ChatRequest,
+    service: ChatService = Depends(get_chat_service),
+) -> ChatResponse:
+    """
+    Processes a chat message through the Gemini agent and persists state.
 
-    # 1. Load existing history from DB
-    api_json, ui_json = db.load_session(request.session_id)
-    history = hydrate_history(api_json)
-    ui_messages = json.loads(ui_json) if ui_json != "[]" else []
+    The synchronous agent call is dispatched to a thread-pool executor so the
+    event loop remains free during the (potentially 10–30 s) model call.
+    """
+    loop = asyncio.get_event_loop()
 
-    # 2. Add user message to UI state
-    ui_messages.append({"role": "user", "content": request.message})
-
-    # Log the prompt to the running prompt log
-    log_prompt(request.message)
-
-    # 3. Process with Agent
     try:
-        final_text, tool_logs = process_chat_turn(
-            user_message=request.message,
-            history=history,
-            system_instruction=request.system_prompt,
-            images=[img.model_dump() for img in request.images] if request.images else None,
-            context_files=request.context_files or None,
+        final_text, tool_logs = await loop.run_in_executor(
+            None,
+            partial(
+                service.handle_turn,
+                session_id=request.session_id,
+                user_message=request.message,
+                system_prompt=request.system_prompt,
+                images=(
+                    [img.model_dump() for img in request.images]
+                    if request.images
+                    else None
+                ),
+                context_files=request.context_files or None,
+            ),
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        logger.exception("Agent error for session %s", request.session_id[:8])
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    # 4. Add assistant response to UI state
-    ui_messages.append({
-        "role": "assistant",
-        "content": final_text,
-        "tools": tool_logs
-    })
-
-    # 5. Save back to DB
-    title = ui_messages[0]["content"][:30] + "..." if len(ui_messages[0]["content"]) > 30 else ui_messages[0]["content"]
-    db.save_session(
-        session_id=request.session_id,
-        title=title,
-        api_history_json=dehydrate_history(history),
-        ui_history_json=json.dumps(ui_messages)
-    )
-
-    # 6. Return response to frontend
     return ChatResponse(text=final_text, tools_used=tool_logs)

@@ -1,36 +1,42 @@
-# src/tools/repo_map.py
-import os
+"""
+src/tools/repo_map.py
+=====================
+Lightweight "repo map" tool: scans the knowledge-base directory for Markdown
+files and extracts their headings so the LLM can decide which file to read
+without loading the full content of every file.
+"""
+
 from pathlib import Path
 
 
 def get_repo_map(base_dir: str = "data") -> dict:
     """
-    Scans the directory for .md files and extracts their headers.
-    Acts as a lightweight 'Repo Map' for the LLM.
+    Scans *base_dir* recursively for ``.md`` files and extracts their Markdown
+    headings (lines starting with ``#``).
+
+    Returns:
+        {"content": str}  — formatted map ready for the model.
+        {"error":   str}  — when *base_dir* does not exist.
     """
-    try:
-        base_path = Path(base_dir)
-        if not base_path.exists():
-            return {"error": f"Directory not found: {base_dir}"}
+    base_path = Path(base_dir)
+    if not base_path.exists():
+        return {"error": f"Directory not found: {base_dir}"}
 
-        output = []
+    output: list[str] = []
 
-        # Find all .md files recursively
-        for filepath in base_path.rglob("*.md"):
+    for filepath in sorted(base_path.rglob("*.md")):
+        # Full POSIX path so the LLM can pass it directly to read_file.
+        output.append(f"\n=== {filepath.as_posix()} ===")
+        try:
+            for line_num, line in enumerate(
+                filepath.read_text(encoding="utf-8").splitlines(), start=1
+            ):
+                if line.startswith("#"):
+                    output.append(f"{line_num}: {line.strip()}")
+        except OSError:
+            output.append("  (unreadable)")
 
-            # FIX: Use the full path (e.g., data/test.md) so the LLM knows exactly where it is.
-            # .as_posix() ensures we use forward slashes (/) even if you are on Windows.
-            output.append(f"\n=== {filepath.as_posix()} ===")
+    if not output:
+        return {"content": "No markdown files found."}
 
-            with open(filepath, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
-                    if line.startswith("#"):
-                        output.append(f"{line_num}: {line.strip()}")
-
-        if not output:
-            return {"content": "No markdown files found."}
-
-        return {"content": "\n".join(output)}
-
-    except Exception as e:
-        return {"error": str(e)}
+    return {"content": "\n".join(output)}
