@@ -19,27 +19,14 @@ Design notes
 
 import base64
 import logging
-from typing import Any
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
 from src.config import settings
-from src.tools.file_ops import (
-    create_file,
-    edit_file,
-    read_file,
-    search_knowledge_base,
-)
-from src.tools.repo_map import get_repo_map
-from src.tools.schemas import (
-    create_file_fn,
-    edit_file_fn,
-    get_repo_map_fn,
-    read_file_fn,
-    search_knowledge_base_fn,
-)
+from src.tools.file_ops import read_file
+from src.tools.registry import DECLARATIONS, FUNCTION_MAP
 
 load_dotenv()
 
@@ -51,24 +38,9 @@ logger = logging.getLogger(__name__)
 
 _client = genai.Client()
 
-# Maps the string name declared in the schema to the real Python callable.
-FUNCTION_MAP: dict[str, Any] = {
-    "read_file": read_file,
-    "get_repo_map": get_repo_map,
-    "edit_file": edit_file,
-    "create_file": create_file,
-    "search_knowledge_base": search_knowledge_base,
-}
-
-_gemini_tools = types.Tool(
-    function_declarations=[
-        read_file_fn,
-        get_repo_map_fn,
-        edit_file_fn,
-        create_file_fn,
-        search_knowledge_base_fn,
-    ]
-)
+# FUNCTION_MAP and DECLARATIONS are derived from the single ToolEntry registry
+# in src/tools/registry.py — no duplication of tool names here.
+_gemini_tools = types.Tool(function_declarations=DECLARATIONS)
 
 # ---------------------------------------------------------------------------
 # Public API

@@ -41,7 +41,7 @@ class DatabaseManager:
     # ── Schema ────────────────────────────────────────────────────────────────
 
     def _init_db(self) -> None:
-        """Creates the sessions table if it does not already exist."""
+        """Creates all tables if they do not already exist."""
         with self._get_connection() as conn:
             conn.execute(
                 """
@@ -51,6 +51,18 @@ class DatabaseManager:
                     api_history_json TEXT,
                     ui_history_json  TEXT,
                     updated_at       TIMESTAMP
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS notes (
+                    id            TEXT PRIMARY KEY,
+                    session_id    TEXT NOT NULL,
+                    selected_text TEXT NOT NULL,
+                    note          TEXT NOT NULL DEFAULT '',
+                    source_role   TEXT NOT NULL,
+                    created_at    TIMESTAMP NOT NULL
                 )
                 """
             )
@@ -150,6 +162,103 @@ class DatabaseManager:
             ui_history_json=json.dumps(new_ui),
         )
         return new_id
+
+    # ── Notes ─────────────────────────────────────────────────────────────────
+
+    def add_note(
+        self,
+        session_id: str,
+        selected_text: str,
+        source_role: str,
+        note: str = "",
+    ) -> dict:
+        """
+        Persists a new note tied to *session_id*.
+
+        Args:
+            session_id:    The owning session.  Must already exist.
+            selected_text: The raw text the user highlighted.
+            source_role:   Which message the selection came from
+                           (``"user"`` or ``"assistant"``).
+            note:          Optional free-text annotation added by the user.
+
+        Returns:
+            The newly created note as a plain dict.
+
+        Raises:
+            ValueError: When *session_id* does not exist.
+            ValueError: When *selected_text* is empty.
+        """
+        if not selected_text.strip():
+            raise ValueError("selected_text must not be empty.")
+
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT id FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+
+        if row is None:
+            raise ValueError(f"Session not found: {session_id}")
+
+        note_id = str(uuid.uuid4())
+        created_at = datetime.now()
+
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO notes (id, session_id, selected_text, note, source_role, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (note_id, session_id, selected_text, note, source_role, created_at),
+            )
+            conn.commit()
+
+        return {
+            "id": note_id,
+            "session_id": session_id,
+            "selected_text": selected_text,
+            "note": note,
+            "source_role": source_role,
+            "created_at": created_at.isoformat(),
+        }
+
+    def list_notes(self, session_id: str) -> list[dict]:
+        """
+        Returns all notes for *session_id* ordered oldest-first.
+
+        Returns an empty list (not an error) when the session has no notes
+        or does not exist — the caller decides whether a missing session
+        warrants a 404.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT id, session_id, selected_text, note, source_role, created_at
+                FROM   notes
+                WHERE  session_id = ?
+                ORDER  BY created_at ASC
+                """,
+                (session_id,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def delete_note(self, note_id: str, session_id: str) -> bool:
+        """
+        Deletes a single note.
+
+        Both *note_id* and *session_id* must match — prevents one session
+        from deleting another session's notes.
+
+        Returns:
+            ``True`` when a row was deleted, ``False`` when not found.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM notes WHERE id = ? AND session_id = ?",
+                (note_id, session_id),
+            )
+            conn.commit()
+        return cursor.rowcount > 0
 
     # ── Export ────────────────────────────────────────────────────────────────
 

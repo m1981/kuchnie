@@ -126,6 +126,21 @@ class FileListItem(BaseModel):
     name: str
 
 
+class NoteCreateRequest(BaseModel):
+    selected_text: str
+    source_role: str  # "user" | "assistant"
+    note: str = ""
+
+
+class NoteResponse(BaseModel):
+    id: str
+    session_id: str
+    selected_text: str
+    note: str
+    source_role: str
+    created_at: str
+
+
 # ---------------------------------------------------------------------------
 # Path helpers
 # ---------------------------------------------------------------------------
@@ -252,6 +267,71 @@ def repo_map_endpoint() -> dict:
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return result
+
+
+# ---------------------------------------------------------------------------
+# Notes endpoints
+# ---------------------------------------------------------------------------
+
+@app.post(
+    "/api/sessions/{session_id}/notes",
+    response_model=NoteResponse,
+    status_code=201,
+)
+def create_note(
+    session_id: str,
+    request: NoteCreateRequest,
+    db: DatabaseManager = Depends(get_db),
+) -> NoteResponse:
+    """
+    Saves a text selection from a chat message as a note scoped to *session_id*.
+
+    Returns 404 when the session does not exist.
+    Returns 422 when *selected_text* is blank (FastAPI / Pydantic validation).
+    Returns 400 when the DB layer rejects the payload (e.g. empty after strip).
+    """
+    try:
+        note = db.add_note(
+            session_id=session_id,
+            selected_text=request.selected_text,
+            source_role=request.source_role,
+            note=request.note,
+        )
+    except ValueError as exc:
+        detail = str(exc)
+        status = 404 if "not found" in detail.lower() else 400
+        raise HTTPException(status_code=status, detail=detail) from exc
+    return NoteResponse(**note)
+
+
+@app.get(
+    "/api/sessions/{session_id}/notes",
+    response_model=list[NoteResponse],
+)
+def list_notes(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> list[NoteResponse]:
+    """Returns all notes for *session_id* ordered by creation time (oldest first)."""
+    return [NoteResponse(**n) for n in db.list_notes(session_id)]
+
+
+@app.delete(
+    "/api/sessions/{session_id}/notes/{note_id}",
+    status_code=204,
+)
+def delete_note(
+    session_id: str,
+    note_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> None:
+    """Deletes a single note.  Returns 404 when the note is not found."""
+    deleted = db.delete_note(note_id=note_id, session_id=session_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Note not found: {note_id}",
+        )
 
 
 # ---------------------------------------------------------------------------

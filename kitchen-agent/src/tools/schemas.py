@@ -1,97 +1,37 @@
-# src/tools/schemas.py
-
 """
-This file contains the JSON schemas that tell the Gemini LLM what tools it has available,
-what they do, and what parameters they require.
+src/tools/schemas.py
+====================
+.. deprecated::
+    This module previously held raw-dict tool schemas.  It has been superseded
+    by ``src/tools/registry.py``, which uses typed ``FunctionDeclaration`` /
+    ``Schema`` objects and co-locates each declaration with its callable so
+    that tool names can never drift out of sync.
+
+    This file is kept only as a compatibility shim.  Import from
+    ``src.tools.registry`` directly for all new code.
 """
 
-read_file_fn = {
-    "name": "read_file",
-    "description": "Reads the full contents of a local markdown file from the knowledge base.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "filepath": {
-                "type": "string",
-                "description": "Path to the file, e.g., 'data/test.md'",
-            }
-        },
-        "required": ["filepath"],
-    },
-}
+# Re-export the typed declarations under the old names so that any test or
+# external code that still does ``from src.tools.schemas import read_file_fn``
+# continues to work unchanged.
+from src.tools.registry import (
+    _create_file_entry,
+    _edit_file_entry,
+    _get_repo_map_entry,
+    _read_file_entry,
+    _search_knowledge_base_entry,
+)
 
-get_repo_map_fn = {
-    "name": "get_repo_map",
-    "description": "Scans the knowledge base and returns a list of all markdown files and their headers. Use this to figure out which file you need to read.",
-    "parameters": {
-        "type": "object",
-        "properties": {}, # No parameters needed, it just scans the default directory
-    },
-}
+read_file_fn = _read_file_entry.declaration
+get_repo_map_fn = _get_repo_map_entry.declaration
+edit_file_fn = _edit_file_entry.declaration
+create_file_fn = _create_file_entry.declaration
+search_knowledge_base_fn = _search_knowledge_base_entry.declaration
 
-edit_file_fn = {
-    "name": "edit_file",
-    # ADDED STRICT GUARDRAILS TO THE DESCRIPTION:
-    "description": "Edits an existing file using exact search and replace. ONLY use this tool if the user EXPLICITLY asks you to update, change, or edit a file. DO NOT proactively edit files to add information unless commanded.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "filepath": {
-                "type": "string",
-                "description": "Path to the file, e.g., 'data/test.md'",
-            },
-            "search_text": {
-                "type": "string",
-                "description": "The exact text currently in the file that you want to replace.",
-            },
-            "replace_text": {
-                "type": "string",
-                "description": "The new text to insert in place of the search_text.",
-            }
-        },
-        "required": ["filepath", "search_text", "replace_text"],
-    },
-}
-
-
-search_knowledge_base_fn = {
-    "name": "search_knowledge_base",
-    "description": (
-        "Searches all markdown files in the knowledge base for lines that match a regex pattern. "
-        "Use this to find specific terms, part numbers, or topics without reading every file manually. "
-        "Supports OR logic with the pipe character (e.g., 'hinge|blum|runner'). "
-        "Returns file path, line number, and matching line content."
-    ),
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "query": {
-                "type": "string",
-                "description": (
-                    "A regex pattern to search for, e.g., 'Blum|hinge' or '18mm'. "
-                    "Matching is case-insensitive."
-                ),
-            }
-        },
-        "required": ["query"],
-    },
-}
-
-create_file_fn = {
-    "name": "create_file",
-    "description": "Creates a brand new markdown file. Use this when starting a new topic that doesn't fit in existing files. DO NOT use this to update existing files.",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "filepath": {
-                "type": "string",
-                "description": "Path to the new file, e.g., 'data/03_Finishes/paint.md'",
-            },
-            "content": {
-                "type": "string",
-                "description": "The full markdown content to write into the new file.",
-            }
-        },
-        "required": ["filepath", "content"],
-    },
-}
+__all__ = [
+    "read_file_fn",
+    "get_repo_map_fn",
+    "edit_file_fn",
+    "create_file_fn",
+    "search_knowledge_base_fn",
+]
