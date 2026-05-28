@@ -10,19 +10,21 @@
 
 	import { api, type FileItem } from '$lib/api';
 	import FileEditor from './FileEditor.svelte';
+	import NotesPanel from './NotesPanel.svelte';
 
 	type Props = {
 		oncontextchange: (paths: string[]) => void;
+		sessionId: string;
 	};
 
-	let { oncontextchange }: Props = $props();
+	let { oncontextchange, sessionId }: Props = $props();
 
 	// ── State ────────────────────────────────────────────────────────────────
 	let files = $state<FileItem[]>([]);
 	let selectedPaths = $state<Set<string>>(new Set());
 	let editingFile = $state<string | null>(null);
 	let loading = $state(true);
-	let tab = $state<'context' | 'editor'>('context');
+	let tab = $state<'context' | 'editor' | 'notes'>('context');
 
 	// ── Load files ───────────────────────────────────────────────────────────
 	$effect(() => {
@@ -69,6 +71,14 @@
 				: 'text-muted hover:text-ink'}"
 		>
 			📎 Context
+		</button>
+		<button
+			onclick={() => (tab = 'notes')}
+			class="flex-1 py-2 text-xs font-semibold transition {tab === 'notes'
+				? 'border-b-2 border-accent text-accent'
+				: 'text-muted hover:text-ink'}"
+		>
+			📌 Notes
 		</button>
 		<button
 			onclick={() => (tab = 'editor')}
@@ -134,6 +144,10 @@
 				</div>
 			{/if}
 		</div>
+
+	<!-- Notes tab -->
+	{:else if tab === 'notes'}
+		<NotesPanel {sessionId} />
 
 	<!-- Editor tab -->
 	{:else if tab === 'editor'}

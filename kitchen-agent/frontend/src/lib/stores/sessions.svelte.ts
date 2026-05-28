@@ -1,0 +1,144 @@
+/**
+ * src/lib/stores/sessions.svelte.ts
+ * ==================================
+ * Rune-based store for the session tree.
+ *
+ * Owns:
+ *   - the tree fetched from GET /api/sessions/tree
+ *   - the currently active session ID
+ *   - archive / unarchive / delete operations (with optimistic removal)
+ *
+ * Consumers should call `sessionStore.refresh()` on mount and after any
+ * mutation that changes the tree shape (fork, new chat, delete).
+ */
+
+import { api, type SessionNode } from '$lib/api';
+
+// ---------------------------------------------------------------------------
+// RemoteData state machine (no boolean flags)
+// ---------------------------------------------------------------------------
+
+type RemoteData<T> =
+	| { status: 'idle' }
+	| { status: 'loading' }
+	| { status: 'error'; error: string }
+	| { status: 'success'; data: T };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Flatten a forest into a plain array for O(1) ID lookups. */
+function flatten(nodes: SessionNode[]): SessionNode[] {
+	const result: SessionNode[] = [];
+	function walk(ns: SessionNode[]) {
+		for (const n of ns) {
+			result.push(n);
+			walk(n.children);
+		}
+	}
+	walk(nodes);
+	return result;
+}
+
+/** Remove a node by ID anywhere in the tree (used for optimistic delete). */
+function removeById(nodes: SessionNode[], id: string): SessionNode[] {
+	return nodes
+		.filter((n) => n.id !== id)
+		.map((n) => ({ ...n, children: removeById(n.children, id) }));
+}
+
+/** Stamp archived_at on a node anywhere in the tree (optimistic archive). */
+function stampArchived(nodes: SessionNode[], id: string, stamp: string | null): SessionNode[] {
+	return nodes.map((n) => {
+		if (n.id === id) return { ...n, archived_at: stamp };
+		return { ...n, children: stampArchived(n.children, id, stamp) };
+	});
+}
+
+// ---------------------------------------------------------------------------
+// Store factory
+// ---------------------------------------------------------------------------
+
+function createSessionStore() {
+	let tree = $state<SessionNode[]>([]);
+	let fetchState = $state<RemoteData<SessionNode[]>>({ status: 'idle' });
+	let activeId = $state<string | null>(null);
+
+	// Derived flat list — recomputed whenever `tree` mutates.
+	const flat = $derived(flatten(tree));
+
+	return {
+		// ── Reads ────────────────────────────────────────────────────────────
+		get tree() {
+			return tree;
+		},
+		/** Flat list of every node — useful for title lookups by ID. */
+		get flat() {
+			return flat;
+		},
+		get fetchState() {
+			return fetchState;
+		},
+		get activeId() {
+			return activeId;
+		},
+
+		// ── Mutations ────────────────────────────────────────────────────────
+
+		setActive(id: string) {
+			activeId = id;
+		},
+
+		async refresh() {
+			fetchState = { status: 'loading' };
+			try {
+				tree = await api.getSessionTree();
+				fetchState = { status: 'success', data: tree };
+			} catch (e) {
+				fetchState = { status: 'error', error: String(e) };
+			}
+		},
+
+		async archive(id: string) {
+			// Optimistic: stamp immediately so the UI greys it out at once.
+			tree = stampArchived(tree, id, new Date().toISOString());
+			try {
+				await api.archiveSession(id);
+			} catch (e) {
+				// Rollback: clear the stamp.
+				tree = stampArchived(tree, id, null);
+				throw e;
+			}
+		},
+
+		async unarchive(id: string) {
+			// Optimistic: clear stamp immediately.
+			tree = stampArchived(tree, id, null);
+			try {
+				await api.unarchiveSession(id);
+			} catch (e) {
+				// Rollback: re-stamp (we don't know the original value so re-fetch).
+				await this.refresh();
+				throw e;
+			}
+		},
+
+		async delete(id: string) {
+			// Optimistic removal — but only from the local tree snapshot.
+			const previous = tree;
+			tree = removeById(tree, id);
+			try {
+				await api.deleteSession(id);
+				// If the deleted session was active, clear it.
+				if (activeId === id) activeId = null;
+			} catch (e) {
+				tree = previous; // rollback
+				throw e;
+			}
+		}
+	};
+}
+
+// Singleton — one instance for the whole app.
+export const sessionStore = createSessionStore();

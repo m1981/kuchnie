@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { api, type FileItem, type Message, type SessionSummary, type ToolLog } from '$lib/api';
+	import { api, type FileItem, type Message, type ToolLog } from '$lib/api';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
+	import SessionTree from '$lib/components/SessionTree.svelte';
+	import NotePopup from '$lib/components/NotePopup.svelte';
 	import { createSidebarResize } from '$lib/sidebar-resize.svelte';
+	import { sessionStore } from '$lib/stores/sessions.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Local-only types
@@ -50,7 +53,7 @@
 	let currentMessage       = $state('');
 	let messages             = $state<Message[]>([]);
 	let isLoading            = $state(false);
-	let savedSessions        = $state<SessionSummary[]>([]);
+
 	let selectedTemplateName = $state<TemplateName>('General Assistant');
 
 	// Layout
@@ -60,11 +63,20 @@
 	// Pasted images
 	let pastedImages = $state<PastedImage[]>([]);
 
-	// Highlight → Append
+	// Highlight → Append to docs
 	let appendTarget  = $state('');
 	let appendFiles   = $state<FileItem[]>([]);
 	let appendPopup   = $state<{ text: string; x: number; y: number } | null>(null);
 	let appendStatus  = $state('');
+
+	// Highlight → Note popup
+	type NotePopupState = {
+		text: string;
+		x: number;
+		y: number;
+		sourceRole: 'user' | 'assistant';
+	} | null;
+	let notePopup = $state<NotePopupState>(null);
 
 	// Fork
 	let forkStatus = $state('');
@@ -81,17 +93,9 @@
 	// ---------------------------------------------------------------------------
 
 	$effect(() => {
-		fetchSessions();
+		sessionStore.refresh();
 		fetchFileList();
 	});
-
-	async function fetchSessions() {
-		try {
-			savedSessions = await api.getSessions();
-		} catch (e) {
-			console.error('Failed to fetch sessions', e);
-		}
-	}
 
 	async function fetchFileList() {
 		try {
@@ -127,7 +131,7 @@
 		try {
 			const data = await api.forkSession(sessionId, turnIndex);
 			await loadSession(data.new_session_id);
-			await fetchSessions();
+			await sessionStore.refresh();
 			forkStatus = `Forked at turn ${turnIndex}`;
 		} catch (e) {
 			forkStatus = `Fork failed: ${e}`;
@@ -203,6 +207,7 @@
 	}
 
 	function dismissAppendPopup() { appendPopup = null; }
+	function dismissNotePopup()   { notePopup   = null; }
 
 	async function appendToDoc() {
 		if (!appendPopup || !appendTarget) return;
@@ -255,7 +260,7 @@
 				tools:   data.tools_used
 			});
 
-			fetchSessions();
+			sessionStore.refresh();
 		} catch (error) {
 			const msg =
 				error instanceof Error ? error.message : 'Unknown error connecting to API.';
@@ -294,15 +299,15 @@
 	<title>Kitchen Agent</title>
 </svelte:head>
 
-<!-- Dismiss popup on click-away -->
+<!-- Dismiss popups on click-away -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="flex h-screen overflow-hidden bg-surface text-ink"
 	onclick={(e) => {
-		if (appendPopup && !(e.target as HTMLElement).closest('.append-popup')) {
-			dismissAppendPopup();
-		}
+		const t = e.target as HTMLElement;
+		if (appendPopup && !t.closest('.append-popup')) dismissAppendPopup();
+		if (notePopup   && !t.closest('.note-popup'))   dismissNotePopup();
 	}}
 	onmouseup={handleMouseUp}
 >
@@ -333,34 +338,12 @@
 			⬇ Export session
 		</button>
 
-		<div class="min-h-0 flex-1">
-			<div class="mb-3 flex items-center justify-between">
-				<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
-				<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
-					{savedSessions.length}
-				</span>
-			</div>
-
-			<div class="space-y-1.5 overflow-y-auto pr-1">
-				{#if savedSessions.length === 0}
-					<p class="rounded-md border border-dashed border-line bg-surface p-3 text-sm text-muted">
-						No saved conversations yet.
-					</p>
-				{/if}
-
-				{#each savedSessions as session (session.id)}
-					<button
-						onclick={() => loadSession(session.id)}
-						class="group w-full rounded-md px-3 py-2 text-left text-sm transition {sessionId ===
-						session.id
-							? 'bg-accent-soft text-ink shadow-[inset_3px_0_0_var(--color-accent)]'
-							: 'text-muted hover:bg-surface hover:text-ink'}"
-					>
-						<span class="block truncate font-medium">{session.title}</span>
-						<span class="mt-0.5 block truncate text-xs opacity-70">{session.id.substring(0, 8)}</span>
-					</button>
-				{/each}
-			</div>
+		<!-- Session tree (replaces flat list) -->
+		<div class="min-h-0 flex-1 overflow-y-auto">
+			<SessionTree
+				activeId={sessionId}
+				onload={loadSession}
+			/>
 		</div>
 
 		<button
@@ -490,6 +473,7 @@
 				<div class="space-y-5">
 					{#each messages as msg, messageIndex (`${msg.role}-${messageIndex}`)}
 						<article
+							data-chat-bubble={msg.role}
 							class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
 							aria-label={msg.role === 'user' ? 'User message' : 'Assistant message'}
 						>
@@ -684,11 +668,24 @@
 				onkeydown={(event) => handleSidebarResizeKeydown(event, 'right')}
 				title="Drag to resize. Double-click to reset."
 			></button>
-			<ContextSidebar oncontextchange={handleContextChange} />
+			<ContextSidebar oncontextchange={handleContextChange} {sessionId} />
 		</div>
 	{/if}
 
 	<!-- ===================================================================== -->
+	<!-- FLOATING POPUP — Note (highlight inside chat bubble)                  -->
+	<!-- ===================================================================== -->
+	{#if notePopup}
+		<NotePopup
+			selectedText={notePopup.text}
+			x={notePopup.x}
+			y={notePopup.y}
+			{sessionId}
+			sourceRole={notePopup.sourceRole}
+			ondismiss={dismissNotePopup}
+		/>
+	{/if}
+
 	<!-- FLOATING POPUP — Highlight → Add to Docs                              -->
 	<!-- ===================================================================== -->
 	{#if appendPopup}

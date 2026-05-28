@@ -20,8 +20,31 @@ export const API_BASE: string =
 
 export type SessionSummary = {
 	id: string;
-	title: string;
-	updated_at: string;
+	title: string | null;
+	updated_at: string | null;
+	parent_id: string | null;
+	fork_turn_index: number | null;
+	root_id: string | null;
+	archived_at: string | null;
+};
+
+export type SessionNode = SessionSummary & {
+	children: SessionNode[];
+};
+
+export type Note = {
+	id: string;
+	session_id: string;
+	selected_text: string;
+	note: string;
+	source_role: 'user' | 'assistant';
+	created_at: string;
+};
+
+export type NoteCreateRequest = {
+	selected_text: string;
+	source_role: 'user' | 'assistant';
+	note?: string;
 };
 
 export type ToolLog = {
@@ -122,6 +145,43 @@ export const api = {
 
 	// Repo map
 	getRepoMap: () => request<{ content: string }>('/api/repo-map'),
+
+	// Session tree, archive, delete
+	getSessionTree: (includeArchived = true) =>
+		request<SessionNode[]>(`/api/sessions/tree?include_archived=${includeArchived}`),
+
+	archiveSession: (id: string) =>
+		request<{ archived: boolean; session_id: string }>(
+			`/api/sessions/${id}/archive`,
+			{ method: 'POST' }
+		),
+
+	unarchiveSession: (id: string) =>
+		request<{ archived: boolean; session_id: string }>(
+			`/api/sessions/${id}/archive`,
+			{ method: 'DELETE' }
+		),
+
+	deleteSession: (id: string) =>
+		fetch(`${API_BASE}/api/sessions/${id}`, { method: 'DELETE' }).then((r) => {
+			if (!r.ok && r.status !== 204)
+				return r.text().then((t) => { throw new Error(t || `HTTP ${r.status}`); });
+		}),
+
+	// Notes
+	getNotes: (sessionId: string) =>
+		request<Note[]>(`/api/sessions/${sessionId}/notes`),
+
+	createNote: (sessionId: string, body: NoteCreateRequest) =>
+		request<Note>(`/api/sessions/${sessionId}/notes`, json(body)),
+
+	deleteNote: (sessionId: string, noteId: string) =>
+		fetch(`${API_BASE}/api/sessions/${sessionId}/notes/${noteId}`, { method: 'DELETE' }).then(
+			(r) => {
+				if (!r.ok && r.status !== 204)
+					return r.text().then((t) => { throw new Error(t || `HTTP ${r.status}`); });
+			}
+		),
 
 	// Chat
 	chat: (payload: ChatRequest) =>
