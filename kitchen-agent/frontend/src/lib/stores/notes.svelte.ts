@@ -41,7 +41,8 @@ function createNotesStore() {
 
 		async load(sessionId: string) {
 			// Don't re-fetch if already loaded — caller can use refresh() to force.
-			if (fetchStates[sessionId]?.status === 'success') return;
+			const current = fetchStates[sessionId]?.status;
+			if (current === 'loading' || current === 'success') return;
 
 			fetchStates = { ...fetchStates, [sessionId]: { status: 'loading' } };
 			try {

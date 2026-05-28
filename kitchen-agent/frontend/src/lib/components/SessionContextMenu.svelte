@@ -78,7 +78,7 @@
 		title="Session options"
 		aria-label="Session options"
 		aria-expanded={menuState !== 'closed'}
-		class="flex h-5 w-5 items-center justify-center rounded text-muted opacity-0 transition
+		class="flex h-5 w-5 items-center justify-center rounded text-muted opacity-45 transition
 		       group-hover:opacity-100 hover:bg-line hover:text-ink focus:opacity-100 focus:outline-none
 		       {menuState !== 'closed' ? 'opacity-100' : ''}"
 	>

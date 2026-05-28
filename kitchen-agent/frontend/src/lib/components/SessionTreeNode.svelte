@@ -3,7 +3,7 @@
 	 * SessionTreeNode
 	 * ================
 	 * Renders one node in the session tree and, recursively, its children.
-	 * Uses <svelte:self> for the recursive step so no circular import is needed.
+	 * Self-imports for recursion, as required by Svelte 5.
 	 *
 	 * Visual behaviour:
 	 *   - Active session → accent left-border highlight.
@@ -13,6 +13,7 @@
 	 *   - ⋯ context menu → archive / restore / delete.
 	 */
 	import SessionContextMenu from './SessionContextMenu.svelte';
+	import SessionTreeNode from './SessionTreeNode.svelte';
 	import type { SessionNode } from '$lib/api';
 
 	type Props = {
@@ -119,7 +120,7 @@
 			></div>
 
 			{#each node.children as child (child.id)}
-				<svelte:self
+				<SessionTreeNode
 					node={child}
 					depth={depth + 1}
 					{activeId}

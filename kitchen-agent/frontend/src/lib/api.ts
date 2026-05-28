@@ -153,7 +153,7 @@ export const api = {
 	archiveSession: (id: string) =>
 		request<{ archived: boolean; session_id: string }>(
 			`/api/sessions/${id}/archive`,
-			{ method: 'POST' }
+			{ method: 'PATCH' }
 		),
 
 	unarchiveSession: (id: string) =>

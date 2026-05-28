@@ -11,6 +11,7 @@
 	 * Props:
 	 *   sessionId — the currently active session.
 	 */
+	import { untrack } from 'svelte';
 	import { notesStore } from '$lib/stores/notes.svelte';
 
 	type Props = { sessionId: string };
@@ -19,7 +20,10 @@
 
 	// Load on mount and whenever sessionId changes.
 	$effect(() => {
-		notesStore.load(sessionId);
+		const id = sessionId;
+		untrack(() => {
+			notesStore.load(id);
+		});
 	});
 
 	const notes = $derived(notesStore.forSession(sessionId));

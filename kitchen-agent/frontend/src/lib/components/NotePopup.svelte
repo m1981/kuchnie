@@ -66,6 +66,7 @@
 	role="dialog"
 	aria-modal="true"
 	aria-label="Add note"
+	tabindex="-1"
 	use:focusTrap
 	onkeydown={handleKeydown}
 	class="note-popup fixed z-50 w-72 rounded-xl border border-line bg-panel p-3 shadow-2xl"

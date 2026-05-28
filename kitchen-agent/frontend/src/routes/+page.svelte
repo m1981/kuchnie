@@ -68,6 +68,7 @@
 	let appendFiles   = $state<FileItem[]>([]);
 	let appendPopup   = $state<{ text: string; x: number; y: number } | null>(null);
 	let appendStatus  = $state('');
+	let suppressNextClickAway = $state(false);
 
 	// Highlight → Note popup
 	type NotePopupState = {
@@ -200,10 +201,53 @@
 	// Highlight → Add to Docs
 	// ---------------------------------------------------------------------------
 
+	function popupPosition(event: MouseEvent, width = 288, height = 220) {
+		const gap = 12;
+		return {
+			x: Math.min(Math.max(event.clientX, gap), window.innerWidth - width - gap),
+			y: Math.min(Math.max(event.clientY - 48, gap), window.innerHeight - height - gap)
+		};
+	}
+
+	function nodeElement(node: Node | null): HTMLElement | null {
+		if (!node) return null;
+		return node instanceof HTMLElement ? node : node.parentElement;
+	}
+
+	function selectedChatText(): { text: string; sourceRole: 'user' | 'assistant' } | null {
+		const selection = window.getSelection();
+		const text = selection?.toString().trim();
+		if (!selection || selection.rangeCount === 0 || !text || text.length < 5) return null;
+
+		const anchorBubble = nodeElement(selection.anchorNode)?.closest<HTMLElement>('[data-chat-bubble]');
+		const focusBubble = nodeElement(selection.focusNode)?.closest<HTMLElement>('[data-chat-bubble]');
+		const bubble = anchorBubble ?? focusBubble;
+		if (!bubble || (anchorBubble && focusBubble && anchorBubble !== focusBubble)) return null;
+
+		const role = bubble.dataset.chatBubble;
+		if (role !== 'user' && role !== 'assistant') return null;
+		return { text, sourceRole: role };
+	}
+
 	function handleMouseUp(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		if (target.closest('button, input, textarea, select, .note-popup, .append-popup')) return;
+
+		const chatSelection = selectedChatText();
+		if (chatSelection) {
+			const { x, y } = popupPosition(event);
+			notePopup = { ...chatSelection, x, y };
+			appendPopup = null;
+			suppressNextClickAway = true;
+			return;
+		}
+
 		const text = window.getSelection()?.toString().trim();
 		if (!text || text.length < 5) { appendPopup = null; return; }
-		appendPopup = { text, x: event.clientX, y: event.clientY - 48 };
+		const { x, y } = popupPosition(event, 300, 120);
+		appendPopup = { text, x, y };
+		notePopup = null;
+		suppressNextClickAway = true;
 	}
 
 	function dismissAppendPopup() { appendPopup = null; }
@@ -305,6 +349,10 @@
 <div
 	class="flex h-screen overflow-hidden bg-surface text-ink"
 	onclick={(e) => {
+		if (suppressNextClickAway) {
+			suppressNextClickAway = false;
+			return;
+		}
 		const t = e.target as HTMLElement;
 		if (appendPopup && !t.closest('.append-popup')) dismissAppendPopup();
 		if (notePopup   && !t.closest('.note-popup'))   dismissNotePopup();
