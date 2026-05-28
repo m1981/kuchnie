@@ -1,21 +1,38 @@
-Here is your comprehensive handoff document. You can copy and paste this entire message into your new chat window. It contains all the architectural context, technical decisions, and roadmaps we have established so far.
+# 🏗️ PROJECT HANDOFF: Kitchen Cabinet Agentic Workspace
+
+## 1. Domain Context & User Persona
+
+The user is a solo kitchen cabinet designer and builder based in Poland. They are actively learning the trade and managing a self-made "second brain" (knowledge base) consisting of roughly 200KB of Markdown files stored in a local Git repository.
+
+The application serves as a highly specialized, local-only AI assistant. Because the entire knowledge base is small enough to fit into modern LLM context windows (128k+ tokens), **traditional RAG (Vector Databases, Chunking, Embeddings) is explicitly out of scope.** The agent relies entirely on full-context window ingestion and autonomous tool-calling to read, search, and update the local file system.
+
+## 2. Core App Functionality (User Perspective)
+
+The application acts as an integrated workspace combining a chat interface, a text editor, and an autonomous agent.
+
+- **Bidirectional Knowledge Management:** The user can ask questions (e.g., _"What thickness of MDF do we use for back panels?"_). The agent autonomously maps the repository, reads the relevant files, and answers. Conversely, the user can command the agent to update the knowledge base (e.g., _"I just learned a new way to install Blum hinges, please update the hardware file."_).
+- **Contextual Personas (Prompt Templates):** The user can switch the agent's behavior mid-conversation via a UI dropdown:
+    - _Design Mode:_ Focuses on ergonomics, spacing, and aesthetics.
+    - _Assembly Mode:_ Acts as a master carpenter, focusing on structural integrity, hardware installation, and step-by-step instructions.
+- **Transparent Reasoning:** The UI explicitly shows the user exactly which files the agent read and what raw text it extracted via expandable UI logs, building trust in the agent's answers.
+- **Safe File Operations:** The agent is strictly forbidden from overwriting entire files. It must use a precise "Search and Replace" tool to edit files, preventing accidental data loss or hallucinated deletions.
+
+## 3. Project Scope & Constraints
+
+- **In-Scope:** Local file system manipulation (Markdown), multimodal chat (text + images), chat history branching/forking, manual text editing via UI, strict TDD backend development.
+- **Out-of-Scope:** Cloud deployment, multi-user authentication, Vector Databases/Semantic Search, direct integration with CAD software.
+- **Constraints:** Must run locally. Must use Google Gemini 3.5 Flash (via `google-genai` SDK). Must handle Gemini's strict `thought_signature` byte-encoding requirements for multi-turn tool calling.
 
 ---
 
-# 🏗️ PROJECT HANDOFF: Kitchen Cabinet Agentic Workspace
-
-## 1. Project Overview
-
-A local-only, agentic workspace designed for a solo kitchen cabinet designer/builder. The application acts as a bidirectional interface to a local Markdown knowledge base (~200KB). It allows the user to chat with their notes, autonomously read/edit files, and manage kitchen design/assembly workflows.
-
-## 2. Tech Stack
+## 4. Tech Stack
 
 - **Backend:** Python 3.11, `uv` (package manager), FastAPI, `pytest` (TDD).
 - **LLM Integration:** Google Gemini 3.5 Flash via the modern `google-genai` SDK.
 - **Database:** SQLite3 (Local persistence).
 - **Frontend:** SvelteKit (TypeScript/JavaScript), TailwindCSS.
 
-## 3. Current Architecture (Decoupled)
+## 5. Current Architecture (Decoupled)
 
 We recently migrated from Streamlit to a headless FastAPI + SvelteKit architecture to support advanced UI state (branching, attachments, text editors).
 
@@ -26,7 +43,7 @@ We recently migrated from Streamlit to a headless FastAPI + SvelteKit architectu
 - **`src/tools/`**: Pure Python implementations of file system operations.
 - **`frontend/`**: SvelteKit application handling reactive UI, chat bubbles, and native HTML `<details>` expanders for raw tool logs.
 
-## 4. Implemented Features (100% Working)
+## 6. Implemented Features (100% Working)
 
 - **Agentic Tool Loop:** The LLM can chain multiple tools together before returning a final text response to the user.
 - **State Persistence:** Chats are saved to SQLite. The UI state (tool expanders/raw JSON) and API state (strict Gemini objects) are tracked separately and survive app restarts.
@@ -39,11 +56,7 @@ We recently migrated from Streamlit to a headless FastAPI + SvelteKit architectu
 3.  `edit_file(filepath, search_text, replace_text)`: Safe search-and-replace to prevent the LLM from accidentally deleting file contents.
 4.  `create_file(filepath, content)`: Safely creates new files and directories (fails if file already exists).
 
-### 🌿 Session Management
-
-- **Forking/Branching:** `POST /api/sessions/{session_id}/fork` with `{turn_index}` slices both `api_history_json` and `ui_history_json` inclusively up to the given turn and creates a new session with a derived title. Original session is untouched. Implemented in `DatabaseManager.fork_session()`.
-
-## 5. Database Schema (SQLite)
+## 7. Database Schema (SQLite)
 
 **Table:** `sessions`
 
@@ -55,15 +68,15 @@ We recently migrated from Streamlit to a headless FastAPI + SvelteKit architectu
 
 ---
 
-## 6. Planned Features & Roadmap (To Be Implemented)
+## 8. Planned Features & Roadmap (To Be Implemented)
 
 The following features have been architected but not yet coded. They are the priority for the new chat session:
 
 ### A. Advanced Chat Management
 
-- ✅ **Forking/Branching:** ~~Ability to slice the `api_history_json` array at a specific turn, generate a new `session_id`, and branch the conversation to explore different design angles.~~ **DONE** — see `DatabaseManager.fork_session()` and `POST /api/sessions/{id}/fork`.
-- ✅ **Exporting:** ~~Save a chat session as a formatted `.md` file.~~ **DONE** — see `DatabaseManager.export_session()`, `src/exporter.py`, and `GET /api/sessions/{id}/export`.
-- ✅ **Prompt Logging:** ~~Append every user prompt to a running `data/prompt_log.md` file.~~ **DONE** — see `src/prompt_logger.py` (`log_prompt()`), wired into `POST /api/chat`.
+- **Forking/Branching:** Ability to slice the `api_history_json` array at a specific turn, generate a new `session_id`, and branch the conversation to explore different design angles.
+- **Exporting:** Save a chat session as a formatted `.md` file.
+- **Prompt Logging:** Append every user prompt to a running `data/prompt_log.md` file.
 
 ### B. UI & Workspace Enhancements (Svelte + FastAPI)
 
@@ -75,8 +88,3 @@ The following features have been architected but not yet coded. They are the pri
 
 - **Image Pasting (CTRL+V):** Intercept pasted images in Svelte, convert to Base64, and pass to FastAPI to construct `types.Part.from_bytes(..., mime_type="image/jpeg")`.
 - **Advanced Search Tool:** A new Python tool (`search_knowledge_base`) utilizing regex to simulate `grep -E` (OR logic) across the entire file contents, not just headers.
-
----
-
-**Next Immediate Action for New Chat:**
-Review this document and select one feature from Section 6 (e.g., Image Pasting, Text Editor, or Forking) to begin implementation using the FastAPI + SvelteKit stack.
