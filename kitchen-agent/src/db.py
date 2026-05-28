@@ -41,7 +41,7 @@ class DatabaseManager:
     # ── Schema ────────────────────────────────────────────────────────────────
 
     def _init_db(self) -> None:
-        """Creates all tables if they do not already exist."""
+        """Creates all tables and missing columns if they do not already exist."""
         with self._get_connection() as conn:
             conn.execute(
                 """
@@ -50,10 +50,30 @@ class DatabaseManager:
                     title            TEXT,
                     api_history_json TEXT,
                     ui_history_json  TEXT,
-                    updated_at       TIMESTAMP
+                    updated_at       TIMESTAMP,
+                    parent_id        TEXT,
+                    fork_turn_index  INTEGER,
+                    root_id          TEXT,
+                    archived_at      TIMESTAMP
                 )
                 """
             )
+            # ── Forward-compatible migration for existing DBs ─────────────
+            # ADD COLUMN is idempotent when the column already exists only on
+            # SQLite ≥ 3.37 (IF NOT EXISTS clause on ADD COLUMN).  For older
+            # SQLite we catch the OperationalError raised on duplicate column.
+            for col, typedef in (
+                ("parent_id",       "TEXT"),
+                ("fork_turn_index", "INTEGER"),
+                ("root_id",         "TEXT"),
+                ("archived_at",     "TIMESTAMP"),
+            ):
+                try:
+                    conn.execute(
+                        f"ALTER TABLE sessions ADD COLUMN {col} {typedef}"
+                    )
+                except Exception:  # noqa: BLE001 — column already exists
+                    pass
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS notes (
@@ -76,20 +96,33 @@ class DatabaseManager:
         title: str,
         api_history_json: str,
         ui_history_json: str,
+        parent_id: str | None = None,
+        fork_turn_index: int | None = None,
+        root_id: str | None = None,
     ) -> None:
-        """Inserts a new session or updates an existing one (upsert)."""
+        """Inserts a new session or updates an existing one (upsert).
+
+        Lineage columns (parent_id, fork_turn_index, root_id) are written on
+        INSERT and intentionally NOT overwritten on UPDATE — ancestry is
+        immutable once set.
+        """
         with self._get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO sessions (id, title, api_history_json, ui_history_json, updated_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO sessions
+                    (id, title, api_history_json, ui_history_json, updated_at,
+                     parent_id, fork_turn_index, root_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title            = excluded.title,
                     api_history_json = excluded.api_history_json,
                     ui_history_json  = excluded.ui_history_json,
                     updated_at       = excluded.updated_at
                 """,
-                (session_id, title, api_history_json, ui_history_json, datetime.now()),
+                (
+                    session_id, title, api_history_json, ui_history_json,
+                    datetime.now(), parent_id, fork_turn_index, root_id,
+                ),
             )
             conn.commit()
 
@@ -110,13 +143,145 @@ class DatabaseManager:
             return row["api_history_json"], row["ui_history_json"]
         return "[]", "[]"
 
-    def list_sessions(self) -> list[dict]:
-        """Returns all sessions ordered by most-recently updated."""
+    def list_sessions(self, include_archived: bool = False) -> list[dict]:
+        """
+        Returns all sessions (flat) ordered by most-recently updated.
+
+        Args:
+            include_archived: When ``False`` (default) archived sessions are
+                              excluded.  Pass ``True`` to include them — used
+                              by the tree endpoint so the tree structure stays
+                              coherent even when some nodes are archived.
+        """
+        where = "" if include_archived else "WHERE archived_at IS NULL"
         with self._get_connection() as conn:
             cursor = conn.execute(
-                "SELECT id, title, updated_at FROM sessions ORDER BY updated_at DESC"
+                f"""
+                SELECT id, title, updated_at, parent_id, fork_turn_index,
+                       root_id, archived_at
+                FROM   sessions
+                {where}
+                ORDER  BY updated_at DESC
+                """
             )
             return [dict(row) for row in cursor.fetchall()]
+
+    def get_session_tree(self, include_archived: bool = True) -> list[dict]:
+        """
+        Returns all sessions assembled into a forest of trees.
+
+        Each node has the same fields as ``list_sessions`` rows plus a
+        ``children`` key containing a list of child nodes (same shape,
+        recursively).  Root sessions (``parent_id IS NULL``) are the
+        top-level elements; they are ordered by ``updated_at DESC``.
+        Children within each node are ordered by ``updated_at DESC``.
+
+        Args:
+            include_archived: Defaults to ``True`` so the tree structure
+                              remains coherent — archived nodes are visible
+                              (greyed-out in the UI) rather than silently
+                              creating gaps in the ancestry chain.
+
+        Assembly is done in Python with a single SQL query + one O(n) pass —
+        no recursive CTE required.
+        """
+        rows = self.list_sessions(include_archived=include_archived)
+
+        # Build a lookup and pre-attach an empty children list to every node.
+        nodes: dict[str, dict] = {}
+        for row in rows:
+            node = dict(row)
+            node["children"] = []
+            nodes[node["id"]] = node
+
+        roots: list[dict] = []
+        for node in nodes.values():
+            parent_id = node.get("parent_id")
+            if parent_id and parent_id in nodes:
+                nodes[parent_id]["children"].append(node)
+            else:
+                roots.append(node)
+
+        return roots
+
+    # ── Archive / Delete ──────────────────────────────────────────────────────
+
+    def archive_session(self, session_id: str) -> bool:
+        """
+        Soft-archives a session by stamping ``archived_at``.
+
+        Archived sessions are hidden from normal listings but remain in the DB
+        with all data and lineage intact.  No child-presence check is needed
+        because data is not destroyed.
+
+        Returns:
+            ``True`` when the session existed and was archived.
+            ``False`` when *session_id* was not found.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "UPDATE sessions SET archived_at = ? WHERE id = ? AND archived_at IS NULL",
+                (datetime.now(), session_id),
+            )
+            conn.commit()
+        return cursor.rowcount > 0
+
+    def unarchive_session(self, session_id: str) -> bool:
+        """
+        Reverses an archive operation by clearing ``archived_at``.
+
+        Returns:
+            ``True`` when the session existed and was unarchived.
+            ``False`` when *session_id* was not found or was not archived.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "UPDATE sessions SET archived_at = NULL WHERE id = ? AND archived_at IS NOT NULL",
+                (session_id,),
+            )
+            conn.commit()
+        return cursor.rowcount > 0
+
+    def delete_session(self, session_id: str) -> None:
+        """
+        Permanently deletes a session and all its notes.
+
+        Protection rule: a session cannot be deleted while it has living
+        (non-deleted) direct children.  The caller must delete all descendants
+        leaf-first before this succeeds.
+
+        Args:
+            session_id: The session to permanently remove.
+
+        Raises:
+            ValueError: When *session_id* does not exist.
+            ValueError: When the session has one or more living children
+                        (``HasChildrenError`` semantics — caught by the HTTP
+                        layer and returned as 409 Conflict).
+        """
+        with self._get_connection() as conn:
+            row = conn.execute(
+                "SELECT id FROM sessions WHERE id = ?", (session_id,)
+            ).fetchone()
+
+            if row is None:
+                raise ValueError(f"Session not found: {session_id}")
+
+            child_count = conn.execute(
+                "SELECT COUNT(*) FROM sessions WHERE parent_id = ?",
+                (session_id,),
+            ).fetchone()[0]
+
+            if child_count > 0:
+                raise ValueError(
+                    f"Cannot delete session '{session_id}': it has {child_count} "
+                    f"child session(s). Delete all descendants first."
+                )
+
+            # Cascade-delete notes before removing the session.
+            conn.execute("DELETE FROM notes WHERE session_id = ?", (session_id,))
+            conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            conn.commit()
 
     # ── Fork ──────────────────────────────────────────────────────────────────
 
@@ -155,11 +320,23 @@ class DatabaseManager:
         new_ui = source_ui[:end]
 
         new_id = str(uuid.uuid4())
+
+        # root_id: forks inherit the root of their parent; a root points to itself.
+        with self._get_connection() as conn:
+            parent_row = conn.execute(
+                "SELECT root_id FROM sessions WHERE id = ?",
+                (source_session_id,),
+            ).fetchone()
+        parent_root = parent_row["root_id"] if parent_row and parent_row["root_id"] else source_session_id
+
         self.save_session(
             session_id=new_id,
             title=f"{source_title} (fork @ turn {turn_index})",
             api_history_json=json.dumps(new_api),
             ui_history_json=json.dumps(new_ui),
+            parent_id=source_session_id,
+            fork_turn_index=turn_index,
+            root_id=parent_root,
         )
         return new_id
 

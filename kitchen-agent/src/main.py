@@ -26,7 +26,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
@@ -107,6 +107,35 @@ class ForkResponse(BaseModel):
     new_session_id: str
 
 
+class SessionSummary(BaseModel):
+    """Flat representation of a session as returned by GET /api/sessions."""
+
+    id: str
+    title: str | None
+    updated_at: str | None
+    parent_id: str | None = None
+    fork_turn_index: int | None = None
+    root_id: str | None = None
+    archived_at: str | None = None
+
+
+class SessionNode(BaseModel):
+    """One node in the session tree returned by GET /api/sessions/tree."""
+
+    id: str
+    title: str | None
+    updated_at: str | None
+    parent_id: str | None = None
+    fork_turn_index: int | None = None
+    root_id: str | None = None
+    archived_at: str | None = None
+    children: list["SessionNode"] = []
+
+
+# Required so Pydantic can resolve the self-referential type.
+SessionNode.model_rebuild()
+
+
 class FileReadResponse(BaseModel):
     filepath: str
     content: str
@@ -163,10 +192,43 @@ def _resolve_data_path(filepath: str) -> Path:
 # Session endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/api/sessions")
-def get_sessions(db: DatabaseManager = Depends(get_db)) -> list[dict]:
-    """Returns a list of all saved chat sessions."""
-    return db.list_sessions()
+@app.get("/api/sessions", response_model=list[SessionSummary])
+def get_sessions(
+    include_archived: bool = Query(False, description="Include archived sessions in the list."),
+    db: DatabaseManager = Depends(get_db),
+) -> list[SessionSummary]:
+    """
+    Returns a flat list of all sessions ordered by most-recently updated.
+
+    Archived sessions are hidden by default; pass ``?include_archived=true``
+    to surface them (e.g. for an 'archived chats' management screen).
+    """
+    return [SessionSummary(**row) for row in db.list_sessions(include_archived=include_archived)]
+
+
+@app.get("/api/sessions/tree", response_model=list[SessionNode])
+def get_session_tree(
+    include_archived: bool = Query(True, description="Include archived sessions to preserve tree structure."),
+    db: DatabaseManager = Depends(get_db),
+) -> list[SessionNode]:
+    """
+    Returns all sessions as a forest of trees.
+
+    Each root session (no parent) is a top-level element; its ``children``
+    list contains forked sessions, recursively.  Use this endpoint to render
+    the sidebar tree view.
+
+    Archived sessions are included by default so the tree structure stays
+    coherent — they appear greyed-out in the UI rather than leaving gaps
+    in the ancestry chain.
+    """
+    def _build(node: dict) -> SessionNode:
+        return SessionNode(
+            **{k: v for k, v in node.items() if k != "children"},
+            children=[_build(c) for c in node.get("children", [])],
+        )
+
+    return [_build(root) for root in db.get_session_tree(include_archived=include_archived)]
 
 
 @app.get("/api/sessions/{session_id}")
@@ -208,6 +270,63 @@ def fork_session(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ForkResponse(new_session_id=new_id)
+
+
+@app.patch("/api/sessions/{session_id}/archive", status_code=200)
+def archive_session(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> dict:
+    """
+    Soft-archives a session.  The session is hidden from normal listings but
+    all data and lineage are preserved.  Returns 404 when the session does not
+    exist or is already archived.
+    """
+    archived = db.archive_session(session_id)
+    if not archived:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session not found or already archived: {session_id}",
+        )
+    return {"archived": True, "session_id": session_id}
+
+
+@app.delete("/api/sessions/{session_id}/archive", status_code=200)
+def unarchive_session(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> dict:
+    """
+    Reverses an archive.  Returns 404 when the session does not exist or is
+    not currently archived.
+    """
+    unarchived = db.unarchive_session(session_id)
+    if not unarchived:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session not found or not archived: {session_id}",
+        )
+    return {"archived": False, "session_id": session_id}
+
+
+@app.delete("/api/sessions/{session_id}", status_code=204)
+def delete_session(
+    session_id: str,
+    db: DatabaseManager = Depends(get_db),
+) -> None:
+    """
+    Permanently deletes a session and all its notes.
+
+    Returns 404 when the session does not exist.
+    Returns 409 Conflict when the session has living child sessions — delete
+    all descendants (leaf-first) before deleting the parent.
+    """
+    try:
+        db.delete_session(session_id)
+    except ValueError as exc:
+        detail = str(exc)
+        status = 409 if "child" in detail.lower() else 404
+        raise HTTPException(status_code=status, detail=detail) from exc
 
 
 # ---------------------------------------------------------------------------
