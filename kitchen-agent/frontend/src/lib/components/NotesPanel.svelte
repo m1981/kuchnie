@@ -12,11 +12,15 @@
 	 *   sessionId — the currently active session.
 	 */
 	import { untrack } from 'svelte';
+	import type { Note } from '$lib/api';
 	import { notesStore } from '$lib/stores/notes.svelte';
 
-	type Props = { sessionId: string };
+	type Props = {
+		sessionId: string;
+		oninsertnotes: (notes: Note[]) => void;
+	};
 
-	let { sessionId }: Props = $props();
+	let { sessionId, oninsertnotes }: Props = $props();
 
 	// Load on mount and whenever sessionId changes.
 	$effect(() => {
@@ -28,13 +32,33 @@
 
 	const notes = $derived(notesStore.forSession(sessionId));
 	const fetchState = $derived(notesStore.fetchStateFor(sessionId));
-
+	let selectedNoteIds = $state<Set<string>>(new Set());
+	const selectedNotes = $derived(notes.filter((note) => selectedNoteIds.has(note.id)));
 	let deleteError = $state('');
 	let deleteErrorTimer: ReturnType<typeof setTimeout>;
+
+	$effect(() => {
+		sessionId;
+		selectedNoteIds = new Set();
+	});
+
+	function toggleNote(noteId: string) {
+		const next = new Set(selectedNoteIds);
+		next.has(noteId) ? next.delete(noteId) : next.add(noteId);
+		selectedNoteIds = next;
+	}
+
+	function insertSelected() {
+		if (selectedNotes.length === 0) return;
+		oninsertnotes(selectedNotes);
+		selectedNoteIds = new Set();
+	}
 
 	async function remove(noteId: string) {
 		clearTimeout(deleteErrorTimer);
 		deleteError = '';
+		selectedNoteIds.delete(noteId);
+		selectedNoteIds = new Set(selectedNoteIds);
 		try {
 			await notesStore.delete(sessionId, noteId);
 		} catch (e) {
@@ -57,16 +81,26 @@
 	}
 </script>
 
-<div class="flex flex-col overflow-hidden p-3">
-	<!-- Header -->
-	<div class="mb-3 flex items-center justify-between">
-		<p class="text-xs font-semibold tracking-wide text-muted uppercase">Notes</p>
-		{#if notes.length > 0}
-			<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
-				{notes.length}
-			</span>
-		{/if}
-	</div>
+	<div class="flex flex-col overflow-hidden p-3">
+		<!-- Header -->
+		<div class="mb-3 flex items-center justify-between">
+			<p class="text-xs font-semibold tracking-wide text-muted uppercase">Notes</p>
+			<div class="flex items-center gap-2">
+				{#if selectedNotes.length > 0}
+					<button
+						onclick={insertSelected}
+						class="rounded bg-accent px-2 py-1 text-xs font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:outline-none"
+					>
+						Insert {selectedNotes.length}
+					</button>
+				{/if}
+				{#if notes.length > 0}
+					<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
+						{notes.length}
+					</span>
+				{/if}
+			</div>
+		</div>
 
 	<!-- Description -->
 	<p class="mb-3 text-xs leading-4 text-muted">
@@ -112,21 +146,32 @@
 	<!-- Notes list -->
 	{:else}
 		<ul class="min-h-0 flex-1 space-y-2 overflow-y-auto">
-			{#each notes as note (note.id)}
-				<li
-					class="group rounded-lg border border-line bg-surface p-2.5 text-xs transition
-					       hover:border-accent-soft"
-				>
-					<!-- Role badge + date -->
-					<div class="mb-1.5 flex items-center justify-between gap-2">
-						<span
-							class="rounded-full border border-line px-1.5 py-0.5 text-[10px] font-medium
-							       {note.source_role === 'assistant' ? 'text-accent' : 'text-muted'}"
-						>
-							{note.source_role}
-						</span>
-						<span class="text-[10px] text-muted">{formatDate(note.created_at)}</span>
-					</div>
+				{#each notes as note (note.id)}
+					<li
+						class="group rounded-lg border bg-surface p-2.5 text-xs transition
+						       {selectedNoteIds.has(note.id)
+							? 'border-accent shadow-[inset_3px_0_0_var(--color-accent)]'
+							: 'border-line hover:border-accent-soft'}"
+					>
+						<!-- Role badge + date -->
+						<div class="mb-1.5 flex items-center justify-between gap-2">
+							<label class="flex min-w-0 items-center gap-1.5">
+								<input
+									type="checkbox"
+									checked={selectedNoteIds.has(note.id)}
+									onchange={() => toggleNote(note.id)}
+									class="h-3.5 w-3.5 shrink-0 accent-accent"
+									aria-label="Select note"
+								/>
+								<span
+									class="rounded-full border border-line px-1.5 py-0.5 text-[10px] font-medium
+									       {note.source_role === 'assistant' ? 'text-accent' : 'text-muted'}"
+								>
+									{note.source_role}
+								</span>
+							</label>
+							<span class="text-[10px] text-muted">{formatDate(note.created_at)}</span>
+						</div>
 
 					<!-- Selected text -->
 					<blockquote

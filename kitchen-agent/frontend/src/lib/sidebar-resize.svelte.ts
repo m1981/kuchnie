@@ -1,8 +1,9 @@
 /**
  * sidebar-resize.svelte.ts
  *
- * Svelte 5 rune-based drag-to-resize logic for left and right sidebars.
- * Widths are persisted to localStorage so they survive page reloads.
+ * Svelte 5 rune-based drag-to-resize logic for left and right sidebars
+ * plus the prompt composer. Sizes are persisted to localStorage so they
+ * survive page reloads.
  *
  * Usage (in a Svelte component):
  *   import { createSidebarResize } from '$lib/sidebar-resize.svelte';
@@ -20,19 +21,24 @@
 const STORAGE_KEY_LEFT = 'kitchen-agent:layout:left-sidebar-width';
 const STORAGE_KEY_RIGHT = 'kitchen-agent:layout:right-sidebar-width';
 const STORAGE_KEY_SHOW = 'kitchen-agent:layout:right-sidebar-visible';
+const STORAGE_KEY_PROMPT = 'kitchen-agent:layout:prompt-height';
 const URL_PARAM_BY_KEY: Record<string, string> = {
 	[STORAGE_KEY_LEFT]: 'kaLeftSidebar',
 	[STORAGE_KEY_RIGHT]: 'kaRightSidebar',
-	[STORAGE_KEY_SHOW]: 'kaRightPanel'
+	[STORAGE_KEY_SHOW]: 'kaRightPanel',
+	[STORAGE_KEY_PROMPT]: 'kaPromptHeight'
 };
 
 const LEFT_MIN  = 180;
 const LEFT_MAX  = 480;
 const RIGHT_MIN = 220;
 const RIGHT_MAX = 600;
+const PROMPT_MIN = 64;
+const PROMPT_MAX = 320;
 
 const DEFAULT_LEFT  = 256;   // w-64 = 16rem = 256px
 const DEFAULT_RIGHT = 288;   // w-72 = 18rem = 288px
+const DEFAULT_PROMPT = 96;
 
 function isStorage(value: unknown): value is Storage {
 	return (
@@ -161,12 +167,13 @@ export function createSidebarResize() {
 	// ── Persistent widths ────────────────────────────────────────────────────
 	let leftWidth = $state(readStorage(STORAGE_KEY_LEFT, DEFAULT_LEFT, LEFT_MIN, LEFT_MAX));
 	let rightWidth = $state(readStorage(STORAGE_KEY_RIGHT, DEFAULT_RIGHT, RIGHT_MIN, RIGHT_MAX));
+	let promptHeight = $state(readStorage(STORAGE_KEY_PROMPT, DEFAULT_PROMPT, PROMPT_MIN, PROMPT_MAX));
 	let showRight = $state(readBoolStorage(STORAGE_KEY_SHOW, true));
 
 	// ── Drag state (not persisted) ────────────────────────────────────────────
-	let dragging: 'left' | 'right' | null = null;
-	let dragStartX = 0;
-	let dragStartWidth = 0;
+	let dragging: 'left' | 'right' | 'prompt' | null = null;
+	let dragStartPosition = 0;
+	let dragStartSize = 0;
 
 	// ── Setters ───────────────────────────────────────────────────────────────
 	function setLeftWidth(width: number) {
@@ -184,16 +191,23 @@ export function createSidebarResize() {
 		writeSetting(STORAGE_KEY_SHOW, String(showRight));
 	}
 
+	function setPromptHeight(height: number) {
+		promptHeight = clamp(height, PROMPT_MIN, PROMPT_MAX);
+		writeSetting(STORAGE_KEY_PROMPT, String(promptHeight));
+	}
+
 	// ── Drag handlers ─────────────────────────────────────────────────────────
 	function onMouseMove(e: MouseEvent) {
 		if (!dragging) return;
-		const delta = e.clientX - dragStartX;
 
 		if (dragging === 'left') {
-			setLeftWidth(dragStartWidth + delta);
-		} else {
+			setLeftWidth(dragStartSize + e.clientX - dragStartPosition);
+		} else if (dragging === 'right') {
 			// Right sidebar grows leftward — delta is inverted
-			setRightWidth(dragStartWidth - delta);
+			setRightWidth(dragStartSize - (e.clientX - dragStartPosition));
+		} else {
+			// Prompt composer grows upward from the footer.
+			setPromptHeight(dragStartSize - (e.clientY - dragStartPosition));
 		}
 	}
 
@@ -209,9 +223,20 @@ export function createSidebarResize() {
 	function startDrag(side: 'left' | 'right', e: MouseEvent) {
 		e.preventDefault();
 		dragging = side;
-		dragStartX = e.clientX;
-		dragStartWidth = side === 'left' ? leftWidth : rightWidth;
+		dragStartPosition = e.clientX;
+		dragStartSize = side === 'left' ? leftWidth : rightWidth;
 		document.body.style.cursor = 'col-resize';
+		document.body.style.userSelect = 'none';
+		window.addEventListener('mousemove', onMouseMove);
+		window.addEventListener('mouseup', onMouseUp);
+	}
+
+	function startPromptDrag(e: MouseEvent) {
+		e.preventDefault();
+		dragging = 'prompt';
+		dragStartPosition = e.clientY;
+		dragStartSize = promptHeight;
+		document.body.style.cursor = 'row-resize';
 		document.body.style.userSelect = 'none';
 		window.addEventListener('mousemove', onMouseMove);
 		window.addEventListener('mouseup', onMouseUp);
@@ -221,18 +246,22 @@ export function createSidebarResize() {
 	return {
 		get leftWidth() { return leftWidth; },
 		get rightWidth() { return rightWidth; },
+		get promptHeight() { return promptHeight; },
 		get showRight() { return showRight; },
 		set showRight(v: boolean) { setShowRight(v); },
 
 		startLeftDrag: (e: MouseEvent) => startDrag('left', e),
 		startRightDrag: (e: MouseEvent) => startDrag('right', e),
+		startPromptDrag,
 
 		toggleRight() { setShowRight(!showRight); },
 
 		resizeLeftBy(delta: number) { setLeftWidth(leftWidth + delta); },
 		resizeRightBy(delta: number) { setRightWidth(rightWidth + delta); },
+		resizePromptBy(delta: number) { setPromptHeight(promptHeight + delta); },
 
 		resetLeft() { setLeftWidth(DEFAULT_LEFT); },
 		resetRight() { setRightWidth(DEFAULT_RIGHT); },
+		resetPrompt() { setPromptHeight(DEFAULT_PROMPT); },
 	};
 }

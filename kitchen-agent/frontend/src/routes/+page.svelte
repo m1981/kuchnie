@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, type FileItem, type Message, type ToolLog } from '$lib/api';
+	import { api, type FileItem, type Message, type Note, type ToolLog } from '$lib/api';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
 	import SessionTree from '$lib/components/SessionTree.svelte';
@@ -51,6 +51,7 @@
 
 	let sessionId            = $state(crypto.randomUUID());
 	let currentMessage       = $state('');
+	let messageInput         = $state<HTMLTextAreaElement | null>(null);
 	let messages             = $state<Message[]>([]);
 	let isLoading            = $state(false);
 
@@ -168,6 +169,40 @@
 
 	function handleContextChange(paths: string[]) {
 		contextFiles = paths;
+	}
+
+	function formatNotesForPrompt(notes: Note[]): string {
+		const lines = notes.map((note, index) => {
+			const annotation = note.note.trim()
+				? `\nComment: ${note.note.trim()}`
+				: '';
+			return [
+				`### Note ${index + 1} (${note.source_role})`,
+				`Selected text:`,
+				`> ${note.selected_text.replace(/\n/g, '\n> ')}`,
+				annotation
+			].join('\n');
+		});
+
+		return [
+			'Here are my selected notes with comments. Please comment and explain.',
+			'',
+			'## Selected notes',
+			'',
+			lines.join('\n\n')
+		].join('\n');
+	}
+
+	function insertNotesIntoComposer(notes: Note[]) {
+		const block = formatNotesForPrompt(notes);
+		currentMessage = currentMessage.trim()
+			? `${currentMessage.trimEnd()}\n\n${block}`
+			: block;
+
+		requestAnimationFrame(() => {
+			messageInput?.focus();
+			messageInput?.setSelectionRange(currentMessage.length, currentMessage.length);
+		});
 	}
 
 	// ---------------------------------------------------------------------------
@@ -336,6 +371,18 @@
 		} else {
 			sidebarResize.resizeRightBy(direction * -step);
 		}
+	}
+
+	function handlePromptResizeKeydown(event: KeyboardEvent) {
+		if (!['ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) return;
+		event.preventDefault();
+		const step = event.shiftKey ? 40 : 16;
+
+		if (event.key === 'Home') {
+			sidebarResize.resetPrompt();
+			return;
+		}
+		sidebarResize.resizePromptBy(event.key === 'ArrowUp' ? step : -step);
 	}
 </script>
 
@@ -675,15 +722,26 @@
 					</button>
 				</div>
 
-				<div class="flex items-end gap-2 rounded-md border border-line bg-surface p-2 shadow-sm">
+				<div class="relative flex items-end gap-2 rounded-md border border-line bg-surface p-2 shadow-sm">
+					<button
+						type="button"
+						aria-label="Resize prompt area"
+						class="absolute -top-1 left-0 z-20 h-2 w-full cursor-row-resize touch-none rounded-t-md transition hover:bg-accent/30 focus:bg-accent/30 focus:outline-none"
+						onmousedown={sidebarResize.startPromptDrag}
+						ondblclick={sidebarResize.resetPrompt}
+						onkeydown={handlePromptResizeKeydown}
+						title="Drag to resize. Double-click to reset."
+					></button>
 					<label class="sr-only" for="message-input">Message</label>
 					<textarea
 						id="message-input"
+						bind:this={messageInput}
 						bind:value={currentMessage}
 						onkeydown={handleKeydown}
 						onpaste={handlePaste}
 						placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
-						class="max-h-40 min-h-16 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
+						class="min-h-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
+						style="height: {sidebarResize.promptHeight}px;"
 						rows="2"
 					></textarea>
 
@@ -716,7 +774,11 @@
 				onkeydown={(event) => handleSidebarResizeKeydown(event, 'right')}
 				title="Drag to resize. Double-click to reset."
 			></button>
-			<ContextSidebar oncontextchange={handleContextChange} {sessionId} />
+				<ContextSidebar
+					oncontextchange={handleContextChange}
+					oninsertnotes={insertNotesIntoComposer}
+					{sessionId}
+				/>
 		</div>
 	{/if}
 

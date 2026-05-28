@@ -8,16 +8,17 @@
 	 *   oncontextchange(filepaths: string[]) – emitted when the selection changes
 	 */
 
-	import { api, type FileItem } from '$lib/api';
+	import { api, type FileItem, type Note } from '$lib/api';
 	import FileEditor from './FileEditor.svelte';
 	import NotesPanel from './NotesPanel.svelte';
 
 	type Props = {
 		oncontextchange: (paths: string[]) => void;
+		oninsertnotes: (notes: Note[]) => void;
 		sessionId: string;
 	};
 
-	let { oncontextchange, sessionId }: Props = $props();
+	let { oncontextchange, oninsertnotes, sessionId }: Props = $props();
 
 	// ── State ────────────────────────────────────────────────────────────────
 	let files = $state<FileItem[]>([]);
@@ -147,7 +148,7 @@
 
 	<!-- Notes tab -->
 	{:else if tab === 'notes'}
-		<NotesPanel {sessionId} />
+		<NotesPanel {sessionId} {oninsertnotes} />
 
 	<!-- Editor tab -->
 	{:else if tab === 'editor'}
