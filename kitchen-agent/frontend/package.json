@@ -15,6 +15,12 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run"
 	},
+	"dependencies": {
+		"highlight.js": "^11.11.1",
+		"marked": "^18.0.4",
+		"marked-highlight": "^2.2.4",
+		"mermaid": "^11.15.0"
+	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
 		"@eslint/js": "^10.0.1",

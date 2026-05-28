@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Markdown from '$lib/components/Markdown.svelte';
+
 	type ToolLog = {
 		name: string;
 		args: Record<string, unknown>;
@@ -170,7 +172,7 @@
 					</p>
 				{/if}
 
-				{#each savedSessions as session}
+				{#each savedSessions as session (session.id)}
 					<button
 						onclick={() => loadSession(session.id)}
 						class="group w-full rounded-md px-3 py-2 text-left text-sm transition {sessionId ===
@@ -208,7 +210,7 @@
 				</div>
 
 				<div class="flex rounded-md border border-line bg-surface p-1">
-					{#each Object.keys(templates) as templateName}
+					{#each Object.keys(templates) as templateName (templateName)}
 						{@const typedName = templateName as keyof typeof templates}
 						<button
 							onclick={() => (selectedTemplateName = typedName)}
@@ -246,7 +248,7 @@
 					<div class="rounded-md border border-dashed border-line bg-panel p-5 shadow-sm">
 						<p class="text-sm font-semibold text-ink">Start with a practical kitchen workflow</p>
 						<div class="mt-4 grid gap-2 md:grid-cols-2">
-							{#each starterPrompts as prompt}
+							{#each starterPrompts as prompt (prompt)}
 								<button
 									onclick={() => useStarterPrompt(prompt)}
 									class="rounded-md border border-line bg-surface px-3 py-3 text-left text-sm leading-5 text-ink transition hover:border-accent hover:bg-accent-soft focus:ring-2 focus:ring-accent focus:outline-none"
@@ -259,7 +261,7 @@
 				{/if}
 
 				<div class="space-y-5">
-					{#each messages as msg}
+					{#each messages as msg, messageIndex (`${msg.role}-${messageIndex}`)}
 						<article
 							class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
 							aria-label={msg.role === 'user' ? 'User message' : 'Assistant message'}
@@ -287,13 +289,13 @@
 									{/if}
 								</div>
 
-								<div
-									class={msg.role === 'user'
-										? 'text-sm leading-6 whitespace-pre-wrap'
-										: 'text-[15px] leading-7 whitespace-pre-wrap text-ink'}
-								>
-									{msg.content}
-								</div>
+								{#if msg.role === 'assistant'}
+									<Markdown content={msg.content} />
+								{:else}
+									<div class="text-sm leading-6 whitespace-pre-wrap">
+										{msg.content}
+									</div>
+								{/if}
 
 								{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
 									<div class="mt-4 space-y-2 border-t border-line pt-3">
@@ -301,7 +303,7 @@
 											Tools used
 										</p>
 
-										{#each msg.tools as tool}
+										{#each msg.tools as tool, toolIndex (`${tool.name}-${toolIndex}`)}
 											<details class="group rounded-md border border-line bg-surface">
 												<summary
 													class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm"
