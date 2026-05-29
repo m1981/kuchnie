@@ -3,7 +3,7 @@ src/exporter.py
 ===============
 Export functions for chat sessions.
 
-Two export formats are provided:
+Three export formats are provided:
 
 1. ``export_session_to_markdown`` — Human-readable Markdown.
    Uses ``ui_history_json`` (the pretty, tool-summarised UI representation).
@@ -13,7 +13,23 @@ Two export formats are provided:
    Uses ``api_history_json`` (the raw dehydrated ``Content`` objects) so you
    can see *exactly* what the model had in its context window, including
    ``thought_signature`` hex bytes, function call IDs, and every Part.
-   Suitable for debugging multi-turn tool-calling issues.
+
+   F04 addition: a top-level ``"config"`` block is prepended BEFORE ``"turns"``
+   containing the reconstructed ``GenerateContentConfig`` envelope:
+     - model name          (from settings)
+     - temperature         (from settings)
+     - system_instruction  (persisted from ChatRequest.system_prompt)
+     - tools / function_declarations  (from the live tool registry)
+
+   Key order in output dict: ``metadata`` → ``config`` → ``turns``
+
+   Suitable for debugging multi-turn tool-calling sessions.
+
+Public surface
+--------------
+  build_config_block(system_instruction)  → dict
+  export_session_to_markdown(ui_messages, title)  → str
+  export_session_to_llm_json(api_items, title, session_id, system_instruction) → dict
 
 Pure functions only — no DB or HTTP concerns.
 """
@@ -24,7 +40,7 @@ from typing import Any
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ── Format 1: Markdown export (existing, unchanged) ───────────────────────────
+# ── Format 1: Markdown export (unchanged) ─────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -82,8 +98,56 @@ def export_session_to_markdown(
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# ── Format 2: LLM-context debug export (new) ──────────────────────────────────
+# ── Format 2: LLM-context debug export ────────────────────────────────────────
 # ──────────────────────────────────────────────────────────────────────────────
+
+
+def build_config_block(system_instruction: str | None) -> dict[str, Any]:
+    """
+    Reconstructs the ``GenerateContentConfig`` envelope as a plain dict,
+    exactly as it was sent to the Gemini API on every ``generate_content``
+    call.
+
+    Because ``GenerateContentConfig`` is a Pydantic model in the ``google-genai``
+    SDK, we build a real instance and dump it via ``model_dump_json`` to get
+    the canonical wire representation.  Only non-None fields are included,
+    matching ``exclude_none=True`` semantics.
+
+    Args:
+        system_instruction: The persisted system prompt for this session,
+                            or ``None`` if no persona was active.
+
+    Returns:
+        A dict with keys: ``model``, ``temperature``, ``system_instruction``,
+        ``tools``.  ``system_instruction`` is always present (may be ``None``).
+    """
+    # Import here to avoid circular dependency risks at module load time.
+    # These imports are fast (already-imported modules, no I/O).
+    from google.genai import types
+    from src.config import settings
+    from src.tools.registry import DECLARATIONS
+
+    gemini_tools = types.Tool(function_declarations=DECLARATIONS)
+    config = types.GenerateContentConfig(
+        tools=[gemini_tools],
+        temperature=settings.gemini_temperature,
+        system_instruction=system_instruction,
+    )
+
+    # Dump via the SDK's own Pydantic serializer for maximum fidelity.
+    # We then re-parse to a plain dict so no SDK types leak into the output.
+    raw: dict[str, Any] = json.loads(config.model_dump_json(exclude_none=True))
+
+    # Ensure the canonical structure: model name is not part of the config
+    # object itself (it's passed separately to generate_content), so we
+    # inject it explicitly for completeness.
+    return {
+        "model": settings.gemini_model,
+        "temperature": raw.get("temperature", settings.gemini_temperature),
+        # Always include system_instruction key — None makes the absence explicit.
+        "system_instruction": raw.get("system_instruction", None),
+        "tools": raw.get("tools", []),
+    }
 
 
 def _render_llm_part(item: dict[str, Any]) -> dict[str, Any]:
@@ -170,35 +234,59 @@ def export_session_to_llm_json(
     api_items: list[dict[str, Any]],
     title: str,
     session_id: str,
+    system_instruction: str | None = None,
 ) -> dict[str, Any]:
     """
-    Renders the raw LLM context as a structured JSON document.
+    Renders the complete LLM call context as a structured JSON document.
 
-    Each element in ``api_items`` is a dehydrated ``Content`` object as stored
-    in ``api_history_json`` by ``src/serializers.py``.  The output mirrors
-    what the Gemini model actually receives in its context window.
+    Output structure (key order is canonical):
+    ::
 
-    ``thought_signature`` bytes are represented as hex strings (they are
-    already hex-encoded by the serializer; this function preserves that).
+        {
+          "metadata": {
+            "session_id": "…",
+            "title":      "…",
+            "turn_count": N,
+            "export_timestamp": "…"
+          },
+          "config": {
+            "model":              "gemini-3.1-pro-preview",
+            "temperature":        0.2,
+            "system_instruction": "…" | null,
+            "tools": [ { "function_declarations": [ … ] } ]
+          },
+          "turns": [ … ]
+        }
+
+    The ``config`` block is placed between ``metadata`` and ``turns`` so that
+    when a developer reads the exported JSON top-to-bottom they first see the
+    call envelope (what model, what tools, what system prompt) before the
+    actual conversation turns — matching the mental model of how a Gemini API
+    call is structured.
 
     Args:
-        api_items:  List of dehydrated Content dicts from ``api_history_json``.
-        title:      Session title (for metadata block).
-        session_id: Session UUID (for metadata block).
+        api_items:          Dehydrated Content dicts from ``api_history_json``.
+        title:              Session title (for metadata block).
+        session_id:         Session UUID (for metadata block).
+        system_instruction: Persisted system prompt (``None`` if not set).
 
     Returns:
-        A dict with two top-level keys:
-          - ``"metadata"``: session_id, title, turn_count, export_timestamp
-          - ``"turns"``:    ordered list of turn dicts, each with role + parts
+        Ordered dict with ``metadata``, ``config``, ``turns`` keys.
     """
     turns = [_render_llm_turn(item) for item in api_items]
 
-    return {
-        "metadata": {
-            "session_id": session_id,
-            "title": title,
-            "turn_count": len(turns),
-            "export_timestamp": datetime.now(tz=timezone.utc).isoformat(),
-        },
-        "turns": turns,
+    # Use an explicit insertion order to guarantee metadata → config → turns.
+    result: dict[str, Any] = {}
+
+    result["metadata"] = {
+        "session_id": session_id,
+        "title": title,
+        "turn_count": len(turns),
+        "export_timestamp": datetime.now(tz=timezone.utc).isoformat(),
     }
+
+    result["config"] = build_config_block(system_instruction=system_instruction)
+
+    result["turns"] = turns
+
+    return result

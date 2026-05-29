@@ -10,7 +10,7 @@ Usage:
     from src.config import settings
 
     settings.data_dir          # Path("data")
-    settings.gemini_model      # "gemini-2.5-flash"
+    settings.gemini_model      # "gemini-3.1-pro-preview"
     settings.allowed_origins   # ["http://localhost:5173"]
 """
 
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         return self.data_dir / "prompt_log.md"
 
     # ── Gemini ───────────────────────────────────────────────────────────────
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.1-pro-preview"
     gemini_temperature: float = 0.2
 
     # ── CORS ─────────────────────────────────────────────────────────────────

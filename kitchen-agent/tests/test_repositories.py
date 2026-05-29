@@ -27,10 +27,11 @@ def test_database_lifecycle(tmp_path):
         ui_history_json=fake_ui_history
     )
 
-    # 3. Assert: Load the session back
-    loaded_api, loaded_ui = repo.load_session(session_id)
+    # 3. Assert: Load the session back — now returns 3-tuple (api, ui, system_prompt)
+    loaded_api, loaded_ui, loaded_prompt = repo.load_session(session_id)
     assert loaded_api == fake_json_history
     assert loaded_ui == fake_ui_history
+    assert loaded_prompt is None  # not set
 
     # 4. Assert: List sessions
     sessions = repo.list_sessions()
@@ -48,6 +49,6 @@ def test_database_lifecycle(tmp_path):
     )
 
     # 6. Assert: Ensure it updated, not duplicated
-    loaded_api, _ = repo.load_session(session_id)
+    loaded_api, _, _ = repo.load_session(session_id)
     assert loaded_api == updated_json
     assert len(repo.list_sessions()) == 1

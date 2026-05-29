@@ -44,9 +44,13 @@ class ChatService:
     ) -> tuple[str, list[dict]]:
         """
         Loads history, runs the agent, persists state, and returns the result.
+
+        The ``system_prompt`` is now persisted alongside the history so that
+        the LLM debug export (F04) can faithfully reconstruct the
+        ``GenerateContentConfig`` envelope for each session.
         """
         # 1. Load existing history from DB.
-        api_json, ui_json = self._session_repo.load_session(session_id)
+        api_json, ui_json, _existing_system_prompt = self._session_repo.load_session(session_id)
         history = hydrate_history(api_json)
         ui_messages: list[dict] = json.loads(ui_json) if ui_json != "[]" else []
 
@@ -69,12 +73,18 @@ class ChatService:
             {"role": "assistant", "content": final_text, "tools": tool_logs}
         )
 
-        # 5. Persist updated state.
+        # 5. Persist updated state — system_prompt is stored so the LLM debug
+        #    export can reconstruct the GenerateContentConfig envelope (F04).
+        #    If no system_prompt was passed this turn, fall back to the one
+        #    already stored (preserves the prompt across turns within a session).
+        resolved_prompt = system_prompt if system_prompt is not None else _existing_system_prompt
+
         self._session_repo.save_session(
             session_id=session_id,
             title=_make_title(ui_messages),
             api_history_json=dehydrate_history(history),
             ui_history_json=json.dumps(ui_messages),
+            system_prompt=resolved_prompt,
         )
 
         return final_text, tool_logs

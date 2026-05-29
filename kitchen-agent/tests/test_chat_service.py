@@ -72,7 +72,8 @@ def test_handle_turn_saves_session(
     assert text == "Great, noted!"
     assert tools == []
 
-    _, ui_json = repo.load_session(session_id)
+    # load_session now returns 3-tuple
+    _, ui_json, _ = repo.load_session(session_id)
     ui_messages = json.loads(ui_json)
     assert len(ui_messages) == 2
     assert ui_messages[0] == {"role": "user", "content": "What hinges should I use?"}
@@ -96,7 +97,8 @@ def test_handle_turn_appends_to_existing_history(
     mock_agent.return_value = ("Answer 2", [])
     service.handle_turn("sess-1", "Turn 2")
 
-    _, ui_json = repo.load_session("sess-1")
+    # load_session now returns 3-tuple
+    _, ui_json, _ = repo.load_session("sess-1")
     ui_messages = json.loads(ui_json)
     assert len(ui_messages) == 4
     assert ui_messages[2]["content"] == "Turn 2"

@@ -117,7 +117,7 @@ class NoteResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# LLM-context debug export schemas
+# F04 — LLM-context debug export schemas (extended from F03)
 # ---------------------------------------------------------------------------
 
 class LlmExportMetadata(BaseModel):
@@ -128,16 +128,20 @@ class LlmExportMetadata(BaseModel):
     export_timestamp: str  # ISO 8601 UTC
 
 
-class LlmExportPart(BaseModel):
+class LlmExportConfig(BaseModel):
     """
-    One Part inside a turn.
+    Reconstructed GenerateContentConfig envelope — what the Gemini API
+    received alongside the conversation turns.
 
-    ``type`` is one of: ``"text"``, ``"function_call"``,
-    ``"function_response"``, ``"unknown_part"``.
-    The remaining keys depend on the type (open-ended to handle future types).
+    model              : Gemini model name (e.g. "gemini-3.1-pro-preview").
+    temperature        : Sampling temperature used for this session.
+    system_instruction : Persisted system prompt, or null if none was active.
+    tools              : Full tool/function_declarations schema as sent to the API.
     """
-    type: str
-    model_config = {"extra": "allow"}
+    model: str
+    temperature: float
+    system_instruction: str | None
+    tools: list[dict[str, Any]]  # open structure — mirrors SDK wire format
 
 
 class LlmExportTurn(BaseModel):
@@ -150,8 +154,13 @@ class LlmExportResponse(BaseModel):
     """
     Response returned by GET /api/sessions/{id}/export/llm.
 
+    Key order (canonical, matches debug reading order):
+      metadata → config → turns
+
     metadata : Session info and export timestamp.
+    config   : Reconstructed GenerateContentConfig envelope (F04).
     turns    : Ordered list of every Content turn in the LLM context window.
     """
     metadata: LlmExportMetadata
+    config: LlmExportConfig
     turns: list[LlmExportTurn]

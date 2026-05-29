@@ -49,7 +49,7 @@ def test_fork_slices_ui_history_inclusive(tmp_path):
 
     new_id = repo.fork_session(source_id, turn_index=1)
 
-    _, new_ui_json = repo.load_session(new_id)
+    _, new_ui_json, _ = repo.load_session(new_id)
     assert json.loads(new_ui_json) == ui_messages[:2]
 
 
@@ -60,7 +60,7 @@ def test_fork_slices_api_history_inclusive(tmp_path):
 
     new_id = repo.fork_session(source_id, turn_index=2)
 
-    new_api_json, _ = repo.load_session(new_id)
+    new_api_json, _, _ = repo.load_session(new_id)
     assert json.loads(new_api_json) == api_history[:3]
 
 
@@ -71,7 +71,7 @@ def test_fork_does_not_modify_source_session(tmp_path):
 
     repo.fork_session(source_id, turn_index=1)
 
-    src_api_json, src_ui_json = repo.load_session(source_id)
+    src_api_json, src_ui_json, _ = repo.load_session(source_id)
     assert json.loads(src_ui_json) == ui_messages
     assert json.loads(src_api_json) == api_history
 
@@ -97,7 +97,7 @@ def test_fork_at_index_zero_keeps_first_turn_only(tmp_path):
 
     new_id = repo.fork_session(source_id, turn_index=0)
 
-    _, new_ui_json = repo.load_session(new_id)
+    _, new_ui_json, _ = repo.load_session(new_id)
     assert json.loads(new_ui_json) == ui_messages[:1]
 
 
@@ -108,7 +108,7 @@ def test_fork_index_beyond_history_is_clamped(tmp_path):
 
     new_id = repo.fork_session(source_id, turn_index=999)
 
-    new_api_json, new_ui_json = repo.load_session(new_id)
+    new_api_json, new_ui_json, _ = repo.load_session(new_id)
     assert json.loads(new_ui_json) == ui_messages
     assert json.loads(new_api_json) == api_history
 

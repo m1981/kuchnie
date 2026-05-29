@@ -22,8 +22,20 @@ LEGACY_FORK_TITLE_RE = re.compile(r"^(?P<parent_title>.+) \(fork @ turn (?P<turn
 # ---------------------------------------------------------------------------
 
 class SessionRepository(Protocol):
-    def save_session(self, session_id: str, title: str, api_history_json: str, ui_history_json: str, parent_id: str | None = None, fork_turn_index: int | None = None, root_id: str | None = None) -> None: ...
-    def load_session(self, session_id: str) -> tuple[str, str]: ...
+    def save_session(
+        self,
+        session_id: str,
+        title: str,
+        api_history_json: str,
+        ui_history_json: str,
+        parent_id: str | None = None,
+        fork_turn_index: int | None = None,
+        root_id: str | None = None,
+        system_prompt: str | None = None,
+    ) -> None: ...
+
+    def load_session(self, session_id: str) -> tuple[str, str, str | None]: ...
+
     def list_sessions(self, include_archived: bool = False) -> list[dict]: ...
     def get_session_tree(self, include_archived: bool = True) -> list[dict]: ...
     def archive_session(self, session_id: str) -> bool: ...
@@ -68,7 +80,8 @@ class SQLiteConnection:
                     parent_id        TEXT,
                     fork_turn_index  INTEGER,
                     root_id          TEXT,
-                    archived_at      TIMESTAMP
+                    archived_at      TIMESTAMP,
+                    system_prompt    TEXT
                 )
                 """
             )
@@ -77,6 +90,7 @@ class SQLiteConnection:
                 ("fork_turn_index", "INTEGER"),
                 ("root_id",         "TEXT"),
                 ("archived_at",     "TIMESTAMP"),
+                ("system_prompt",   "TEXT"),
             ):
                 try:
                     conn.execute(f"ALTER TABLE sessions ADD COLUMN {col} {typedef}")
@@ -143,35 +157,64 @@ class SQLiteSessionRepository:
     def __init__(self, db: SQLiteConnection):
         self.db = db
 
-    def save_session(self, session_id: str, title: str, api_history_json: str, ui_history_json: str, parent_id: str | None = None, fork_turn_index: int | None = None, root_id: str | None = None) -> None:
+    def save_session(
+        self,
+        session_id: str,
+        title: str,
+        api_history_json: str,
+        ui_history_json: str,
+        parent_id: str | None = None,
+        fork_turn_index: int | None = None,
+        root_id: str | None = None,
+        system_prompt: str | None = None,
+    ) -> None:
         with self.db.get_connection() as conn:
             conn.execute(
                 """
                 INSERT INTO sessions
-                    (id, title, api_history_json, ui_history_json, updated_at, parent_id, fork_turn_index, root_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    (id, title, api_history_json, ui_history_json, updated_at,
+                     parent_id, fork_turn_index, root_id, system_prompt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title            = excluded.title,
                     api_history_json = excluded.api_history_json,
                     ui_history_json  = excluded.ui_history_json,
-                    updated_at       = excluded.updated_at
+                    updated_at       = excluded.updated_at,
+                    system_prompt    = excluded.system_prompt
                 """,
-                (session_id, title, api_history_json, ui_history_json, datetime.now(), parent_id, fork_turn_index, root_id),
+                (
+                    session_id, title, api_history_json, ui_history_json,
+                    datetime.now(), parent_id, fork_turn_index, root_id,
+                    system_prompt,
+                ),
             )
             conn.commit()
 
-    def load_session(self, session_id: str) -> tuple[str, str]:
+    def load_session(self, session_id: str) -> tuple[str, str, str | None]:
+        """
+        Returns ``(api_history_json, ui_history_json, system_prompt)``.
+
+        ``system_prompt`` is ``None`` when it was never set or when the row
+        pre-dates the F04 schema migration.
+        """
         with self.db.get_connection() as conn:
-            cursor = conn.execute("SELECT api_history_json, ui_history_json FROM sessions WHERE id = ?", (session_id,))
+            cursor = conn.execute(
+                "SELECT api_history_json, ui_history_json, system_prompt "
+                "FROM sessions WHERE id = ?",
+                (session_id,),
+            )
             row = cursor.fetchone()
         if row:
-            return row["api_history_json"], row["ui_history_json"]
-        return "[]", "[]"
+            return row["api_history_json"], row["ui_history_json"], row["system_prompt"]
+        return "[]", "[]", None
 
     def list_sessions(self, include_archived: bool = False) -> list[dict]:
         where = "" if include_archived else "WHERE archived_at IS NULL"
         with self.db.get_connection() as conn:
-            cursor = conn.execute(f"SELECT id, title, updated_at, parent_id, fork_turn_index, root_id, archived_at FROM sessions {where} ORDER BY updated_at DESC")
+            cursor = conn.execute(
+                f"SELECT id, title, updated_at, parent_id, fork_turn_index, root_id, archived_at "
+                f"FROM sessions {where} ORDER BY updated_at DESC"
+            )
             return [dict(row) for row in cursor.fetchall()]
 
     def get_session_tree(self, include_archived: bool = True) -> list[dict]:
@@ -193,13 +236,19 @@ class SQLiteSessionRepository:
 
     def archive_session(self, session_id: str) -> bool:
         with self.db.get_connection() as conn:
-            cursor = conn.execute("UPDATE sessions SET archived_at = ? WHERE id = ? AND archived_at IS NULL", (datetime.now(), session_id))
+            cursor = conn.execute(
+                "UPDATE sessions SET archived_at = ? WHERE id = ? AND archived_at IS NULL",
+                (datetime.now(), session_id),
+            )
             conn.commit()
         return cursor.rowcount > 0
 
     def unarchive_session(self, session_id: str) -> bool:
         with self.db.get_connection() as conn:
-            cursor = conn.execute("UPDATE sessions SET archived_at = NULL WHERE id = ? AND archived_at IS NOT NULL", (session_id,))
+            cursor = conn.execute(
+                "UPDATE sessions SET archived_at = NULL WHERE id = ? AND archived_at IS NOT NULL",
+                (session_id,),
+            )
             conn.commit()
         return cursor.rowcount > 0
 
@@ -209,9 +258,14 @@ class SQLiteSessionRepository:
             if row is None:
                 raise ValueError(f"Session not found: {session_id}")
 
-            child_count = conn.execute("SELECT COUNT(*) FROM sessions WHERE parent_id = ?", (session_id,)).fetchone()[0]
+            child_count = conn.execute(
+                "SELECT COUNT(*) FROM sessions WHERE parent_id = ?", (session_id,)
+            ).fetchone()[0]
             if child_count > 0:
-                raise ValueError(f"Cannot delete session '{session_id}': it has {child_count} child session(s). Delete all descendants first.")
+                raise ValueError(
+                    f"Cannot delete session '{session_id}': it has {child_count} "
+                    f"child session(s). Delete all descendants first."
+                )
 
             conn.execute("DELETE FROM notes WHERE session_id = ?", (session_id,))
             conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
@@ -222,7 +276,11 @@ class SQLiteSessionRepository:
             raise ValueError(f"turn_index must be >= 0, got {turn_index}")
 
         with self.db.get_connection() as conn:
-            row = conn.execute("SELECT title, api_history_json, ui_history_json FROM sessions WHERE id = ?", (source_session_id,)).fetchone()
+            row = conn.execute(
+                "SELECT title, api_history_json, ui_history_json, system_prompt "
+                "FROM sessions WHERE id = ?",
+                (source_session_id,),
+            ).fetchone()
 
         if row is None:
             raise ValueError(f"Source session not found: {source_session_id}")
@@ -230,6 +288,7 @@ class SQLiteSessionRepository:
         source_title: str = row["title"] or ""
         source_api: list = json.loads(row["api_history_json"]) if row["api_history_json"] else []
         source_ui: list = json.loads(row["ui_history_json"]) if row["ui_history_json"] else []
+        source_system_prompt: str | None = row["system_prompt"]
 
         end = turn_index + 1
         new_api = source_api[:end]
@@ -237,7 +296,9 @@ class SQLiteSessionRepository:
         new_id = str(uuid.uuid4())
 
         with self.db.get_connection() as conn:
-            parent_row = conn.execute("SELECT root_id FROM sessions WHERE id = ?", (source_session_id,)).fetchone()
+            parent_row = conn.execute(
+                "SELECT root_id FROM sessions WHERE id = ?", (source_session_id,)
+            ).fetchone()
         parent_root = parent_row["root_id"] if parent_row and parent_row["root_id"] else source_session_id
 
         self.save_session(
@@ -248,13 +309,17 @@ class SQLiteSessionRepository:
             parent_id=source_session_id,
             fork_turn_index=turn_index,
             root_id=parent_root,
+            system_prompt=source_system_prompt,
         )
         return new_id
 
     def export_session(self, session_id: str) -> str:
         """Exports the session as a human-readable Markdown document."""
         with self.db.get_connection() as conn:
-            row = conn.execute("SELECT title, ui_history_json FROM sessions WHERE id = ?", (session_id,)).fetchone()
+            row = conn.execute(
+                "SELECT title, ui_history_json FROM sessions WHERE id = ?",
+                (session_id,),
+            ).fetchone()
 
         if row is None:
             raise ValueError(f"Session not found: {session_id}")
@@ -265,25 +330,28 @@ class SQLiteSessionRepository:
 
     def export_session_llm_json(self, session_id: str) -> dict[str, Any]:
         """
-        Exports the raw LLM context as a structured JSON document.
+        Exports the complete LLM call context as a structured JSON document.
 
-        Returns the ``api_history_json`` in a debug-friendly format that
-        mirrors exactly what the Gemini model receives in its context window.
-        Includes every Content turn, every Part, function call IDs, and
-        ``thought_signature`` bytes as hex strings.
+        Returns the ``api_history_json`` in a debug-friendly format that mirrors
+        exactly what the Gemini model receives: the ``GenerateContentConfig``
+        envelope (model, temperature, system_instruction, tool schemas) followed
+        by every Content turn.
+
+        Key order in returned dict: ``metadata`` → ``config`` → ``turns``
 
         Args:
             session_id: The session UUID to export.
 
         Returns:
-            A dict with ``metadata`` and ``turns`` keys.
+            A dict with ``metadata``, ``config``, and ``turns`` keys.
 
         Raises:
             ValueError: When the session does not exist.
         """
         with self.db.get_connection() as conn:
             row = conn.execute(
-                "SELECT title, api_history_json FROM sessions WHERE id = ?",
+                "SELECT title, api_history_json, system_prompt "
+                "FROM sessions WHERE id = ?",
                 (session_id,),
             ).fetchone()
 
@@ -293,11 +361,13 @@ class SQLiteSessionRepository:
         title: str = row["title"] or ""
         raw_json: str = row["api_history_json"] or "[]"
         api_items: list[dict] = json.loads(raw_json) if raw_json.strip() else []
+        system_prompt: str | None = row["system_prompt"]
 
         return export_session_to_llm_json(
             api_items=api_items,
             title=title,
             session_id=session_id,
+            system_instruction=system_prompt,
         )
 
 
@@ -336,11 +406,18 @@ class SQLiteNoteRepository:
 
     def list_notes(self, session_id: str) -> list[dict]:
         with self.db.get_connection() as conn:
-            cursor = conn.execute("SELECT id, session_id, selected_text, note, source_role, created_at FROM notes WHERE session_id = ? ORDER BY created_at ASC", (session_id,))
+            cursor = conn.execute(
+                "SELECT id, session_id, selected_text, note, source_role, created_at "
+                "FROM notes WHERE session_id = ? ORDER BY created_at ASC",
+                (session_id,),
+            )
             return [dict(row) for row in cursor.fetchall()]
 
     def delete_note(self, note_id: str, session_id: str) -> bool:
         with self.db.get_connection() as conn:
-            cursor = conn.execute("DELETE FROM notes WHERE id = ? AND session_id = ?", (note_id, session_id))
+            cursor = conn.execute(
+                "DELETE FROM notes WHERE id = ? AND session_id = ?",
+                (note_id, session_id),
+            )
             conn.commit()
         return cursor.rowcount > 0

@@ -31,7 +31,8 @@ from src.schemas import (
     ChatRequest, ChatResponse, ForkRequest, ForkResponse,
     SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
-    RevertResponse, LlmExportResponse, LlmExportMetadata, LlmExportTurn,
+    RevertResponse,
+    LlmExportResponse, LlmExportMetadata, LlmExportConfig, LlmExportTurn,
 )
 from src.repositories import (
     SQLiteConnection,
@@ -146,7 +147,7 @@ def get_session(
     session_id: str,
     session_repo: SessionRepository = Depends(get_session_repo),
 ) -> dict:
-    _, ui_json = session_repo.load_session(session_id)
+    _, ui_json, _ = session_repo.load_session(session_id)
     ui_messages = json.loads(ui_json) if ui_json and ui_json != "[]" else []
     return {"ui_messages": ui_messages}
 
@@ -174,10 +175,11 @@ def export_session(
     response_model=LlmExportResponse,
     summary="Export session as raw LLM context (debug)",
     description=(
-        "Returns the raw ``api_history_json`` in a structured JSON format "
-        "that mirrors exactly what the Gemini model receives in its context "
-        "window.  Includes every Content turn, every Part, function call IDs, "
-        "and ``thought_signature`` bytes as hex strings.  "
+        "Returns the complete LLM call context as structured JSON, mirroring "
+        "exactly what the Gemini model received: the ``GenerateContentConfig`` "
+        "envelope (model, temperature, system_instruction, tool schemas) followed "
+        "by every ``Content`` turn from ``api_history_json``.\n\n"
+        "Key order: ``metadata`` → ``config`` → ``turns``\n\n"
         "Intended for debugging multi-turn tool-calling sessions."
     ),
 )
@@ -186,7 +188,7 @@ def export_session_llm(
     session_repo: SessionRepository = Depends(get_session_repo),
 ) -> LlmExportResponse:
     """
-    LLM-context debug export.
+    F04 — LLM-context debug export with GenerateContentConfig envelope.
 
     HTTP status codes:
       200 — export succeeded
@@ -199,6 +201,7 @@ def export_session_llm(
 
     return LlmExportResponse(
         metadata=LlmExportMetadata(**data["metadata"]),
+        config=LlmExportConfig(**data["config"]),
         turns=[LlmExportTurn(**turn) for turn in data["turns"]],
     )
 
