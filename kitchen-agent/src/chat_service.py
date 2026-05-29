@@ -15,14 +15,15 @@ All methods are synchronous — the FastAPI handler runs them inside
 """
 
 import json
-import logging
+import structlog
+
 
 from agent import process_chat_turn
 from db import DatabaseManager
 from prompt_logger import log_prompt
 from serializers import dehydrate_history, hydrate_history
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _make_title(ui_messages: list[dict]) -> str:

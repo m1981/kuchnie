@@ -18,7 +18,8 @@ Design notes
 """
 
 import base64
-import logging
+import structlog
+
 
 from dotenv import load_dotenv
 from google import genai
@@ -30,7 +31,7 @@ from src.tools.registry import DECLARATIONS, FUNCTION_MAP
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Gemini client & tool registry

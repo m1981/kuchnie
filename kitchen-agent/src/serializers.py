@@ -16,11 +16,12 @@ Limitations / design decisions
 """
 
 import json
-import logging
+import structlog
+
 
 from google.genai import types
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------

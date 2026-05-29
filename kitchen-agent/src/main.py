@@ -3,10 +3,11 @@ src/main.py
 ===========
 FastAPI application — HTTP layer only.
 """
-
+from src.logger import setup_logging
+import structlog
 import asyncio
 import json
-import logging
+
 from functools import partial
 from pathlib import Path
 
@@ -27,8 +28,8 @@ from schemas import (
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse
 )
 
-logger = logging.getLogger(__name__)
-
+setup_logging(is_local_dev=True)
+logger = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 # Application
 # ---------------------------------------------------------------------------
