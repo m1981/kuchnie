@@ -218,3 +218,92 @@ class PromptModeDetail(BaseModel):
     label: str
     eyebrow: str
     content: str
+
+
+# ---------------------------------------------------------------------------
+# Message Editor schemas — in-session message editing/deletion
+# ---------------------------------------------------------------------------
+
+class MessageEditRequest(BaseModel):
+    """
+    Request body for PATCH /api/sessions/{id}/messages/{index}.
+
+    new_content : Replacement text for the targeted message.
+                  Must be non-empty after stripping whitespace.
+    """
+    new_content: str
+
+
+class MessageEditResponse(BaseModel):
+    """
+    Response returned by PATCH /api/sessions/{id}/messages/{index}.
+
+    updated   : Always True on a 200 response.
+    ui_index  : The zero-based position that was edited (echoed back).
+    """
+    updated: bool
+    ui_index: int
+
+
+class MessageDeleteResponse(BaseModel):
+    """
+    Response returned by DELETE /api/sessions/{id}/messages/{index}.
+
+    deleted     : Always True on a 200 response.
+    ui_index    : The zero-based position that was deleted.
+    delete_pair : Whether the paired next message was also removed.
+    """
+    deleted: bool
+    ui_index: int
+    delete_pair: bool
+
+
+class TruncateRequest(BaseModel):
+    """
+    Request body for POST /api/sessions/{id}/messages/truncate.
+
+    n : Number of complete turn-pairs (user + assistant) to remove from the tail.
+        Must be >= 1.
+    """
+    n: int
+
+
+class TruncateResponse(BaseModel):
+    """
+    Response returned by POST /api/sessions/{id}/messages/truncate.
+
+    truncated     : Always True on a 200 response.
+    turns_removed : The value of ``n`` that was applied.
+    """
+    truncated: bool
+    turns_removed: int
+
+
+class SystemPromptUpdateRequest(BaseModel):
+    """
+    Request body for PATCH /api/sessions/{id}/system-prompt.
+
+    system_prompt : The new session-scoped system-prompt override.
+                    Empty string is valid (clears the override).
+    """
+    system_prompt: str
+
+
+class SystemPromptResponse(BaseModel):
+    """
+    Response returned by GET /api/sessions/{id}/system-prompt.
+
+    session_id    : The session UUID.
+    system_prompt : Current value stored in the DB (None if never set).
+    """
+    session_id: str
+    system_prompt: str | None
+
+
+class SystemPromptUpdateResponse(BaseModel):
+    """
+    Response returned by PATCH /api/sessions/{id}/system-prompt.
+
+    updated : Always True on a 200 response.
+    """
+    updated: bool

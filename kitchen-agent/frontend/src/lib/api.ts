@@ -137,6 +137,40 @@ export type LlmExportResponse = {
 };
 
 // ---------------------------------------------------------------------------
+// Message editor types (mirrors message_editor Pydantic models)
+// ---------------------------------------------------------------------------
+
+/** Response from PATCH /api/sessions/{id}/messages/{index} */
+export type MessageEditResponse = {
+	updated: boolean;
+	ui_index: number;
+};
+
+/** Response from DELETE /api/sessions/{id}/messages/{index} */
+export type MessageDeleteResponse = {
+	deleted: boolean;
+	ui_index: number;
+	delete_pair: boolean;
+};
+
+/** Response from POST /api/sessions/{id}/messages/truncate */
+export type TruncateResponse = {
+	truncated: boolean;
+	turns_removed: number;
+};
+
+/** Response from GET /api/sessions/{id}/system-prompt */
+export type SystemPromptResponse = {
+	session_id: string;
+	system_prompt: string | null;
+};
+
+/** Response from PATCH /api/sessions/{id}/system-prompt */
+export type SystemPromptUpdateResponse = {
+	updated: boolean;
+};
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -161,6 +195,14 @@ async function requestText(path: string, init?: RequestInit): Promise<string> {
 function json(body: unknown): RequestInit {
 	return {
 		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body)
+	};
+}
+
+function jsonPatch(body: unknown): RequestInit {
+	return {
+		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(body)
 	};
@@ -286,5 +328,59 @@ export const api = {
 	 * Useful during development when editing prompts/*.md files.
 	 */
 	reloadPrompts: (): Promise<{ success: boolean }> =>
-		request<{ success: boolean }>('/api/prompts/reload', { method: 'POST' })
+		request<{ success: boolean }>('/api/prompts/reload', { method: 'POST' }),
+
+	// -------------------------------------------------------------------------
+	// Message Editor — in-session message editing/deletion
+	// -------------------------------------------------------------------------
+
+	/**
+	 * PATCH /api/sessions/{id}/messages/{ui_index}
+	 * Replace the text content of a single message.
+	 * Both ui_history and api_history are updated atomically.
+	 */
+	editMessage: (sessionId: string, uiIndex: number, newContent: string) =>
+		request<MessageEditResponse>(
+			`/api/sessions/${sessionId}/messages/${uiIndex}`,
+			jsonPatch({ new_content: newContent })
+		),
+
+	/**
+	 * DELETE /api/sessions/{id}/messages/{ui_index}
+	 * Remove a message from the conversation.
+	 * Pass deletePair=true to also remove the next paired message.
+	 */
+	deleteMessage: (sessionId: string, uiIndex: number, deletePair = false) =>
+		request<MessageDeleteResponse>(
+			`/api/sessions/${sessionId}/messages/${uiIndex}?delete_pair=${deletePair}`,
+			{ method: 'DELETE' }
+		),
+
+	/**
+	 * POST /api/sessions/{id}/messages/truncate
+	 * Remove the last n complete turn-pairs from the conversation.
+	 */
+	truncateMessages: (sessionId: string, n: number) =>
+		request<TruncateResponse>(
+			`/api/sessions/${sessionId}/messages/truncate`,
+			json({ n })
+		),
+
+	/**
+	 * GET /api/sessions/{id}/system-prompt
+	 * Retrieve the session-scoped system prompt override (or null if unset).
+	 */
+	getSystemPrompt: (sessionId: string) =>
+		request<SystemPromptResponse>(`/api/sessions/${sessionId}/system-prompt`),
+
+	/**
+	 * PATCH /api/sessions/{id}/system-prompt
+	 * Set or clear the session-scoped system prompt override.
+	 * Empty string clears the override (reverts to mode-resolved prompt).
+	 */
+	updateSystemPrompt: (sessionId: string, systemPrompt: string) =>
+		request<SystemPromptUpdateResponse>(
+			`/api/sessions/${sessionId}/system-prompt`,
+			jsonPatch({ system_prompt: systemPrompt })
+		)
 };

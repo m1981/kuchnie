@@ -4,7 +4,7 @@
 	 * =============================
 	 * Pure layout wrapper. All business logic lives elsewhere:
 	 *
-	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images
+	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images, message editor
 	 *   $lib/stores/sessions.svelte.ts      — session tree, archive, delete
 	 *   $lib/actions/textSelection.ts       — mouseup → note-popup classification
 	 *   $lib/actions/pasteImage.ts          — Ctrl+V image capture
@@ -15,6 +15,7 @@
 	 *   - Wiring the textSelection action to the note popup $state
 	 *   - Wiring keyboard resize handlers to drag-handle buttons
 	 *   - Mounting child components with the correct props
+	 *   - Wiring the message editor and system prompt editor
 	 */
 
 	import { onMount } from 'svelte';
@@ -28,13 +29,15 @@
 	import type { PromptMode, Note }     from '$lib/api';
 	import type { ChatSelectionHit }     from '$lib/actions/textSelection';
 
-	import ChatHeader      from '$lib/components/ChatHeader.svelte';
-	import ChatMessageList from '$lib/components/ChatMessageList.svelte';
-	import ChatComposer    from '$lib/components/ChatComposer.svelte';
-	import PromptInspector from '$lib/components/PromptInspector.svelte';
-	import SessionTree     from '$lib/components/SessionTree.svelte';
-	import ContextSidebar  from '$lib/components/ContextSidebar.svelte';
-	import NotePopup       from '$lib/components/NotePopup.svelte';
+	import ChatHeader           from '$lib/components/ChatHeader.svelte';
+	import ChatMessageList      from '$lib/components/ChatMessageList.svelte';
+	import ChatComposer         from '$lib/components/ChatComposer.svelte';
+	import PromptInspector      from '$lib/components/PromptInspector.svelte';
+	import SessionTree          from '$lib/components/SessionTree.svelte';
+	import ContextSidebar       from '$lib/components/ContextSidebar.svelte';
+	import NotePopup            from '$lib/components/NotePopup.svelte';
+	import SystemPromptEditor   from '$lib/components/SystemPromptEditor.svelte';
+	import TruncateBar          from '$lib/components/TruncateBar.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Layout resize
@@ -78,6 +81,28 @@
 			label:   chatStore.selectedModeId,
 			eyebrow: '',
 		}
+	);
+
+	// Derived: true when the session has a non-empty system prompt override.
+	const hasSystemPromptOverride = $derived(
+		chatStore.sessionSystemPrompt !== null && chatStore.sessionSystemPrompt !== ''
+	);
+
+	// Derived: edit state helpers
+	const isEditSaving = $derived(chatStore.editState.status === 'loading');
+	const editError    = $derived(
+		chatStore.editState.status === 'error' ? chatStore.editState.message : ''
+	);
+	const isTruncating = $derived(chatStore.editState.status === 'loading');
+
+	// System prompt editor helpers
+	const isSystemPromptLoading = $derived(
+		chatStore.systemPromptState.status === 'loading'
+	);
+	const systemPromptError = $derived(
+		chatStore.systemPromptState.status === 'error'
+			? chatStore.systemPromptState.message
+			: ''
 	);
 
 	// ---------------------------------------------------------------------------
@@ -171,7 +196,9 @@
 			modeLabel={activeMode.label}
 			sessionId={chatStore.sessionId}
 			showRight={sidebarResize.showRight}
+			hasSystemPromptOverride={hasSystemPromptOverride}
 			ontoggleright={() => sidebarResize.toggleRight()}
+			oneditprompt={() => chatStore.openSystemPromptEditor()}
 		/>
 
 		<!-- Chat scroll area -->
@@ -204,10 +231,30 @@
 					</p>
 				{/if}
 
+				<!-- Truncate bar — quick turn removal (only shown when there are messages) -->
+				{#if chatStore.messages.length >= 2}
+					<TruncateBar
+						totalMessages={chatStore.messages.length}
+						isBusy={isTruncating}
+						errorMessage={editError ?? ''}
+						ontruncate={(n) => chatStore.truncateMessages(n)}
+					/>
+				{/if}
+
 				<ChatMessageList
 					messages={chatStore.messages}
 					isLoading={chatStore.chatState.status === 'loading'}
+					editingIndex={chatStore.editingIndex}
+					editDraft={chatStore.editDraft}
+					isSavingEdit={isEditSaving}
+					editErrorMessage={editError ?? ''}
 					onfork={(i) => chatStore.forkSession(i)}
+					onedit={(i) => chatStore.startEditing(i)}
+					ondelete={(i) => chatStore.deleteMessage(i, false)}
+					ondeletepair={(i) => chatStore.deleteMessage(i, true)}
+					onsaveedit={() => chatStore.saveEdit()}
+					oncanceledit={() => chatStore.cancelEditing()}
+					ondraftchange={(text) => chatStore.setEditDraft(text)}
 				/>
 			</div>
 		</section>
@@ -262,6 +309,23 @@
 			sessionId={chatStore.sessionId}
 			sourceRole={notePopup.sourceRole}
 			ondismiss={() => (notePopup = null)}
+		/>
+	{/if}
+
+	<!-- ===================================================================== -->
+	<!-- SYSTEM PROMPT EDITOR — floating modal                                 -->
+	<!-- ===================================================================== -->
+	{#if chatStore.systemPromptEditorOpen}
+		<SystemPromptEditor
+			draft={chatStore.systemPromptDraft}
+			isLoading={isSystemPromptLoading}
+			isSaving={isSystemPromptLoading}
+			errorMessage={systemPromptError ?? ''}
+			hasOverride={hasSystemPromptOverride}
+			onsave={() => chatStore.saveSystemPrompt()}
+			onclear={() => chatStore.clearSystemPrompt()}
+			onclose={() => chatStore.closeSystemPromptEditor()}
+			ondraftchange={(text) => chatStore.setSystemPromptDraft(text)}
 		/>
 	{/if}
 </div>

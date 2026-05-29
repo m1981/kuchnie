@@ -5,25 +5,80 @@
 	 * Renders the scrollable list of chat messages (user + assistant bubbles)
 	 * including tool logs, image previews, and the "Thinking…" loading state.
 	 *
+	 * Now includes per-message edit / delete controls that appear on hover.
+	 *
 	 * Fires:
-	 *   onfork(turnIndex: number)  — user clicked the ⎇ Fork button
+	 *   onfork(turnIndex: number)   — user clicked the ⎇ Fork button
+	 *   onedit(uiIndex: number)     — user clicked ✏️ Edit
+	 *   ondelete(uiIndex: number)   — user clicked 🗑 Delete (single)
+	 *   ondeletepair(uiIndex: number) — user clicked 🗑🗑 Delete with reply
 	 *
 	 * This component is purely presentational — it owns no async logic.
+	 * All state (editingIndex, editDraft, editState) comes from the parent.
 	 */
 
 	import type { Message, ToolLog } from '$lib/api';
 	import Markdown from './Markdown.svelte';
+	import MessageEditor from './MessageEditor.svelte';
 
 	type Props = {
 		messages: Message[];
 		isLoading: boolean;
+		editingIndex: number;
+		editDraft: string;
+		isSavingEdit: boolean;
+		editErrorMessage: string;
 		onfork: (turnIndex: number) => void;
+		onedit: (uiIndex: number) => void;
+		ondelete: (uiIndex: number) => void;
+		ondeletepair: (uiIndex: number) => void;
+		onsaveedit: () => void;
+		oncanceledit: () => void;
+		ondraftchange: (text: string) => void;
 	};
 
-	let { messages, isLoading, onfork }: Props = $props();
+	let {
+		messages,
+		isLoading,
+		editingIndex,
+		editDraft,
+		isSavingEdit,
+		editErrorMessage,
+		onfork,
+		onedit,
+		ondelete,
+		ondeletepair,
+		onsaveedit,
+		oncanceledit,
+		ondraftchange
+	}: Props = $props();
 
 	function formatToolResult(tool: ToolLog): string {
 		return (tool.result.content as string | undefined) ?? JSON.stringify(tool.result, null, 2);
+	}
+
+	/**
+	 * Returns true when this message has a following assistant reply,
+	 * so we can offer "Delete with reply" in the menu.
+	 */
+	function hasNextAssistant(msgIndex: number): boolean {
+		return (
+			messages[msgIndex]?.role === 'user' &&
+			messages[msgIndex + 1]?.role === 'assistant'
+		);
+	}
+
+	/** Confirm before destructive delete */
+	function confirmDelete(uiIndex: number) {
+		if (confirm('Delete this message from the conversation history?')) {
+			ondelete(uiIndex);
+		}
+	}
+
+	function confirmDeletePair(uiIndex: number) {
+		if (confirm('Delete this message AND the assistant reply from the conversation history?')) {
+			ondeletepair(uiIndex);
+		}
 	}
 </script>
 
@@ -31,7 +86,7 @@
 	{#each messages as msg, messageIndex (`${msg.role}-${messageIndex}`)}
 		<article
 			data-chat-bubble={msg.role}
-			class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
+			class="group/msg flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
 			aria-label={msg.role === 'user' ? 'User message' : 'Assistant message'}
 		>
 			<div
@@ -39,7 +94,7 @@
 					? 'max-w-[min(760px,88%)] rounded-md bg-ink px-4 py-3 text-white shadow-sm'
 					: 'w-full max-w-4xl rounded-md border border-line bg-panel p-4 shadow-sm'}
 			>
-				<!-- Role label + badges -->
+				<!-- Role label + badges + action buttons -->
 				<div class="mb-2 flex items-center justify-between gap-3">
 					<p
 						class={msg.role === 'user'
@@ -49,7 +104,7 @@
 						{msg.role === 'user' ? 'You' : 'Assistant'}
 					</p>
 
-					<div class="flex items-center gap-2">
+					<div class="flex items-center gap-1">
 						{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
 							<span
 								class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted"
@@ -57,13 +112,65 @@
 								{msg.tools.length} tools
 							</span>
 						{/if}
-						<button
-							onclick={() => onfork(messageIndex)}
-							title="Fork conversation from this turn"
-							class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-ink"
+
+						<!-- ── Per-message action buttons (visible on hover) ───────────── -->
+						<div
+							class="flex items-center gap-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100"
+							aria-label="Message actions"
 						>
-							⎇ Fork
-						</button>
+							<!-- Edit button -->
+							{#if editingIndex !== messageIndex}
+								<button
+									onclick={() => onedit(messageIndex)}
+									title="Edit this message"
+									aria-label="Edit message"
+									class="rounded px-1.5 py-0.5 text-xs transition
+										{msg.role === 'user'
+											? 'text-white/60 hover:bg-white/10 hover:text-white'
+											: 'text-muted hover:bg-line hover:text-ink'}"
+								>
+									✏️
+								</button>
+							{/if}
+
+							<!-- Delete button (single) -->
+							<button
+								onclick={() => confirmDelete(messageIndex)}
+								title="Delete this message"
+								aria-label="Delete message"
+								class="rounded px-1.5 py-0.5 text-xs transition
+									{msg.role === 'user'
+										? 'text-white/60 hover:bg-white/10 hover:text-white'
+										: 'text-muted hover:bg-line hover:text-red-600'}"
+							>
+								🗑
+							</button>
+
+							<!-- Delete pair button (user messages only, when a reply follows) -->
+							{#if hasNextAssistant(messageIndex)}
+								<button
+									onclick={() => confirmDeletePair(messageIndex)}
+									title="Delete this message and the assistant reply"
+									aria-label="Delete message and reply"
+									class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-red-600"
+								>
+									🗑🗑
+								</button>
+							{/if}
+
+							<!-- Fork button -->
+							<button
+								onclick={() => onfork(messageIndex)}
+								title="Fork conversation from this turn"
+								aria-label="Fork at this turn"
+								class="rounded px-1.5 py-0.5 text-xs transition
+									{msg.role === 'user'
+										? 'text-white/60 hover:bg-white/10 hover:text-white'
+										: 'text-muted hover:bg-line hover:text-ink'}"
+							>
+								⎇
+							</button>
+						</div>
 					</div>
 				</div>
 
@@ -80,10 +187,22 @@
 					</div>
 				{/if}
 
-				<Markdown content={msg.content} variant={msg.role} />
+				<!-- Message content or inline editor -->
+				{#if editingIndex === messageIndex}
+					<MessageEditor
+						draft={editDraft}
+						isSaving={isSavingEdit}
+						errorMessage={editErrorMessage}
+						onsave={onsaveedit}
+						oncancel={oncanceledit}
+						ondraftchange={ondraftchange}
+					/>
+				{:else}
+					<Markdown content={msg.content} variant={msg.role} />
+				{/if}
 
 				<!-- Tool logs -->
-				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
+				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0 && editingIndex !== messageIndex}
 					<div class="mt-4 space-y-2 border-t border-line pt-3">
 						<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
 							Tools used

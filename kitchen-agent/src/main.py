@@ -22,6 +22,7 @@ from fastapi.responses import PlainTextResponse
 
 from src.chat_service import ChatService
 from src.config import settings
+from src.message_editor import MessageEditService, EditError
 from src.prompt_manager import PromptManager, prompt_manager as _default_prompt_manager
 from src.tools.file_ops import append_to_file, revert_backup
 from src.tools.repo_map import get_repo_map
@@ -34,6 +35,11 @@ from src.schemas import (
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
     RevertResponse, PromptModeResponse, PromptModeDetail,
     LlmExportResponse, LlmExportMetadata, LlmExportConfig, LlmExportTurn,
+    # Message editor schemas
+    MessageEditRequest, MessageEditResponse,
+    MessageDeleteResponse,
+    TruncateRequest, TruncateResponse,
+    SystemPromptUpdateRequest, SystemPromptResponse, SystemPromptUpdateResponse,
 )
 from src.repositories import (
     SQLiteConnection,
@@ -95,6 +101,13 @@ def get_prompt_manager() -> PromptManager:
     occurs during the test suite.
     """
     return _default_prompt_manager
+
+
+def get_message_editor(
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> MessageEditService:
+    """FastAPI dependency: returns a MessageEditService wired to the Session Repo."""
+    return MessageEditService(session_repo)
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +291,175 @@ def delete_session(
         detail = str(exc)
         status = 409 if "child" in detail.lower() else 404
         raise HTTPException(status_code=status, detail=detail) from exc
+
+
+# ---------------------------------------------------------------------------
+# Message editing endpoints
+# ---------------------------------------------------------------------------
+
+@app.patch(
+    "/api/sessions/{session_id}/messages/{ui_index}",
+    response_model=MessageEditResponse,
+    summary="Edit a message in the conversation",
+    description=(
+        "Replace the text content of a single message at ``ui_index`` "
+        "(zero-based position in the UI message list).  Both the display layer "
+        "and the LLM API history are updated atomically.\n\n"
+        "Use this to fix typos, rephrase a question, or correct an assistant "
+        "answer — without restarting the conversation.\n\n"
+        "HTTP status codes:\n"
+        "  200 — edit applied\n"
+        "  400 — index out of range or content is blank\n"
+        "  404 — session not found"
+    ),
+)
+def edit_message(
+    session_id: str,
+    ui_index: int,
+    request: MessageEditRequest,
+    editor: MessageEditService = Depends(get_message_editor),
+) -> MessageEditResponse:
+    """Edit the content of a single chat message."""
+    try:
+        editor.edit_message(
+            session_id=session_id,
+            ui_index=ui_index,
+            new_content=request.new_content,
+        )
+    except EditError as exc:
+        detail = str(exc)
+        status = 404 if "not found" in detail else 400
+        raise HTTPException(status_code=status, detail=detail) from exc
+    return MessageEditResponse(updated=True, ui_index=ui_index)
+
+
+@app.delete(
+    "/api/sessions/{session_id}/messages/{ui_index}",
+    response_model=MessageDeleteResponse,
+    summary="Delete a message from the conversation",
+    description=(
+        "Remove the message at ``ui_index`` from the conversation history.  "
+        "Pass ``?delete_pair=true`` to also remove the immediately following "
+        "message (useful for removing a user+assistant turn together).\n\n"
+        "Both the display layer and the LLM API history are updated atomically.\n\n"
+        "HTTP status codes:\n"
+        "  200 — deletion applied\n"
+        "  400 — index out of range\n"
+        "  404 — session not found"
+    ),
+)
+def delete_message(
+    session_id: str,
+    ui_index: int,
+    delete_pair: bool = Query(False, description="Also delete the next paired message"),
+    editor: MessageEditService = Depends(get_message_editor),
+) -> MessageDeleteResponse:
+    """Delete a single chat message (optionally with its paired response)."""
+    try:
+        editor.delete_message(
+            session_id=session_id,
+            ui_index=ui_index,
+            delete_pair=delete_pair,
+        )
+    except EditError as exc:
+        detail = str(exc)
+        status = 404 if "not found" in detail else 400
+        raise HTTPException(status_code=status, detail=detail) from exc
+    return MessageDeleteResponse(deleted=True, ui_index=ui_index, delete_pair=delete_pair)
+
+
+@app.post(
+    "/api/sessions/{session_id}/messages/truncate",
+    response_model=TruncateResponse,
+    summary="Truncate the last N turn-pairs from the conversation",
+    description=(
+        "Remove the last ``n`` complete turn-pairs (user + assistant) from the "
+        "tail of the conversation.  Use this to trim context before sending a "
+        "new message, or to discard a sequence of bad LLM responses.\n\n"
+        "Both the display layer and the LLM API history are updated atomically.\n\n"
+        "HTTP status codes:\n"
+        "  200 — truncation applied\n"
+        "  400 — n < 1 or n exceeds available pairs\n"
+        "  404 — session not found"
+    ),
+)
+def truncate_messages(
+    session_id: str,
+    request: TruncateRequest,
+    editor: MessageEditService = Depends(get_message_editor),
+) -> TruncateResponse:
+    """Remove the last N turn-pairs from the conversation tail."""
+    try:
+        editor.truncate_turns(session_id=session_id, n=request.n)
+    except EditError as exc:
+        detail = str(exc)
+        status = 404 if "not found" in detail else 400
+        raise HTTPException(status_code=status, detail=detail) from exc
+    return TruncateResponse(truncated=True, turns_removed=request.n)
+
+
+# ---------------------------------------------------------------------------
+# Session-scoped system prompt override endpoints
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/sessions/{session_id}/system-prompt",
+    response_model=SystemPromptResponse,
+    summary="Get the session-scoped system prompt override",
+    description=(
+        "Returns the system prompt currently stored for this session.  "
+        "This is either the original prompt used when the session was created "
+        "or a user-applied override.\n\n"
+        "``null`` means no override has been set (the next chat turn will use "
+        "the PromptManager-resolved prompt for the selected mode).\n\n"
+        "HTTP status codes:\n"
+        "  200 — always succeeds for known sessions\n"
+        "  404 — session not found"
+    ),
+)
+def get_system_prompt(
+    session_id: str,
+    editor: MessageEditService = Depends(get_message_editor),
+) -> SystemPromptResponse:
+    """Retrieve the session-scoped system prompt (or null if unset)."""
+    try:
+        # Load via internal helper — raises EditError if not found.
+        from src.message_editor import _load_histories
+        _, _, system_prompt = _load_histories(editor._repo, session_id)
+    except EditError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return SystemPromptResponse(session_id=session_id, system_prompt=system_prompt)
+
+
+@app.patch(
+    "/api/sessions/{session_id}/system-prompt",
+    response_model=SystemPromptUpdateResponse,
+    summary="Override the session-scoped system prompt",
+    description=(
+        "Temporarily replace the system prompt for this specific session without "
+        "editing any ``.md`` file.  The change only affects **this session** — "
+        "other sessions and the PromptManager cache are unaffected.\n\n"
+        "The override takes effect on the **next** message sent in this session.  "
+        "Pass an empty string to clear the override (reverts to mode-resolved prompt).\n\n"
+        "HTTP status codes:\n"
+        "  200 — override applied\n"
+        "  404 — session not found"
+    ),
+)
+def update_system_prompt(
+    session_id: str,
+    request: SystemPromptUpdateRequest,
+    editor: MessageEditService = Depends(get_message_editor),
+) -> SystemPromptUpdateResponse:
+    """Set or clear the session-scoped system prompt override."""
+    try:
+        editor.update_system_prompt(
+            session_id=session_id,
+            system_prompt=request.system_prompt,
+        )
+    except EditError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return SystemPromptUpdateResponse(updated=True)
 
 
 # ---------------------------------------------------------------------------

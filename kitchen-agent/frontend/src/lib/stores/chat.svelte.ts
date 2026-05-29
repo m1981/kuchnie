@@ -14,6 +14,8 @@
  *   - Pasted image queue
  *   - Prompt mode list + detail (lazy-loaded, invalidated on mode change)
  *   - Status strings for fork feedback
+ *   - In-session message editing / deletion / truncation
+ *   - Session-scoped system-prompt override
  */
 
 import { api, type Message, type Note } from '$lib/api';
@@ -58,6 +60,24 @@ function createChatStore() {
 	// ── Context files ─────────────────────────────────────────────────────────
 	let contextFiles = $state<string[]>([]);
 
+	// ── Message editor ────────────────────────────────────────────────────────
+	/** Index currently being edited in the inline editor (-1 = none). */
+	let editingIndex   = $state<number>(-1);
+	/** Draft text while editing a message. */
+	let editDraft      = $state<string>('');
+	/** Async state for edit/delete/truncate operations. */
+	let editState      = $state<AsyncState<void>>({ status: 'idle' });
+
+	// ── System prompt editor ──────────────────────────────────────────────────
+	/** The session-scoped system prompt override loaded from the backend. */
+	let sessionSystemPrompt     = $state<string | null>(null);
+	/** Whether the system prompt editor panel is open. */
+	let systemPromptEditorOpen  = $state(false);
+	/** Draft while the user edits the system prompt. */
+	let systemPromptDraft       = $state<string>('');
+	/** Async state for system prompt save. */
+	let systemPromptState       = $state<AsyncState<void>>({ status: 'idle' });
+
 	// ---------------------------------------------------------------------------
 	// Public API
 	// ---------------------------------------------------------------------------
@@ -80,21 +100,47 @@ function createChatStore() {
 		get forkStatus()          { return forkStatus; },
 		get contextFiles()        { return contextFiles; },
 
+		// Message editor
+		get editingIndex()        { return editingIndex; },
+		get editDraft()           { return editDraft; },
+		get editState()           { return editState; },
+
+		// System prompt editor
+		get sessionSystemPrompt()    { return sessionSystemPrompt; },
+		get systemPromptEditorOpen() { return systemPromptEditorOpen; },
+		get systemPromptDraft()      { return systemPromptDraft; },
+		get systemPromptState()      { return systemPromptState; },
+
 		// ── Session ───────────────────────────────────────────────────────────
 
 		startNewChat() {
-			sessionId    = crypto.randomUUID();
-			messages     = [];
-			pastedImages = [];
-			chatState    = { status: 'idle' };
+			sessionId             = crypto.randomUUID();
+			messages              = [];
+			pastedImages          = [];
+			chatState             = { status: 'idle' };
+			editingIndex          = -1;
+			editDraft             = '';
+			editState             = { status: 'idle' };
+			sessionSystemPrompt   = null;
+			systemPromptDraft     = '';
+			systemPromptEditorOpen = false;
+			systemPromptState     = { status: 'idle' };
 		},
 
 		async loadSession(id: string) {
 			try {
 				const data = await api.getSession(id);
-				sessionId = id;
-				messages  = data.ui_messages ?? [];
-				chatState = { status: 'idle' };
+				sessionId    = id;
+				messages     = data.ui_messages ?? [];
+				chatState    = { status: 'idle' };
+				editingIndex = -1;
+				editDraft    = '';
+				editState    = { status: 'idle' };
+				// Reset system prompt editor
+				systemPromptEditorOpen = false;
+				systemPromptDraft      = '';
+				sessionSystemPrompt    = null;
+				systemPromptState      = { status: 'idle' };
 			} catch (e) {
 				console.error('Failed to load session', e);
 			}
@@ -250,6 +296,164 @@ function createChatStore() {
 				'',
 				lines.join('\n\n')
 			].join('\n');
+		},
+
+		// ── Message editor ────────────────────────────────────────────────────
+
+		/** Open the inline editor for message at ui_index. */
+		startEditing(uiIndex: number) {
+			if (uiIndex < 0 || uiIndex >= messages.length) return;
+			editingIndex = uiIndex;
+			editDraft    = messages[uiIndex].content;
+			editState    = { status: 'idle' };
+		},
+
+		/** Cancel inline edit without saving. */
+		cancelEditing() {
+			editingIndex = -1;
+			editDraft    = '';
+			editState    = { status: 'idle' };
+		},
+
+		/** Update the draft text while the user types in the inline editor. */
+		setEditDraft(text: string) {
+			editDraft = text;
+		},
+
+		/**
+		 * Save the current editDraft to the backend and update local state.
+		 * Closes the editor on success.
+		 */
+		async saveEdit() {
+			if (editingIndex < 0 || !editDraft.trim()) return;
+			editState = { status: 'loading' };
+			try {
+				await api.editMessage(sessionId, editingIndex, editDraft);
+				// Update local optimistic state
+				messages[editingIndex] = {
+					...messages[editingIndex],
+					content: editDraft
+				};
+				editingIndex = -1;
+				editDraft    = '';
+				editState    = { status: 'success', data: undefined };
+			} catch (e) {
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Edit failed.'
+				};
+			}
+		},
+
+		/**
+		 * Delete a single message.  Optionally deletes the paired next message.
+		 * Reloads the full session from the backend to stay in sync.
+		 */
+		async deleteMessage(uiIndex: number, deletePair = false) {
+			editState = { status: 'loading' };
+			try {
+				await api.deleteMessage(sessionId, uiIndex, deletePair);
+				// Reload messages from backend to get the authoritative state.
+				const data = await api.getSession(sessionId);
+				messages  = data.ui_messages ?? [];
+				editState = { status: 'success', data: undefined };
+			} catch (e) {
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Delete failed.'
+				};
+			}
+		},
+
+		/**
+		 * Truncate the last n turn-pairs from the conversation.
+		 * Reloads the session from the backend after truncation.
+		 */
+		async truncateMessages(n: number) {
+			if (n < 1) return;
+			editState = { status: 'loading' };
+			try {
+				await api.truncateMessages(sessionId, n);
+				const data = await api.getSession(sessionId);
+				messages  = data.ui_messages ?? [];
+				editState = { status: 'success', data: undefined };
+				await sessionStore.refresh();
+			} catch (e) {
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Truncate failed.'
+				};
+			}
+		},
+
+		// ── System prompt editor ──────────────────────────────────────────────
+
+		/**
+		 * Open the system prompt editor panel and load the current value from
+		 * the backend (or use the cached value if already loaded).
+		 */
+		async openSystemPromptEditor() {
+			systemPromptEditorOpen = true;
+			if (sessionSystemPrompt !== null) {
+				// Already loaded — just pre-fill the draft.
+				systemPromptDraft = sessionSystemPrompt ?? '';
+				return;
+			}
+			systemPromptState = { status: 'loading' };
+			try {
+				const data        = await api.getSystemPrompt(sessionId);
+				sessionSystemPrompt = data.system_prompt;
+				systemPromptDraft   = data.system_prompt ?? '';
+				systemPromptState   = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to load system prompt.'
+				};
+			}
+		},
+
+		closeSystemPromptEditor() {
+			systemPromptEditorOpen = false;
+		},
+
+		setSystemPromptDraft(text: string) {
+			systemPromptDraft = text;
+		},
+
+		/**
+		 * Save the system prompt draft to the backend.
+		 * Closes the editor panel on success.
+		 */
+		async saveSystemPrompt() {
+			systemPromptState = { status: 'loading' };
+			try {
+				await api.updateSystemPrompt(sessionId, systemPromptDraft);
+				sessionSystemPrompt    = systemPromptDraft;
+				systemPromptEditorOpen = false;
+				systemPromptState      = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to save system prompt.'
+				};
+			}
+		},
+
+		/** Clear the session-scoped system prompt override (revert to mode default). */
+		async clearSystemPrompt() {
+			systemPromptState = { status: 'loading' };
+			try {
+				await api.updateSystemPrompt(sessionId, '');
+				sessionSystemPrompt    = '';
+				systemPromptEditorOpen = false;
+				systemPromptState      = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to clear system prompt.'
+				};
+			}
 		}
 	};
 }
