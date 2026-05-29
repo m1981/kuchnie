@@ -3,29 +3,35 @@
 	 * SessionContextMenu
 	 * ==================
 	 * A ⋯ button that opens a small popover with per-session actions:
-	 *   Archive / Restore / Delete (with confirm step).
+	 *   Export Markdown / Export LLM JSON / Archive / Restore / Delete
 	 *
-	 * State machine: 'closed' | 'open' | 'confirming-delete'
+	 * State machine:
+	 *   'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm'
+	 *
 	 * No boolean flags — impossible states are unrepresentable.
+	 * Both export states share the same spinner UI; label differs by type.
 	 */
 	import { focusTrap } from '$lib/actions/focustrap';
 	import type { SessionNode } from '$lib/api';
 
-	type MenuState = 'closed' | 'open' | 'confirming-delete';
+	type MenuState = 'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm';
 
 	type Props = {
 		node: SessionNode;
 		onarchive: (id: string) => void;
 		onunarchive: (id: string) => void;
 		ondelete: (id: string) => void;
+		onexport: (id: string) => Promise<void>;
+		onexportllm: (id: string) => Promise<void>;
 	};
 
-	let { node, onarchive, onunarchive, ondelete }: Props = $props();
+	let { node, onarchive, onunarchive, ondelete, onexport, onexportllm }: Props = $props();
 
 	let menuState = $state<MenuState>('closed');
 	let errorMsg = $state('');
 
 	const isArchived = $derived(node.archived_at !== null);
+	const isBusy = $derived(menuState === 'exporting-md' || menuState === 'exporting-llm');
 
 	function open(e: MouseEvent) {
 		e.stopPropagation();
@@ -63,6 +69,32 @@
 		e.stopPropagation();
 		menuState = 'open';
 	}
+
+	async function handleExport(e: MouseEvent) {
+		e.stopPropagation();
+		menuState = 'exporting-md';
+		errorMsg = '';
+		try {
+			await onexport(node.id);
+			menuState = 'closed';
+		} catch (err) {
+			errorMsg = `Export failed: ${err instanceof Error ? err.message : String(err)}`;
+			menuState = 'open';
+		}
+	}
+
+	async function handleExportLlm(e: MouseEvent) {
+		e.stopPropagation();
+		menuState = 'exporting-llm';
+		errorMsg = '';
+		try {
+			await onexportllm(node.id);
+			menuState = 'closed';
+		} catch (err) {
+			errorMsg = `LLM export failed: ${err instanceof Error ? err.message : String(err)}`;
+			menuState = 'open';
+		}
+	}
 </script>
 
 <!-- Click-outside backdrop (invisible, closes menu) -->
@@ -73,28 +105,68 @@
 {/if}
 
 <div class="relative">
+	<!-- ⋯ trigger button — shows spinner while either export is in flight -->
 	<button
 		onclick={open}
 		title="Session options"
 		aria-label="Session options"
 		aria-expanded={menuState !== 'closed'}
-		class="flex h-5 w-5 items-center justify-center rounded text-muted opacity-45 transition
+		disabled={isBusy}
+		class="flex h-5 w-5 items-center justify-center rounded text-muted transition
 		       group-hover:opacity-100 hover:bg-line hover:text-ink focus:opacity-100 focus:outline-none
-		       {menuState !== 'closed' ? 'opacity-100' : ''}"
+		       {menuState !== 'closed' ? 'opacity-100' : 'opacity-45'}
+		       disabled:cursor-wait disabled:opacity-60"
 	>
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-			<circle cx="8" cy="3" r="1.4" />
-			<circle cx="8" cy="8" r="1.4" />
-			<circle cx="8" cy="13" r="1.4" />
-		</svg>
+		{#if isBusy}
+			<svg
+				class="animate-spin"
+				width="12"
+				height="12"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2.5"
+				aria-hidden="true"
+			>
+				<circle cx="12" cy="12" r="9" stroke-opacity="0.25" />
+				<path d="M12 3 A9 9 0 0 1 21 12" />
+			</svg>
+		{:else}
+			<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+				<circle cx="8" cy="3" r="1.4" />
+				<circle cx="8" cy="8" r="1.4" />
+				<circle cx="8" cy="13" r="1.4" />
+			</svg>
+		{/if}
 	</button>
 
 	{#if menuState === 'open'}
 		<div
 			use:focusTrap
-			class="absolute right-0 top-6 z-40 min-w-[148px] rounded-lg border border-line bg-panel
+			class="absolute right-0 top-6 z-40 min-w-[178px] rounded-lg border border-line bg-panel
 			       py-1 shadow-lg"
 		>
+			<!-- Export Markdown -->
+			<button
+				onclick={handleExport}
+				class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink
+				       hover:bg-surface"
+			>
+				<span aria-hidden="true">⬇</span> Export Markdown
+			</button>
+
+			<!-- Export LLM JSON -->
+			<button
+				onclick={handleExportLlm}
+				class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink
+				       hover:bg-surface"
+			>
+				<span aria-hidden="true">⬇</span> Export LLM JSON
+			</button>
+
+			<div class="my-1 border-t border-line"></div>
+
+			<!-- Archive / Restore -->
 			<button
 				onclick={handleArchive}
 				class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink
@@ -109,6 +181,7 @@
 
 			<div class="my-1 border-t border-line"></div>
 
+			<!-- Delete -->
 			<button
 				onclick={startDelete}
 				class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-red-600
@@ -116,6 +189,13 @@
 			>
 				<span aria-hidden="true">🗑</span> Delete…
 			</button>
+
+			<!-- Inline error -->
+			{#if errorMsg}
+				<div class="border-t border-line px-3 py-2">
+					<p class="text-xs text-red-600">{errorMsg}</p>
+				</div>
+			{/if}
 		</div>
 	{/if}
 

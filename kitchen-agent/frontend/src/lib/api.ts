@@ -78,6 +78,27 @@ export type ChatResponse = {
 };
 
 // ---------------------------------------------------------------------------
+// LLM debug export types (mirrors LlmExportResponse Pydantic model)
+// ---------------------------------------------------------------------------
+
+export type LlmExportMetadata = {
+	session_id: string;
+	title: string;
+	turn_count: number;
+	export_timestamp: string; // ISO 8601 UTC
+};
+
+export type LlmExportTurn = {
+	role: string;
+	parts: Record<string, unknown>[];
+};
+
+export type LlmExportResponse = {
+	metadata: LlmExportMetadata;
+	turns: LlmExportTurn[];
+};
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -118,8 +139,21 @@ export const api = {
 	getSession: (id: string) =>
 		request<{ ui_messages: Message[] }>(`/api/sessions/${id}`),
 
-	exportSession: (id: string) =>
+	/**
+	 * GET /api/sessions/{id}/export
+	 * Returns the session as a human-readable Markdown string.
+	 * Content-Type: text/markdown
+	 */
+	exportSession: (id: string): Promise<string> =>
 		requestText(`/api/sessions/${id}/export`),
+
+	/**
+	 * GET /api/sessions/{id}/export/llm
+	 * Returns the raw LLM context window as structured JSON.
+	 * Useful for debugging multi-turn tool-calling sessions.
+	 */
+	exportSessionLlm: (id: string): Promise<LlmExportResponse> =>
+		request<LlmExportResponse>(`/api/sessions/${id}/export/llm`),
 
 	forkSession: (id: string, turnIndex: number) =>
 		request<{ new_session_id: string }>(

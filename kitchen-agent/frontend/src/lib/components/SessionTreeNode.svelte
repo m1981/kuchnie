@@ -10,7 +10,7 @@
 	 *   - Archived node  → dimmed + italic title.
 	 *   - Fork indicator → small ⎇ badge with fork_turn_index.
 	 *   - Children       → indented below with a subtle tree line.
-	 *   - ⋯ context menu → archive / restore / delete.
+	 *   - ⋯ context menu → export md / export llm json / archive / restore / delete.
 	 */
 	import SessionContextMenu from './SessionContextMenu.svelte';
 	import SessionTreeNode from './SessionTreeNode.svelte';
@@ -24,9 +24,11 @@
 		onarchive: (id: string) => void;
 		onunarchive: (id: string) => void;
 		ondelete: (id: string) => void;
+		onexport: (id: string) => Promise<void>;
+		onexportllm: (id: string) => Promise<void>;
 	};
 
-	let { node, depth = 0, activeId, onload, onarchive, onunarchive, ondelete }: Props = $props();
+	let { node, depth = 0, activeId, onload, onarchive, onunarchive, ondelete, onexport, onexportllm }: Props = $props();
 
 	let expanded = $state(false);
 
@@ -128,7 +130,7 @@
 		{/if}
 
 		<!-- Context menu -->
-		<SessionContextMenu {node} {onarchive} {onunarchive} {ondelete} />
+		<SessionContextMenu {node} {onarchive} {onunarchive} {ondelete} {onexport} {onexportllm} />
 	</div>
 
 	<!-- ── Children ──────────────────────────────────────────────────────── -->
@@ -150,6 +152,8 @@
 					{onarchive}
 					{onunarchive}
 					{ondelete}
+					{onexport}
+					{onexportllm}
 				/>
 			{/each}
 		</div>

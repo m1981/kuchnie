@@ -140,21 +140,6 @@
 		}
 	}
 
-	async function exportSession() {
-		try {
-			const md   = await api.exportSession(sessionId);
-			const blob = new Blob([md], { type: 'text/markdown' });
-			const url  = URL.createObjectURL(blob);
-			const a    = document.createElement('a');
-			a.href     = url;
-			a.download = `session-${sessionId.substring(0, 8)}.md`;
-			a.click();
-			URL.revokeObjectURL(url);
-		} catch (e) {
-			console.error('Export failed:', e);
-		}
-	}
-
 	// ---------------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------------
@@ -420,17 +405,10 @@
 
 		<button
 			onclick={startNewChat}
-			class="mb-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
+			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
 		>
 			<span aria-hidden="true">+</span>
 			New chat
-		</button>
-
-		<button
-			onclick={exportSession}
-			class="mb-5 flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-line bg-surface px-3 text-xs font-semibold text-muted shadow-sm transition hover:border-accent hover:text-ink"
-		>
-			⬇ Export session
 		</button>
 
 		<!-- Session tree (replaces flat list) -->

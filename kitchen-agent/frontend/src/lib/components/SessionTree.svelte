@@ -3,13 +3,13 @@
 	 * SessionTree
 	 * ============
 	 * Renders the full session forest from the sessionStore and wires up
-	 * all tree-level callbacks (load, archive, unarchive, delete).
+	 * all tree-level callbacks (load, archive, unarchive, delete, export).
 	 *
 	 * Props:
-	 *   activeId    — currently loaded session ID (for highlight).
-	 *   onload      — called when user clicks a session title.
-	 *   onnewsession — called when user clicks "New chat".
+	 *   activeId — currently loaded session ID (for highlight).
+	 *   onload   — called when user clicks a session title.
 	 */
+	import { api } from '$lib/api';
 	import { sessionStore } from '$lib/stores/sessions.svelte';
 	import SessionTreeNode from './SessionTreeNode.svelte';
 
@@ -29,6 +29,35 @@
 		clearTimeout(opErrorTimer);
 		opError = msg;
 		opErrorTimer = setTimeout(() => (opError = ''), 4000);
+	}
+
+	// ── Shared filename helper ────────────────────────────────────────────────
+	/**
+	 * Derives a safe filesystem filename stem from the session's title.
+	 * Strips path-unsafe characters, collapses whitespace, lowercases, caps at 64 chars.
+	 * Falls back to the short session ID when no title is set.
+	 */
+	function safeFilename(id: string): string {
+		const node = sessionStore.flat.find((n) => n.id === id);
+		const rawTitle = node?.title ?? id.slice(0, 8);
+		return rawTitle
+			.replace(/[/\\:*?"<>|]/g, '')
+			.replace(/\s+/g, '-')
+			.slice(0, 64)
+			.toLowerCase();
+	}
+
+	/** Trigger a browser file download from an in-memory string. */
+	function triggerDownload(content: string, filename: string, mimeType: string): void {
+		const blob = new Blob([content], { type: mimeType });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
 	}
 
 	// ── Handlers passed to every SessionTreeNode ─────────────────────────────
@@ -52,12 +81,43 @@
 		try {
 			await sessionStore.delete(id);
 		} catch (e) {
-			// 409 = has children; surface a clear message.
 			const msg = String(e).includes('child')
 				? 'Delete children first before deleting this session.'
 				: `Delete failed: ${e}`;
 			showError(msg);
 		}
+	}
+
+	/**
+	 * GET /api/sessions/{id}/export
+	 * Downloads the human-readable Markdown export (from ui_history_json).
+	 * Throws on API error — SessionContextMenu surfaces it inline.
+	 */
+	async function handleExport(id: string): Promise<void> {
+		const markdown = await api.exportSession(id);
+		triggerDownload(
+			markdown,
+			`${safeFilename(id)}.md`,
+			'text/markdown;charset=utf-8'
+		);
+	}
+
+	/**
+	 * GET /api/sessions/{id}/export/llm
+	 * Downloads the raw LLM context window as a pretty-printed JSON file
+	 * (from api_history_json) — every Content turn, Part, function call ID,
+	 * and thought_signature hex exactly as Gemini received them.
+	 * Throws on API error — SessionContextMenu surfaces it inline.
+	 */
+	async function handleExportLlm(id: string): Promise<void> {
+		const data = await api.exportSessionLlm(id);
+		// Pretty-print so the file is immediately human-readable in any text editor.
+		const json = JSON.stringify(data, null, 2);
+		triggerDownload(
+			json,
+			`${safeFilename(id)}.llm.json`,
+			'application/json;charset=utf-8'
+		);
 	}
 
 	// Derived counts for the header badges.
@@ -127,6 +187,8 @@
 					onarchive={handleArchive}
 					onunarchive={handleUnarchive}
 					ondelete={handleDelete}
+					onexport={handleExport}
+					onexportllm={handleExportLlm}
 				/>
 			{/each}
 		</div>
@@ -168,6 +230,8 @@
 								onarchive={handleArchive}
 								onunarchive={handleUnarchive}
 								ondelete={handleDelete}
+								onexport={handleExport}
+								onexportllm={handleExportLlm}
 							/>
 						{/each}
 					</div>
