@@ -31,7 +31,7 @@ from src.schemas import (
     ChatRequest, ChatResponse, ForkRequest, ForkResponse,
     SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
-    RevertResponse,
+    RevertResponse, LlmExportResponse, LlmExportMetadata, LlmExportTurn,
 )
 from src.repositories import (
     SQLiteConnection,
@@ -156,11 +156,51 @@ def export_session(
     session_id: str,
     session_repo: SessionRepository = Depends(get_session_repo),
 ) -> PlainTextResponse:
+    """
+    Exports the session as a human-readable Markdown document.
+
+    Uses ``ui_history_json`` — the pretty, tool-summarised UI representation.
+    Suitable for archiving, sharing or reading.
+    """
     try:
         markdown = session_repo.export_session(session_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return PlainTextResponse(content=markdown, media_type="text/markdown")
+
+
+@app.get(
+    "/api/sessions/{session_id}/export/llm",
+    response_model=LlmExportResponse,
+    summary="Export session as raw LLM context (debug)",
+    description=(
+        "Returns the raw ``api_history_json`` in a structured JSON format "
+        "that mirrors exactly what the Gemini model receives in its context "
+        "window.  Includes every Content turn, every Part, function call IDs, "
+        "and ``thought_signature`` bytes as hex strings.  "
+        "Intended for debugging multi-turn tool-calling sessions."
+    ),
+)
+def export_session_llm(
+    session_id: str,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> LlmExportResponse:
+    """
+    LLM-context debug export.
+
+    HTTP status codes:
+      200 — export succeeded
+      404 — session not found
+    """
+    try:
+        data = session_repo.export_session_llm_json(session_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return LlmExportResponse(
+        metadata=LlmExportMetadata(**data["metadata"]),
+        turns=[LlmExportTurn(**turn) for turn in data["turns"]],
+    )
 
 
 @app.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)

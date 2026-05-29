@@ -10,10 +10,10 @@ import sqlite3
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from src.config import settings
-from src.exporter import export_session_to_markdown
+from src.exporter import export_session_to_llm_json, export_session_to_markdown
 
 LEGACY_FORK_TITLE_RE = re.compile(r"^(?P<parent_title>.+) \(fork @ turn (?P<turn>\d+)\)$")
 
@@ -31,6 +31,7 @@ class SessionRepository(Protocol):
     def delete_session(self, session_id: str) -> None: ...
     def fork_session(self, source_session_id: str, turn_index: int) -> str: ...
     def export_session(self, session_id: str) -> str: ...
+    def export_session_llm_json(self, session_id: str) -> dict[str, Any]: ...
 
 
 class NoteRepository(Protocol):
@@ -251,6 +252,7 @@ class SQLiteSessionRepository:
         return new_id
 
     def export_session(self, session_id: str) -> str:
+        """Exports the session as a human-readable Markdown document."""
         with self.db.get_connection() as conn:
             row = conn.execute("SELECT title, ui_history_json FROM sessions WHERE id = ?", (session_id,)).fetchone()
 
@@ -260,6 +262,43 @@ class SQLiteSessionRepository:
         title: str = row["title"] or ""
         ui_messages: list[dict] = json.loads(row["ui_history_json"]) if row["ui_history_json"] else []
         return export_session_to_markdown(ui_messages, title)
+
+    def export_session_llm_json(self, session_id: str) -> dict[str, Any]:
+        """
+        Exports the raw LLM context as a structured JSON document.
+
+        Returns the ``api_history_json`` in a debug-friendly format that
+        mirrors exactly what the Gemini model receives in its context window.
+        Includes every Content turn, every Part, function call IDs, and
+        ``thought_signature`` bytes as hex strings.
+
+        Args:
+            session_id: The session UUID to export.
+
+        Returns:
+            A dict with ``metadata`` and ``turns`` keys.
+
+        Raises:
+            ValueError: When the session does not exist.
+        """
+        with self.db.get_connection() as conn:
+            row = conn.execute(
+                "SELECT title, api_history_json FROM sessions WHERE id = ?",
+                (session_id,),
+            ).fetchone()
+
+        if row is None:
+            raise ValueError(f"Session not found: {session_id}")
+
+        title: str = row["title"] or ""
+        raw_json: str = row["api_history_json"] or "[]"
+        api_items: list[dict] = json.loads(raw_json) if raw_json.strip() else []
+
+        return export_session_to_llm_json(
+            api_items=api_items,
+            title=title,
+            session_id=session_id,
+        )
 
 
 class SQLiteNoteRepository:

@@ -114,3 +114,44 @@ class NoteResponse(BaseModel):
     note: str
     source_role: str
     created_at: str
+
+
+# ---------------------------------------------------------------------------
+# LLM-context debug export schemas
+# ---------------------------------------------------------------------------
+
+class LlmExportMetadata(BaseModel):
+    """Metadata block for the LLM debug export."""
+    session_id: str
+    title: str
+    turn_count: int
+    export_timestamp: str  # ISO 8601 UTC
+
+
+class LlmExportPart(BaseModel):
+    """
+    One Part inside a turn.
+
+    ``type`` is one of: ``"text"``, ``"function_call"``,
+    ``"function_response"``, ``"unknown_part"``.
+    The remaining keys depend on the type (open-ended to handle future types).
+    """
+    type: str
+    model_config = {"extra": "allow"}
+
+
+class LlmExportTurn(BaseModel):
+    """One Content turn as the LLM sees it."""
+    role: str
+    parts: list[dict[str, Any]]  # keep as raw dicts — structure varies by type
+
+
+class LlmExportResponse(BaseModel):
+    """
+    Response returned by GET /api/sessions/{id}/export/llm.
+
+    metadata : Session info and export timestamp.
+    turns    : Ordered list of every Content turn in the LLM context window.
+    """
+    metadata: LlmExportMetadata
+    turns: list[LlmExportTurn]
