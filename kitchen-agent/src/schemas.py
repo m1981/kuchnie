@@ -86,6 +86,21 @@ class FileListItem(BaseModel):
     name: str
 
 
+# ---------------------------------------------------------------------------
+# F03 — Snapshot / Revert schemas
+# ---------------------------------------------------------------------------
+
+class RevertResponse(BaseModel):
+    """
+    Response returned by POST /api/files/revert/{revert_id}.
+
+    success : Always True on a 200 response (errors become HTTP 4xx).
+    message : Human-readable description, e.g. "Reverted changes to notes.md".
+    """
+    success: bool
+    message: str
+
+
 class NoteCreateRequest(BaseModel):
     selected_text: str
     source_role: str  # "user" | "assistant"

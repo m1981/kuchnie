@@ -22,15 +22,16 @@ from fastapi.responses import PlainTextResponse
 
 from src.chat_service import ChatService
 from src.config import settings
-from src.tools.file_ops import append_to_file
+from src.tools.file_ops import append_to_file, revert_backup
 from src.tools.repo_map import get_repo_map
 from src.logger import setup_logging
 
-# --- NEW: Clean imports for Schemas and Repositories ---
+# --- Clean imports for Schemas and Repositories ---
 from src.schemas import (
     ChatRequest, ChatResponse, ForkRequest, ForkResponse,
     SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
-    FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse
+    FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
+    RevertResponse,
 )
 from src.repositories import (
     SQLiteConnection,
@@ -260,6 +261,74 @@ def append_to_file_endpoint(request: FileAppendRequest) -> dict:
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
+
+
+@app.post(
+    "/api/files/revert/{revert_id}",
+    response_model=RevertResponse,
+    summary="Revert a file mutation made by the agent",
+    description=(
+        "Restores the file to its pre-mutation state using the snapshot "
+        "identified by *revert_id*.  The backup is deleted after a successful "
+        "revert so the same ID cannot be used twice."
+    ),
+)
+def revert_file_edit(revert_id: str) -> RevertResponse:
+    """
+    F03 — API-Native Snapshot Pattern.
+
+    Reads the backup JSON stored at ``settings.data_dir/.backups/{revert_id}.json``,
+    validates that the target path is inside ``data_dir`` (path-traversal guard),
+    and restores the file.
+
+    HTTP status codes:
+      200 — revert succeeded
+      400 — backup is malformed, or the stored path is outside data_dir
+      404 — no backup found for this revert_id
+    """
+    backup_file = settings.data_dir / ".backups" / f"{revert_id}.json"
+
+    if not backup_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Backup not found or already reverted: {revert_id}",
+        )
+
+    # --- Parse backup JSON ---------------------------------------------------
+    try:
+        import json as _json
+        state = _json.loads(backup_file.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Backup file is malformed: {exc}",
+        ) from exc
+
+    # --- Path-traversal guard on the stored filepath ------------------------
+    stored_filepath: str = state.get("filepath", "")
+    try:
+        target_resolved = Path(stored_filepath).resolve()
+        data_dir_resolved = settings.data_dir.resolve()
+        if not str(target_resolved).startswith(str(data_dir_resolved)):
+            raise HTTPException(
+                status_code=400,
+                detail="Backup references a path outside the data directory.",
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not validate backup path: {exc}",
+        ) from exc
+
+    # --- Delegate restore to the service layer ------------------------------
+    result = revert_backup(revert_id=revert_id, backup_dir=settings.data_dir)
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return RevertResponse(success=result["success"], message=result["message"])
 
 
 @app.get("/api/repo-map")

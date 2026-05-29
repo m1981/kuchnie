@@ -5,17 +5,31 @@ File-system tool implementations executed by the agent.
 
 All functions return a plain dict so they can be sent directly back to the
 Gemini function-calling API.  Two keys are used:
-  {"content": str}  — success with a string payload
-  {"success": str}  — success with a status message
-  {"error":   str}  — failure; the agent will see the reason
+  {"content":   str}  — success with a string payload
+  {"success":   str}  — success with a status message
+  {"error":     str}  — failure; the agent will see the reason
+
+Backup / Revert (F03 — API-Native Snapshot Pattern)
+----------------------------------------------------
+Every mutating tool (edit_file, create_file, append_to_file) optionally
+accepts a *backup_dir* keyword argument.  When provided the function:
+  1. Saves the pre-mutation state to  backup_dir/.backups/<uuid>.json
+  2. Returns  {"revert_id": "<uuid>"}  alongside the normal success key
+
+The caller (FastAPI route in main.py) injects settings.data_dir as
+backup_dir, keeping this module decoupled from settings.
+
+Use revert_backup(revert_id, backup_dir) to atomically restore a file.
 """
 
+import json
 import re
+import uuid
 from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Internal helpers
 # ---------------------------------------------------------------------------
 
 def _read_path(filepath: str) -> tuple[Path, dict | None]:
@@ -27,6 +41,101 @@ def _read_path(filepath: str) -> tuple[Path, dict | None]:
     if not p.exists():
         return p, {"error": f"File not found: {filepath}"}
     return p, None
+
+
+# ---------------------------------------------------------------------------
+# F03 — Backup / Snapshot helpers
+# ---------------------------------------------------------------------------
+
+def _create_backup(target_path: Path, backup_dir: Path) -> str:
+    """
+    Saves the *current* state of *target_path* into
+    ``backup_dir/.backups/<uuid>.json`` and returns the revert_id (UUID string).
+
+    The JSON envelope contains:
+      - filepath : str    — posix path of the target file (as stored, not resolved)
+      - existed  : bool   — whether the file existed at snapshot time
+      - content  : str|None — full text content, or None when the file didn't exist
+
+    Design decisions:
+      - filepath is stored as-is (posix) so it survives cross-platform moves.
+      - The backup_dir is always injected by the caller; this function has no
+        dependency on ``settings`` and is therefore trivially unit-testable.
+    """
+    backup_id = str(uuid.uuid4())
+    backup_folder = backup_dir / ".backups"
+    backup_folder.mkdir(parents=True, exist_ok=True)
+
+    state = {
+        "filepath": target_path.as_posix(),
+        "existed": target_path.exists(),
+        "content": (
+            target_path.read_text(encoding="utf-8") if target_path.exists() else None
+        ),
+    }
+
+    (backup_folder / f"{backup_id}.json").write_text(
+        json.dumps(state), encoding="utf-8"
+    )
+    return backup_id
+
+
+def revert_backup(revert_id: str, backup_dir: Path) -> dict:
+    """
+    Reads the backup snapshot identified by *revert_id* and restores the file.
+
+    Behaviour:
+      - existed=True  → write original content back to the file
+      - existed=False → delete the file (it was created by the agent)
+      - If the file to delete is already gone, that is treated as a no-op
+        (idempotent success) because the end-state is correct.
+
+    Cleanup:
+      - The backup JSON is deleted ONLY after a successful restore so that a
+        failed restore (e.g. disk full) can still be retried.
+
+    Returns:
+      {"success": True, "message": str}  on success
+      {"error": str}                      on failure (never raises)
+    """
+    backup_file = backup_dir / ".backups" / f"{revert_id}.json"
+
+    if not backup_file.exists():
+        return {"error": f"Backup not found or already reverted: {revert_id}"}
+
+    # --- Parse backup JSON ---------------------------------------------------
+    try:
+        state = json.loads(backup_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        return {"error": f"Backup file is malformed or unreadable: {exc}"}
+
+    target_path = Path(state["filepath"])
+    existed: bool = state["existed"]
+    content: str | None = state["content"]
+
+    # --- Restore -------------------------------------------------------------
+    try:
+        if existed:
+            # Restore original content (covers edit_file and append_to_file)
+            target_path.write_text(content or "", encoding="utf-8")
+        else:
+            # The file was created by the agent — reverting means deleting it
+            if target_path.exists():
+                target_path.unlink()
+            # If already gone: no-op; the desired post-revert state is met
+    except OSError as exc:
+        return {"error": f"Failed to restore {target_path.name}: {exc}"}
+
+    # --- Clean up backup (only on success) -----------------------------------
+    try:
+        backup_file.unlink()
+    except OSError:
+        pass  # Best-effort cleanup; not fatal
+
+    return {
+        "success": True,
+        "message": f"Reverted changes to {target_path.name}",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -44,12 +153,21 @@ def read_file(filepath: str) -> dict:
         return {"error": str(exc)}
 
 
-def edit_file(filepath: str, search_text: str, replace_text: str) -> dict:
+def edit_file(
+    filepath: str,
+    search_text: str,
+    replace_text: str,
+    backup_dir: Path | None = None,
+) -> dict:
     """
     Safely edits a file using exact search-and-replace.
 
     Returns an error when *search_text* is not found so the agent can
     re-read the file before trying again — preventing accidental data loss.
+
+    When *backup_dir* is provided the pre-edit state is snapshotted and the
+    response includes a ``revert_id`` key that the frontend can use to undo
+    the change.
     """
     p, err = _read_path(filepath)
     if err:
@@ -67,44 +185,87 @@ def edit_file(filepath: str, search_text: str, replace_text: str) -> dict:
             )
         }
 
+    # Snapshot BEFORE mutating (only when a backup destination is provided)
+    revert_id: str | None = None
+    if backup_dir is not None:
+        revert_id = _create_backup(target_path=p, backup_dir=backup_dir)
+
     p.write_text(content.replace(search_text, replace_text), encoding="utf-8")
-    return {"success": f"Successfully updated {filepath}."}
+
+    result: dict = {"success": f"Successfully updated {filepath}."}
+    if revert_id is not None:
+        result["revert_id"] = revert_id
+    return result
 
 
-def create_file(filepath: str, content: str) -> dict:
+def create_file(
+    filepath: str,
+    content: str,
+    backup_dir: Path | None = None,
+) -> dict:
     """
     Creates a new file with the given content.
 
     Refuses to overwrite an existing file — the agent must use edit_file
     for updates.
+
+    When *backup_dir* is provided a snapshot is taken (recording that the
+    file did not exist) so the creation can be reverted by deleting the file.
     """
     p = Path(filepath)
     if p.exists():
         return {"error": f"File already exists at {filepath}. Use edit_file instead."}
+
+    # Snapshot BEFORE creating (records existed=False)
+    revert_id: str | None = None
+    if backup_dir is not None:
+        revert_id = _create_backup(target_path=p, backup_dir=backup_dir)
+
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(content, encoding="utf-8")
-        return {"success": f"Successfully created {filepath}."}
     except OSError as exc:
         return {"error": str(exc)}
 
+    result: dict = {"success": f"Successfully created {filepath}."}
+    if revert_id is not None:
+        result["revert_id"] = revert_id
+    return result
 
-def append_to_file(filepath: str, content: str) -> dict:
+
+def append_to_file(
+    filepath: str,
+    content: str,
+    backup_dir: Path | None = None,
+) -> dict:
     """
     Appends *content* to an existing file (or creates it when absent).
 
     Used by the UI's "Highlight → Add to Docs" feature and exposed as a
     REST endpoint; NOT exposed to the LLM as a tool.
+
+    When *backup_dir* is provided the pre-append state is snapshotted
+    (or the non-existence of the file is recorded) for revert support.
     """
     p = Path(filepath)
+
+    # Snapshot BEFORE mutating (backup_dir opt-in)
+    revert_id: str | None = None
+    if backup_dir is not None:
+        revert_id = _create_backup(target_path=p, backup_dir=backup_dir)
+
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("a", encoding="utf-8") as f:
             # Ensure a blank line separates existing content from the snippet.
             f.write("\n" + content)
-        return {"success": f"Successfully appended to {filepath}."}
     except OSError as exc:
         return {"error": str(exc)}
+
+    result: dict = {"success": f"Successfully appended to {filepath}."}
+    if revert_id is not None:
+        result["revert_id"] = revert_id
+    return result
 
 
 def search_knowledge_base(query: str, base_dir: str = "data") -> dict:
