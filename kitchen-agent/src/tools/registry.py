@@ -56,35 +56,16 @@ class ToolEntry:
 
 
 # ---------------------------------------------------------------------------
-# Tool definitions
+# Tool definitions (Ordered: Discovery -> Ingestion -> Mutation)
 # ---------------------------------------------------------------------------
-
-_read_file_entry = ToolEntry(
-    declaration=types.FunctionDeclaration(
-        name="read_file",
-        description=(
-            "Reads the full contents of a local markdown file from the knowledge base."
-        ),
-        parameters=types.Schema(
-            type=types.Type.OBJECT,
-            properties={
-                "filepath": types.Schema(
-                    type=types.Type.STRING,
-                    description="Path to the file, e.g., 'data/test.md'",
-                ),
-            },
-            required=["filepath"],
-        ),
-    ),
-    fn=read_file,
-)
 
 _get_repo_map_entry = ToolEntry(
     declaration=types.FunctionDeclaration(
         name="get_repo_map",
         description=(
-        "Scans the knowledge base and returns a list of all markdown files and their headers. "
-        "ALWAYS use this tool first if the user asks you to read or edit a topic but does not provide a specific file path."
+            "Scans the knowledge base and returns a list of all markdown files and their headers. "
+            "ALWAYS use this tool FIRST if the user asks you to read, update, or elaborate on a topic "
+            "but does not provide a specific file path. Do not guess file paths."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
@@ -96,73 +77,14 @@ _get_repo_map_entry = ToolEntry(
     fn=lambda: get_repo_map(base_dir=str(settings.data_dir)),
 )
 
-_edit_file_entry = ToolEntry(
-    declaration=types.FunctionDeclaration(
-        name="edit_file",
-        description=(
-            "Edits an existing file using exact search and replace. "
-            "CRITICAL: You must know the EXACT existing text to use this tool. "
-            "If you do not know the exact text, you MUST call `read_file` first to look at the file contents. "
-            "Do not ask the user for the text, find it yourself."
-        ),
-        parameters=types.Schema(
-            type=types.Type.OBJECT,
-            properties={
-                "filepath": types.Schema(
-                    type=types.Type.STRING,
-                    description="Path to the file, e.g., 'data/test.md'",
-                ),
-                "search_text": types.Schema(
-                    type=types.Type.STRING,
-                    description="The exact text currently in the file that you want to replace.",
-                ),
-                "replace_text": types.Schema(
-                    type=types.Type.STRING,
-                    description="The new text to insert in place of the search_text.",
-                ),
-            },
-            required=["filepath", "search_text", "replace_text"],
-        ),
-    ),
-    fn=edit_file,
-)
-
-_create_file_entry = ToolEntry(
-    declaration=types.FunctionDeclaration(
-        name="create_file",
-        description=(
-            "Creates a brand new markdown file. "
-            "Use this when starting a new topic that does not fit in existing files. "
-            "DO NOT use this to update existing files."
-        ),
-        parameters=types.Schema(
-            type=types.Type.OBJECT,
-            properties={
-                "filepath": types.Schema(
-                    type=types.Type.STRING,
-                    description="Path to the new file, e.g., 'data/03_Finishes/paint.md'",
-                ),
-                "content": types.Schema(
-                    type=types.Type.STRING,
-                    description="The full markdown content to write into the new file.",
-                ),
-            },
-            required=["filepath", "content"],
-        ),
-    ),
-    fn=create_file,
-)
-
 _search_knowledge_base_entry = ToolEntry(
     declaration=types.FunctionDeclaration(
         name="search_knowledge_base",
         description=(
-            "Searches all markdown files in the knowledge base for lines that match a "
-            "regex pattern. "
-            "Use this to find specific terms, part numbers, or topics without reading "
-            "every file manually. "
-            "Supports OR logic with the pipe character (e.g., 'hinge|blum|runner'). "
-            "Returns file path, line number, and matching line content."
+            "Searches all markdown files for lines matching a regex pattern. "
+            "Use this if get_repo_map doesn't give you enough detail, or if you need to find "
+            "specific terms, part numbers, or dimensions across the entire workspace. "
+            "Supports OR logic (e.g., 'hinge|blum|runner')."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
@@ -182,17 +104,105 @@ _search_knowledge_base_entry = ToolEntry(
     fn=lambda query: search_knowledge_base(query, base_dir=str(settings.data_dir)),
 )
 
+_read_file_entry = ToolEntry(
+    declaration=types.FunctionDeclaration(
+        name="read_file",
+        description=(
+            "Reads the full contents of a local markdown file. "
+            "CRITICAL: You MUST use this tool to read a file BEFORE you attempt to use edit_file. "
+            "You cannot edit a file safely without reading its exact current contents first."
+        ),
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "filepath": types.Schema(
+                    type=types.Type.STRING,
+                    description="Exact path to the file, e.g., 'data/test.md'",
+                ),
+            },
+            required=["filepath"],
+        ),
+    ),
+    fn=read_file,
+)
+
+_edit_file_entry = ToolEntry(
+    declaration=types.FunctionDeclaration(
+        name="edit_file",
+        description=(
+            "Edits an existing file using exact search and replace. "
+            "CRITICAL RULES: "
+            "1. You MUST know the EXACT existing text. "
+            "2. If you have not called read_file on this path yet, do so NOW before using this tool. "
+            "3. Do not ask the user for the text, find it yourself."
+        ),
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "filepath": types.Schema(
+                    type=types.Type.STRING,
+                    description="Path to the file, e.g., 'data/test.md'",
+                ),
+                "search_text": types.Schema(
+                    type=types.Type.STRING,
+                    description=(
+                        "The EXACT text currently in the file to replace. "
+                        "WARNING: This must match character-for-character. Pay strict attention to "
+                        "leading/trailing spaces, newlines (\\n), and punctuation."
+                    ),
+                ),
+                "replace_text": types.Schema(
+                    type=types.Type.STRING,
+                    description="The new text to insert. Ensure you include necessary markdown formatting and newlines.",
+                ),
+            },
+            required=["filepath", "search_text", "replace_text"],
+        ),
+    ),
+    fn=edit_file,
+)
+
+_create_file_entry = ToolEntry(
+    declaration=types.FunctionDeclaration(
+        name="create_file",
+        description=(
+            "Creates a brand new markdown file. "
+            "Use this when starting a new topic that does not fit in existing files. "
+            "DO NOT use this to update existing files (use edit_file for that)."
+        ),
+        parameters=types.Schema(
+            type=types.Type.OBJECT,
+            properties={
+                "filepath": types.Schema(
+                    type=types.Type.STRING,
+                    description=(
+                        "Path to the new file. You may specify nested directories "
+                        "(e.g., 'data/04_NewTopic/file.md') and they will be created automatically."
+                    ),
+                ),
+                "content": types.Schema(
+                    type=types.Type.STRING,
+                    description="The full markdown content to write into the new file.",
+                ),
+            },
+            required=["filepath", "content"],
+        ),
+    ),
+    fn=create_file,
+)
+
 
 # ---------------------------------------------------------------------------
 # Registry — single ordered list; everything else is derived from it
 # ---------------------------------------------------------------------------
 
+# Reordered to prime the LLM: Discovery -> Ingestion -> Mutation
 TOOLS: list[ToolEntry] = [
-    _read_file_entry,
     _get_repo_map_entry,
+    _search_knowledge_base_entry,
+    _read_file_entry,
     _edit_file_entry,
     _create_file_entry,
-    _search_knowledge_base_entry,
 ]
 
 # Derived: name → callable mapping used by the agent dispatch loop.
