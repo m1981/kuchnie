@@ -1,21 +1,26 @@
-# tests/test_db.py
+"""
+tests/test_repositories.py
+==========================
+Basic lifecycle tests for the Repository pattern.
+"""
 import pytest
-from src.db import DatabaseManager
+from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
 
 def test_database_lifecycle(tmp_path):
     """Tests initializing, saving, loading, and listing chat sessions."""
 
-    # 1. Arrange: Set up a temporary database
+    # 1. Arrange: Set up a temporary database connection and repository
     db_path = tmp_path / "test_chats.db"
-    db = DatabaseManager(db_path=str(db_path))
+    conn = SQLiteConnection(db_path=str(db_path))
+    repo = SQLiteSessionRepository(conn)
 
     # 2. Act: Save a new session
     session_id = "chat_123"
     fake_json_history = '[{"role": "user", "type": "text", "data": "Hello"}]'
     fake_ui_history = '[{"role": "user", "content": "Hello"}]'
 
-    db.save_session(
+    repo.save_session(
         session_id=session_id,
         title="My First Chat",
         api_history_json=fake_json_history,
@@ -23,19 +28,19 @@ def test_database_lifecycle(tmp_path):
     )
 
     # 3. Assert: Load the session back
-    loaded_api, loaded_ui = db.load_session(session_id)
+    loaded_api, loaded_ui = repo.load_session(session_id)
     assert loaded_api == fake_json_history
     assert loaded_ui == fake_ui_history
 
     # 4. Assert: List sessions
-    sessions = db.list_sessions()
+    sessions = repo.list_sessions()
     assert len(sessions) == 1
     assert sessions[0]["id"] == "chat_123"
     assert sessions[0]["title"] == "My First Chat"
 
-    # 5. Act: Update the existing session
+    # 5. Act: Update the existing session (Upsert)
     updated_json = '[{"role": "user", "type": "text", "data": "Hello Updated"}]'
-    db.save_session(
+    repo.save_session(
         session_id=session_id,
         title="My First Chat",
         api_history_json=updated_json,
@@ -43,6 +48,6 @@ def test_database_lifecycle(tmp_path):
     )
 
     # 6. Assert: Ensure it updated, not duplicated
-    loaded_api, _ = db.load_session(session_id)
+    loaded_api, _ = repo.load_session(session_id)
     assert loaded_api == updated_json
-    assert len(db.list_sessions()) == 1
+    assert len(repo.list_sessions()) == 1

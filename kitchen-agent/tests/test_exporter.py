@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from src.exporter import export_session_to_markdown, _render_message
-from src.db import DatabaseManager
+from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +109,7 @@ def test_export_falls_back_for_empty_title() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Unknown role fallback (line 50)
+# Unknown role fallback
 # ---------------------------------------------------------------------------
 
 def test_render_message_unknown_role() -> None:
@@ -121,16 +121,16 @@ def test_render_message_unknown_role() -> None:
 
 
 # ---------------------------------------------------------------------------
-# DatabaseManager integration tests
+# Repository integration tests
 # ---------------------------------------------------------------------------
 
-def _seed(db: DatabaseManager) -> str:
+def _seed(repo: SQLiteSessionRepository) -> str:
     session_id = "exp-session-1"
     ui_messages = [
         {"role": "user", "content": "Hello"},
         {"role": "assistant", "content": "Hi back", "tools": []},
     ]
-    db.save_session(
+    repo.save_session(
         session_id=session_id,
         title="Export Test",
         api_history_json="[]",
@@ -140,9 +140,10 @@ def _seed(db: DatabaseManager) -> str:
 
 
 def test_db_export_session_returns_markdown(tmp_path: Path) -> None:
-    db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
-    session_id = _seed(db)
-    result = db.export_session(session_id)
+    conn = SQLiteConnection(db_path=str(tmp_path / "test_chats.db"))
+    repo = SQLiteSessionRepository(conn)
+    session_id = _seed(repo)
+    result = repo.export_session(session_id)
     assert isinstance(result, str)
     assert "# Export Test" in result
     assert "## User" in result
@@ -152,18 +153,20 @@ def test_db_export_session_returns_markdown(tmp_path: Path) -> None:
 
 
 def test_db_export_nonexistent_session_raises(tmp_path: Path) -> None:
-    db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
+    conn = SQLiteConnection(db_path=str(tmp_path / "test_chats.db"))
+    repo = SQLiteSessionRepository(conn)
     with pytest.raises(ValueError):
-        db.export_session("does-not-exist")
+        repo.export_session("does-not-exist")
 
 
 def test_db_export_empty_session(tmp_path: Path) -> None:
-    db = DatabaseManager(db_path=str(tmp_path / "test_chats.db"))
-    db.save_session(
+    conn = SQLiteConnection(db_path=str(tmp_path / "test_chats.db"))
+    repo = SQLiteSessionRepository(conn)
+    repo.save_session(
         session_id="empty-1",
         title="Empty One",
         api_history_json="[]",
         ui_history_json="[]",
     )
-    result = db.export_session("empty-1")
+    result = repo.export_session("empty-1")
     assert "# Empty One" in result

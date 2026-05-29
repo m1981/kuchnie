@@ -3,25 +3,18 @@ src/chat_service.py
 ===================
 Business-logic layer for the chat endpoint.
 
-Extracts the seven-step orchestration that previously lived inside the FastAPI
-route handler so that:
-
+Extracts the orchestration so that:
   1. The route handler is thin (HTTP concerns only).
-  2. The service is independently testable without an HTTP client.
-  3. The service can be called from tests or future CLI tools directly.
-
-All methods are synchronous — the FastAPI handler runs them inside
-``asyncio.run_in_executor`` so the event loop is never blocked.
+  2. The service is independently testable (using the Repository Pattern).
 """
 
 import json
 import structlog
 
-
 from agent import process_chat_turn
-from db import DatabaseManager
 from prompt_logger import log_prompt
 from serializers import dehydrate_history, hydrate_history
+from repositories import SessionRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -37,8 +30,9 @@ def _make_title(ui_messages: list[dict]) -> str:
 class ChatService:
     """Orchestrates a single chat turn end-to-end."""
 
-    def __init__(self, db: DatabaseManager) -> None:
-        self._db = db
+    # Notice we inject the Protocol (Interface), not the SQLite class!
+    def __init__(self, session_repo: SessionRepository) -> None:
+        self._session_repo = session_repo
 
     def handle_turn(
         self,
@@ -50,19 +44,9 @@ class ChatService:
     ) -> tuple[str, list[dict]]:
         """
         Loads history, runs the agent, persists state, and returns the result.
-
-        Args:
-            session_id:    UUID string identifying the session.
-            user_message:  Raw text from the user.
-            system_prompt: Optional system-instruction override.
-            images:        List of ``{mime_type, data}`` base64 image dicts.
-            context_files: Paths injected as context before the user message.
-
-        Returns:
-            ``(final_text, tool_logs)`` — same shape as ``process_chat_turn``.
         """
         # 1. Load existing history from DB.
-        api_json, ui_json = self._db.load_session(session_id)
+        api_json, ui_json = self._session_repo.load_session(session_id)
         history = hydrate_history(api_json)
         ui_messages: list[dict] = json.loads(ui_json) if ui_json != "[]" else []
 
@@ -71,7 +55,7 @@ class ChatService:
         log_prompt(user_message)
 
         # 3. Run the agentic loop.
-        logger.info("ChatService: running agent for session %s", session_id[:8])
+        logger.info("running_agent", session_id=session_id[:8])
         final_text, tool_logs = process_chat_turn(
             user_message=user_message,
             history=history,
@@ -86,7 +70,7 @@ class ChatService:
         )
 
         # 5. Persist updated state.
-        self._db.save_session(
+        self._session_repo.save_session(
             session_id=session_id,
             title=_make_title(ui_messages),
             api_history_json=dehydrate_history(history),
