@@ -27,10 +27,3 @@ export type NotePopupState = {
 	y: number;
 	sourceRole: 'user' | 'assistant';
 } | null;
-
-/** Floating append-to-docs popup state — null means the popup is hidden. */
-export type AppendPopupState = {
-	text: string;
-	x: number;
-	y: number;
-} | null;

@@ -2,12 +2,10 @@
  * lib/actions/textSelection.ts
  * =============================
  * Svelte Action — attaches a `mouseup` listener to a container element and
- * classifies every text-selection event into one of three outcomes:
+ * classifies every text-selection event into one of two outcomes:
  *
  *   1. Selection inside a `[data-chat-bubble]` element  → `onchatselect`
- *   2. Selection anywhere else on the page              → `onpageselect`
- *   3. Selection cleared / too short                    → both callbacks
- *      receive `null` so callers can close their popups.
+ *   2. Selection cleared / too short / outside bubble   → `onchatselect(null)`
  *
  * Design goals:
  *   - Zero Svelte imports — pure TypeScript DOM glue.
@@ -19,15 +17,13 @@
  *   import { textSelection } from '$lib/actions/textSelection';
  *
  *   <div use:textSelection={{
- *     onchatselect: (hit) => notePopup = hit,   // null to clear
- *     onpageselect: (hit) => appendPopup = hit, // null to clear
+ *     onchatselect: (hit) => notePopup = hit,  // null to clear
  *   }}>
  *     …page content…
  *   </div>
  *
- * Types exported so callers can annotate their $state variables:
+ * Type exported so callers can annotate their $state variables:
  *   ChatSelectionHit  — position + text + bubble role
- *   PageSelectionHit  — position + text
  */
 
 import type { Action } from 'svelte/action';
@@ -43,15 +39,8 @@ export type ChatSelectionHit = {
 	y: number;
 };
 
-export type PageSelectionHit = {
-	text: string;
-	x: number;
-	y: number;
-};
-
 export type TextSelectionParams = {
 	onchatselect: (hit: ChatSelectionHit | null) => void;
-	onpageselect: (hit: PageSelectionHit | null) => void;
 	/** Minimum character count before a selection is considered intentional. Default: 5 */
 	minLength?: number;
 };
@@ -85,7 +74,7 @@ function toElement(node: Node | null): HTMLElement | null {
 /**
  * Returns the chat-bubble hit if the current window selection sits entirely
  * inside a single `[data-chat-bubble]` element with a valid role attribute.
- * Returns `null` for cross-bubble or non-bubble selections.
+ * Returns `null` for cross-bubble, non-bubble, or too-short selections.
  */
 function readChatSelection(
 	event: MouseEvent,
@@ -110,20 +99,6 @@ function readChatSelection(
 	return { text, sourceRole: role, x, y };
 }
 
-/**
- * Returns a generic page-selection hit when text is selected outside any
- * chat bubble. Returns `null` when the selection is empty / too short.
- */
-function readPageSelection(
-	event: MouseEvent,
-	minLength: number
-): PageSelectionHit | null {
-	const text = window.getSelection()?.toString().trim() ?? '';
-	if (text.length < minLength) return null;
-	const { x, y } = popupPosition(event, 300, 120);
-	return { text, x, y };
-}
-
 // ---------------------------------------------------------------------------
 // The action
 // ---------------------------------------------------------------------------
@@ -132,7 +107,7 @@ export const textSelection: Action<HTMLElement, TextSelectionParams> = (
 	node,
 	params
 ) => {
-	let { onchatselect, onpageselect, minLength = 5 } = params;
+	let { onchatselect, minLength = 5 } = params;
 
 	/**
 	 * Track whether the *next* click-away should be suppressed.
@@ -145,29 +120,17 @@ export const textSelection: Action<HTMLElement, TextSelectionParams> = (
 	function handleMouseUp(event: MouseEvent) {
 		const target = event.target as HTMLElement;
 
-		// Never trigger when the user clicks interactive elements or popups.
-		if (target.closest('button, input, textarea, select, .note-popup, .append-popup')) {
-			return;
-		}
+		// Never trigger when the user clicks interactive elements or the note popup.
+		if (target.closest('button, input, textarea, select, .note-popup')) return;
 
 		const chatHit = readChatSelection(event, minLength);
 		if (chatHit) {
 			onchatselect(chatHit);
-			onpageselect(null);          // clear the other popup
 			suppressNextClick = true;
 			return;
 		}
 
-		const pageHit = readPageSelection(event, minLength);
-		if (pageHit) {
-			onpageselect(pageHit);
-			onchatselect(null);          // clear the other popup
-			suppressNextClick = true;
-			return;
-		}
-
-		// Nothing selected — clear both.
-		onpageselect(null);
+		// Nothing relevant selected — clear popup.
 		onchatselect(null);
 	}
 
@@ -176,10 +139,9 @@ export const textSelection: Action<HTMLElement, TextSelectionParams> = (
 			suppressNextClick = false;
 			return;
 		}
-		// Click-away: dismiss each popup only when the click is outside its element.
+		// Click-away: dismiss the note popup when clicking outside it.
 		const t = event.target as HTMLElement;
-		if (!t.closest('.append-popup')) onpageselect(null);
-		if (!t.closest('.note-popup'))   onchatselect(null);
+		if (!t.closest('.note-popup')) onchatselect(null);
 	}
 
 	node.addEventListener('mouseup', handleMouseUp);
@@ -188,7 +150,6 @@ export const textSelection: Action<HTMLElement, TextSelectionParams> = (
 	return {
 		update(newParams: TextSelectionParams) {
 			onchatselect = newParams.onchatselect;
-			onpageselect = newParams.onpageselect;
 			minLength    = newParams.minLength ?? 5;
 		},
 		destroy() {

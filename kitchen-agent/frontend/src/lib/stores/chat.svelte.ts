@@ -13,11 +13,10 @@
  *   - Sending messages (with optimistic UI update)
  *   - Pasted image queue
  *   - Prompt mode list + detail (lazy-loaded, invalidated on mode change)
- *   - Append-to-docs (highlight → file)
- *   - Status strings for fork / append feedback
+ *   - Status strings for fork feedback
  */
 
-import { api, type Message, type FileItem, type Note } from '$lib/api';
+import { api, type Message, type Note } from '$lib/api';
 import { sessionStore } from '$lib/stores/sessions.svelte';
 import type { AsyncState, PastedImage } from '$lib/types';
 
@@ -28,7 +27,7 @@ import type { AsyncState, PastedImage } from '$lib/types';
 function createChatStore() {
 	// ── Session ───────────────────────────────────────────────────────────────
 	let sessionId = $state<string>(crypto.randomUUID());
-	let messages = $state<Message[]>([]);
+	let messages  = $state<Message[]>([]);
 
 	// ── Async chat state machine — replaces isLoading boolean ─────────────────
 	let chatState = $state<AsyncState<void>>({ status: 'idle' });
@@ -38,26 +37,20 @@ function createChatStore() {
 
 	// ── Prompt modes ──────────────────────────────────────────────────────────
 	let selectedModeId = $state('general');
-	let modesState = $state<AsyncState<void>>({ status: 'idle' });
+	let modesState     = $state<AsyncState<void>>({ status: 'idle' });
 
 	// ── Prompt inspector ──────────────────────────────────────────────────────
 	/**
 	 * Stores the detail content keyed by mode ID so switching modes while the
 	 * inspector is open immediately updates the displayed content.
-	 *
 	 * `null` means "not yet fetched for selectedModeId".
 	 */
 	let promptDetailContent = $state<string | null>(null);
-	let promptDetailState = $state<AsyncState<void>>({ status: 'idle' });
+	let promptDetailState   = $state<AsyncState<void>>({ status: 'idle' });
 	/** ID for which the current promptDetailContent was fetched. */
-	let promptDetailForId = $state('');
+	let promptDetailForId   = $state('');
 	/** Whether the inspector <details> panel is currently open. */
 	let promptInspectorOpen = $state(false);
-
-	// ── Append-to-docs ────────────────────────────────────────────────────────
-	let appendFiles = $state<FileItem[]>([]);
-	let appendStatus = $state('');
-	let appendStatusTimer: ReturnType<typeof setTimeout> | undefined;
 
 	// ── Fork feedback ─────────────────────────────────────────────────────────
 	let forkStatus = $state('');
@@ -66,52 +59,41 @@ function createChatStore() {
 	let contextFiles = $state<string[]>([]);
 
 	// ---------------------------------------------------------------------------
-	// Internal helpers
-	// ---------------------------------------------------------------------------
-
-	function clearAppendStatus() {
-		clearTimeout(appendStatusTimer);
-		appendStatusTimer = undefined;
-	}
-
-	// ---------------------------------------------------------------------------
 	// Public API
 	// ---------------------------------------------------------------------------
 
 	return {
 		// ── Getters ───────────────────────────────────────────────────────────
-		get sessionId() { return sessionId; },
-		get messages() { return messages; },
-		get chatState() { return chatState; },
-		get pastedImages() { return pastedImages; },
+		get sessionId()           { return sessionId; },
+		get messages()            { return messages; },
+		get chatState()           { return chatState; },
+		get pastedImages()        { return pastedImages; },
 
-		get selectedModeId() { return selectedModeId; },
-		get modesState() { return modesState; },
+		get selectedModeId()      { return selectedModeId; },
+		get modesState()          { return modesState; },
 
 		get promptDetailContent() { return promptDetailContent; },
-		get promptDetailState() { return promptDetailState; },
-		get promptDetailForId() { return promptDetailForId; },
+		get promptDetailState()   { return promptDetailState; },
+		get promptDetailForId()   { return promptDetailForId; },
 		get promptInspectorOpen() { return promptInspectorOpen; },
 
-		get appendFiles() { return appendFiles; },
-		get appendStatus() { return appendStatus; },
-		get forkStatus() { return forkStatus; },
-		get contextFiles() { return contextFiles; },
+		get forkStatus()          { return forkStatus; },
+		get contextFiles()        { return contextFiles; },
 
 		// ── Session ───────────────────────────────────────────────────────────
 
 		startNewChat() {
-			sessionId = crypto.randomUUID();
-			messages = [];
+			sessionId    = crypto.randomUUID();
+			messages     = [];
 			pastedImages = [];
-			chatState = { status: 'idle' };
+			chatState    = { status: 'idle' };
 		},
 
 		async loadSession(id: string) {
 			try {
 				const data = await api.getSession(id);
 				sessionId = id;
-				messages = data.ui_messages ?? [];
+				messages  = data.ui_messages ?? [];
 				chatState = { status: 'idle' };
 			} catch (e) {
 				console.error('Failed to load session', e);
@@ -139,18 +121,18 @@ function createChatStore() {
 
 			// Optimistic UI — push user message immediately
 			messages.push({
-				role: 'user',
+				role:   'user',
 				content: text,
 				images: imagesToSend.map((i) => i.dataUrl)
 			});
 			pastedImages = [];
-			chatState = { status: 'loading' };
+			chatState    = { status: 'loading' };
 
 			try {
 				const data = await api.chat({
-					session_id: sessionId,
-					message: text,
-					mode_id: selectedModeId,
+					session_id:    sessionId,
+					message:       text,
+					mode_id:       selectedModeId,
 					images:
 						imagesToSend.length > 0
 							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
@@ -159,7 +141,7 @@ function createChatStore() {
 				});
 
 				messages.push({
-					role: 'assistant',
+					role:  'assistant',
 					content: data.text,
 					tools: data.tools_used
 				});
@@ -190,14 +172,11 @@ function createChatStore() {
 			modesState = { status: 'loading' };
 			try {
 				const fetched = await api.getPromptModes();
-				// Re-export modes via the store so components can read them.
-				// We store them as a success payload.
 				modesState = { status: 'success', data: undefined };
 				// Keep selectedModeId when still valid, otherwise fall back to first.
 				if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
 					selectedModeId = fetched[0].id;
 				}
-				// Return for consumers that need the list.
 				return fetched;
 			} catch (e) {
 				console.error('Failed to load prompt modes', e);
@@ -211,12 +190,10 @@ function createChatStore() {
 			selectedModeId = id;
 			// Invalidate stale prompt detail cache.
 			promptDetailContent = null;
-			promptDetailState = { status: 'idle' };
-			promptDetailForId = '';
+			promptDetailState   = { status: 'idle' };
+			promptDetailForId   = '';
 			// Eagerly re-fetch if the inspector is open.
-			if (promptInspectorOpen) {
-				void this.loadPromptDetail();
-			}
+			if (promptInspectorOpen) void this.loadPromptDetail();
 		},
 
 		// ── Prompt inspector ──────────────────────────────────────────────────
@@ -225,16 +202,16 @@ function createChatStore() {
 			if (promptDetailState.status === 'loading') return;
 			if (promptDetailContent !== null && promptDetailForId === selectedModeId) return;
 
-			promptDetailState = { status: 'loading' };
+			promptDetailState   = { status: 'loading' };
 			promptDetailContent = null;
 			try {
-				const detail = await api.getPromptModeDetail(selectedModeId);
+				const detail        = await api.getPromptModeDetail(selectedModeId);
 				promptDetailContent = detail.content;
-				promptDetailForId = selectedModeId;
-				promptDetailState = { status: 'success', data: undefined };
+				promptDetailForId   = selectedModeId;
+				promptDetailState   = { status: 'success', data: undefined };
 			} catch (e) {
 				promptDetailState = {
-					status: 'error',
+					status:  'error',
 					message: e instanceof Error ? e.message : 'Failed to load prompt.'
 				};
 			}
@@ -243,29 +220,6 @@ function createChatStore() {
 		setPromptInspectorOpen(open: boolean) {
 			promptInspectorOpen = open;
 			if (open) void this.loadPromptDetail();
-		},
-
-		// ── Append-to-docs ────────────────────────────────────────────────────
-
-		async loadAppendFiles() {
-			try {
-				appendFiles = await api.listFiles();
-			} catch (e) {
-				console.error('Failed to fetch file list', e);
-			}
-		},
-
-		async appendToDoc(target: string, text: string) {
-			if (!target || !text) return;
-			const snippet = `\n## Snippet (from chat)\n\n${text}\n`;
-			clearAppendStatus();
-			try {
-				await api.appendToFile(target, snippet);
-				appendStatus = `✓ Added to ${target}`;
-				appendStatusTimer = setTimeout(() => (appendStatus = ''), 3000);
-			} catch (e) {
-				appendStatus = `Failed: ${e}`;
-			}
 		},
 
 		// ── Context files ─────────────────────────────────────────────────────

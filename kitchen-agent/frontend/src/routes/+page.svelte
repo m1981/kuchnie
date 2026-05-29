@@ -4,38 +4,37 @@
 	 * =============================
 	 * Pure layout wrapper. All business logic lives elsewhere:
 	 *
-	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images, append
+	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images
 	 *   $lib/stores/sessions.svelte.ts      — session tree, archive, delete
-	 *   $lib/actions/textSelection.ts       — mouseup → popup classification
+	 *   $lib/actions/textSelection.ts       — mouseup → note-popup classification
 	 *   $lib/actions/pasteImage.ts          — Ctrl+V image capture
 	 *   $lib/hooks/useKeyboardResize.svelte — keyboard-driven sidebar/prompt resize
 	 *
 	 * This file is responsible only for:
 	 *   - Three-column layout (left sidebar / main / right sidebar)
-	 *   - Wiring the textSelection action to popup $state variables
+	 *   - Wiring the textSelection action to the note popup $state
 	 *   - Wiring keyboard resize handlers to drag-handle buttons
 	 *   - Mounting child components with the correct props
 	 */
 
 	import { onMount } from 'svelte';
 
-	import { chatStore }      from '$lib/stores/chat.svelte';
-	import { sessionStore }   from '$lib/stores/sessions.svelte';
-	import { createSidebarResize }    from '$lib/sidebar-resize.svelte';
-	import { textSelection }          from '$lib/actions/textSelection';
-	import { createKeyboardResize }   from '$lib/hooks/useKeyboardResize.svelte';
+	import { chatStore }           from '$lib/stores/chat.svelte';
+	import { sessionStore }        from '$lib/stores/sessions.svelte';
+	import { createSidebarResize } from '$lib/sidebar-resize.svelte';
+	import { textSelection }       from '$lib/actions/textSelection';
+	import { createKeyboardResize} from '$lib/hooks/useKeyboardResize.svelte';
 
-	import type { PromptMode, Note }              from '$lib/api';
-	import type { ChatSelectionHit, PageSelectionHit } from '$lib/actions/textSelection';
+	import type { PromptMode, Note }     from '$lib/api';
+	import type { ChatSelectionHit }     from '$lib/actions/textSelection';
 
-	import ChatHeader       from '$lib/components/ChatHeader.svelte';
-	import ChatMessageList  from '$lib/components/ChatMessageList.svelte';
-	import ChatComposer     from '$lib/components/ChatComposer.svelte';
-	import PromptInspector  from '$lib/components/PromptInspector.svelte';
-	import AppendPopup      from '$lib/components/AppendPopup.svelte';
-	import SessionTree      from '$lib/components/SessionTree.svelte';
-	import ContextSidebar   from '$lib/components/ContextSidebar.svelte';
-	import NotePopup        from '$lib/components/NotePopup.svelte';
+	import ChatHeader      from '$lib/components/ChatHeader.svelte';
+	import ChatMessageList from '$lib/components/ChatMessageList.svelte';
+	import ChatComposer    from '$lib/components/ChatComposer.svelte';
+	import PromptInspector from '$lib/components/PromptInspector.svelte';
+	import SessionTree     from '$lib/components/SessionTree.svelte';
+	import ContextSidebar  from '$lib/components/ContextSidebar.svelte';
+	import NotePopup       from '$lib/components/NotePopup.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Layout resize
@@ -51,11 +50,10 @@
 	let modes = $state<PromptMode[]>([]);
 
 	// ---------------------------------------------------------------------------
-	// Floating popup state — set by the textSelection action callbacks
+	// Note popup state — set by the textSelection action callback
 	// ---------------------------------------------------------------------------
 
-	let notePopup   = $state<ChatSelectionHit | null>(null);
-	let appendPopup = $state<PageSelectionHit | null>(null);
+	let notePopup = $state<ChatSelectionHit | null>(null);
 
 	// ---------------------------------------------------------------------------
 	// Composer — bind:currentMessage so notes can be injected from the sidebar
@@ -88,7 +86,6 @@
 
 	onMount(async () => {
 		void sessionStore.refresh();
-		void chatStore.loadAppendFiles();
 
 		const fetched = await chatStore.loadModes();
 		if (fetched) modes = fetched;
@@ -116,17 +113,13 @@
 </svelte:head>
 
 <!--
-  use:textSelection wires the entire mouseup + click-away lifecycle.
-  Popup state is set reactively via the action callbacks — no inline
-  handleMouseUp / popupPosition / nodeElement helpers needed here.
+  use:textSelection handles the full mouseup + click-away lifecycle.
+  The onchatselect callback is the only wiring needed here.
 -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="flex h-screen overflow-hidden bg-surface text-ink"
-	use:textSelection={{
-		onchatselect: (hit) => { notePopup = hit;   if (hit) appendPopup = null; },
-		onpageselect: (hit) => { appendPopup = hit; if (hit) notePopup   = null; },
-	}}
+	use:textSelection={{ onchatselect: (hit) => (notePopup = hit) }}
 >
 
 	<!-- ===================================================================== -->
@@ -204,15 +197,10 @@
 					</div>
 				{/if}
 
-				<!-- Status pills -->
+				<!-- Fork status pill -->
 				{#if chatStore.forkStatus}
 					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
 						{chatStore.forkStatus}
-					</p>
-				{/if}
-				{#if chatStore.appendStatus}
-					<p class="rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs text-accent">
-						{chatStore.appendStatus}
 					</p>
 				{/if}
 
@@ -274,25 +262,6 @@
 			sessionId={chatStore.sessionId}
 			sourceRole={notePopup.sourceRole}
 			ondismiss={() => (notePopup = null)}
-		/>
-	{/if}
-
-	<!-- ===================================================================== -->
-	<!-- FLOATING POPUP — Highlight → Add to Docs                             -->
-	<!-- ===================================================================== -->
-	{#if appendPopup}
-		<AppendPopup
-			text={appendPopup.text}
-			x={appendPopup.x}
-			y={appendPopup.y}
-			files={chatStore.appendFiles}
-			ondismiss={() => (appendPopup = null)}
-			onappend={async (target) => {
-				if (appendPopup) {
-					await chatStore.appendToDoc(target, appendPopup.text);
-					appendPopup = null;
-				}
-			}}
 		/>
 	{/if}
 </div>
