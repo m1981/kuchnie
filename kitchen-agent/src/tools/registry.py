@@ -83,8 +83,8 @@ _get_repo_map_entry = ToolEntry(
     declaration=types.FunctionDeclaration(
         name="get_repo_map",
         description=(
-            "Scans the knowledge base and returns a list of all markdown files and "
-            "their headers. Use this to figure out which file you need to read."
+        "Scans the knowledge base and returns a list of all markdown files and their headers. "
+        "ALWAYS use this tool first if the user asks you to read or edit a topic but does not provide a specific file path."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
@@ -101,8 +101,9 @@ _edit_file_entry = ToolEntry(
         name="edit_file",
         description=(
             "Edits an existing file using exact search and replace. "
-            "ONLY use this tool if the user EXPLICITLY asks you to update, change, or "
-            "edit a file. DO NOT proactively edit files to add information unless commanded."
+            "CRITICAL: You must know the EXACT existing text to use this tool. "
+            "If you do not know the exact text, you MUST call `read_file` first to look at the file contents. "
+            "Do not ask the user for the text, find it yourself."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
