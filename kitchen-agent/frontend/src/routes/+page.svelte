@@ -17,20 +17,27 @@
 		base64: string;   // raw base64 sent to the API
 	};
 
+	type NotePopupState = {
+		text: string;
+		x: number;
+		y: number;
+		sourceRole: 'user' | 'assistant';
+	} | null;
+
 	// ---------------------------------------------------------------------------
 	// State
 	// ---------------------------------------------------------------------------
 
-	let sessionId            = $state(crypto.randomUUID());
-	let currentMessage       = $state('');
-	let messageInput         = $state<HTMLTextAreaElement | null>(null);
-	let messages             = $state<Message[]>([]);
-	let isLoading            = $state(false);
+	let sessionId   = $state(crypto.randomUUID());
+	let currentMessage = $state('');
+	let messageInput   = $state<HTMLTextAreaElement | null>(null);
+	let messages       = $state<Message[]>([]);
+	let isLoading      = $state(false);
 
 	// F05 — prompt modes fetched from the backend; no hardcoded strings here
-	let modes           = $state<PromptMode[]>([]);
-	let modesLoading    = $state(true);
-	let selectedModeId  = $state('general');
+	let modes          = $state<PromptMode[]>([]);
+	let modesLoading   = $state(true);
+	let selectedModeId = $state('general');
 
 	// Layout
 	const sidebarResize = createSidebarResize();
@@ -40,24 +47,19 @@
 	let pastedImages = $state<PastedImage[]>([]);
 
 	// Highlight → Append to docs
-	let appendTarget  = $state('');
-	let appendFiles   = $state<FileItem[]>([]);
-	let appendPopup   = $state<{ text: string; x: number; y: number } | null>(null);
-	let appendStatus  = $state('');
+	let appendTarget          = $state('');
+	let appendFiles           = $state<FileItem[]>([]);
+	let appendPopup           = $state<{ text: string; x: number; y: number } | null>(null);
+	let appendStatus          = $state('');
 	let suppressNextClickAway = $state(false);
 
 	// Highlight → Note popup
-	type NotePopupState = {
-		text: string;
-		x: number;
-		y: number;
-		sourceRole: 'user' | 'assistant';
-	} | null;
 	let notePopup = $state<NotePopupState>(null);
 
 	// Fork
 	let forkStatus = $state('');
 
+	// Static starter prompts — not reactive, plain const is correct
 	const starterPrompts = [
 		'Review a kitchen layout for ergonomic risks and missing clearances.',
 		'Explain which hinges and runners fit a tall kitchen cabinet.',
@@ -66,21 +68,22 @@
 	];
 
 	// ---------------------------------------------------------------------------
-	// Derived — resolved from the backend modes list
+	// Derived — resolved from the live backend modes list
 	// ---------------------------------------------------------------------------
 
 	const activeMode = $derived(
-		modes.find((m) => m.id === selectedModeId) ?? { id: selectedModeId, label: selectedModeId, eyebrow: '' }
+		modes.find((m) => m.id === selectedModeId)
+			?? { id: selectedModeId, label: selectedModeId, eyebrow: '' }
 	);
 
 	// ---------------------------------------------------------------------------
-	// Lifecycle
+	// Lifecycle — run once on mount; no $state reads inside so no re-runs
 	// ---------------------------------------------------------------------------
 
 	$effect(() => {
-		sessionStore.refresh();
-		fetchFileList();
-		loadModes();
+		void sessionStore.refresh();
+		void fetchFileList();
+		void loadModes();
 	});
 
 	// F05 — fetch available prompt modes from the backend on startup
@@ -89,7 +92,7 @@
 		try {
 			const fetched = await api.getPromptModes();
 			modes = fetched;
-			// keep selectedModeId if it's still valid, otherwise default to first
+			// keep selectedModeId when still valid, otherwise fall back to first mode
 			if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
 				selectedModeId = fetched[0].id;
 			}
@@ -241,7 +244,7 @@
 		if (!selection || selection.rangeCount === 0 || !text || text.length < 5) return null;
 
 		const anchorBubble = nodeElement(selection.anchorNode)?.closest<HTMLElement>('[data-chat-bubble]');
-		const focusBubble = nodeElement(selection.focusNode)?.closest<HTMLElement>('[data-chat-bubble]');
+		const focusBubble  = nodeElement(selection.focusNode)?.closest<HTMLElement>('[data-chat-bubble]');
 		const bubble = anchorBubble ?? focusBubble;
 		if (!bubble || (anchorBubble && focusBubble && anchorBubble !== focusBubble)) return null;
 
@@ -257,7 +260,7 @@
 		const chatSelection = selectedChatText();
 		if (chatSelection) {
 			const { x, y } = popupPosition(event);
-			notePopup = { ...chatSelection, x, y };
+			notePopup  = { ...chatSelection, x, y };
 			appendPopup = null;
 			suppressNextClickAway = true;
 			return;
@@ -267,7 +270,7 @@
 		if (!text || text.length < 5) { appendPopup = null; return; }
 		const { x, y } = popupPosition(event, 300, 120);
 		appendPopup = { text, x, y };
-		notePopup = null;
+		notePopup   = null;
 		suppressNextClickAway = true;
 	}
 
@@ -289,19 +292,19 @@
 	}
 
 	// ---------------------------------------------------------------------------
-	// Send message — F05: sends mode_id, NOT system_prompt
+	// Send message — F05: sends mode_id; backend resolves it to full prompt
 	// ---------------------------------------------------------------------------
 
 	async function sendMessage() {
 		if (!currentMessage.trim() || isLoading) return;
 
-		const promptToSend  = currentMessage.trim();
-		const imagesToSend  = [...pastedImages];
+		const promptToSend = currentMessage.trim();
+		const imagesToSend = [...pastedImages];
 
 		messages.push({
-			role:    'user',
+			role:   'user',
 			content: promptToSend,
-			images:  imagesToSend.map((i) => i.dataUrl)
+			images: imagesToSend.map((i) => i.dataUrl)
 		});
 		currentMessage = '';
 		pastedImages   = [];
@@ -311,7 +314,6 @@
 			const data = await api.chat({
 				session_id:    sessionId,
 				message:       promptToSend,
-				// F05 — send the mode id; backend resolves it to the full prompt
 				mode_id:       selectedModeId,
 				images:
 					imagesToSend.length > 0
@@ -321,12 +323,12 @@
 			});
 
 			messages.push({
-				role:    'assistant',
+				role:   'assistant',
 				content: data.text,
-				tools:   data.tools_used
+				tools:  data.tools_used
 			});
 
-			sessionStore.refresh();
+			await sessionStore.refresh();
 		} catch (error) {
 			const msg =
 				error instanceof Error ? error.message : 'Unknown error connecting to API.';
@@ -413,7 +415,6 @@
 			New chat
 		</button>
 
-		<!-- Session tree (replaces flat list) -->
 		<div class="min-h-0 flex-1 overflow-y-auto">
 			<SessionTree
 				activeId={sessionId}
@@ -436,27 +437,24 @@
 	<!-- MAIN AREA                                                              -->
 	<!-- ===================================================================== -->
 	<main class="flex min-w-0 flex-1 flex-col">
+
 		<!-- Header -->
 		<header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
-			<div
-				class="mx-auto flex max-w-5xl flex-col gap-3 md:flex-row md:items-center md:justify-between"
-			>
+			<div class="mx-auto flex max-w-5xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
 				<div>
 					<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
 						Kitchen Cabinet Assistant
 					</p>
 					<div class="mt-1 flex flex-wrap items-center gap-2">
 						<h2 class="text-xl font-semibold text-ink md:text-2xl">{activeMode.label} mode</h2>
-						<span
-							class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted"
-						>
+						<span class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted">
 							Session {sessionId.substring(0, 8)}
 						</span>
 					</div>
 				</div>
 
 				<div class="flex items-center gap-3">
-					<!-- Mode switcher — rendered from backend data, no hardcoded labels -->
+					<!-- Mode switcher — buttons populated from GET /api/prompts/modes -->
 					<div class="flex rounded-md border border-line bg-surface p-1">
 						{#if modesLoading}
 							<span class="px-3 py-1.5 text-sm text-muted">Loading…</span>
@@ -474,7 +472,6 @@
 						{/if}
 					</div>
 
-					<!-- Context sidebar toggle -->
 					<button
 						onclick={sidebarResize.toggleRight}
 						class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
@@ -490,7 +487,7 @@
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
 
-				<!-- System prompt indicator — eyebrow only; content lives on the server -->
+				<!-- System prompt indicator: eyebrow only — full content lives on the server -->
 				<div class="rounded-md border border-line bg-panel px-4 py-3 shadow-sm">
 					<p class="text-sm">
 						<span class="font-semibold text-ink">System prompt</span>
@@ -503,9 +500,7 @@
 
 				<!-- Context injection status -->
 				{#if contextFiles.length > 0}
-					<div
-						class="flex items-center gap-2 rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs font-medium text-accent"
-					>
+					<div class="flex items-center gap-2 rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs font-medium text-accent">
 						📎 {contextFiles.length} file{contextFiles.length > 1 ? 's' : ''} will be injected into
 						your next message.
 					</div>
@@ -523,7 +518,7 @@
 					</p>
 				{/if}
 
-				<!-- Starter prompts -->
+				<!-- Starter prompts — shown only on empty sessions -->
 				{#if messages.length === 0}
 					<div class="rounded-md border border-dashed border-line bg-panel p-5 shadow-sm">
 						<p class="text-sm font-semibold text-ink">Start with a practical kitchen workflow</p>
@@ -565,9 +560,7 @@
 
 									<div class="flex items-center gap-2">
 										{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
-											<span
-												class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted"
-											>
+											<span class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted">
 												{msg.tools.length} tools
 											</span>
 										{/if}
@@ -605,9 +598,7 @@
 
 										{#each msg.tools as tool, toolIndex (`${tool.name}-${toolIndex}`)}
 											<details class="group rounded-md border border-line bg-surface">
-												<summary
-													class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm"
-												>
+												<summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm">
 													<span class="min-w-0">
 														<span class="font-semibold text-ink">{tool.name}</span>
 														<span class="ml-2 text-xs text-muted">Args and result</span>
@@ -618,15 +609,11 @@
 												<div class="space-y-3 border-t border-line px-3 py-3">
 													<div>
 														<p class="mb-1 text-xs font-semibold text-muted uppercase">Args</p>
-														<pre
-															class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
-														>{JSON.stringify(tool.args, null, 2)}</pre>
+														<pre class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{JSON.stringify(tool.args, null, 2)}</pre>
 													</div>
 													<div>
 														<p class="mb-1 text-xs font-semibold text-muted uppercase">Result</p>
-														<pre
-															class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
-														>{formatToolResult(tool)}</pre>
+														<pre class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{formatToolResult(tool)}</pre>
 													</div>
 												</div>
 											</details>
@@ -640,9 +627,7 @@
 					{#if isLoading}
 						<article class="flex justify-start">
 							<div class="w-full max-w-4xl rounded-md border border-line bg-panel p-4 shadow-sm">
-								<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-									Assistant
-								</p>
+								<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Assistant</p>
 								<div class="mt-3 flex items-center gap-3 text-sm text-muted">
 									<span class="h-2 w-2 animate-pulse rounded-full bg-accent"></span>
 									Thinking, reading files, and preparing the answer…
@@ -657,7 +642,8 @@
 		<!-- Footer / input area -->
 		<footer class="border-t border-line bg-panel/95 px-4 py-4 backdrop-blur md:px-6">
 			<div class="mx-auto max-w-5xl">
-				<!-- Image previews -->
+
+				<!-- Pasted image previews -->
 				{#if pastedImages.length > 0}
 					<div class="mb-2 flex flex-wrap gap-2">
 						{#each pastedImages as img, i (i)}
@@ -720,7 +706,6 @@
 						style="height: {sidebarResize.promptHeight}px;"
 						rows="2"
 					></textarea>
-
 					<button
 						onclick={sendMessage}
 						disabled={isLoading || !currentMessage.trim()}
@@ -734,7 +719,7 @@
 	</main>
 
 	<!-- ===================================================================== -->
-	<!-- RIGHT SIDEBAR — context injection + file editor                        -->
+	<!-- RIGHT SIDEBAR — context injection + notes                              -->
 	<!-- ===================================================================== -->
 	{#if sidebarResize.showRight}
 		<div
@@ -750,11 +735,11 @@
 				onkeydown={(event) => handleSidebarResizeKeydown(event, 'right')}
 				title="Drag to resize. Double-click to reset."
 			></button>
-				<ContextSidebar
-					oncontextchange={handleContextChange}
-					oninsertnotes={insertNotesIntoComposer}
-					{sessionId}
-				/>
+			<ContextSidebar
+				oncontextchange={handleContextChange}
+				oninsertnotes={insertNotesIntoComposer}
+				{sessionId}
+			/>
 		</div>
 	{/if}
 
@@ -772,6 +757,7 @@
 		/>
 	{/if}
 
+	<!-- ===================================================================== -->
 	<!-- FLOATING POPUP — Highlight → Add to Docs                              -->
 	<!-- ===================================================================== -->
 	{#if appendPopup}
