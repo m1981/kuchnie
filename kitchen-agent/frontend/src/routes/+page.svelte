@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, type FileItem, type Message, type Note, type ToolLog } from '$lib/api';
+	import { api, type FileItem, type Message, type Note, type PromptMode, type ToolLog } from '$lib/api';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
 	import SessionTree from '$lib/components/SessionTree.svelte';
@@ -18,34 +18,6 @@
 	};
 
 	// ---------------------------------------------------------------------------
-	// Prompt templates / modes
-	// ---------------------------------------------------------------------------
-
-	const templates = {
-		'General Assistant':
-			'You are a helpful assistant for a kitchen cabinet builder. Read files to answer questions, but NEVER edit or create files unless the user explicitly asks you to.',
-		'Design Mode':
-			'You are an expert kitchen designer. Focus on ergonomics, spacing, and aesthetics. Always check the repo map for design guidelines. NEVER edit files unless explicitly requested.',
-		'Assembly Mode':
-			"You are a master carpenter. Focus on structural integrity, hardware installation, and step-by-step assembly instructions. Answer the user's questions based on the files, but DO NOT modify the files yourself unless told to do so."
-	} as const;
-
-	type TemplateName = keyof typeof templates;
-
-	const modeMeta: Record<TemplateName, { label: string; eyebrow: string }> = {
-		'General Assistant': { label: 'General',  eyebrow: 'Workspace help' },
-		'Design Mode':       { label: 'Design',   eyebrow: 'Ergonomics and layout' },
-		'Assembly Mode':     { label: 'Assembly', eyebrow: 'Build and fitting' }
-	};
-
-	const starterPrompts = [
-		'Review a kitchen layout for ergonomic risks and missing clearances.',
-		'Explain which hinges and runners fit a tall kitchen cabinet.',
-		'Create a step-by-step assembly checklist for base cabinets.',
-		'Summarize material choices for durable kitchen cabinet fronts.'
-	];
-
-	// ---------------------------------------------------------------------------
 	// State
 	// ---------------------------------------------------------------------------
 
@@ -55,7 +27,10 @@
 	let messages             = $state<Message[]>([]);
 	let isLoading            = $state(false);
 
-	let selectedTemplateName = $state<TemplateName>('General Assistant');
+	// F05 — prompt modes fetched from the backend; no hardcoded strings here
+	let modes           = $state<PromptMode[]>([]);
+	let modesLoading    = $state(true);
+	let selectedModeId  = $state('general');
 
 	// Layout
 	const sidebarResize = createSidebarResize();
@@ -83,12 +58,20 @@
 	// Fork
 	let forkStatus = $state('');
 
+	const starterPrompts = [
+		'Review a kitchen layout for ergonomic risks and missing clearances.',
+		'Explain which hinges and runners fit a tall kitchen cabinet.',
+		'Create a step-by-step assembly checklist for base cabinets.',
+		'Summarize material choices for durable kitchen cabinet fronts.'
+	];
+
 	// ---------------------------------------------------------------------------
-	// Derived
+	// Derived — resolved from the backend modes list
 	// ---------------------------------------------------------------------------
 
-	const activePrompt = $derived(templates[selectedTemplateName]);
-	const activeMode   = $derived(modeMeta[selectedTemplateName]);
+	const activeMode = $derived(
+		modes.find((m) => m.id === selectedModeId) ?? { id: selectedModeId, label: selectedModeId, eyebrow: '' }
+	);
 
 	// ---------------------------------------------------------------------------
 	// Lifecycle
@@ -97,7 +80,25 @@
 	$effect(() => {
 		sessionStore.refresh();
 		fetchFileList();
+		loadModes();
 	});
+
+	// F05 — fetch available prompt modes from the backend on startup
+	async function loadModes() {
+		modesLoading = true;
+		try {
+			const fetched = await api.getPromptModes();
+			modes = fetched;
+			// keep selectedModeId if it's still valid, otherwise default to first
+			if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
+				selectedModeId = fetched[0].id;
+			}
+		} catch (e) {
+			console.error('Failed to load prompt modes', e);
+		} finally {
+			modesLoading = false;
+		}
+	}
 
 	async function fetchFileList() {
 		try {
@@ -288,7 +289,7 @@
 	}
 
 	// ---------------------------------------------------------------------------
-	// Send message
+	// Send message — F05: sends mode_id, NOT system_prompt
 	// ---------------------------------------------------------------------------
 
 	async function sendMessage() {
@@ -310,7 +311,8 @@
 			const data = await api.chat({
 				session_id:    sessionId,
 				message:       promptToSend,
-				system_prompt: activePrompt,
+				// F05 — send the mode id; backend resolves it to the full prompt
+				mode_id:       selectedModeId,
 				images:
 					imagesToSend.length > 0
 						? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
@@ -454,20 +456,22 @@
 				</div>
 
 				<div class="flex items-center gap-3">
-					<!-- Mode switcher -->
+					<!-- Mode switcher — rendered from backend data, no hardcoded labels -->
 					<div class="flex rounded-md border border-line bg-surface p-1">
-						{#each Object.keys(templates) as templateName (templateName)}
-							{@const typedName = templateName as TemplateName}
-							<button
-								onclick={() => (selectedTemplateName = typedName)}
-								class="rounded px-3 py-1.5 text-sm font-medium transition {selectedTemplateName ===
-								typedName
-									? 'bg-panel text-ink shadow-sm'
-									: 'text-muted hover:text-ink'}"
-							>
-								{modeMeta[typedName].label}
-							</button>
-						{/each}
+						{#if modesLoading}
+							<span class="px-3 py-1.5 text-sm text-muted">Loading…</span>
+						{:else}
+							{#each modes as mode (mode.id)}
+								<button
+									onclick={() => (selectedModeId = mode.id)}
+									class="rounded px-3 py-1.5 text-sm font-medium transition {selectedModeId === mode.id
+										? 'bg-panel text-ink shadow-sm'
+										: 'text-muted hover:text-ink'}"
+								>
+									{mode.label}
+								</button>
+							{/each}
+						{/if}
 					</div>
 
 					<!-- Context sidebar toggle -->
@@ -486,22 +490,16 @@
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
 
-				<!-- System prompt expander -->
-				<details class="group rounded-md border border-line bg-panel shadow-sm">
-					<summary
-						class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm"
-					>
-						<span>
-							<span class="font-semibold text-ink">System prompt</span>
-							<span class="ml-2 text-muted">{selectedTemplateName} · {activeMode.eyebrow}</span>
+				<!-- System prompt indicator — eyebrow only; content lives on the server -->
+				<div class="rounded-md border border-line bg-panel px-4 py-3 shadow-sm">
+					<p class="text-sm">
+						<span class="font-semibold text-ink">System prompt</span>
+						<span class="ml-2 text-muted">{activeMode.label} · {activeMode.eyebrow}</span>
+						<span class="ml-3 rounded-full border border-line bg-surface px-2 py-0.5 text-xs text-muted">
+							managed by server
 						</span>
-						<span class="text-xs font-medium text-accent group-open:hidden">Expand</span>
-						<span class="hidden text-xs font-medium text-accent group-open:inline">Collapse</span>
-					</summary>
-					<div class="border-t border-line bg-surface px-4 py-3">
-						<p class="whitespace-pre-wrap text-sm leading-6 text-ink">{activePrompt}</p>
-					</div>
-				</details>
+					</p>
+				</div>
 
 				<!-- Context injection status -->
 				{#if contextFiles.length > 0}
@@ -684,7 +682,7 @@
 				<div class="mb-2 flex items-center justify-between gap-3">
 					<p class="text-xs font-medium text-muted">
 						Active mode:
-						<span class="font-semibold text-ink">{selectedTemplateName}</span>
+						<span class="font-semibold text-ink">{activeMode.label}</span>
 						{#if contextFiles.length > 0}
 							·
 							<span class="text-accent">
