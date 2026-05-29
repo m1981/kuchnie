@@ -197,8 +197,24 @@ class PromptModeResponse(BaseModel):
     Metadata for one prompt mode, returned by GET /api/prompts/modes.
 
     Intentionally does NOT include ``content`` so the frontend never
-    receives the full system prompt text.
+    receives the full system prompt text in the list response.
     """
     id: str
     label: str
     eyebrow: str
+
+
+class PromptModeDetail(BaseModel):
+    """
+    Full detail for one prompt mode, returned by GET /api/prompts/modes/{mode_id}.
+
+    Includes ``content`` — the complete resolved system instruction
+    (base_agent_rules + mode body) — so the frontend can display it
+    in an expandable panel when the user explicitly asks to inspect it.
+
+    Returns 404 when the mode_id is not found.
+    """
+    id: str
+    label: str
+    eyebrow: str
+    content: str

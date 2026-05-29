@@ -106,6 +106,15 @@ export type PromptMode = {
 	eyebrow: string;
 };
 
+/**
+ * Full detail for one prompt mode including the resolved system instruction.
+ * Returned by GET /api/prompts/modes/{mode_id}.
+ * Fetched lazily only when the user expands the inspector panel.
+ */
+export type PromptModeDetail = PromptMode & {
+	content: string;
+};
+
 // ---------------------------------------------------------------------------
 // LLM debug export types (mirrors LlmExportResponse Pydantic model)
 // ---------------------------------------------------------------------------
@@ -261,6 +270,15 @@ export const api = {
 	 */
 	getPromptModes: (): Promise<PromptMode[]> =>
 		request<PromptMode[]>('/api/prompts/modes'),
+
+	/**
+	 * GET /api/prompts/modes/{mode_id}
+	 * Returns the full resolved system instruction for one mode.
+	 * Fetched lazily when the user expands the prompt inspector.
+	 * Throws on 404 when the mode_id is not registered.
+	 */
+	getPromptModeDetail: (modeId: string): Promise<PromptModeDetail> =>
+		request<PromptModeDetail>(`/api/prompts/modes/${modeId}`),
 
 	/**
 	 * POST /api/prompts/reload

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, type FileItem, type Message, type Note, type PromptMode, type ToolLog } from '$lib/api';
+	import { api, type FileItem, type Message, type Note, type PromptMode, type PromptModeDetail, type ToolLog } from '$lib/api';
 	import Markdown from '$lib/components/Markdown.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
 	import SessionTree from '$lib/components/SessionTree.svelte';
@@ -28,7 +28,7 @@
 	// State
 	// ---------------------------------------------------------------------------
 
-	let sessionId   = $state(crypto.randomUUID());
+	let sessionId      = $state(crypto.randomUUID());
 	let currentMessage = $state('');
 	let messageInput   = $state<HTMLTextAreaElement | null>(null);
 	let messages       = $state<Message[]>([]);
@@ -38,6 +38,19 @@
 	let modes          = $state<PromptMode[]>([]);
 	let modesLoading   = $state(true);
 	let selectedModeId = $state('general');
+
+	// Prompt inspector — lazy-loaded full content, fetched on first expand.
+	// BUG FIX: promptDetail is now invalidated reactively via $effect whenever
+	// selectedModeId changes, so the inspector always shows the correct prompt
+	// regardless of whether the <details> element is open or closed.
+	let promptDetail        = $state<PromptModeDetail | null>(null);
+	let promptDetailLoading = $state(false);
+	let promptDetailError   = $state('');
+	let promptDetailForId   = $state('');
+
+	// Inspector open/close — tracked in JS so we can force-refresh content
+	// when the mode changes while the panel is already open.
+	let promptInspectorOpen = $state(false);
 
 	// Layout
 	const sidebarResize = createSidebarResize();
@@ -59,13 +72,19 @@
 	// Fork
 	let forkStatus = $state('');
 
-	// Static starter prompts — not reactive, plain const is correct
-	const starterPrompts = [
-		'Review a kitchen layout for ergonomic risks and missing clearances.',
-		'Explain which hinges and runners fit a tall kitchen cabinet.',
-		'Create a step-by-step assembly checklist for base cabinets.',
-		'Summarize material choices for durable kitchen cabinet fronts.'
-	];
+	// ---------------------------------------------------------------------------
+	// Mode icon map — purely presentational, resolved client-side
+	// ---------------------------------------------------------------------------
+
+	const MODE_ICONS: Record<string, string> = {
+		general:  '🔧',
+		design:   '📐',
+		assembly: '🔨',
+	};
+
+	function modeIcon(id: string): string {
+		return MODE_ICONS[id] ?? '💬';
+	}
 
 	// ---------------------------------------------------------------------------
 	// Derived — resolved from the live backend modes list
@@ -77,7 +96,7 @@
 	);
 
 	// ---------------------------------------------------------------------------
-	// Lifecycle — run once on mount; no $state reads inside so no re-runs
+	// Lifecycle — runs once on mount; no $state reads so no re-runs
 	// ---------------------------------------------------------------------------
 
 	$effect(() => {
@@ -86,7 +105,39 @@
 		void loadModes();
 	});
 
-	// F05 — fetch available prompt modes from the backend on startup
+	// ---------------------------------------------------------------------------
+	// BUG FIX — invalidate prompt inspector cache when mode changes.
+	//
+	// The old code relied solely on the <details> ontoggle event to fetch
+	// prompt content. If the panel was already open when the user switched
+	// mode, ontoggle never fired, so the panel kept showing the previous
+	// mode's content — making it look like the selection had no effect.
+	//
+	// This $effect reads selectedModeId (tracked) and promptDetailForId
+	// (tracked). Whenever selectedModeId differs from what we last fetched,
+	// we clear the stale cache. If the inspector is currently open we
+	// immediately kick off a fresh fetch so the content updates in place.
+	// ---------------------------------------------------------------------------
+
+	$effect(() => {
+		const current = selectedModeId;           // tracked
+		if (promptDetailForId === current) return; // already correct — nothing to do
+
+		// Invalidate stale cache
+		promptDetail      = null;
+		promptDetailError = '';
+		promptDetailForId = '';
+
+		// Re-fetch immediately only when the inspector panel is open
+		if (promptInspectorOpen) {
+			void loadPromptDetail();
+		}
+	});
+
+	// ---------------------------------------------------------------------------
+	// Prompt mode loading (list + detail)
+	// ---------------------------------------------------------------------------
+
 	async function loadModes() {
 		modesLoading = true;
 		try {
@@ -101,6 +152,38 @@
 		} finally {
 			modesLoading = false;
 		}
+	}
+
+	/**
+	 * Fetches the full prompt content for selectedModeId.
+	 * Guards against concurrent calls and skips when already loaded
+	 * for the current mode.
+	 */
+	async function loadPromptDetail() {
+		if (promptDetailLoading) return;
+		if (promptDetail && promptDetailForId === selectedModeId) return;
+
+		promptDetailLoading = true;
+		promptDetailError   = '';
+		promptDetail        = null;
+		try {
+			promptDetail      = await api.getPromptModeDetail(selectedModeId);
+			promptDetailForId = selectedModeId;
+		} catch (e) {
+			promptDetailError = e instanceof Error ? e.message : 'Failed to load prompt.';
+		} finally {
+			promptDetailLoading = false;
+		}
+	}
+
+	/**
+	 * Called by the <details> ontoggle handler.
+	 * Syncs promptInspectorOpen so the $effect above knows when to
+	 * eagerly re-fetch after a mode switch while the panel is open.
+	 */
+	function handleInspectorToggle(e: Event) {
+		promptInspectorOpen = (e.target as HTMLDetailsElement).open;
+		if (promptInspectorOpen) void loadPromptDetail();
 	}
 
 	async function fetchFileList() {
@@ -147,10 +230,6 @@
 	// ---------------------------------------------------------------------------
 	// Helpers
 	// ---------------------------------------------------------------------------
-
-	function useStarterPrompt(prompt: string) {
-		currentMessage = prompt;
-	}
 
 	function formatToolResult(tool: ToolLog): string {
 		return (tool.result.content as string | undefined) ?? JSON.stringify(tool.result, null, 2);
@@ -260,7 +339,7 @@
 		const chatSelection = selectedChatText();
 		if (chatSelection) {
 			const { x, y } = popupPosition(event);
-			notePopup  = { ...chatSelection, x, y };
+			notePopup   = { ...chatSelection, x, y };
 			appendPopup = null;
 			suppressNextClickAway = true;
 			return;
@@ -302,9 +381,9 @@
 		const imagesToSend = [...pastedImages];
 
 		messages.push({
-			role:   'user',
+			role:    'user',
 			content: promptToSend,
-			images: imagesToSend.map((i) => i.dataUrl)
+			images:  imagesToSend.map((i) => i.dataUrl)
 		});
 		currentMessage = '';
 		pastedImages   = [];
@@ -323,9 +402,9 @@
 			});
 
 			messages.push({
-				role:   'assistant',
+				role:    'assistant',
 				content: data.text,
-				tools:  data.tools_used
+				tools:   data.tools_used
 			});
 
 			await sessionStore.refresh();
@@ -438,48 +517,35 @@
 	<!-- ===================================================================== -->
 	<main class="flex min-w-0 flex-1 flex-col">
 
-		<!-- Header -->
+		<!-- ================================================================= -->
+		<!-- Header — title + session badge + context toggle only.             -->
+		<!-- Mode switcher removed from here; it now lives in the footer.      -->
+		<!-- ================================================================= -->
 		<header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
-			<div class="mx-auto flex max-w-5xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+			<div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
 				<div>
 					<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
 						Kitchen Cabinet Assistant
 					</p>
 					<div class="mt-1 flex flex-wrap items-center gap-2">
-						<h2 class="text-xl font-semibold text-ink md:text-2xl">{activeMode.label} mode</h2>
+						<!-- Active mode label reflects selectedModeId live -->
+						<h2 class="text-xl font-semibold text-ink md:text-2xl">
+							{modeIcon(activeMode.id)}&nbsp;{activeMode.label} mode
+						</h2>
 						<span class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted">
 							Session {sessionId.substring(0, 8)}
 						</span>
 					</div>
 				</div>
 
-				<div class="flex items-center gap-3">
-					<!-- Mode switcher — buttons populated from GET /api/prompts/modes -->
-					<div class="flex rounded-md border border-line bg-surface p-1">
-						{#if modesLoading}
-							<span class="px-3 py-1.5 text-sm text-muted">Loading…</span>
-						{:else}
-							{#each modes as mode (mode.id)}
-								<button
-									onclick={() => (selectedModeId = mode.id)}
-									class="rounded px-3 py-1.5 text-sm font-medium transition {selectedModeId === mode.id
-										? 'bg-panel text-ink shadow-sm'
-										: 'text-muted hover:text-ink'}"
-								>
-									{mode.label}
-								</button>
-							{/each}
-						{/if}
-					</div>
-
-					<button
-						onclick={sidebarResize.toggleRight}
-						class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
-						title="Toggle context sidebar"
-					>
-						{sidebarResize.showRight ? '▶ Hide panel' : '◀ Context'}
-					</button>
-				</div>
+				<!-- Context sidebar toggle (unchanged) -->
+				<button
+					onclick={sidebarResize.toggleRight}
+					class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
+					title="Toggle context sidebar"
+				>
+					{sidebarResize.showRight ? '▶ Hide panel' : '◀ Context'}
+				</button>
 			</div>
 		</header>
 
@@ -487,16 +553,37 @@
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
 
-				<!-- System prompt indicator: eyebrow only — full content lives on the server -->
-				<div class="rounded-md border border-line bg-panel px-4 py-3 shadow-sm">
-					<p class="text-sm">
-						<span class="font-semibold text-ink">System prompt</span>
-						<span class="ml-2 text-muted">{activeMode.label} · {activeMode.eyebrow}</span>
-						<span class="ml-3 rounded-full border border-line bg-surface px-2 py-0.5 text-xs text-muted">
-							managed by server
+				<!--
+					System prompt inspector.
+					BUG FIX: handleInspectorToggle() now syncs promptInspectorOpen
+					so the $effect above can eagerly re-fetch when the user switches
+					modes while this panel is already open.
+				-->
+				<details
+					class="group rounded-md border border-line bg-panel shadow-sm"
+					ontoggle={handleInspectorToggle}
+				>
+					<summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm">
+						<span>
+							<span class="font-semibold text-ink">System prompt</span>
+							<span class="ml-2 text-muted">{activeMode.label} · {activeMode.eyebrow}</span>
 						</span>
-					</p>
-				</div>
+						<span class="text-xs font-medium text-accent group-open:hidden">Expand</span>
+						<span class="hidden text-xs font-medium text-accent group-open:inline">Collapse</span>
+					</summary>
+
+					<div class="border-t border-line bg-surface px-4 py-3">
+						{#if promptDetailLoading}
+							<p class="text-sm text-muted">Loading…</p>
+						{:else if promptDetailError}
+							<p class="text-sm text-red-500">{promptDetailError}</p>
+						{:else if promptDetail}
+							<pre class="whitespace-pre-wrap text-sm leading-6 text-ink">{promptDetail.content}</pre>
+						{:else}
+							<p class="text-sm text-muted">Open to inspect the active system prompt.</p>
+						{/if}
+					</div>
+				</details>
 
 				<!-- Context injection status -->
 				{#if contextFiles.length > 0}
@@ -516,23 +603,6 @@
 					<p class="rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs text-accent">
 						{appendStatus}
 					</p>
-				{/if}
-
-				<!-- Starter prompts — shown only on empty sessions -->
-				{#if messages.length === 0}
-					<div class="rounded-md border border-dashed border-line bg-panel p-5 shadow-sm">
-						<p class="text-sm font-semibold text-ink">Start with a practical kitchen workflow</p>
-						<div class="mt-4 grid gap-2 md:grid-cols-2">
-							{#each starterPrompts as prompt (prompt)}
-								<button
-									onclick={() => useStarterPrompt(prompt)}
-									class="rounded-md border border-line bg-surface px-3 py-3 text-left text-sm leading-5 text-ink transition hover:border-accent hover:bg-accent-soft focus:ring-2 focus:ring-accent focus:outline-none"
-								>
-									{prompt}
-								</button>
-							{/each}
-						</div>
-					</div>
 				{/if}
 
 				<!-- Messages -->
@@ -639,7 +709,9 @@
 			</div>
 		</section>
 
-		<!-- Footer / input area -->
+		<!-- ================================================================= -->
+		<!-- Footer / input area                                                -->
+		<!-- ================================================================= -->
 		<footer class="border-t border-line bg-panel/95 px-4 py-4 backdrop-blur md:px-6">
 			<div class="mx-auto max-w-5xl">
 
@@ -665,26 +737,12 @@
 					</div>
 				{/if}
 
-				<div class="mb-2 flex items-center justify-between gap-3">
-					<p class="text-xs font-medium text-muted">
-						Active mode:
-						<span class="font-semibold text-ink">{activeMode.label}</span>
-						{#if contextFiles.length > 0}
-							·
-							<span class="text-accent">
-								{contextFiles.length} context file{contextFiles.length > 1 ? 's' : ''}
-							</span>
-						{/if}
-					</p>
-					<button
-						onclick={startNewChat}
-						class="text-xs font-semibold text-muted transition hover:text-ink lg:hidden"
-					>
-						New chat
-					</button>
-				</div>
+				<!-- ============================================================= -->
+				<!-- Composer box — resize handle + mode pills + textarea + send   -->
+				<!-- ============================================================= -->
+				<div class="relative rounded-md border border-line bg-surface shadow-sm">
 
-				<div class="relative flex items-end gap-2 rounded-md border border-line bg-surface p-2 shadow-sm">
+					<!-- Drag-to-resize handle (sits at the very top of the box) -->
 					<button
 						type="button"
 						aria-label="Resize prompt area"
@@ -694,32 +752,97 @@
 						onkeydown={handlePromptResizeKeydown}
 						title="Drag to resize. Double-click to reset."
 					></button>
-					<label class="sr-only" for="message-input">Message</label>
-					<textarea
-						id="message-input"
-						bind:this={messageInput}
-						bind:value={currentMessage}
-						onkeydown={handleKeydown}
-						onpaste={handlePaste}
-						placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
-						class="min-h-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
-						style="height: {sidebarResize.promptHeight}px;"
-						rows="2"
-					></textarea>
-					<button
-						onclick={sendMessage}
-						disabled={isLoading || !currentMessage.trim()}
-						class="h-10 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45"
+
+					<!-- Textarea -->
+					<div class="flex items-end gap-2 px-2 pt-3 pb-2">
+						<label class="sr-only" for="message-input">Message</label>
+						<textarea
+							id="message-input"
+							bind:this={messageInput}
+							bind:value={currentMessage}
+							onkeydown={handleKeydown}
+							onpaste={handlePaste}
+							placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
+							class="min-h-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
+							style="height: {sidebarResize.promptHeight}px;"
+							rows="2"
+						></textarea>
+						<button
+							onclick={sendMessage}
+							disabled={isLoading || !currentMessage.trim()}
+							class="h-10 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45"
+						>
+							Send
+						</button>
+					</div>
+
+					<!-- =========================================================== -->
+					<!-- Mode pill strip — the new bottom toolbar                     -->
+					<!--                                                               -->
+					<!-- Sits inside the composer box, visually separated by a thin   -->
+					<!-- top border, matching the pattern used in Claude / ChatGPT.   -->
+					<!-- Each pill is a toggle button: active = accent fill,          -->
+					<!-- inactive = ghost with hover state.                           -->
+					<!-- Keyboard: Tab between pills, Space/Enter to activate.        -->
+					<!-- =========================================================== -->
+					<div
+						class="flex items-center gap-1 border-t border-line px-3 py-2"
+						role="group"
+						aria-label="Prompt mode"
 					>
-						Send
-					</button>
+						{#if modesLoading}
+							<!-- Skeleton shimmer while modes load from the backend -->
+							<span class="h-7 w-20 animate-pulse rounded-full bg-line"></span>
+							<span class="h-7 w-16 animate-pulse rounded-full bg-line"></span>
+							<span class="h-7 w-20 animate-pulse rounded-full bg-line"></span>
+						{:else}
+							{#each modes as mode (mode.id)}
+								<button
+									type="button"
+									role="radio"
+									aria-checked={selectedModeId === mode.id}
+									title={mode.eyebrow}
+									onclick={() => (selectedModeId = mode.id)}
+									class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
+										{selectedModeId === mode.id
+											? 'border-accent bg-accent text-white shadow-sm'
+											: 'border-line bg-transparent text-muted hover:border-accent/60 hover:bg-accent/8 hover:text-ink'}"
+								>
+									<span aria-hidden="true">{modeIcon(mode.id)}</span>
+									{mode.label}
+								</button>
+							{/each}
+						{/if}
+
+						<!-- Spacer pushes the "New chat" shortcut to the right -->
+						<span class="flex-1"></span>
+
+						<button
+							onclick={startNewChat}
+							class="rounded-full border border-line px-3 py-1 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
+							title="Start a new conversation"
+						>
+							+ New chat
+						</button>
+					</div>
 				</div>
+
+				<!-- Tiny status line below the composer — context files count -->
+				{#if contextFiles.length > 0}
+					<p class="mt-1.5 px-1 text-xs text-muted">
+						📎
+						<span class="text-accent font-medium">
+							{contextFiles.length} context file{contextFiles.length > 1 ? 's' : ''}
+						</span>
+						will be injected into your next message.
+					</p>
+				{/if}
 			</div>
 		</footer>
 	</main>
 
 	<!-- ===================================================================== -->
-	<!-- RIGHT SIDEBAR — context injection + notes                              -->
+	<!-- RIGHT SIDEBAR — context injection + notes                             -->
 	<!-- ===================================================================== -->
 	{#if sidebarResize.showRight}
 		<div

@@ -3,13 +3,12 @@ tests/test_prompt_routes.py
 ============================
 TDD tests for F05 backend-prompt endpoints and the updated /api/chat flow.
 
-Tests are written RED-first before the implementation exists.
-
 Coverage contract:
-  GET  /api/prompts/modes        — returns list[{id, label, eyebrow}]
-  POST /api/prompts/reload       — hot-reloads files; returns {success: true}
-  POST /api/chat with mode_id    — resolves mode_id → system_instruction via PromptManager
-  POST /api/chat backward compat — system_prompt field still accepted (legacy)
+  GET  /api/prompts/modes           — returns list[{id, label, eyebrow}]
+  GET  /api/prompts/modes/{mode_id} — returns full content for one mode (200 / 404)
+  POST /api/prompts/reload          — hot-reloads files; returns {success: true}
+  POST /api/chat with mode_id       — resolves mode_id → system_instruction via PromptManager
+  POST /api/chat backward compat    — system_prompt field still accepted (legacy)
   Dependency override ensures PromptManager is isolated from real disk
 """
 from pathlib import Path
@@ -49,7 +48,6 @@ def _stub_chat_service(text: str = "ok", tools: list | None = None):
 # ---------------------------------------------------------------------------
 
 def test_get_prompt_modes_returns_200(tmp_path: Path, monkeypatch) -> None:
-    """Endpoint must return HTTP 200."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -62,7 +60,6 @@ def test_get_prompt_modes_returns_200(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_get_prompt_modes_returns_list(tmp_path: Path, monkeypatch) -> None:
-    """Response must be a JSON array."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -75,7 +72,6 @@ def test_get_prompt_modes_returns_list(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_get_prompt_modes_has_three_modes(tmp_path: Path, monkeypatch) -> None:
-    """Must return exactly the three built-in modes."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -100,13 +96,12 @@ def test_get_prompt_modes_shape(tmp_path: Path, monkeypatch) -> None:
             assert "id" in m
             assert "label" in m
             assert "eyebrow" in m
-            assert "content" not in m, "content must NOT be exposed to the frontend"
+            assert "content" not in m, "content must NOT be exposed in the list response"
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
 
 
 def test_get_prompt_modes_correct_labels(tmp_path: Path, monkeypatch) -> None:
-    """Labels must match the spec from f05.md."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -125,11 +120,98 @@ def test_get_prompt_modes_correct_labels(tmp_path: Path, monkeypatch) -> None:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/prompts/modes/{mode_id}  — detail with content
+# ---------------------------------------------------------------------------
+
+def test_get_prompt_mode_detail_returns_200(tmp_path: Path, monkeypatch) -> None:
+    """Returns 200 for a known mode_id."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        resp = TestClient(app).get("/api/prompts/modes/design")
+        assert resp.status_code == 200
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+def test_get_prompt_mode_detail_includes_content(tmp_path: Path, monkeypatch) -> None:
+    """Response must include the full combined prompt content."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        body = TestClient(app).get("/api/prompts/modes/design").json()
+        assert "content" in body
+        assert "DESIGN CONTENT" in body["content"]
+        assert "BASE RULES" in body["content"]
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+def test_get_prompt_mode_detail_has_all_fields(tmp_path: Path, monkeypatch) -> None:
+    """Response must have id, label, eyebrow, and content."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        body = TestClient(app).get("/api/prompts/modes/general").json()
+        assert body["id"]      == "general"
+        assert body["label"]   == "General"
+        assert body["eyebrow"] == "Workspace help"
+        assert "GENERAL CONTENT" in body["content"]
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+def test_get_prompt_mode_detail_assembly(tmp_path: Path, monkeypatch) -> None:
+    """Works for all three built-in modes."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        body = TestClient(app).get("/api/prompts/modes/assembly").json()
+        assert "ASSEMBLY CONTENT" in body["content"]
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+def test_get_prompt_mode_detail_unknown_returns_404(tmp_path: Path, monkeypatch) -> None:
+    """Returns 404 for an unregistered mode_id."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        resp = TestClient(app).get("/api/prompts/modes/nonexistent")
+        assert resp.status_code == 404
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+def test_get_prompt_mode_detail_404_has_detail_field(tmp_path: Path, monkeypatch) -> None:
+    """404 response must include a detail field explaining what was not found."""
+    pm = _make_prompt_manager(tmp_path)
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        body = TestClient(app).get("/api/prompts/modes/ghost").json()
+        assert "detail" in body
+        assert "ghost" in body["detail"]
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+
+
+# ---------------------------------------------------------------------------
 # POST /api/prompts/reload
 # ---------------------------------------------------------------------------
 
 def test_reload_endpoint_returns_200(tmp_path: Path, monkeypatch) -> None:
-    """POST /api/prompts/reload must return HTTP 200."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -142,7 +224,6 @@ def test_reload_endpoint_returns_200(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_reload_endpoint_returns_success_true(tmp_path: Path, monkeypatch) -> None:
-    """POST /api/prompts/reload must return {success: true}."""
     pm = _make_prompt_manager(tmp_path)
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
@@ -155,7 +236,6 @@ def test_reload_endpoint_returns_success_true(tmp_path: Path, monkeypatch) -> No
 
 
 def test_reload_endpoint_calls_reload_prompts(tmp_path: Path, monkeypatch) -> None:
-    """POST /api/prompts/reload must actually call pm.reload_prompts()."""
     pm = MagicMock(spec=PromptManager)
     pm.reload_prompts.return_value = None
     app.dependency_overrides[get_prompt_manager] = lambda: pm
@@ -173,8 +253,6 @@ def test_reload_endpoint_calls_reload_prompts(tmp_path: Path, monkeypatch) -> No
 # ---------------------------------------------------------------------------
 
 def test_chat_with_mode_id_resolves_instruction(tmp_path: Path, monkeypatch) -> None:
-    """When mode_id='design' is sent, the ChatService must receive the
-    resolved design system_instruction, NOT the raw mode_id string."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -195,19 +273,14 @@ def test_chat_with_mode_id_resolves_instruction(tmp_path: Path, monkeypatch) -> 
         })
         assert resp.status_code == 200
         passed_prompt = captured.get("system_prompt", "")
-        assert "DESIGN CONTENT" in passed_prompt, (
-            f"Expected DESIGN CONTENT in system_prompt, got: {passed_prompt!r}"
-        )
-        assert "BASE RULES" in passed_prompt, (
-            f"Expected BASE RULES in system_prompt, got: {passed_prompt!r}"
-        )
+        assert "DESIGN CONTENT" in passed_prompt
+        assert "BASE RULES" in passed_prompt
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
         app.dependency_overrides.pop(get_chat_service, None)
 
 
 def test_chat_mode_id_defaults_to_general(tmp_path: Path, monkeypatch) -> None:
-    """When no mode_id is supplied, the general prompt must be used."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -226,15 +299,13 @@ def test_chat_mode_id_defaults_to_general(tmp_path: Path, monkeypatch) -> None:
             "message":    "hello",
         })
         assert resp.status_code == 200
-        passed_prompt = captured.get("system_prompt", "")
-        assert "GENERAL CONTENT" in passed_prompt
+        assert "GENERAL CONTENT" in captured.get("system_prompt", "")
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
         app.dependency_overrides.pop(get_chat_service, None)
 
 
 def test_chat_unknown_mode_id_falls_back_to_base(tmp_path: Path, monkeypatch) -> None:
-    """An unrecognised mode_id must not crash; it falls back to base rules."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -254,15 +325,13 @@ def test_chat_unknown_mode_id_falls_back_to_base(tmp_path: Path, monkeypatch) ->
             "mode_id":    "nonexistent_mode",
         })
         assert resp.status_code == 200
-        passed_prompt = captured.get("system_prompt", "")
-        assert "BASE RULES" in passed_prompt
+        assert "BASE RULES" in captured.get("system_prompt", "")
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
         app.dependency_overrides.pop(get_chat_service, None)
 
 
 def test_chat_assembly_mode_resolves_correctly(tmp_path: Path, monkeypatch) -> None:
-    """mode_id='assembly' must resolve to the assembly prompt."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -282,20 +351,13 @@ def test_chat_assembly_mode_resolves_correctly(tmp_path: Path, monkeypatch) -> N
             "mode_id":    "assembly",
         })
         assert resp.status_code == 200
-        passed_prompt = captured.get("system_prompt", "")
-        assert "ASSEMBLY CONTENT" in passed_prompt
+        assert "ASSEMBLY CONTENT" in captured.get("system_prompt", "")
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
         app.dependency_overrides.pop(get_chat_service, None)
 
 
-# ---------------------------------------------------------------------------
-# POST /api/chat — backward compatibility (system_prompt field still works)
-# ---------------------------------------------------------------------------
-
 def test_chat_legacy_system_prompt_still_accepted(tmp_path: Path, monkeypatch) -> None:
-    """Sending system_prompt directly (old frontend behaviour) must still work.
-    The raw value must be forwarded to ChatService unchanged."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -315,7 +377,6 @@ def test_chat_legacy_system_prompt_still_accepted(tmp_path: Path, monkeypatch) -
             "system_prompt": "MY CUSTOM LEGACY PROMPT",
         })
         assert resp.status_code == 200
-        # system_prompt overrides mode_id — raw value must reach the service
         assert captured.get("system_prompt") == "MY CUSTOM LEGACY PROMPT"
     finally:
         app.dependency_overrides.pop(get_prompt_manager, None)
@@ -323,8 +384,6 @@ def test_chat_legacy_system_prompt_still_accepted(tmp_path: Path, monkeypatch) -
 
 
 def test_chat_system_prompt_overrides_mode_id(tmp_path: Path, monkeypatch) -> None:
-    """When both system_prompt and mode_id are provided,
-    system_prompt takes precedence (backward compat guarantee)."""
     pm = _make_prompt_manager(tmp_path)
     captured: dict = {}
 
@@ -356,7 +415,6 @@ def test_chat_system_prompt_overrides_mode_id(tmp_path: Path, monkeypatch) -> No
 # ---------------------------------------------------------------------------
 
 def test_get_prompt_manager_dependency_returns_instance(tmp_path: Path, monkeypatch) -> None:
-    """The get_prompt_manager DI factory must return a PromptManager instance."""
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
     monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
     from src.main import get_prompt_manager as gpm

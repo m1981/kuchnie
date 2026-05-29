@@ -32,7 +32,7 @@ from src.schemas import (
     ChatRequest, ChatResponse, ForkRequest, ForkResponse,
     SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
-    RevertResponse, PromptModeResponse,
+    RevertResponse, PromptModeResponse, PromptModeDetail,
     LlmExportResponse, LlmExportMetadata, LlmExportConfig, LlmExportTurn,
 )
 from src.repositories import (
@@ -483,6 +483,44 @@ def get_prompt_modes(
       200 — always succeeds (returns empty list when prompts_dir is missing)
     """
     return [PromptModeResponse(**m) for m in pm.get_all_modes()]
+
+
+@app.get(
+    "/api/prompts/modes/{mode_id}",
+    response_model=PromptModeDetail,
+    summary="Get full prompt content for one mode",
+    description=(
+        "Returns the complete resolved system instruction for *mode_id* "
+        "(``base_agent_rules.md`` + mode body concatenated). "
+        "Intended for the frontend expand-to-inspect panel. "
+        "Returns 404 when *mode_id* is not registered."
+    ),
+)
+def get_prompt_mode_detail(
+    mode_id: str,
+    pm: PromptManager = Depends(get_prompt_manager),
+) -> PromptModeDetail:
+    """
+    F05 — Returns the full prompt text for a single mode.
+
+    HTTP status codes:
+      200 — mode found; content is the full resolved system instruction
+      404 — mode_id not registered in PromptManager
+    """
+    all_modes = {m["id"]: m for m in pm.get_all_modes()}
+    if mode_id not in all_modes:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Prompt mode not found: {mode_id}",
+        )
+    content = pm.get_system_instruction(mode_id)
+    meta = all_modes[mode_id]
+    return PromptModeDetail(
+        id=meta["id"],
+        label=meta["label"],
+        eyebrow=meta["eyebrow"],
+        content=content,
+    )
 
 
 @app.post(
