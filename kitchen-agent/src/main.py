@@ -2,21 +2,6 @@
 src/main.py
 ===========
 FastAPI application — HTTP layer only.
-
-Responsibilities
-----------------
-* Declare routes and Pydantic request / response models.
-* Validate input and translate service/domain errors into HTTP responses.
-* Delegate all business logic to ``ChatService`` and ``DatabaseManager``.
-
-No business logic lives here.
-
-Async strategy
---------------
-The Gemini SDK call and all SQLite operations are synchronous (blocking I/O).
-We run them inside ``asyncio.get_event_loop().run_in_executor(None, ...)`` so
-that the FastAPI event loop is never blocked and can serve other requests while
-the model is thinking.
 """
 
 import asyncio
@@ -24,18 +9,23 @@ import json
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
 
 from src.chat_service import ChatService
 from src.config import settings
 from src.db import DatabaseManager
 from src.tools.file_ops import append_to_file
 from src.tools.repo_map import get_repo_map
+
+# --- NEW: Import all schemas from our new file ---
+from schemas import (
+    ChatRequest, ChatResponse, ForkRequest, ForkResponse,
+    SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
+    FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,105 +59,6 @@ def get_db() -> DatabaseManager:
 def get_chat_service(db: DatabaseManager = Depends(get_db)) -> ChatService:
     """FastAPI dependency: returns a ChatService wired to the DB."""
     return ChatService(db)
-
-
-# ---------------------------------------------------------------------------
-# Pydantic models
-# ---------------------------------------------------------------------------
-
-class ChatImagePart(BaseModel):
-    mime_type: str  # e.g. "image/jpeg"
-    data: str       # base64-encoded bytes
-
-
-class ChatRequest(BaseModel):
-    session_id: str
-    message: str
-    system_prompt: str | None = None
-    images: list[ChatImagePart] | None = None
-    context_files: list[str] | None = None
-
-
-class ToolLog(BaseModel):
-    name: str
-    args: dict[str, Any]
-    result: dict[str, Any]
-
-
-class ChatResponse(BaseModel):
-    text: str
-    tools_used: list[ToolLog]
-
-
-class ForkRequest(BaseModel):
-    turn_index: int
-
-
-class ForkResponse(BaseModel):
-    new_session_id: str
-
-
-class SessionSummary(BaseModel):
-    """Flat representation of a session as returned by GET /api/sessions."""
-
-    id: str
-    title: str | None
-    updated_at: str | None
-    parent_id: str | None = None
-    fork_turn_index: int | None = None
-    root_id: str | None = None
-    archived_at: str | None = None
-
-
-class SessionNode(BaseModel):
-    """One node in the session tree returned by GET /api/sessions/tree."""
-
-    id: str
-    title: str | None
-    updated_at: str | None
-    parent_id: str | None = None
-    fork_turn_index: int | None = None
-    root_id: str | None = None
-    archived_at: str | None = None
-    children: list["SessionNode"] = []
-
-
-# Required so Pydantic can resolve the self-referential type.
-SessionNode.model_rebuild()
-
-
-class FileReadResponse(BaseModel):
-    filepath: str
-    content: str
-
-
-class FileWriteRequest(BaseModel):
-    content: str
-
-
-class FileAppendRequest(BaseModel):
-    filepath: str
-    content: str
-
-
-class FileListItem(BaseModel):
-    path: str
-    name: str
-
-
-class NoteCreateRequest(BaseModel):
-    selected_text: str
-    source_role: str  # "user" | "assistant"
-    note: str = ""
-
-
-class NoteResponse(BaseModel):
-    id: str
-    session_id: str
-    selected_text: str
-    note: str
-    source_role: str
-    created_at: str
 
 
 # ---------------------------------------------------------------------------

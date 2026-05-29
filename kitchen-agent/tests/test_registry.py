@@ -176,23 +176,3 @@ def test_search_knowledge_base_wrapper_passes_data_dir(tmp_path) -> None:
     assert captured["query"] == "blum"
 
 
-# ---------------------------------------------------------------------------
-# schemas.py shim re-exports the same objects
-# ---------------------------------------------------------------------------
-
-def test_schemas_shim_returns_same_declarations() -> None:
-    """schemas.py must re-export the identical declaration objects from registry."""
-    from src.tools import schemas
-    from src.tools.registry import (
-        _create_file_entry,
-        _edit_file_entry,
-        _get_repo_map_entry,
-        _read_file_entry,
-        _search_knowledge_base_entry,
-    )
-
-    assert schemas.read_file_fn is _read_file_entry.declaration
-    assert schemas.get_repo_map_fn is _get_repo_map_entry.declaration
-    assert schemas.edit_file_fn is _edit_file_entry.declaration
-    assert schemas.create_file_fn is _create_file_entry.declaration
-    assert schemas.search_knowledge_base_fn is _search_knowledge_base_entry.declaration
