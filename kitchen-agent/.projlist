@@ -1,0 +1,35 @@
+# ── Python backend (FastAPI) ──────────────────────────────────────────────────
+src/**/*.py
+tests/**/*.py
+pyproject.toml
+Makefile
+.env.example
+
+# ── Svelte frontend ───────────────────────────────────────────────────────────
+frontend/src/**/*.svelte
+frontend/src/**/*.ts
+frontend/src/**/*.html
+frontend/src/**/*.css
+frontend/package.json
+frontend/svelte.config.js
+frontend/vite.config.ts
+frontend/tsconfig.json
+frontend/eslint.config.js
+
+# ── Prompts & domain knowledge ────────────────────────────────────────────────
+prompts/*.md
+data/01_Materials/*.md
+data/02_Hardware/*.md
+data/03_Finishes/*.md
+
+# ── Docs ──────────────────────────────────────────────────────────────────────
+doc/*.md
+README.md
+
+# ── Negations — exclude noise even if whitelisted ────────────────────────────
+!frontend/src/lib/vitest-examples/**
+!frontend/src/app.d.ts
+!frontend/README.md
+!frontend/.env.example
+!tests/__init__.py
+!src/__init__.py

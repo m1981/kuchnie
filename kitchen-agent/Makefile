@@ -33,6 +33,10 @@ dev: ## Start both server and frontend in parallel
 	@make -j2 server frontend
 
 ##@ Testing
+.PHONY: ls
+ls: ## List meaningful project files (backend + frontend sources, prompts, docs)
+	lsproj
+
 .PHONY: test-cov
 test-cov: ## Run UNIT tests with strict coverage (Fail under 80%, excludes UI and integration tests)
 	@echo "$(GREEN)Running Unit Tests with Coverage Check...$(RESET)"
