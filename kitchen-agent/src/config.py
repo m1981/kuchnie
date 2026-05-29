@@ -10,6 +10,7 @@ Usage:
     from src.config import settings
 
     settings.data_dir          # Path("data")
+    settings.prompts_dir       # Path("prompts")
     settings.gemini_model      # "gemini-3.1-pro-preview"
     settings.allowed_origins   # ["http://localhost:5173"]
 """
@@ -29,6 +30,9 @@ class Settings(BaseSettings):
 
     # ── Paths ────────────────────────────────────────────────────────────────
     data_dir: Path = Path("data")
+
+    # F05 — prompts directory for backend-managed system prompts
+    prompts_dir: Path = Path("prompts")
 
     @property
     def db_path(self) -> Path:

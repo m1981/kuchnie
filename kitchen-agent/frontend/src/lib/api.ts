@@ -64,9 +64,23 @@ export type FileItem = { path: string; name: string };
 
 export type ChatImagePart = { mime_type: string; data: string };
 
+/**
+ * F05 — Updated ChatRequest.
+ *
+ * `mode_id` is the new primary field (default: "general").
+ * `system_prompt` is kept for backward compatibility and takes precedence
+ * when provided.
+ */
 export type ChatRequest = {
 	session_id: string;
 	message: string;
+	/** F05: backend prompt mode id. Resolved server-side via PromptManager. */
+	mode_id?: string;
+	/**
+	 * Legacy override.  When set, bypasses mode_id resolution entirely and
+	 * passes the raw string directly to the LLM.  Maintained for backward
+	 * compatibility with existing frontend code.
+	 */
 	system_prompt?: string | null;
 	images?: ChatImagePart[] | null;
 	context_files?: string[] | null;
@@ -75,6 +89,21 @@ export type ChatRequest = {
 export type ChatResponse = {
 	text: string;
 	tools_used: ToolLog[];
+};
+
+// ---------------------------------------------------------------------------
+// F05 — Prompt mode types (mirrors PromptModeResponse Pydantic model)
+// ---------------------------------------------------------------------------
+
+/**
+ * Metadata for one backend-managed prompt mode.
+ * Returned by GET /api/prompts/modes.
+ * Never includes the full `content` string.
+ */
+export type PromptMode = {
+	id: string;
+	label: string;
+	eyebrow: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -219,5 +248,25 @@ export const api = {
 
 	// Chat
 	chat: (payload: ChatRequest) =>
-		request<ChatResponse>('/api/chat', json(payload))
+		request<ChatResponse>('/api/chat', json(payload)),
+
+	// -------------------------------------------------------------------------
+	// F05 — Prompt mode management
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GET /api/prompts/modes
+	 * Returns metadata (id, label, eyebrow) for all backend prompt modes.
+	 * Use this to populate the mode switcher instead of hardcoding templates.
+	 */
+	getPromptModes: (): Promise<PromptMode[]> =>
+		request<PromptMode[]>('/api/prompts/modes'),
+
+	/**
+	 * POST /api/prompts/reload
+	 * Hot-reloads the prompt Markdown files on the server without restart.
+	 * Useful during development when editing prompts/*.md files.
+	 */
+	reloadPrompts: (): Promise<{ success: boolean }> =>
+		request<{ success: boolean }>('/api/prompts/reload', { method: 'POST' })
 };

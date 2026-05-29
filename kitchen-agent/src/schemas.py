@@ -14,8 +14,30 @@ class ChatImagePart(BaseModel):
 
 
 class ChatRequest(BaseModel):
+    """
+    Request body for POST /api/chat.
+
+    F05 changes
+    -----------
+    ``mode_id`` replaces the old ``system_prompt`` as the primary way to
+    select a persona.  The backend resolves ``mode_id`` → full system
+    instruction via ``PromptManager`` before calling the agent.
+
+    Backward compatibility
+    ----------------------
+    ``system_prompt`` is kept as an **optional override**.  When provided it
+    takes precedence over ``mode_id`` so the old Svelte frontend (which sends
+    the full prompt string directly) continues to work without changes.
+
+    Priority (highest → lowest):
+      1. ``system_prompt``  (explicit raw override — legacy / power-user path)
+      2. ``mode_id``        (resolved via PromptManager — new default path)
+    """
     session_id: str
     message: str
+    # F05 — new primary field; defaults to "general"
+    mode_id: str = "general"
+    # Legacy override — if set, bypasses mode_id resolution entirely
     system_prompt: str | None = None
     images: list[ChatImagePart] | None = None
     context_files: list[str] | None = None
@@ -164,3 +186,19 @@ class LlmExportResponse(BaseModel):
     metadata: LlmExportMetadata
     config: LlmExportConfig
     turns: list[LlmExportTurn]
+
+
+# ---------------------------------------------------------------------------
+# F05 — Backend Prompt Management schemas
+# ---------------------------------------------------------------------------
+
+class PromptModeResponse(BaseModel):
+    """
+    Metadata for one prompt mode, returned by GET /api/prompts/modes.
+
+    Intentionally does NOT include ``content`` so the frontend never
+    receives the full system prompt text.
+    """
+    id: str
+    label: str
+    eyebrow: str

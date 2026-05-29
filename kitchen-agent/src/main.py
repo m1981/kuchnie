@@ -7,7 +7,7 @@ Responsibilities
 ----------------
 * Declare routes and Pydantic request / response models.
 * Validate input and translate service/domain errors into HTTP responses.
-* Delegate all business logic to `ChatService` and Repositories.
+* Delegate all business logic to `ChatService`, Repositories, and PromptManager.
 """
 
 import asyncio
@@ -22,6 +22,7 @@ from fastapi.responses import PlainTextResponse
 
 from src.chat_service import ChatService
 from src.config import settings
+from src.prompt_manager import PromptManager, prompt_manager as _default_prompt_manager
 from src.tools.file_ops import append_to_file, revert_backup
 from src.tools.repo_map import get_repo_map
 from src.logger import setup_logging
@@ -31,7 +32,7 @@ from src.schemas import (
     ChatRequest, ChatResponse, ForkRequest, ForkResponse,
     SessionSummary, SessionNode, FileReadResponse, FileWriteRequest,
     FileAppendRequest, FileListItem, NoteCreateRequest, NoteResponse,
-    RevertResponse,
+    RevertResponse, PromptModeResponse,
     LlmExportResponse, LlmExportMetadata, LlmExportConfig, LlmExportTurn,
 )
 from src.repositories import (
@@ -70,17 +71,31 @@ app.add_middleware(
 # Singleton connection manager for the app lifecycle
 db_connection = SQLiteConnection()
 
+
 def get_session_repo() -> SessionRepository:
     """FastAPI dependency: returns the Session Repository."""
     return SQLiteSessionRepository(db_connection)
+
 
 def get_note_repo() -> NoteRepository:
     """FastAPI dependency: returns the Note Repository."""
     return SQLiteNoteRepository(db_connection)
 
+
 def get_chat_service(session_repo: SessionRepository = Depends(get_session_repo)) -> ChatService:
     """FastAPI dependency: returns a ChatService wired to the Session Repo."""
     return ChatService(session_repo)
+
+
+def get_prompt_manager() -> PromptManager:
+    """
+    FastAPI dependency: returns the module-level PromptManager singleton.
+
+    Isolated via ``app.dependency_overrides`` in tests so no real disk I/O
+    occurs during the test suite.
+    """
+    return _default_prompt_manager
+
 
 # ---------------------------------------------------------------------------
 # Path helpers
@@ -444,6 +459,56 @@ def delete_note(
 
 
 # ---------------------------------------------------------------------------
+# F05 — Prompt management endpoints
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/prompts/modes",
+    response_model=list[PromptModeResponse],
+    summary="List available prompt modes",
+    description=(
+        "Returns metadata for all backend-managed prompt modes.\n\n"
+        "Each item contains ``id``, ``label``, and ``eyebrow`` — **never** "
+        "the full ``content`` string — so the frontend can render the mode "
+        "switcher without receiving the system prompt text."
+    ),
+)
+def get_prompt_modes(
+    pm: PromptManager = Depends(get_prompt_manager),
+) -> list[PromptModeResponse]:
+    """
+    F05 — Returns the list of available prompt modes for the frontend mode switcher.
+
+    HTTP status codes:
+      200 — always succeeds (returns empty list when prompts_dir is missing)
+    """
+    return [PromptModeResponse(**m) for m in pm.get_all_modes()]
+
+
+@app.post(
+    "/api/prompts/reload",
+    summary="Hot-reload prompt files",
+    description=(
+        "Re-reads all Markdown files in ``prompts/`` and refreshes the "
+        "in-memory cache without restarting the server.\n\n"
+        "Use this after editing a ``.md`` prompt file to pick up the changes "
+        "instantly.  The next ``/api/chat`` call will use the updated prompt."
+    ),
+)
+def reload_prompts(
+    pm: PromptManager = Depends(get_prompt_manager),
+) -> dict:
+    """
+    F05 — Hot-reload endpoint.
+
+    HTTP status codes:
+      200 — reload succeeded
+    """
+    pm.reload_prompts()
+    return {"success": True}
+
+
+# ---------------------------------------------------------------------------
 # Chat endpoint
 # ---------------------------------------------------------------------------
 
@@ -451,13 +516,31 @@ def delete_note(
 async def chat(
     request: ChatRequest,
     service: ChatService = Depends(get_chat_service),
+    pm: PromptManager = Depends(get_prompt_manager),
 ) -> ChatResponse:
     """
     Processes a chat message through the Gemini agent and persists state.
 
+    F05 — System instruction resolution
+    ------------------------------------
+    Priority (highest → lowest):
+      1. ``request.system_prompt`` — explicit raw override (legacy / power-user)
+      2. ``request.mode_id``       — resolved via PromptManager (new default)
+
     The synchronous agent call is dispatched to a thread-pool executor so the
     event loop remains free during the (potentially 10–30 s) model call.
     """
+    # Resolve the system instruction with the F05 priority rules
+    if request.system_prompt is not None:
+        # Legacy / explicit override — pass through unchanged
+        system_instruction: str | None = request.system_prompt
+    else:
+        # New path: resolve mode_id → full prompt via PromptManager
+        resolved = pm.get_system_instruction(request.mode_id)
+        # Use None when the resolved text is empty (missing prompts_dir etc.)
+        # so the agent behaves the same as before F05 in degraded environments
+        system_instruction = resolved if resolved else None
+
     loop = asyncio.get_event_loop()
 
     try:
@@ -467,7 +550,7 @@ async def chat(
                 service.handle_turn,
                 session_id=request.session_id,
                 user_message=request.message,
-                system_prompt=request.system_prompt,
+                system_prompt=system_instruction,
                 images=(
                     [img.model_dump() for img in request.images]
                     if request.images
