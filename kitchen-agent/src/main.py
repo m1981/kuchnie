@@ -128,6 +128,78 @@ def _resolve_data_path(filepath: str) -> Path:
     return resolved
 
 
+def _resolve_context_file_paths(
+    context_files: list[str] | None,
+) -> list[str] | None:
+    """
+    Resolve context file paths sent by the frontend to full filesystem paths.
+
+    The frontend ``ContextSidebar`` sends ``FileListItem.path`` values that are
+    relative to ``settings.data_dir`` (e.g. ``"kuchnia-kroki.md"``).  The agent's
+    ``read_file`` function resolves paths relative to CWD, so a bare filename like
+    ``"kuchnia-kroki.md"`` will fail unless the server is started from *inside*
+    ``data/``.
+
+    This function converts each path to a canonical absolute path under data_dir:
+
+      1. If the path is already absolute AND inside data_dir → keep it.
+      2. If the path is absolute but outside data_dir → silently drop it
+         (path-traversal guard).
+      3. If the path is relative → resolve it relative to data_dir
+         (this is the normal frontend case: ``"file.md"`` → ``data_dir/file.md``).
+
+    Note: we intentionally do NOT check ``Path(fp).exists()`` here because the
+    file may exist in CWD by coincidence (e.g. a same-named file in the project
+    root) which would yield the wrong content.  We always treat relative paths
+    as relative to data_dir.
+
+    Args:
+        context_files: Raw list from the HTTP request, or ``None``.
+
+    Returns:
+        Resolved list of absolute path strings, or ``None`` when the input is
+        empty / ``None``.
+    """
+    if not context_files:
+        return None
+
+    data_dir_resolved = settings.data_dir.resolve()
+    resolved_paths: list[str] = []
+
+    for fp in context_files:
+        candidate = Path(fp)
+
+        if candidate.is_absolute():
+            # Already absolute — validate it's inside data_dir.
+            try:
+                candidate.resolve().relative_to(data_dir_resolved)
+            except ValueError:
+                logger.warning(
+                    "context_file_path_traversal_dropped",
+                    path=fp,
+                    data_dir=str(data_dir_resolved),
+                )
+                continue
+            resolved_paths.append(fp)
+        else:
+            # Relative path — always resolve relative to data_dir.
+            # This is the normal case from the ContextSidebar frontend.
+            prefixed = (settings.data_dir / fp).resolve()
+
+            # Path-traversal guard: relative paths containing ".." could escape.
+            if not str(prefixed).startswith(str(data_dir_resolved)):
+                logger.warning(
+                    "context_file_path_traversal_dropped",
+                    path=fp,
+                    resolved=str(prefixed),
+                )
+                continue
+
+            resolved_paths.append(str(prefixed))
+
+    return resolved_paths or None
+
+
 # ---------------------------------------------------------------------------
 # Session endpoints
 # ---------------------------------------------------------------------------
@@ -749,6 +821,14 @@ async def chat(
       1. ``request.system_prompt`` — explicit raw override (legacy / power-user)
       2. ``request.mode_id``       — resolved via PromptManager (new default)
 
+    Context file path resolution
+    ----------------------------
+    The frontend ``ContextSidebar`` sends ``FileListItem.path`` values that are
+    relative to ``data_dir`` (e.g. ``"kuchnia-kroki.md"``).  Before forwarding
+    to the agent, each path is resolved to a full absolute path via
+    ``_resolve_context_file_paths`` so that ``read_file`` can open the file
+    regardless of the server's CWD.
+
     The synchronous agent call is dispatched to a thread-pool executor so the
     event loop remains free during the (potentially 10–30 s) model call.
     """
@@ -762,6 +842,11 @@ async def chat(
         # Use None when the resolved text is empty (missing prompts_dir etc.)
         # so the agent behaves the same as before F05 in degraded environments
         system_instruction = resolved if resolved else None
+
+    # Resolve context file paths: bare filenames → absolute paths under data_dir.
+    # This fixes the bug where ContextSidebar sends "file.md" but read_file
+    # needs "data/file.md" (or the absolute path).
+    resolved_context_files = _resolve_context_file_paths(request.context_files)
 
     loop = asyncio.get_event_loop()
 
@@ -778,7 +863,7 @@ async def chat(
                     if request.images
                     else None
                 ),
-                context_files=request.context_files or None,
+                context_files=resolved_context_files,
             ),
         )
     except Exception as exc:
