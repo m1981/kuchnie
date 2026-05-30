@@ -103,8 +103,8 @@ class TestAgentContextFilesUnitRegression:
     has not regressed.
     """
 
-    @patch("src.agent._client.models.generate_content")
-    @patch("src.agent.read_file")
+    @patch("src.providers.gemini.genai.Client")
+    @patch("src.providers.gemini.read_file")
     def test_agent_injects_content_when_file_readable(
         self,
         mock_read_file: MagicMock,
@@ -119,7 +119,7 @@ class TestAgentContextFilesUnitRegression:
         resp = MagicMock()
         resp.candidates = [MagicMock(content=MagicMock(parts=[final_part]))]
         resp.text = "Noted."
-        mock_generate.return_value = resp
+        mock_generate.return_value.models.generate_content.return_value = resp
 
         history: list = []
         process_chat_turn(
@@ -135,8 +135,8 @@ class TestAgentContextFilesUnitRegression:
         assert "[Context files injected by user]" in user_parts[0].text
         assert "18mm Birch" in user_parts[0].text
 
-    @patch("src.agent._client.models.generate_content")
-    @patch("src.agent.read_file")
+    @patch("src.providers.gemini.genai.Client")
+    @patch("src.providers.gemini.read_file")
     def test_agent_skips_when_path_has_no_data_prefix(
         self,
         mock_read_file: MagicMock,
@@ -156,7 +156,7 @@ class TestAgentContextFilesUnitRegression:
         resp = MagicMock()
         resp.candidates = [MagicMock(content=MagicMock(parts=[final_part]))]
         resp.text = "ok"
-        mock_generate.return_value = resp
+        mock_generate.return_value.models.generate_content.return_value = resp
 
         history: list = []
         process_chat_turn(

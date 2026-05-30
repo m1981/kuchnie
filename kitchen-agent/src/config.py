@@ -9,13 +9,23 @@ All knobs live here.  Values can be overridden via environment variables
 Usage:
     from src.config import settings
 
-    settings.data_dir          # Path("data")
-    settings.prompts_dir       # Path("prompts")
-    settings.gemini_model      # "gemini-3.1-pro-preview"
-    settings.allowed_origins   # ["http://localhost:5173"]
+    settings.data_dir           # Path("data")
+    settings.prompts_dir        # Path("prompts")
+    settings.gemini_model       # "gemini-2.5-flash"
+    settings.allowed_origins    # ["http://localhost:5173"]
+    settings.llm_provider       # "gemini" | "anthropic"
+    settings.anthropic_model    # "claude-sonnet-4-5"
+
+Provider selection
+------------------
+Set ``LLM_PROVIDER=anthropic`` in your ``.env`` (or environment) to switch
+from Gemini to Anthropic Claude.  The Anthropic provider also requires
+``ANTHROPIC_API_KEY`` to be set.
 """
 
 from pathlib import Path
+from typing import Literal
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -43,8 +53,30 @@ class Settings(BaseSettings):
         return self.data_dir / "prompt_log.md"
 
     # ── Gemini ───────────────────────────────────────────────────────────────
-    gemini_model: str = "gemini-3.1-pro-preview"
+    gemini_model: str = "gemini-2.5-flash"
     gemini_temperature: float = 0.2
+
+    # ── Anthropic ────────────────────────────────────────────────────────────
+    # API key — optional when using Gemini (the default provider).
+    # Required when LLM_PROVIDER=anthropic.
+    anthropic_api_key: str | None = None
+
+    # Model name.  Default: claude-sonnet-4-5 (fast, capable, cost-effective).
+    anthropic_model: str = "claude-sonnet-4-5"
+
+    # Sampling temperature (0.0–1.0 recommended for Claude).
+    anthropic_temperature: float = 0.2
+
+    # Maximum tokens in the assistant response.
+    # Anthropic requires this parameter (Gemini does not).
+    anthropic_max_tokens: int = 8096
+
+    # ── Provider selection ────────────────────────────────────────────────────
+    # Controls which LLM backend is used for all chat turns.
+    # Accepted values: "gemini" | "anthropic"
+    # Additional providers can be added by implementing LLMProvider and
+    # registering them in src/providers/base.py get_provider().
+    llm_provider: str = "gemini"
 
     # ── CORS ─────────────────────────────────────────────────────────────────
     # Comma-separated list in env:  ALLOWED_ORIGINS=http://localhost:5173,https://example.com
