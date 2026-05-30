@@ -58,6 +58,12 @@ export type Message = {
 	content: string;
 	tools?: ToolLog[];
 	images?: string[]; // preview data-URLs stored locally; not sent to backend
+	/**
+	 * Stable UUID stamped by the backend at write time (Decision 1 refactor).
+	 * Used to identify messages for editing/deleting without relying on array
+	 * position.  May be undefined for messages from legacy sessions.
+	 */
+	turn_id?: string;
 };
 
 export type FileItem = { path: string; name: string };
@@ -140,16 +146,16 @@ export type LlmExportResponse = {
 // Message editor types (mirrors message_editor Pydantic models)
 // ---------------------------------------------------------------------------
 
-/** Response from PATCH /api/sessions/{id}/messages/{index} */
+/** Response from PATCH /api/sessions/{id}/messages/{turn_id} */
 export type MessageEditResponse = {
 	updated: boolean;
-	ui_index: number;
+	turn_id: string;
 };
 
-/** Response from DELETE /api/sessions/{id}/messages/{index} */
+/** Response from DELETE /api/sessions/{id}/messages/{turn_id} */
 export type MessageDeleteResponse = {
 	deleted: boolean;
-	ui_index: number;
+	turn_id: string;
 	delete_pair: boolean;
 };
 
@@ -335,24 +341,24 @@ export const api = {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * PATCH /api/sessions/{id}/messages/{ui_index}
-	 * Replace the text content of a single message.
+	 * PATCH /api/sessions/{id}/messages/{turn_id}
+	 * Replace the text content of a single message identified by its stable turn_id.
 	 * Both ui_history and api_history are updated atomically.
 	 */
-	editMessage: (sessionId: string, uiIndex: number, newContent: string) =>
+	editMessage: (sessionId: string, turnId: string, newContent: string) =>
 		request<MessageEditResponse>(
-			`/api/sessions/${sessionId}/messages/${uiIndex}`,
+			`/api/sessions/${sessionId}/messages/${turnId}`,
 			jsonPatch({ new_content: newContent })
 		),
 
 	/**
-	 * DELETE /api/sessions/{id}/messages/{ui_index}
-	 * Remove a message from the conversation.
+	 * DELETE /api/sessions/{id}/messages/{turn_id}
+	 * Remove a message from the conversation identified by its stable turn_id.
 	 * Pass deletePair=true to also remove the next paired message.
 	 */
-	deleteMessage: (sessionId: string, uiIndex: number, deletePair = false) =>
+	deleteMessage: (sessionId: string, turnId: string, deletePair = false) =>
 		request<MessageDeleteResponse>(
-			`/api/sessions/${sessionId}/messages/${uiIndex}?delete_pair=${deletePair}`,
+			`/api/sessions/${sessionId}/messages/${turnId}?delete_pair=${deletePair}`,
 			{ method: 'DELETE' }
 		),
 

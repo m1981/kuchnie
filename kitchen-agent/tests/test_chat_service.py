@@ -76,9 +76,12 @@ def test_handle_turn_saves_session(
     _, ui_json, _ = repo.load_session(session_id)
     ui_messages = json.loads(ui_json)
     assert len(ui_messages) == 2
-    assert ui_messages[0] == {"role": "user", "content": "What hinges should I use?"}
+    assert ui_messages[0]["role"] == "user"
+    assert ui_messages[0]["content"] == "What hinges should I use?"
+    assert "turn_id" in ui_messages[0]          # Decision 1: turn_id stamped
     assert ui_messages[1]["role"] == "assistant"
     assert ui_messages[1]["content"] == "Great, noted!"
+    assert "turn_id" in ui_messages[1]          # Decision 1: turn_id stamped
 
 
 @patch("src.chat_service.log_prompt")

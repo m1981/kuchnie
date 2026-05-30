@@ -236,25 +236,25 @@ class MessageEditRequest(BaseModel):
 
 class MessageEditResponse(BaseModel):
     """
-    Response returned by PATCH /api/sessions/{id}/messages/{index}.
+    Response returned by PATCH /api/sessions/{id}/messages/{turn_id}.
 
-    updated   : Always True on a 200 response.
-    ui_index  : The zero-based position that was edited (echoed back).
+    updated  : Always True on a 200 response.
+    turn_id  : The stable UUID of the message that was edited (echoed back).
     """
     updated: bool
-    ui_index: int
+    turn_id: str
 
 
 class MessageDeleteResponse(BaseModel):
     """
-    Response returned by DELETE /api/sessions/{id}/messages/{index}.
+    Response returned by DELETE /api/sessions/{id}/messages/{turn_id}.
 
     deleted     : Always True on a 200 response.
-    ui_index    : The zero-based position that was deleted.
+    turn_id     : The stable UUID of the message that was deleted.
     delete_pair : Whether the paired next message was also removed.
     """
     deleted: bool
-    ui_index: int
+    turn_id: str
     delete_pair: bool
 
 

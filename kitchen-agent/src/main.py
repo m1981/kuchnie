@@ -298,59 +298,59 @@ def delete_session(
 # ---------------------------------------------------------------------------
 
 @app.patch(
-    "/api/sessions/{session_id}/messages/{ui_index}",
+    "/api/sessions/{session_id}/messages/{turn_id}",
     response_model=MessageEditResponse,
     summary="Edit a message in the conversation",
     description=(
-        "Replace the text content of a single message at ``ui_index`` "
-        "(zero-based position in the UI message list).  Both the display layer "
-        "and the LLM API history are updated atomically.\n\n"
+        "Replace the text content of the message identified by ``turn_id`` "
+        "(the stable UUID stamped on the message at write time).  "
+        "Both the display layer and the LLM API history are updated atomically.\n\n"
         "Use this to fix typos, rephrase a question, or correct an assistant "
         "answer — without restarting the conversation.\n\n"
         "HTTP status codes:\n"
         "  200 — edit applied\n"
-        "  400 — index out of range or content is blank\n"
+        "  400 — turn_id not found, content is blank, or legacy session without turn_ids\n"
         "  404 — session not found"
     ),
 )
 def edit_message(
     session_id: str,
-    ui_index: int,
+    turn_id: str,
     request: MessageEditRequest,
     editor: MessageEditService = Depends(get_message_editor),
 ) -> MessageEditResponse:
-    """Edit the content of a single chat message."""
+    """Edit the content of a single chat message identified by turn_id."""
     try:
         editor.edit_message(
             session_id=session_id,
-            ui_index=ui_index,
+            turn_id=turn_id,
             new_content=request.new_content,
         )
     except EditError as exc:
         detail = str(exc)
         status = 404 if "not found" in detail else 400
         raise HTTPException(status_code=status, detail=detail) from exc
-    return MessageEditResponse(updated=True, ui_index=ui_index)
+    return MessageEditResponse(updated=True, turn_id=turn_id)
 
 
 @app.delete(
-    "/api/sessions/{session_id}/messages/{ui_index}",
+    "/api/sessions/{session_id}/messages/{turn_id}",
     response_model=MessageDeleteResponse,
     summary="Delete a message from the conversation",
     description=(
-        "Remove the message at ``ui_index`` from the conversation history.  "
-        "Pass ``?delete_pair=true`` to also remove the immediately following "
-        "message (useful for removing a user+assistant turn together).\n\n"
+        "Remove the message identified by ``turn_id`` from the conversation "
+        "history.  Pass ``?delete_pair=true`` to also remove the immediately "
+        "following message (useful for removing a user+assistant turn together).\n\n"
         "Both the display layer and the LLM API history are updated atomically.\n\n"
         "HTTP status codes:\n"
         "  200 — deletion applied\n"
-        "  400 — index out of range\n"
+        "  400 — turn_id not found or legacy session without turn_ids\n"
         "  404 — session not found"
     ),
 )
 def delete_message(
     session_id: str,
-    ui_index: int,
+    turn_id: str,
     delete_pair: bool = Query(False, description="Also delete the next paired message"),
     editor: MessageEditService = Depends(get_message_editor),
 ) -> MessageDeleteResponse:
@@ -358,14 +358,14 @@ def delete_message(
     try:
         editor.delete_message(
             session_id=session_id,
-            ui_index=ui_index,
+            turn_id=turn_id,
             delete_pair=delete_pair,
         )
     except EditError as exc:
         detail = str(exc)
         status = 404 if "not found" in detail else 400
         raise HTTPException(status_code=status, detail=detail) from exc
-    return MessageDeleteResponse(deleted=True, ui_index=ui_index, delete_pair=delete_pair)
+    return MessageDeleteResponse(deleted=True, turn_id=turn_id, delete_pair=delete_pair)
 
 
 @app.post(

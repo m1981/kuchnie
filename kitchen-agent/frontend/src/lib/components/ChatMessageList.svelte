@@ -5,16 +5,23 @@
 	 * Renders the scrollable list of chat messages (user + assistant bubbles)
 	 * including tool logs, image previews, and the "Thinking…" loading state.
 	 *
-	 * Now includes per-message edit / delete controls that appear on hover.
+	 * Refactor — Decision 1: turn_id identity
+	 * -----------------------------------------
+	 * All per-message callbacks now pass ``turn_id`` (the stable UUID stamped
+	 * at write time) instead of the array index.  This means the parent never
+	 * needs to track positions that shift when messages are deleted.
+	 *
+	 * Messages from legacy sessions may not have a turn_id.  Edit and delete
+	 * buttons are disabled for those messages to prevent silent failures.
 	 *
 	 * Fires:
-	 *   onfork(turnIndex: number)   — user clicked the ⎇ Fork button
-	 *   onedit(uiIndex: number)     — user clicked ✏️ Edit
-	 *   ondelete(uiIndex: number)   — user clicked 🗑 Delete (single)
-	 *   ondeletepair(uiIndex: number) — user clicked 🗑🗑 Delete with reply
+	 *   onfork(turnIndex: number)      — user clicked the ⎇ Fork button
+	 *                                   (still index-based; fork uses position)
+	 *   onedit(turnId: string)         — user clicked ✏️ Edit
+	 *   ondelete(turnId: string)       — user clicked 🗑 Delete (single)
+	 *   ondeletepair(turnId: string)   — user clicked 🗑🗑 Delete with reply
 	 *
 	 * This component is purely presentational — it owns no async logic.
-	 * All state (editingIndex, editDraft, editState) comes from the parent.
 	 */
 
 	import type { Message, ToolLog } from '$lib/api';
@@ -24,14 +31,14 @@
 	type Props = {
 		messages: Message[];
 		isLoading: boolean;
-		editingIndex: number;
+		editingTurnId: string | null;
 		editDraft: string;
 		isSavingEdit: boolean;
 		editErrorMessage: string;
 		onfork: (turnIndex: number) => void;
-		onedit: (uiIndex: number) => void;
-		ondelete: (uiIndex: number) => void;
-		ondeletepair: (uiIndex: number) => void;
+		onedit: (turnId: string) => void;
+		ondelete: (turnId: string) => void;
+		ondeletepair: (turnId: string) => void;
 		onsaveedit: () => void;
 		oncanceledit: () => void;
 		ondraftchange: (text: string) => void;
@@ -40,7 +47,7 @@
 	let {
 		messages,
 		isLoading,
-		editingIndex,
+		editingTurnId,
 		editDraft,
 		isSavingEdit,
 		editErrorMessage,
@@ -69,23 +76,27 @@
 	}
 
 	/** Confirm before destructive delete */
-	function confirmDelete(uiIndex: number) {
+	function confirmDelete(turnId: string) {
 		if (confirm('Delete this message from the conversation history?')) {
-			ondelete(uiIndex);
+			ondelete(turnId);
 		}
 	}
 
-	function confirmDeletePair(uiIndex: number) {
+	function confirmDeletePair(turnId: string) {
 		if (confirm('Delete this message AND the assistant reply from the conversation history?')) {
-			ondeletepair(uiIndex);
+			ondeletepair(turnId);
 		}
 	}
 </script>
 
 <div class="space-y-5">
-	{#each messages as msg, messageIndex (`${msg.role}-${messageIndex}`)}
+	{#each messages as msg, messageIndex (`${msg.role}-${msg.turn_id ?? messageIndex}`)}
+		{@const hasTurnId = !!msg.turn_id}
+		{@const isEditing = editingTurnId !== null && msg.turn_id === editingTurnId}
+
 		<article
 			data-chat-bubble={msg.role}
+			data-turn-id={msg.turn_id}
 			class="group/msg flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
 			aria-label={msg.role === 'user' ? 'User message' : 'Assistant message'}
 		>
@@ -118,47 +129,57 @@
 							class="flex items-center gap-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100"
 							aria-label="Message actions"
 						>
-							<!-- Edit button -->
-							{#if editingIndex !== messageIndex}
+							{#if !hasTurnId}
+								<!-- Legacy message: no stable identity, show muted indicator -->
+								<span
+									title="Legacy message — upgrade session by starting a new chat to enable editing"
+									class="rounded px-1.5 py-0.5 text-xs opacity-40"
+								>
+									⚠️
+								</span>
+							{:else}
+								<!-- Edit button -->
+								{#if !isEditing}
+									<button
+										onclick={() => onedit(msg.turn_id!)}
+										title="Edit this message"
+										aria-label="Edit message"
+										class="rounded px-1.5 py-0.5 text-xs transition
+											{msg.role === 'user'
+												? 'text-white/60 hover:bg-white/10 hover:text-white'
+												: 'text-muted hover:bg-line hover:text-ink'}"
+									>
+										✏️
+									</button>
+								{/if}
+
+								<!-- Delete button (single) -->
 								<button
-									onclick={() => onedit(messageIndex)}
-									title="Edit this message"
-									aria-label="Edit message"
+									onclick={() => confirmDelete(msg.turn_id!)}
+									title="Delete this message"
+									aria-label="Delete message"
 									class="rounded px-1.5 py-0.5 text-xs transition
 										{msg.role === 'user'
 											? 'text-white/60 hover:bg-white/10 hover:text-white'
-											: 'text-muted hover:bg-line hover:text-ink'}"
+											: 'text-muted hover:bg-line hover:text-red-600'}"
 								>
-									✏️
+									🗑
 								</button>
+
+								<!-- Delete pair button (user messages only, when a reply follows) -->
+								{#if hasNextAssistant(messageIndex)}
+									<button
+										onclick={() => confirmDeletePair(msg.turn_id!)}
+										title="Delete this message and the assistant reply"
+										aria-label="Delete message and reply"
+										class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-red-600"
+									>
+										🗑🗑
+									</button>
+								{/if}
 							{/if}
 
-							<!-- Delete button (single) -->
-							<button
-								onclick={() => confirmDelete(messageIndex)}
-								title="Delete this message"
-								aria-label="Delete message"
-								class="rounded px-1.5 py-0.5 text-xs transition
-									{msg.role === 'user'
-										? 'text-white/60 hover:bg-white/10 hover:text-white'
-										: 'text-muted hover:bg-line hover:text-red-600'}"
-							>
-								🗑
-							</button>
-
-							<!-- Delete pair button (user messages only, when a reply follows) -->
-							{#if hasNextAssistant(messageIndex)}
-								<button
-									onclick={() => confirmDeletePair(messageIndex)}
-									title="Delete this message and the assistant reply"
-									aria-label="Delete message and reply"
-									class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-red-600"
-								>
-									🗑🗑
-								</button>
-							{/if}
-
-							<!-- Fork button -->
+							<!-- Fork button — still position-based -->
 							<button
 								onclick={() => onfork(messageIndex)}
 								title="Fork conversation from this turn"
@@ -188,7 +209,7 @@
 				{/if}
 
 				<!-- Message content or inline editor -->
-				{#if editingIndex === messageIndex}
+				{#if isEditing}
 					<MessageEditor
 						draft={editDraft}
 						isSaving={isSavingEdit}
@@ -202,7 +223,7 @@
 				{/if}
 
 				<!-- Tool logs -->
-				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0 && editingIndex !== messageIndex}
+				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0 && !isEditing}
 					<div class="mt-4 space-y-2 border-t border-line pt-3">
 						<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
 							Tools used

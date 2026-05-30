@@ -93,6 +93,7 @@
 	const editError    = $derived(
 		chatStore.editState.status === 'error' ? chatStore.editState.message : ''
 	);
+	// isTruncating shares the same editState — it is loading during any edit op
 	const isTruncating = $derived(chatStore.editState.status === 'loading');
 
 	// System prompt editor helpers
@@ -244,14 +245,14 @@
 				<ChatMessageList
 					messages={chatStore.messages}
 					isLoading={chatStore.chatState.status === 'loading'}
-					editingIndex={chatStore.editingIndex}
+					editingTurnId={chatStore.editingTurnId}
 					editDraft={chatStore.editDraft}
 					isSavingEdit={isEditSaving}
 					editErrorMessage={editError ?? ''}
 					onfork={(i) => chatStore.forkSession(i)}
-					onedit={(i) => chatStore.startEditing(i)}
-					ondelete={(i) => chatStore.deleteMessage(i, false)}
-					ondeletepair={(i) => chatStore.deleteMessage(i, true)}
+					onedit={(turnId) => chatStore.startEditing(turnId)}
+					ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
+					ondeletepair={(turnId) => chatStore.deleteMessage(turnId, true)}
 					onsaveedit={() => chatStore.saveEdit()}
 					oncanceledit={() => chatStore.cancelEditing()}
 					ondraftchange={(text) => chatStore.setEditDraft(text)}

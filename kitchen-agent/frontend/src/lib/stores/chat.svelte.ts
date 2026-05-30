@@ -61,8 +61,12 @@ function createChatStore() {
 	let contextFiles = $state<string[]>([]);
 
 	// ── Message editor ────────────────────────────────────────────────────────
-	/** Index currently being edited in the inline editor (-1 = none). */
-	let editingIndex   = $state<number>(-1);
+	/**
+	 * turn_id of the message currently being edited in the inline editor.
+	 * null = no edit in progress.
+	 * Using turn_id (stable UUID) instead of array index (shifts on delete).
+	 */
+	let editingTurnId  = $state<string | null>(null);
 	/** Draft text while editing a message. */
 	let editDraft      = $state<string>('');
 	/** Async state for edit/delete/truncate operations. */
@@ -101,7 +105,7 @@ function createChatStore() {
 		get contextFiles()        { return contextFiles; },
 
 		// Message editor
-		get editingIndex()        { return editingIndex; },
+		get editingTurnId()       { return editingTurnId; },
 		get editDraft()           { return editDraft; },
 		get editState()           { return editState; },
 
@@ -118,7 +122,7 @@ function createChatStore() {
 			messages              = [];
 			pastedImages          = [];
 			chatState             = { status: 'idle' };
-			editingIndex          = -1;
+			editingTurnId         = null;
 			editDraft             = '';
 			editState             = { status: 'idle' };
 			sessionSystemPrompt   = null;
@@ -130,12 +134,12 @@ function createChatStore() {
 		async loadSession(id: string) {
 			try {
 				const data = await api.getSession(id);
-				sessionId    = id;
-				messages     = data.ui_messages ?? [];
-				chatState    = { status: 'idle' };
-				editingIndex = -1;
-				editDraft    = '';
-				editState    = { status: 'idle' };
+				sessionId     = id;
+				messages      = data.ui_messages ?? [];
+				chatState     = { status: 'idle' };
+				editingTurnId = null;
+				editDraft     = '';
+				editState     = { status: 'idle' };
 				// Reset system prompt editor
 				systemPromptEditorOpen = false;
 				systemPromptDraft      = '';
@@ -300,19 +304,24 @@ function createChatStore() {
 
 		// ── Message editor ────────────────────────────────────────────────────
 
-		/** Open the inline editor for message at ui_index. */
-		startEditing(uiIndex: number) {
-			if (uiIndex < 0 || uiIndex >= messages.length) return;
-			editingIndex = uiIndex;
-			editDraft    = messages[uiIndex].content;
-			editState    = { status: 'idle' };
+		/**
+		 * Open the inline editor for the message identified by turn_id.
+		 * Using turn_id instead of array index prevents stale-index bugs after
+		 * a delete shifts the array.
+		 */
+		startEditing(turnId: string) {
+			const msg = messages.find(m => m.turn_id === turnId);
+			if (!msg) return;
+			editingTurnId = turnId;
+			editDraft     = msg.content;
+			editState     = { status: 'idle' };
 		},
 
 		/** Cancel inline edit without saving. */
 		cancelEditing() {
-			editingIndex = -1;
-			editDraft    = '';
-			editState    = { status: 'idle' };
+			editingTurnId = null;
+			editDraft     = '';
+			editState     = { status: 'idle' };
 		},
 
 		/** Update the draft text while the user types in the inline editor. */
@@ -322,21 +331,23 @@ function createChatStore() {
 
 		/**
 		 * Save the current editDraft to the backend and update local state.
+		 * Uses turn_id for the API call — position-independent.
 		 * Closes the editor on success.
 		 */
 		async saveEdit() {
-			if (editingIndex < 0 || !editDraft.trim()) return;
+			if (!editingTurnId || !editDraft.trim()) return;
+			const turnId = editingTurnId;
 			editState = { status: 'loading' };
 			try {
-				await api.editMessage(sessionId, editingIndex, editDraft);
-				// Update local optimistic state
-				messages[editingIndex] = {
-					...messages[editingIndex],
-					content: editDraft
-				};
-				editingIndex = -1;
-				editDraft    = '';
-				editState    = { status: 'success', data: undefined };
+				await api.editMessage(sessionId, turnId, editDraft);
+				// Optimistic local update — find by turn_id, not by index.
+				const idx = messages.findIndex(m => m.turn_id === turnId);
+				if (idx !== -1) {
+					messages[idx] = { ...messages[idx], content: editDraft };
+				}
+				editingTurnId = null;
+				editDraft     = '';
+				editState     = { status: 'success', data: undefined };
 			} catch (e) {
 				editState = {
 					status:  'error',
@@ -346,13 +357,14 @@ function createChatStore() {
 		},
 
 		/**
-		 * Delete a single message.  Optionally deletes the paired next message.
+		 * Delete a single message identified by turn_id.
+		 * Optionally deletes the paired next message.
 		 * Reloads the full session from the backend to stay in sync.
 		 */
-		async deleteMessage(uiIndex: number, deletePair = false) {
+		async deleteMessage(turnId: string, deletePair = false) {
 			editState = { status: 'loading' };
 			try {
-				await api.deleteMessage(sessionId, uiIndex, deletePair);
+				await api.deleteMessage(sessionId, turnId, deletePair);
 				// Reload messages from backend to get the authoritative state.
 				const data = await api.getSession(sessionId);
 				messages  = data.ui_messages ?? [];
