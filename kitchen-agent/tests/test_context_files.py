@@ -390,7 +390,8 @@ class TestContextFileIntegration:
         captured_history: list = []
 
         def fake_process_chat_turn(
-            user_message, history, system_instruction=None, images=None, context_files=None
+            user_message, history, system_instruction=None, images=None,
+            context_files=None, **_kwargs
         ):
             # We intercept here — after context files are read
             from src.agent import process_chat_turn as _real
@@ -455,7 +456,8 @@ class TestContextFileIntegration:
         received_paths: list[str] = []
 
         def recording_process_chat_turn(
-            user_message, history, system_instruction=None, images=None, context_files=None
+            user_message, history, system_instruction=None, images=None,
+            context_files=None, **_kwargs
         ):
             if context_files:
                 received_paths.extend(context_files)
@@ -507,7 +509,8 @@ class TestContextFileIntegration:
         received_paths: list[str] = []
 
         def recording_process_chat_turn(
-            user_message, history, system_instruction=None, images=None, context_files=None
+            user_message, history, system_instruction=None, images=None,
+            context_files=None, **_kwargs
         ):
             if context_files:
                 received_paths.extend(context_files)

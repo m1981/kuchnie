@@ -39,6 +39,8 @@ def process_chat_turn(
     system_instruction: str | None = None,
     images: list[dict] | None = None,
     context_files: list[str] | None = None,
+    provider_name: str | None = None,
+    model_override: str | None = None,
 ) -> tuple[str, list[dict]]:
     """
     Handles a single conversational turn using the configured LLM provider.
@@ -53,11 +55,18 @@ def process_chat_turn(
         system_instruction: Optional system-prompt override.
         images:             List of ``{"mime_type": str, "data": str}`` dicts.
         context_files:      File paths whose contents are prepended as context.
+        provider_name:      Override which LLM provider to use for this turn.
+                            ``None`` → read from ``settings.llm_provider``.
+        model_override:     Override the model within the chosen provider.
+                            ``None`` → provider uses its own default model.
 
     Returns:
         ``(final_text, tool_logs)`` — see ``LLMProvider.process_chat_turn``.
     """
-    provider = get_provider()
+    provider = get_provider(
+        provider_name=provider_name,
+        model_override=model_override,
+    )
     return provider.process_chat_turn(
         user_message=user_message,
         history=history,

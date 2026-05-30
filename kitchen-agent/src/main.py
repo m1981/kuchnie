@@ -42,6 +42,8 @@ from src.schemas import (
     SystemPromptUpdateRequest, SystemPromptResponse, SystemPromptUpdateResponse,
     # Token counting schemas
     TokenEstimateRequest, TokenEstimateResponse, SessionTokensResponse,
+    # Provider catalogue schemas
+    ModelInfo, ProviderInfo, ActiveProvider,
 )
 from src.token_counter import (
     count_session_tokens,
@@ -812,6 +814,101 @@ def reload_prompts(
 # Chat endpoint
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Provider catalogue  (static — updated here when new models are released)
+# ---------------------------------------------------------------------------
+
+_PROVIDER_CATALOGUE: list[ProviderInfo] = [
+    ProviderInfo(
+        id="gemini",
+        label="Google Gemini",
+        default_model="gemini-2.5-flash",
+        models=[
+            ModelInfo(id="gemini-2.5-flash",       label="Gemini 2.5 Flash",       context_k=1000),
+            ModelInfo(id="gemini-2.5-pro",          label="Gemini 2.5 Pro",          context_k=1000),
+            ModelInfo(id="gemini-2.0-flash",        label="Gemini 2.0 Flash",        context_k=1000),
+            ModelInfo(id="gemini-2.0-flash-lite",   label="Gemini 2.0 Flash Lite",   context_k=1000),
+        ],
+    ),
+    ProviderInfo(
+        id="anthropic",
+        label="Anthropic Claude",
+        default_model="claude-sonnet-4-5",
+        models=[
+            ModelInfo(id="claude-opus-4-5",    label="Claude Opus 4.5",    context_k=200),
+            ModelInfo(id="claude-sonnet-4-5",  label="Claude Sonnet 4.5",  context_k=200),
+            ModelInfo(id="claude-haiku-3-5",   label="Claude Haiku 3.5",   context_k=200),
+        ],
+    ),
+]
+
+# index for O(1) lookup: provider_id -> ProviderInfo
+_PROVIDER_MAP: dict[str, ProviderInfo] = {p.id: p for p in _PROVIDER_CATALOGUE}
+
+
+def _default_model_for(provider_id: str) -> str:
+    """Return the catalogue default model for a provider, falling back to the
+    matching settings field when the provider is not in the catalogue."""
+    entry = _PROVIDER_MAP.get(provider_id)
+    if entry:
+        return entry.default_model
+    # Fallback: read the appropriate settings field
+    if provider_id == "gemini":
+        return settings.gemini_model
+    if provider_id == "anthropic":
+        return settings.anthropic_model
+    return ""
+
+
+@app.get(
+    "/api/providers",
+    response_model=list[ProviderInfo],
+    summary="List available LLM providers and their model catalogues",
+    description=(
+        "Returns metadata for every LLM backend the server knows about, "
+        "including supported model ids, display labels, and context window "
+        "sizes.\n\n"
+        "The frontend uses this to populate the provider/model picker.  "
+        "The list is static — it changes only when the server is updated "
+        "to support new models."
+    ),
+)
+def list_providers() -> list[ProviderInfo]:
+    """
+    Returns the full provider + model catalogue.
+
+    HTTP status codes:
+      200 — always succeeds
+    """
+    return _PROVIDER_CATALOGUE
+
+
+@app.get(
+    "/api/providers/active",
+    response_model=ActiveProvider,
+    summary="Get the server's currently configured default provider + model",
+    description=(
+        "Returns the provider id and model id that will be used when "
+        "``POST /api/chat`` is called without explicit ``provider``/``model`` "
+        "fields.  Driven by the ``LLM_PROVIDER`` and ``*_MODEL`` environment "
+        "variables on the server.\n\n"
+        "The frontend uses this to pre-select the correct option in the "
+        "provider picker on first load."
+    ),
+)
+def get_active_provider() -> ActiveProvider:
+    """
+    Returns the server-configured default.
+
+    HTTP status codes:
+      200 — always succeeds
+    """
+    return ActiveProvider(
+        provider=settings.llm_provider,
+        model=_default_model_for(settings.llm_provider),
+    )
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
@@ -854,6 +951,17 @@ async def chat(
     # needs "data/file.md" (or the absolute path).
     resolved_context_files = _resolve_context_file_paths(request.context_files)
 
+    # Validate the requested provider early so we can return HTTP 400
+    # (bad request) rather than 500 (server error) for unknown names.
+    if request.provider is not None and request.provider not in _PROVIDER_MAP:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unknown provider: '{request.provider}'. "
+                f"Supported: {sorted(_PROVIDER_MAP.keys())}"
+            ),
+        )
+
     loop = asyncio.get_event_loop()
 
     try:
@@ -870,6 +978,8 @@ async def chat(
                     else None
                 ),
                 context_files=resolved_context_files,
+                provider_name=request.provider,
+                model_override=request.model,
             ),
         )
     except Exception as exc:

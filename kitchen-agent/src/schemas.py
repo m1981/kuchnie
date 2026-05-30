@@ -41,6 +41,10 @@ class ChatRequest(BaseModel):
     system_prompt: str | None = None
     images: list[ChatImagePart] | None = None
     context_files: list[str] | None = None
+    # Provider routing — both optional; omit to use the server default.
+    # When provided they are forwarded to get_provider() for this turn only.
+    provider: str | None = None   # e.g. "gemini" | "anthropic"
+    model: str | None = None      # provider-specific model id override
 
 
 class ToolLog(BaseModel):
@@ -381,3 +385,42 @@ class TokenEstimateResponse(BaseModel):
     history_tokens: int
     total_tokens: int
     fallback_used: bool
+
+
+# ---------------------------------------------------------------------------
+# Provider catalogue  (GET /api/providers, GET /api/providers/active)
+# ---------------------------------------------------------------------------
+
+class ModelInfo(BaseModel):
+    """
+    Metadata for one model within a provider.
+
+    context_k  : Context window size in **thousands** of tokens.
+                 E.g. 1000 means a 1M-token context window.
+    """
+    id: str
+    label: str
+    context_k: int
+
+
+class ProviderInfo(BaseModel):
+    """
+    Metadata for one LLM provider including its model catalogue.
+
+    Returned by GET /api/providers.
+    """
+    id: str
+    label: str
+    default_model: str
+    models: list[ModelInfo]
+
+
+class ActiveProvider(BaseModel):
+    """
+    The server's currently configured default provider + model.
+
+    Returned by GET /api/providers/active.  The frontend uses this to
+    pre-select the correct option in the provider picker on first load.
+    """
+    provider: str
+    model: str

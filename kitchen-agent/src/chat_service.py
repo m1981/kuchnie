@@ -155,6 +155,8 @@ class ChatService:
         system_prompt: str | None = None,
         images: list[dict] | None = None,
         context_files: list[str] | None = None,
+        provider_name: str | None = None,
+        model_override: str | None = None,
     ) -> tuple[str, list[dict]]:
         """
         Loads history, runs the agent, persists state, and returns the result.
@@ -226,6 +228,8 @@ class ChatService:
             system_instruction=system_prompt,
             images=images,
             context_files=context_files or None,
+            provider_name=provider_name,
+            model_override=model_override,
         )
 
         # ── 5. Record assistant response in UI state ──────────────────────────
