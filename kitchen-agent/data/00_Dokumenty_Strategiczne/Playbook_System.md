@@ -357,7 +357,7 @@ Daj to klientowi do podpisu. Chroni Cię to przed fałszywymi oskarżeniami o za
 PROTOKÓŁ ODBIORU I KARTA GWARANCYJNA
 =================================================================
 Klient: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Data realizacji: \***\*\_\_\_\_\*\***
-Adres: ****\*\*\*\*****\*\*****\*\*\*\*****\_\_****\*\*\*\*****\*\*****\*\*\*\*****
+Adres: \***\*\*\*\*\*\*\***\*\*\***\*\*\*\*\*\*\***\_\_\***\*\*\*\*\*\*\***\*\*\***\*\*\*\*\*\*\***
 
 OŚWIADCZENIE KLIENTA:
 ☐ Potwierdzam odbiór zabudowy kuchennej bez zastrzeżeń wizualnych.

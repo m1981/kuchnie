@@ -116,7 +116,7 @@ https://www.youtube.com/watch?v=0waVo4zKUGM&t=136s
 
 https://www.youtube.com/watch?v=6lN7PfFfOcQ
 
-### Montaż lodówki - zawiasy suwakowe
+### Montaż lodówki - system suwakowy (wymaga zawiasów Blum 155°)
 
 https://www.youtube.com/watch?v=Z596L5vUU_8
 
