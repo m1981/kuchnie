@@ -63,7 +63,7 @@ _Cel: Dociąć twardy blat, wyciąć otwory bez pęknięć i zamontować go elas
     - **Wywierć 4 otwory w rogach** wiertłem 10 mm (promień 5 mm). **Nigdy nie zostawiaj ostrych kątów 90 stopni!**
     - Połącz otwory tnąc zagłębiarką/frezarką. Krawędzie muszą być gładkie.
 3.  **Wiercenie od spodu (np. pod zmywarkę):** Używaj wiertła z ogranicznikiem. Zostaw minimum 1,5 mm grubości materiału (wierć max na 10,5 mm).
-4.  **Mocowanie blatu:** Nie przykręcaj blatu na sztywno! Użyj elastycznego kleju (np. Ottocoll M500 lub Mamut) punktowo do korpusów/trawersów. Blat musi mieć możliwość pracy (rozszerzania się).
+4.  **Mocowanie blatu:** Nie przykręcaj blatu na sztywno! Użyj elastycznego kleju **Ottocoll M500** (Otto Chemie) punktowo do korpusów/trawersów. Blat musi mieć możliwość pracy (rozszerzania się). ⚠️ Nie używaj Mamut ani Sikaflex – to masy uszczelniające, nie kleje wyrównujące naprężenia termiczne HPL.
 5.  **Zlew podwieszany (opcja):** Użyj dedykowanego zestawu mocującego EGGER (szyny klejone od spodu).
 
 ### ETAP 6: PANEL ŚCIENNY (Splashback)
