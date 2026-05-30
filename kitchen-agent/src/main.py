@@ -822,22 +822,19 @@ _PROVIDER_CATALOGUE: list[ProviderInfo] = [
     ProviderInfo(
         id="gemini",
         label="Google Gemini",
-        default_model="gemini-2.5-flash",
+        default_model="gemini-3.1-pro-preview",
         models=[
-            ModelInfo(id="gemini-2.5-flash",       label="Gemini 2.5 Flash",       context_k=1000),
-            ModelInfo(id="gemini-2.5-pro",          label="Gemini 2.5 Pro",          context_k=1000),
-            ModelInfo(id="gemini-2.0-flash",        label="Gemini 2.0 Flash",        context_k=1000),
-            ModelInfo(id="gemini-2.0-flash-lite",   label="Gemini 2.0 Flash Lite",   context_k=1000),
+            ModelInfo(id="gemini-3.1-pro-preview",       label="Gemini 3.1 Pro",       context_k=1000),
+            ModelInfo(id="gemini-3.5-flash",          label="Gemini 3.5 Flash",          context_k=1000),
         ],
     ),
     ProviderInfo(
         id="anthropic",
         label="Anthropic Claude",
-        default_model="claude-sonnet-4-5",
+        default_model="claude-sonnet-4-6",
         models=[
-            ModelInfo(id="claude-opus-4-5",    label="Claude Opus 4.5",    context_k=200),
-            ModelInfo(id="claude-sonnet-4-5",  label="Claude Sonnet 4.5",  context_k=200),
-            ModelInfo(id="claude-haiku-3-5",   label="Claude Haiku 3.5",   context_k=200),
+            ModelInfo(id="claude-opus-4-8",    label="Claude Opus 4.8",    context_k=200),
+            ModelInfo(id="claude-sonnet-4-6",  label="Claude Sonnet 4.6",  context_k=200),
         ],
     ),
 ]
