@@ -4,7 +4,8 @@
 	 * =============================
 	 * Pure layout wrapper. All business logic lives elsewhere:
 	 *
-	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images, message editor
+	 *   $lib/stores/chat.svelte.ts          — chat session, modes, images, message editor,
+	 *                                         provider/model selection
 	 *   $lib/stores/sessions.svelte.ts      — session tree, archive, delete
 	 *   $lib/actions/textSelection.ts       — mouseup → note-popup classification
 	 *   $lib/actions/pasteImage.ts          — Ctrl+V image capture
@@ -16,6 +17,7 @@
 	 *   - Wiring keyboard resize handlers to drag-handle buttons
 	 *   - Mounting child components with the correct props
 	 *   - Wiring the message editor and system prompt editor
+	 *   - Passing provider/model selection props to ChatHeader
 	 */
 
 	import { onMount } from 'svelte';
@@ -26,18 +28,18 @@
 	import { textSelection }       from '$lib/actions/textSelection';
 	import { createKeyboardResize} from '$lib/hooks/useKeyboardResize.svelte';
 
-	import type { PromptMode, Note }     from '$lib/api';
-	import type { ChatSelectionHit }     from '$lib/actions/textSelection';
+	import type { PromptMode, Note } from '$lib/api';
+	import type { ChatSelectionHit } from '$lib/actions/textSelection';
 
-	import ChatHeader           from '$lib/components/ChatHeader.svelte';
-	import ChatMessageList      from '$lib/components/ChatMessageList.svelte';
-	import ChatComposer         from '$lib/components/ChatComposer.svelte';
-	import PromptInspector      from '$lib/components/PromptInspector.svelte';
-	import SessionTree          from '$lib/components/SessionTree.svelte';
-	import ContextSidebar       from '$lib/components/ContextSidebar.svelte';
-	import NotePopup            from '$lib/components/NotePopup.svelte';
-	import SystemPromptEditor   from '$lib/components/SystemPromptEditor.svelte';
-	import TruncateBar          from '$lib/components/TruncateBar.svelte';
+	import ChatHeader         from '$lib/components/ChatHeader.svelte';
+	import ChatMessageList    from '$lib/components/ChatMessageList.svelte';
+	import ChatComposer       from '$lib/components/ChatComposer.svelte';
+	import PromptInspector    from '$lib/components/PromptInspector.svelte';
+	import SessionTree        from '$lib/components/SessionTree.svelte';
+	import ContextSidebar     from '$lib/components/ContextSidebar.svelte';
+	import NotePopup          from '$lib/components/NotePopup.svelte';
+	import SystemPromptEditor from '$lib/components/SystemPromptEditor.svelte';
+	import TruncateBar        from '$lib/components/TruncateBar.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Layout resize
@@ -107,13 +109,17 @@
 	);
 
 	// ---------------------------------------------------------------------------
-	// Bootstrap
+	// Bootstrap — load modes and providers in parallel on mount
 	// ---------------------------------------------------------------------------
 
 	onMount(async () => {
 		void sessionStore.refresh();
 
-		const fetched = await chatStore.loadModes();
+		// Fire both in parallel — neither depends on the other.
+		const [fetched] = await Promise.all([
+			chatStore.loadModes(),
+			chatStore.loadProviders()
+		]);
 		if (fetched) modes = fetched;
 	});
 
@@ -198,8 +204,12 @@
 			sessionId={chatStore.sessionId}
 			showRight={sidebarResize.showRight}
 			hasSystemPromptOverride={hasSystemPromptOverride}
+			providers={chatStore.providers}
+			selectedProvider={chatStore.selectedProvider}
+			selectedModel={chatStore.selectedModel}
 			ontoggleright={() => sidebarResize.toggleRight()}
 			oneditprompt={() => chatStore.openSystemPromptEditor()}
+			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
 		/>
 
 		<!-- Chat scroll area -->

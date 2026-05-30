@@ -13,14 +13,17 @@
  *   - Sending messages (with optimistic UI update)
  *   - Pasted image queue
  *   - Prompt mode list + detail (lazy-loaded, invalidated on mode change)
+ *   - Provider / model selection (loaded from /api/providers, falls back to
+ *     static PROVIDERS catalog when the endpoint is not yet available)
  *   - Status strings for fork feedback
  *   - In-session message editing / deletion / truncation
  *   - Session-scoped system-prompt override
  */
 
 import { api, type Message, type Note } from '$lib/api';
-import { sessionStore } from '$lib/stores/sessions.svelte';
-import type { AsyncState, PastedImage } from '$lib/types';
+import { PROVIDERS, type ProviderInfo }  from '$lib/providers';
+import { sessionStore }                  from '$lib/stores/sessions.svelte';
+import type { AsyncState, PastedImage }  from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -82,6 +85,26 @@ function createChatStore() {
 	/** Async state for system prompt save. */
 	let systemPromptState       = $state<AsyncState<void>>({ status: 'idle' });
 
+	// ── Provider / model selection ────────────────────────────────────────────
+	/**
+	 * The full provider catalog.  Populated by loadProviders() on app mount.
+	 * Pre-seeded from the static PROVIDERS catalog so the picker renders
+	 * immediately even before the network call completes.
+	 */
+	let providers        = $state<ProviderInfo[]>(PROVIDERS);
+	/**
+	 * The user's currently selected provider id.
+	 * Empty string = "use server default".
+	 * Initialised after loadProviders() fetches /api/providers/active.
+	 */
+	let selectedProvider = $state<string>('');
+	/**
+	 * The user's currently selected model id within the active provider.
+	 * Empty string = "use provider default".
+	 * Reset to provider default whenever the user switches provider.
+	 */
+	let selectedModel    = $state<string>('');
+
 	// ---------------------------------------------------------------------------
 	// Public API
 	// ---------------------------------------------------------------------------
@@ -115,6 +138,11 @@ function createChatStore() {
 		get systemPromptDraft()      { return systemPromptDraft; },
 		get systemPromptState()      { return systemPromptState; },
 
+		// Provider / model
+		get providers()        { return providers; },
+		get selectedProvider() { return selectedProvider; },
+		get selectedModel()    { return selectedModel; },
+
 		// ── Session ───────────────────────────────────────────────────────────
 
 		startNewChat() {
@@ -129,6 +157,8 @@ function createChatStore() {
 			systemPromptDraft     = '';
 			systemPromptEditorOpen = false;
 			systemPromptState     = { status: 'idle' };
+			// Provider / model selection intentionally kept across new chats —
+			// the user's choice should persist until they manually change it.
 		},
 
 		async loadSession(id: string) {
@@ -198,7 +228,11 @@ function createChatStore() {
 						imagesToSend.length > 0
 							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
 							: null,
-					context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null
+					context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null,
+					// Only include provider/model when the user has made an explicit
+					// selection — omitting them lets the server use its configured defaults.
+					provider: selectedProvider || undefined,
+					model:    selectedModel    || undefined
 				});
 
 				messages.push({
@@ -477,6 +511,63 @@ function createChatStore() {
 					message: e instanceof Error ? e.message : 'Failed to clear system prompt.'
 				};
 			}
+		},
+
+		// ── Provider / model selection ────────────────────────────────────────
+
+		/**
+		 * Load the provider catalog and the server's active default.
+		 *
+		 * Strategy (graceful degradation):
+		 *   1. Pre-seeded with the static PROVIDERS catalog — picker renders immediately.
+		 *   2. On mount, try GET /api/providers to get a live list (may differ from static).
+		 *   3. Try GET /api/providers/active to sync the picker with the server default.
+		 *   4. If either endpoint 404s / errors (backend not yet updated), swallow the
+		 *      error and keep the static catalog + first provider as the selection.
+		 *
+		 * Call this once in onMount alongside loadModes().
+		 */
+		async loadProviders() {
+			try {
+				// Fire both requests in parallel for speed.
+				const [providerList, active] = await Promise.all([
+					api.getProviders(),
+					api.getActiveProvider()
+				]);
+
+				// Replace static catalog with the live one from the backend.
+				if (providerList.length > 0) {
+					providers = providerList;
+				}
+
+				// Initialise the picker to match the server default — but only if
+				// the user has not already made a manual selection this session.
+				if (!selectedProvider) selectedProvider = active.provider;
+				if (!selectedModel)    selectedModel    = active.model;
+			} catch {
+				// Backend endpoints not yet implemented — fall back to static catalog.
+				// Initialise to the first provider's default so the picker is usable.
+				if (!selectedProvider && providers.length > 0) {
+					selectedProvider = providers[0].id;
+					selectedModel    = providers[0].default_model;
+				}
+			}
+		},
+
+		/**
+		 * Switch to a different provider.
+		 * Automatically resets selectedModel to the new provider's default_model
+		 * so the model picker never shows a stale value from the old provider.
+		 */
+		setProvider(id: string) {
+			selectedProvider = id;
+			const p = providers.find((p) => p.id === id);
+			selectedModel = p?.default_model ?? '';
+		},
+
+		/** Switch to a different model within the currently selected provider. */
+		setModel(id: string) {
+			selectedModel = id;
 		}
 	};
 }

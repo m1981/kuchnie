@@ -77,12 +77,54 @@ export type FileItem = { path: string; name: string };
 
 export type ChatImagePart = { mime_type: string; data: string };
 
+// ---------------------------------------------------------------------------
+// Provider / model picker types  (mirrors backend ProviderInfo / ModelInfo)
+// ---------------------------------------------------------------------------
+
+/**
+ * Metadata for a single model within a provider.
+ * Matches ModelInfo Pydantic schema on the backend.
+ */
+export type ModelInfo = {
+	id: string;
+	label: string;
+	context_k: number; // context window in thousands of tokens
+};
+
+/**
+ * Metadata for one LLM provider, including its available model list.
+ * Returned by GET /api/providers.
+ */
+export type ProviderInfo = {
+	id: string;
+	label: string;
+	default_model: string;
+	models: ModelInfo[];
+};
+
+/**
+ * Server's currently configured default provider + model.
+ * Returned by GET /api/providers/active.
+ */
+export type ActiveProvider = {
+	provider: string;
+	model: string;
+};
+
+// ---------------------------------------------------------------------------
+// Chat types
+// ---------------------------------------------------------------------------
+
 /**
  * F05 — Updated ChatRequest.
  *
  * `mode_id` is the new primary field (default: "general").
  * `system_prompt` is kept for backward compatibility and takes precedence
  * when provided.
+ *
+ * `provider` and `model` are optional overrides added in the provider
+ * integration pass.  When omitted the server uses its configured defaults.
+ * When provided they override the server default for that single request.
  */
 export type ChatRequest = {
 	session_id: string;
@@ -97,6 +139,16 @@ export type ChatRequest = {
 	system_prompt?: string | null;
 	images?: ChatImagePart[] | null;
 	context_files?: string[] | null;
+	/**
+	 * Provider override — "gemini" | "anthropic".
+	 * Omit to use the server's LLM_PROVIDER environment variable default.
+	 */
+	provider?: string;
+	/**
+	 * Model override — provider-specific model id string.
+	 * Omit to use the provider's configured default model.
+	 */
+	model?: string;
 };
 
 export type ChatResponse = {
@@ -395,5 +447,27 @@ export const api = {
 		request<SystemPromptUpdateResponse>(
 			`/api/sessions/${sessionId}/system-prompt`,
 			jsonPatch({ system_prompt: systemPrompt })
-		)
+		),
+
+	// -------------------------------------------------------------------------
+	// Provider / model selection
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GET /api/providers
+	 * Returns all available providers and their supported model lists.
+	 * Call once on app mount and cache the result in the store.
+	 * Falls back to the static PROVIDERS catalog in src/lib/providers.ts
+	 * when the endpoint is not yet available on the backend.
+	 */
+	getProviders: (): Promise<ProviderInfo[]> =>
+		request<ProviderInfo[]>('/api/providers'),
+
+	/**
+	 * GET /api/providers/active
+	 * Returns the server's default provider + model as configured via env vars.
+	 * Use on app startup to initialise the picker to match the server default.
+	 */
+	getActiveProvider: (): Promise<ActiveProvider> =>
+		request<ActiveProvider>('/api/providers/active')
 };

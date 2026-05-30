@@ -5,8 +5,11 @@
 	 * Top bar showing the active mode label, session badge, and the
 	 * context-sidebar toggle button.
 	 *
-	 * Now also exposes a "Edit system prompt" button so the user can open the
+	 * Also exposes a "Edit system prompt" button so the user can open the
 	 * session-scoped system prompt editor without having to touch the .md files.
+	 *
+	 * Also renders the ProviderPicker so the user can switch the LLM provider
+	 * and model without leaving the chat view.
 	 *
 	 * Props:
 	 *   modeIcon              — emoji icon for the active mode
@@ -14,9 +17,16 @@
 	 *   sessionId             — current session UUID (first 8 chars displayed)
 	 *   showRight             — whether the context sidebar is currently visible
 	 *   hasSystemPromptOverride — true when a session-level override is active
-	 *   ontoggleright         — callback to toggle the sidebar
+	 *   providers             — full ProviderInfo list from the store
+	 *   selectedProvider      — currently active provider id ('' = server default)
+	 *   selectedModel         — currently active model id ('' = provider default)
+	 *   ontoggleright         — callback to toggle the context sidebar
 	 *   oneditprompt          — callback to open the system prompt editor
+	 *   onproviderchange      — callback(provider, model) when picker changes
 	 */
+
+	import type { ProviderInfo } from '$lib/providers';
+	import ProviderPicker from '$lib/components/ProviderPicker.svelte';
 
 	type Props = {
 		modeIcon: string;
@@ -24,8 +34,12 @@
 		sessionId: string;
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
+		providers: ProviderInfo[];
+		selectedProvider: string;
+		selectedModel: string;
 		ontoggleright: () => void;
 		oneditprompt: () => void;
+		onproviderchange: (provider: string, model: string) => void;
 	};
 
 	let {
@@ -34,14 +48,20 @@
 		sessionId,
 		showRight,
 		hasSystemPromptOverride,
+		providers,
+		selectedProvider,
+		selectedModel,
 		ontoggleright,
-		oneditprompt
+		oneditprompt,
+		onproviderchange
 	}: Props = $props();
 </script>
 
 <header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
-		<div>
+
+		<!-- ── Left cluster: mode title + badges ──────────────────────────── -->
+		<div class="min-w-0">
 			<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
 				Kitchen Cabinet Assistant
 			</p>
@@ -67,7 +87,19 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-2">
+		<!-- ── Right cluster: provider picker + action buttons ────────────── -->
+		<div class="flex shrink-0 items-center gap-2">
+
+			<!-- Provider / model picker — hidden on small screens to save space -->
+			<div class="hidden md:flex">
+				<ProviderPicker
+					{providers}
+					{selectedProvider}
+					{selectedModel}
+					onchange={onproviderchange}
+				/>
+			</div>
+
 			<!-- Edit system prompt button -->
 			<button
 				onclick={oneditprompt}
@@ -78,7 +110,7 @@
 				⚙️ Prompt
 			</button>
 
-			<!-- Truncate shortcut — remove last turn -->
+			<!-- Context sidebar toggle -->
 			<button
 				onclick={ontoggleright}
 				class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
@@ -87,5 +119,16 @@
 				{showRight ? '▶ Hide panel' : '◀ Context'}
 			</button>
 		</div>
+
+	</div>
+
+	<!-- ── Mobile-only provider picker row (shown below the title line) ──── -->
+	<div class="mt-2 flex md:hidden">
+		<ProviderPicker
+			{providers}
+			{selectedProvider}
+			{selectedModel}
+			onchange={onproviderchange}
+		/>
 	</div>
 </header>
