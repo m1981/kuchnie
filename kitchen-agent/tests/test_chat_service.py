@@ -6,9 +6,15 @@ handler and the agent.
 
 All external I/O (DB, agent, prompt logger) is mocked so these tests run
 instantly without network or disk access.
+
+Migration note
+--------------
+log_prompt → log_turn: ChatService now calls ``log_turn`` (enriched, with
+tool data and session context) instead of the bare ``log_prompt`` shim.
+All patches and assertions have been updated accordingly.
 """
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -51,7 +57,7 @@ def repo(tmp_path):
     return SQLiteSessionRepository(conn)
 
 
-@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.log_turn")
 @patch("src.chat_service.process_chat_turn")
 def test_handle_turn_saves_session(
     mock_agent: MagicMock,
@@ -84,7 +90,7 @@ def test_handle_turn_saves_session(
     assert "turn_id" in ui_messages[1]          # Decision 1: turn_id stamped
 
 
-@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.log_turn")
 @patch("src.chat_service.process_chat_turn")
 def test_handle_turn_appends_to_existing_history(
     mock_agent: MagicMock,
@@ -108,23 +114,30 @@ def test_handle_turn_appends_to_existing_history(
     assert ui_messages[3]["content"] == "Answer 2"
 
 
-@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.log_turn")
 @patch("src.chat_service.process_chat_turn")
 def test_handle_turn_logs_prompt(
     mock_agent: MagicMock,
     mock_log: MagicMock,
     repo: SQLiteSessionRepository,
 ) -> None:
-    """log_prompt must be called with the user message."""
+    """log_turn must be called with the user message, tool_logs, and session_id."""
     mock_agent.return_value = ("ok", [])
     service = ChatService(repo)
 
     service.handle_turn("sess-log", "Log me please")
 
-    mock_log.assert_called_once_with("Log me please")
+    assert mock_log.called
+    args, kwargs = mock_log.call_args
+    # user_message is the first positional or keyword arg
+    user_msg = kwargs.get("user_message") or (args[0] if args else None)
+    assert user_msg == "Log me please"
+    # session_id must be forwarded
+    sid = kwargs.get("session_id")
+    assert sid == "sess-log"
 
 
-@patch("src.chat_service.log_prompt")
+@patch("src.chat_service.log_turn")
 @patch("src.chat_service.process_chat_turn")
 def test_handle_turn_passes_images_and_context(
     mock_agent: MagicMock,

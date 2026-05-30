@@ -27,6 +27,14 @@ propagated outward.  ``agent.process_chat_turn`` is not aware of turn_ids —
 it still mutates the bare ``history`` list.  We reconstruct the turn_id→
 index mapping after the agent returns by comparing the history length before
 and after the call.
+
+Activity log (prompt_logger)
+-----------------------------
+After each turn we call ``log_turn(user_message, tool_logs, session_id, ...)``
+so the Markdown activity log contains:
+  * What the user asked
+  * Which files the agent read / edited / created (with inline diffs)
+  * The session context (short ID + title) for easy "Friday recall"
 """
 
 import json
@@ -34,7 +42,7 @@ import uuid
 import structlog
 
 from agent import process_chat_turn
-from prompt_logger import log_prompt
+from prompt_logger import log_turn
 from serializers import dehydrate_history, hydrate_history
 from repositories import SessionRepository
 
@@ -124,6 +132,12 @@ class ChatService:
                                     the agent (tool calls, tool responses, and
                                     the final text) plus the ui_messages
                                     assistant entry.
+
+        Activity log
+        ------------
+        After the agent returns, ``log_turn`` is called with the full
+        tool_logs list so the Markdown diary records which files were touched
+        and what changed (inline diff for edit_file / create_file).
         """
         # ── 1. Load existing history from DB ─────────────────────────────────
         api_json, ui_json, _existing_system_prompt = self._session_repo.load_session(session_id)
@@ -142,13 +156,12 @@ class ChatService:
 
         history_before_len = len(history)
 
-        # ── 3. Record user message in UI state and prompt log ─────────────────
+        # ── 3. Record user message in UI state ────────────────────────────────
         ui_messages.append({
             "role": "user",
             "content": user_message,
             "turn_id": user_turn_id,
         })
-        log_prompt(user_message)
 
         # ── 4. Run the agentic loop ───────────────────────────────────────────
         logger.info("running_agent", session_id=session_id[:8])
@@ -189,6 +202,16 @@ class ChatService:
             api_history_json=dehydrate_history(history, turn_ids=turn_ids),
             ui_history_json=json.dumps(ui_messages),
             system_prompt=resolved_prompt,
+        )
+
+        # ── 8. Write human-readable activity log ─────────────────────────────
+        # Derive session title from the UI messages already computed above.
+        session_title = _make_title(ui_messages)
+        log_turn(
+            user_message=user_message,
+            tool_logs=tool_logs,
+            session_id=session_id,
+            session_title=session_title,
         )
 
         return final_text, tool_logs
