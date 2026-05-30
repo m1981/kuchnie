@@ -64,6 +64,13 @@ export type Message = {
 	 * position.  May be undefined for messages from legacy sessions.
 	 */
 	turn_id?: string;
+	/**
+	 * Basenames of context files that were injected into this user message
+	 * (e.g. ["kuchnia-kroki.md", "materials.md"]).
+	 * Persisted by the backend on the user ui_message entry; undefined when
+	 * no files were attached.  Only present on user messages.
+	 */
+	context_files?: string[];
 };
 
 export type FileItem = { path: string; name: string };

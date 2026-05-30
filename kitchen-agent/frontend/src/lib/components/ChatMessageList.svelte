@@ -208,6 +208,20 @@
 					</div>
 				{/if}
 
+				<!-- Context file badges — shown on user messages that had files injected -->
+				{#if msg.role === 'user' && msg.context_files && msg.context_files.length > 0}
+					<div class="mb-2 flex flex-wrap gap-1.5">
+						{#each msg.context_files as filename (filename)}
+							<span
+								title="Context file injected: {filename}"
+								class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-xs font-medium text-white/80"
+							>
+								📎 {filename}
+							</span>
+						{/each}
+					</div>
+				{/if}
+
 				<!-- Message content or inline editor -->
 				{#if isEditing}
 					<MessageEditor

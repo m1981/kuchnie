@@ -28,6 +28,25 @@ it still mutates the bare ``history`` list.  We reconstruct the turn_id→
 index mapping after the agent returns by comparing the history length before
 and after the call.
 
+Context files UI persistence
+-----------------------------
+When ``context_files`` are provided to ``handle_turn`` their **basenames**
+are stored on the user ``ui_messages`` entry under the key
+``"context_files"``.  This allows the frontend to display which files were
+attached to a message without needing to know the server's filesystem layout.
+
+Example stored entry::
+
+    {
+        "role": "user",
+        "content": "What materials?",
+        "turn_id": "<uuid>",
+        "context_files": ["kuchnia-kroki.md", "materials.md"]
+    }
+
+The key is omitted entirely when no context_files are attached so legacy
+sessions remain clean.
+
 Activity log (prompt_logger)
 -----------------------------
 After each turn we call ``log_turn(user_message, tool_logs, session_id, ...)``
@@ -39,6 +58,8 @@ so the Markdown activity log contains:
 
 import json
 import uuid
+from pathlib import Path
+
 import structlog
 
 from agent import process_chat_turn
@@ -55,6 +76,25 @@ def _make_title(ui_messages: list[dict]) -> str:
         (m["content"] for m in ui_messages if m.get("role") == "user"), "New Chat"
     )
     return first_content[:30] + "..." if len(first_content) > 30 else first_content
+
+
+def _context_file_basenames(context_files: list[str] | None) -> list[str] | None:
+    """
+    Extract the basename of each context file path for UI display.
+
+    The frontend sends relative names (e.g. ``"kuchnia-kroki.md"``), the
+    backend resolves them to absolute paths (e.g.
+    ``"/abs/path/data/kuchnia-kroki.md"``).  Either way we store only the
+    basename so the UI can render the filename without knowing the server's
+    filesystem layout.
+
+    Returns ``None`` (not an empty list) when no files are provided so the
+    key is omitted from the stored ui_message dict entirely.
+    """
+    if not context_files:
+        return None
+    basenames = [Path(fp).name for fp in context_files]
+    return basenames if basenames else None
 
 
 def _build_turn_ids_for_history(
@@ -133,6 +173,14 @@ class ChatService:
                                     the final text) plus the ui_messages
                                     assistant entry.
 
+        Context files UI persistence
+        ----------------------------
+        When ``context_files`` are provided, the **basenames** of those paths
+        are stored on the user ui_message under the key ``"context_files"``.
+        This allows the frontend bubble to show which files were attached
+        without exposing server filesystem paths.  The key is omitted entirely
+        when no context_files are sent.
+
         Activity log
         ------------
         After the agent returns, ``log_turn`` is called with the full
@@ -157,11 +205,18 @@ class ChatService:
         history_before_len = len(history)
 
         # ── 3. Record user message in UI state ────────────────────────────────
-        ui_messages.append({
+        # Include context_files basenames so the frontend bubble can show
+        # which files were attached to this specific message.
+        user_ui_entry: dict = {
             "role": "user",
             "content": user_message,
             "turn_id": user_turn_id,
-        })
+        }
+        file_basenames = _context_file_basenames(context_files)
+        if file_basenames is not None:
+            user_ui_entry["context_files"] = file_basenames
+
+        ui_messages.append(user_ui_entry)
 
         # ── 4. Run the agentic loop ───────────────────────────────────────────
         logger.info("running_agent", session_id=session_id[:8])

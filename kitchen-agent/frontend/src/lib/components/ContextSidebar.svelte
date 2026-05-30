@@ -5,7 +5,11 @@
 	 *   2. "Editor"  – inline Markdown editor for the selected file
 	 *
 	 * Props:
-	 *   oncontextchange(filepaths: string[]) – emitted when the selection changes
+	 *   checkedFiles             – set of currently checked file paths (driven
+	 *                              by the parent / store so it clears after send)
+	 *   oncontextchange(paths)   – emitted when the selection changes
+	 *   oninsertnotes(notes)     – emitted when user inserts notes into composer
+	 *   sessionId                – current session ID (for notes tab)
 	 */
 
 	import { api, type FileItem, type Note } from '$lib/api';
@@ -13,19 +17,22 @@
 	import NotesPanel from './NotesPanel.svelte';
 
 	type Props = {
+		checkedFiles: string[];
 		oncontextchange: (paths: string[]) => void;
 		oninsertnotes: (notes: Note[]) => void;
 		sessionId: string;
 	};
 
-	let { oncontextchange, oninsertnotes, sessionId }: Props = $props();
+	let { checkedFiles, oncontextchange, oninsertnotes, sessionId }: Props = $props();
 
 	// ── State ────────────────────────────────────────────────────────────────
 	let files = $state<FileItem[]>([]);
-	let selectedPaths = $state<Set<string>>(new Set());
 	let editingFile = $state<string | null>(null);
 	let loading = $state(true);
 	let tab = $state<'context' | 'editor' | 'notes'>('context');
+
+	// Derive the checked set from the prop so it clears when the store clears.
+	const selectedPaths = $derived(new Set(checkedFiles));
 
 	// ── Load files ───────────────────────────────────────────────────────────
 	$effect(() => {
@@ -40,7 +47,6 @@
 	function toggleFile(path: string) {
 		const next = new Set(selectedPaths);
 		next.has(path) ? next.delete(path) : next.add(path);
-		selectedPaths = next;
 		oncontextchange(Array.from(next));
 	}
 

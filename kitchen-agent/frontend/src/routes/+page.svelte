@@ -217,14 +217,6 @@
 					ontoggle={(open) => chatStore.setPromptInspectorOpen(open)}
 				/>
 
-				<!-- Context injection badge -->
-				{#if chatStore.contextFiles.length > 0}
-					<div class="flex items-center gap-2 rounded-md border border-accent-soft bg-accent-soft px-3 py-2 text-xs font-medium text-accent">
-						📎 {chatStore.contextFiles.length} file{chatStore.contextFiles.length > 1 ? 's' : ''} will
-						be injected into your next message.
-					</div>
-				{/if}
-
 				<!-- Fork status pill -->
 				{#if chatStore.forkStatus}
 					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
@@ -292,6 +284,7 @@
 			></button>
 
 			<ContextSidebar
+				checkedFiles={chatStore.contextFiles}
 				oncontextchange={(paths) => chatStore.setContextFiles(paths)}
 				oninsertnotes={insertNotesIntoComposer}
 				sessionId={chatStore.sessionId}

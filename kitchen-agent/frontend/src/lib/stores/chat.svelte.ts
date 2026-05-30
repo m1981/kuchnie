@@ -167,15 +167,26 @@ function createChatStore() {
 		async sendMessage(text: string) {
 			if (!text.trim() || chatState.status === 'loading') return;
 
-			const imagesToSend = [...pastedImages];
+			const imagesToSend      = [...pastedImages];
+			// Snapshot context files before clearing so the optimistic bubble
+			// and the API call both use the same list.
+			const contextFilesToSend = [...contextFiles];
 
-			// Optimistic UI — push user message immediately
-			messages.push({
+			// Optimistic UI — push user message immediately, including the
+			// basenames of any attached context files so the bubble renders them
+			// straight away without waiting for the API response.
+			const optimisticMsg: import('$lib/api').Message = {
 				role:   'user',
 				content: text,
-				images: imagesToSend.map((i) => i.dataUrl)
-			});
+				images: imagesToSend.map((i) => i.dataUrl),
+				...(contextFilesToSend.length > 0
+					? { context_files: contextFilesToSend.map((p) => p.split('/').pop() ?? p) }
+					: {})
+			};
+			messages.push(optimisticMsg);
 			pastedImages = [];
+			// Clear selected context files after snapshot — one-shot injection.
+			contextFiles = [];
 			chatState    = { status: 'loading' };
 
 			try {
@@ -187,7 +198,7 @@ function createChatStore() {
 						imagesToSend.length > 0
 							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
 							: null,
-					context_files: contextFiles.length > 0 ? contextFiles : null
+					context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null
 				});
 
 				messages.push({

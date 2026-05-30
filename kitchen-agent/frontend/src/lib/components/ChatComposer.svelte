@@ -9,6 +9,7 @@
 	 *   - Send button
 	 *   - Mode pill strip (bottom toolbar)
 	 *   - "New chat" shortcut pill
+	 *   - Context files status strip (names of files queued for injection)
 	 *
 	 * State it owns:
 	 *   - `currentMessage` — the typed text in the textarea
@@ -68,6 +69,12 @@
 		return MODE_ICONS[id] ?? '💬';
 	}
 
+	// ── Context file display name ─────────────────────────────────────────────
+	/** Extract just the filename from a path for display. */
+	function basename(path: string): string {
+		return path.split('/').pop() ?? path;
+	}
+
 	// ── Send ──────────────────────────────────────────────────────────────────
 
 	function handleSend() {
@@ -123,6 +130,29 @@
 				onkeydown={onResizeKeydown}
 				title="Drag to resize. Double-click to reset."
 			></button>
+
+			<!-- Context files strip — shown above textarea when files are queued -->
+			{#if chatStore.contextFiles.length > 0}
+				<div class="flex flex-wrap items-center gap-1.5 border-b border-line px-3 pt-3 pb-2">
+					<span class="text-xs text-muted">📎 Will inject:</span>
+					{#each chatStore.contextFiles as path (path)}
+						<span
+							title={path}
+							class="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent"
+						>
+							{basename(path)}
+							<button
+								onclick={() => {
+									const next = chatStore.contextFiles.filter((p) => p !== path);
+									chatStore.setContextFiles(next);
+								}}
+								aria-label="Remove {basename(path)} from context"
+								class="ml-0.5 rounded-full text-accent/60 hover:text-accent"
+							>✕</button>
+						</span>
+					{/each}
+				</div>
+			{/if}
 
 			<!-- Textarea + Send button -->
 			<div class="flex items-end gap-2 px-2 pt-3 pb-2">
@@ -190,16 +220,5 @@
 				</button>
 			</div>
 		</div>
-
-		<!-- Context files status line -->
-		{#if chatStore.contextFiles.length > 0}
-			<p class="mt-1.5 px-1 text-xs text-muted">
-				📎
-				<span class="font-medium text-accent">
-					{chatStore.contextFiles.length} context file{chatStore.contextFiles.length > 1 ? 's' : ''}
-				</span>
-				will be injected into your next message.
-			</p>
-		{/if}
 	</div>
 </footer>
