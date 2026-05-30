@@ -40,6 +40,12 @@ from src.schemas import (
     MessageDeleteResponse,
     TruncateRequest, TruncateResponse,
     SystemPromptUpdateRequest, SystemPromptResponse, SystemPromptUpdateResponse,
+    # Token counting schemas
+    TokenEstimateRequest, TokenEstimateResponse, SessionTokensResponse,
+)
+from src.token_counter import (
+    count_session_tokens,
+    build_pending_context_estimate,
 )
 from src.repositories import (
     SQLiteConnection,
@@ -871,3 +877,98 @@ async def chat(
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return ChatResponse(text=final_text, tools_used=tool_logs)
+
+
+# ---------------------------------------------------------------------------
+# Token counting endpoints
+# ---------------------------------------------------------------------------
+
+@app.get(
+    "/api/sessions/{session_id}/tokens",
+    response_model=SessionTokensResponse,
+    summary="Count tokens in a stored session",
+    description=(
+        "Returns the authoritative token count for all turns stored in the "
+        "session by calling the Gemini ``count_tokens`` API.\n\n"
+        "When the Gemini API is unavailable the endpoint degrades gracefully "
+        "to a local heuristic and sets ``fallback_used=true`` in the response "
+        "so the client can show an approximate indicator instead of failing.\n\n"
+        "An empty session (no turns yet) returns ``total_tokens=0`` without "
+        "making any API call.\n\n"
+        "HTTP status codes:\n"
+        "  200 — always succeeds for known sessions\n"
+        "  404 — session not found"
+    ),
+)
+def get_session_token_count(
+    session_id: str,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> SessionTokensResponse:
+    api_json, _ui_json, system_prompt = session_repo.load_session(session_id)
+    # load_session returns ("[]", "[]", None) for unknown sessions — the same
+    # as an empty session.  We return 200 with zero tokens, consistent with
+    # GET /api/sessions/{id} which also returns 200+empty for unknown IDs.
+    estimate = count_session_tokens(api_json, system_prompt=system_prompt)
+
+    return SessionTokensResponse(
+        session_id=session_id,
+        text_tokens=estimate.text_tokens,
+        image_tokens=estimate.image_tokens,
+        context_file_tokens=estimate.context_file_tokens,
+        system_prompt_tokens=estimate.system_prompt_tokens,
+        history_tokens=estimate.history_tokens,
+        total_tokens=estimate.total_tokens,
+        fallback_used=estimate.fallback_used,
+    )
+
+
+@app.post(
+    "/api/tokens/estimate",
+    response_model=TokenEstimateResponse,
+    summary="Estimate tokens for a pending context",
+    description=(
+        "Returns a heuristic token estimate for a context that has **not yet "
+        "been sent** to the model.  Use this to show an input-token indicator "
+        "in the UI before the user presses Send.\n\n"
+        "The estimate is calculated locally (no Gemini API call) using a "
+        "4-chars-per-token rule for text and a tile-count proxy for images.  "
+        "``fallback_used`` is always ``true``.\n\n"
+        "Fields:\n"
+        "  ``user_message``        — required, the message text\n"
+        "  ``images``              — optional list of ``{mime_type, data}`` "
+        "base64-encoded images\n"
+        "  ``context_files``       — optional list of file paths (resolved "
+        "the same way as ``/api/chat``)\n"
+        "  ``system_prompt``       — optional system instruction text\n"
+        "  ``history_token_count`` — optional prior session token count "
+        "(default 0)"
+    ),
+)
+def estimate_pending_tokens(
+    request: TokenEstimateRequest,
+) -> TokenEstimateResponse:
+    # Resolve context file paths the same way as the chat endpoint so token
+    # estimates are based on the actual files the agent would read.
+    resolved_files = _resolve_context_file_paths(request.context_files)
+
+    estimate = build_pending_context_estimate(
+        user_message=request.user_message,
+        images=(
+            [img.model_dump() for img in request.images]
+            if request.images
+            else None
+        ),
+        context_files=resolved_files,
+        system_prompt=request.system_prompt,
+        history_token_count=request.history_token_count,
+    )
+
+    return TokenEstimateResponse(
+        text_tokens=estimate.text_tokens,
+        image_tokens=estimate.image_tokens,
+        context_file_tokens=estimate.context_file_tokens,
+        system_prompt_tokens=estimate.system_prompt_tokens,
+        history_tokens=estimate.history_tokens,
+        total_tokens=estimate.total_tokens,
+        fallback_used=estimate.fallback_used,
+    )

@@ -307,3 +307,77 @@ class SystemPromptUpdateResponse(BaseModel):
     updated : Always True on a 200 response.
     """
     updated: bool
+
+
+# ---------------------------------------------------------------------------
+# Token counting / estimation
+# ---------------------------------------------------------------------------
+
+class TokenEstimateRequest(BaseModel):
+    """
+    Body for POST /api/tokens/estimate.
+
+    Describes a *pending* (not-yet-sent) context so the backend can return
+    a heuristic token count before the user presses Send.
+
+    user_message        : The text the user is about to send.
+    images              : Optional list of images (same shape as ChatRequest).
+    context_files       : Optional list of file paths attached as context.
+    system_prompt       : The system instruction for the current mode/session.
+    history_token_count : Token count of the prior conversation history
+                          (caller supplies — avoids re-reading the DB).
+    """
+    user_message: str
+    images: list[ChatImagePart] | None = None
+    context_files: list[str] | None = None
+    system_prompt: str | None = None
+    history_token_count: int = 0
+
+
+class SessionTokensResponse(BaseModel):
+    """
+    Response for GET /api/sessions/{session_id}/tokens.
+
+    Wraps the TokenEstimate from token_counter plus the session_id for
+    easy correlation on the client side.
+
+    session_id            : The queried session UUID.
+    text_tokens           : Token count for history text (exact or heuristic).
+    image_tokens          : Always 0 for stored sessions (images not stored).
+    context_file_tokens   : Always 0 for stored sessions.
+    system_prompt_tokens  : Always 0 (folded into text_tokens for exact path).
+    history_tokens        : Always 0 (all history is in text_tokens for exact).
+    total_tokens          : Authoritative total.
+    fallback_used         : True when the Gemini API was unavailable.
+    """
+    session_id: str
+    text_tokens: int
+    image_tokens: int
+    context_file_tokens: int
+    system_prompt_tokens: int
+    history_tokens: int
+    total_tokens: int
+    fallback_used: bool
+
+
+class TokenEstimateResponse(BaseModel):
+    """
+    Response for POST /api/tokens/estimate.
+
+    A full breakdown so the frontend can show a tooltip with component detail.
+
+    text_tokens          : Tokens from the user message text.
+    image_tokens         : Tokens from all attached images.
+    context_file_tokens  : Tokens from injected context files.
+    system_prompt_tokens : Tokens in the system instruction.
+    history_tokens       : Tokens from prior conversation history.
+    total_tokens         : Sum of all the above.
+    fallback_used        : Always True (heuristic, never exact API).
+    """
+    text_tokens: int
+    image_tokens: int
+    context_file_tokens: int
+    system_prompt_tokens: int
+    history_tokens: int
+    total_tokens: int
+    fallback_used: bool
