@@ -421,13 +421,13 @@ def get_system_prompt(
     session_id: str,
     editor: MessageEditService = Depends(get_message_editor),
 ) -> SystemPromptResponse:
-    """Retrieve the session-scoped system prompt (or null if unset)."""
-    try:
-        # Load via internal helper — raises EditError if not found.
-        from src.message_editor import _load_histories
-        _, _, system_prompt = _load_histories(editor._repo, session_id)
-    except EditError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    """
+    Retrieve the session-scoped system prompt (or null if unset).
+
+    Returns null for brand-new sessions that have no messages yet — this
+    is not an error; the next chat turn will use the mode-resolved default.
+    """
+    system_prompt = editor.get_system_prompt(session_id)
     return SystemPromptResponse(session_id=session_id, system_prompt=system_prompt)
 
 
@@ -451,14 +451,16 @@ def update_system_prompt(
     request: SystemPromptUpdateRequest,
     editor: MessageEditService = Depends(get_message_editor),
 ) -> SystemPromptUpdateResponse:
-    """Set or clear the session-scoped system prompt override."""
-    try:
-        editor.update_system_prompt(
-            session_id=session_id,
-            system_prompt=request.system_prompt,
-        )
-    except EditError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    """
+    Set or clear the session-scoped system prompt override.
+
+    Safe to call on a brand-new session with no messages yet — the session
+    row is created automatically so the prompt is ready for the first turn.
+    """
+    editor.update_system_prompt(
+        session_id=session_id,
+        system_prompt=request.system_prompt,
+    )
     return SystemPromptUpdateResponse(updated=True)
 
 

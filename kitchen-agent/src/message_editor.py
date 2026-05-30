@@ -337,6 +337,17 @@ class MessageEditService:
             remaining_messages=len(ui_messages),
         )
 
+    def get_system_prompt(self, session_id: str) -> str | None:
+        """
+        Return the current session-scoped system prompt override.
+
+        Unlike ``_load_histories``, this method does **not** raise when the
+        session row does not exist yet (brand-new chat, no messages sent).
+        It simply returns ``None`` in that case.
+        """
+        _, _, system_prompt = self._repo.load_session(session_id)
+        return system_prompt
+
     def update_system_prompt(
         self,
         session_id: str,
@@ -345,13 +356,21 @@ class MessageEditService:
         """
         Overwrite the session-scoped system prompt stored in the DB.
 
+        Safe to call on a brand-new session that has no messages yet — the
+        session row is created (upserted) on the spot with empty histories.
+        This allows users to set a prompt override before sending the first
+        message, which is the common UX pattern.
+
         An empty string is valid (clears any override) so that the next turn
         falls back to the PromptManager default.
-
-        Raises:
-            EditError: when the session does not exist.
         """
-        api_items, ui_messages, _old_prompt = _load_histories(self._repo, session_id)
+        # Load existing data so we don't overwrite histories that already exist.
+        # Do NOT use _load_histories here — it raises for unknown session IDs.
+        # load_session returns safe defaults ("[]") for unknown IDs, and
+        # save_session uses INSERT OR REPLACE so a new row is created if absent.
+        api_json, ui_json, _ = self._repo.load_session(session_id)
+        api_items: list[dict] = json.loads(api_json) if api_json else []
+        ui_messages: list[dict] = json.loads(ui_json) if ui_json else []
         _save_histories(self._repo, session_id, api_items, ui_messages, system_prompt)
         logger.info(
             "system_prompt_updated",
