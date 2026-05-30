@@ -84,7 +84,10 @@ _search_knowledge_base_entry = ToolEntry(
             "Searches all markdown files for lines matching a regex pattern. "
             "Use this if get_repo_map doesn't give you enough detail, or if you need to find "
             "specific terms, part numbers, or dimensions across the entire workspace. "
-            "Supports OR logic (e.g., 'hinge|blum|runner')."
+            "Supports OR logic (e.g., 'zawias|hinge|Blum'). "
+            "IMPORTANT: the knowledge base may contain contradicting notes across files — "
+            "use context_lines=3 or higher for ambiguous queries so you can see surrounding "
+            "text and detect conflicts before answering."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
@@ -92,8 +95,18 @@ _search_knowledge_base_entry = ToolEntry(
                 "query": types.Schema(
                     type=types.Type.STRING,
                     description=(
-                        "A regex pattern to search for, e.g., 'Blum|hinge' or '18mm'. "
-                        "Matching is case-insensitive."
+                        "A regex pattern to search for, e.g., 'Blum|zawias' or '18mm'. "
+                        "Matching is case-insensitive. Use OR (|) for synonyms or "
+                        "Polish/English variants of the same term."
+                    ),
+                ),
+                "context_lines": types.Schema(
+                    type=types.Type.INTEGER,
+                    description=(
+                        "Number of lines to include BEFORE and AFTER each matching line "
+                        "(default 2). Increase to 3–5 for topics that may be scattered "
+                        "across multiple files or where older notes may contradict newer ones. "
+                        "Use 0 only when you need a quick count of occurrences."
                     ),
                 ),
             },
@@ -101,7 +114,9 @@ _search_knowledge_base_entry = ToolEntry(
         ),
     ),
     # base_dir is fixed to settings.data_dir — never exposed to the LLM.
-    fn=lambda query: search_knowledge_base(query, base_dir=str(settings.data_dir)),
+    fn=lambda query, context_lines=2: search_knowledge_base(
+        query, base_dir=str(settings.data_dir), context_lines=context_lines
+    ),
 )
 
 _read_file_entry = ToolEntry(

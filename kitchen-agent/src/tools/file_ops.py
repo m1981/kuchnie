@@ -268,13 +268,28 @@ def append_to_file(
     return result
 
 
-def search_knowledge_base(query: str, base_dir: str = "data") -> dict:
+def search_knowledge_base(
+    query: str,
+    base_dir: str = "data",
+    context_lines: int = 2,
+) -> dict:
     """
     Searches all Markdown files under *base_dir* for lines matching a
     case-insensitive regex pattern.
 
     Supports OR logic via the pipe character, e.g. ``'hinge|blum|runner'``.
-    Returns up to 200 matching lines with their file path and line number.
+
+    Args:
+        query:         Regex pattern (case-insensitive).  Pipe = OR logic.
+        base_dir:      Root directory to scan.  Fixed by the registry lambda.
+        context_lines: Number of lines to include BEFORE and AFTER each match.
+                       Default 2 gives the model enough surrounding text to
+                       resolve contradictions across files without loading whole
+                       files.  Pass 0 for the legacy single-line behaviour.
+
+    Returns up to MAX_MATCHES *match groups* (each group = context window).
+    When context windows from the same file overlap they are merged into one
+    contiguous block to avoid duplication.
     """
     MAX_MATCHES = 200
 
@@ -287,7 +302,9 @@ def search_knowledge_base(query: str, base_dir: str = "data") -> dict:
     except re.error as exc:
         return {"error": f"Invalid regex pattern: {exc}"}
 
-    matches: list[str] = []
+    output_blocks: list[str] = []   # final rendered blocks, one per file section
+    total_match_count = 0
+    truncated = False
 
     for filepath in sorted(base_path.rglob("*.md")):
         try:
@@ -295,14 +312,60 @@ def search_knowledge_base(query: str, base_dir: str = "data") -> dict:
         except OSError:
             continue
 
-        for line_num, line in enumerate(lines, start=1):
+        # ── Collect 0-based indices of matching lines ─────────────────────
+        hit_indices: list[int] = []
+        for idx, line in enumerate(lines):
             if pattern.search(line):
-                matches.append(f"{filepath.as_posix()}:{line_num}: {line}")
-                if len(matches) >= MAX_MATCHES:
-                    matches.append(f"... (truncated at {MAX_MATCHES} results)")
-                    return {"content": "\n".join(matches)}
+                hit_indices.append(idx)
+                total_match_count += 1
+                if total_match_count >= MAX_MATCHES:
+                    truncated = True
+                    break
 
-    if not matches:
+        if not hit_indices:
+            continue
+
+        if context_lines == 0:
+            # ── Legacy behaviour: one line per match ──────────────────────
+            file_header = f"=== {filepath.as_posix()} ==="
+            file_lines: list[str] = [file_header]
+            for idx in hit_indices:
+                line_num = idx + 1
+                file_lines.append(f"{line_num}: {lines[idx]}")
+            output_blocks.append("\n".join(file_lines))
+        else:
+            # ── Context mode: merge overlapping windows ───────────────────
+            # Build contiguous intervals [start, end] (inclusive, 0-based)
+            intervals: list[tuple[int, int]] = []
+            n = len(lines)
+            for idx in hit_indices:
+                start = max(0, idx - context_lines)
+                end = min(n - 1, idx + context_lines)
+                if intervals and start <= intervals[-1][1] + 1:
+                    # Overlaps or adjacent — extend the previous interval
+                    intervals[-1] = (intervals[-1][0], max(intervals[-1][1], end))
+                else:
+                    intervals.append((start, end))
+
+            file_header = f"=== {filepath.as_posix()} ==="
+            file_lines = [file_header]
+            for seg_idx, (start, end) in enumerate(intervals):
+                if seg_idx > 0:
+                    file_lines.append("---")  # separator between non-adjacent windows
+                for i in range(start, end + 1):
+                    line_num = i + 1
+                    marker = ">>" if pattern.search(lines[i]) else "  "
+                    file_lines.append(f"{marker} {line_num}: {lines[i]}")
+            output_blocks.append("\n".join(file_lines))
+
+        if truncated:
+            break
+
+    if not output_blocks:
         return {"content": f"No matches found for pattern: '{query}'"}
 
-    return {"content": "\n".join(matches)}
+    result_text = "\n\n".join(output_blocks)
+    if truncated:
+        result_text += f"\n\n... (truncated at {MAX_MATCHES} matches)"
+
+    return {"content": result_text}

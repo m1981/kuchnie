@@ -160,7 +160,7 @@ def test_search_knowledge_base_wrapper_passes_data_dir(tmp_path) -> None:
     """The search_knowledge_base fn wrapper must pass settings.data_dir as base_dir."""
     captured: dict = {}
 
-    def fake_search(query: str, base_dir: str = "data") -> dict:
+    def fake_search(query: str, base_dir: str = "data", context_lines: int = 2) -> dict:
         captured["base_dir"] = base_dir
         captured["query"] = query
         return {"content": "ok"}

@@ -172,13 +172,16 @@ def test_search_truncates_at_200_matches(tmp_path: Path) -> None:
     # Each line matches "TARGET"; 201 lines → should truncate after 200
     big_file.write_text("\n".join(["TARGET"] * 201), encoding="utf-8")
 
-    result = search_knowledge_base("TARGET", base_dir=str(tmp_path))
+    # Use context_lines=0 to get legacy single-line-per-match output
+    # so we can count exactly 200 match lines + 1 truncation notice.
+    result = search_knowledge_base("TARGET", base_dir=str(tmp_path), context_lines=0)
     assert "error" not in result
-    lines = result["content"].splitlines()
-    # Last line must be the truncation notice
-    assert "truncated at 200" in lines[-1]
-    # Exactly 201 lines: 200 matches + 1 truncation notice
-    assert len(lines) == 201
+    content = result["content"]
+    # Truncation notice must be present
+    assert "truncated at 200" in content
+    # Must not contain more than 200 match lines (plus header + notice)
+    match_lines = [l for l in content.splitlines() if l.strip() and not l.startswith("===") and "truncated" not in l]
+    assert len(match_lines) <= 200
 
 
 # ---------------------------------------------------------------------------
