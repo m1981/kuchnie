@@ -255,6 +255,33 @@ export type SystemPromptUpdateResponse = {
 };
 
 // ---------------------------------------------------------------------------
+// Token counting types (mirrors SessionTokensResponse / TokenEstimateResponse)
+// ---------------------------------------------------------------------------
+
+/** Response from GET /api/sessions/{id}/tokens */
+export type SessionTokensResponse = {
+	session_id: string;
+	text_tokens: number;
+	image_tokens: number;
+	context_file_tokens: number;
+	system_prompt_tokens: number;
+	history_tokens: number;
+	total_tokens: number;
+	fallback_used: boolean;
+};
+
+/** Response from POST /api/tokens/estimate */
+export type TokenEstimateResponse = {
+	text_tokens: number;
+	image_tokens: number;
+	context_file_tokens: number;
+	system_prompt_tokens: number;
+	history_tokens: number;
+	total_tokens: number;
+	fallback_used: boolean;
+};
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -497,5 +524,33 @@ export const api = {
 	 * Graceful degradation: falls back to generic defaults on error.
 	 */
 	getAppInfo: (): Promise<AppInfo> =>
-		request<AppInfo>('/api/app-info')
+		request<AppInfo>('/api/app-info'),
+
+	// -------------------------------------------------------------------------
+	// Token counting
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GET /api/sessions/{id}/tokens
+	 * Returns the token count for all turns stored in the session so far.
+	 * Uses the exact Gemini count_tokens API on the backend when available,
+	 * falling back to a heuristic when the API is unreachable.
+	 */
+	getSessionTokens: (sessionId: string): Promise<SessionTokensResponse> =>
+		request<SessionTokensResponse>(`/api/sessions/${sessionId}/tokens`),
+
+	/**
+	 * POST /api/tokens/estimate
+	 * Returns a heuristic token estimate for a pending (not-yet-sent) context.
+	 * Used for precise on-demand estimates; the client-side estimator is used
+	 * for the reactive live indicator.
+	 */
+	estimateTokens: (payload: {
+		user_message: string;
+		images?: { mime_type: string; data: string }[] | null;
+		context_files?: string[] | null;
+		system_prompt?: string | null;
+		history_token_count?: number;
+	}): Promise<TokenEstimateResponse> =>
+		request<TokenEstimateResponse>('/api/tokens/estimate', json(payload))
 };

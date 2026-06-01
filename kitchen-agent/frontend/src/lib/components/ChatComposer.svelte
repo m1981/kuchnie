@@ -32,6 +32,7 @@
 
 	import { chatStore } from '$lib/stores/chat.svelte';
 	import { pasteImage } from '$lib/actions/pasteImage';
+	import TokenIndicator from '$lib/components/TokenIndicator.svelte';
 	import type { PromptMode } from '$lib/api';
 
 	type Props = {
@@ -177,6 +178,9 @@
 					Send
 				</button>
 			</div>
+
+			<!-- Token indicator bar -->
+			<TokenIndicator messageText={currentMessage} />
 
 			<!-- Mode pill strip -->
 			<div

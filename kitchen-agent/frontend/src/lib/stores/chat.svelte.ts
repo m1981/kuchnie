@@ -18,12 +18,14 @@
  *   - Status strings for fork feedback
  *   - In-session message editing / deletion / truncation
  *   - Session-scoped system-prompt override
+ *   - Token counting (session count + live input estimate)
  */
 
 import { api, type Message, type Note } from '$lib/api';
 import { PROVIDERS, type ProviderInfo }  from '$lib/providers';
 import { sessionStore }                  from '$lib/stores/sessions.svelte';
 import type { AsyncState, PastedImage }  from '$lib/types';
+import { estimateTokensForText, estimateTokensForImage } from '$lib/token_estimator';
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -103,6 +105,32 @@ function createChatStore() {
 	let appTitle       = $state('Agentic Workspace');
 	let appDescription = $state('');
 
+	// ── Token counting ──────────────────────────────────────────────────────
+	/**
+	 * Token count for the current session's entire history.
+	 * Updated after each send and on session load.
+	 * -1 means "not yet fetched".
+	 */
+	let sessionTokenCount = $state<number>(-1);
+
+	/**
+	 * Whether the session token count was fetched using the heuristic
+	 * fallback (true) or the exact API (false).
+	 */
+	let sessionTokenFallback = $state<boolean>(false);
+
+	/**
+	 * Cached token estimate for the currently attached context files.
+	 * Recalculated when contextFiles changes.
+	 */
+	let contextFileTokenEstimate = $state<number>(0);
+
+	/**
+	 * Cached system prompt text for the currently selected mode.
+	 * Used by the client-side input token estimator.
+	 */
+	let cachedSystemPromptText = $state<string>('');
+
 	// ── Provider / model selection ────────────────────────────────────────────
 	/**
 	 * The full provider catalog.  Populated by loadProviders() on app mount.
@@ -166,6 +194,45 @@ function createChatStore() {
 		get selectedProvider() { return selectedProvider; },
 		get selectedModel()    { return selectedModel; },
 
+		// Token counting
+		get sessionTokenCount()     { return sessionTokenCount; },
+		get sessionTokenFallback()  { return sessionTokenFallback; },
+		get contextFileTokenEstimate() { return contextFileTokenEstimate; },
+
+		/**
+		 * Reactive input token estimate — "what you'll pay when you click Send".
+		 * Computed client-side using the chars/4 heuristic for instant feedback.
+		 *
+		 * Components:
+		 *   text        = estimateTokensForText(currentMessage)
+		 *   images      = pastedImages.length * 258
+		 *   ctx_files   = cached context file token estimate
+		 *   sys_prompt  = estimateTokensForText(cachedSystemPromptText)
+		 *   history     = sessionTokenCount (last known)
+		 *
+		 * The `currentMessage` is not in the store (it's in the component)
+		 * so we expose a method that takes it as an argument.
+		 */
+		estimateInputTokensFor(messageText: string): number {
+			const textTokens = estimateTokensForText(messageText);
+			const imageTokens = pastedImages.length * estimateTokensForImage();
+			const systemPromptTokens = estimateTokensForText(cachedSystemPromptText);
+			const historyTokens = Math.max(0, sessionTokenCount);
+
+			return textTokens + imageTokens + contextFileTokenEstimate + systemPromptTokens + historyTokens;
+		},
+
+		/**
+		 * Return the context window size in thousands of tokens for the
+		 * currently selected model. Falls back to 1000 (Gemini default).
+		 */
+		get contextWindowK(): number {
+			const provider = providers.find(p => p.id === selectedProvider);
+			if (!provider) return 1000;
+			const model = provider.models.find(m => m.id === selectedModel);
+			return model?.context_k ?? provider.models[0]?.context_k ?? 1000;
+		},
+
 		// ── Session ───────────────────────────────────────────────────────────
 
 		startNewChat() {
@@ -180,6 +247,9 @@ function createChatStore() {
 			systemPromptDraft     = '';
 			systemPromptEditorOpen = false;
 			systemPromptState     = { status: 'idle' };
+			sessionTokenCount     = -1;  // Reset — new session has no tokens yet
+			sessionTokenFallback  = false;
+			contextFileTokenEstimate = 0;
 			// Provider / model selection intentionally kept across new chats —
 			// the user's choice should persist until they manually change it.
 		},
@@ -198,6 +268,8 @@ function createChatStore() {
 				systemPromptDraft      = '';
 				sessionSystemPrompt    = null;
 				systemPromptState      = { status: 'idle' };
+				// Auto-fetch session token count
+				void this.refreshSessionTokens();
 			} catch (e) {
 				console.error('Failed to load session', e);
 			}
@@ -240,6 +312,7 @@ function createChatStore() {
 			pastedImages = [];
 			// Clear selected context files after snapshot — one-shot injection.
 			contextFiles = [];
+			contextFileTokenEstimate = 0;
 			chatState    = { status: 'loading' };
 
 			try {
@@ -269,6 +342,8 @@ function createChatStore() {
 
 				chatState = { status: 'success', data: undefined };
 				await sessionStore.refresh();
+				// Auto-refresh session token count after each successful send
+				void this.refreshSessionTokens();
 			} catch (e) {
 				const msg = e instanceof Error ? e.message : 'Unknown error connecting to API.';
 				messages.push({ role: 'assistant', content: `⚠️ Error: ${msg}` });
@@ -298,9 +373,11 @@ function createChatStore() {
 				if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
 					selectedModeId = fetched[0].id;
 				}
-				// Sync toolsEnabled to the selected mode’s default from the live list.
+				// Sync toolsEnabled to the selected mode's default from the live list.
 				const activeModeData = fetched.find((m) => m.id === selectedModeId);
 				if (activeModeData !== undefined) toolsEnabled = activeModeData.tools_enabled_default ?? true;
+				// Cache system prompt for token estimation
+				void this.refreshCachedSystemPrompt();
 				return fetched;
 			} catch (e) {
 				console.error('Failed to load prompt modes', e);
@@ -323,6 +400,8 @@ function createChatStore() {
 			promptDetailForId   = '';
 			// Eagerly re-fetch if the inspector is open.
 			if (promptInspectorOpen) void this.loadPromptDetail();
+			// Update cached system prompt for token estimation
+			void this.refreshCachedSystemPrompt();
 		},
 
 		toggleTools() {
@@ -363,6 +442,8 @@ function createChatStore() {
 
 		setContextFiles(paths: string[]) {
 			contextFiles = paths;
+			// Recalculate context file token estimate
+			void this.refreshContextFileTokens();
 		},
 
 		// ── Notes helper ──────────────────────────────────────────────────────
@@ -477,6 +558,8 @@ function createChatStore() {
 				messages  = data.ui_messages ?? [];
 				editState = { status: 'success', data: undefined };
 				await sessionStore.refresh();
+				// Refresh token count after truncation changes history
+				void this.refreshSessionTokens();
 			} catch (e) {
 				editState = {
 					status:  'error',
@@ -625,6 +708,58 @@ function createChatStore() {
 		/** Switch to a different model within the currently selected provider. */
 		setModel(id: string) {
 			selectedModel = id;
+		},
+
+		// ── Token counting ──────────────────────────────────────────────────────
+
+		/**
+		 * Fetch the session's token count from the backend API.
+		 * Called automatically after each send and on session load.
+		 * Gracefully degrades — on error the count stays at its previous value.
+		 */
+		async refreshSessionTokens() {
+			try {
+				const data = await api.getSessionTokens(sessionId);
+				sessionTokenCount    = data.total_tokens;
+				sessionTokenFallback = data.fallback_used;
+			} catch {
+				// Backend not available — keep previous value
+			}
+		},
+
+		/**
+		 * Refresh the cached context file token estimate.
+		 * Called when contextFiles changes.
+		 * Reads each file's content and estimates tokens using chars/4.
+		 */
+		async refreshContextFileTokens() {
+			if (contextFiles.length === 0) {
+				contextFileTokenEstimate = 0;
+				return;
+			}
+			let total = 0;
+			for (const path of contextFiles) {
+				try {
+					const data = await api.readFile(path);
+					total += estimateTokensForText(data.content);
+				} catch {
+					// Unreadable file — skip
+				}
+			}
+			contextFileTokenEstimate = total;
+		},
+
+		/**
+		 * Refresh the cached system prompt text for token estimation.
+		 * Called when the mode changes.
+		 */
+		async refreshCachedSystemPrompt() {
+			try {
+				const detail = await api.getPromptModeDetail(selectedModeId);
+				cachedSystemPromptText = detail.content ?? '';
+			} catch {
+				cachedSystemPromptText = '';
+			}
 		}
 	};
 }
