@@ -50,12 +50,34 @@ from google import genai
 from google.genai import types
 
 from src.config import settings
+from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
+from src.providers.normalizer import ResponseNormalizer
 from src.tools.file_ops import read_file
 from src.tools.registry import DECLARATIONS, FUNCTION_MAP
 
 load_dotenv()
 
 logger = structlog.get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Adapter: FUNCTION_MAP → ToolRegistryProtocol
+# ---------------------------------------------------------------------------
+
+class _FunctionMapAdapter:
+    """
+    Adapts the module-level FUNCTION_MAP dict to the ToolRegistryProtocol
+    so ToolExecutor can look up handlers.
+
+    This adapter reads FUNCTION_MAP at call time (not at construction), so
+    tests that patch FUNCTION_MAP via ``patch("src.providers.gemini.FUNCTION_MAP", ...)``
+    still work — the adapter sees the patched version.
+    """
+
+    def get_handler(self, name: str):
+        if name not in FUNCTION_MAP:
+            raise ValueError(f"Unknown tool: {name!r}")
+        return FUNCTION_MAP[name]
 
 
 # ---------------------------------------------------------------------------
@@ -241,6 +263,8 @@ class GeminiProvider:
         # Resolved at construction so it is stable for the lifetime of this
         # instance and visible to tests via provider._model.
         self._model: str = model_override or settings.gemini_model
+        self._normalizer = ResponseNormalizer()
+        self._tool_executor = ToolExecutor(registry=_FunctionMapAdapter())
 
     def process_chat_turn(
         self,
@@ -343,7 +367,8 @@ class GeminiProvider:
                 contents=gemini_contents,
                 config=config,
             )
-            final_text = response.text or ""
+            normalized = self._normalizer.normalize(response, provider="gemini")
+            final_text = normalized.text or ""
             logger.info("gemini_direct_response", length=len(final_text))
             history.append(
                 types.Content(role="model", parts=[types.Part(text=final_text)])
@@ -366,10 +391,15 @@ class GeminiProvider:
                 gemini_contents.append(empty_content)
                 return "", tools_used
 
-            part = candidate.content.parts[0]
+            # Use normalizer to classify the response.
+            normalized = self._normalizer.normalize(response, provider="gemini")
 
             # ── Tool call branch ──────────────────────────────────────────────
-            if part.function_call:
+            if normalized.has_tool_calls:
+                # The normalizer extracted tool_calls in a provider-agnostic
+                # format, but we still need the raw SDK parts for history
+                # mutation (to preserve thought_signature, function_call id, etc.)
+                part = candidate.content.parts[0]
                 fc = part.function_call
                 logger.info("gemini_tool_call", tool=fc.name, args=str(fc.args)[:120])
 
@@ -378,22 +408,28 @@ class GeminiProvider:
                 history.append(model_content)
                 gemini_contents.append(model_content)
 
-                # Dispatch the tool.
-                tool_fn = FUNCTION_MAP.get(fc.name)
-                if tool_fn is not None:
-                    try:
-                        result: dict = tool_fn(**fc.args)
-                    except Exception as exc:  # noqa: BLE001
-                        result = {"error": str(exc)}
-                        logger.error("gemini_tool_error", tool=fc.name, error=str(exc))
-                else:
-                    result = {"error": f"Unknown tool: {fc.name}"}
-                    logger.warning("gemini_unknown_tool", tool=fc.name)
+                # Dispatch the tool using ToolExecutor.
+                tool_call = normalized.tool_calls[0]
+                tool_exec_result = self._tool_executor._execute_one(
+                    ToolCall(id=tool_call.id, name=tool_call.name, arguments=tool_call.arguments)
+                )
 
-                tools_used.append({"name": fc.name, "args": dict(fc.args), "result": result})
+                if tool_exec_result.is_error:
+                    result = {"error": tool_exec_result.content}
+                    logger.warning("gemini_tool_error", tool=tool_call.name, error=tool_exec_result.content)
+                else:
+                    # ToolExecutor returns stringified results — parse back to dict
+                    # for consistent tool_logs format
+                    try:
+                        import ast
+                        result = ast.literal_eval(tool_exec_result.content)
+                    except (ValueError, SyntaxError):
+                        result = {"content": tool_exec_result.content}
+
+                tools_used.append({"name": tool_call.name, "args": tool_call.arguments, "result": result})
                 logger.info("gemini_tool_result", snippet=str(result)[:120])
 
-                # Feed the result back.
+                # Feed the result back using the raw SDK objects for id preservation.
                 tool_response_content = types.Content(
                     role="user",
                     parts=[
@@ -411,7 +447,7 @@ class GeminiProvider:
 
             # ── Final text branch ─────────────────────────────────────────────
             else:
-                final_text: str = response.text or ""
+                final_text: str = normalized.text or ""
                 logger.info("gemini_final_response", length=len(final_text))
                 final_content = types.Content(
                     role="model", parts=[types.Part(text=final_text)]

@@ -1,0 +1,216 @@
+"""
+src/providers/normalizer.py
+===========================
+ResponseNormalizer — absorbs all provider-specific response shape differences.
+
+The rest of the codebase only ever sees ``NormalizedResponse``.  Provider
+SDKs (google-genai, anthropic) return wildly different structures; this
+module is the **only place** that knows about both.
+
+Design rules
+------------
+* ``normalize()`` takes a raw SDK response and a provider name string.
+  It returns a ``NormalizedResponse`` — never raises for valid inputs.
+* ``normalize_chunk()`` takes a raw streaming chunk and returns a text
+  delta string.  Returns ``""`` for non-text chunks (no raise).
+* Unknown providers raise ``ValueError`` — a programming error, not a
+  runtime condition.
+* The ``raw`` field on ``NormalizedResponse`` preserves the original SDK
+  object for debugging.
+
+Phase 1 scope
+-------------
+Initially the normalizer is used inside provider ``process_chat_turn()``
+methods to normalize individual API responses during the agentic loop.
+The provider's public interface (returning ``tuple[str, list[dict]]``)
+does not change.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+
+# ---------------------------------------------------------------------------
+# Data classes — the provider-agnostic contract
+# ---------------------------------------------------------------------------
+
+@dataclass
+class ToolCall:
+    """
+    A single tool call extracted from a provider response.
+
+    Provider-agnostic: ``id`` is the SDK call identifier,
+    ``name`` is the tool name, ``arguments`` is the dict of args.
+    """
+
+    id: str
+    name: str
+    arguments: dict
+
+
+@dataclass
+class NormalizedResponse:
+    """
+    Single shape regardless of which provider responded.
+
+    The rest of the application only ever sees this.
+    """
+
+    text: str
+    has_tool_calls: bool = False
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    usage: dict = field(default_factory=dict)  # {input, output, total}
+    raw: Any = None  # keep original for debugging
+
+
+# ---------------------------------------------------------------------------
+# Normalizer
+# ---------------------------------------------------------------------------
+
+class ResponseNormalizer:
+    """
+    Absorbs ALL provider-specific response shape differences.
+
+    Gemini and Anthropic return very different structures.
+    This is the only place that knows about both.
+    """
+
+    def normalize(self, raw: Any, provider: str) -> NormalizedResponse:
+        """
+        Convert a raw SDK response to a NormalizedResponse.
+
+        Args:
+            raw:      The raw response object from the provider SDK.
+            provider: "gemini" or "anthropic".
+
+        Returns:
+            A NormalizedResponse with text, tool_calls, and usage populated.
+
+        Raises:
+            ValueError: when provider is not recognized.
+        """
+        if provider == "gemini":
+            return self._from_gemini(raw)
+        if provider == "anthropic":
+            return self._from_anthropic(raw)
+        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic'.")
+
+    def normalize_chunk(self, chunk: Any, provider: str) -> str:
+        """
+        Extract text delta from a streaming chunk.
+
+        Returns "" for non-text chunks (no raise).
+        """
+        if provider == "gemini":
+            return self._gemini_chunk_text(chunk)
+        if provider == "anthropic":
+            return self._anthropic_chunk_text(chunk)
+        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic'.")
+
+    # ── Gemini ────────────────────────────────────────────────────────
+
+    def _from_gemini(self, raw: Any) -> NormalizedResponse:
+        """
+        google-genai SDK response shape::
+
+            response.candidates[0].content.parts → text or function_call
+            response.usage_metadata → token counts
+        """
+        candidate = raw.candidates[0]
+        parts = candidate.content.parts if candidate.content else []
+
+        text_parts: list[str] = []
+        tool_calls: list[ToolCall] = []
+
+        for part in parts:
+            if hasattr(part, "text") and isinstance(part.text, str) and part.text:
+                text_parts.append(part.text)
+            elif hasattr(part, "function_call") and part.function_call:
+                fc = part.function_call
+                call_id = fc.id if hasattr(fc, "id") and fc.id else fc.name
+                tool_calls.append(
+                    ToolCall(
+                        id=call_id,
+                        name=fc.name,
+                        arguments=dict(fc.args) if fc.args else {},
+                    )
+                )
+
+        usage: dict = {"input": 0, "output": 0, "total": 0}
+        if hasattr(raw, "usage_metadata") and raw.usage_metadata is not None:
+            um = raw.usage_metadata
+            usage = {
+                "input": getattr(um, "prompt_token_count", 0) or 0,
+                "output": getattr(um, "candidates_token_count", 0) or 0,
+                "total": getattr(um, "total_token_count", 0) or 0,
+            }
+
+        return NormalizedResponse(
+            text="".join(text_parts),
+            has_tool_calls=bool(tool_calls),
+            tool_calls=tool_calls,
+            usage=usage,
+            raw=raw,
+        )
+
+    def _gemini_chunk_text(self, chunk: Any) -> str:
+        try:
+            return chunk.candidates[0].content.parts[0].text or ""
+        except (IndexError, AttributeError):
+            return ""
+
+    # ── Anthropic ─────────────────────────────────────────────────────
+
+    def _from_anthropic(self, raw: Any) -> NormalizedResponse:
+        """
+        anthropic SDK response shape::
+
+            response.content → list of TextBlock | ToolUseBlock
+            response.usage → input_tokens, output_tokens
+        """
+        text_parts: list[str] = []
+        tool_calls: list[ToolCall] = []
+
+        for block in raw.content:
+            block_type = getattr(block, "type", None)
+            if block_type == "text":
+                text_parts.append(block.text)
+            elif block_type == "tool_use":
+                tool_calls.append(
+                    ToolCall(
+                        id=block.id,
+                        name=block.name,
+                        arguments=block.input if isinstance(block.input, dict) else {},
+                    )
+                )
+
+        usage: dict = {}
+        if hasattr(raw, "usage") and raw.usage is not None:
+            usage = {
+                "input": raw.usage.input_tokens,
+                "output": raw.usage.output_tokens,
+                "total": raw.usage.input_tokens + raw.usage.output_tokens,
+            }
+
+        return NormalizedResponse(
+            text="".join(text_parts),
+            has_tool_calls=bool(tool_calls),
+            tool_calls=tool_calls,
+            usage=usage,
+            raw=raw,
+        )
+
+    def _anthropic_chunk_text(self, chunk: Any) -> str:
+        """
+        Anthropic streaming events::
+
+            content_block_delta → delta.type == "text_delta"
+        """
+        try:
+            if chunk.type == "content_block_delta":
+                if chunk.delta.type == "text_delta":
+                    return chunk.delta.text
+        except AttributeError:
+            pass
+        return ""

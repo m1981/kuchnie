@@ -68,6 +68,8 @@ import structlog
 from dotenv import load_dotenv
 
 from src.config import settings
+from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
+from src.providers.normalizer import ResponseNormalizer
 from src.tools.file_ops import read_file
 from src.tools.registry import DECLARATIONS, FUNCTION_MAP
 
@@ -84,6 +86,26 @@ _GENAI_TYPE_TO_JSON: dict[str, str] = {
     "ARRAY": "array",
     "OBJECT": "object",
 }
+
+
+# ---------------------------------------------------------------------------
+# Adapter: FUNCTION_MAP → ToolRegistryProtocol
+# ---------------------------------------------------------------------------
+
+class _FunctionMapAdapter:
+    """
+    Adapts the module-level FUNCTION_MAP dict to the ToolRegistryProtocol
+    so ToolExecutor can look up handlers.
+
+    This adapter reads FUNCTION_MAP at call time (not at construction), so
+    tests that patch FUNCTION_MAP via ``patch("src.providers.anthropic_provider.FUNCTION_MAP", ...)``
+    still work — the adapter sees the patched version.
+    """
+
+    def get_handler(self, name: str):
+        if name not in FUNCTION_MAP:
+            raise ValueError(f"Unknown tool: {name!r}")
+        return FUNCTION_MAP[name]
 
 
 def _schema_to_json_schema(schema: Any) -> dict[str, Any]:
@@ -159,6 +181,8 @@ class AnthropicProvider:
         self._tool_schemas: list[dict[str, Any]] = self._build_tool_schemas()
         # Resolved at construction; visible to tests via provider._model.
         self._model: str = model_override or settings.anthropic_model
+        self._normalizer = ResponseNormalizer()
+        self._tool_executor = ToolExecutor(registry=_FunctionMapAdapter())
 
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
         """Build Anthropic tool schema list from the central registry."""
@@ -265,11 +289,8 @@ class AnthropicProvider:
                 "system":     system_instruction,
             }
             response = self._client.messages.create(**direct_kwargs)
-            text_parts: list[str] = [
-                block.text for block in response.content
-                if block.type == "text"
-            ]
-            final_text: str = " ".join(text_parts).strip() if text_parts else ""
+            normalized = self._normalizer.normalize(response, provider="anthropic")
+            final_text: str = normalized.text.strip() if normalized.text else ""
             logger.info("anthropic_direct_response", length=len(final_text))
             history.append({
                 "role": "assistant",
@@ -292,9 +313,14 @@ class AnthropicProvider:
 
             response = self._client.messages.create(**create_kwargs)
 
+            # Use normalizer to classify the response.
+            normalized = self._normalizer.normalize(response, provider="anthropic")
+
             # ── Tool call branch ──────────────────────────────────────────────
-            if response.stop_reason == "tool_use":
+            if normalized.has_tool_calls:
                 # Append the assistant's tool-use turn to history.
+                # We still iterate raw blocks for history mutation
+                # (preserving block-level detail).
                 assistant_content: list[dict[str, Any]] = []
                 for block in response.content:
                     if block.type == "text":
@@ -309,28 +335,30 @@ class AnthropicProvider:
 
                 history.append({"role": "assistant", "content": assistant_content})
 
-                # Dispatch each tool_use block and collect results.
+                # Dispatch each tool using ToolExecutor.
                 tool_results: list[dict[str, Any]] = []
-                for block in response.content:
-                    if block.type != "tool_use":
-                        continue
+                for tc in normalized.tool_calls:
+                    logger.info("anthropic_tool_call", tool=tc.name, args=str(tc.arguments)[:120])
 
-                    logger.info("anthropic_tool_call", tool=block.name, args=str(block.input)[:120])
+                    tool_exec_result = self._tool_executor._execute_one(
+                        ToolCall(id=tc.id, name=tc.name, arguments=tc.arguments)
+                    )
 
-                    tool_fn = FUNCTION_MAP.get(block.name)
-                    if tool_fn is not None:
-                        try:
-                            result: dict = tool_fn(**block.input)
-                        except Exception as exc:  # noqa: BLE001
-                            result = {"error": str(exc)}
-                            logger.error("anthropic_tool_error", tool=block.name, error=str(exc))
+                    if tool_exec_result.is_error:
+                        result = {"error": tool_exec_result.content}
+                        logger.warning("anthropic_tool_error", tool=tc.name, error=tool_exec_result.content)
                     else:
-                        result = {"error": f"Unknown tool: {block.name}"}
-                        logger.warning("anthropic_unknown_tool", tool=block.name)
+                        # ToolExecutor returns stringified results — parse back to dict
+                        # for consistent tool_logs format
+                        try:
+                            import ast
+                            result = ast.literal_eval(tool_exec_result.content)
+                        except (ValueError, SyntaxError):
+                            result = {"content": tool_exec_result.content}
 
                     tools_used.append({
-                        "name": block.name,
-                        "args": dict(block.input),
+                        "name": tc.name,
+                        "args": tc.arguments,
                         "result": result,
                     })
                     logger.info("anthropic_tool_result", snippet=str(result)[:120])
@@ -338,7 +366,7 @@ class AnthropicProvider:
                     # Anthropic expects tool results as JSON string content.
                     tool_results.append({
                         "type": "tool_result",
-                        "tool_use_id": block.id,
+                        "tool_use_id": tc.id,
                         "content": json.dumps(result),
                     })
 
@@ -349,13 +377,7 @@ class AnthropicProvider:
 
             # ── Final text branch ─────────────────────────────────────────────
             else:
-                # Collect all text blocks from the response.
-                text_parts: list[str] = []
-                for block in response.content:
-                    if block.type == "text":
-                        text_parts.append(block.text)
-
-                final_text: str = " ".join(text_parts).strip() if text_parts else ""
+                final_text: str = normalized.text.strip() if normalized.text else ""
                 logger.info("anthropic_final_response", length=len(final_text))
 
                 history.append({

@@ -35,7 +35,8 @@ not in the tool schema that the LLM sees in every request.
 """
 
 from dataclasses import dataclass
-from typing import Callable
+from enum import Enum, auto
+from typing import Any, Callable
 
 from google.genai import types
 
@@ -214,17 +215,100 @@ _create_file_entry = ToolEntry(
 
 
 # ---------------------------------------------------------------------------
+# Tool category — for future grouping (Phase 6)
+# ---------------------------------------------------------------------------
+
+class ToolCategory(Enum):
+    """Logical grouping for tools. Used for filtering and discovery."""
+    DISCOVERY = auto()
+    FILE_OPERATIONS = auto()
+    SEARCH = auto()
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry — class-based interface (Phase 2)
+# ---------------------------------------------------------------------------
+
+class ToolRegistry:
+    """
+    Self-contained tool registry.
+
+    Providers ask for schemas via ``schemas_for_provider()``.
+    ToolExecutor asks for handlers via ``get_handler()``.
+    No global state. Injectable.
+    """
+
+    def __init__(self, tools: list[ToolEntry] | None = None) -> None:
+        self._tools: list[ToolEntry] = tools or []
+
+    def register(self, entry: ToolEntry) -> None:
+        self._tools.append(entry)
+
+    def get_handler(self, name: str) -> Callable[..., dict]:  # type: ignore[type-arg]
+        """Return the callable for a tool by name."""
+        for entry in self._tools:
+            if entry.declaration.name == name:
+                return entry.fn
+        raise ValueError(f"Unknown tool: {name!r}")
+
+    @property
+    def tool_names(self) -> list[str]:
+        return [entry.declaration.name for entry in self._tools]
+
+    def get_all_entries(self) -> list[ToolEntry]:
+        return list(self._tools)
+
+    def schemas_for_provider(
+        self,
+        provider: str,
+        categories: list[ToolCategory] | None = None,
+    ) -> list[Any]:
+        """
+        Return provider-specific tool schemas.
+
+        Args:
+            provider:  "gemini" or "anthropic".
+            categories: Optional filter by tool category.
+        """
+        if provider == "gemini":
+            return [entry.declaration for entry in self._tools]
+        elif provider == "anthropic":
+            from src.providers.anthropic_provider import (
+                _declaration_to_anthropic_tool,
+            )
+            return [
+                _declaration_to_anthropic_tool(entry.declaration)
+                for entry in self._tools
+            ]
+        raise ValueError(f"Unknown provider: {provider!r}")
+
+
+def build_default_registry() -> ToolRegistry:
+    """
+    Factory function — single place to wire all tools.
+    Import this in DI container, not individual tools.
+    """
+    registry = ToolRegistry()
+    for entry in _ALL_ENTRIES:
+        registry.register(entry)
+    return registry
+
+
+# ---------------------------------------------------------------------------
 # Registry — single ordered list; everything else is derived from it
 # ---------------------------------------------------------------------------
 
 # Reordered to prime the LLM: Discovery -> Ingestion -> Mutation
-TOOLS: list[ToolEntry] = [
+_ALL_ENTRIES: list[ToolEntry] = [
     _get_repo_map_entry,
     _search_knowledge_base_entry,
     _read_file_entry,
     _edit_file_entry,
     _create_file_entry,
 ]
+
+# Public alias for backward compatibility.
+TOOLS: list[ToolEntry] = _ALL_ENTRIES
 
 # Derived: name → callable mapping used by the agent dispatch loop.
 FUNCTION_MAP: dict[str, Callable[..., dict]] = {  # type: ignore[type-arg]
