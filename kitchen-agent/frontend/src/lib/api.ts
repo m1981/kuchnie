@@ -111,6 +111,16 @@ export type ActiveProvider = {
 	model: string;
 };
 
+/**
+ * Domain branding metadata for the running instance.
+ * Returned by GET /api/app-info.
+ * Driven by APP_TITLE / APP_DESCRIPTION env vars on the server.
+ */
+export type AppInfo = {
+	title: string;
+	description: string;
+};
+
 // ---------------------------------------------------------------------------
 // Chat types
 // ---------------------------------------------------------------------------
@@ -469,5 +479,14 @@ export const api = {
 	 * Use on app startup to initialise the picker to match the server default.
 	 */
 	getActiveProvider: (): Promise<ActiveProvider> =>
-		request<ActiveProvider>('/api/providers/active')
+		request<ActiveProvider>('/api/providers/active'),
+
+	/**
+	 * GET /api/app-info
+	 * Returns domain branding metadata (title, description) from server config.
+	 * Call once on app mount to replace hardcoded domain strings in the UI.
+	 * Graceful degradation: falls back to generic defaults on error.
+	 */
+	getAppInfo: (): Promise<AppInfo> =>
+		request<AppInfo>('/api/app-info')
 };

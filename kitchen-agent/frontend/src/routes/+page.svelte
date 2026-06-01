@@ -115,10 +115,11 @@
 	onMount(async () => {
 		void sessionStore.refresh();
 
-		// Fire both in parallel — neither depends on the other.
+			// Fire all three in parallel — none depends on the others.
 		const [fetched] = await Promise.all([
 			chatStore.loadModes(),
-			chatStore.loadProviders()
+			chatStore.loadProviders(),
+			chatStore.loadAppInfo()
 		]);
 		if (fetched) modes = fetched;
 	});
@@ -141,7 +142,7 @@
 </script>
 
 <svelte:head>
-	<title>Kitchen Agent</title>
+	<title>{chatStore.appTitle}</title>
 </svelte:head>
 
 <!--
@@ -162,7 +163,7 @@
 		style="width: {sidebarResize.leftWidth}px;"
 	>
 		<div class="mb-5">
-			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">Kitchen Agent</p>
+			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{chatStore.appTitle}</p>
 			<h1 class="mt-2 text-xl font-semibold text-ink">Project conversations</h1>
 		</div>
 
@@ -199,6 +200,7 @@
 	<main class="flex min-w-0 flex-1 flex-col">
 
 		<ChatHeader
+			appTitle={chatStore.appTitle}
 			modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
 			modeLabel={activeMode.label}
 			sessionId={chatStore.sessionId}

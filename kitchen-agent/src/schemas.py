@@ -424,3 +424,15 @@ class ActiveProvider(BaseModel):
     """
     provider: str
     model: str
+
+
+class AppInfo(BaseModel):
+    """
+    Domain branding metadata for the running instance.
+
+    Returned by GET /api/app-info.  Driven by the APP_TITLE and
+    APP_DESCRIPTION environment variables (see config.py) so any domain
+    can brand the UI without touching frontend source code.
+    """
+    title: str
+    description: str

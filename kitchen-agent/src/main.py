@@ -43,7 +43,7 @@ from src.schemas import (
     # Token counting schemas
     TokenEstimateRequest, TokenEstimateResponse, SessionTokensResponse,
     # Provider catalogue schemas
-    ModelInfo, ProviderInfo, ActiveProvider,
+    ModelInfo, ProviderInfo, ActiveProvider, AppInfo,
 )
 from src.token_counter import (
     count_session_tokens,
@@ -65,8 +65,8 @@ logger = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Kitchen Cabinet Agent API",
-    description="AI agent for kitchen cabinet design, materials and assembly.",
+    title=settings.app_title,
+    description=settings.app_description,
     version="1.0.0",
 )
 
@@ -908,6 +908,29 @@ def get_active_provider() -> ActiveProvider:
     else:
         model = _default_model_for(provider)
     return ActiveProvider(provider=provider, model=model)
+
+
+@app.get(
+    "/api/app-info",
+    response_model=AppInfo,
+    summary="Domain branding metadata for this running instance",
+    description=(
+        "Returns the `APP_TITLE` and `APP_DESCRIPTION` values from the server "
+        "configuration.  The frontend uses this to populate page titles and "
+        "header labels so domain-specific copy never needs to be hardcoded in "
+        "frontend source.\n\n"
+        "Driven by the ``APP_TITLE`` and ``APP_DESCRIPTION`` environment "
+        "variables defined in ``.env``."
+    ),
+)
+def get_app_info() -> AppInfo:
+    """
+    Returns domain branding metadata.
+
+    HTTP status codes:
+      200 — always succeeds
+    """
+    return AppInfo(title=settings.app_title, description=settings.app_description)
 
 
 @app.post("/api/chat", response_model=ChatResponse)

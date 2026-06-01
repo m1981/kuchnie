@@ -85,6 +85,15 @@ function createChatStore() {
 	/** Async state for system prompt save. */
 	let systemPromptState       = $state<AsyncState<void>>({ status: 'idle' });
 
+	// ── App branding ──────────────────────────────────────────────────────────
+	/**
+	 * Domain title loaded from GET /api/app-info (APP_TITLE env var).
+	 * Generic default used until the network call completes so the UI
+	 * always has something sensible to display.
+	 */
+	let appTitle       = $state('Agentic Workspace');
+	let appDescription = $state('');
+
 	// ── Provider / model selection ────────────────────────────────────────────
 	/**
 	 * The full provider catalog.  Populated by loadProviders() on app mount.
@@ -137,6 +146,10 @@ function createChatStore() {
 		get systemPromptEditorOpen() { return systemPromptEditorOpen; },
 		get systemPromptDraft()      { return systemPromptDraft; },
 		get systemPromptState()      { return systemPromptState; },
+
+		// App branding
+		get appTitle()       { return appTitle; },
+		get appDescription() { return appDescription; },
 
 		// Provider / model
 		get providers()        { return providers; },
@@ -514,6 +527,21 @@ function createChatStore() {
 		},
 
 		// ── Provider / model selection ────────────────────────────────────────
+
+		/**
+		 * Load domain branding from GET /api/app-info.
+		 * Gracefully degrades — on any error the generic defaults are kept.
+		 * Call once in onMount alongside loadModes() and loadProviders().
+		 */
+		async loadAppInfo() {
+			try {
+				const info   = await api.getAppInfo();
+				appTitle       = info.title;
+				appDescription = info.description;
+			} catch {
+				// Backend not yet updated — keep generic defaults.
+			}
+		},
 
 		/**
 		 * Load the provider catalog and the server's active default.

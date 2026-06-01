@@ -29,6 +29,7 @@
 	import ProviderPicker from '$lib/components/ProviderPicker.svelte';
 
 	type Props = {
+		appTitle: string;
 		modeIcon: string;
 		modeLabel: string;
 		sessionId: string;
@@ -43,6 +44,7 @@
 	};
 
 	let {
+		appTitle,
 		modeIcon,
 		modeLabel,
 		sessionId,
@@ -63,7 +65,7 @@
 		<!-- ── Left cluster: mode title + badges ──────────────────────────── -->
 		<div class="min-w-0">
 			<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
-				Kitchen Cabinet Assistant
+				{appTitle}
 			</p>
 			<div class="mt-1 flex flex-wrap items-center gap-2">
 				<h2 class="text-xl font-semibold text-ink md:text-2xl">
