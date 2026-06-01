@@ -7,6 +7,7 @@ Tests are written RED-first before the implementation exists.
 
 Coverage contract:
   - PromptManager loads and caches prompt files from a directory
+  - modes.json drives which modes are registered (domain-agnostic)
   - base_agent_rules.md is prepended to every mode's content
   - get_all_modes() returns metadata only (no content)
   - get_system_instruction() returns the full combined prompt
@@ -15,6 +16,7 @@ Coverage contract:
   - Missing files produce empty strings (graceful degradation)
   - A missing prompts_dir does not crash; returns empty cache + empty base rules
 """
+import json
 from pathlib import Path
 
 import pytest
@@ -26,10 +28,23 @@ from src.prompt_manager import PromptManager, PromptMode
 # Helpers
 # ---------------------------------------------------------------------------
 
+_KITCHEN_MODES = [
+    {"id": "general",  "label": "General",  "eyebrow": "Workspace help",       "file": "general.md"},
+    {"id": "design",   "label": "Design",   "eyebrow": "Ergonomics and layout", "file": "design.md"},
+    {"id": "assembly", "label": "Assembly", "eyebrow": "Build and fitting",     "file": "assembly.md"},
+]
+
+
 def _write(directory: Path, filename: str, text: str) -> None:
     """Convenience: write a file inside *directory*, creating parents."""
     directory.mkdir(parents=True, exist_ok=True)
     (directory / filename).write_text(text, encoding="utf-8")
+
+
+def _write_kitchen_modes(directory: Path) -> None:
+    """Write the standard kitchen modes.json into *directory*."""
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "modes.json").write_text(json.dumps(_KITCHEN_MODES), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -51,8 +66,11 @@ def test_prompt_mode_fields() -> None:
 
 def test_manager_loads_base_rules(tmp_path: Path) -> None:
     """base_agent_rules.md should be read and stored in _base_rules."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "RULE: Never edit without reading first.\n")
     _write(tmp_path, "general.md", "You are a general assistant.\n")
+    _write(tmp_path, "design.md",   "d\n")
+    _write(tmp_path, "assembly.md", "a\n")
 
     mgr = PromptManager(prompts_dir=str(tmp_path))
     assert "RULE: Never edit without reading first." in mgr._base_rules
@@ -60,8 +78,11 @@ def test_manager_loads_base_rules(tmp_path: Path) -> None:
 
 def test_manager_combines_base_rules_and_mode_content(tmp_path: Path) -> None:
     """Full prompt must contain both base rules and mode-specific content."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "BASE RULES HERE\n")
+    _write(tmp_path, "general.md",  "g\n")
     _write(tmp_path, "design.md", "DESIGN MODE CONTENT\n")
+    _write(tmp_path, "assembly.md", "a\n")
 
     mgr = PromptManager(prompts_dir=str(tmp_path))
     instruction = mgr.get_system_instruction("design")
@@ -72,6 +93,7 @@ def test_manager_combines_base_rules_and_mode_content(tmp_path: Path) -> None:
 
 def test_manager_loads_all_three_modes(tmp_path: Path) -> None:
     """All three built-in modes (general, design, assembly) must be in cache."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "base\n")
     _write(tmp_path, "general.md",  "general content\n")
     _write(tmp_path, "design.md",   "design content\n")
@@ -90,6 +112,7 @@ def test_manager_loads_all_three_modes(tmp_path: Path) -> None:
 
 def test_get_all_modes_returns_metadata_only(tmp_path: Path) -> None:
     """get_all_modes() must return id/label/eyebrow dicts WITHOUT content."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "base\n")
     _write(tmp_path, "general.md", "secret prompt text\n")
     _write(tmp_path, "design.md",  "secret design text\n")
@@ -104,7 +127,8 @@ def test_get_all_modes_returns_metadata_only(tmp_path: Path) -> None:
 
 
 def test_get_all_modes_correct_labels(tmp_path: Path) -> None:
-    """Labels and eyebrows must match the spec in f05.md."""
+    """Labels and eyebrows must match the spec in modes.json."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "x\n")
     _write(tmp_path, "general.md",  "x\n")
     _write(tmp_path, "design.md",   "x\n")
@@ -128,6 +152,7 @@ def test_get_all_modes_correct_labels(tmp_path: Path) -> None:
 
 def test_get_system_instruction_known_mode(tmp_path: Path) -> None:
     """Returns the full combined prompt for a known mode_id."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "BASE\n")
     _write(tmp_path, "general.md",  "GENERAL\n")
     _write(tmp_path, "design.md",   "DESIGN\n")
@@ -147,6 +172,7 @@ def test_get_system_instruction_known_mode(tmp_path: Path) -> None:
 
 def test_get_system_instruction_unknown_mode_fallback(tmp_path: Path) -> None:
     """Unknown mode_id must fall back to base rules only, never crash."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "FALLBACK BASE RULES\n")
     _write(tmp_path, "general.md", "x\n")
     _write(tmp_path, "design.md",  "x\n")
@@ -160,6 +186,7 @@ def test_get_system_instruction_unknown_mode_fallback(tmp_path: Path) -> None:
 
 def test_get_system_instruction_returns_string(tmp_path: Path) -> None:
     """Return type must always be str."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "base\n")
     _write(tmp_path, "general.md", "g\n")
     _write(tmp_path, "design.md",  "d\n")
@@ -177,6 +204,7 @@ def test_get_system_instruction_returns_string(tmp_path: Path) -> None:
 def test_missing_base_rules_file_graceful(tmp_path: Path) -> None:
     """If base_agent_rules.md is absent, the manager must not crash.
     The mode content alone is returned for known modes."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "general.md", "GENERAL ONLY\n")
     _write(tmp_path, "design.md",  "x\n")
     _write(tmp_path, "assembly.md","x\n")
@@ -191,6 +219,7 @@ def test_missing_base_rules_file_graceful(tmp_path: Path) -> None:
 def test_missing_mode_file_graceful(tmp_path: Path) -> None:
     """If a mode .md file is absent, its content is empty string (no crash).
     The combined prompt still contains the base rules."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "BASE RULES\n")
     _write(tmp_path, "general.md",  "g\n")
     # design.md intentionally missing
@@ -219,6 +248,7 @@ def test_missing_prompts_dir_graceful(tmp_path: Path) -> None:
 
 def test_reload_prompts_picks_up_new_content(tmp_path: Path) -> None:
     """After reload_prompts(), updated file content must be reflected immediately."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "ORIGINAL BASE\n")
     _write(tmp_path, "general.md",  "ORIGINAL GENERAL\n")
     _write(tmp_path, "design.md",   "x\n")
@@ -238,6 +268,7 @@ def test_reload_prompts_picks_up_new_content(tmp_path: Path) -> None:
 
 def test_reload_prompts_picks_up_new_base_rules(tmp_path: Path) -> None:
     """After reload_prompts(), updated base rules must appear in all modes."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "OLD BASE\n")
     _write(tmp_path, "general.md",  "g\n")
     _write(tmp_path, "design.md",   "d\n")
@@ -255,6 +286,7 @@ def test_reload_prompts_picks_up_new_base_rules(tmp_path: Path) -> None:
 
 def test_reload_clears_old_cache(tmp_path: Path) -> None:
     """reload_prompts() must clear and fully rebuild the cache (no stale entries)."""
+    _write_kitchen_modes(tmp_path)
     _write(tmp_path, "base_agent_rules.md", "base\n")
     _write(tmp_path, "general.md",  "g\n")
     _write(tmp_path, "design.md",   "d\n")

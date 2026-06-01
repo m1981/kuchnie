@@ -900,10 +900,14 @@ def get_active_provider() -> ActiveProvider:
     HTTP status codes:
       200 — always succeeds
     """
-    return ActiveProvider(
-        provider=settings.llm_provider,
-        model=_default_model_for(settings.llm_provider),
-    )
+    provider = settings.llm_provider
+    if provider == "gemini":
+        model: str = settings.gemini_model
+    elif provider == "anthropic":
+        model = settings.anthropic_model
+    else:
+        model = _default_model_for(provider)
+    return ActiveProvider(provider=provider, model=model)
 
 
 @app.post("/api/chat", response_model=ChatResponse)

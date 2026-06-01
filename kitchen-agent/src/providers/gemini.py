@@ -13,6 +13,26 @@ Gemini uses SDK ``types.Content`` objects.  The history list passed in and
 mutated in place must contain ``types.Content`` items (same as before the
 refactor).
 
+Provider-switching compatibility
+---------------------------------
+When a session was started with the Anthropic provider its history is stored
+as plain ``{"role": ..., "content": ...}`` dicts (the Anthropic MessageParam
+shape).  ``hydrate_history()`` returns those dicts as-is so that
+``AnthropicProvider`` can continue using them.
+
+If the same session is then continued with the **Gemini** provider (user
+switches provider, or the server default changes) ``process_chat_turn``
+receives those plain dicts in the ``history`` argument.  The Gemini SDK's
+``generate_content`` call validates ``contents`` with Pydantic and only
+accepts ``types.Content`` objects — plain dicts are rejected with a
+``ValidationError`` → HTTP 500.
+
+``_coerce_history_for_gemini()`` solves this by converting any plain-dict
+items to ``types.Content`` objects before the API call.  Existing
+``types.Content`` objects are returned unchanged (pure-Gemini sessions are
+unaffected).  The caller's original list is **not mutated** — the conversion
+is purely internal.
+
 Tool dispatch
 -------------
 Uses ``FUNCTION_MAP`` and ``DECLARATIONS`` from the central tool registry
@@ -21,6 +41,8 @@ Uses ``FUNCTION_MAP`` and ``DECLARATIONS`` from the central tool registry
 from __future__ import annotations
 
 import base64
+import json
+from typing import Any
 
 import structlog
 from dotenv import load_dotenv
@@ -35,6 +57,174 @@ load_dotenv()
 
 logger = structlog.get_logger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Anthropic → Gemini history coercion
+# ---------------------------------------------------------------------------
+
+def _coerce_history_for_gemini(history: list) -> list:
+    """
+    Return a new list where every Anthropic plain-dict item has been converted
+    to a ``types.Content`` object.  Existing ``types.Content`` objects are
+    passed through unchanged (same object, not a copy).
+
+    This is needed when a session was created with the Anthropic provider and
+    is then continued with the Gemini provider.
+
+    Conversion rules
+    ----------------
+    * ``"assistant"`` role → ``"model"`` role  (Gemini vocabulary)
+    * ``content`` is a plain string → ``[Part(text=content)]``
+    * ``content`` is a list of blocks:
+        - ``{"type": "text",       "text": "..."}``     → ``Part(text=...)``
+        - ``{"type": "tool_use",  "id", "name", "input"}``
+                                                         → ``Part(function_call=...)``
+        - ``{"type": "tool_result", "tool_use_id", "content"}``
+                                                         → ``Part(function_response=...)``
+          The function name is recovered by scanning already-processed items
+          backwards for a matching ``tool_use`` id.
+        - Any other block type → ``Part(text=str(block))`` fallback (no crash)
+
+    Multiple blocks of the same type in one message (parallel tool calls) are
+    mapped to multiple ``Part`` objects in a single ``Content`` item.
+
+    The original ``history`` list is **never mutated**.  Only a new list is
+    returned.
+
+    Args:
+        history: The raw history list as returned by ``hydrate_history()``.
+                 May contain ``types.Content`` objects, plain dicts, or a mix.
+
+    Returns:
+        A new list of ``types.Content`` objects ready for the Gemini SDK.
+    """
+    # Build a tool_id → function_name index as we scan forward, so that
+    # tool_result items can recover the name of their matching tool_use.
+    tool_id_to_name: dict[str, str] = {}
+
+    result: list[types.Content] = []
+
+    for item in history:
+        # ── Already a Gemini Content object — pass through untouched ─────────
+        if isinstance(item, types.Content):
+            # Also index any function_call parts so tool_result lookup works
+            # in mixed histories (Content tool_call + dict tool_result, unlikely
+            # but defensive).
+            for part in item.parts or []:
+                if part.function_call and part.function_call.id:
+                    tool_id_to_name[part.function_call.id] = part.function_call.name
+            result.append(item)
+            continue
+
+        # ── Plain dict — Anthropic MessageParam shape ─────────────────────────
+        if not isinstance(item, dict):
+            logger.warning(
+                "coerce_history_for_gemini: skipping unknown item type %s",
+                type(item).__name__,
+            )
+            continue
+
+        anthropic_role: str = item.get("role", "user")
+        gemini_role: str = "model" if anthropic_role == "assistant" else anthropic_role
+        content_raw: Any = item.get("content", "")
+
+        # 1. Plain-string content
+        if isinstance(content_raw, str):
+            result.append(
+                types.Content(role=gemini_role, parts=[types.Part(text=content_raw)])
+            )
+            continue
+
+        # 2. List-of-blocks content
+        if isinstance(content_raw, list):
+            parts: list[types.Part] = []
+
+            for block in content_raw:
+                block_type = block.get("type") if isinstance(block, dict) else None
+
+                if block_type == "text":
+                    parts.append(types.Part(text=block["text"]))
+
+                elif block_type == "tool_use":
+                    tid = block.get("id", "")
+                    name = block.get("name", "unknown")
+                    tool_input = block.get("input", {})
+
+                    # Register so downstream tool_result blocks can find the name.
+                    if tid:
+                        tool_id_to_name[tid] = name
+
+                    parts.append(
+                        types.Part(
+                            function_call=types.FunctionCall(
+                                name=name,
+                                args=tool_input,
+                                id=tid,
+                            )
+                        )
+                    )
+
+                elif block_type == "tool_result":
+                    tid = block.get("tool_use_id", "")
+                    func_name = tool_id_to_name.get(tid, "unknown")
+
+                    raw_content = block.get("content", "{}")
+                    if isinstance(raw_content, str):
+                        try:
+                            response_dict: dict = json.loads(raw_content)
+                        except (json.JSONDecodeError, ValueError):
+                            response_dict = {"content": raw_content}
+                    elif isinstance(raw_content, dict):
+                        response_dict = raw_content
+                    else:
+                        response_dict = {"content": str(raw_content)}
+
+                    parts.append(
+                        types.Part(
+                            function_response=types.FunctionResponse(
+                                name=func_name,
+                                response=response_dict,
+                                id=tid,
+                            )
+                        )
+                    )
+
+                else:
+                    # Unknown block type — stringify as fallback, never crash.
+                    logger.warning(
+                        "coerce_history_for_gemini: unknown block type '%s' — using text fallback",
+                        block_type,
+                    )
+                    parts.append(types.Part(text=str(block)))
+
+            if parts:
+                result.append(types.Content(role=gemini_role, parts=parts))
+            else:
+                # Empty content list — add an empty text part to keep position.
+                result.append(
+                    types.Content(role=gemini_role, parts=[types.Part(text="")])
+                )
+            continue
+
+        # 3. Unexpected content type — stringify fallback.
+        logger.warning(
+            "coerce_history_for_gemini: unexpected content type %s for role=%s",
+            type(content_raw).__name__,
+            anthropic_role,
+        )
+        result.append(
+            types.Content(
+                role=gemini_role,
+                parts=[types.Part(text=str(content_raw))],
+            )
+        )
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Provider
+# ---------------------------------------------------------------------------
 
 class GeminiProvider:
     """
@@ -66,6 +256,14 @@ class GeminiProvider:
         Mutates *history* in place by appending all new turns produced
         during this call (user message, model tool calls, tool responses,
         and the final model text).
+
+        Provider-switching note
+        -----------------------
+        If *history* contains plain dicts (e.g. from a session that was
+        previously driven by the Anthropic provider), those items are coerced
+        to ``types.Content`` objects *for the API call only*.  The caller's
+        list keeps its original items; only new turns appended during this
+        call are ``types.Content`` objects.
 
         Returns:
             ``(final_text, tool_logs)`` — see LLMProvider docstring.
@@ -103,7 +301,8 @@ class GeminiProvider:
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("image_decode_failed", error=str(exc))
 
-        history.append(types.Content(role="user", parts=user_parts))
+        new_user_content = types.Content(role="user", parts=user_parts)
+        history.append(new_user_content)
 
         # ── API config ────────────────────────────────────────────────────────
 
@@ -115,20 +314,29 @@ class GeminiProvider:
 
         tools_used: list[dict] = []
 
+        # ── Coerce full history to types.Content objects ──────────────────────
+        # This handles the provider-switching case: if the session was previously
+        # driven by AnthropicProvider its items are plain dicts that the Gemini
+        # SDK's Pydantic validator would reject.  We convert them here without
+        # mutating the caller's list.
+        gemini_contents = _coerce_history_for_gemini(history)
+
         # ── Agentic loop ──────────────────────────────────────────────────────
 
         while True:
             logger.info("gemini_api_call", model=self._model)
             response = self._client.models.generate_content(
                 model=self._model,
-                contents=history,
+                contents=gemini_contents,
                 config=config,
             )
 
             candidate = response.candidates[0]
             if not candidate.content.parts:
                 logger.warning("gemini_no_parts_in_candidate")
-                history.append(types.Content(role="model", parts=[types.Part(text="")]))
+                empty_content = types.Content(role="model", parts=[types.Part(text="")])
+                history.append(empty_content)
+                gemini_contents.append(empty_content)
                 return "", tools_used
 
             part = candidate.content.parts[0]
@@ -139,7 +347,9 @@ class GeminiProvider:
                 logger.info("gemini_tool_call", tool=fc.name, args=str(fc.args)[:120])
 
                 # Append the EXACT model part to preserve thought_signature.
-                history.append(types.Content(role="model", parts=[part]))
+                model_content = types.Content(role="model", parts=[part])
+                history.append(model_content)
+                gemini_contents.append(model_content)
 
                 # Dispatch the tool.
                 tool_fn = FUNCTION_MAP.get(fc.name)
@@ -157,26 +367,28 @@ class GeminiProvider:
                 logger.info("gemini_tool_result", snippet=str(result)[:120])
 
                 # Feed the result back.
-                history.append(
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part(
-                                function_response=types.FunctionResponse(
-                                    id=fc.id,
-                                    name=fc.name,
-                                    response=result,
-                                )
+                tool_response_content = types.Content(
+                    role="user",
+                    parts=[
+                        types.Part(
+                            function_response=types.FunctionResponse(
+                                id=fc.id,
+                                name=fc.name,
+                                response=result,
                             )
-                        ],
-                    )
+                        )
+                    ],
                 )
+                history.append(tool_response_content)
+                gemini_contents.append(tool_response_content)
 
             # ── Final text branch ─────────────────────────────────────────────
             else:
                 final_text: str = response.text or ""
                 logger.info("gemini_final_response", length=len(final_text))
-                history.append(
-                    types.Content(role="model", parts=[types.Part(text=final_text)])
+                final_content = types.Content(
+                    role="model", parts=[types.Part(text=final_text)]
                 )
+                history.append(final_content)
+                # No need to append to gemini_contents — loop ends here.
                 return final_text, tools_used

@@ -11,6 +11,7 @@ Coverage contract:
   POST /api/chat backward compat    — system_prompt field still accepted (legacy)
   Dependency override ensures PromptManager is isolated from real disk
 """
+import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -27,8 +28,16 @@ from src.prompt_manager import PromptManager, PromptMode
 # Shared helpers
 # ---------------------------------------------------------------------------
 
+_KITCHEN_MODES = [
+    {"id": "general",  "label": "General",  "eyebrow": "Workspace help",       "file": "general.md"},
+    {"id": "design",   "label": "Design",   "eyebrow": "Ergonomics and layout", "file": "design.md"},
+    {"id": "assembly", "label": "Assembly", "eyebrow": "Build and fitting",     "file": "assembly.md"},
+]
+
+
 def _make_prompt_manager(tmp_path: Path) -> PromptManager:
     """Create an isolated PromptManager backed by tmp_path prompt files."""
+    (tmp_path / "modes.json").write_text(json.dumps(_KITCHEN_MODES), encoding="utf-8")
     (tmp_path / "base_agent_rules.md").write_text("BASE RULES\n", encoding="utf-8")
     (tmp_path / "general.md").write_text("GENERAL CONTENT\n", encoding="utf-8")
     (tmp_path / "design.md").write_text("DESIGN CONTENT\n", encoding="utf-8")

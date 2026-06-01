@@ -26,6 +26,12 @@ This module eliminates both problems:
      callable can never drift apart.
   3. ``base_dir`` is fixed inside a lambda so it is never part of the public
      tool API surface (prevents a potential path-traversal vector).
+
+Domain-agnostic design
+----------------------
+All tool names, descriptions, and parameter examples use generic vocabulary
+only.  Domain-specific terminology belongs in the system prompt (``prompts/``),
+not in the tool schema that the LLM sees in every request.
 """
 
 from dataclasses import dataclass
@@ -84,7 +90,7 @@ _search_knowledge_base_entry = ToolEntry(
             "Searches all markdown files for lines matching a regex pattern. "
             "Use this if get_repo_map doesn't give you enough detail, or if you need to find "
             "specific terms, part numbers, or dimensions across the entire workspace. "
-            "Supports OR logic (e.g., 'zawias|hinge|Blum'). "
+            "Supports OR logic (e.g., 'keyword1|keyword2|term3'). "
             "IMPORTANT: the knowledge base may contain contradicting notes across files — "
             "use context_lines=3 or higher for ambiguous queries so you can see surrounding "
             "text and detect conflicts before answering."
@@ -95,9 +101,9 @@ _search_knowledge_base_entry = ToolEntry(
                 "query": types.Schema(
                     type=types.Type.STRING,
                     description=(
-                        "A regex pattern to search for, e.g., 'Blum|zawias' or '18mm'. "
+                        "A regex pattern to search for, e.g., 'keyword1|keyword2' or 'exact phrase'. "
                         "Matching is case-insensitive. Use OR (|) for synonyms or "
-                        "Polish/English variants of the same term."
+                        "alternative spellings of the same term."
                     ),
                 ),
                 "context_lines": types.Schema(
@@ -132,7 +138,7 @@ _read_file_entry = ToolEntry(
             properties={
                 "filepath": types.Schema(
                     type=types.Type.STRING,
-                    description="Exact path to the file, e.g., 'data/test.md'",
+                    description="Exact path to the file, e.g., 'data/notes.md'",
                 ),
             },
             required=["filepath"],
@@ -156,7 +162,7 @@ _edit_file_entry = ToolEntry(
             properties={
                 "filepath": types.Schema(
                     type=types.Type.STRING,
-                    description="Path to the file, e.g., 'data/test.md'",
+                    description="Path to the file, e.g., 'data/notes.md'",
                 ),
                 "search_text": types.Schema(
                     type=types.Type.STRING,
@@ -192,7 +198,7 @@ _create_file_entry = ToolEntry(
                     type=types.Type.STRING,
                     description=(
                         "Path to the new file. You may specify nested directories "
-                        "(e.g., 'data/04_NewTopic/file.md') and they will be created automatically."
+                        "(e.g., 'data/new-topic/file.md') and they will be created automatically."
                     ),
                 ),
                 "content": types.Schema(

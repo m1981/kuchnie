@@ -11,10 +11,18 @@ Usage:
 
     settings.data_dir           # Path("data")
     settings.prompts_dir        # Path("prompts")
+    settings.app_title          # "Agentic Workspace API"
+    settings.app_description    # "Domain-agnostic AI agent..."
     settings.gemini_model       # "gemini-2.5-flash"
     settings.allowed_origins    # ["http://localhost:5173"]
     settings.llm_provider       # "gemini" | "anthropic"
     settings.anthropic_model    # "claude-sonnet-4-5"
+
+Domain-agnostic app metadata
+-----------------------------
+Set ``APP_TITLE`` and ``APP_DESCRIPTION`` in your ``.env`` (or environment)
+to customise the FastAPI OpenAPI title and description without touching source
+code.  This allows the same backend to serve any knowledge domain.
 
 Provider selection
 ------------------
@@ -36,6 +44,14 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+    )
+
+    # ── Application metadata ─────────────────────────────────────────────────
+    # Override via APP_TITLE / APP_DESCRIPTION env vars to adapt to any domain.
+    app_title: str = "Agentic Workspace API"
+    app_description: str = (
+        "Domain-agnostic AI agent with tool-calling, session management, "
+        "and a knowledge-base file system."
     )
 
     # ── Paths ────────────────────────────────────────────────────────────────

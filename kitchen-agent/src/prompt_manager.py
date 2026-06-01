@@ -13,23 +13,71 @@ Responsibilities
 * Support hot-reload (``reload_prompts()``) so prompt files can be edited
   and picked up immediately without restarting the server.
 
+Domain-agnostic design
+----------------------
+Mode definitions are loaded from a ``modes.json`` file that lives inside
+``prompts_dir``.  This means any domain (kitchen cabinets, legal research,
+software engineering, …) can define its own set of modes by:
+
+  1. Writing a ``modes.json`` registry file.
+  2. Adding one ``.md`` file per mode.
+  3. Optionally providing a ``base_agent_rules.md`` that is prepended to
+     every mode's system instruction.
+
+``modes.json`` schema (array of objects)::
+
+    [
+      {
+        "id":      "research",
+        "label":   "Research",
+        "eyebrow": "Case law & statutes",
+        "file":    "research.md"
+      },
+      ...
+    ]
+
+All four keys (``id``, ``label``, ``eyebrow``, ``file``) are required for
+each entry.  Entries missing any key are **silently skipped** (graceful
+degradation).  Extra keys are ignored.
+
+Graceful degradation contract
+------------------------------
+* Missing ``modes.json``          → empty mode list, no crash.
+* Malformed JSON in ``modes.json``→ empty mode list, no crash.
+* ``modes.json`` root is not list  → empty mode list, no crash.
+* Missing mode ``.md`` file       → mode content is empty string (base rules
+                                    still prepended).
+* Missing ``base_agent_rules.md`` → base rules are empty string.
+* Completely missing prompts_dir  → empty base rules + empty mode list.
+
 Design decisions
 ----------------
 * **Singleton at module level** — ``prompt_manager`` is imported directly by
   ``main.py`` for the FastAPI DI factory.  Tests override it via
   ``app.dependency_overrides``.
-* **Graceful degradation** — missing files / directory never raise; they
-  produce empty strings so the agent can still run.
-* **base_agent_rules.md** is prepended to every mode's content so agentic
-  rules are always present regardless of the selected mode.
+* **Atomic cache swap** — ``reload_prompts()`` builds a fresh dict and then
+  replaces ``self._cache`` in a single assignment so concurrent readers always
+  see a consistent snapshot.
+* **_MODE_REGISTRY removed** — all domain knowledge now lives in
+  ``prompts/modes.json``, not in Python source.
 """
 
+from __future__ import annotations
+
+import json
 from pathlib import Path
+from typing import Any
 
 import structlog
 from pydantic import BaseModel
 
 logger = structlog.get_logger(__name__)
+
+# ---------------------------------------------------------------------------
+# Required keys that every modes.json entry must have
+# ---------------------------------------------------------------------------
+
+_REQUIRED_ENTRY_KEYS: frozenset[str] = frozenset({"id", "label", "eyebrow", "file"})
 
 
 # ---------------------------------------------------------------------------
@@ -45,35 +93,6 @@ class PromptMode(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Mode registry
-# ---------------------------------------------------------------------------
-
-# Ordered list that defines which modes exist and what their labels are.
-# File discovery is driven by this registry: add a new entry + matching .md file
-# to introduce a new mode.
-_MODE_REGISTRY: list[dict[str, str]] = [
-    {
-        "id":     "general",
-        "label":  "General",
-        "eyebrow":"Workspace help",
-        "file":   "general.md",
-    },
-    {
-        "id":     "design",
-        "label":  "Design",
-        "eyebrow":"Ergonomics and layout",
-        "file":   "design.md",
-    },
-    {
-        "id":     "assembly",
-        "label":  "Assembly",
-        "eyebrow":"Build and fitting",
-        "file":   "assembly.md",
-    },
-]
-
-
-# ---------------------------------------------------------------------------
 # PromptManager
 # ---------------------------------------------------------------------------
 
@@ -85,8 +104,8 @@ class PromptManager:
     Parameters
     ----------
     prompts_dir:
-        Directory that contains ``base_agent_rules.md`` and one ``.md`` file
-        per mode listed in ``_MODE_REGISTRY``.
+        Directory that contains ``modes.json``, ``base_agent_rules.md``, and
+        one ``.md`` file per mode listed in ``modes.json``.
         Defaults to ``"prompts"`` (relative to the working directory).
     """
 
@@ -102,11 +121,12 @@ class PromptManager:
 
     def reload_prompts(self) -> None:
         """
-        (Re-)read all Markdown files and refresh the in-memory cache.
+        (Re-)read ``modes.json``, ``base_agent_rules.md``, and all mode
+        ``.md`` files, then refresh the in-memory cache atomically.
 
-        Safe to call at runtime — replaces the cache atomically so concurrent
-        readers always see a consistent snapshot.  Any file that does not exist
-        is treated as an empty string (graceful degradation).
+        Safe to call at runtime — replaces ``self._cache`` in a single
+        assignment so concurrent readers always see a consistent snapshot.
+        Any file that does not exist is treated as an empty string.
         """
         new_cache: dict[str, PromptMode] = {}
 
@@ -119,8 +139,11 @@ class PromptManager:
             self._cache = new_cache
             return
 
-        # 2. Load each mode and combine with base rules
-        for entry in _MODE_REGISTRY:
+        # 2. Discover mode registry from modes.json (domain-agnostic)
+        registry = self._load_mode_registry()
+
+        # 3. Load each mode and combine with base rules
+        for entry in registry:
             mode_body = self._read_file(entry["file"])
             separator = "\n\n" if base_rules and mode_body else ""
             full_prompt = f"{base_rules}{separator}{mode_body}".strip()
@@ -143,7 +166,7 @@ class PromptManager:
 
     def get_all_modes(self) -> list[dict[str, str]]:
         """
-        Returns metadata for every cached mode.
+        Returns metadata for every cached mode **in registry order**.
 
         **Never includes ``content``** — only ``id``, ``label``, and
         ``eyebrow`` are returned so the frontend knows which buttons to render
@@ -170,6 +193,58 @@ class PromptManager:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _load_mode_registry(self) -> list[dict[str, str]]:
+        """
+        Parse ``modes.json`` from ``prompts_dir`` and return a validated list
+        of mode entry dicts.  Any entry missing a required key is skipped.
+        Returns ``[]`` on any error (missing file, malformed JSON, wrong type).
+        """
+        modes_path = self._prompts_dir / "modes.json"
+        if not modes_path.exists():
+            logger.debug("modes_json_missing", path=str(modes_path))
+            return []
+
+        raw_text = modes_path.read_text(encoding="utf-8")
+
+        try:
+            data: Any = json.loads(raw_text)
+        except json.JSONDecodeError as exc:
+            logger.warning("modes_json_parse_error", path=str(modes_path), error=str(exc))
+            return []
+
+        if not isinstance(data, list):
+            logger.warning(
+                "modes_json_not_a_list",
+                path=str(modes_path),
+                type=type(data).__name__,
+            )
+            return []
+
+        valid_entries: list[dict[str, str]] = []
+        for i, item in enumerate(data):
+            if not isinstance(item, dict):
+                logger.warning("modes_json_entry_not_dict", index=i, type=type(item).__name__)
+                continue
+            missing = _REQUIRED_ENTRY_KEYS - item.keys()
+            if missing:
+                logger.warning(
+                    "modes_json_entry_missing_keys",
+                    index=i,
+                    missing=sorted(missing),
+                )
+                continue
+            # Include only the required keys (ignore extras)
+            valid_entries.append(
+                {
+                    "id":      str(item["id"]),
+                    "label":   str(item["label"]),
+                    "eyebrow": str(item["eyebrow"]),
+                    "file":    str(item["file"]),
+                }
+            )
+
+        return valid_entries
 
     def _read_file(self, filename: str) -> str:
         """Read a file relative to ``prompts_dir``; return '' if absent."""

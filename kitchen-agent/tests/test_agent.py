@@ -10,6 +10,28 @@ Gemini-specific logic lives in ``GeminiProvider``.  The mocks therefore target
 
 All Gemini API calls are mocked — no network or API key required.
 
+History-list semantics note
+-----------------------------
+Prior to the provider-switching fix, ``GeminiProvider`` passed the caller's
+``history`` list directly to ``generate_content(contents=history)``.
+Because Python mock records the *reference* (not a snapshot), the
+``call_args`` inspection reflected the list state *after* the call returned —
+i.e. after ``history.append(final_content)`` ran.  This was a subtle
+reference-aliasing artefact.
+
+After the fix, ``GeminiProvider`` builds an internal ``gemini_contents`` list
+(used for the actual API calls) that is separate from the caller-visible
+``history`` list.  The API call therefore receives an accurate snapshot at
+call time — 3 items on the 2nd call of a single-tool scenario:
+  0: user message
+  1: model tool-call
+  2: tool response
+The final assistant text is appended to ``history`` after the call, not
+before, so it is correctly not included in the 2nd call's ``contents``.
+
+Tests assert the ``call_count``, ``history`` final state, and the tool logs
+— not the fragile post-mutation reference count.
+
 Covers:
  - Normal single-tool turn: thought_signature + ID preserved  (main path)
  - Empty candidate parts → empty string returned               (no parts)
@@ -86,14 +108,24 @@ def test_agent_preserves_thought_signature_and_id(mock_client_cls: MagicMock) ->
     assert tool_logs[0]["result"] == {"content": "wood"}
     assert mock_client.models.generate_content.call_count == 2
 
-    final_history = mock_client.models.generate_content.call_args[1]["contents"]
-    assert len(final_history) == 4
+    # ── Verify what the 2nd call (returning the final text) received ──────────
+    # At the 2nd call, gemini_contents = [user, model_tool_call, tool_response]
+    # i.e. 3 items.  The final assistant Content is appended to history AFTER
+    # this call returns, so it is NOT in the API call payload — that is correct.
+    second_call_contents = mock_client.models.generate_content.call_args_list[1][1]["contents"]
+    assert len(second_call_contents) == 3
 
-    model_turn = final_history[1]
+    # ── Verify the caller's history list has all 4 turns ─────────────────────
+    # history = [user, model_tool_call, tool_response, final_assistant]
+    assert len(history) == 4
+
+    # The model turn in history must carry the original thought_signature.
+    model_turn = history[1]
     assert model_turn.role == "model"
     assert model_turn.parts[0].thought_signature == mock_tool_part.thought_signature
 
-    tool_response_turn = final_history[2]
+    # The tool response must use the correct call ID.
+    tool_response_turn = history[2]
     assert tool_response_turn.role == "user"
     assert tool_response_turn.parts[0].function_response.id == "call_123"
 
