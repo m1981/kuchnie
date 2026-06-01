@@ -191,7 +191,7 @@ class TestForkLineage:
         assert rows["parent-1"]["fork_turn_index"] is None
 
 
-class TestGetSessionTree:
+class TestGetSessionTreeRepository:
     def test_empty_db_returns_empty_list(self, tmp_path: Path) -> None:
         repo = SQLiteSessionRepository(_make_conn(tmp_path))
         assert repo.get_session_tree() == []

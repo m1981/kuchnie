@@ -401,3 +401,74 @@ def test_chat_service_exception_returns_500(tmp_path: Path, monkeypatch) -> None
         assert resp.status_code == 500
     finally:
         app.dependency_overrides.pop(get_chat_service, None)
+
+
+# ===========================================================================
+# File API — unique coverage from test_file_api.py (merged)
+# ===========================================================================
+
+class TestFileApiRoutes:
+    """Integration tests for file CRUD endpoints not already covered above."""
+
+    @pytest.fixture()
+    def data_dir(self, tmp_path: Path) -> Path:
+        (tmp_path / "materials.md").write_text(
+            "# Materials\n\n18mm Birch Plywood.\n", encoding="utf-8"
+        )
+        (tmp_path / "hardware.md").write_text(
+            "# Hardware\n\nBlum hinges.\n", encoding="utf-8"
+        )
+        return tmp_path
+
+    @pytest.fixture()
+    def file_client(self, data_dir: Path, monkeypatch) -> TestClient:
+        monkeypatch.setattr(config_module.settings, "data_dir", data_dir)
+        monkeypatch.setattr(main_module.settings, "data_dir", data_dir)
+        return TestClient(app)
+
+    def test_list_files_paths_are_relative(self, file_client: TestClient) -> None:
+        resp = file_client.get("/api/files")
+        assert resp.status_code == 200
+        for item in resp.json():
+            assert not item["path"].startswith("/"), f"Expected relative path, got: {item['path']}"
+
+    def test_list_files_empty_dir(self, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+        monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+        resp = TestClient(app).get("/api/files")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_read_file_returns_content(self, file_client: TestClient) -> None:
+        resp = file_client.get("/api/files/materials.md")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["filepath"] == "materials.md"
+        assert "Birch Plywood" in body["content"]
+
+    def test_write_file_updates_content(self, file_client: TestClient, data_dir: Path) -> None:
+        new_content = "# Materials\n\nUpdated content.\n"
+        resp = file_client.put("/api/files/materials.md", json={"content": new_content})
+        assert resp.status_code == 200
+        written = (data_dir / "materials.md").read_text(encoding="utf-8")
+        assert "Updated content" in written
+
+    def test_append_adds_content(self, file_client: TestClient, data_dir: Path) -> None:
+        payload = {
+            "filepath": str(data_dir / "materials.md"),
+            "content": "\n## Appended\n\nHighlighted snippet.\n",
+        }
+        resp = file_client.post("/api/files/append", json=payload)
+        assert resp.status_code == 200
+        written = (data_dir / "materials.md").read_text(encoding="utf-8")
+        assert "Highlighted snippet" in written
+
+    def test_repo_map_success_path(self, file_client: TestClient, monkeypatch) -> None:
+        monkeypatch.setattr(
+            main_module,
+            "get_repo_map",
+            lambda base_dir=None: {"content": "=== materials.md ===\n1: # Materials"},
+        )
+        resp = file_client.get("/api/repo-map")
+        assert resp.status_code == 200
+        assert "content" in resp.json()
