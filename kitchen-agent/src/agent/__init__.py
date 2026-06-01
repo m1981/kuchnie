@@ -1,15 +1,12 @@
 """
-src/agent.py
-============
-Thin dispatcher for the LLM agentic loop.
+src/agent/
+==========
+Agent layer — LLM turn lifecycle, tool execution, and context assembly.
 
-After the provider refactor this module is a pure delegator: it calls
-``get_provider()`` to resolve the currently configured LLM backend and
-forwards the call to its ``process_chat_turn`` method.
-
-``get_provider()`` is called on every request (not cached at module load) so
-the active provider can be changed at runtime via settings or test monkeypatching
-without restarting the process.
+  - ``process_chat_turn`` — thin dispatcher (backward-compatible public API)
+  - ``tool_executor``     — safe, isolated tool execution
+  - ``context_assembler`` — builds the context window (Phase 3)
+  - ``turn_orchestrator`` — manages one turn end-to-end (Phase 4)
 
 Public API
 ----------
@@ -26,7 +23,7 @@ Adding a new provider
 1. Implement ``LLMProvider`` in a new file under ``src/providers/``.
 2. Register it in ``src/providers/base.py :: get_provider()``.
 3. Add the key to ``settings.llm_provider`` docs in ``config.py``.
-This file does NOT need to change.
+This package does NOT need to change.
 """
 from __future__ import annotations
 
