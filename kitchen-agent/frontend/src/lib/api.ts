@@ -159,6 +159,13 @@ export type ChatRequest = {
 	 * Omit to use the provider's configured default model.
 	 */
 	model?: string;
+	/**
+	 * Tool-calling toggle — Option C.
+	 * true  → agentic loop (LLM may call file tools). Default.
+	 * false → plain LLM call; no tools sent, no agentic loop.
+	 * When omitted the server uses the mode's tools_enabled_default.
+	 */
+	tools_enabled?: boolean;
 };
 
 export type ChatResponse = {
@@ -179,6 +186,8 @@ export type PromptMode = {
 	id: string;
 	label: string;
 	eyebrow: string;
+	/** When false, this mode defaults to plain LLM chat (no tool-calling loop). */
+	tools_enabled_default: boolean;
 };
 
 /**

@@ -157,6 +157,7 @@ class ChatService:
         context_files: list[str] | None = None,
         provider_name: str | None = None,
         model_override: str | None = None,
+        use_tools: bool = True,
     ) -> tuple[str, list[dict]]:
         """
         Loads history, runs the agent, persists state, and returns the result.
@@ -221,7 +222,7 @@ class ChatService:
         ui_messages.append(user_ui_entry)
 
         # ── 4. Run the agentic loop ───────────────────────────────────────────
-        logger.info("running_agent", session_id=session_id[:8])
+        logger.info("running_agent", session_id=session_id[:8], use_tools=use_tools)
         final_text, tool_logs = process_chat_turn(
             user_message=user_message,
             history=history,
@@ -230,6 +231,7 @@ class ChatService:
             context_files=context_files or None,
             provider_name=provider_name,
             model_override=model_override,
+            use_tools=use_tools,
         )
 
         # ── 5. Record assistant response in UI state ──────────────────────────

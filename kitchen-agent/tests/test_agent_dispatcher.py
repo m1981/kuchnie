@@ -40,6 +40,7 @@ def test_process_chat_turn_delegates_to_provider() -> None:
         system_instruction=None,
         images=None,
         context_files=None,
+        use_tools=True,
     )
 
 
@@ -67,6 +68,7 @@ def test_process_chat_turn_passes_all_args() -> None:
         system_instruction="Be a kitchen expert",
         images=images,
         context_files=context_files,
+        use_tools=True,
     )
     assert text == "answer"
     assert len(tools) == 1

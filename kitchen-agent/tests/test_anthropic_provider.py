@@ -347,6 +347,71 @@ def test_no_system_instruction_not_sent(provider: AnthropicProvider) -> None:
 
 
 # ---------------------------------------------------------------------------
+# tools_enabled=False — direct LLM call, no agentic loop
+# ---------------------------------------------------------------------------
+
+def test_no_tools_skips_agentic_loop(provider: AnthropicProvider) -> None:
+    """When use_tools=False the provider makes exactly one API call and returns."""
+    resp = _make_response([_text_block("direct answer")], stop_reason="end_turn")
+    provider._client.messages.create.return_value = resp
+
+    history: list = []
+    final_text, tool_logs = provider.process_chat_turn(
+        "what is the standard overhang?", history, use_tools=False
+    )
+
+    assert final_text == "direct answer"
+    assert tool_logs == []
+    assert provider._client.messages.create.call_count == 1
+
+
+def test_no_tools_sends_no_tools_to_api(provider: AnthropicProvider) -> None:
+    """When use_tools=False the messages.create call must have an empty tools list."""
+    resp = _make_response([_text_block("ok")], stop_reason="end_turn")
+    provider._client.messages.create.return_value = resp
+
+    history: list = []
+    provider.process_chat_turn("hello", history, use_tools=False)
+
+    call_kwargs = provider._client.messages.create.call_args[1]
+    assert call_kwargs.get("tools") == []
+
+
+def test_no_tools_history_has_user_and_assistant_turn(provider: AnthropicProvider) -> None:
+    """Even without tools, history must contain the user turn and the assistant reply."""
+    resp = _make_response([_text_block("reply")], stop_reason="end_turn")
+    provider._client.messages.create.return_value = resp
+
+    history: list = []
+    provider.process_chat_turn("ping", history, use_tools=False)
+
+    assert len(history) == 2
+    assert history[0]["role"] == "user"
+    assert history[1]["role"] == "assistant"
+
+
+def test_tools_enabled_true_still_uses_agentic_loop(provider: AnthropicProvider) -> None:
+    """Explicit use_tools=True must behave identically to the default (agentic loop)."""
+    tool_resp = _make_response(
+        [_tool_use_block("read_file", {"filepath": "a.md"}, "cX")],
+        stop_reason="tool_use",
+    )
+    final_resp = _make_response([_text_block("done")], stop_reason="end_turn")
+    provider._client.messages.create.side_effect = [tool_resp, final_resp]
+
+    with patch("src.providers.anthropic_provider.FUNCTION_MAP",
+               {"read_file": lambda filepath: {"content": "stuff"}}):
+        history: list = []
+        final_text, tool_logs = provider.process_chat_turn(
+            "read a.md", history, use_tools=True
+        )
+
+    assert final_text == "done"
+    assert len(tool_logs) == 1
+    assert provider._client.messages.create.call_count == 2
+
+
+# ---------------------------------------------------------------------------
 # Multi-tool turn
 # ---------------------------------------------------------------------------
 

@@ -63,6 +63,7 @@ class LLMProvider(Protocol):
         system_instruction: str | None = None,
         images: list[dict] | None = None,
         context_files: list[str] | None = None,
+        use_tools: bool = True,
     ) -> tuple[str, list[dict]]:
         ...
 

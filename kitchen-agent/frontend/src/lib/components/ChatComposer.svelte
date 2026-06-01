@@ -196,7 +196,7 @@
 							role="radio"
 							aria-checked={chatStore.selectedModeId === mode.id}
 							title={mode.eyebrow}
-							onclick={() => chatStore.setSelectedModeId(mode.id)}
+							onclick={() => chatStore.setSelectedModeId(mode.id, modes)}
 							class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
 								{chatStore.selectedModeId === mode.id
 									? 'border-accent bg-accent text-white shadow-sm'
@@ -208,14 +208,31 @@
 					{/each}
 				{/if}
 
-				<!-- Spacer pushes "New chat" to the right -->
+				<!-- Spacer pushes right-side controls to the right -->
 				<span class="flex-1"></span>
+
+				<!-- Tools toggle — visible and stateful at all times -->
+				<button
+					type="button"
+					onclick={() => chatStore.toggleTools()}
+					aria-pressed={chatStore.toolsEnabled}
+					title={chatStore.toolsEnabled
+						? 'Tools ON — LLM can read and edit your knowledge base. Click to disable.'
+						: 'Tools OFF — Direct LLM reply, no file access. Click to enable.'}
+					class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
+						{chatStore.toolsEnabled
+							? 'border-accent/40 bg-accent/10 text-accent hover:bg-accent/20'
+							: 'border-line bg-transparent text-muted hover:border-accent/60 hover:text-ink'}"
+				>
+					<span aria-hidden="true">{chatStore.toolsEnabled ? '⚡' : '💬'}</span>
+					{chatStore.toolsEnabled ? 'Tools' : 'Chat'}
+				</button>
 
 				<button
 					onclick={onnewchat}
 					class="rounded-full border border-line px-3 py-1 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
 					title="Start a new conversation"
-				>
+			>
 					+ New chat
 				</button>
 			</div>

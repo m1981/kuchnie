@@ -190,6 +190,7 @@ class AnthropicProvider:
         system_instruction: str | None = None,
         images: list[dict] | None = None,
         context_files: list[str] | None = None,
+        use_tools: bool = True,
     ) -> tuple[str, list[dict]]:
         """
         Drives a single conversational turn via the Anthropic Messages API.
@@ -252,6 +253,30 @@ class AnthropicProvider:
         # Re-build tool schemas in case FUNCTION_MAP was patched (tests).
         tool_schemas = self._build_tool_schemas()
 
+        # ── Direct call branch (use_tools=False) ───────────────────────────
+        # One API call, no loop, no tool dispatch, empty tool_logs.
+        if not use_tools:
+            logger.info("anthropic_direct_call", model=self._model)
+            direct_kwargs: dict = {
+                "model":      self._model,
+                "max_tokens": settings.anthropic_max_tokens,
+                "tools":      [],
+                "messages":   history,
+                "system":     system_instruction,
+            }
+            response = self._client.messages.create(**direct_kwargs)
+            text_parts: list[str] = [
+                block.text for block in response.content
+                if block.type == "text"
+            ]
+            final_text: str = " ".join(text_parts).strip() if text_parts else ""
+            logger.info("anthropic_direct_response", length=len(final_text))
+            history.append({
+                "role": "assistant",
+                "content": [{"type": "text", "text": final_text}],
+            })
+            return final_text, []
+
         # ── Agentic loop ──────────────────────────────────────────────────────
 
         while True:
@@ -260,7 +285,7 @@ class AnthropicProvider:
             create_kwargs: dict[str, Any] = {
                 "model": self._model,
                 "max_tokens": settings.anthropic_max_tokens,
-                "tools": tool_schemas,
+                "tools": tool_schemas if use_tools else [],
                 "messages": history,
                 "system": system_instruction,
             }

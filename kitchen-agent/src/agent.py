@@ -41,6 +41,7 @@ def process_chat_turn(
     context_files: list[str] | None = None,
     provider_name: str | None = None,
     model_override: str | None = None,
+    use_tools: bool = True,
 ) -> tuple[str, list[dict]]:
     """
     Handles a single conversational turn using the configured LLM provider.
@@ -59,6 +60,9 @@ def process_chat_turn(
                             ``None`` → read from ``settings.llm_provider``.
         model_override:     Override the model within the chosen provider.
                             ``None`` → provider uses its own default model.
+        use_tools:          When ``False``, skip the agentic tool-calling loop
+                            and make a single direct LLM call instead.
+                            Default ``True`` preserves existing behaviour.
 
     Returns:
         ``(final_text, tool_logs)`` — see ``LLMProvider.process_chat_turn``.
@@ -73,4 +77,5 @@ def process_chat_turn(
         system_instruction=system_instruction,
         images=images,
         context_files=context_files,
+        use_tools=use_tools,
     )

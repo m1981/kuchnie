@@ -44,6 +44,15 @@ function createChatStore() {
 	let selectedModeId = $state('general');
 	let modesState     = $state<AsyncState<void>>({ status: 'idle' });
 
+	// ── Tools toggle ────────────────────────────────────────────────────
+	/**
+	 * Whether the next message should use the agentic tool-calling loop.
+	 * Initialised to true; updated automatically when the user switches mode
+	 * (picks up mode.tools_enabled_default); can be flipped manually by the
+	 * user via the toggle in ChatComposer at any time.
+	 */
+	let toolsEnabled = $state<boolean>(true);
+
 	// ── Prompt inspector ──────────────────────────────────────────────────────
 	/**
 	 * Stores the detail content keyed by mode ID so switching modes while the
@@ -127,6 +136,7 @@ function createChatStore() {
 
 		get selectedModeId()      { return selectedModeId; },
 		get modesState()          { return modesState; },
+		get toolsEnabled()        { return toolsEnabled; },
 
 		get promptDetailContent() { return promptDetailContent; },
 		get promptDetailState()   { return promptDetailState; },
@@ -245,7 +255,10 @@ function createChatStore() {
 					// Only include provider/model when the user has made an explicit
 					// selection — omitting them lets the server use its configured defaults.
 					provider: selectedProvider || undefined,
-					model:    selectedModel    || undefined
+					model:    selectedModel    || undefined,
+					// Send tools_enabled=false explicitly only when the user has turned
+					// tools off — omitting it (or true) lets the server use mode default.
+					tools_enabled: toolsEnabled ? undefined : false
 				});
 
 				messages.push({
@@ -285,6 +298,9 @@ function createChatStore() {
 				if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
 					selectedModeId = fetched[0].id;
 				}
+				// Sync toolsEnabled to the selected mode’s default from the live list.
+				const activeModeData = fetched.find((m) => m.id === selectedModeId);
+				if (activeModeData !== undefined) toolsEnabled = activeModeData.tools_enabled_default ?? true;
 				return fetched;
 			} catch (e) {
 				console.error('Failed to load prompt modes', e);
@@ -293,15 +309,28 @@ function createChatStore() {
 			}
 		},
 
-		setSelectedModeId(id: string) {
+		setSelectedModeId(id: string, modes?: import('$lib/api').PromptMode[]) {
 			if (id === selectedModeId) return;
 			selectedModeId = id;
+			// Sync toolsEnabled to the new mode's default when provided.
+			if (modes) {
+				const mode = modes.find((m) => m.id === id);
+				if (mode !== undefined) toolsEnabled = mode.tools_enabled_default ?? true;
+			}
 			// Invalidate stale prompt detail cache.
 			promptDetailContent = null;
 			promptDetailState   = { status: 'idle' };
 			promptDetailForId   = '';
 			// Eagerly re-fetch if the inspector is open.
 			if (promptInspectorOpen) void this.loadPromptDetail();
+		},
+
+		toggleTools() {
+			toolsEnabled = !toolsEnabled;
+		},
+
+		setToolsEnabled(value: boolean) {
+			toolsEnabled = value;
 		},
 
 		// ── Prompt inspector ──────────────────────────────────────────────────

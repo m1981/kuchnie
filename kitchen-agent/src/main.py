@@ -970,6 +970,18 @@ async def chat(
         # so the agent behaves the same as before F05 in degraded environments
         system_instruction = resolved if resolved else None
 
+    # Resolve effective use_tools flag — Option C:
+    #   request.tools_enabled is the per-request explicit value (default True).
+    #   When the mode defines tools_enabled_default=False and the request did
+    #   NOT explicitly set tools_enabled, the mode default wins.  Since
+    #   ChatRequest.tools_enabled defaults to True we can’t distinguish
+    #   "explicitly True" from "omitted"; the convention is:
+    #     request.tools_enabled=False  → always False (explicit disable)
+    #     request.tools_enabled=True   → use mode default (may still be False)
+    mode_obj = pm.get_mode(request.mode_id)
+    mode_tools_default = mode_obj.tools_enabled_default if mode_obj else True
+    use_tools: bool = request.tools_enabled and mode_tools_default
+
     # Resolve context file paths: bare filenames → absolute paths under data_dir.
     # This fixes the bug where ContextSidebar sends "file.md" but read_file
     # needs "data/file.md" (or the absolute path).
@@ -1004,6 +1016,7 @@ async def chat(
                 context_files=resolved_context_files,
                 provider_name=request.provider,
                 model_override=request.model,
+                use_tools=use_tools,
             ),
         )
     except Exception as exc:

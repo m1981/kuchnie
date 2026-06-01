@@ -45,6 +45,11 @@ class ChatRequest(BaseModel):
     # When provided they are forwarded to get_provider() for this turn only.
     provider: str | None = None   # e.g. "gemini" | "anthropic"
     model: str | None = None      # provider-specific model id override
+    # Tool-calling toggle — Option C: per-request override of the mode default.
+    # True  → agentic loop (LLM may call file tools); default behaviour.
+    # False → plain LLM call; no tools sent, no agentic loop.
+    # When omitted the resolved mode's tools_enabled_default is used instead.
+    tools_enabled: bool = True
 
 
 class ToolLog(BaseModel):

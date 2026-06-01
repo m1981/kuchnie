@@ -249,6 +249,7 @@ class GeminiProvider:
         system_instruction: str | None = None,
         images: list[dict] | None = None,
         context_files: list[str] | None = None,
+        use_tools: bool = True,
     ) -> tuple[str, list[dict]]:
         """
         Drives a single conversational turn via the Gemini API.
@@ -264,6 +265,12 @@ class GeminiProvider:
         to ``types.Content`` objects *for the API call only*.  The caller's
         list keeps its original items; only new turns appended during this
         call are ``types.Content`` objects.
+
+        use_tools=False
+        ---------------
+        Skips the agentic loop entirely: no tools are passed to the API and
+        exactly one ``generate_content`` call is made.  The response text is
+        returned immediately with an empty tool_logs list.
 
         Returns:
             ``(final_text, tool_logs)`` — see LLMProvider docstring.
@@ -306,8 +313,11 @@ class GeminiProvider:
 
         # ── API config ────────────────────────────────────────────────────────
 
+        # When use_tools=False we omit the tools parameter entirely so the
+        # Gemini API treats this as a plain generative call with no function
+        # declarations.  This also means we never enter the agentic loop.
         config = types.GenerateContentConfig(
-            tools=[self._tools],
+            tools=[self._tools] if use_tools else [],
             temperature=settings.gemini_temperature,
             system_instruction=system_instruction,
         )
@@ -322,6 +332,23 @@ class GeminiProvider:
         gemini_contents = _coerce_history_for_gemini(history)
 
         # ── Agentic loop ──────────────────────────────────────────────────────
+
+
+        # ── Direct call branch (use_tools=False) ───────────────────────────
+        # One API call, no loop, no tool dispatch, empty tool_logs.
+        if not use_tools:
+            logger.info("gemini_direct_call", model=self._model)
+            response = self._client.models.generate_content(
+                model=self._model,
+                contents=gemini_contents,
+                config=config,
+            )
+            final_text = response.text or ""
+            logger.info("gemini_direct_response", length=len(final_text))
+            history.append(
+                types.Content(role="model", parts=[types.Part(text=final_text)])
+            )
+            return final_text, []
 
         while True:
             logger.info("gemini_api_call", model=self._model)

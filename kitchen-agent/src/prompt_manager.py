@@ -78,6 +78,7 @@ logger = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 _REQUIRED_ENTRY_KEYS: frozenset[str] = frozenset({"id", "label", "eyebrow", "file"})
+_OPTIONAL_BOOL_KEYS: frozenset[str] = frozenset({"tools_enabled"})
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +91,7 @@ class PromptMode(BaseModel):
     label: str
     eyebrow: str
     content: str  # full combined prompt (base rules + mode body) — never sent to frontend
+    tools_enabled_default: bool = True  # False → this mode defaults to plain LLM chat
 
 
 # ---------------------------------------------------------------------------
@@ -148,11 +150,16 @@ class PromptManager:
             separator = "\n\n" if base_rules and mode_body else ""
             full_prompt = f"{base_rules}{separator}{mode_body}".strip()
 
+            # tools_enabled is optional; default True; non-bool coerced to True.
+            raw_tools = entry.get("tools_enabled", True)
+            tools_default = raw_tools if isinstance(raw_tools, bool) else True
+
             new_cache[entry["id"]] = PromptMode(
                 id=entry["id"],
                 label=entry["label"],
                 eyebrow=entry["eyebrow"],
                 content=full_prompt,
+                tools_enabled_default=tools_default,
             )
             logger.debug(
                 "prompt_loaded",
@@ -164,18 +171,27 @@ class PromptManager:
         self._cache = new_cache
         logger.info("prompts_reloaded", mode_count=len(self._cache))
 
-    def get_all_modes(self) -> list[dict[str, str]]:
+    def get_all_modes(self) -> list[dict]:
         """
         Returns metadata for every cached mode **in registry order**.
 
-        **Never includes ``content``** — only ``id``, ``label``, and
-        ``eyebrow`` are returned so the frontend knows which buttons to render
-        without receiving the full prompt text.
+        **Never includes ``content``** — only ``id``, ``label``, ``eyebrow``,
+        and ``tools_enabled_default`` are returned so the frontend knows which
+        buttons to render and what the default tool behaviour is for each mode.
         """
         return [
-            {"id": mode.id, "label": mode.label, "eyebrow": mode.eyebrow}
+            {
+                "id":                   mode.id,
+                "label":                mode.label,
+                "eyebrow":              mode.eyebrow,
+                "tools_enabled_default": mode.tools_enabled_default,
+            }
             for mode in self._cache.values()
         ]
+
+    def get_mode(self, mode_id: str) -> PromptMode | None:
+        """Return the full ``PromptMode`` for *mode_id*, or ``None`` if unknown."""
+        return self._cache.get(mode_id)
 
     def get_system_instruction(self, mode_id: str) -> str:
         """
@@ -234,15 +250,16 @@ class PromptManager:
                     missing=sorted(missing),
                 )
                 continue
-            # Include only the required keys (ignore extras)
-            valid_entries.append(
-                {
-                    "id":      str(item["id"]),
-                    "label":   str(item["label"]),
-                    "eyebrow": str(item["eyebrow"]),
-                    "file":    str(item["file"]),
-                }
-            )
+            # Include required keys plus the optional tools_enabled flag.
+            entry: dict = {
+                "id":      str(item["id"]),
+                "label":   str(item["label"]),
+                "eyebrow": str(item["eyebrow"]),
+                "file":    str(item["file"]),
+            }
+            if "tools_enabled" in item:
+                entry["tools_enabled"] = item["tools_enabled"]
+            valid_entries.append(entry)
 
         return valid_entries
 

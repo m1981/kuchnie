@@ -216,6 +216,69 @@ def test_handles_tool_exception(provider: GeminiProvider) -> None:
 
 
 # ---------------------------------------------------------------------------
+# tools_enabled=False — direct LLM call, no agentic loop
+# ---------------------------------------------------------------------------
+
+def test_no_tools_skips_agentic_loop(provider: GeminiProvider) -> None:
+    """When use_tools=False the provider makes exactly one API call and returns."""
+    provider._client.models.generate_content.return_value = _make_text_response("direct answer")
+
+    history: list = []
+    final_text, tool_logs = provider.process_chat_turn(
+        "what is the standard overhang?", history, use_tools=False
+    )
+
+    assert final_text == "direct answer"
+    assert tool_logs == []
+    assert provider._client.models.generate_content.call_count == 1
+
+
+def test_no_tools_sends_no_tools_to_api(provider: GeminiProvider) -> None:
+    """When use_tools=False the GenerateContentConfig must contain no tools."""
+    provider._client.models.generate_content.return_value = _make_text_response("ok")
+
+    history: list = []
+    provider.process_chat_turn("hello", history, use_tools=False)
+
+    call_kwargs = provider._client.models.generate_content.call_args[1]
+    config = call_kwargs.get("config")
+    # tools must be absent or an empty list
+    tools = getattr(config, "tools", None)
+    assert not tools
+
+
+def test_no_tools_history_has_user_and_model_turn(provider: GeminiProvider) -> None:
+    """Even without tools the history must have the user turn + model reply."""
+    provider._client.models.generate_content.return_value = _make_text_response("reply")
+
+    history: list = []
+    provider.process_chat_turn("ping", history, use_tools=False)
+
+    # Exactly two items: user turn + model final turn
+    assert len(history) == 2
+    assert history[0].role == "user"
+    assert history[1].role == "model"
+
+
+def test_tools_enabled_true_still_uses_agentic_loop(provider: GeminiProvider) -> None:
+    """Explicit use_tools=True must behave identically to the default (agentic loop)."""
+    resp_tool = _make_tool_call_response("read_file", {"filepath": "x.md"}, "c99")
+    resp_text = _make_text_response("done")
+    provider._client.models.generate_content.side_effect = [resp_tool, resp_text]
+
+    with patch("src.providers.gemini.FUNCTION_MAP",
+               {"read_file": lambda filepath: {"content": "stuff"}}):
+        history: list = []
+        final_text, tool_logs = provider.process_chat_turn(
+            "read x.md", history, use_tools=True
+        )
+
+    assert final_text == "done"
+    assert len(tool_logs) == 1
+    assert provider._client.models.generate_content.call_count == 2
+
+
+# ---------------------------------------------------------------------------
 # Multi-tool turn: two sequential tool calls in one conversation
 # ---------------------------------------------------------------------------
 
