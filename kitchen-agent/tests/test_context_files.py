@@ -32,7 +32,7 @@ from __future__ import annotations
 import json
 from functools import partial
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -97,83 +97,7 @@ def _stub_agent(text: str = "ok", tools: list | None = None):
 
 
 # ===========================================================================
-# 1. Agent-level unit tests (regression guard — context_files already work
-#    when the caller supplies the correct full path)
-# ===========================================================================
 
-class TestAgentContextFilesUnitRegression:
-    """
-    Guard that the agent correctly injects context_files when given real paths.
-    These tests mock Gemini and read_file — they verify agent.py behaviour
-    has not regressed.
-    """
-
-    @patch("src.providers.gemini.genai.Client")
-    @patch("src.providers.gemini.read_file")
-    def test_agent_injects_content_when_file_readable(
-        self,
-        mock_read_file: MagicMock,
-        mock_generate: MagicMock,
-    ) -> None:
-        """Agent prepends file content when read_file returns content."""
-        from src.agent import process_chat_turn
-
-        mock_read_file.return_value = {"content": "# Materials\n18mm Birch."}
-        final_part = MagicMock()
-        final_part.function_call = None
-        resp = MagicMock()
-        resp.candidates = [MagicMock(content=MagicMock(parts=[final_part]))]
-        resp.text = "Noted."
-        mock_generate.return_value.models.generate_content.return_value = resp
-
-        history: list = []
-        process_chat_turn(
-            "Use context",
-            history,
-            context_files=["data/materials.md"],
-        )
-
-        mock_read_file.assert_called_once_with("data/materials.md")
-        user_parts = history[0].parts
-        # First part = context block, second = user message
-        assert len(user_parts) == 2
-        assert "[Context files injected by user]" in user_parts[0].text
-        assert "18mm Birch" in user_parts[0].text
-
-    @patch("src.providers.gemini.genai.Client")
-    @patch("src.providers.gemini.read_file")
-    def test_agent_skips_when_path_has_no_data_prefix(
-        self,
-        mock_read_file: MagicMock,
-        mock_generate: MagicMock,
-    ) -> None:
-        """
-        When read_file gets a bare filename (no data/ prefix) it returns an
-        error and the agent silently skips it — so no context block is injected.
-        This test documents the pre-fix broken behaviour at the agent level.
-        """
-        from src.agent import process_chat_turn
-
-        # Simulate what happens when the path is NOT prefixed: file not found
-        mock_read_file.return_value = {"error": "File not found: materials.md"}
-        final_part = MagicMock()
-        final_part.function_call = None
-        resp = MagicMock()
-        resp.candidates = [MagicMock(content=MagicMock(parts=[final_part]))]
-        resp.text = "ok"
-        mock_generate.return_value.models.generate_content.return_value = resp
-
-        history: list = []
-        process_chat_turn(
-            "hello",
-            history,
-            context_files=["materials.md"],  # bare filename — no data/ prefix
-        )
-
-        # Only the message Part — no context block injected
-        user_parts = history[0].parts
-        assert len(user_parts) == 1
-        assert user_parts[0].text == "hello"
 
 
 # ===========================================================================

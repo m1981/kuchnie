@@ -29,7 +29,7 @@ Layers tested here (provider-level tests live in their own files):
 """
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -327,42 +327,4 @@ class TestChatEndpointToolsEnabled:
 
 
 # ===========================================================================
-# 4. agent.py — process_chat_turn forwards use_tools to the provider
-# ===========================================================================
 
-class TestAgentDispatchToolsFlag:
-    """agent.process_chat_turn must pass use_tools to the provider."""
-
-    def test_use_tools_true_passed_to_provider(self) -> None:
-        mock_provider = MagicMock()
-        mock_provider.process_chat_turn.return_value = ("hi", [])
-
-        with patch("src.agent.get_provider", return_value=mock_provider):
-            from src.agent import process_chat_turn
-            process_chat_turn("hello", [], use_tools=True)
-
-        kwargs = mock_provider.process_chat_turn.call_args[1]
-        assert kwargs.get("use_tools") is True
-
-    def test_use_tools_false_passed_to_provider(self) -> None:
-        mock_provider = MagicMock()
-        mock_provider.process_chat_turn.return_value = ("direct", [])
-
-        with patch("src.agent.get_provider", return_value=mock_provider):
-            from src.agent import process_chat_turn
-            process_chat_turn("tell me a joke", [], use_tools=False)
-
-        kwargs = mock_provider.process_chat_turn.call_args[1]
-        assert kwargs.get("use_tools") is False
-
-    def test_use_tools_defaults_to_true_in_agent(self) -> None:
-        """Callers that omit use_tools must get use_tools=True by default."""
-        mock_provider = MagicMock()
-        mock_provider.process_chat_turn.return_value = ("ok", [])
-
-        with patch("src.agent.get_provider", return_value=mock_provider):
-            from src.agent import process_chat_turn
-            process_chat_turn("hello", [])
-
-        kwargs = mock_provider.process_chat_turn.call_args[1]
-        assert kwargs.get("use_tools") is True

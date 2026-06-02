@@ -63,7 +63,6 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from agent import process_chat_turn
 from prompt_logger import log_turn
 from serializers import dehydrate_history, hydrate_history
 from repositories import SessionRepository
@@ -296,14 +295,19 @@ class ChatService:
             )
         else:
             # Legacy path: handles per-request provider/model overrides.
-            final_text, tool_logs = process_chat_turn(
+            # Lazy import — process_chat_turn is no longer at module level
+            # since the MIGRATION_SHIM was removed.
+            from src.providers.base import get_provider
+            provider = get_provider(
+                provider_name=provider_name,
+                model_override=model_override,
+            )
+            final_text, tool_logs = provider.process_chat_turn(
                 user_message=user_message,
                 history=history,
                 system_instruction=system_prompt,
                 images=images,
                 context_files=context_files or None,
-                provider_name=provider_name,
-                model_override=model_override,
                 use_tools=use_tools,
             )
 

@@ -263,13 +263,16 @@ def test_chat_service_anthropic_no_attribute_error(tmp_path) -> None:
         _anthropic_assistant_text("Use 18mm birch plywood."),
     ]
 
-    with patch("src.chat_service.process_chat_turn") as mock_pct:
-        # process_chat_turn mutates history in place (as AnthropicProvider does)
+    with patch("src.providers.base.get_provider") as mock_get_provider:
+        # provider.process_chat_turn mutates history in place (as AnthropicProvider does)
+        mock_provider = MagicMock()
+
         def side_effect(user_message, history, **kwargs):
             history.extend(anthropic_history)
             return "Use 18mm birch plywood.", []
 
-        mock_pct.side_effect = side_effect
+        mock_provider.process_chat_turn.side_effect = side_effect
+        mock_get_provider.return_value = mock_provider
 
         service = ChatService(repo)
         # Must not raise AttributeError

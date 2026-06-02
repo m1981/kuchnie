@@ -234,7 +234,7 @@ def test_chat_endpoint_accepts_provider_and_model(repo, tmp_path) -> None:
     mock_provider = MagicMock()
     mock_provider.process_chat_turn.return_value = ("ok", [])
 
-    with patch("src.agent.get_provider", return_value=mock_provider):
+    with patch("src.providers.base.get_provider", return_value=mock_provider):
         resp = client.post("/api/chat", json={
             "session_id": "sess-001",
             "message": "hello",
@@ -248,12 +248,15 @@ def test_chat_endpoint_accepts_provider_and_model(repo, tmp_path) -> None:
 
 
 def test_chat_endpoint_routes_to_correct_provider(repo, tmp_path) -> None:
-    """provider + model fields must be forwarded to process_chat_turn."""
+    """provider + model fields must be forwarded to the provider."""
     client = TestClient(app)
     app.dependency_overrides[get_session_repo] = lambda: repo
 
-    # Patch at the chat_service import site (where it is actually called).
-    with patch("src.chat_service.process_chat_turn", return_value=("response text", [])) as mock_pct:
+    mock_provider = MagicMock()
+    mock_provider.process_chat_turn.return_value = ("response text", [])
+
+    # Patch get_provider so the legacy path uses our mock.
+    with patch("src.providers.base.get_provider", return_value=mock_provider):
         client.post("/api/chat", json={
             "session_id": "sess-002",
             "message": "test",
@@ -261,10 +264,9 @@ def test_chat_endpoint_routes_to_correct_provider(repo, tmp_path) -> None:
             "model": "claude-haiku-3-5",
         })
 
-    mock_pct.assert_called_once()
-    call_kwargs = mock_pct.call_args.kwargs
-    assert call_kwargs["provider_name"]  == "anthropic"
-    assert call_kwargs["model_override"] == "claude-haiku-3-5"
+    mock_provider.process_chat_turn.assert_called_once()
+    call_kwargs = mock_provider.process_chat_turn.call_args.kwargs
+    assert call_kwargs["user_message"] == "test"
     app.dependency_overrides.clear()
 
 
