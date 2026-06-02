@@ -41,6 +41,8 @@ import src.main
 from src import config
 from src.main import app, get_session_repo, get_chat_service
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
+from src.chat_service import ChatService
+from tests.test_chat_service import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------
@@ -68,7 +70,10 @@ def client(data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     repo = SQLiteSessionRepository(db)
 
     app.dependency_overrides[get_session_repo] = lambda: repo
-    app.dependency_overrides[get_chat_service] = lambda: src.main.ChatService(repo)
+    app.dependency_overrides[get_chat_service] = lambda: ChatService(
+        session_repo=repo,
+        turn_orchestrator=FakeOrchestrator(),
+    )
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -379,48 +384,38 @@ class TestContextFileIntegration:
         """
         The content of the checked file must appear in the user turn
         forwarded to the LLM.
-        END-TO-END: real file on disk, real agent call (Gemini mocked).
+        END-TO-END: real file on disk, FakeOrchestrator captures context.
         """
         monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
+        orchestrator = FakeOrchestrator(text="Agent response")
 
-        captured_history: list = []
+        app.dependency_overrides[get_session_repo] = lambda: repo
+        app.dependency_overrides[get_chat_service] = lambda: ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-        def fake_process_chat_turn(
-            user_message, history, system_instruction=None, images=None,
-            context_files=None, **_kwargs
-        ):
-            # We intercept here — after context files are read
-            from src.agent import process_chat_turn as _real
-            # Store the resolved context_files for assertion
-            captured_history.append({"context_files": context_files})
-            # Don't call real Gemini — just return
-            return "Agent response", []
-
-        with patch("src.chat_service.process_chat_turn", side_effect=fake_process_chat_turn):
-            app.dependency_overrides[get_session_repo] = lambda: repo
-            app.dependency_overrides[get_chat_service] = lambda: src.main.ChatService(repo)
-
-            try:
-                client = TestClient(app)
-                resp = client.post(
-                    "/api/chat",
-                    json={
-                        "session_id": "sess-integ-1",
-                        "message": "What materials should I use?",
-                        "context_files": ["materials.md"],  # bare name from frontend
-                    },
-                )
-            finally:
-                app.dependency_overrides.clear()
+        try:
+            client = TestClient(app)
+            resp = client.post(
+                "/api/chat",
+                json={
+                    "session_id": "sess-integ-1",
+                    "message": "What materials should I use?",
+                    "context_files": ["materials.md"],  # bare name from frontend
+                },
+            )
+        finally:
+            app.dependency_overrides.clear()
 
         assert resp.status_code == 200
+        assert orchestrator.last_turn_input is not None
 
-        assert len(captured_history) == 1
-        received_paths = captured_history[0]["context_files"]
+        received_paths = orchestrator.last_turn_input.context_files
         assert received_paths is not None
         assert len(received_paths) == 1
 
@@ -452,34 +447,29 @@ class TestContextFileIntegration:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
+        orchestrator = FakeOrchestrator(text="ok")
 
-        received_paths: list[str] = []
+        app.dependency_overrides[get_session_repo] = lambda: repo
+        app.dependency_overrides[get_chat_service] = lambda: ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-        def recording_process_chat_turn(
-            user_message, history, system_instruction=None, images=None,
-            context_files=None, **_kwargs
-        ):
-            if context_files:
-                received_paths.extend(context_files)
-            return "ok", []
+        try:
+            client = TestClient(app)
+            client.post(
+                "/api/chat",
+                json={
+                    "session_id": "sess-integ-2",
+                    "message": "Help",
+                    "context_files": ["materials.md"],
+                },
+            )
+        finally:
+            app.dependency_overrides.clear()
 
-        with patch("src.chat_service.process_chat_turn", side_effect=recording_process_chat_turn):
-            app.dependency_overrides[get_session_repo] = lambda: repo
-            app.dependency_overrides[get_chat_service] = lambda: src.main.ChatService(repo)
-
-            try:
-                client = TestClient(app)
-                client.post(
-                    "/api/chat",
-                    json={
-                        "session_id": "sess-integ-2",
-                        "message": "Help",
-                        "context_files": ["materials.md"],
-                    },
-                )
-            finally:
-                app.dependency_overrides.clear()
-
+        assert orchestrator.last_turn_input is not None
+        received_paths = orchestrator.last_turn_input.context_files
         assert len(received_paths) == 1
 
         # The path the agent receives must be readable by read_file
@@ -505,36 +495,31 @@ class TestContextFileIntegration:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
+        orchestrator = FakeOrchestrator(text="ok")
 
-        received_paths: list[str] = []
+        app.dependency_overrides[get_session_repo] = lambda: repo
+        app.dependency_overrides[get_chat_service] = lambda: ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-        def recording_process_chat_turn(
-            user_message, history, system_instruction=None, images=None,
-            context_files=None, **_kwargs
-        ):
-            if context_files:
-                received_paths.extend(context_files)
-            return "ok", []
-
-        with patch("src.chat_service.process_chat_turn", side_effect=recording_process_chat_turn):
-            app.dependency_overrides[get_session_repo] = lambda: repo
-            app.dependency_overrides[get_chat_service] = lambda: src.main.ChatService(repo)
-
-            try:
-                client = TestClient(app)
-                client.post(
-                    "/api/chat",
-                    json={
-                        "session_id": "sess-integ-3",
-                        "message": "Help",
-                        "context_files": ["file_a.md", "file_b.md"],
-                    },
-                )
-            finally:
-                app.dependency_overrides.clear()
+        try:
+            client = TestClient(app)
+            client.post(
+                "/api/chat",
+                json={
+                    "session_id": "sess-integ-3",
+                    "message": "Help",
+                    "context_files": ["file_a.md", "file_b.md"],
+                },
+            )
+        finally:
+            app.dependency_overrides.clear()
 
         from src.tools.file_ops import read_file
 
+        assert orchestrator.last_turn_input is not None
+        received_paths = orchestrator.last_turn_input.context_files
         assert len(received_paths) == 2
         for p in received_paths:
             result = read_file(p)
@@ -554,23 +539,26 @@ class TestContextFileIntegration:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
+        orchestrator = FakeOrchestrator(text="Great!")
 
-        with patch("src.chat_service.process_chat_turn", return_value=("Great!", [])):
-            app.dependency_overrides[get_session_repo] = lambda: repo
-            app.dependency_overrides[get_chat_service] = lambda: src.main.ChatService(repo)
+        app.dependency_overrides[get_session_repo] = lambda: repo
+        app.dependency_overrides[get_chat_service] = lambda: ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-            try:
-                client = TestClient(app)
-                resp = client.post(
-                    "/api/chat",
-                    json={
-                        "session_id": "sess-integ-4",
-                        "message": "Help",
-                        "context_files": ["materials.md"],
-                    },
-                )
-            finally:
-                app.dependency_overrides.clear()
+        try:
+            client = TestClient(app)
+            resp = client.post(
+                "/api/chat",
+                json={
+                    "session_id": "sess-integ-4",
+                    "message": "Help",
+                    "context_files": ["materials.md"],
+                },
+            )
+        finally:
+            app.dependency_overrides.clear()
 
         assert resp.status_code == 200
         assert resp.json()["text"] == "Great!"

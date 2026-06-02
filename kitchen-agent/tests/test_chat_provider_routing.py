@@ -30,6 +30,8 @@ from pydantic import ValidationError
 from src.main import app, get_chat_service, get_session_repo
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.schemas import ChatRequest
+from src.chat_service import ChatService
+from tests.test_chat_service import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------
@@ -217,9 +219,10 @@ def repo(tmp_path):
 
 def _make_chat_client(repo: SQLiteSessionRepository) -> TestClient:
     app.dependency_overrides[get_session_repo] = lambda: repo
-    app.dependency_overrides[get_chat_service] = lambda: __import__(
-        "src.chat_service", fromlist=["ChatService"]
-    ).ChatService(repo)
+    app.dependency_overrides[get_chat_service] = lambda: ChatService(
+        session_repo=repo,
+        turn_orchestrator=FakeOrchestrator(),
+    )
     return TestClient(app)
 
 
@@ -266,20 +269,24 @@ def test_chat_endpoint_routes_to_correct_provider(repo, tmp_path) -> None:
 
 
 def test_chat_endpoint_uses_server_default_when_no_provider(repo) -> None:
-    """Omitting provider/model must pass None for both overrides."""
+    """Omitting provider/model must use the orchestrator path."""
     client = TestClient(app)
     app.dependency_overrides[get_session_repo] = lambda: repo
 
-    with patch("src.chat_service.process_chat_turn", return_value=("ok", [])) as mock_pct:
-        client.post("/api/chat", json={
-            "session_id": "sess-003",
-            "message": "hello",
-        })
+    orchestrator = FakeOrchestrator()
+    app.dependency_overrides[get_chat_service] = lambda: ChatService(
+        session_repo=repo,
+        turn_orchestrator=orchestrator,
+    )
 
-    mock_pct.assert_called_once()
-    call_kwargs = mock_pct.call_args.kwargs
-    assert call_kwargs["provider_name"]  is None
-    assert call_kwargs["model_override"] is None
+    client.post("/api/chat", json={
+        "session_id": "sess-003",
+        "message": "hello",
+    })
+
+    assert orchestrator.run_call_count == 1
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.user_message == "hello"
     app.dependency_overrides.clear()
 
 
