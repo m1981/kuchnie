@@ -104,23 +104,22 @@ def get_turn_orchestrator() -> "TurnOrchestrator | None":
     → tool loop → response normalization).  It replaces the inline loop that
     was previously embedded in each provider's ``process_chat_turn`` method.
 
-    Returns ``None`` when the provider cannot be created (e.g. missing API key)
-    so that ChatService falls back to the legacy ``process_chat_turn`` path.
+    Raises RuntimeError when the provider cannot be created (e.g. missing API key).
     """
     try:
         from src.providers.base import get_provider
         provider = get_provider()
     except Exception as exc:
-        # Provider can't be created (missing API key, etc.) — fall back
-        # to legacy path in ChatService.
         import structlog
         _log = structlog.get_logger(__name__)
-        _log.warning(
-            "turn_orchestrator_unavailable_falling_back_to_legacy",
+        _log.error(
+            "turn_orchestrator_build_failed",
             error=str(exc),
             error_type=type(exc).__name__,
         )
-        return None
+        raise RuntimeError(
+            f"Cannot build TurnOrchestrator: {exc}"
+        ) from exc
 
     from src.agent.turn_orchestrator import TurnOrchestrator
     from src.agent.context_assembler import ContextAssembler, ContextBudget

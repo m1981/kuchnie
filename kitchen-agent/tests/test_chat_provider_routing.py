@@ -296,6 +296,10 @@ def test_chat_unknown_provider_returns_400(repo) -> None:
     """An unknown provider name must return HTTP 400, not 500."""
     client = TestClient(app)
     app.dependency_overrides[get_session_repo] = lambda: repo
+    app.dependency_overrides[get_chat_service] = lambda: ChatService(
+        session_repo=repo,
+        turn_orchestrator=FakeOrchestrator(),
+    )
 
     resp = client.post("/api/chat", json={
         "session_id": "sess-004",

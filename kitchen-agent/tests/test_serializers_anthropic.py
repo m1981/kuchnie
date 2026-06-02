@@ -44,6 +44,7 @@ import pytest
 from google.genai import types
 
 from src.serializers import dehydrate_history, hydrate_history
+from tests.test_chat_service import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------
@@ -274,7 +275,7 @@ def test_chat_service_anthropic_no_attribute_error(tmp_path) -> None:
         mock_provider.process_chat_turn.side_effect = side_effect
         mock_get_provider.return_value = mock_provider
 
-        service = ChatService(repo)
+        service = ChatService(repo, turn_orchestrator=FakeOrchestrator())
         # Must not raise AttributeError
         text, tools = service.handle_turn(
             session_id="sess-anthropic-1",

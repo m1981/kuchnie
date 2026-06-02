@@ -196,7 +196,7 @@ class ChatService:
     def __init__(
         self,
         session_repo: SessionRepository,
-        turn_orchestrator: "TurnOrchestrator | None" = None,
+        turn_orchestrator: "TurnOrchestrator",
     ) -> None:
         self._session_repo = session_repo
         self._orchestrator = turn_orchestrator
@@ -281,10 +281,8 @@ class ChatService:
         # ── 4. Run the agentic loop ───────────────────────────────────────────
         logger.info("running_agent", session_id=session_id[:8], use_tools=use_tools)
 
-        if self._orchestrator is not None and not provider_name:
-            # New path: TurnOrchestrator manages the agentic loop.
-            # Only used when no per-request provider override is set
-            # because the orchestrator is built with the default provider.
+        if not provider_name:
+            # Orchestrator path: default provider via TurnOrchestrator
             final_text, tool_logs = self._run_with_orchestrator(
                 history=history,
                 user_message=user_message,
@@ -294,9 +292,7 @@ class ChatService:
                 use_tools=use_tools,
             )
         else:
-            # Legacy path: handles per-request provider/model overrides.
-            # Lazy import — process_chat_turn is no longer at module level
-            # since the MIGRATION_SHIM was removed.
+            # Direct provider path: per-request provider/model override
             from src.providers.base import get_provider
             provider = get_provider(
                 provider_name=provider_name,

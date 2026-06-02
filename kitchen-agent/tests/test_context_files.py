@@ -136,7 +136,7 @@ class TestContextFilePathResolution:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo)
+        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list[str] = []
 
@@ -180,7 +180,7 @@ class TestContextFilePathResolution:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo)
+        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list[str] = []
 
@@ -220,7 +220,7 @@ class TestContextFilePathResolution:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo)
+        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list = []
 
@@ -258,7 +258,7 @@ class TestContextFilePathResolution:
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo)
+        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list = []
 
