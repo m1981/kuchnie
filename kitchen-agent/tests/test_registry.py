@@ -21,7 +21,15 @@ from unittest.mock import patch
 import pytest
 from google.genai import types
 
-from src.tools.registry import DECLARATIONS, FUNCTION_MAP, TOOLS, ToolEntry
+from src.tools.registry import (
+    DECLARATIONS,
+    FUNCTION_MAP,
+    TOOLS,
+    ToolCategory,
+    ToolEntry,
+    ToolRegistry,
+    build_default_registry,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -174,5 +182,175 @@ def test_search_knowledge_base_wrapper_passes_data_dir(tmp_path) -> None:
 
     assert captured["base_dir"] == str(tmp_path)
     assert captured["query"] == "blum"
+
+
+# ---------------------------------------------------------------------------
+# ToolCategory enum
+# ---------------------------------------------------------------------------
+
+class TestToolCategory:
+    def test_all_expected_categories_exist(self):
+        expected = {"DISCOVERY", "FILE_OPERATIONS", "SEARCH", "NOTES", "WEB"}
+        actual = {cat.name for cat in ToolCategory}
+        assert actual == expected
+
+    def test_categories_are_unique(self):
+        values = [cat.value for cat in ToolCategory]
+        assert len(values) == len(set(values))
+
+
+# ---------------------------------------------------------------------------
+# ToolEntry — category field
+# ---------------------------------------------------------------------------
+
+class TestToolEntryCategory:
+    def test_default_category_is_file_operations(self):
+        """Entries without explicit category default to FILE_OPERATIONS."""
+        from google.genai import types
+        entry = ToolEntry(
+            declaration=types.FunctionDeclaration(
+                name="test_tool",
+                description="Test",
+                parameters=types.Schema(type=types.Type.OBJECT),
+            ),
+            fn=lambda: {},
+        )
+        assert entry.category == ToolCategory.FILE_OPERATIONS
+
+    def test_explicit_category_preserved(self):
+        from google.genai import types
+        entry = ToolEntry(
+            declaration=types.FunctionDeclaration(
+                name="test_tool",
+                description="Test",
+                parameters=types.Schema(type=types.Type.OBJECT),
+            ),
+            fn=lambda: {},
+            category=ToolCategory.SEARCH,
+        )
+        assert entry.category == ToolCategory.SEARCH
+
+
+# ---------------------------------------------------------------------------
+# Existing tool entries — category assignments
+# ---------------------------------------------------------------------------
+
+class TestExistingToolCategories:
+    def test_get_repo_map_is_discovery(self):
+        entry = next(e for e in TOOLS if e.declaration.name == "get_repo_map")
+        assert entry.category == ToolCategory.DISCOVERY
+
+    def test_search_knowledge_base_is_search(self):
+        entry = next(e for e in TOOLS if e.declaration.name == "search_knowledge_base")
+        assert entry.category == ToolCategory.SEARCH
+
+    def test_read_file_is_file_operations(self):
+        entry = next(e for e in TOOLS if e.declaration.name == "read_file")
+        assert entry.category == ToolCategory.FILE_OPERATIONS
+
+    def test_edit_file_is_file_operations(self):
+        entry = next(e for e in TOOLS if e.declaration.name == "edit_file")
+        assert entry.category == ToolCategory.FILE_OPERATIONS
+
+    def test_create_file_is_file_operations(self):
+        entry = next(e for e in TOOLS if e.declaration.name == "create_file")
+        assert entry.category == ToolCategory.FILE_OPERATIONS
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry — category filtering
+# ---------------------------------------------------------------------------
+
+class TestRegistryCategoryFiltering:
+    def test_schemas_for_provider_returns_all_when_no_filter(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider("gemini")
+        assert len(schemas) == len(TOOLS)
+
+    def test_schemas_for_provider_filters_by_category(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider(
+            "gemini",
+            categories=[ToolCategory.SEARCH],
+        )
+        names = [s.name for s in schemas]
+        assert "search_knowledge_base" in names
+        assert "read_file" not in names
+        assert "get_repo_map" not in names
+
+    def test_filter_discovery_only(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider(
+            "gemini",
+            categories=[ToolCategory.DISCOVERY],
+        )
+        names = [s.name for s in schemas]
+        assert "get_repo_map" in names
+        assert len(schemas) == 1
+
+    def test_filter_file_operations(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider(
+            "gemini",
+            categories=[ToolCategory.FILE_OPERATIONS],
+        )
+        names = [s.name for s in schemas]
+        assert "read_file" in names
+        assert "edit_file" in names
+        assert "create_file" in names
+        assert "get_repo_map" not in names
+        assert "search_knowledge_base" not in names
+
+    def test_filter_multiple_categories(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider(
+            "gemini",
+            categories=[ToolCategory.DISCOVERY, ToolCategory.SEARCH],
+        )
+        names = [s.name for s in schemas]
+        assert "get_repo_map" in names
+        assert "search_knowledge_base" in names
+        assert "read_file" not in names
+
+    def test_filter_empty_category_returns_empty(self):
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider(
+            "gemini",
+            categories=[ToolCategory.NOTES],  # no tools in this category yet
+        )
+        assert schemas == []
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry — get_entries_by_category
+# ---------------------------------------------------------------------------
+
+class TestGetEntriesByCategory:
+    def test_returns_entries_matching_category(self):
+        registry = build_default_registry()
+        entries = registry.get_entries_by_category([ToolCategory.SEARCH])
+        assert len(entries) == 1
+        assert entries[0].declaration.name == "search_knowledge_base"
+
+    def test_returns_empty_for_unused_category(self):
+        registry = build_default_registry()
+        entries = registry.get_entries_by_category([ToolCategory.NOTES])
+        assert entries == []
+
+
+# ---------------------------------------------------------------------------
+# ToolRegistry — get_handler still works
+# ---------------------------------------------------------------------------
+
+class TestRegistryGetHandler:
+    def test_get_handler_returns_callable(self):
+        registry = build_default_registry()
+        handler = registry.get_handler("read_file")
+        assert callable(handler)
+
+    def test_get_handler_unknown_tool_raises(self):
+        registry = build_default_registry()
+        with pytest.raises(ValueError, match="Unknown tool: 'ghost_tool'"):
+            registry.get_handler("ghost_tool")
 
 

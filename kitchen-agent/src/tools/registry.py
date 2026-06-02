@@ -7,6 +7,7 @@ Each ``ToolEntry`` binds together:
   - ``declaration`` — the typed ``FunctionDeclaration`` sent to the Gemini API.
   - ``fn``          — the Python callable that executes when the model picks
                       that tool.
+  - ``category``    — logical grouping for filtering and discovery.
 
 Derived constants (used by agent.py):
   ``FUNCTION_MAP``  — ``{name: callable}`` — looked up at call-dispatch time.
@@ -51,15 +52,36 @@ from src.tools.repo_map import get_repo_map
 
 
 # ---------------------------------------------------------------------------
+# Tool category — for grouping and filtering
+# ---------------------------------------------------------------------------
+
+class ToolCategory(Enum):
+    """Logical grouping for tools. Used for filtering and discovery."""
+    DISCOVERY = auto()
+    FILE_OPERATIONS = auto()
+    SEARCH = auto()
+    NOTES = auto()        # future: note CRUD tools
+    WEB = auto()          # future: web search tools
+
+
+# ---------------------------------------------------------------------------
 # Registry entry
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class ToolEntry:
-    """Pairs a Gemini FunctionDeclaration with its Python implementation."""
+    """
+    Pairs a Gemini FunctionDeclaration with its Python implementation.
+
+    Attributes:
+        declaration: The typed FunctionDeclaration sent to the Gemini API.
+        fn:          The Python callable that executes when the model picks that tool.
+        category:    Logical grouping for filtering and discovery.
+    """
 
     declaration: types.FunctionDeclaration
     fn: Callable[..., dict]  # type: ignore[type-arg]
+    category: ToolCategory = ToolCategory.FILE_OPERATIONS
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +104,7 @@ _get_repo_map_entry = ToolEntry(
     ),
     # base_dir is fixed to settings.data_dir — never exposed to the LLM.
     fn=lambda: get_repo_map(base_dir=str(settings.data_dir)),
+    category=ToolCategory.DISCOVERY,
 )
 
 _search_knowledge_base_entry = ToolEntry(
@@ -124,6 +147,7 @@ _search_knowledge_base_entry = ToolEntry(
     fn=lambda query, context_lines=2: search_knowledge_base(
         query, base_dir=str(settings.data_dir), context_lines=context_lines
     ),
+    category=ToolCategory.SEARCH,
 )
 
 _read_file_entry = ToolEntry(
@@ -146,6 +170,7 @@ _read_file_entry = ToolEntry(
         ),
     ),
     fn=read_file,
+    category=ToolCategory.FILE_OPERATIONS,
 )
 
 _edit_file_entry = ToolEntry(
@@ -182,6 +207,7 @@ _edit_file_entry = ToolEntry(
         ),
     ),
     fn=edit_file,
+    category=ToolCategory.FILE_OPERATIONS,
 )
 
 _create_file_entry = ToolEntry(
@@ -211,22 +237,12 @@ _create_file_entry = ToolEntry(
         ),
     ),
     fn=create_file,
+    category=ToolCategory.FILE_OPERATIONS,
 )
 
 
 # ---------------------------------------------------------------------------
-# Tool category — for future grouping (Phase 6)
-# ---------------------------------------------------------------------------
-
-class ToolCategory(Enum):
-    """Logical grouping for tools. Used for filtering and discovery."""
-    DISCOVERY = auto()
-    FILE_OPERATIONS = auto()
-    SEARCH = auto()
-
-
-# ---------------------------------------------------------------------------
-# ToolRegistry — class-based interface (Phase 2)
+# ToolRegistry — class-based interface
 # ---------------------------------------------------------------------------
 
 class ToolRegistry:
@@ -258,6 +274,16 @@ class ToolRegistry:
     def get_all_entries(self) -> list[ToolEntry]:
         return list(self._tools)
 
+    def get_entries_by_category(
+        self,
+        categories: list[ToolCategory],
+    ) -> list[ToolEntry]:
+        """Return entries matching the given categories."""
+        return [
+            entry for entry in self._tools
+            if entry.category in categories
+        ]
+
     def schemas_for_provider(
         self,
         provider: str,
@@ -267,18 +293,27 @@ class ToolRegistry:
         Return provider-specific tool schemas.
 
         Args:
-            provider:  "gemini" or "anthropic".
+            provider:   "gemini" or "anthropic".
             categories: Optional filter by tool category.
+                        None = return all tools.
         """
+        # Filter by category if specified
+        entries = self._tools
+        if categories is not None:
+            entries = [
+                entry for entry in self._tools
+                if entry.category in categories
+            ]
+
         if provider == "gemini":
-            return [entry.declaration for entry in self._tools]
+            return [entry.declaration for entry in entries]
         elif provider == "anthropic":
             from src.providers.anthropic_provider import (
                 _declaration_to_anthropic_tool,
             )
             return [
                 _declaration_to_anthropic_tool(entry.declaration)
-                for entry in self._tools
+                for entry in entries
             ]
         raise ValueError(f"Unknown provider: {provider!r}")
 
