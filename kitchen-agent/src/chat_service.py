@@ -282,7 +282,10 @@ class ChatService:
         # ── 4. Run the agentic loop ───────────────────────────────────────────
         logger.info("running_agent", session_id=session_id[:8], use_tools=use_tools)
 
-        if self._orchestrator is not None:
+        if self._orchestrator is not None and not provider_name:
+            # New path: TurnOrchestrator manages the agentic loop.
+            # Only used when no per-request provider override is set
+            # because the orchestrator is built with the default provider.
             final_text, tool_logs = self._run_with_orchestrator(
                 history=history,
                 user_message=user_message,
@@ -291,7 +294,7 @@ class ChatService:
                 context_files=context_files,
             )
         else:
-            # Legacy path: delegate to agent.process_chat_turn
+            # Legacy path: handles per-request provider/model overrides.
             final_text, tool_logs = process_chat_turn(
                 user_message=user_message,
                 history=history,

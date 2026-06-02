@@ -350,3 +350,37 @@ def test_handle_turn_with_orchestrator_logs_prompt(
     _, kwargs = mock_log.call_args
     assert kwargs.get("user_message") == "Log me"
     assert kwargs.get("session_id") == "sess-orch-log"
+
+
+@patch("src.chat_service.process_chat_turn")
+@patch("src.chat_service.log_turn")
+def test_provider_override_bypasses_orchestrator(
+    mock_log: MagicMock,
+    mock_agent: MagicMock,
+    fake_orchestrator: FakeOrchestrator,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """
+    When provider_name is explicitly set, the legacy path must
+    be used regardless of whether an orchestrator is injected.
+    The orchestrator is built with the default provider and
+    cannot honour per-request provider overrides.
+    """
+    mock_agent.return_value = ("legacy response", [])
+
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=fake_orchestrator,
+    )
+
+    text, tools = service.handle_turn(
+        session_id="sess-provider-override",
+        user_message="hello",
+        provider_name="anthropic",   # explicit override
+    )
+
+    # Legacy path must have been called
+    assert mock_agent.called
+    # Orchestrator must NOT have been called
+    assert fake_orchestrator.run_call_count == 0
+    assert text == "legacy response"
