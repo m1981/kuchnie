@@ -292,6 +292,7 @@ class ChatService:
                 system_prompt=system_prompt,
                 images=images,
                 context_files=context_files,
+                use_tools=use_tools,
             )
         else:
             # Legacy path: handles per-request provider/model overrides.
@@ -356,6 +357,7 @@ class ChatService:
         system_prompt: str | None,
         images: list[dict] | None,
         context_files: list[str] | None,
+        use_tools: bool = True,
     ) -> tuple[str, list[dict]]:
         """
         Run a chat turn using the injected TurnOrchestrator.
@@ -376,6 +378,7 @@ class ChatService:
             system_prompt=system_prompt,
             images=images or [],
             context_files=context_files or [],
+            use_tools=use_tools,
         )
 
         # Run orchestrator

@@ -69,6 +69,7 @@ class TurnInput:
     file_ids: list[str] = field(default_factory=list)
     images: list[dict] = field(default_factory=list)
     context_files: list[str] = field(default_factory=list)
+    use_tools: bool = True
 
 
 @dataclass
@@ -217,7 +218,7 @@ class TurnOrchestrator:
         tool_details: list[ToolCallDetail] = []
         iterations = 0
 
-        while normalized.has_tool_calls:
+        while normalized.has_tool_calls and turn_input.use_tools:
             iterations += 1
             if iterations > self._max_tool_iterations:
                 raise MaxToolIterationsError(self._max_tool_iterations)

@@ -384,3 +384,25 @@ def test_provider_override_bypasses_orchestrator(
     # Orchestrator must NOT have been called
     assert fake_orchestrator.run_call_count == 0
     assert text == "legacy response"
+
+
+@patch("src.chat_service.log_turn")
+def test_use_tools_false_forwarded_to_orchestrator(
+    mock_log: MagicMock,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """use_tools=False must be forwarded to TurnInput."""
+    orchestrator = FakeOrchestrator()
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=orchestrator,
+    )
+
+    service.handle_turn(
+        session_id="sess-no-tools",
+        user_message="hello",
+        use_tools=False,
+    )
+
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.use_tools is False
