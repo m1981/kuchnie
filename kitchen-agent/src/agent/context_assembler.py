@@ -95,6 +95,8 @@ class AssembledContext:
     messages: list[dict]
     total_tokens_estimated: int
     slots_used: dict[ContextSlot, int]  # for observability
+    images: list[dict] = field(default_factory=list)  # inline images for the LLM
+    context_files: list[str] = field(default_factory=list)  # file paths to inject
 
 
 # ---------------------------------------------------------------------------

@@ -96,9 +96,76 @@ def get_note_repo() -> NoteRepository:
     return SQLiteNoteRepository(db_connection)
 
 
-def get_chat_service(session_repo: SessionRepository = Depends(get_session_repo)) -> ChatService:
-    """FastAPI dependency: returns a ChatService wired to the Session Repo."""
-    return ChatService(session_repo)
+def get_turn_orchestrator() -> "TurnOrchestrator | None":
+    """
+    FastAPI dependency: returns a TurnOrchestrator wired to default provider.
+
+    The TurnOrchestrator manages the agentic loop (context assembly → LLM call
+    → tool loop → response normalization).  It replaces the inline loop that
+    was previously embedded in each provider's ``process_chat_turn`` method.
+
+    Returns ``None`` when the provider cannot be created (e.g. missing API key)
+    so that ChatService falls back to the legacy ``process_chat_turn`` path.
+    """
+    try:
+        from src.providers.base import get_provider
+        provider = get_provider()
+    except Exception as exc:
+        # Provider can't be created (missing API key, etc.) — fall back
+        # to legacy path in ChatService.
+        import structlog
+        _log = structlog.get_logger(__name__)
+        _log.warning(
+            "turn_orchestrator_unavailable_falling_back_to_legacy",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        return None
+
+    from src.agent.turn_orchestrator import TurnOrchestrator
+    from src.agent.context_assembler import ContextAssembler, ContextBudget
+    from src.agent.tool_executor import ToolExecutor
+    from src.providers.normalizer import ResponseNormalizer
+    from src.tools.registry import build_default_registry
+
+    registry = build_default_registry()
+
+    # Token counter adapter for ContextAssembler
+    class _TokenCounter:
+        def count(self, text: str) -> int:
+            return max(1, len(text) // 4)
+
+        def count_message(self, message: dict) -> int:
+            content = message.get("content", "")
+            return self.count(str(content))
+
+        def trim_to(self, text: str, max_tokens: int) -> str:
+            return text[:max_tokens * 4]
+
+    assembler = ContextAssembler(
+        token_budget=ContextBudget(),
+        token_counter=_TokenCounter(),
+        prompt_manager=_default_prompt_manager,
+    )
+
+    return TurnOrchestrator(
+        context_assembler=assembler,
+        tool_executor=ToolExecutor(registry=registry),
+        provider=provider,
+        response_normalizer=ResponseNormalizer(),
+        provider_name=settings.llm_provider,
+    )
+
+
+def get_chat_service(
+    session_repo: SessionRepository = Depends(get_session_repo),
+    orchestrator: "TurnOrchestrator" = Depends(get_turn_orchestrator),
+) -> ChatService:
+    """FastAPI dependency: returns a ChatService wired to the Session Repo and TurnOrchestrator."""
+    return ChatService(
+        session_repo=session_repo,
+        turn_orchestrator=orchestrator,
+    )
 
 
 def get_prompt_manager() -> PromptManager:

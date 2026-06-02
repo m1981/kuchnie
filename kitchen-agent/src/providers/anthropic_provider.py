@@ -385,3 +385,134 @@ class AnthropicProvider:
                     "content": [{"type": "text", "text": final_text}],
                 })
                 return final_text, tools_used
+
+    # ── LLMCompleter interface (for TurnOrchestrator) ─────────────────────
+
+    def complete(self, context: "AssembledContext") -> Any:
+        """
+        New interface for TurnOrchestrator.
+        Calls Anthropic API with pre-assembled context.
+        Returns raw SDK response — normalizer handles parsing.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build user content with context files and images
+        user_content: list[dict[str, Any]] = []
+
+        if context.context_files:
+            snippets: list[str] = []
+            for fp in context.context_files:
+                result = read_file(fp)
+                if "content" in result:
+                    snippets.append(f"=== {fp} ===\n{result['content']}")
+                else:
+                    logger.warning("context_file_unreadable", path=fp, error=result.get("error"))
+            if snippets:
+                block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
+                user_content.append({"type": "text", "text": block})
+
+        if context.images:
+            for img in context.images:
+                try:
+                    base64.b64decode(img["data"], validate=True)
+                    user_content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": img["mime_type"],
+                            "data": img["data"],
+                        },
+                    })
+                except Exception as exc:
+                    logger.warning("image_decode_failed", error=str(exc))
+
+        # Build conversation state from context messages
+        self._conversation_state: list[dict[str, Any]] = []
+        for msg in context.messages:
+            if msg.get("role") == "user" and user_content:
+                # Enrich the last user message with context files/images
+                enriched = list(user_content)
+                enriched.append({"type": "text", "text": msg.get("content", "")})
+                self._conversation_state.append({"role": "user", "content": enriched})
+                user_content = []  # Only enrich once
+            else:
+                self._conversation_state.append(dict(msg))
+
+        # If user_content wasn't consumed (no user message in context),
+        # add it as a separate turn
+        if user_content:
+            self._conversation_state.append({"role": "user", "content": user_content})
+
+        tool_schemas = self._build_tool_schemas()
+
+        response = self._client.messages.create(
+            model=self._model,
+            max_tokens=settings.anthropic_max_tokens,
+            tools=tool_schemas,
+            messages=self._conversation_state,
+            system=context.system_prompt or None,
+        )
+
+        # Store response in conversation state for tool loop continuity
+        assistant_content: list[dict[str, Any]] = []
+        for block in response.content:
+            if block.type == "text":
+                assistant_content.append({"type": "text", "text": block.text})
+            elif block.type == "tool_use":
+                assistant_content.append({
+                    "type": "tool_use",
+                    "id": block.id,
+                    "name": block.name,
+                    "input": block.input,
+                })
+        self._conversation_state.append({"role": "assistant", "content": assistant_content})
+
+        return response
+
+    def complete_with_tools(
+        self,
+        context: "AssembledContext",
+        tool_calls: list["ToolCall"],
+        tool_results: list["ToolResult"],
+    ) -> Any:
+        """
+        Continue generation after tool execution.
+        Builds tool result message, appends to conversation state.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build tool result message
+        result_content: list[dict[str, Any]] = []
+        for tr in tool_results:
+            result_content.append({
+                "type": "tool_result",
+                "tool_use_id": tr.tool_call_id,
+                "content": tr.content,
+            })
+        self._conversation_state.append({"role": "user", "content": result_content})
+
+        tool_schemas = self._build_tool_schemas()
+
+        response = self._client.messages.create(
+            model=self._model,
+            max_tokens=settings.anthropic_max_tokens,
+            tools=tool_schemas,
+            messages=self._conversation_state,
+            system=context.system_prompt or None,
+        )
+
+        # Store response in conversation state for next iteration
+        assistant_content: list[dict[str, Any]] = []
+        for block in response.content:
+            if block.type == "text":
+                assistant_content.append({"type": "text", "text": block.text})
+            elif block.type == "tool_use":
+                assistant_content.append({
+                    "type": "tool_use",
+                    "id": block.id,
+                    "name": block.name,
+                    "input": block.input,
+                })
+        self._conversation_state.append({"role": "assistant", "content": assistant_content})
+
+        return response

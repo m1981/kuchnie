@@ -25,6 +25,14 @@ Adding a new provider
 3. Add the key to ``settings.llm_provider`` docs in ``config.py``.
 This package does NOT need to change.
 """
+# ╔════════════════════════════════════════════════════════════════════╗
+# ║  MIGRATION_SHIM                                                  ║
+# ║  Safe to delete when:                                            ║
+# ║    - test_agent_dispatcher.py updated to use TurnOrchestrator   ║
+# ║    - test_context_files.py updated to use TurnOrchestrator      ║
+# ║    - test_tools_toggle.py updated to use TurnOrchestrator       ║
+# ║    - ChatService always uses injected TurnOrchestrator          ║
+# ╚════════════════════════════════════════════════════════════════════╝
 from __future__ import annotations
 
 from src.providers.base import get_provider

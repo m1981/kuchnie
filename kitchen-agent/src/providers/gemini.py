@@ -455,3 +455,132 @@ class GeminiProvider:
                 history.append(final_content)
                 # No need to append to gemini_contents — loop ends here.
                 return final_text, tools_used
+
+    # ── LLMCompleter interface (for TurnOrchestrator) ─────────────────────
+
+    def complete(self, context: "AssembledContext") -> Any:
+        """
+        New interface for TurnOrchestrator.
+        Calls Gemini API with pre-assembled context.
+        Returns raw SDK response — normalizer handles parsing.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build user parts with context files and images
+        user_parts: list[types.Part] = []
+
+        if context.context_files:
+            snippets: list[str] = []
+            for fp in context.context_files:
+                result = read_file(fp)
+                if "content" in result:
+                    snippets.append(f"=== {fp} ===\n{result['content']}")
+                else:
+                    logger.warning("context_file_unreadable", path=fp, error=result.get("error"))
+            if snippets:
+                block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
+                user_parts.append(types.Part(text=block))
+
+        # Build messages list, injecting user parts into the last user message
+        messages = list(context.messages)
+        if messages and messages[-1].get("role") == "user":
+            # Replace last user message with enriched version
+            user_parts.append(types.Part(text=messages[-1]["content"]))
+            messages[-1] = {"role": "user", "content": "", "_parts": user_parts}
+
+        if context.images:
+            for img in context.images:
+                try:
+                    raw_bytes = base64.b64decode(img["data"])
+                    user_parts.append(
+                        types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"])
+                    )
+                except Exception as exc:
+                    logger.warning("image_decode_failed", error=str(exc))
+
+        # Convert messages to Gemini Content objects
+        self._conversation_state = _coerce_history_for_gemini(messages)
+
+        # If we have enriched user parts, replace the last user Content
+        if user_parts and self._conversation_state:
+            last = self._conversation_state[-1]
+            if last.role == "user":
+                self._conversation_state[-1] = types.Content(role="user", parts=user_parts)
+
+        config_kwargs: dict = {}
+        if context.system_prompt:
+            config_kwargs["system_instruction"] = context.system_prompt
+        config_kwargs["tools"] = [self._tools]
+        config_kwargs["temperature"] = settings.gemini_temperature
+
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=self._conversation_state,
+            config=types.GenerateContentConfig(**config_kwargs),
+        )
+
+        # Store response in conversation state for tool loop continuity
+        if response.candidates and response.candidates[0].content:
+            self._conversation_state.append(response.candidates[0].content)
+
+        return response
+
+    def complete_with_tools(
+        self,
+        context: "AssembledContext",
+        tool_calls: list["ToolCall"],
+        tool_results: list["ToolResult"],
+    ) -> Any:
+        """
+        Continue generation after tool execution.
+        Builds tool call and result messages, appends to conversation state.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build tool call message (assistant Content with function_call parts)
+        parts: list[types.Part] = []
+        for tc in tool_calls:
+            parts.append(types.Part(
+                function_call=types.FunctionCall(
+                    name=tc.name, args=tc.arguments, id=tc.id,
+                )
+            ))
+        tool_call_content = types.Content(role="model", parts=parts)
+        self._conversation_state.append(tool_call_content)
+
+        # Build tool result message (user Content with function_response parts)
+        result_parts: list[types.Part] = []
+        for tr in tool_results:
+            # Parse result content back to dict for Gemini
+            try:
+                import ast
+                response_dict = ast.literal_eval(tr.content)
+            except (ValueError, SyntaxError):
+                response_dict = {"content": tr.content}
+            result_parts.append(types.Part(
+                function_response=types.FunctionResponse(
+                    name=tr.name,
+                    response=response_dict,
+                    id=tr.tool_call_id,
+                )
+            ))
+        tool_result_content = types.Content(role="user", parts=result_parts)
+        self._conversation_state.append(tool_result_content)
+
+        config_kwargs: dict = {}
+        if context.system_prompt:
+            config_kwargs["system_instruction"] = context.system_prompt
+        config_kwargs["tools"] = [self._tools]
+        config_kwargs["temperature"] = settings.gemini_temperature
+
+        response = self._client.models.generate_content(
+            model=self._model,
+            contents=self._conversation_state,
+            config=types.GenerateContentConfig(**config_kwargs),
+        )
+
+        # Store response in conversation state for next iteration
+        if response.candidates and response.candidates[0].content:
+            self._conversation_state.append(response.candidates[0].content)
+
+        return response

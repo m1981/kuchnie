@@ -64,8 +64,22 @@ class TurnInput:
 
     user_message: str
     mode: str = "default"
+    system_prompt: str | None = None  # override system prompt (bypass PromptManager)
     note_ids: list[str] = field(default_factory=list)
     file_ids: list[str] = field(default_factory=list)
+    images: list[dict] = field(default_factory=list)
+    context_files: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ToolCallDetail:
+    """Full detail of a tool call for history persistence."""
+
+    id: str
+    name: str
+    arguments: dict
+    result_content: str
+    is_error: bool = False
 
 
 @dataclass
@@ -76,6 +90,7 @@ class TurnOutput:
     tool_calls_made: list[str]
     tokens_used: dict  # {input, output, total}
     context_slots: dict  # observability: which slots consumed tokens
+    tool_details: list[ToolCallDetail] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -184,12 +199,22 @@ class TurnOrchestrator:
             file_ids=turn_input.file_ids or None,
         )
 
+        # Override system prompt if provided in TurnInput
+        if turn_input.system_prompt is not None:
+            context.system_prompt = turn_input.system_prompt
+
+        # Propagate images and context_files from TurnInput to context
+        # so providers can access them via the LLMCompleter interface.
+        context.images = turn_input.images or []
+        context.context_files = turn_input.context_files or []
+
         # 2. Call LLM
         raw_response = self._provider.complete(context)
         normalized = self._normalizer.normalize(raw_response, self._provider_name)
 
         # 3. Agentic tool loop
         tool_calls_made: list[str] = []
+        tool_details: list[ToolCallDetail] = []
         iterations = 0
 
         while normalized.has_tool_calls:
@@ -203,6 +228,16 @@ class TurnOrchestrator:
                 tc.name for tc in normalized.tool_calls
             )
 
+            # Record tool details for history persistence
+            for tc, tr in zip(normalized.tool_calls, tool_results):
+                tool_details.append(ToolCallDetail(
+                    id=tc.id,
+                    name=tc.name,
+                    arguments=tc.arguments,
+                    result_content=tr.content,
+                    is_error=tr.is_error,
+                ))
+
             # Feed results back to LLM
             raw_response = self._provider.complete_with_tools(
                 context, normalized.tool_calls, tool_results,
@@ -215,4 +250,5 @@ class TurnOrchestrator:
             tool_calls_made=tool_calls_made,
             tokens_used=normalized.usage,
             context_slots=context.slots_used,
+            tool_details=tool_details,
         )

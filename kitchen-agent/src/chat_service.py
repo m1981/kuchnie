@@ -59,6 +59,7 @@ so the Markdown activity log contains:
 import json
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import structlog
 
@@ -66,6 +67,9 @@ from agent import process_chat_turn
 from prompt_logger import log_turn
 from serializers import dehydrate_history, hydrate_history
 from repositories import SessionRepository
+
+if TYPE_CHECKING:
+    from src.agent.turn_orchestrator import TurnOrchestrator
 
 logger = structlog.get_logger(__name__)
 
@@ -141,12 +145,62 @@ def _build_turn_ids_for_history(
     return result
 
 
+def _content_to_dict(item: object) -> dict:
+    """
+    Convert a Gemini ``types.Content`` object to a plain dict.
+
+    Plain dicts are returned unchanged.  This is needed so the
+    TurnOrchestrator (which expects ``list[dict]`` messages) can work with
+    histories loaded from the DB that may contain ``types.Content`` objects.
+    """
+    try:
+        from google.genai import types
+    except ImportError:
+        return item if isinstance(item, dict) else {}
+
+    if not isinstance(item, types.Content):
+        return item if isinstance(item, dict) else {}
+
+    role = item.role
+    if not item.parts:
+        return {"role": role, "content": ""}
+
+    part = item.parts[0]
+    if part.text is not None:
+        return {"role": role, "content": part.text}
+    elif part.function_call is not None:
+        return {
+            "role": role,
+            "content": [{
+                "type": "tool_use",
+                "id": part.function_call.id,
+                "name": part.function_call.name,
+                "input": dict(part.function_call.args) if part.function_call.args else {},
+            }]
+        }
+    elif part.function_response is not None:
+        return {
+            "role": role,
+            "content": [{
+                "type": "tool_result",
+                "tool_use_id": part.function_response.id,
+                "content": part.function_response.response,
+            }]
+        }
+    else:
+        return {"role": role, "content": ""}
+
+
 class ChatService:
     """Orchestrates a single chat turn end-to-end."""
 
-    # Notice we inject the Protocol (Interface), not the SQLite class!
-    def __init__(self, session_repo: SessionRepository) -> None:
+    def __init__(
+        self,
+        session_repo: SessionRepository,
+        turn_orchestrator: "TurnOrchestrator | None" = None,
+    ) -> None:
         self._session_repo = session_repo
+        self._orchestrator = turn_orchestrator
 
     def handle_turn(
         self,
@@ -161,6 +215,10 @@ class ChatService:
     ) -> tuple[str, list[dict]]:
         """
         Loads history, runs the agent, persists state, and returns the result.
+
+        When a ``TurnOrchestrator`` is injected, the new path is used:
+        the orchestrator manages the agentic loop via ``LLMCompleter``.
+        Otherwise, falls back to ``process_chat_turn()`` (legacy path).
 
         The ``system_prompt`` is now persisted alongside the history so that
         the LLM debug export (F04) can faithfully reconstruct the
@@ -223,16 +281,27 @@ class ChatService:
 
         # ── 4. Run the agentic loop ───────────────────────────────────────────
         logger.info("running_agent", session_id=session_id[:8], use_tools=use_tools)
-        final_text, tool_logs = process_chat_turn(
-            user_message=user_message,
-            history=history,
-            system_instruction=system_prompt,
-            images=images,
-            context_files=context_files or None,
-            provider_name=provider_name,
-            model_override=model_override,
-            use_tools=use_tools,
-        )
+
+        if self._orchestrator is not None:
+            final_text, tool_logs = self._run_with_orchestrator(
+                history=history,
+                user_message=user_message,
+                system_prompt=system_prompt,
+                images=images,
+                context_files=context_files,
+            )
+        else:
+            # Legacy path: delegate to agent.process_chat_turn
+            final_text, tool_logs = process_chat_turn(
+                user_message=user_message,
+                history=history,
+                system_instruction=system_prompt,
+                images=images,
+                context_files=context_files or None,
+                provider_name=provider_name,
+                model_override=model_override,
+                use_tools=use_tools,
+            )
 
         # ── 5. Record assistant response in UI state ──────────────────────────
         ui_messages.append({
@@ -276,3 +345,78 @@ class ChatService:
         )
 
         return final_text, tool_logs
+
+    def _run_with_orchestrator(
+        self,
+        history: list,
+        user_message: str,
+        system_prompt: str | None,
+        images: list[dict] | None,
+        context_files: list[str] | None,
+    ) -> tuple[str, list[dict]]:
+        """
+        Run a chat turn using the injected TurnOrchestrator.
+
+        Converts history to dict format for the orchestrator, runs the turn,
+        and appends the new history items (user message, tool calls, tool
+        results, assistant response) to the history list.
+        """
+        from src.agent.turn_orchestrator import TurnInput
+
+        # Convert history to dict format for the orchestrator
+        session_messages = [_content_to_dict(item) for item in history]
+        session = {"messages": session_messages}
+
+        # Build TurnInput
+        turn_input = TurnInput(
+            user_message=user_message,
+            system_prompt=system_prompt,
+            images=images or [],
+            context_files=context_files or [],
+        )
+
+        # Run orchestrator
+        turn_output = self._orchestrator.run(session, turn_input)
+
+        # Build tool_logs from tool_details
+        tool_logs: list[dict] = []
+        for detail in turn_output.tool_details:
+            tool_logs.append({
+                "name": detail.name,
+                "args": detail.arguments,
+                "result": {"content": detail.result_content} if not detail.is_error else {"error": detail.result_content},
+            })
+
+        # Append new history items for persistence
+        # User message
+        history.append({"role": "user", "content": user_message})
+
+        # Tool call/response pairs
+        for detail in turn_output.tool_details:
+            # Tool call (assistant message with tool_use)
+            history.append({
+                "role": "assistant",
+                "content": [{
+                    "type": "tool_use",
+                    "id": detail.id,
+                    "name": detail.name,
+                    "input": detail.arguments,
+                }]
+            })
+            # Tool result (user message with tool_result)
+            history.append({
+                "role": "user",
+                "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": detail.id,
+                    "content": detail.result_content,
+                }]
+            })
+
+        # Assistant response
+        history.append({
+            "role": "assistant",
+            "content": [{"type": "text", "text": turn_output.assistant_message}],
+        })
+
+        return turn_output.assistant_message, tool_logs
