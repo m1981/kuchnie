@@ -38,6 +38,7 @@ from src.prompt_manager import PromptManager, PromptMode
 from src.chat_service import ChatService
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.main import app, get_chat_service
+from tests.test_chat_service import FakeOrchestrator
 
 
 # ===========================================================================
@@ -175,68 +176,64 @@ def repo(tmp_path: Path) -> SQLiteSessionRepository:
 class TestChatServiceToolsFlag:
     """ChatService must forward the effective use_tools flag to process_chat_turn."""
 
-    @patch("src.chat_service.log_turn")
-    @patch("src.chat_service.process_chat_turn")
     def test_use_tools_true_by_default(
         self,
-        mock_agent: MagicMock,
-        mock_log: MagicMock,
         repo: SQLiteSessionRepository,
     ) -> None:
-        """When use_tools is omitted, process_chat_turn is called with use_tools=True."""
-        mock_agent.return_value = ("answer", [])
-        svc = ChatService(repo)
+        """When use_tools is omitted, FakeOrchestrator receives use_tools=True."""
+        orchestrator = FakeOrchestrator()
+        svc = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
         svc.handle_turn("s1", "hello")
 
-        kwargs = mock_agent.call_args[1]
-        assert kwargs.get("use_tools") is True
+        assert orchestrator.last_turn_input is not None
+        assert orchestrator.last_turn_input.use_tools is True
 
-    @patch("src.chat_service.log_turn")
-    @patch("src.chat_service.process_chat_turn")
     def test_use_tools_false_forwarded(
         self,
-        mock_agent: MagicMock,
-        mock_log: MagicMock,
         repo: SQLiteSessionRepository,
     ) -> None:
-        """When use_tools=False is passed, process_chat_turn receives use_tools=False."""
-        mock_agent.return_value = ("plain answer", [])
-        svc = ChatService(repo)
+        """When use_tools=False is passed, FakeOrchestrator receives use_tools=False."""
+        orchestrator = FakeOrchestrator()
+        svc = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
         svc.handle_turn("s2", "tell me a joke", use_tools=False)
 
-        kwargs = mock_agent.call_args[1]
-        assert kwargs.get("use_tools") is False
+        assert orchestrator.last_turn_input is not None
+        assert orchestrator.last_turn_input.use_tools is False
 
-    @patch("src.chat_service.log_turn")
-    @patch("src.chat_service.process_chat_turn")
     def test_use_tools_false_returns_empty_tool_logs(
         self,
-        mock_agent: MagicMock,
-        mock_log: MagicMock,
         repo: SQLiteSessionRepository,
     ) -> None:
         """A no-tools turn must always produce an empty tool_logs list."""
-        mock_agent.return_value = ("direct reply", [])
-        svc = ChatService(repo)
+        orchestrator = FakeOrchestrator(text="direct reply")
+        svc = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
         text, tool_logs = svc.handle_turn("s3", "quick question", use_tools=False)
 
         assert text == "direct reply"
         assert tool_logs == []
 
-    @patch("src.chat_service.log_turn")
-    @patch("src.chat_service.process_chat_turn")
     def test_use_tools_false_stored_in_ui_history(
         self,
-        mock_agent: MagicMock,
-        mock_log: MagicMock,
         repo: SQLiteSessionRepository,
     ) -> None:
         """The assistant ui_message must record tools=[] when no tools were used."""
-        mock_agent.return_value = ("chat reply", [])
-        svc = ChatService(repo)
+        orchestrator = FakeOrchestrator(text="chat reply")
+        svc = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
         svc.handle_turn("s4", "just chat", use_tools=False)
 

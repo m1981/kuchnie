@@ -45,6 +45,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from src.prompt_logger import log_prompt, log_turn, MAX_DIFF_LINES
+from tests.test_chat_service import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------
@@ -631,27 +632,34 @@ class TestChatServiceIntegration:
     def test_chat_service_calls_log_turn_with_tool_logs(self, tmp_path: Path) -> None:
         from src.chat_service import ChatService
         from src.repositories import SQLiteConnection, SQLiteSessionRepository
+        from src.agent.turn_orchestrator import ToolCallDetail
 
         conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
         repo = SQLiteSessionRepository(conn)
-        service = ChatService(repo)
 
-        fake_tool_logs = [
-            {
-                "name": "edit_file",
-                "args": {
+        fake_tool_details = [
+            ToolCallDetail(
+                id="call_1",
+                name="edit_file",
+                arguments={
                     "filepath": "data/hinges.md",
                     "search_text": "old text",
                     "replace_text": "new text",
                 },
-                "result": {"success": "Updated data/hinges.md."},
-            }
+                result_content="{'success': 'Updated data/hinges.md.'}",
+                is_error=False,
+            )
         ]
+        orchestrator = FakeOrchestrator(
+            text="Agent reply",
+            tool_details=fake_tool_details,
+        )
+        service = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-        with patch("src.chat_service.process_chat_turn") as mock_agent, \
-             patch("src.chat_service.log_turn") as mock_log:
-            mock_agent.return_value = ("Agent reply", fake_tool_logs)
-
+        with patch("src.chat_service.log_turn") as mock_log:
             service.handle_turn(
                 session_id="session-xyz",
                 user_message="Popraw zawiasy",
@@ -662,7 +670,8 @@ class TestChatServiceIntegration:
             # Either positional or keyword
             args, kwargs = call_kwargs
             passed_tool_logs = kwargs.get("tool_logs") or (args[1] if len(args) > 1 else None)
-            assert passed_tool_logs == fake_tool_logs
+            assert len(passed_tool_logs) == 1
+            assert passed_tool_logs[0]["name"] == "edit_file"
 
     def test_chat_service_passes_session_id_to_log_turn(self, tmp_path: Path) -> None:
         from src.chat_service import ChatService
@@ -670,12 +679,13 @@ class TestChatServiceIntegration:
 
         conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
         repo = SQLiteSessionRepository(conn)
-        service = ChatService(repo)
+        orchestrator = FakeOrchestrator(text="Reply")
+        service = ChatService(
+            session_repo=repo,
+            turn_orchestrator=orchestrator,
+        )
 
-        with patch("src.chat_service.process_chat_turn") as mock_agent, \
-             patch("src.chat_service.log_turn") as mock_log:
-            mock_agent.return_value = ("Reply", [])
-
+        with patch("src.chat_service.log_turn") as mock_log:
             service.handle_turn(
                 session_id="my-special-session",
                 user_message="What materials?",
