@@ -269,8 +269,7 @@ def test_write_file_endpoint_not_found(client: TestClient) -> None:
 
 def test_append_error_branch(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(
-        main_module,
-        "append_to_file",
+        "src.api.files.append_to_file",
         lambda filepath, content: {"error": "simulated write failure"},
     )
     resp = client.post("/api/files/append", json={"filepath": "materials.md", "content": "x"})
@@ -284,8 +283,7 @@ def test_append_error_branch(client: TestClient, monkeypatch) -> None:
 
 def test_repo_map_error_branch(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(
-        main_module,
-        "get_repo_map",
+        "src.api.files.get_repo_map",
         lambda base_dir=None: {"error": "scan failed"},
     )
     resp = client.get("/api/repo-map")
