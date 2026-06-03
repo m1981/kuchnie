@@ -9,16 +9,17 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
-import src.main
+import src.config as main_module
 from src import config
 from src.chat_service import ChatService, ChatTurnResponse
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
-from src.main import app, get_session_repo, get_chat_service
-from src.main import _resolve_data_path
+from src.main import app
+from src.dependencies import get_session_repo, get_chat_service
+from src.api.files import _resolve_data_path
 from fastapi import HTTPException
 import base64
 
-import src.main as main_module
+import src.config as main_module
 import src.config as config_module
 
 
@@ -197,7 +198,7 @@ def test_fork_session_invalid_index(tmp_path: Path, monkeypatch) -> None:
 # ---------------------------------------------------------------------------
 
 def test_path_traversal_blocked(data_dir: Path, monkeypatch) -> None:
-    from src.main import _resolve_data_path
+    from src.api.files import _resolve_data_path
     from fastapi import HTTPException
 
     monkeypatch.setattr(config_module.settings, "data_dir", data_dir)
@@ -463,8 +464,7 @@ class TestFileApiRoutes:
 
     def test_repo_map_success_path(self, file_client: TestClient, monkeypatch) -> None:
         monkeypatch.setattr(
-            main_module,
-            "get_repo_map",
+            "src.api.files.get_repo_map",
             lambda base_dir=None: {"content": "=== materials.md ===\n1: # Materials"},
         )
         resp = file_client.get("/api/repo-map")

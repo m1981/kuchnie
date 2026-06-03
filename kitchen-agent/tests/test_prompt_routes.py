@@ -18,9 +18,10 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-import src.main as main_module
+import src.config as main_module
 from src import config as config_module
-from src.main import app, get_chat_service, get_prompt_manager
+from src.main import app
+from src.dependencies import get_chat_service, get_prompt_manager
 from src.chat_service import ChatTurnResponse
 from src.prompt_manager import PromptManager, PromptMode
 
@@ -427,6 +428,6 @@ def test_chat_system_prompt_overrides_mode_id(tmp_path: Path, monkeypatch) -> No
 def test_get_prompt_manager_dependency_returns_instance(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
     monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
-    from src.main import get_prompt_manager as gpm
+    from src.dependencies import get_prompt_manager as gpm
     result = gpm()
     assert isinstance(result, PromptManager)

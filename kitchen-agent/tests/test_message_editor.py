@@ -29,7 +29,8 @@ from fastapi.testclient import TestClient
 
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.message_editor import MessageEditService, EditError
-from src.main import app, get_session_repo
+from src.main import app
+from src.dependencies import get_session_repo
 
 
 # ---------------------------------------------------------------------------

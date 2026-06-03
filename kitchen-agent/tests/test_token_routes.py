@@ -71,7 +71,7 @@ class TestSessionTokensRoute:
         _seed_session(repo, session_id="sess-abc", turns=2)
 
         app.dependency_overrides[
-            __import__("src.main", fromlist=["get_session_repo"]).get_session_repo
+            __import__("src.dependencies", fromlist=["get_session_repo"]).get_session_repo
         ] = lambda: repo
 
         with patch("src.token_counter._client") as mock_client:
@@ -112,7 +112,7 @@ class TestSessionTokensRoute:
         """
         repo = _make_session_repo(tmp_path)
         app.dependency_overrides[
-            __import__("src.main", fromlist=["get_session_repo"]).get_session_repo
+            __import__("src.dependencies", fromlist=["get_session_repo"]).get_session_repo
         ] = lambda: repo
         try:
             with patch("src.token_counter._client"):  # no API call expected
@@ -132,7 +132,7 @@ class TestSessionTokensRoute:
             ui_history_json="[]",
         )
         app.dependency_overrides[
-            __import__("src.main", fromlist=["get_session_repo"]).get_session_repo
+            __import__("src.dependencies", fromlist=["get_session_repo"]).get_session_repo
         ] = lambda: repo
 
         try:

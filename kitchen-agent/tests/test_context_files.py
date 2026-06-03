@@ -37,9 +37,10 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-import src.main
+import src.dependencies as main_module
 from src import config
-from src.main import app, get_session_repo, get_chat_service
+from src.main import app
+from src.dependencies import get_session_repo, get_chat_service
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 from tests.test_chat_service import FakeOrchestrator
@@ -63,7 +64,7 @@ def client(data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     TestClient wired to a tmp data_dir and an in-memory SQLite database.
     The Gemini API is never called — all agent calls are mocked.
     """
-    monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+    monkeypatch.setattr(config.settings, "data_dir", data_dir)
     monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
     db = SQLiteConnection(data_dir / "chats.db")
@@ -118,7 +119,7 @@ class TestContextFilePathResolution:
         "data/materials.md" (or the equivalent under the configured data_dir)
         to the chat service / agent.
         """
-        import src.main as main_module
+        import src.dependencies as main_module
 
         captured: list[list[str] | None] = []
 
@@ -131,12 +132,12 @@ class TestContextFilePathResolution:
         svc = MagicMock(spec=ChatService)
         svc.handle_turn.side_effect = lambda req: (captured.append(req.context_files), ChatTurnResponse(session_id=req.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[]))[1]
 
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
+        real_svc = ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list[str] = []
 
@@ -175,12 +176,12 @@ class TestContextFilePathResolution:
         When the caller already sends the full path (e.g. "data/materials.md")
         the handler must not double-prefix it.
         """
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
+        real_svc = ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list[str] = []
 
@@ -215,12 +216,12 @@ class TestContextFilePathResolution:
         self, data_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """When context_files is null/absent the service receives None."""
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
+        real_svc = ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list = []
 
@@ -253,12 +254,12 @@ class TestContextFilePathResolution:
         self, data_dir: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """context_files=[] should forward as None (existing behaviour)."""
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
         repo = SQLiteSessionRepository(db)
-        real_svc = src.main.ChatService(repo, turn_orchestrator=FakeOrchestrator())
+        real_svc = ChatService(repo, turn_orchestrator=FakeOrchestrator())
 
         forwarded: list = []
 
@@ -310,7 +311,7 @@ class TestContextFileIntegration:
         forwarded to the LLM.
         END-TO-END: real file on disk, FakeOrchestrator captures context.
         """
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
@@ -366,7 +367,7 @@ class TestContextFileIntegration:
         """
         from src.tools.file_ops import read_file
 
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
@@ -414,7 +415,7 @@ class TestContextFileIntegration:
         (data_dir / "file_a.md").write_text("File A content", encoding="utf-8")
         (data_dir / "file_b.md").write_text("File B content", encoding="utf-8")
 
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
@@ -458,7 +459,7 @@ class TestContextFileIntegration:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """HTTP 200 must be returned when a valid context file is included."""
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
@@ -506,7 +507,7 @@ class TestFileListPathFormat:
         """path field must be relative, not absolute (e.g. 'test.md' not '/tmp/.../test.md')."""
         (data_dir / "test.md").write_text("content", encoding="utf-8")
 
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")
@@ -536,7 +537,7 @@ class TestFileListPathFormat:
         """
         (data_dir / "notes.md").write_text("content", encoding="utf-8")
 
-        monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+        monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
 
         db = SQLiteConnection(data_dir / "chats.db")

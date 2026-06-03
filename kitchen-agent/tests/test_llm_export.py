@@ -372,7 +372,7 @@ def _make_test_client(tmp_path: Path) -> tuple[TestClient, SQLiteSessionReposito
     test_db = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     test_repo = SQLiteSessionRepository(test_db)
 
-    from src import main as main_module
+    from src import dependencies as main_module
     from src.config import settings
 
     # Patch settings.data_dir so file operations don't touch real data
@@ -408,7 +408,7 @@ def test_t16_endpoint_returns_200_with_correct_shape(tmp_path: Path) -> None:
     ]
     _seed_session(test_repo, "http-1", "Shelf Pins", api_items)
 
-    from src import main as main_module
+    from src import dependencies as main_module
 
     def _override():
         return test_repo
@@ -439,7 +439,7 @@ def test_t17_endpoint_returns_404_for_unknown_session(tmp_path: Path) -> None:
     test_db = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     test_repo = SQLiteSessionRepository(test_db)
 
-    from src import main as main_module
+    from src import dependencies as main_module
 
     def _override():
         return test_repo
@@ -465,7 +465,7 @@ def test_t18_content_type_is_application_json(tmp_path: Path) -> None:
     test_repo = SQLiteSessionRepository(test_db)
     _seed_session(test_repo, "ct-1", "CT Test", [_make_text_item("user", "hi")])
 
-    from src import main as main_module
+    from src import dependencies as main_module
 
     def _override():
         return test_repo
@@ -496,7 +496,7 @@ def test_t19_llm_export_distinct_from_markdown_export(tmp_path: Path) -> None:
         ui_messages=[{"role": "user", "content": "test"}],
     )
 
-    from src import main as main_module
+    from src import dependencies as main_module
 
     def _override():
         return test_repo
@@ -548,7 +548,7 @@ def test_t20_full_round_trip_with_tool_calls(tmp_path: Path) -> None:
     ]
     _seed_session(test_repo, "rt-1", "Round Trip Test", api_items)
 
-    from src import main as main_module
+    from src import dependencies as main_module
 
     def _override():
         return test_repo

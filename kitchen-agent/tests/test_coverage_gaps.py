@@ -76,7 +76,8 @@ class TestResolveContextFilePaths:
 
     @pytest.fixture(autouse=True)
     def _client(self, tmp_path):
-        from src.main import app, get_session_repo, get_prompt_manager
+        from src.main import app
+        from src.dependencies import get_session_repo, get_prompt_manager
         from src.repositories import SQLiteConnection, SQLiteSessionRepository
         from src.prompt_manager import PromptManager
 
@@ -95,15 +96,15 @@ class TestResolveContextFilePaths:
 
     def test_none_context_files_returns_none(self):
         """No context_files key → function returns None (no crash)."""
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         assert _resolve_context_file_paths(None) is None
 
     def test_empty_list_returns_none(self):
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         assert _resolve_context_file_paths([]) is None
 
     def test_relative_path_resolved_to_data_dir(self, tmp_path):
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         from src import config as cfg_module
 
         # Patch data_dir to tmp_path so files can be resolved
@@ -119,7 +120,7 @@ class TestResolveContextFilePaths:
             cfg_module.settings.data_dir = original
 
     def test_absolute_path_inside_data_dir_accepted(self, tmp_path):
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         from src import config as cfg_module
 
         original = cfg_module.settings.data_dir
@@ -135,7 +136,7 @@ class TestResolveContextFilePaths:
 
     def test_absolute_path_outside_data_dir_dropped(self, tmp_path):
         """Absolute path that escapes data_dir must be silently dropped."""
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         from src import config as cfg_module
 
         sub = tmp_path / "sub"
@@ -151,7 +152,7 @@ class TestResolveContextFilePaths:
 
     def test_relative_path_traversal_dropped(self, tmp_path):
         """Relative paths with '..' that escape data_dir must be dropped."""
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         from src import config as cfg_module
 
         sub = tmp_path / "sub"
@@ -167,7 +168,7 @@ class TestResolveContextFilePaths:
 
     def test_mixed_valid_and_invalid_paths(self, tmp_path):
         """Valid paths are kept; invalid paths are silently dropped."""
-        from src.main import _resolve_context_file_paths
+        from src.api.chat import _resolve_context_file_paths
         from src import config as cfg_module
 
         original = cfg_module.settings.data_dir
@@ -189,7 +190,8 @@ class TestResolveContextFilePaths:
 class TestRevertRouteExceptionPath:
     @pytest.fixture
     def client(self, tmp_path):
-        from src.main import app, get_session_repo
+        from src.main import app
+        from src.dependencies import get_session_repo
         from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
         db = SQLiteConnection(db_path=str(tmp_path / "test.db"))

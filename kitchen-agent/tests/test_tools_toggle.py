@@ -37,7 +37,8 @@ from fastapi.testclient import TestClient
 from src.prompt_manager import PromptManager, PromptMode
 from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
-from src.main import app, get_chat_service
+from src.main import app
+from src.dependencies import get_chat_service
 from tests.test_chat_service import FakeOrchestrator
 
 

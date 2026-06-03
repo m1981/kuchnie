@@ -7,10 +7,11 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-import src.main as main_module
+import src.config as main_module
 from src import config as config_module
 from src.repositories import SQLiteConnection, SQLiteSessionRepository, SQLiteNoteRepository
-from src.main import app, get_session_repo, get_note_repo
+from src.main import app
+from src.dependencies import get_session_repo, get_note_repo
 
 
 # ===========================================================================

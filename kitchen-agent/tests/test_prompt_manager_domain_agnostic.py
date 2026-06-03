@@ -586,7 +586,7 @@ class TestFastAPIMetadataFromSettings:
 
     def test_app_title_matches_settings(self, monkeypatch) -> None:
         """FastAPI app title must be derived from settings.app_title."""
-        import src.main as main_module
+        import src.dependencies as main_module
         import src.config as config_module
 
         monkeypatch.setattr(config_module.settings, "app_title", "Test Domain Agent")

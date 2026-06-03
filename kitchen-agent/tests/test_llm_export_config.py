@@ -351,7 +351,7 @@ def test_c17_fork_copies_system_prompt(tmp_path: Path) -> None:
 
 def _make_client(tmp_path: Path) -> tuple[TestClient, SQLiteSessionRepository]:
     from src.main import app
-    from src import main as main_module
+    from src import dependencies as main_module
 
     test_db = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     test_repo = SQLiteSessionRepository(test_db)

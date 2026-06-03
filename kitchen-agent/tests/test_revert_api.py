@@ -41,11 +41,10 @@ def data_dir(tmp_path: Path) -> Path:
 @pytest.fixture
 def client(data_dir: Path, monkeypatch) -> TestClient:
     """TestClient with DATA_DIR patched to the tmp data_dir."""
+    import src.config as config_module
     import src.main as main_module
-    from src import config as config_module
 
     monkeypatch.setattr(config_module.settings, "data_dir", data_dir)
-    monkeypatch.setattr(main_module.settings, "data_dir", data_dir)
 
     return TestClient(main_module.app)
 

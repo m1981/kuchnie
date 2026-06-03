@@ -39,9 +39,11 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-import src.main
+import src.config as config_module
+import src.dependencies as main_module
 from src import config
-from src.main import app, get_session_repo, get_chat_service
+from src.main import app
+from src.dependencies import get_session_repo, get_chat_service
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.chat_service import ChatService, ChatTurnRequest
 from tests.test_chat_service import FakeOrchestrator
@@ -80,7 +82,7 @@ def data_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture()
 def client(repo: SQLiteSessionRepository, data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
+    monkeypatch.setattr(config_module.settings, "data_dir", data_dir)
     monkeypatch.setattr(config.settings, "data_dir", data_dir)
     app.dependency_overrides[get_session_repo] = lambda: repo
     app.dependency_overrides[get_chat_service] = lambda: ChatService(

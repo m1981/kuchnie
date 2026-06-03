@@ -25,7 +25,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.main import app, get_chat_service, get_session_repo
+from src.main import app
+from src.dependencies import get_chat_service, get_session_repo
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.schemas import ChatRequest
 from src.chat_service import ChatService, ChatTurnResponse
