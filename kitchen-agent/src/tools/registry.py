@@ -308,11 +308,9 @@ class ToolRegistry:
         if provider == "gemini":
             return [entry.declaration for entry in entries]
         elif provider == "anthropic":
-            from src.providers.anthropic_provider import (
-                _declaration_to_anthropic_tool,
-            )
+            from src.providers.schema_converters import declaration_to_anthropic_tool
             return [
-                _declaration_to_anthropic_tool(entry.declaration)
+                declaration_to_anthropic_tool(entry.declaration)
                 for entry in entries
             ]
         raise ValueError(f"Unknown provider: {provider!r}")
@@ -345,11 +343,17 @@ _ALL_ENTRIES: list[ToolEntry] = [
 # Public alias for backward compatibility.
 TOOLS: list[ToolEntry] = _ALL_ENTRIES
 
+# DEPRECATED: use ToolRegistry and build_default_registry() instead.
+# These globals remain temporarily while dependents are migrated.
+# Remove after Tasks 2 and 3 are complete.
 # Derived: name → callable mapping used by the agent dispatch loop.
 FUNCTION_MAP: dict[str, Callable[..., dict]] = {  # type: ignore[type-arg]
     entry.declaration.name: entry.fn for entry in TOOLS
 }
 
+# DEPRECATED: use ToolRegistry and build_default_registry() instead.
+# These globals remain temporarily while dependents are migrated.
+# Remove after Tasks 2 and 3 are complete.
 # Derived: ordered list of declarations sent to types.Tool().
 DECLARATIONS: list[types.FunctionDeclaration] = [
     entry.declaration for entry in TOOLS

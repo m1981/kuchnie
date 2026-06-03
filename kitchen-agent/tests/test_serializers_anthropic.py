@@ -244,13 +244,13 @@ def test_full_round_trip_gemini_text_unchanged() -> None:
 
 
 # ---------------------------------------------------------------------------
-# chat_service integration: no AttributeError when Anthropic provider used
+# chat_service integration: legacy provider path raises NotImplementedError
 # ---------------------------------------------------------------------------
 
-def test_chat_service_anthropic_no_attribute_error(tmp_path) -> None:
+def test_chat_service_anthropic_legacy_raises_not_implemented(tmp_path) -> None:
     """
-    Simulates what chat_service does after an Anthropic turn:
-    history contains plain dicts → dehydrate_history must not raise.
+    The legacy provider path (explicit provider_name) now raises NotImplementedError
+    since process_chat_turn was removed from providers.
     """
     from src.repositories import SQLiteConnection, SQLiteSessionRepository
     from src.chat_service import ChatService
@@ -258,35 +258,15 @@ def test_chat_service_anthropic_no_attribute_error(tmp_path) -> None:
     db   = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     repo = SQLiteSessionRepository(db)
 
-    # Build the kind of history AnthropicProvider leaves behind
-    anthropic_history = [
-        _anthropic_user_text("What materials should I use?"),
-        _anthropic_assistant_text("Use 18mm birch plywood."),
-    ]
-
     with patch("src.providers.base.get_provider") as mock_get_provider:
-        # provider.process_chat_turn mutates history in place (as AnthropicProvider does)
         mock_provider = MagicMock()
-
-        def side_effect(user_message, history, **kwargs):
-            history.extend(anthropic_history)
-            return "Use 18mm birch plywood.", []
-
-        mock_provider.process_chat_turn.side_effect = side_effect
         mock_get_provider.return_value = mock_provider
 
         service = ChatService(repo, turn_orchestrator=FakeOrchestrator())
-        # Must not raise AttributeError
-        text, tools = service.handle_turn(
-            session_id="sess-anthropic-1",
-            user_message="What materials?",
-            provider_name="anthropic",
-        )
 
-    assert text == "Use 18mm birch plywood."
-
-    # Verify the session was actually persisted (serializer ran without error)
-    api_json, ui_json, _ = repo.load_session("sess-anthropic-1")
-    assert api_json != "[]"
-    parsed = json.loads(api_json)
-    assert len(parsed) > 0
+        with pytest.raises(NotImplementedError):
+            service.handle_turn(
+                session_id="sess-anthropic-1",
+                user_message="What materials?",
+                provider_name="anthropic",
+            )

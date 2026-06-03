@@ -27,9 +27,9 @@ Three export formats are provided:
 
 Public surface
 --------------
-  build_config_block(system_instruction)  → dict
+  build_config_block(system_instruction, tool_declarations)  → dict
   export_session_to_markdown(ui_messages, title)  → str
-  export_session_to_llm_json(api_items, title, session_id, system_instruction) → dict
+  export_session_to_llm_json(api_items, title, session_id, system_instruction, tool_schemas) → dict
 
 Pure functions only — no DB or HTTP concerns.
 """
@@ -102,7 +102,10 @@ def export_session_to_markdown(
 # ──────────────────────────────────────────────────────────────────────────────
 
 
-def build_config_block(system_instruction: str | None) -> dict[str, Any]:
+def build_config_block(
+    system_instruction: str | None,
+    tool_declarations: list[Any] | None = None,
+) -> dict[str, Any]:
     """
     Reconstructs the ``GenerateContentConfig`` envelope as a plain dict,
     exactly as it was sent to the Gemini API on every ``generate_content``
@@ -114,8 +117,11 @@ def build_config_block(system_instruction: str | None) -> dict[str, Any]:
     matching ``exclude_none=True`` semantics.
 
     Args:
-        system_instruction: The persisted system prompt for this session,
-                            or ``None`` if no persona was active.
+        system_instruction:  The persisted system prompt for this session,
+                             or ``None`` if no persona was active.
+        tool_declarations:   Optional list of FunctionDeclaration objects.
+                             When ``None``, falls back to the global
+                             ``DECLARATIONS`` from the tool registry.
 
     Returns:
         A dict with keys: ``model``, ``temperature``, ``system_instruction``,
@@ -125,9 +131,12 @@ def build_config_block(system_instruction: str | None) -> dict[str, Any]:
     # These imports are fast (already-imported modules, no I/O).
     from google.genai import types
     from src.config import settings
-    from src.tools.registry import DECLARATIONS
 
-    gemini_tools = types.Tool(function_declarations=DECLARATIONS)
+    if tool_declarations is not None:
+        gemini_tools = types.Tool(function_declarations=tool_declarations)
+    else:
+        from src.tools.registry import DECLARATIONS
+        gemini_tools = types.Tool(function_declarations=DECLARATIONS)
     config = types.GenerateContentConfig(
         tools=[gemini_tools],
         temperature=settings.gemini_temperature,
@@ -235,6 +244,7 @@ def export_session_to_llm_json(
     title: str,
     session_id: str,
     system_instruction: str | None = None,
+    tool_schemas: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Renders the complete LLM call context as a structured JSON document.
@@ -285,7 +295,10 @@ def export_session_to_llm_json(
         "export_timestamp": datetime.now(tz=timezone.utc).isoformat(),
     }
 
-    result["config"] = build_config_block(system_instruction=system_instruction)
+    result["config"] = build_config_block(
+        system_instruction=system_instruction,
+        tool_declarations=tool_schemas,
+    )
 
     result["turns"] = turns
 

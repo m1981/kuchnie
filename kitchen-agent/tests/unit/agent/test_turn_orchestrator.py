@@ -28,12 +28,12 @@ from src.agent.context_assembler import (
 )
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
 from src.agent.turn_orchestrator import (
-    LLMCompleter,
     MaxToolIterationsError,
     TurnInput,
     TurnOrchestrator,
     TurnOutput,
 )
+from src.providers.base import LLMProvider
 from src.providers.normalizer import NormalizedResponse, ResponseNormalizer
 
 
@@ -124,7 +124,7 @@ class FakeRegistry:
 
 class FakeCompleter:
     """
-    Controllable LLM provider implementing LLMCompleter protocol.
+    Controllable LLM provider implementing LLMProvider protocol.
 
     Returns mock Gemini SDK responses that ResponseNormalizer can parse.
 
@@ -642,12 +642,12 @@ class TestRealContextAssemblerIntegration:
 
 
 # ---------------------------------------------------------------------------
-# Tests: LLMCompleter protocol compliance
+# Tests: LLMProvider protocol compliance
 # ---------------------------------------------------------------------------
 
-class TestLLMCompleterProtocol:
+class TestLLMProviderProtocol:
     def test_fake_completer_satisfies_protocol(self):
-        """FakeCompleter must satisfy the LLMCompleter protocol."""
+        """FakeCompleter must satisfy the LLMProvider protocol."""
         completer = FakeCompleter(text="test")
         # This is a structural check — if FakeCompleter has the right
         # methods, it satisfies the protocol without explicit inheritance.

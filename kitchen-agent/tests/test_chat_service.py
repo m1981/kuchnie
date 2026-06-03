@@ -248,20 +248,17 @@ def test_handle_turn_with_orchestrator_logs_prompt(
 
 @patch("src.providers.base.get_provider")
 @patch("src.chat_service.log_turn")
-def test_provider_override_bypasses_orchestrator(
+def test_provider_override_raises_not_implemented(
     mock_log: MagicMock,
     mock_get_provider: MagicMock,
     fake_orchestrator: FakeOrchestrator,
     repo: SQLiteSessionRepository,
 ) -> None:
     """
-    When provider_name is explicitly set, the legacy path must
-    be used regardless of whether an orchestrator is injected.
-    The orchestrator is built with the default provider and
-    cannot honour per-request provider overrides.
+    When provider_name is explicitly set, the legacy path is triggered
+    which now raises NotImplementedError since process_chat_turn was removed.
     """
     mock_provider = MagicMock()
-    mock_provider.process_chat_turn.return_value = ("legacy response", [])
     mock_get_provider.return_value = mock_provider
 
     service = ChatService(
@@ -269,17 +266,15 @@ def test_provider_override_bypasses_orchestrator(
         turn_orchestrator=fake_orchestrator,
     )
 
-    text, tools = service.handle_turn(
-        session_id="sess-provider-override",
-        user_message="hello",
-        provider_name="anthropic",   # explicit override
-    )
+    with pytest.raises(NotImplementedError):
+        service.handle_turn(
+            session_id="sess-provider-override",
+            user_message="hello",
+            provider_name="anthropic",   # explicit override
+        )
 
-    # Legacy path must have been called
-    assert mock_provider.process_chat_turn.called
     # Orchestrator must NOT have been called
     assert fake_orchestrator.run_call_count == 0
-    assert text == "legacy response"
 
 
 @patch("src.chat_service.log_turn")

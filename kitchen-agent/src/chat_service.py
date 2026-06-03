@@ -216,7 +216,7 @@ class ChatService:
         Loads history, runs the agent, persists state, and returns the result.
 
         When a ``TurnOrchestrator`` is injected, the new path is used:
-        the orchestrator manages the agentic loop via ``LLMCompleter``.
+        the orchestrator manages the agentic loop via ``LLMProvider``.
         Otherwise, falls back to ``process_chat_turn()`` (legacy path).
 
         The ``system_prompt`` is now persisted alongside the history so that
@@ -298,13 +298,8 @@ class ChatService:
                 provider_name=provider_name,
                 model_override=model_override,
             )
-            final_text, tool_logs = provider.process_chat_turn(
-                user_message=user_message,
-                history=history,
-                system_instruction=system_prompt,
-                images=images,
-                context_files=context_files or None,
-                use_tools=use_tools,
+            raise NotImplementedError(
+                "process_chat_turn removed. Use TurnOrchestrator.run() instead."
             )
 
         # ── 5. Record assistant response in UI state ──────────────────────────

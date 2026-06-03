@@ -20,24 +20,12 @@ Design decisions
 * **AssembledContext**: Immutable result — what gets handed to the provider.
 * **Optional dependencies**: NoteManager and FileManager are optional
   (they arrive in Phase 5).  When absent, those slots are simply empty.
-
-Phase 3 scope
--------------
-Currently used for:
-  - System prompt resolution from PromptManager
-  - History trimming when over token budget
-  - Context slot observability
-
-Future (Phase 5):
-  - Note attachment via NoteManager
-  - File attachment via FileManager
-  - SearchCoordinator integration
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Protocol
+from typing import Protocol
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +85,7 @@ class AssembledContext:
     slots_used: dict[ContextSlot, int]  # for observability
     images: list[dict] = field(default_factory=list)  # inline images for the LLM
     context_files: list[str] = field(default_factory=list)  # file paths to inject
+    tool_schemas: list[dict] = field(default_factory=list)  # provider-format tool schemas
 
 
 # ---------------------------------------------------------------------------
@@ -111,6 +100,29 @@ class TokenCounterProtocol(Protocol):
 
 class PromptManagerProtocol(Protocol):
     def get_system_instruction(self, mode: str = "default") -> str: ...
+
+
+class NoteManagerProtocol(Protocol):
+    """
+    What ContextAssembler needs from NoteManager.
+    Defined here to avoid agent layer importing from content layer.
+    """
+    def get_for_context(
+        self,
+        session_id: str,
+        max_tokens: int = 2000,
+    ) -> str: ...
+
+
+class FileManagerProtocol(Protocol):
+    """
+    What ContextAssembler needs from FileManager.
+    """
+    def get_for_context(
+        self,
+        file_paths: list[str],
+        max_tokens: int = 4000,
+    ) -> str: ...
 
 
 # ---------------------------------------------------------------------------
@@ -130,10 +142,14 @@ class ContextAssembler:
         token_budget: ContextBudget,
         token_counter: TokenCounterProtocol,
         prompt_manager: PromptManagerProtocol,
+        note_manager: NoteManagerProtocol | None = None,
+        file_manager: FileManagerProtocol | None = None,
     ) -> None:
         self._budget = token_budget
         self._tokens = token_counter
         self._prompts = prompt_manager
+        self._notes = note_manager
+        self._files = file_manager
 
     def assemble(
         self,
@@ -150,8 +166,8 @@ class ContextAssembler:
             session:      Session-like dict with a ``messages`` key.
             mode:         Prompt mode (resolved via PromptManager).
             user_message: The user's new message text.
-            note_ids:     Optional note IDs to attach (Phase 5).
-            file_ids:     Optional file IDs to attach (Phase 5).
+            note_ids:     Optional note IDs to attach.
+            file_ids:     Optional file IDs to attach.
 
         Returns:
             An AssembledContext with system_prompt, messages,
@@ -162,7 +178,10 @@ class ContextAssembler:
         system_prompt = self._build_system(mode, slots_used)
         history = self._trim_history(session, slots_used)
         enrichments = self._attach_content(
-            note_ids=note_ids, file_ids=file_ids, slots_used=slots_used,
+            session_id=session.get("session_id", ""),
+            note_ids=note_ids,
+            file_ids=file_ids,
+            slots_used=slots_used,
         )
 
         messages = history + enrichments
@@ -172,6 +191,7 @@ class ContextAssembler:
         return AssembledContext(
             system_prompt=system_prompt,
             messages=messages,
+            tool_schemas=[],
             total_tokens_estimated=sum(slots_used.values()),
             slots_used=slots_used,
         )
@@ -217,26 +237,52 @@ class ContextAssembler:
         slots_used[ContextSlot.CONVERSATION_HISTORY] = used
         return kept
 
-    # ── Content attachment (stubs for Phase 5) ───────────────────────
+    # ── Content attachment ───────────────────────────────────────────
 
     def _attach_content(
         self,
+        session_id: str,
         note_ids: list[str] | None,
         file_ids: list[str] | None,
         slots_used: dict[ContextSlot, int],
     ) -> list[dict]:
         """
         Attach notes and files as context messages.
-        Each gets its own budget slot — neither can starve the other.
-
-        Currently stubs — will be wired in Phase 5 when
-        NoteManager and FileManager exist.
+        Each gets its own budget slot — neither starves the other.
+        Silently skips if manager not injected (backward compat).
         """
         enrichments: list[dict] = []
 
-        if note_ids:
-            slots_used[ContextSlot.ATTACHED_NOTES] = 0  # Phase 5
-        if file_ids:
-            slots_used[ContextSlot.ATTACHED_FILES] = 0  # Phase 5
+        # ── Notes ────────────────────────────────────────────────────────
+        if note_ids and self._notes is not None:
+            note_budget = self._budget.tokens_for(ContextSlot.ATTACHED_NOTES)
+            notes_content = self._notes.get_for_context(
+                session_id=session_id,
+                max_tokens=note_budget,
+            )
+            if notes_content:
+                enrichments.append({
+                    "role": "user",
+                    "content": f"<notes>\n{notes_content}\n</notes>",
+                })
+                slots_used[ContextSlot.ATTACHED_NOTES] = (
+                    self._tokens.count(notes_content)
+                )
+
+        # ── Files ─────────────────────────────────────────────────────────
+        if file_ids and self._files is not None:
+            file_budget = self._budget.tokens_for(ContextSlot.ATTACHED_FILES)
+            files_content = self._files.get_for_context(
+                file_paths=file_ids,
+                max_tokens=file_budget,
+            )
+            if files_content:
+                enrichments.append({
+                    "role": "user",
+                    "content": f"<files>\n{files_content}\n</files>",
+                })
+                slots_used[ContextSlot.ATTACHED_FILES] = (
+                    self._tokens.count(files_content)
+                )
 
         return enrichments

@@ -6,9 +6,9 @@ LLMProvider Protocol + provider registry factory.
 Design
 ------
 ``LLMProvider`` is a ``runtime_checkable`` Protocol — any class that
-implements ``process_chat_turn`` with the correct signature satisfies it
-without inheritance.  This lets us test structural compliance easily and
-avoids coupling providers to a base class.
+implements ``complete`` and ``complete_with_tools`` with the correct
+signatures satisfies it without inheritance.  This lets us test structural
+compliance easily and avoids coupling providers to a base class.
 
 ``get_provider()`` is the single entry point for the rest of the application.
 It reads ``settings.llm_provider`` and returns the matching instance.  We
@@ -22,49 +22,49 @@ Providers available:
 
 Adding a new provider
 ---------------------
-1. Create ``src/providers/my_provider.py`` implementing ``process_chat_turn``.
+1. Create ``src/providers/my_provider.py`` implementing ``complete`` and
+   ``complete_with_tools``.
 2. Add a new branch in ``get_provider()`` below.
 3. Document the provider name in ``config.py``.
 That is all — no other file needs to change.
 """
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol, Any, runtime_checkable
+
+from src.agent.context_assembler import AssembledContext
+from src.agent.tool_executor import ToolCall, ToolResult
 
 
 @runtime_checkable
 class LLMProvider(Protocol):
     """
-    Structural interface every LLM provider must satisfy.
+    Unified interface for all LLM providers.
 
-    The method contract is identical to the original ``agent.process_chat_turn``
-    function signature so ``chat_service.py`` requires zero changes.
+    Providers receive an AssembledContext and return raw SDK responses.
+    ResponseNormalizer converts raw responses to NormalizedResponse.
 
-    Args:
-        user_message:       Plain text from the user.
-        history:            Mutable conversation history list (mutated in place).
-                            The concrete format depends on the provider:
-                              - Gemini: list of ``types.Content`` objects
-                              - Anthropic: list of ``MessageParam``-shaped dicts
-        system_instruction: Optional system-prompt text.
-        images:             Optional list of ``{"mime_type": str, "data": str}``
-                            base64-encoded image dicts.
-        context_files:      Optional list of file paths to inject as context.
-
-    Returns:
-        ``(final_text, tool_logs)`` tuple where ``tool_logs`` is a list of
-        dicts with keys ``name``, ``args``, ``result``.
+    Providers do NOT:
+    - Execute tools (ToolExecutor owns that)
+    - Manage conversation history (ContextAssembler owns that)
+    - Select models dynamically (Settings/DI owns that)
+    - Know about ToolRegistry (they receive final schemas only)
     """
 
-    def process_chat_turn(
+    def complete(
         self,
-        user_message: str,
-        history: list,
-        system_instruction: str | None = None,
-        images: list[dict] | None = None,
-        context_files: list[str] | None = None,
-        use_tools: bool = True,
-    ) -> tuple[str, list[dict]]:
+        context: AssembledContext,
+    ) -> Any:
+        """Single turn completion. Returns raw provider SDK response."""
+        ...
+
+    def complete_with_tools(
+        self,
+        context: AssembledContext,
+        tool_calls: list[ToolCall],
+        tool_results: list[ToolResult],
+    ) -> Any:
+        """Completion after tool results are available."""
         ...
 
 
@@ -87,23 +87,21 @@ def get_provider(
                         default.  When ``None`` the provider reads its own
                         ``settings.*_model`` field.
 
-    Implementation note: we import ``src.config`` (the module) and access
-    ``src.config.settings`` through it so ``patch("src.config.settings")``
-    correctly intercepts the attribute lookup even after the module is cached.
-
     Raises:
         ValueError: when the resolved provider name is not supported.
     """
-    import src.config as _config  # noqa: PLC0415
+    from src.config import settings
 
-    name = provider_name or _config.settings.llm_provider
+    name = (provider_name or settings.llm_provider or "gemini").lower()
 
     if name == "gemini":
-        from src.providers.gemini import GeminiProvider  # noqa: PLC0415
+        from src.providers.gemini import GeminiProvider
         return GeminiProvider(model_override=model_override)
 
     if name == "anthropic":
-        from src.providers.anthropic_provider import AnthropicProvider  # noqa: PLC0415
+        from src.providers.anthropic_provider import AnthropicProvider
         return AnthropicProvider(model_override=model_override)
 
-    raise ValueError(f"Unknown LLM provider: {name}. Supported: 'gemini', 'anthropic'.")
+    raise ValueError(
+        f"Unknown provider {name!r}. Valid: 'gemini', 'anthropic'"
+    )

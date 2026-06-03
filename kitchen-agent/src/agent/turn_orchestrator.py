@@ -17,7 +17,7 @@ Design decisions
 ----------------
 * **Provider protocol**: The orchestrator requires a provider that exposes
   ``complete(context)`` and ``complete_with_tools(context, tool_calls,
-  tool_results)``.  This is a *new* protocol (``LLMCompleter``) distinct
+  tool_results)``.  This is a *new* protocol (``LLMProvider``) distinct
   from the existing ``LLMProvider`` protocol in ``providers/base.py``.
   Existing providers can be adapted to this protocol later; the orchestrator
   does not depend on the old ``process_chat_turn`` interface.
@@ -35,7 +35,7 @@ Phase 4 scope
 TurnOrchestrator is introduced as a standalone component.  It is NOT yet
 wired into ChatService or the existing ``process_chat_turn`` function.
 That wiring will happen in a later phase once providers expose the
-``LLMCompleter`` interface.
+``LLMProvider`` interface.
 
 Public API
 ----------
@@ -51,6 +51,7 @@ from typing import Any, Protocol
 
 from src.agent.context_assembler import AssembledContext, ContextAssembler
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
+from src.providers.base import LLMProvider
 from src.providers.normalizer import NormalizedResponse, ResponseNormalizer
 
 
@@ -94,33 +95,6 @@ class TurnOutput:
     tool_details: list[ToolCallDetail] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# Provider protocol — what the orchestrator needs from an LLM provider
-# ---------------------------------------------------------------------------
-
-class LLMCompleter(Protocol):
-    """
-    Minimal interface the TurnOrchestrator requires from an LLM provider.
-
-    This is distinct from the existing ``LLMProvider`` protocol in
-    ``providers/base.py`` which exposes ``process_chat_turn`` (the full
-    agentic loop).  ``LLMCompleter`` exposes only the raw API call —
-    the orchestrator owns the tool loop.
-    """
-
-    def complete(self, context: AssembledContext) -> Any:
-        """Send a context to the LLM and return the raw SDK response."""
-        ...
-
-    def complete_with_tools(
-        self,
-        context: AssembledContext,
-        tool_calls: list[ToolCall],
-        tool_results: list[ToolResult],
-    ) -> Any:
-        """Send context + tool results to the LLM and return the raw SDK response."""
-        ...
-
 
 # ---------------------------------------------------------------------------
 # Exceptions
@@ -147,7 +121,7 @@ class TurnOrchestrator:
 
     Lifecycle:
     1. Assemble context (via ContextAssembler)
-    2. Call LLM (via LLMCompleter)
+    2. Call LLM (via LLMProvider)
     3. Normalize response (via ResponseNormalizer)
     4. If tool calls: execute tools, feed results back, repeat
     5. Return TurnOutput
@@ -160,7 +134,7 @@ class TurnOrchestrator:
         self,
         context_assembler: ContextAssembler,
         tool_executor: ToolExecutor,
-        provider: LLMCompleter,
+        provider: LLMProvider,
         response_normalizer: ResponseNormalizer,
         provider_name: str = "gemini",
         max_tool_iterations: int = 10,
@@ -205,7 +179,7 @@ class TurnOrchestrator:
             context.system_prompt = turn_input.system_prompt
 
         # Propagate images and context_files from TurnInput to context
-        # so providers can access them via the LLMCompleter interface.
+        # so providers can access them via the LLMProvider interface.
         context.images = turn_input.images or []
         context.context_files = turn_input.context_files or []
 
