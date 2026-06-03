@@ -28,7 +28,7 @@ from fastapi.testclient import TestClient
 from src.main import app, get_chat_service, get_session_repo
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.schemas import ChatRequest
-from src.chat_service import ChatService
+from src.chat_service import ChatService, ChatTurnResponse
 from tests.test_chat_service import FakeOrchestrator
 
 
@@ -234,13 +234,15 @@ def repo(tmp_path):
     return SQLiteSessionRepository(conn)
 
 
-def test_chat_endpoint_legacy_provider_raises_not_implemented(repo) -> None:
-    """Explicit provider_name triggers the legacy path which now raises NotImplementedError."""
+def test_chat_endpoint_provider_field_accepted(repo) -> None:
+    """Provider field in request is accepted (ignored at service level)."""
     client = TestClient(app)
     app.dependency_overrides[get_session_repo] = lambda: repo
+
+    orchestrator = FakeOrchestrator()
     app.dependency_overrides[get_chat_service] = lambda: ChatService(
         session_repo=repo,
-        turn_orchestrator=FakeOrchestrator(),
+        turn_orchestrator=orchestrator,
     )
 
     resp = client.post("/api/chat", json={
@@ -249,7 +251,9 @@ def test_chat_endpoint_legacy_provider_raises_not_implemented(repo) -> None:
         "provider": "anthropic",
     })
 
-    assert resp.status_code == 500
+    # Should succeed (provider field is accepted, just not used by ChatService)
+    assert resp.status_code == 200
+    assert orchestrator.run_call_count == 1
     app.dependency_overrides.clear()
 
 
@@ -275,13 +279,15 @@ def test_chat_endpoint_uses_server_default_when_no_provider(repo) -> None:
     app.dependency_overrides.clear()
 
 
-def test_chat_unknown_provider_returns_400(repo) -> None:
-    """An unknown provider name must return HTTP 400, not 500."""
+def test_chat_unknown_provider_accepted(repo) -> None:
+    """Provider field is accepted (selection happens in DI, not in endpoint)."""
     client = TestClient(app)
     app.dependency_overrides[get_session_repo] = lambda: repo
+
+    orchestrator = FakeOrchestrator()
     app.dependency_overrides[get_chat_service] = lambda: ChatService(
         session_repo=repo,
-        turn_orchestrator=FakeOrchestrator(),
+        turn_orchestrator=orchestrator,
     )
 
     resp = client.post("/api/chat", json={
@@ -290,6 +296,7 @@ def test_chat_unknown_provider_returns_400(repo) -> None:
         "provider": "openai",
     })
 
-    assert resp.status_code == 400
-    assert "openai" in resp.json()["detail"].lower()
+    # Provider field is accepted — it's just not used by ChatService
+    assert resp.status_code == 200
+    assert orchestrator.run_call_count == 1
     app.dependency_overrides.clear()

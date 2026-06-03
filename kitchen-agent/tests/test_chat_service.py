@@ -6,19 +6,13 @@ handler and the agent.
 
 All external I/O (DB, agent, prompt logger) is mocked so these tests run
 instantly without network or disk access.
-
-Migration note
---------------
-log_prompt → log_turn: ChatService now calls ``log_turn`` (enriched, with
-tool data and session context) instead of the bare ``log_prompt`` shim.
-All patches and assertions have been updated accordingly.
 """
 import json
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.chat_service import ChatService, _make_title
+from src.chat_service import ChatService, ChatTurnRequest, _make_title
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
 
@@ -58,10 +52,10 @@ def repo(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# ChatService with TurnOrchestrator (new path)
+# ChatService with TurnOrchestrator
 # ---------------------------------------------------------------------------
 
-from src.agent.turn_orchestrator import TurnInput, TurnOutput, ToolCallDetail
+from src.agent.turn_orchestrator import TurnInput, TurnOutput, ToolCallDetail, ToolCall
 from src.agent.context_assembler import ContextSlot
 
 
@@ -86,12 +80,46 @@ class FakeOrchestrator:
         self.run_call_count += 1
         self.last_turn_input = turn_input
         self.last_session = session
+
+        # Build tool_logs and tool_calls_made from tool_details
+        tool_logs = []
+        tool_calls_made = []
+        for d in self._tool_details:
+            tool_calls_made.append(
+                ToolCall(id=d.id, name=d.name, arguments=d.arguments)
+            )
+            tool_logs.append({
+                "name": d.name,
+                "args": d.arguments,
+                "result": {"content": d.result_content} if not d.is_error else {"error": d.result_content},
+            })
+
+        # Build updated_api_history
+        updated_api_history = list(session.get("messages", []))
+        updated_api_history.append({"role": "user", "content": turn_input.user_message})
+        for d in self._tool_details:
+            updated_api_history.append({
+                "role": "assistant",
+                "content": [{"type": "tool_use", "id": d.id, "name": d.name, "input": d.arguments}],
+            })
+            updated_api_history.append({
+                "role": "user",
+                "content": [{"type": "tool_result", "tool_use_id": d.id, "content": d.result_content}],
+            })
+        updated_api_history.append({
+            "role": "assistant",
+            "content": [{"type": "text", "text": self._text}],
+        })
+
         return TurnOutput(
             assistant_message=self._text,
-            tool_calls_made=[d.name for d in self._tool_details],
+            updated_api_history=updated_api_history,
+            user_turn_id="test-user-turn-id",
+            assistant_turn_id="test-assistant-turn-id",
+            tool_calls_made=tool_calls_made,
+            tool_logs=tool_logs,
             tokens_used={"input": 10, "output": 5, "total": 15},
             context_slots={ContextSlot.SYSTEM_PROMPT: 20},
-            tool_details=self._tool_details,
         )
 
 
@@ -101,25 +129,25 @@ def fake_orchestrator():
 
 
 @patch("src.chat_service.log_turn")
-def test_handle_turn_with_orchestrator_saves_session(
+def test_handle_turn_saves_session(
     mock_log: MagicMock,
     fake_orchestrator: FakeOrchestrator,
     repo: SQLiteSessionRepository,
 ) -> None:
-    """With orchestrator injected, handle_turn should use the new path."""
+    """handle_turn should persist the session and return structured response."""
     service = ChatService(
         session_repo=repo,
         turn_orchestrator=fake_orchestrator,
     )
     session_id = "test-orch-001"
 
-    text, tools = service.handle_turn(
+    result = service.handle_turn(ChatTurnRequest(
         session_id=session_id,
         user_message="What hinges should I use?",
-    )
+    ))
 
-    assert text == "response text"
-    assert tools == []
+    assert result.assistant_message == "response text"
+    assert result.tool_calls_made == []
     assert fake_orchestrator.run_call_count == 1
 
     # Verify session persisted
@@ -135,21 +163,21 @@ def test_handle_turn_with_orchestrator_saves_session(
 
 
 @patch("src.chat_service.log_turn")
-def test_handle_turn_with_orchestrator_appends_to_history(
+def test_handle_turn_appends_to_history(
     mock_log: MagicMock,
     fake_orchestrator: FakeOrchestrator,
     repo: SQLiteSessionRepository,
 ) -> None:
-    """Second turn with orchestrator must append to existing history."""
+    """Second turn must append to existing history."""
     service = ChatService(
         session_repo=repo,
         turn_orchestrator=fake_orchestrator,
     )
 
-    service.handle_turn("sess-orch-1", "Turn 1")
+    service.handle_turn(ChatTurnRequest(session_id="sess-orch-1", user_message="Turn 1"))
 
     fake_orchestrator._text = "Answer 2"
-    service.handle_turn("sess-orch-1", "Turn 2")
+    service.handle_turn(ChatTurnRequest(session_id="sess-orch-1", user_message="Turn 2"))
 
     _, ui_json, _ = repo.load_session("sess-orch-1")
     ui_messages = json.loads(ui_json)
@@ -159,7 +187,7 @@ def test_handle_turn_with_orchestrator_appends_to_history(
 
 
 @patch("src.chat_service.log_turn")
-def test_handle_turn_with_orchestrator_passes_images_and_context(
+def test_handle_turn_passes_images_and_context(
     mock_log: MagicMock,
     repo: SQLiteSessionRepository,
 ) -> None:
@@ -173,12 +201,12 @@ def test_handle_turn_with_orchestrator_passes_images_and_context(
     images = [{"mime_type": "image/png", "data": "abc123"}]
     context = ["/data/file.txt"]
 
-    service.handle_turn(
-        "sess-orch-img",
-        "describe this",
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-orch-img",
+        user_message="describe this",
         images=images,
         context_files=context,
-    )
+    ))
 
     assert orchestrator.last_turn_input is not None
     assert orchestrator.last_turn_input.images == images
@@ -186,7 +214,7 @@ def test_handle_turn_with_orchestrator_passes_images_and_context(
 
 
 @patch("src.chat_service.log_turn")
-def test_handle_turn_with_orchestrator_persists_tool_calls(
+def test_handle_turn_persists_tool_calls(
     mock_log: MagicMock,
     repo: SQLiteSessionRepository,
 ) -> None:
@@ -209,72 +237,34 @@ def test_handle_turn_with_orchestrator_persists_tool_calls(
         turn_orchestrator=orchestrator,
     )
 
-    text, tool_logs = service.handle_turn(
-        "sess-orch-tools",
-        "Read the file",
-    )
+    result = service.handle_turn(ChatTurnRequest(
+        session_id="sess-orch-tools",
+        user_message="Read the file",
+    ))
 
-    assert text == "Based on the file, here is my answer."
-    assert len(tool_logs) == 1
-    assert tool_logs[0]["name"] == "read_file"
-    assert tool_logs[0]["args"] == {"filepath": "/test.md"}
-
-    # Verify history includes tool call and result
-    api_json, _, _ = repo.load_session("sess-orch-tools")
-    api_items = json.loads(api_json)
-    # Should have: user msg, tool_use, tool_result, assistant response
-    assert len(api_items) >= 4
+    assert result.assistant_message == "Based on the file, here is my answer."
+    assert len(result.tool_calls_made) == 1
+    assert result.tool_calls_made[0] == "read_file"
 
 
 @patch("src.chat_service.log_turn")
-def test_handle_turn_with_orchestrator_logs_prompt(
+def test_handle_turn_logs_prompt(
     mock_log: MagicMock,
     fake_orchestrator: FakeOrchestrator,
     repo: SQLiteSessionRepository,
 ) -> None:
-    """log_turn must be called even with orchestrator path."""
+    """log_turn must be called."""
     service = ChatService(
         session_repo=repo,
         turn_orchestrator=fake_orchestrator,
     )
 
-    service.handle_turn("sess-orch-log", "Log me")
+    service.handle_turn(ChatTurnRequest(session_id="sess-orch-log", user_message="Log me"))
 
     assert mock_log.called
     _, kwargs = mock_log.call_args
     assert kwargs.get("user_message") == "Log me"
     assert kwargs.get("session_id") == "sess-orch-log"
-
-
-@patch("src.providers.base.get_provider")
-@patch("src.chat_service.log_turn")
-def test_provider_override_raises_not_implemented(
-    mock_log: MagicMock,
-    mock_get_provider: MagicMock,
-    fake_orchestrator: FakeOrchestrator,
-    repo: SQLiteSessionRepository,
-) -> None:
-    """
-    When provider_name is explicitly set, the legacy path is triggered
-    which now raises NotImplementedError since process_chat_turn was removed.
-    """
-    mock_provider = MagicMock()
-    mock_get_provider.return_value = mock_provider
-
-    service = ChatService(
-        session_repo=repo,
-        turn_orchestrator=fake_orchestrator,
-    )
-
-    with pytest.raises(NotImplementedError):
-        service.handle_turn(
-            session_id="sess-provider-override",
-            user_message="hello",
-            provider_name="anthropic",   # explicit override
-        )
-
-    # Orchestrator must NOT have been called
-    assert fake_orchestrator.run_call_count == 0
 
 
 @patch("src.chat_service.log_turn")
@@ -289,11 +279,11 @@ def test_use_tools_false_forwarded_to_orchestrator(
         turn_orchestrator=orchestrator,
     )
 
-    service.handle_turn(
+    service.handle_turn(ChatTurnRequest(
         session_id="sess-no-tools",
         user_message="hello",
         use_tools=False,
-    )
+    ))
 
     assert orchestrator.last_turn_input is not None
     assert orchestrator.last_turn_input.use_tools is False

@@ -308,7 +308,9 @@ def test_c15_export_uses_persisted_system_prompt(tmp_path: Path) -> None:
     conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     repo = SQLiteSessionRepository(conn)
     _seed(repo, "c15", system_prompt="You are a cabinet specialist.")
-    result = repo.export_session_llm_json("c15")
+    from src.export_service import ExportService
+    svc = ExportService(repo)
+    result = svc.export_llm_json("c15")
     assert result["config"]["system_instruction"] == "You are a cabinet specialist."
 
 
@@ -320,7 +322,9 @@ def test_c16_export_config_instruction_null_when_none_saved(tmp_path: Path) -> N
     conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     repo = SQLiteSessionRepository(conn)
     _seed(repo, "c16", system_prompt=None)
-    result = repo.export_session_llm_json("c16")
+    from src.export_service import ExportService
+    svc = ExportService(repo)
+    result = svc.export_llm_json("c16")
     assert result["config"]["system_instruction"] is None
 
 

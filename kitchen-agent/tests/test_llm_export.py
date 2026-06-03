@@ -43,6 +43,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from src.export_service import ExportService
 from src.exporter import export_session_to_llm_json, _render_llm_turn
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
@@ -327,7 +328,8 @@ def test_t14_repo_export_llm_json_returns_structured_dict(tmp_path: Path) -> Non
     ]
     _seed_session(repo, "repo-1", "Screws Q&A", api_items)
 
-    result = repo.export_session_llm_json("repo-1")
+    svc = ExportService(repo)
+    result = svc.export_llm_json("repo-1")
     assert isinstance(result, dict)
     assert result["metadata"]["session_id"] == "repo-1"
     assert result["metadata"]["title"] == "Screws Q&A"
@@ -341,7 +343,8 @@ def test_t14b_repo_export_llm_json_empty_api_history(tmp_path: Path) -> None:
     repo = SQLiteSessionRepository(conn)
     _seed_session(repo, "repo-empty", "No History", api_items=[])
 
-    result = repo.export_session_llm_json("repo-empty")
+    svc = ExportService(repo)
+    result = svc.export_llm_json("repo-empty")
     assert result["turns"] == []
     assert result["metadata"]["turn_count"] == 0
 
@@ -354,7 +357,7 @@ def test_t15_nonexistent_session_raises_value_error(tmp_path: Path) -> None:
     conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     repo = SQLiteSessionRepository(conn)
     with pytest.raises(ValueError, match="Session not found"):
-        repo.export_session_llm_json("does-not-exist")
+        ExportService(repo).export_llm_json("does-not-exist")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

@@ -35,7 +35,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.prompt_manager import PromptManager, PromptMode
-from src.chat_service import ChatService
+from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.main import app, get_chat_service
 from tests.test_chat_service import FakeOrchestrator
@@ -187,7 +187,7 @@ class TestChatServiceToolsFlag:
             turn_orchestrator=orchestrator,
         )
 
-        svc.handle_turn("s1", "hello")
+        svc.handle_turn(ChatTurnRequest(session_id="s1", user_message="hello"))
 
         assert orchestrator.last_turn_input is not None
         assert orchestrator.last_turn_input.use_tools is True
@@ -203,7 +203,7 @@ class TestChatServiceToolsFlag:
             turn_orchestrator=orchestrator,
         )
 
-        svc.handle_turn("s2", "tell me a joke", use_tools=False)
+        svc.handle_turn(ChatTurnRequest(session_id="s2", user_message="tell me a joke", use_tools=False))
 
         assert orchestrator.last_turn_input is not None
         assert orchestrator.last_turn_input.use_tools is False
@@ -219,7 +219,8 @@ class TestChatServiceToolsFlag:
             turn_orchestrator=orchestrator,
         )
 
-        text, tool_logs = svc.handle_turn("s3", "quick question", use_tools=False)
+        r = svc.handle_turn(ChatTurnRequest(session_id="s3", user_message="quick question", use_tools=False))
+        text, tool_logs = r.assistant_message, r.tool_calls_made
 
         assert text == "direct reply"
         assert tool_logs == []
@@ -235,7 +236,7 @@ class TestChatServiceToolsFlag:
             turn_orchestrator=orchestrator,
         )
 
-        svc.handle_turn("s4", "just chat", use_tools=False)
+        svc.handle_turn(ChatTurnRequest(session_id="s4", user_message="just chat", use_tools=False))
 
         _, ui_json, _ = repo.load_session("s4")
         ui = json.loads(ui_json)
@@ -254,7 +255,7 @@ class TestChatEndpointToolsEnabled:
     def _make_capture_svc(self) -> tuple[MagicMock, callable]:
         """Returns (mock_svc, override_factory) for dependency injection."""
         mock_svc = MagicMock()
-        mock_svc.handle_turn.return_value = ("ok", [])
+        mock_svc.handle_turn.return_value = ChatTurnResponse(session_id="test-session", assistant_message="ok", ui_history=[], tool_calls_made=[])
 
         def override():
             return mock_svc
@@ -287,8 +288,8 @@ class TestChatEndpointToolsEnabled:
         finally:
             app.dependency_overrides.pop(get_chat_service, None)
 
-        kwargs = mock_svc.handle_turn.call_args[1]
-        assert kwargs.get("use_tools") is True
+        req = mock_svc.handle_turn.call_args[0][0]
+        assert req.use_tools is True
 
     def test_endpoint_passes_tools_enabled_false_to_service(self, tmp_path: Path) -> None:
         """When tools_enabled=False is sent, service receives use_tools=False."""
@@ -305,8 +306,8 @@ class TestChatEndpointToolsEnabled:
         finally:
             app.dependency_overrides.pop(get_chat_service, None)
 
-        kwargs = mock_svc.handle_turn.call_args[1]
-        assert kwargs.get("use_tools") is False
+        req = mock_svc.handle_turn.call_args[0][0]
+        assert req.use_tools is False
 
     def test_endpoint_tools_enabled_false_response_has_empty_tool_logs(self) -> None:
         """Response tools_used must be [] when the agent returns no tool logs."""

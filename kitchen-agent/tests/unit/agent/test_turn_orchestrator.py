@@ -291,7 +291,7 @@ class TestSingleToolCall:
         )
 
         assert output.assistant_message == "Here is the file."
-        assert "read_file" in output.tool_calls_made
+        assert any(tc.name == "read_file" for tc in output.tool_calls_made)
 
     def test_tool_call_name_recorded(self):
         tool_call = ToolCall(
@@ -309,7 +309,7 @@ class TestSingleToolCall:
             turn_input=TurnInput(user_message="Echo hi"),
         )
 
-        assert "echo" in output.tool_calls_made
+        assert any(tc.name == "echo" for tc in output.tool_calls_made)
 
     def test_provider_called_twice_for_tool_loop(self):
         tool_call = ToolCall(
@@ -354,8 +354,8 @@ class TestMultipleToolCalls:
             turn_input=TurnInput(user_message="Read and echo"),
         )
 
-        assert "read_file" in output.tool_calls_made
-        assert "echo" in output.tool_calls_made
+        assert any(tc.name == "read_file" for tc in output.tool_calls_made)
+        assert any(tc.name == "echo" for tc in output.tool_calls_made)
         assert len(output.tool_calls_made) == 2
 
     def test_sequential_tool_iterations(self):
@@ -378,8 +378,8 @@ class TestMultipleToolCalls:
 
         assert output.assistant_message == "Final answer."
         assert len(output.tool_calls_made) == 2
-        assert output.tool_calls_made[0] == "read_file"
-        assert output.tool_calls_made[1] == "echo"
+        assert output.tool_calls_made[0].name == "read_file"
+        assert output.tool_calls_made[1].name == "echo"
 
 
 # ---------------------------------------------------------------------------
@@ -550,12 +550,16 @@ class TestTurnOutput:
     def test_fields(self):
         output = TurnOutput(
             assistant_message="Answer.",
-            tool_calls_made=["read_file"],
+            updated_api_history=[],
+            user_turn_id="u1",
+            assistant_turn_id="a1",
+            tool_calls_made=[ToolCall(id="c1", name="read_file", arguments={})],
+            tool_logs=[{"name": "read_file", "args": {}, "result": {}}],
             tokens_used={"input": 10, "output": 5, "total": 15},
             context_slots={ContextSlot.SYSTEM_PROMPT: 20},
         )
         assert output.assistant_message == "Answer."
-        assert "read_file" in output.tool_calls_made
+        assert any(tc.name == "read_file" for tc in output.tool_calls_made)
         assert output.tokens_used["total"] == 15
 
 
@@ -601,7 +605,7 @@ class TestToolErrorInLoop:
 
         # The error was fed to the LLM and it responded
         assert output.assistant_message == "I couldn't read the file."
-        assert "nonexistent" in output.tool_calls_made
+        assert any(tc.name == "nonexistent" for tc in output.tool_calls_made)
 
 
 # ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 import src.main as main_module
 from src import config as config_module
 from src.main import app, get_chat_service, get_prompt_manager
+from src.chat_service import ChatTurnResponse
 from src.prompt_manager import PromptManager, PromptMode
 
 
@@ -48,7 +49,7 @@ def _make_prompt_manager(tmp_path: Path) -> PromptManager:
 def _stub_chat_service(text: str = "ok", tools: list | None = None):
     """Returns a FastAPI dependency override that yields a stubbed ChatService."""
     svc = MagicMock()
-    svc.handle_turn.return_value = (text, tools or [])
+    svc.handle_turn.return_value = ChatTurnResponse(session_id="test-session", assistant_message=text, ui_history=[], tool_calls_made=tools or [])
     return lambda: svc
 
 
@@ -266,9 +267,9 @@ def test_chat_with_mode_id_resolves_instruction(tmp_path: Path, monkeypatch) -> 
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()
@@ -294,9 +295,9 @@ def test_chat_mode_id_defaults_to_general(tmp_path: Path, monkeypatch) -> None:
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()
@@ -319,9 +320,9 @@ def test_chat_unknown_mode_id_falls_back_to_base(tmp_path: Path, monkeypatch) ->
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()
@@ -345,9 +346,9 @@ def test_chat_assembly_mode_resolves_correctly(tmp_path: Path, monkeypatch) -> N
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()
@@ -371,9 +372,9 @@ def test_chat_legacy_system_prompt_still_accepted(tmp_path: Path, monkeypatch) -
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()
@@ -397,9 +398,9 @@ def test_chat_system_prompt_overrides_mode_id(tmp_path: Path, monkeypatch) -> No
     captured: dict = {}
 
     class CaptureSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"user_message": request.user_message, "system_prompt": request.system_prompt, "mode": request.mode, "use_tools": request.use_tools})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_prompt_manager] = lambda: pm
     app.dependency_overrides[get_chat_service] = lambda: CaptureSvc()

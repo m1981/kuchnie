@@ -41,7 +41,7 @@ import src.main
 from src import config
 from src.main import app, get_session_repo, get_chat_service
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
-from src.chat_service import ChatService
+from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 from tests.test_chat_service import FakeOrchestrator
 
 
@@ -122,14 +122,14 @@ class TestContextFilePathResolution:
 
         captured: list[list[str] | None] = []
 
-        def fake_handle_turn(**kwargs):
-            captured.append(kwargs.get("context_files"))
-            return "ok", []
+        def fake_handle_turn(request):
+            captured.append(request.context_files)
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[])
 
-        from src.chat_service import ChatService
+        from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 
         svc = MagicMock(spec=ChatService)
-        svc.handle_turn.side_effect = lambda **kw: (captured.append(kw.get("context_files")), ("ok", []))[1]
+        svc.handle_turn.side_effect = lambda req: (captured.append(req.context_files), ChatTurnResponse(session_id=req.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[]))[1]
 
         monkeypatch.setattr(src.main.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
@@ -140,9 +140,9 @@ class TestContextFilePathResolution:
 
         forwarded: list[str] = []
 
-        def recording_handle_turn(**kwargs):
-            forwarded.extend(kwargs.get("context_files") or [])
-            return "ok", []
+        def recording_handle_turn(request):
+            forwarded.extend(request.context_files or [])
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[])
 
         real_svc.handle_turn = recording_handle_turn  # type: ignore[method-assign]
 
@@ -184,9 +184,9 @@ class TestContextFilePathResolution:
 
         forwarded: list[str] = []
 
-        def recording_handle_turn(**kwargs):
-            forwarded.extend(kwargs.get("context_files") or [])
-            return "ok", []
+        def recording_handle_turn(request):
+            forwarded.extend(request.context_files or [])
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[])
 
         real_svc.handle_turn = recording_handle_turn  # type: ignore[method-assign]
 
@@ -224,9 +224,9 @@ class TestContextFilePathResolution:
 
         forwarded: list = []
 
-        def recording_handle_turn(**kwargs):
-            forwarded.append(kwargs.get("context_files"))
-            return "ok", []
+        def recording_handle_turn(request):
+            forwarded.append(request.context_files)
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[])
 
         real_svc.handle_turn = recording_handle_turn  # type: ignore[method-assign]
 
@@ -262,9 +262,9 @@ class TestContextFilePathResolution:
 
         forwarded: list = []
 
-        def recording_handle_turn(**kwargs):
-            forwarded.append(kwargs.get("context_files"))
-            return "ok", []
+        def recording_handle_turn(request):
+            forwarded.append(request.context_files)
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[])
 
         real_svc.handle_turn = recording_handle_turn  # type: ignore[method-assign]
 

@@ -20,7 +20,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
-from src.chat_service import ChatService
+from src.chat_service import ChatService, ChatTurnRequest
 from src.config import settings
 from src.message_editor import MessageEditService, EditError
 from src.prompt_manager import PromptManager, prompt_manager as _default_prompt_manager
@@ -165,6 +165,13 @@ def get_chat_service(
         session_repo=session_repo,
         turn_orchestrator=orchestrator,
     )
+
+
+def get_export_service(
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> "ExportService":
+    from src.export_service import ExportService
+    return ExportService(session_repo=session_repo)
 
 
 def get_prompt_manager() -> PromptManager:
@@ -329,7 +336,7 @@ def get_session(
 @app.get("/api/sessions/{session_id}/export", response_class=PlainTextResponse)
 def export_session(
     session_id: str,
-    session_repo: SessionRepository = Depends(get_session_repo),
+    export_service: "ExportService" = Depends(get_export_service),
 ) -> PlainTextResponse:
     """
     Exports the session as a human-readable Markdown document.
@@ -338,7 +345,7 @@ def export_session(
     Suitable for archiving, sharing or reading.
     """
     try:
-        markdown = session_repo.export_session(session_id)
+        markdown = export_service.export_markdown(session_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return PlainTextResponse(content=markdown, media_type="text/markdown")
@@ -359,7 +366,7 @@ def export_session(
 )
 def export_session_llm(
     session_id: str,
-    session_repo: SessionRepository = Depends(get_session_repo),
+    export_service: "ExportService" = Depends(get_export_service),
 ) -> LlmExportResponse:
     """
     F04 — LLM-context debug export with GenerateContentConfig envelope.
@@ -369,7 +376,7 @@ def export_session_llm(
       404 — session not found
     """
     try:
-        data = session_repo.export_session_llm_json(session_id)
+        data = export_service.export_llm_json(session_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -1053,43 +1060,29 @@ async def chat(
     # needs "data/file.md" (or the absolute path).
     resolved_context_files = _resolve_context_file_paths(request.context_files)
 
-    # Validate the requested provider early so we can return HTTP 400
-    # (bad request) rather than 500 (server error) for unknown names.
-    if request.provider is not None and request.provider not in _PROVIDER_MAP:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Unknown provider: '{request.provider}'. "
-                f"Supported: {sorted(_PROVIDER_MAP.keys())}"
-            ),
-        )
-
     loop = asyncio.get_event_loop()
 
+    # Build ChatTurnRequest — provider/model selection is in DI layer
+    chat_request = ChatTurnRequest(
+        session_id=request.session_id,
+        user_message=request.message,
+        system_prompt=system_instruction,
+        images=[img.model_dump() for img in request.images] if request.images else [],
+        context_files=resolved_context_files,
+        mode=request.mode_id or "default",
+        use_tools=use_tools,
+    )
+
     try:
-        final_text, tool_logs = await loop.run_in_executor(
+        result = await loop.run_in_executor(
             None,
-            partial(
-                service.handle_turn,
-                session_id=request.session_id,
-                user_message=request.message,
-                system_prompt=system_instruction,
-                images=(
-                    [img.model_dump() for img in request.images]
-                    if request.images
-                    else None
-                ),
-                context_files=resolved_context_files,
-                provider_name=request.provider,
-                model_override=request.model,
-                use_tools=use_tools,
-            ),
+            partial(service.handle_turn, chat_request),
         )
     except Exception as exc:
         logger.exception("agent_error", session_id=request.session_id[:8], error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return ChatResponse(text=final_text, tools_used=tool_logs)
+    return ChatResponse(text=result.assistant_message, tools_used=result.tool_calls_made)
 
 
 # ---------------------------------------------------------------------------

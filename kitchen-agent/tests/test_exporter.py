@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from src.export_service import ExportService
 from src.exporter import export_session_to_markdown, _render_message
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 
@@ -143,7 +144,8 @@ def test_db_export_session_returns_markdown(tmp_path: Path) -> None:
     conn = SQLiteConnection(db_path=str(tmp_path / "test_chats.db"))
     repo = SQLiteSessionRepository(conn)
     session_id = _seed(repo)
-    result = repo.export_session(session_id)
+    svc = ExportService(repo)
+    result = svc.export_markdown(session_id)
     assert isinstance(result, str)
     assert "# Export Test" in result
     assert "## User" in result
@@ -156,7 +158,7 @@ def test_db_export_nonexistent_session_raises(tmp_path: Path) -> None:
     conn = SQLiteConnection(db_path=str(tmp_path / "test_chats.db"))
     repo = SQLiteSessionRepository(conn)
     with pytest.raises(ValueError):
-        repo.export_session("does-not-exist")
+        ExportService(repo).export_markdown("does-not-exist")
 
 
 def test_db_export_empty_session(tmp_path: Path) -> None:
@@ -168,5 +170,6 @@ def test_db_export_empty_session(tmp_path: Path) -> None:
         api_history_json="[]",
         ui_history_json="[]",
     )
-    result = repo.export_session("empty-1")
+    svc = ExportService(repo)
+    result = svc.export_markdown("empty-1")
     assert "# Empty One" in result

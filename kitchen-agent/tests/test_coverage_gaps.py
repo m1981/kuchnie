@@ -33,7 +33,6 @@ import pytest
 from fastapi.testclient import TestClient
 from google.genai import types
 
-from src.chat_service import _build_turn_ids_for_history
 from src.logger import setup_logging
 from src.message_editor import EditError, MessageEditService, _require_turn_id
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
@@ -66,77 +65,6 @@ class TestSetupLoggingJsonPath:
         setup_logging(is_local_dev=True)
         # basicConfig is idempotent; root level stays at whatever was set first
         assert logging.getLogger().level <= logging.WARNING
-
-
-# ===========================================================================
-# 2. chat_service.py — _build_turn_ids with pre-existing items  [lines 134-139]
-# ===========================================================================
-
-class TestBuildTurnIds:
-    def test_empty_existing_ids(self):
-        """With no pre-existing items, all new items get the right ids."""
-        history_after = [MagicMock(), MagicMock(), MagicMock()]  # 3 new items
-        result = _build_turn_ids_for_history(
-            existing_turn_ids=[],
-            history_before_len=0,
-            history_after=history_after,
-            user_turn_id="user-uid",
-            assistant_turn_id="asst-uid",
-        )
-        assert result[0] == "user-uid"
-        assert result[1] == "asst-uid"
-        assert result[2] == "asst-uid"
-
-    def test_preserves_existing_ids(self):
-        """Pre-existing turn_ids must be carried through unchanged."""
-        history_after = [MagicMock(), MagicMock(), MagicMock()]  # item 0 existed, 1+2 new
-        result = _build_turn_ids_for_history(
-            existing_turn_ids=["old-id"],
-            history_before_len=1,
-            history_after=history_after,
-            user_turn_id="user-uid",
-            assistant_turn_id="asst-uid",
-        )
-        assert result[0] == "old-id"   # preserved
-        assert result[1] == "user-uid"
-        assert result[2] == "asst-uid"
-
-    def test_length_matches_history_after(self):
-        """Returned list must always be len(history_after)."""
-        history_after = [MagicMock() for _ in range(5)]
-        result = _build_turn_ids_for_history(
-            existing_turn_ids=["a", "b"],
-            history_before_len=2,
-            history_after=history_after,
-            user_turn_id="u",
-            assistant_turn_id="a",
-        )
-        assert len(result) == len(history_after)
-
-    def test_no_new_items_returns_existing(self):
-        """When history did not grow, no ids are appended."""
-        history_after = [MagicMock()]
-        result = _build_turn_ids_for_history(
-            existing_turn_ids=["old"],
-            history_before_len=1,   # same as len(history_after)
-            history_after=history_after,
-            user_turn_id="u",
-            assistant_turn_id="a",
-        )
-        assert result == ["old"]
-
-    def test_none_values_in_existing_ids_preserved(self):
-        """Legacy None values in existing_turn_ids must survive intact."""
-        history_after = [MagicMock(), MagicMock()]
-        result = _build_turn_ids_for_history(
-            existing_turn_ids=[None],
-            history_before_len=1,
-            history_after=history_after,
-            user_turn_id="u",
-            assistant_turn_id="a",
-        )
-        assert result[0] is None
-        assert result[1] == "u"
 
 
 # ===========================================================================

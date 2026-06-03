@@ -46,6 +46,7 @@ Public API
 """
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -86,13 +87,18 @@ class ToolCallDetail:
 
 @dataclass
 class TurnOutput:
-    """The orchestrator's result — what ChatService receives."""
-
+    """
+    Everything produced by one complete turn execution.
+    ChatService reads this — nothing else should need to.
+    """
     assistant_message: str
-    tool_calls_made: list[str]
-    tokens_used: dict  # {input, output, total}
-    context_slots: dict  # observability: which slots consumed tokens
-    tool_details: list[ToolCallDetail] = field(default_factory=list)
+    updated_api_history: list          # full history after turn, ready to persist
+    user_turn_id: str                  # stable ID for the user message
+    assistant_turn_id: str             # stable ID for the assistant message
+    tool_calls_made: list[ToolCall]    # all tool calls in execution order
+    tool_logs: list[dict]              # serializable tool log for UI + PromptLogger
+    tokens_used: dict                  # {input, output, total} from provider
+    context_slots: dict = field(default_factory=dict)  # observability
 
 
 
@@ -220,10 +226,61 @@ class TurnOrchestrator:
             normalized = self._normalizer.normalize(raw_response, self._provider_name)
 
         # 4. Build output
+        # Build tool_logs (serializable) and tool_calls_made (ToolCall list)
+        tool_calls_made_objects: list[ToolCall] = []
+        tool_logs: list[dict] = []
+        for detail in tool_details:
+            tool_calls_made_objects.append(
+                ToolCall(id=detail.id, name=detail.name, arguments=detail.arguments)
+            )
+            tool_logs.append({
+                "name": detail.name,
+                "args": detail.arguments,
+                "result": ({"content": detail.result_content}
+                           if not detail.is_error
+                           else {"error": detail.result_content}),
+            })
+
+        # Build updated_api_history from session messages + new turns
+        updated_api_history: list = list(session.get("messages", []))
+        # User message
+        updated_api_history.append({"role": "user", "content": turn_input.user_message})
+        # Tool call/response pairs
+        for detail in tool_details:
+            updated_api_history.append({
+                "role": "assistant",
+                "content": [{
+                    "type": "tool_use",
+                    "id": detail.id,
+                    "name": detail.name,
+                    "input": detail.arguments,
+                }]
+            })
+            updated_api_history.append({
+                "role": "user",
+                "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": detail.id,
+                    "content": detail.result_content,
+                }]
+            })
+        # Assistant response
+        updated_api_history.append({
+            "role": "assistant",
+            "content": [{"type": "text", "text": normalized.text}],
+        })
+
+        # Generate stable turn IDs
+        user_turn_id = str(uuid.uuid4())
+        assistant_turn_id = str(uuid.uuid4())
+
         return TurnOutput(
             assistant_message=normalized.text,
-            tool_calls_made=tool_calls_made,
+            updated_api_history=updated_api_history,
+            user_turn_id=user_turn_id,
+            assistant_turn_id=assistant_turn_id,
+            tool_calls_made=tool_calls_made_objects,
+            tool_logs=tool_logs,
             tokens_used=normalized.usage,
             context_slots=context.slots_used,
-            tool_details=tool_details,
         )

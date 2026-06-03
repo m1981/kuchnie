@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from src.config import settings
-from src.exporter import export_session_to_llm_json, export_session_to_markdown
 
 LEGACY_FORK_TITLE_RE = re.compile(r"^(?P<parent_title>.+) \(fork @ turn (?P<turn>\d+)\)$")
 
@@ -42,8 +41,8 @@ class SessionRepository(Protocol):
     def unarchive_session(self, session_id: str) -> bool: ...
     def delete_session(self, session_id: str) -> None: ...
     def fork_session(self, source_session_id: str, turn_index: int) -> str: ...
-    def export_session(self, session_id: str) -> str: ...
-    def export_session_llm_json(self, session_id: str) -> dict[str, Any]: ...
+    def get_export_data(self, session_id: str) -> dict: ...
+    # export_session and export_session_llm_json removed — ExportService owns formatting
 
 
 class NoteRepository(Protocol):
@@ -313,62 +312,33 @@ class SQLiteSessionRepository:
         )
         return new_id
 
-    def export_session(self, session_id: str) -> str:
-        """Exports the session as a human-readable Markdown document."""
+    def get_export_data(self, session_id: str) -> dict:
+        """
+        Return raw session data needed for export.
+        Formatting is ExportService's responsibility, not ours.
+        """
         with self.db.get_connection() as conn:
             row = conn.execute(
-                "SELECT title, ui_history_json FROM sessions WHERE id = ?",
+                """
+                SELECT id, title, api_history_json, ui_history_json,
+                       system_prompt, updated_at
+                FROM sessions
+                WHERE id = ?
+                """,
                 (session_id,),
             ).fetchone()
 
         if row is None:
-            raise ValueError(f"Session not found: {session_id}")
+            raise ValueError(f"Session not found: {session_id!r}")
 
-        title: str = row["title"] or ""
-        ui_messages: list[dict] = json.loads(row["ui_history_json"]) if row["ui_history_json"] else []
-        return export_session_to_markdown(ui_messages, title)
-
-    def export_session_llm_json(self, session_id: str) -> dict[str, Any]:
-        """
-        Exports the complete LLM call context as a structured JSON document.
-
-        Returns the ``api_history_json`` in a debug-friendly format that mirrors
-        exactly what the Gemini model receives: the ``GenerateContentConfig``
-        envelope (model, temperature, system_instruction, tool schemas) followed
-        by every Content turn.
-
-        Key order in returned dict: ``metadata`` → ``config`` → ``turns``
-
-        Args:
-            session_id: The session UUID to export.
-
-        Returns:
-            A dict with ``metadata``, ``config``, and ``turns`` keys.
-
-        Raises:
-            ValueError: When the session does not exist.
-        """
-        with self.db.get_connection() as conn:
-            row = conn.execute(
-                "SELECT title, api_history_json, system_prompt "
-                "FROM sessions WHERE id = ?",
-                (session_id,),
-            ).fetchone()
-
-        if row is None:
-            raise ValueError(f"Session not found: {session_id}")
-
-        title: str = row["title"] or ""
-        raw_json: str = row["api_history_json"] or "[]"
-        api_items: list[dict] = json.loads(raw_json) if raw_json.strip() else []
-        system_prompt: str | None = row["system_prompt"]
-
-        return export_session_to_llm_json(
-            api_items=api_items,
-            title=title,
-            session_id=session_id,
-            system_instruction=system_prompt,
-        )
+        return {
+            "session_id":      row["id"],
+            "title":           row["title"],
+            "api_history":     row["api_history_json"],
+            "ui_history":      row["ui_history_json"],
+            "system_prompt":   row["system_prompt"],
+            "updated_at":      row["updated_at"],
+        }
 
 
 class SQLiteNoteRepository:

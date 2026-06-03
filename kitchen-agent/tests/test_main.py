@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 import src.main
 from src import config
-from src.chat_service import ChatService
+from src.chat_service import ChatService, ChatTurnResponse
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.main import app, get_session_repo, get_chat_service
 from src.main import _resolve_data_path
@@ -299,7 +299,7 @@ def test_repo_map_error_branch(client: TestClient, monkeypatch) -> None:
 
 def _chat_override(text: str = "Great answer", tools: list | None = None):
     svc = MagicMock(spec=ChatService)
-    svc.handle_turn.return_value = (text, tools or [])
+    svc.handle_turn.return_value = ChatTurnResponse(session_id="s1", assistant_message=text, ui_history=[], tool_calls_made=tools or [])
     return lambda: svc
 
 
@@ -337,9 +337,9 @@ def test_chat_with_images_and_context(tmp_path: Path, monkeypatch) -> None:
     captured: dict = {}
 
     class CapturingSvc:
-        def handle_turn(self, **kwargs):
-            captured.update(kwargs)
-            return ("done", [])
+        def handle_turn(self, request):
+            captured.update({"images": request.images, "context_files": request.context_files})
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
 
     app.dependency_overrides[get_chat_service] = lambda: CapturingSvc()
     try:
