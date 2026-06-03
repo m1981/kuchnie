@@ -144,6 +144,7 @@ class TurnOrchestrator:
         response_normalizer: ResponseNormalizer,
         provider_name: str = "gemini",
         max_tool_iterations: int = 10,
+        tool_registry: Any | None = None,
     ) -> None:
         self._ctx = context_assembler
         self._tools = tool_executor
@@ -151,6 +152,7 @@ class TurnOrchestrator:
         self._normalizer = response_normalizer
         self._provider_name = provider_name
         self._max_tool_iterations = max_tool_iterations
+        self._tool_registry = tool_registry
 
     def run(
         self,
@@ -188,6 +190,15 @@ class TurnOrchestrator:
         # so providers can access them via the LLMProvider interface.
         context.images = turn_input.images or []
         context.context_files = turn_input.context_files or []
+
+        # Inject tool schemas from registry
+        # Schemas are provider-specific format (dicts).
+        # ContextAssembler does not know about providers,
+        # so TurnOrchestrator bridges them here.
+        if self._tool_registry is not None and turn_input.use_tools:
+            context.tool_schemas = self._tool_registry.schemas_for_provider(
+                provider=self._provider_name,
+            )
 
         # 2. Call LLM
         raw_response = self._provider.complete(context)

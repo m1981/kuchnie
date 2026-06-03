@@ -58,7 +58,6 @@ from pydantic import BaseModel
 
 from src.config import settings
 from src.serializers import hydrate_history
-from src.tools.file_ops import read_file
 
 load_dotenv()
 
@@ -168,34 +167,23 @@ def estimate_tokens_for_image(b64_data: str, mime_type: str) -> int:
     return tiles * _TILE_TOKENS
 
 
-def estimate_tokens_for_context_files(context_files: list[str]) -> int:
+def estimate_tokens_for_context_files(file_contents: list[str]) -> int:
     """
-    Sum the heuristic token estimate for all context files.
-
-    Files that cannot be read are silently counted as 0 (a warning is logged).
-    This mirrors the behaviour of the agent itself which skips unreadable files.
+    Estimate token count for a list of already-read file contents.
 
     Args:
-        context_files: List of file paths to read (same paths the agent uses).
+        file_contents: List of file content strings.
+                       Caller is responsible for reading files.
+                       Empty list returns 0.
 
     Returns:
         Integer sum of token estimates across all files.
     """
-    if not context_files:
-        return 0
-
-    total = 0
-    for fp in context_files:
-        result = read_file(fp)
-        if "content" in result:
-            total += estimate_tokens_for_text(result["content"])
-        else:
-            logger.warning(
-                "token_counter: context file not readable: %s — %s",
-                fp,
-                result.get("error"),
-            )
-    return total
+    return sum(
+        estimate_tokens_for_text(content)
+        for content in file_contents
+        if content
+    )
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -205,7 +193,7 @@ def estimate_tokens_for_context_files(context_files: list[str]) -> int:
 def build_pending_context_estimate(
     user_message: str,
     images: list[dict] | None,
-    context_files: list[str] | None,
+    context_file_contents: list[str] | None,
     system_prompt: str | None,
     history_token_count: int,
 ) -> TokenEstimate:
@@ -218,14 +206,12 @@ def build_pending_context_estimate(
     Send.  ``fallback_used`` is always ``True``.
 
     Args:
-        user_message:       The text the user is about to send.
-        images:             List of ``{"mime_type": ..., "data": ...}`` dicts.
-        context_files:      File paths attached as context (same list the agent
-                            receives after path resolution in main.py).
-        system_prompt:      The system instruction, if any.
-        history_token_count:Token count of the conversation so far (caller
-                            supplies this — typically from a prior
-                            ``count_session_tokens`` call or cached value).
+        user_message:          The text the user is about to send.
+        images:                List of ``{"mime_type": ..., "data": ...}`` dicts.
+        context_file_contents: Already-read file contents as strings.
+                               Caller reads files; we only count.
+        system_prompt:         The system instruction, if any.
+        history_token_count:   Token count of the conversation so far.
 
     Returns:
         ``TokenEstimate`` with all fields populated and ``fallback_used=True``.
@@ -239,7 +225,9 @@ def build_pending_context_estimate(
                 img.get("data", ""), img.get("mime_type", "image/jpeg")
             )
 
-    context_file_tokens = estimate_tokens_for_context_files(context_files or [])
+    context_file_tokens = estimate_tokens_for_context_files(
+        context_file_contents or []
+    )
 
     system_prompt_tokens = (
         estimate_tokens_for_text(system_prompt) if system_prompt else 0
@@ -372,3 +360,47 @@ def count_session_tokens(
         total_tokens=heuristic_total,
         fallback_used=True,
     )
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Class wrapper for dependency injection
+# ════════════════════════════════════════════════════════════════════════════
+
+class TokenCounter:
+    """
+    Thin class wrapper around module-level token functions.
+    Satisfies TokenCounterProtocol for dependency injection.
+    """
+
+    def count(self, text: str) -> int:
+        return estimate_tokens_for_text(text)
+
+    def count_message(self, message: dict) -> int:
+        content = message.get("content", "")
+        if isinstance(content, str):
+            return estimate_tokens_for_text(content)
+        if isinstance(content, list):
+            total = 0
+            for part in content:
+                if isinstance(part, dict):
+                    if part.get("type") == "text":
+                        total += estimate_tokens_for_text(part.get("text", ""))
+                    elif part.get("type") == "image":
+                        total += estimate_tokens_for_image(
+                            part.get("b64_data", ""),
+                            part.get("mime_type", "image/jpeg"),
+                        )
+            return total
+        return 0
+
+    def trim_to(self, text: str, max_tokens: int) -> str:
+        """
+        Trim text to approximately max_tokens.
+        Uses character ratio as a fast approximation.
+        """
+        current = estimate_tokens_for_text(text)
+        if current <= max_tokens:
+            return text
+        ratio = max_tokens / max(current, 1)
+        char_limit = int(len(text) * ratio)
+        return text[:char_limit]

@@ -179,7 +179,7 @@ class TestTokensEstimateRoute:
         assert resp_img.json()["image_tokens"] > 0
         assert resp_img.json()["total_tokens"] > resp_text.json()["total_tokens"]
 
-    @patch("src.token_counter.read_file")
+    @patch("src.main.read_file")
     def test_with_context_files_increases_token_count(self, mock_rf: MagicMock) -> None:
         mock_rf.return_value = {"content": "Wood 18mm plywood " * 80}
         client = TestClient(app)

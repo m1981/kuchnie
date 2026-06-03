@@ -182,35 +182,21 @@ class TestEstimateTokensForImage:
 # ════════════════════════════════════════════════════════════════════════════
 
 class TestEstimateTokensForContextFiles:
-    @patch("src.token_counter.read_file")
-    def test_empty_list_returns_zero(self, mock_rf: MagicMock) -> None:  # TC-08
+    def test_empty_list_returns_zero(self) -> None:  # TC-08
         result = estimate_tokens_for_context_files([])
         assert result == 0
-        mock_rf.assert_not_called()
 
-    @patch("src.token_counter.read_file")
-    def test_single_readable_file(self, mock_rf: MagicMock) -> None:  # TC-09
+    def test_single_readable_file(self) -> None:  # TC-09
         content = "a" * 400  # ~100 tokens
-        mock_rf.return_value = {"content": content}
-
-        result = estimate_tokens_for_context_files(["data/file.md"])
-
-        mock_rf.assert_called_once_with("data/file.md")
+        result = estimate_tokens_for_context_files([content])
         assert 80 <= result <= 120
 
-    @patch("src.token_counter.read_file")
-    def test_unreadable_file_counted_as_zero(self, mock_rf: MagicMock) -> None:  # TC-10
-        mock_rf.return_value = {"error": "not found"}
-        result = estimate_tokens_for_context_files(["missing.md"])
-        assert result == 0  # no raise, just 0
+    def test_empty_string_counted_as_zero(self) -> None:  # TC-10
+        result = estimate_tokens_for_context_files([""])
+        assert result == 0
 
-    @patch("src.token_counter.read_file")
-    def test_multiple_files_summed(self, mock_rf: MagicMock) -> None:  # TC-11
-        mock_rf.side_effect = [
-            {"content": "a" * 400},   # ~100 tokens
-            {"content": "b" * 400},   # ~100 tokens
-        ]
-        result = estimate_tokens_for_context_files(["a.md", "b.md"])
+    def test_multiple_files_summed(self) -> None:  # TC-11
+        result = estimate_tokens_for_context_files(["a" * 400, "b" * 400])
         assert 160 <= result <= 240  # both files summed
 
 
@@ -229,7 +215,7 @@ class TestBuildPendingContextEstimate:
         est = build_pending_context_estimate(
             user_message="hello",
             images=None,
-            context_files=None,
+            context_file_contents=None,
             system_prompt=None,
             history_token_count=0,
         )
@@ -252,35 +238,30 @@ class TestBuildPendingContextEstimate:
         est = build_pending_context_estimate(
             user_message="look at this",
             images=images,
-            context_files=None,
+            context_file_contents=None,
             system_prompt=None,
             history_token_count=0,
         )
         assert est.image_tokens > 0
         assert est.total_tokens > est.text_tokens
 
-    @patch("src.token_counter.read_file")
-    def test_message_plus_context_files(self, mock_rf: MagicMock) -> None:  # TC-14
-        mock_rf.return_value = {"content": "wood 18mm birch " * 50}
-
+    def test_message_plus_context_files(self) -> None:  # TC-14
         est = build_pending_context_estimate(
             user_message="check materials",
             images=None,
-            context_files=["data/materials.md"],
+            context_file_contents=["wood 18mm birch " * 50],
             system_prompt=None,
             history_token_count=0,
         )
         assert est.context_file_tokens > 0
 
-    @patch("src.token_counter.read_file")
-    def test_all_components_combined(self, mock_rf: MagicMock) -> None:  # TC-15
-        mock_rf.return_value = {"content": "content " * 100}
+    def test_all_components_combined(self) -> None:  # TC-15
         b64 = base64.b64encode(b"\x89PNG" + b"\x00" * 1000).decode()
 
         est = build_pending_context_estimate(
             user_message="full context",
             images=[{"mime_type": "image/png", "data": b64}],
-            context_files=["data/f.md"],
+            context_file_contents=["content " * 100],
             system_prompt="You are a helpful assistant.",
             history_token_count=500,
         )
@@ -297,13 +278,13 @@ class TestBuildPendingContextEstimate:
     def test_system_prompt_adds_to_total(self) -> None:  # TC-16
         est_without = build_pending_context_estimate(
             user_message="hi",
-            images=None, context_files=None,
+            images=None, context_file_contents=None,
             system_prompt=None,
             history_token_count=0,
         )
         est_with = build_pending_context_estimate(
             user_message="hi",
-            images=None, context_files=None,
+            images=None, context_file_contents=None,
             system_prompt="You are a stoic carpenter with 30 years experience.",
             history_token_count=0,
         )
@@ -313,7 +294,7 @@ class TestBuildPendingContextEstimate:
     def test_history_token_count_forwarded(self) -> None:  # TC-17
         est = build_pending_context_estimate(
             user_message="hi",
-            images=None, context_files=None,
+            images=None, context_file_contents=None,
             system_prompt=None,
             history_token_count=1234,
         )

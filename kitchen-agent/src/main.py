@@ -23,10 +23,19 @@ from fastapi.responses import PlainTextResponse
 from src.chat_service import ChatService, ChatTurnRequest
 from src.config import settings
 from src.message_editor import MessageEditService, EditError
-from src.prompt_manager import PromptManager, prompt_manager as _default_prompt_manager
-from src.tools.file_ops import append_to_file, revert_backup
+from src.tools.file_ops import append_to_file, read_file, revert_backup
 from src.tools.repo_map import get_repo_map
 from src.logger import setup_logging
+from src.dependencies import (
+    get_session_repo,
+    get_note_repo,
+    get_chat_service,
+    get_export_service,
+    get_prompt_manager,
+    get_turn_orchestrator,
+    get_message_editor,
+    get_tool_registry,
+)
 
 # --- Clean imports for Schemas and Repositories ---
 from src.schemas import (
@@ -49,12 +58,12 @@ from src.token_counter import (
     count_session_tokens,
     build_pending_context_estimate,
 )
+from src.export_service import ExportService
+from src.prompt_manager import PromptManager
 from src.repositories import (
-    SQLiteConnection,
     SQLiteSessionRepository,
-    SQLiteNoteRepository,
     SessionRepository,
-    NoteRepository
+    NoteRepository,
 )
 
 # Initialize structured logging
@@ -81,114 +90,8 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # Dependency injection
 # ---------------------------------------------------------------------------
-
-# Singleton connection manager for the app lifecycle
-db_connection = SQLiteConnection()
-
-
-def get_session_repo() -> SessionRepository:
-    """FastAPI dependency: returns the Session Repository."""
-    return SQLiteSessionRepository(db_connection)
-
-
-def get_note_repo() -> NoteRepository:
-    """FastAPI dependency: returns the Note Repository."""
-    return SQLiteNoteRepository(db_connection)
-
-
-def get_turn_orchestrator() -> "TurnOrchestrator | None":
-    """
-    FastAPI dependency: returns a TurnOrchestrator wired to default provider.
-
-    The TurnOrchestrator manages the agentic loop (context assembly → LLM call
-    → tool loop → response normalization).  It replaces the inline loop that
-    was previously embedded in each provider's ``process_chat_turn`` method.
-
-    Raises RuntimeError when the provider cannot be created (e.g. missing API key).
-    """
-    try:
-        from src.providers.base import get_provider
-        provider = get_provider()
-    except Exception as exc:
-        import structlog
-        _log = structlog.get_logger(__name__)
-        _log.error(
-            "turn_orchestrator_build_failed",
-            error=str(exc),
-            error_type=type(exc).__name__,
-        )
-        raise RuntimeError(
-            f"Cannot build TurnOrchestrator: {exc}"
-        ) from exc
-
-    from src.agent.turn_orchestrator import TurnOrchestrator
-    from src.agent.context_assembler import ContextAssembler, ContextBudget
-    from src.agent.tool_executor import ToolExecutor
-    from src.providers.normalizer import ResponseNormalizer
-    from src.tools.registry import build_default_registry
-
-    registry = build_default_registry()
-
-    # Token counter adapter for ContextAssembler
-    class _TokenCounter:
-        def count(self, text: str) -> int:
-            return max(1, len(text) // 4)
-
-        def count_message(self, message: dict) -> int:
-            content = message.get("content", "")
-            return self.count(str(content))
-
-        def trim_to(self, text: str, max_tokens: int) -> str:
-            return text[:max_tokens * 4]
-
-    assembler = ContextAssembler(
-        token_budget=ContextBudget(),
-        token_counter=_TokenCounter(),
-        prompt_manager=_default_prompt_manager,
-    )
-
-    return TurnOrchestrator(
-        context_assembler=assembler,
-        tool_executor=ToolExecutor(registry=registry),
-        provider=provider,
-        response_normalizer=ResponseNormalizer(),
-        provider_name=settings.llm_provider,
-    )
-
-
-def get_chat_service(
-    session_repo: SessionRepository = Depends(get_session_repo),
-    orchestrator: "TurnOrchestrator" = Depends(get_turn_orchestrator),
-) -> ChatService:
-    """FastAPI dependency: returns a ChatService wired to the Session Repo and TurnOrchestrator."""
-    return ChatService(
-        session_repo=session_repo,
-        turn_orchestrator=orchestrator,
-    )
-
-
-def get_export_service(
-    session_repo: SessionRepository = Depends(get_session_repo),
-) -> "ExportService":
-    from src.export_service import ExportService
-    return ExportService(session_repo=session_repo)
-
-
-def get_prompt_manager() -> PromptManager:
-    """
-    FastAPI dependency: returns the module-level PromptManager singleton.
-
-    Isolated via ``app.dependency_overrides`` in tests so no real disk I/O
-    occurs during the test suite.
-    """
-    return _default_prompt_manager
-
-
-def get_message_editor(
-    session_repo: SessionRepository = Depends(get_session_repo),
-) -> MessageEditService:
-    """FastAPI dependency: returns a MessageEditService wired to the Session Repo."""
-    return MessageEditService(session_repo)
+# All get_* dependency functions are in src/dependencies.py
+# Imported above via: from src.dependencies import ...
 
 
 # ---------------------------------------------------------------------------
@@ -1157,6 +1060,12 @@ def estimate_pending_tokens(
     # estimates are based on the actual files the agent would read.
     resolved_files = _resolve_context_file_paths(request.context_files)
 
+    # Read file contents before calling estimator (token_counter accepts contents, not paths)
+    context_file_contents: list[str] = []
+    for path in (resolved_files or []):
+        result = read_file(path)
+        context_file_contents.append(result.get("content", ""))
+
     estimate = build_pending_context_estimate(
         user_message=request.user_message,
         images=(
@@ -1164,7 +1073,7 @@ def estimate_pending_tokens(
             if request.images
             else None
         ),
-        context_files=resolved_files,
+        context_file_contents=context_file_contents,
         system_prompt=request.system_prompt,
         history_token_count=request.history_token_count,
     )
