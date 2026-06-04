@@ -263,9 +263,13 @@ class TestRegistryDeclaration:
     """
 
     def test_context_lines_param_in_declaration(self):
-        from src.tools.registry import FUNCTION_MAP, DECLARATIONS
+        from src.tools.registry import build_default_registry
 
-        decl = next(d for d in DECLARATIONS if d.name == "search_knowledge_base")
+        registry = build_default_registry()
+        handler = registry.get_handler("search_knowledge_base")
+        # Get declaration from registry entries
+        entries = registry.get_all_entries()
+        decl = next(e.declaration for e in entries if e.declaration.name == "search_knowledge_base")
         props = decl.parameters.properties
         assert "context_lines" in props, (
             "context_lines must be declared in the Gemini FunctionDeclaration "
@@ -273,21 +277,24 @@ class TestRegistryDeclaration:
         )
 
     def test_context_lines_has_description(self):
-        from src.tools.registry import DECLARATIONS
+        from src.tools.registry import build_default_registry
 
-        decl = next(d for d in DECLARATIONS if d.name == "search_knowledge_base")
+        registry = build_default_registry()
+        entries = registry.get_all_entries()
+        decl = next(e.declaration for e in entries if e.declaration.name == "search_knowledge_base")
         desc = decl.parameters.properties["context_lines"].description
         assert desc and len(desc) > 20, "context_lines needs a meaningful description"
 
     def test_registry_lambda_passes_context_lines(self, kitchen_kb, monkeypatch):
         """The registry lambda must forward context_lines to the real function."""
-        from src.tools.registry import FUNCTION_MAP
+        from src.tools.registry import build_default_registry
         import src.config as cfg
 
         monkeypatch.setattr(cfg.settings, "data_dir", kitchen_kb)
 
-        fn = FUNCTION_MAP["search_knowledge_base"]
-        # Call via the registry lambda with context_lines
+        registry = build_default_registry()
+        fn = registry.get_handler("search_knowledge_base")
+        # Call via the registry handler with context_lines
         result = fn(query="37 mm", context_lines=2)
         assert "error" not in result
         assert "Blum Clip-Top" in result["content"]

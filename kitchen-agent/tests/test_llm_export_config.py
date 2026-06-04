@@ -139,13 +139,15 @@ def test_c04_config_block_temperature_from_settings() -> None:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def test_c05_config_block_has_all_five_tools() -> None:
-    from src.tools.registry import DECLARATIONS
+    from src.tools.registry import build_default_registry
+    registry = build_default_registry()
+    expected_count = len(registry.tool_names)
     block = build_config_block(system_instruction=None)
     # tools is a list with one Tool object containing function_declarations
     assert "tools" in block
     assert len(block["tools"]) == 1
     decls = block["tools"][0]["function_declarations"]
-    assert len(decls) == len(DECLARATIONS)
+    assert len(decls) == expected_count
 
 
 # ──────────────────────────────────────────────────────────────────────────────

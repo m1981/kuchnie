@@ -548,9 +548,10 @@ class TestToolRegistryDomainAgnostic:
     }
 
     def _get_all_description_text(self) -> str:
-        from src.tools.registry import TOOLS
+        from src.tools.registry import build_default_registry
+        registry = build_default_registry()
         parts = []
-        for entry in TOOLS:
+        for entry in registry.get_all_entries():
             d = entry.declaration
             parts.append(d.description or "")
             if d.parameters and d.parameters.properties:
@@ -568,8 +569,9 @@ class TestToolRegistryDomainAgnostic:
 
     def test_search_tool_example_is_generic(self) -> None:
         """The search_knowledge_base tool's example query must be generic."""
-        from src.tools.registry import TOOLS
-        for entry in TOOLS:
+        from src.tools.registry import build_default_registry
+        registry = build_default_registry()
+        for entry in registry.get_all_entries():
             if entry.declaration.name == "search_knowledge_base":
                 desc = (entry.declaration.description or "").lower()
                 assert "blum" not in desc

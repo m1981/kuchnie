@@ -120,8 +120,8 @@ def build_config_block(
         system_instruction:  The persisted system prompt for this session,
                              or ``None`` if no persona was active.
         tool_declarations:   Optional list of FunctionDeclaration objects.
-                             When ``None``, falls back to the global
-                             ``DECLARATIONS`` from the tool registry.
+                             When ``None``, falls back to the default
+                             ToolRegistry via ``build_default_registry()``.
 
     Returns:
         A dict with keys: ``model``, ``temperature``, ``system_instruction``,
@@ -135,8 +135,10 @@ def build_config_block(
     if tool_declarations is not None:
         gemini_tools = types.Tool(function_declarations=tool_declarations)
     else:
-        from src.tools.registry import DECLARATIONS
-        gemini_tools = types.Tool(function_declarations=DECLARATIONS)
+        from src.tools.registry import build_default_registry
+        registry = build_default_registry()
+        schemas = registry.schemas_for_provider("gemini")
+        gemini_tools = types.Tool(function_declarations=schemas)
     config = types.GenerateContentConfig(
         tools=[gemini_tools],
         temperature=settings.gemini_temperature,

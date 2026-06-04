@@ -4,9 +4,9 @@ tests/test_registry.py
 Unit tests for src/tools/registry.py.
 
 Covers:
-  - Every TOOLS entry has a non-empty name and description.
-  - FUNCTION_MAP is derived correctly (name → callable, no extra / missing keys).
-  - DECLARATIONS list matches TOOLS in order and length.
+  - Every registry entry has a non-empty name and description.
+  - ToolRegistry handler lookup matches entry callables.
+  - ToolRegistry schemas match entries in order and length.
   - Required fields are declared on each parametrised tool.
   - Zero-argument tools (get_repo_map, search_knowledge_base wrappers) have
     required=[] (not omitted).
@@ -14,7 +14,6 @@ Covers:
     (path-traversal guard).
   - Callable wrappers for get_repo_map and search_knowledge_base actually
     invoke the underlying functions with the correct fixed base_dir.
-  - schemas.py shim re-exports the same declaration objects.
 """
 from unittest.mock import patch
 
@@ -22,9 +21,6 @@ import pytest
 from google.genai import types
 
 from src.tools.registry import (
-    DECLARATIONS,
-    FUNCTION_MAP,
-    TOOLS,
     ToolCategory,
     ToolEntry,
     ToolRegistry,
@@ -37,56 +33,68 @@ from src.tools.registry import (
 # ---------------------------------------------------------------------------
 
 def test_tools_is_nonempty() -> None:
-    assert len(TOOLS) > 0
+    registry = build_default_registry()
+    assert len(registry.tool_names) > 0
 
 
 def test_every_entry_is_tool_entry() -> None:
-    for entry in TOOLS:
+    registry = build_default_registry()
+    for entry in registry.get_all_entries():
         assert isinstance(entry, ToolEntry)
 
 
 def test_every_declaration_has_name_and_description() -> None:
-    for entry in TOOLS:
+    registry = build_default_registry()
+    for entry in registry.get_all_entries():
         d = entry.declaration
         assert d.name, f"Empty name on {d}"
         assert d.description, f"Empty description for tool '{d.name}'"
 
 
 def test_every_entry_has_callable() -> None:
-    for entry in TOOLS:
+    registry = build_default_registry()
+    for entry in registry.get_all_entries():
         assert callable(entry.fn), f"fn for '{entry.declaration.name}' is not callable"
 
 
 # ---------------------------------------------------------------------------
-# FUNCTION_MAP derivation
+# ToolRegistry handler lookup
 # ---------------------------------------------------------------------------
 
-def test_function_map_keys_match_tool_names() -> None:
-    expected = {entry.declaration.name for entry in TOOLS}
-    assert set(FUNCTION_MAP.keys()) == expected
+def test_handler_keys_match_tool_names() -> None:
+    registry = build_default_registry()
+    for name in registry.tool_names:
+        handler = registry.get_handler(name)
+        assert callable(handler)
 
 
-def test_function_map_values_match_entry_fns() -> None:
-    for entry in TOOLS:
-        assert FUNCTION_MAP[entry.declaration.name] is entry.fn
+def test_handler_matches_entry_fns() -> None:
+    registry = build_default_registry()
+    for entry in registry.get_all_entries():
+        assert registry.get_handler(entry.declaration.name) is entry.fn
 
 
 # ---------------------------------------------------------------------------
-# DECLARATIONS derivation
+# ToolRegistry schemas
 # ---------------------------------------------------------------------------
 
-def test_declarations_length_matches_tools() -> None:
-    assert len(DECLARATIONS) == len(TOOLS)
+def test_schemas_length_matches_entries() -> None:
+    registry = build_default_registry()
+    schemas = registry.schemas_for_provider("gemini")
+    assert len(schemas) == len(registry.get_all_entries())
 
 
-def test_declarations_order_matches_tools() -> None:
-    for decl, entry in zip(DECLARATIONS, TOOLS):
-        assert decl is entry.declaration
+def test_schemas_order_matches_entries() -> None:
+    registry = build_default_registry()
+    schemas = registry.schemas_for_provider("gemini")
+    for schema, entry in zip(schemas, registry.get_all_entries()):
+        assert schema is entry.declaration
 
 
-def test_declarations_are_function_declaration_instances() -> None:
-    for decl in DECLARATIONS:
-        assert isinstance(decl, types.FunctionDeclaration)
+def test_schemas_are_function_declaration_instances() -> None:
+    registry = build_default_registry()
+    for schema in registry.schemas_for_provider("gemini"):
+        assert isinstance(schema, types.FunctionDeclaration)
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +103,8 @@ def test_declarations_are_function_declaration_instances() -> None:
 
 def _declaration(name: str) -> types.FunctionDeclaration:
     """Helper: retrieve a declaration by tool name."""
-    for entry in TOOLS:
+    registry = build_default_registry()
+    for entry in registry.get_all_entries():
         if entry.declaration.name == name:
             return entry.declaration
     raise KeyError(f"No tool named '{name}'")
@@ -296,23 +305,28 @@ class TestToolEntryCategory:
 
 class TestExistingToolCategories:
     def test_get_repo_map_is_discovery(self):
-        entry = next(e for e in TOOLS if e.declaration.name == "get_repo_map")
+        registry = build_default_registry()
+        entry = next(e for e in registry.get_all_entries() if e.declaration.name == "get_repo_map")
         assert entry.category == ToolCategory.DISCOVERY
 
     def test_search_knowledge_base_is_search(self):
-        entry = next(e for e in TOOLS if e.declaration.name == "search_knowledge_base")
+        registry = build_default_registry()
+        entry = next(e for e in registry.get_all_entries() if e.declaration.name == "search_knowledge_base")
         assert entry.category == ToolCategory.SEARCH
 
     def test_read_file_is_file_operations(self):
-        entry = next(e for e in TOOLS if e.declaration.name == "read_file")
+        registry = build_default_registry()
+        entry = next(e for e in registry.get_all_entries() if e.declaration.name == "read_file")
         assert entry.category == ToolCategory.FILE_OPERATIONS
 
     def test_edit_file_is_file_operations(self):
-        entry = next(e for e in TOOLS if e.declaration.name == "edit_file")
+        registry = build_default_registry()
+        entry = next(e for e in registry.get_all_entries() if e.declaration.name == "edit_file")
         assert entry.category == ToolCategory.FILE_OPERATIONS
 
     def test_create_file_is_file_operations(self):
-        entry = next(e for e in TOOLS if e.declaration.name == "create_file")
+        registry = build_default_registry()
+        entry = next(e for e in registry.get_all_entries() if e.declaration.name == "create_file")
         assert entry.category == ToolCategory.FILE_OPERATIONS
 
 
@@ -324,7 +338,7 @@ class TestRegistryCategoryFiltering:
     def test_schemas_for_provider_returns_all_when_no_filter(self):
         registry = build_default_registry()
         schemas = registry.schemas_for_provider("gemini")
-        assert len(schemas) == len(TOOLS)
+        assert len(schemas) == len(registry.get_all_entries())
 
     def test_schemas_for_provider_filters_by_category(self):
         registry = build_default_registry()
