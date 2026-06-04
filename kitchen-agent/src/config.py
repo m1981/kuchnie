@@ -87,9 +87,17 @@ class Settings(BaseSettings):
     # Anthropic requires this parameter (Gemini does not).
     anthropic_max_tokens: int = 8096
 
+    # ── Xiaomi Mimo ──────────────────────────────────────────────────────────
+    # OpenAI-compatible API provided by Xiaomi.
+    mimo_api_key: str | None = None
+    mimo_base_url: str = "https://api.xiaomimimo.com/v1"
+    mimo_model: str = "mimo-v2.5-pro"
+    mimo_temperature: float = 0.2
+    mimo_max_tokens: int = 8096
+
     # ── Provider selection ────────────────────────────────────────────────────
     # Controls which LLM backend is used for all chat turns.
-    # Accepted values: "gemini" | "anthropic"
+    # Accepted values: "gemini" | "anthropic" | "mimo"
     # Additional providers can be added by implementing LLMProvider and
     # registering them in src/providers/base.py get_provider().
     llm_provider: str = "gemini"

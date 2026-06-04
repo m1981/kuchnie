@@ -27,6 +27,7 @@ does not change.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -82,7 +83,7 @@ class ResponseNormalizer:
 
         Args:
             raw:      The raw response object from the provider SDK.
-            provider: "gemini" or "anthropic".
+            provider: "gemini", "anthropic", or "mimo".
 
         Returns:
             A NormalizedResponse with text, tool_calls, and usage populated.
@@ -94,7 +95,9 @@ class ResponseNormalizer:
             return self._from_gemini(raw)
         if provider == "anthropic":
             return self._from_anthropic(raw)
-        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic'.")
+        if provider == "mimo":
+            return self._from_openai_compat(raw)
+        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic', 'mimo'.")
 
     def normalize_chunk(self, chunk: Any, provider: str) -> str:
         """
@@ -106,7 +109,9 @@ class ResponseNormalizer:
             return self._gemini_chunk_text(chunk)
         if provider == "anthropic":
             return self._anthropic_chunk_text(chunk)
-        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic'.")
+        if provider == "mimo":
+            return self._openai_compat_chunk_text(chunk)
+        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic', 'mimo'.")
 
     # ── Gemini ────────────────────────────────────────────────────────
 
@@ -214,3 +219,59 @@ class ResponseNormalizer:
         except AttributeError:
             pass
         return ""
+
+    # ── OpenAI-compatible (Mimo) ─────────────────────────────────────
+
+    def _from_openai_compat(self, raw: Any) -> NormalizedResponse:
+        """
+        OpenAI-compatible response shape (used by Mimo)::
+
+            response.choices[0].message.content → text
+            response.choices[0].message.tool_calls → tool calls
+            response.usage.prompt_tokens / completion_tokens
+        """
+        text_parts: list[str] = []
+        tool_calls: list[ToolCall] = []
+
+        if raw.choices:
+            message = raw.choices[0].message
+            if message.content:
+                text_parts.append(message.content)
+            if message.tool_calls:
+                for tc in message.tool_calls:
+                    try:
+                        arguments = json.loads(tc.function.arguments)
+                    except (json.JSONDecodeError, TypeError):
+                        arguments = {}
+                    tool_calls.append(ToolCall(
+                        id=tc.id,
+                        name=tc.function.name,
+                        arguments=arguments,
+                    ))
+
+        usage: dict = {"input": 0, "output": 0, "total": 0}
+        if hasattr(raw, "usage") and raw.usage is not None:
+            usage = {
+                "input": raw.usage.prompt_tokens or 0,
+                "output": raw.usage.completion_tokens or 0,
+                "total": (raw.usage.prompt_tokens or 0) + (raw.usage.completion_tokens or 0),
+            }
+
+        return NormalizedResponse(
+            text="".join(text_parts),
+            has_tool_calls=bool(tool_calls),
+            tool_calls=tool_calls,
+            usage=usage,
+            raw=raw,
+        )
+
+    def _openai_compat_chunk_text(self, chunk: Any) -> str:
+        """
+        OpenAI-compatible streaming chunk.
+
+            chunk.choices[0].delta.content → text delta
+        """
+        try:
+            return chunk.choices[0].delta.content or ""
+        except (IndexError, AttributeError):
+            return ""

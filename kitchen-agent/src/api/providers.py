@@ -39,6 +39,15 @@ _PROVIDER_CATALOGUE: list[ProviderInfo] = [
             ModelInfo(id="claude-sonnet-4-6", label="Claude Sonnet 4.6", context_k=200),
         ],
     ),
+    ProviderInfo(
+        id="mimo",
+        label="Xiaomi MiMo",
+        default_model="mimo-v2.5-pro",
+        models=[
+            ModelInfo(id="mimo-v2.5-pro", label="MiMo V2.5 Pro", context_k=1000),
+            ModelInfo(id="mimo-v2.5", label="MiMo V2.5", context_k=1000),
+        ],
+    ),
 ]
 
 _PROVIDER_MAP: dict[str, ProviderInfo] = {p.id: p for p in _PROVIDER_CATALOGUE}
@@ -58,6 +67,8 @@ def get_active_provider() -> ActiveProvider:
         model: str = settings.gemini_model
     elif provider == "anthropic":
         model = settings.anthropic_model
+    elif provider == "mimo":
+        model = settings.mimo_model
     else:
         model = _default_model_for(provider)
     return ActiveProvider(provider=provider, model=model)

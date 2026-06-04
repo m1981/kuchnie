@@ -102,6 +102,10 @@ def get_provider(
         from src.providers.anthropic_provider import AnthropicProvider
         return AnthropicProvider(model_override=model_override)
 
+    if name == "mimo":
+        from src.providers.mimo_provider import MimoProvider
+        return MimoProvider(model_override=model_override)
+
     raise ValueError(
-        f"Unknown provider {name!r}. Valid: 'gemini', 'anthropic'"
+        f"Unknown provider {name!r}. Valid: 'gemini', 'anthropic', 'mimo'"
     )
