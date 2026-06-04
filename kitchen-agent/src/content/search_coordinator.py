@@ -73,6 +73,7 @@ class SearchCoordinator:
         query: str,
         limit: int = 10,
         backends: list[str] | None = None,
+        **kwargs: Any,
     ) -> list[SearchResult]:
         """
         Search across all (or selected) backends and return ranked results.
@@ -82,6 +83,8 @@ class SearchCoordinator:
             limit:    Maximum number of results to return.
             backends: Optional list of backend names to use.
                       None = use all available backends.
+            **kwargs: Extra parameters forwarded to each backend
+                      (e.g. context_lines for grep).
 
         Returns:
             Deduplicated, score-ranked list of SearchResult.
@@ -94,7 +97,7 @@ class SearchCoordinator:
 
         all_results: list[SearchResult] = []
         for backend in active.values():
-            results = backend.search(query, limit)
+            results = backend.search(query, limit, **kwargs)
             all_results.extend(results)
 
         return self._rank(all_results, limit)

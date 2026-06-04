@@ -33,6 +33,7 @@ class FakeSearchBackend:
         self.was_called = False
         self.last_query: str | None = None
         self.last_limit: int | None = None
+        self.last_kwargs: dict = {}
 
     def search(
         self,
@@ -43,6 +44,7 @@ class FakeSearchBackend:
         self.was_called = True
         self.last_query = query
         self.last_limit = limit
+        self.last_kwargs = kwargs
         return self._results[:limit]
 
 
@@ -154,6 +156,15 @@ class TestQueryForwarding:
 
         assert backend.last_query == "my query"
         assert backend.last_limit == 7
+
+    def test_context_lines_forwarded_via_kwargs(self):
+        """context_lines must be forwarded from coordinator to backend via **kwargs."""
+        backend = FakeSearchBackend()
+        coordinator = SearchCoordinator(backends={"b": backend})
+
+        coordinator.search("query", limit=10, context_lines=5)
+
+        assert backend.last_kwargs.get("context_lines") == 5
 
 
 # ---------------------------------------------------------------------------

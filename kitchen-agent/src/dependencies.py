@@ -56,9 +56,13 @@ def get_tool_registry():
     """
     Single ToolRegistry for the process.
     All tool schemas and handlers come from here.
+    Wires SearchCoordinator so the search tool can fan out to
+    multiple backends (grep today, BM25/embeddings tomorrow).
     """
     from src.tools.registry import build_default_registry
-    return build_default_registry()
+    return build_default_registry(
+        search_coordinator=get_search_coordinator(),
+    )
 
 
 @lru_cache

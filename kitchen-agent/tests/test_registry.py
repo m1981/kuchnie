@@ -184,6 +184,65 @@ def test_search_knowledge_base_wrapper_passes_data_dir(tmp_path) -> None:
     assert captured["query"] == "blum"
 
 
+def test_build_default_registry_accepts_search_coordinator() -> None:
+    """build_default_registry must accept an optional SearchCoordinator."""
+    from src.content.search_coordinator import SearchCoordinator
+
+    coordinator = SearchCoordinator(backends={})
+    registry = build_default_registry(search_coordinator=coordinator)
+    assert isinstance(registry, ToolRegistry)
+    assert "search_knowledge_base" in registry.tool_names
+
+
+def test_search_tool_uses_coordinator_when_provided(tmp_path) -> None:
+    """When a SearchCoordinator is provided, the search tool must use it."""
+    from src.content.search_coordinator import SearchCoordinator, SearchResult
+
+    class SpyBackend:
+        def __init__(self):
+            self.was_called = False
+            self.last_kwargs: dict = {}
+
+        def search(self, query: str, limit: int, **kwargs) -> list[SearchResult]:
+            self.was_called = True
+            self.last_kwargs = kwargs
+            return [SearchResult(source="spy", content=f"result for {query}", score=1.0)]
+
+    spy = SpyBackend()
+    coordinator = SearchCoordinator(backends={"spy": spy})
+    registry = build_default_registry(search_coordinator=coordinator)
+
+    handler = registry.get_handler("search_knowledge_base")
+    result = handler(query="blum", context_lines=3)
+
+    assert spy.was_called, "SearchCoordinator backend was not called"
+    assert spy.last_kwargs.get("context_lines") == 3
+    assert "error" not in result
+    assert "result for blum" in result["content"]
+
+
+def test_search_tool_forwards_context_lines_to_coordinator(tmp_path) -> None:
+    """context_lines must be forwarded from tool handler through coordinator to backend."""
+    from src.content.search_coordinator import SearchCoordinator, SearchResult
+
+    class SpyBackend:
+        def __init__(self):
+            self.last_kwargs: dict = {}
+
+        def search(self, query: str, limit: int, **kwargs) -> list[SearchResult]:
+            self.last_kwargs = kwargs
+            return [SearchResult(source="spy", content="found", score=1.0)]
+
+    spy = SpyBackend()
+    coordinator = SearchCoordinator(backends={"spy": spy})
+    registry = build_default_registry(search_coordinator=coordinator)
+
+    handler = registry.get_handler("search_knowledge_base")
+    handler(query="test", context_lines=5)
+
+    assert spy.last_kwargs.get("context_lines") == 5
+
+
 # ---------------------------------------------------------------------------
 # ToolCategory enum
 # ---------------------------------------------------------------------------

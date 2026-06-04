@@ -107,8 +107,17 @@ _get_repo_map_entry = ToolEntry(
     category=ToolCategory.DISCOVERY,
 )
 
-_search_knowledge_base_entry = ToolEntry(
-    declaration=types.FunctionDeclaration(
+def _build_search_entry(
+    search_coordinator: Any | None = None,
+) -> ToolEntry:
+    """
+    Build the search_knowledge_base tool entry.
+
+    When a SearchCoordinator is provided, the tool routes through it
+    (enabling BM25, embeddings, etc. in the future). Otherwise falls
+    back to the raw search_knowledge_base function.
+    """
+    declaration = types.FunctionDeclaration(
         name="search_knowledge_base",
         description=(
             "Searches all markdown files for lines matching a regex pattern. "
@@ -142,13 +151,39 @@ _search_knowledge_base_entry = ToolEntry(
             },
             required=["query"],
         ),
-    ),
-    # base_dir is fixed to settings.data_dir — never exposed to the LLM.
-    fn=lambda query, context_lines=2: search_knowledge_base(
-        query, base_dir=str(settings.data_dir), context_lines=context_lines
-    ),
-    category=ToolCategory.SEARCH,
-)
+    )
+
+    if search_coordinator is not None:
+        # Route through SearchCoordinator — enables future backends
+        # (BM25, embeddings) without changing the tool handler.
+        def _search_via_coordinator(query: str, context_lines: int = 2) -> dict:
+            results = search_coordinator.search(
+                query, limit=200, context_lines=context_lines,
+            )
+            if not results:
+                return {"content": f"No matches found for pattern: '{query}'"}
+            content = "\n\n".join(r.content for r in results)
+            return {"content": content}
+
+        return ToolEntry(
+            declaration=declaration,
+            fn=_search_via_coordinator,
+            category=ToolCategory.SEARCH,
+        )
+
+    # Fallback: direct call (backward-compatible, no coordinator)
+    return ToolEntry(
+        declaration=declaration,
+        # base_dir is fixed to settings.data_dir — never exposed to the LLM.
+        fn=lambda query, context_lines=2: search_knowledge_base(
+            query, base_dir=str(settings.data_dir), context_lines=context_lines
+        ),
+        category=ToolCategory.SEARCH,
+    )
+
+
+# Module-level default entry (no coordinator — backward compatibility)
+_search_knowledge_base_entry = _build_search_entry(search_coordinator=None)
 
 _read_file_entry = ToolEntry(
     declaration=types.FunctionDeclaration(
@@ -316,14 +351,36 @@ class ToolRegistry:
         raise ValueError(f"Unknown provider: {provider!r}")
 
 
-def build_default_registry() -> ToolRegistry:
+def build_default_registry(
+    search_coordinator: Any | None = None,
+) -> ToolRegistry:
     """
     Factory function — single place to wire all tools.
+
+    Args:
+        search_coordinator: Optional SearchCoordinator. When provided the
+            search_knowledge_base tool routes through it (enabling BM25,
+            embeddings, etc. in the future). When None the tool falls back
+            to the raw search_knowledge_base function.
+
     Import this in DI container, not individual tools.
     """
     registry = ToolRegistry()
     for entry in _ALL_ENTRIES:
         registry.register(entry)
+
+    # If a coordinator is provided, replace the search entry with one
+    # that routes through the coordinator.
+    if search_coordinator is not None:
+        coordinator_entry = _build_search_entry(
+            search_coordinator=search_coordinator,
+        )
+        # Replace the search entry in the registry
+        registry._tools = [
+            coordinator_entry if e.declaration.name == "search_knowledge_base" else e
+            for e in registry._tools
+        ]
+
     return registry
 
 
