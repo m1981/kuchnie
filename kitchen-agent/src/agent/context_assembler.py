@@ -25,7 +25,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Protocol
+
+from src.protocols import (
+    FileManagerProtocol,
+    NoteManagerProtocol,
+    PromptManagerProtocol,
+    TokenCounterProtocol,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -88,41 +94,12 @@ class AssembledContext:
     tool_schemas: list[dict] = field(default_factory=list)  # provider-format tool schemas
 
 
-# ---------------------------------------------------------------------------
-# Protocols — what the assembler needs from its dependencies
-# ---------------------------------------------------------------------------
-
-class TokenCounterProtocol(Protocol):
-    def count(self, text: str) -> int: ...
-    def count_message(self, message: dict) -> int: ...
-    def trim_to(self, text: str, max_tokens: int) -> str: ...
-
-
-class PromptManagerProtocol(Protocol):
-    def get_system_instruction(self, mode: str = "default") -> str: ...
-
-
-class NoteManagerProtocol(Protocol):
-    """
-    What ContextAssembler needs from NoteManager.
-    Defined here to avoid agent layer importing from content layer.
-    """
-    def get_for_context(
-        self,
-        session_id: str,
-        max_tokens: int = 2000,
-    ) -> str: ...
-
-
-class FileManagerProtocol(Protocol):
-    """
-    What ContextAssembler needs from FileManager.
-    """
-    def get_for_context(
-        self,
-        file_paths: list[str],
-        max_tokens: int = 4000,
-    ) -> str: ...
+# Protocols imported from src/protocols.py — single source of truth.
+# Re-exported here for backward compatibility.
+TokenCounterProtocol = TokenCounterProtocol
+PromptManagerProtocol = PromptManagerProtocol
+NoteManagerProtocol = NoteManagerProtocol
+FileManagerProtocol = FileManagerProtocol
 
 
 # ---------------------------------------------------------------------------

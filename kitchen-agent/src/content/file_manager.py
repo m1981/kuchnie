@@ -13,18 +13,7 @@ Phase 5 scope: basic file reading + context assembly.
 """
 from __future__ import annotations
 
-from typing import Protocol
-
-
-# ---------------------------------------------------------------------------
-# Protocols
-# ---------------------------------------------------------------------------
-
-class TokenCounterProtocol(Protocol):
-    """Minimal interface for token counting."""
-
-    def count(self, text: str) -> int: ...
-    def trim_to(self, text: str, max_tokens: int) -> str: ...
+from src.protocols import TokenCounterProtocol
 
 
 # ---------------------------------------------------------------------------

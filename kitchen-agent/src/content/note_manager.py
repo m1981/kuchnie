@@ -16,6 +16,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from src.protocols import (
+    SearchCoordinatorProtocol,
+    TokenCounterProtocol,
+)
+
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -53,21 +58,8 @@ class NoteRepositoryProtocol(Protocol):
     def delete_note(self, note_id: str, session_id: str) -> bool: ...
 
 
-class TokenCounterProtocol(Protocol):
-    """Minimal interface for token counting."""
-
-    def count(self, text: str) -> int: ...
-
-
-class SearchCoordinatorProtocol(Protocol):
-    """Minimal interface for search delegation."""
-
-    def search(
-        self,
-        query: str,
-        limit: int = 10,
-        backends: list[str] | None = None,
-    ) -> list[Any]: ...
+# TokenCounterProtocol and SearchCoordinatorProtocol
+# imported from src/protocols.py at module level (see top of file).
 
 
 # ---------------------------------------------------------------------------

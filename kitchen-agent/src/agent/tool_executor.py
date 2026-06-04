@@ -29,7 +29,9 @@ ToolExecutor for the same behavior.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any
+
+from src.protocols import ToolRegistryProtocol
 
 
 # ---------------------------------------------------------------------------
@@ -55,19 +57,7 @@ class ToolResult:
     is_error: bool = False
 
 
-# ---------------------------------------------------------------------------
-# Registry protocol — what ToolExecutor needs from a registry
-# ---------------------------------------------------------------------------
-
-class ToolRegistryProtocol(Protocol):
-    """
-    Minimal interface the ToolExecutor requires from a registry.
-
-    This decouples ToolExecutor from the concrete ToolRegistry class
-    and allows test fakes to be passed in easily.
-    """
-
-    def get_handler(self, name: str) -> Any: ...
+# ToolRegistryProtocol imported from src/protocols.py — single source of truth.
 
 
 # ---------------------------------------------------------------------------
