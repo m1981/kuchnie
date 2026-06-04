@@ -5,6 +5,7 @@ tests/test_notes.py
 import json
 import time
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,8 +13,9 @@ from fastapi.testclient import TestClient
 import src.config as main_module
 from src import config as config_module
 from src.repositories import SQLiteConnection, SQLiteSessionRepository, SQLiteNoteRepository
+from src.content.note_manager import Note, NoteManager
 from src.main import app
-from src.dependencies import get_session_repo, get_note_repo
+from src.dependencies import get_session_repo, get_note_repo, get_note_manager
 
 
 # ===========================================================================
@@ -247,14 +249,20 @@ def note_repo(conn: SQLiteConnection) -> SQLiteNoteRepository:
     return SQLiteNoteRepository(conn)
 
 @pytest.fixture
-def client(session_repo: SQLiteSessionRepository, note_repo: SQLiteNoteRepository, tmp_path: Path, monkeypatch) -> TestClient:
+def note_manager(note_repo: SQLiteNoteRepository) -> NoteManager:
+    """Real NoteManager backed by SQLite repo — for integration tests."""
+    return NoteManager(repo=note_repo)
+
+@pytest.fixture
+def client(session_repo: SQLiteSessionRepository, note_manager: NoteManager, tmp_path: Path, monkeypatch) -> TestClient:
+    """TestClient wired through NoteManager (not repo directly)."""
     monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
     monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
     app.dependency_overrides[get_session_repo] = lambda: session_repo
-    app.dependency_overrides[get_note_repo] = lambda: note_repo
+    app.dependency_overrides[get_note_manager] = lambda: note_manager
     yield TestClient(app)
     app.dependency_overrides.pop(get_session_repo, None)
-    app.dependency_overrides.pop(get_note_repo, None)
+    app.dependency_overrides.pop(get_note_manager, None)
 
 
 @pytest.fixture
@@ -321,6 +329,43 @@ class TestCreateNoteEndpoint:
             json={"selected_text": "some text"},
         )
         assert resp.status_code == 422
+
+    def test_api_uses_note_manager_not_repo_directly(
+        self, session_repo: SQLiteSessionRepository, session_id: str, tmp_path: Path, monkeypatch,
+    ) -> None:
+        """Prove the route goes through NoteManager, not NoteRepository directly."""
+        mock_manager = MagicMock(spec=NoteManager)
+        mock_manager.create.return_value = Note(
+            id="mock-id",
+            session_id=session_id,
+            selected_text="test text",
+            note="",
+            source_role="user",
+            created_at="2026-01-01T00:00:00",
+        )
+        mock_manager.list_notes.return_value = []
+        mock_manager.delete.return_value = True
+
+        monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+        monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+        app.dependency_overrides[get_session_repo] = lambda: session_repo
+        app.dependency_overrides[get_note_manager] = lambda: mock_manager
+        try:
+            client = TestClient(app)
+            resp = client.post(
+                f"/api/sessions/{session_id}/notes",
+                json={"selected_text": "test text", "source_role": "user"},
+            )
+            assert resp.status_code == 201
+            mock_manager.create.assert_called_once_with(
+                session_id=session_id,
+                selected_text="test text",
+                source_role="user",
+                note="",
+            )
+        finally:
+            app.dependency_overrides.pop(get_session_repo, None)
+            app.dependency_overrides.pop(get_note_manager, None)
 
 
 # ---------------------------------------------------------------------------
