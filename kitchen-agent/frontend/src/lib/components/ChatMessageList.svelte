@@ -31,6 +31,7 @@
 	type Props = {
 		messages: Message[];
 		isLoading: boolean;
+		isBusy: boolean;
 		editingTurnId: string | null;
 		editDraft: string;
 		isSavingEdit: boolean;
@@ -47,6 +48,7 @@
 	let {
 		messages,
 		isLoading,
+		isBusy,
 		editingTurnId,
 		editDraft,
 		isSavingEdit,
@@ -142,9 +144,10 @@
 								{#if !isEditing}
 									<button
 										onclick={() => onedit(msg.turn_id!)}
+										disabled={isBusy}
 										title="Edit this message"
 										aria-label="Edit message"
-										class="rounded px-1.5 py-0.5 text-xs transition
+										class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
 											{msg.role === 'user'
 												? 'text-white/60 hover:bg-white/10 hover:text-white'
 												: 'text-muted hover:bg-line hover:text-ink'}"
@@ -156,9 +159,10 @@
 								<!-- Delete button (single) -->
 								<button
 									onclick={() => confirmDelete(msg.turn_id!)}
+									disabled={isBusy}
 									title="Delete this message"
 									aria-label="Delete message"
-									class="rounded px-1.5 py-0.5 text-xs transition
+									class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
 										{msg.role === 'user'
 											? 'text-white/60 hover:bg-white/10 hover:text-white'
 											: 'text-muted hover:bg-line hover:text-red-600'}"
@@ -170,9 +174,10 @@
 								{#if hasNextAssistant(messageIndex)}
 									<button
 										onclick={() => confirmDeletePair(msg.turn_id!)}
+										disabled={isBusy}
 										title="Delete this message and the assistant reply"
 										aria-label="Delete message and reply"
-										class="rounded px-1.5 py-0.5 text-xs text-muted transition hover:bg-line hover:text-red-600"
+										class="rounded px-1.5 py-0.5 text-xs text-muted transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-line hover:text-red-600"
 									>
 										🗑🗑
 									</button>
@@ -182,9 +187,10 @@
 							<!-- Fork button — still position-based -->
 							<button
 								onclick={() => onfork(messageIndex)}
+								disabled={isBusy}
 								title="Fork conversation from this turn"
 								aria-label="Fork at this turn"
-								class="rounded px-1.5 py-0.5 text-xs transition
+								class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
 									{msg.role === 'user'
 										? 'text-white/60 hover:bg-white/10 hover:text-white'
 										: 'text-muted hover:bg-line hover:text-ink'}"

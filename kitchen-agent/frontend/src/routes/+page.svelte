@@ -249,6 +249,7 @@
 				<ChatMessageList
 					messages={chatStore.messages}
 					isLoading={chatStore.chatState.status === 'loading'}
+					isBusy={chatStore.editState.status === 'loading'}
 					editingTurnId={chatStore.editingTurnId}
 					editDraft={chatStore.editDraft}
 					isSavingEdit={isEditSaving}

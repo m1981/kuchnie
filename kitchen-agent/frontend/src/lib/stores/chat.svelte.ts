@@ -39,6 +39,9 @@ function createChatStore() {
 	// ── Async chat state machine — replaces isLoading boolean ─────────────────
 	let chatState = $state<AsyncState<void>>({ status: 'idle' });
 
+	// ── AbortController for cancelling in-flight LLM requests ─────────────────
+	let chatAbortController = $state<AbortController | null>(null);
+
 	// ── Pasted images ─────────────────────────────────────────────────────────
 	let pastedImages = $state<PastedImage[]>([]);
 
@@ -156,7 +159,13 @@ function createChatStore() {
 	// ---------------------------------------------------------------------------
 
 	return {
-		// ── Getters ───────────────────────────────────────────────────────────
+		// ── Derived guards ────────────────────────────────────────────────────────
+		/** True when ANY destructive/edit operation is in flight. */
+		get isMutating() {
+			return editState.status === 'loading' || chatState.status === 'loading';
+		},
+
+	// ── Getters ───────────────────────────────────────────────────────────
 		get sessionId()           { return sessionId; },
 		get messages()            { return messages; },
 		get chatState()           { return chatState; },
@@ -526,18 +535,53 @@ function createChatStore() {
 
 		/**
 		 * Delete a single message identified by turn_id.
-		 * Optionally deletes the paired next message.
-		 * Reloads the full session from the backend to stay in sync.
+		 *
+		 * Safety features:
+		 *  - Auto-cancels any in-progress edit on the same message.
+		 *  - Auto-promotes to pair-delete when deleting a user message that has
+		 *    a following assistant reply (prevents orphaned assistant messages).
+		 *  - Optimistic local update with rollback on failure (no full session reload).
 		 */
 		async deleteMessage(turnId: string, deletePair = false) {
+			if (editState.status === 'loading') return;
+
+			// Auto-cancel edit if deleting the message currently being edited.
+			if (editingTurnId === turnId) {
+				this.cancelEditing();
+			}
+
+			// Auto-promote to pair-delete: deleting a user message that has a
+			// following assistant reply would leave an orphaned assistant bubble.
+			const idx = messages.findIndex(m => m.turn_id === turnId);
+			if (idx !== -1 && messages[idx].role === 'user' && !deletePair) {
+				const next = messages[idx + 1];
+				if (next?.role === 'assistant') {
+					deletePair = true;
+				}
+			}
+
+			// Snapshot for rollback.
+			const snapshot = [...messages];
+
+			// Optimistic local removal — instant UI feedback.
+			if (deletePair) {
+				// Remove the target and its paired assistant reply.
+				messages = messages.filter((m, i) => {
+					if (m.turn_id === turnId) return false;
+					if (i === idx + 1 && m.role === 'assistant') return false;
+					return true;
+				});
+			} else {
+				messages = messages.filter(m => m.turn_id !== turnId);
+			}
+
 			editState = { status: 'loading' };
 			try {
 				await api.deleteMessage(sessionId, turnId, deletePair);
-				// Reload messages from backend to get the authoritative state.
-				const data = await api.getSession(sessionId);
-				messages  = data.ui_messages ?? [];
 				editState = { status: 'success', data: undefined };
 			} catch (e) {
+				// Rollback — restore the snapshot.
+				messages = snapshot;
 				editState = {
 					status:  'error',
 					message: e instanceof Error ? e.message : 'Delete failed.'
@@ -547,20 +591,27 @@ function createChatStore() {
 
 		/**
 		 * Truncate the last n turn-pairs from the conversation.
-		 * Reloads the session from the backend after truncation.
+		 * Uses optimistic local update with rollback on failure.
 		 */
 		async truncateMessages(n: number) {
-			if (n < 1) return;
+			if (n < 1 || editState.status === 'loading') return;
+
+			// Snapshot for rollback.
+			const snapshot = [...messages];
+
+			// Optimistic local removal — drop the last 2*n messages (n turn-pairs).
+			const pairsToRemove = n * 2;
+			messages = messages.slice(0, Math.max(0, messages.length - pairsToRemove));
+
 			editState = { status: 'loading' };
 			try {
 				await api.truncateMessages(sessionId, n);
-				const data = await api.getSession(sessionId);
-				messages  = data.ui_messages ?? [];
 				editState = { status: 'success', data: undefined };
 				await sessionStore.refresh();
-				// Refresh token count after truncation changes history
 				void this.refreshSessionTokens();
 			} catch (e) {
+				// Rollback — restore the snapshot.
+				messages = snapshot;
 				editState = {
 					status:  'error',
 					message: e instanceof Error ? e.message : 'Truncate failed.'
