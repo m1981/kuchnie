@@ -115,10 +115,17 @@
 	onMount(async () => {
 		void sessionStore.refresh();
 
-		// Expose stores on window for browser-based testing (dev mode only)
+		// Expose stores and test helpers on window for browser-based testing (dev mode only)
 		if (import.meta.env.DEV) {
 			(window as any).__chatStore = chatStore;
 			(window as any).__sessionStore = sessionStore;
+			(window as any).__testHelpers = {
+				autoConfirm: false,
+				/** Enable auto-confirm for all ConfirmDialog instances */
+				confirmAll() { (window as any).__testHelpers.autoConfirm = true; },
+				/** Disable auto-confirm */
+				confirmNone() { (window as any).__testHelpers.autoConfirm = false; },
+			};
 		}
 
 			// Fire all three in parallel — none depends on the others.

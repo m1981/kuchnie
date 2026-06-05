@@ -5,11 +5,17 @@
 	 * Accessible modal confirmation dialog.
 	 * Replaces native window.confirm() for testability.
 	 *
+	 * Auto-confirm mode:
+	 *   Set window.__testHelpers.autoConfirm = true to auto-accept all dialogs.
+	 *   Used by browser-test.js --auto-confirm flag.
+	 *
 	 * Props:
 	 *   message    — the question to display
 	 *   onconfirm  — called when user confirms
 	 *   oncancel   — called when user cancels
 	 */
+
+	import { onMount } from 'svelte';
 
 	type Props = {
 		message: string;
@@ -18,6 +24,15 @@
 	};
 
 	let { message, onconfirm, oncancel }: Props = $props();
+
+	// Auto-confirm mode for E2E tests
+	onMount(() => {
+		const helpers = (window as any).__testHelpers;
+		if (helpers?.autoConfirm) {
+			// Small delay to allow React/Svelte to finish rendering
+			requestAnimationFrame(() => onconfirm());
+		}
+	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') oncancel();
