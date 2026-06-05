@@ -151,52 +151,30 @@ Returns lightweight state without full message content:
 
 ## Browser Test Tools
 
-### `browser-test.js`
+### Generic Tools (in `~/.pi/agent/skills/pi-skills/browser-tools/`)
 
-Unified test helper with declarative commands:
+These are reusable across any project:
 
 ```bash
 browser-test.js click "[data-testid='delete-btn']"
-browser-test.js query "[data-testid='chat-bubble']" --count
-browser-test.js assert --count 4           # Exit 0 = pass, 1 = fail
-browser-test.js confirm                     # Click confirm-ok button
-browser-test.js --auto-confirm click ...    # Auto-accept all dialogs
-```
-
----
-
-### `browser-wait.js`
-
-Wait for DOM conditions instead of `sleep`:
-
-```bash
+browser-test.js assert --count 4
 browser-wait.js --selector "[data-testid='chat-bubble']" --count 4
-browser-wait.js --selector "[data-testid='app-busy'][data-busy-recent='false']"
-browser-wait.js --selector "[data-testid='loading-indicator']" --absent
+browser-eval.js 'document.title'
+browser-nav.js http://localhost:5173
+browser-screenshot.js
 ```
 
-**Why:** `sleep` is brittle. DOM-based waits are reliable.
+### Project-Specific Tools (in `kitchen-agent/scripts/`)
 
----
-
-### `browser-seed.js`
-
-Create test sessions and navigate to them:
+These are specific to Kitchen Agent's API and should NOT be moved to global skills:
 
 ```bash
-browser-seed.js --pairs 3 --title "My Test"
-```
+# Create test sessions via /api/_test/seed
+scripts/browser-seed.js --pairs 3 --title "My Test"
 
----
-
-### `browser-intercept.js`
-
-Control network responses for testing:
-
-```bash
-browser-intercept.js --path '/api/sessions/*/messages/*' --delay 2000
-browser-intercept.js --path '/api/chat' --status 500 --error "Server error"
-browser-intercept.js --clear
+# Intercept Kitchen Agent API responses
+scripts/browser-intercept.js --path '/api/sessions/*/messages/*' --delay 2000
+scripts/browser-intercept.js --clear
 ```
 
 ---
@@ -224,14 +202,16 @@ DEBUG=true python -m uvicorn src.main:app --port 8000
 cd frontend && npm run dev
 
 # 3. Start Chrome with remote debugging
-browser-start.js
+~/.pi/agent/skills/pi-skills/browser-tools/browser-start.js
 
-# 4. Run tests
-browser-seed.js --pairs 3
-browser-test.js --auto-confirm assert --count 6
-browser-test.js click "[data-testid='delete-btn']"
-browser-wait.js --selector "[data-testid='app-busy'][data-busy-recent='false']"
-browser-test.js assert --count 5
+# 4. Seed test data (project-specific script)
+scripts/browser-seed.js --pairs 3
+
+# 5. Run tests (generic tools)
+~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js --auto-confirm assert --count 6
+~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js click "[data-testid='delete-btn']"
+~/.pi/agent/skills/pi-skills/browser-tools/browser-wait.js --selector "[data-testid='app-busy'][data-busy-recent='false']"
+~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js assert --count 5
 ```
 
 ---
