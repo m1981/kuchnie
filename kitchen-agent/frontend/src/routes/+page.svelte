@@ -109,6 +109,24 @@
 	);
 
 	// ---------------------------------------------------------------------------
+	// Busy-recent indicator — stays true for 300ms after operation completes
+	// Allows E2E tests to observe the loading state before optimistic updates
+	// ---------------------------------------------------------------------------
+
+	let busyRecent = $state(false);
+	let busyTimer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		const isBusy = chatStore.editState.status === 'loading' || chatStore.chatState.status === 'loading';
+		if (isBusy) {
+			busyRecent = true;
+			if (busyTimer) clearTimeout(busyTimer);
+		} else if (busyRecent) {
+			busyTimer = setTimeout(() => { busyRecent = false; }, 300);
+		}
+	});
+
+	// ---------------------------------------------------------------------------
 	// Bootstrap — load modes and providers in parallel on mount
 	// ---------------------------------------------------------------------------
 
@@ -172,6 +190,7 @@
 	<div
 		data-testid="app-busy"
 		data-loading={chatStore.editState.status === 'loading' || chatStore.chatState.status === 'loading'}
+		data-busy-recent={busyRecent}
 		class="hidden"
 	></div>
 
