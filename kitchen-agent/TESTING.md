@@ -227,10 +227,11 @@ npm run e2e:cleanup
 
 ### Test Coverage
 
-| Spec File                | Tests | Coverage                                                         |
-| ------------------------ | ----- | ---------------------------------------------------------------- |
-| `message-delete.spec.ts` | 10    | Single delete, pair delete, auto-promote, cancel, error rollback |
-| `truncate.spec.ts`       | 6     | Truncate bar visibility, 1 turn, 2 turns, cancel                 |
+| Spec File                | Tests | Coverage                                                           |
+| ------------------------ | ----- | ------------------------------------------------------------------ |
+| `message-delete.spec.ts` | 8     | Single delete, smart delete (auto-promote), cancel, error rollback |
+| `regenerate.spec.ts`     | 5     | Regenerate button visibility, regenerate action                    |
+| `truncate.spec.ts`       | 6     | Truncate bar visibility, 1 turn, 2 turns, cancel                   |
 
 ### Page Object Model
 
