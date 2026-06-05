@@ -32,6 +32,14 @@ export type SessionNode = SessionSummary & {
 	children: SessionNode[];
 };
 
+/** Lightweight session state for test verification. */
+export type SessionState = {
+	session_id: string;
+	message_count: number;
+	turn_ids: (string | undefined)[];
+	roles: string[];
+};
+
 export type Note = {
 	id: string;
 	session_id: string;
@@ -329,6 +337,14 @@ export const api = {
 
 	getSession: (id: string) =>
 		request<{ ui_messages: Message[] }>(`/api/sessions/${id}`),
+
+	/**
+	 * GET /api/sessions/{id}/state
+	 * Lightweight state check for test verification.
+	 * Returns message count, turn_ids, and roles without full message content.
+	 */
+	getSessionState: (id: string) =>
+		request<SessionState>(`/api/sessions/${id}/state`),
 
 	/**
 	 * GET /api/sessions/{id}/export
