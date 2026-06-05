@@ -18,6 +18,13 @@ export interface SeedOptions {
 }
 
 /**
+ * Get the backend API base URL from environment or default
+ */
+function getBackendUrl(): string {
+  return process.env.E2E_BACKEND_URL || 'http://localhost:8001';
+}
+
+/**
  * Seed a test session via the backend API.
  * Requires DEBUG=true on the backend.
  *
@@ -30,8 +37,9 @@ export async function seedSession(
   options: SeedOptions
 ): Promise<SeedResult & { title: string }> {
   const title = options.title || `E2E Test ${Date.now()}`;
+  const backendUrl = getBackendUrl();
 
-  const response = await page.request.post('http://localhost:8000/api/_test/seed', {
+  const response = await page.request.post(`${backendUrl}/api/_test/seed`, {
     data: {
       pairs: options.pairs,
       title,
@@ -54,7 +62,8 @@ export async function seedSession(
  * Delete a session via the backend API (cleanup).
  */
 export async function deleteSession(page: Page, sessionId: string): Promise<void> {
-  await page.request.delete(`http://localhost:8000/api/sessions/${sessionId}`);
+  const backendUrl = getBackendUrl();
+  await page.request.delete(`${backendUrl}/api/sessions/${sessionId}`);
 }
 
 /**
@@ -69,6 +78,7 @@ export async function getSessionState(
   turn_ids: string[];
   roles: string[];
 }> {
-  const response = await page.request.get(`http://localhost:8000/api/sessions/${sessionId}/state`);
+  const backendUrl = getBackendUrl();
+  const response = await page.request.get(`${backendUrl}/api/sessions/${sessionId}/state`);
   return response.json();
 }

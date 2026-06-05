@@ -65,7 +65,23 @@ export class ChatPage {
   }
 
   async loadSession(title: string) {
-    const sessionButton = this.page.locator(`aside button:has-text("${title}")`);
+    // Wait for sidebar to load
+    await this.page.waitForSelector('aside button', { timeout: 10_000 });
+    
+    // Try to find and click the session - use first match to avoid strict mode
+    let sessionButton = this.page.locator(`aside button:has-text("${title}")`).first();
+    
+    // If not visible, refresh and wait (session might have been seeded after page load)
+    const isVisible = await sessionButton.isVisible().catch(() => false);
+    if (!isVisible) {
+      await this.page.reload();
+      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForSelector('aside button', { timeout: 10_000 });
+      sessionButton = this.page.locator(`aside button:has-text("${title}")`).first();
+    }
+    
+    // Wait for the button to appear
+    await sessionButton.waitFor({ state: 'visible', timeout: 10_000 });
     await sessionButton.click();
     await this.waitForMessagesLoaded();
   }

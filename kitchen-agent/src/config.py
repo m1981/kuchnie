@@ -108,7 +108,11 @@ class Settings(BaseSettings):
 
     # ── CORS ─────────────────────────────────────────────────────────────────
     # Comma-separated list in env:  ALLOWED_ORIGINS=http://localhost:5173,https://example.com
-    allowed_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # Include both dev (5173) and E2E (5174) ports
+    allowed_origins: list[str] = [
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+    ]
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
