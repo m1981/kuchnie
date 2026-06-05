@@ -99,6 +99,23 @@ def get_session(
     return {"ui_messages": ui_messages}
 
 
+@router.get("/api/sessions/{session_id}/state")
+def get_session_state(
+    session_id: str,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> dict:
+    """Lightweight state check for test verification.
+    Returns message count, turn_ids, and roles without full message content."""
+    _, ui_json, _ = session_repo.load_session(session_id)
+    ui_messages = json.loads(ui_json) if ui_json and ui_json != "[]" else []
+    return {
+        "session_id": session_id,
+        "message_count": len(ui_messages),
+        "turn_ids": [m.get("turn_id") for m in ui_messages],
+        "roles": [m["role"] for m in ui_messages],
+    }
+
+
 # ── Session lifecycle ──────────────────────────────────────────────
 
 @router.delete("/api/sessions/{session_id}", status_code=204)

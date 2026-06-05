@@ -54,6 +54,10 @@ class Settings(BaseSettings):
         "and a knowledge-base file system."
     )
 
+    # ── Debug mode ───────────────────────────────────────────────────────────
+    # Enable test helpers (X-Test-Delay-Ms header, seed endpoints, etc.)
+    debug: bool = False
+
     # ── Paths ────────────────────────────────────────────────────────────────
     data_dir: Path = Path("data")
 

@@ -16,10 +16,12 @@ Nothing else lives here.
 """
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.config import settings
 from src.logger import setup_logging
@@ -73,6 +75,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class TestDelayMiddleware(BaseHTTPMiddleware):
+    """Add artificial delay when X-Test-Delay-Ms header is present (dev mode only)."""
+
+    async def dispatch(self, request: Request, call_next):
+        if settings.debug:
+            delay_ms = request.headers.get("X-Test-Delay-Ms")
+            if delay_ms:
+                try:
+                    await asyncio.sleep(int(delay_ms) / 1000)
+                except (ValueError, TypeError):
+                    pass
+        return await call_next(request)
+
+
+if settings.debug:
+    app.add_middleware(TestDelayMiddleware)
 
 
 # ── Routers ────────────────────────────────────────────────────────
