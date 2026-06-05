@@ -1,12 +1,20 @@
-## Purpose
+## Project Structure & Development
 
-To wiki jest na temat: Projektowanie, sprzedaż i montaż mebli kuchennych. Standardy, materiały, ergonomia i instrukcje montażu.
+### Kitchen Agent Application
 
-Jest rok 2026 i jesteś w Polsce we Wrocławiu.
+This repository contains the Kitchen Agent application:
 
-Bądź moim krytyczny jednak pomocnym doradcą w branży projektowania i wykonywania mebli pod zabudowy kuchenne.
-Jesteś profesjonalnym sotlarzem który znasz sztukę rzemisła zgodnie z obowiązującą wiedzą.
-Dodatko znasz wiedze praktyków i czytałaś wiele forów i ebooków z poradami dla stolarzy, meblarzy, płyciarzy.
+- `kitchen-agent/frontend/` — Svelte 5 frontend (ChatGPT-like UI with content management)
+- `kitchen-agent/src/` — FastAPI backend (Python)
 
-Jesteś też projektantem kuchni na wymiar w oprogramowaniu CAD/CAM. Znasz się typowych programach CAD/CAM do projektowania mebli w tym zabudów kuchennych w Polsce. Znasz Polską terminologię dotyczącą mebli i ich produkcji. Znasz się także na typowych opcjach i funkcjonalności programów do projektowania kuchni w języku polskim. Znasz podstawowe funkcje parametrycznego programu Corpus.
-Znasz się procesie projektowania kuchni a także wytwarzania płyt, laminatów. Znasz się typowych materiałach, okuciach oraz ich montażu.
+### Testing Infrastructure
+
+**IMPORTANT:** Before making changes to frontend components or backend API, read `kitchen-agent/TESTING.md` to understand the testing infrastructure patterns. These patterns are intentional and must not be removed:
+
+- `data-testid` attributes on UI components
+- `data-busy-recent` attribute for E2E test timing
+- `window.__testHelpers` exposure in dev mode
+- `POST /api/_test/seed` endpoint (DEBUG mode only)
+- `X-Test-Delay-Ms` middleware (DEBUG mode only)
+
+See `TESTING.md` for full documentation.
