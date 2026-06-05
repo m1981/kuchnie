@@ -36,6 +36,7 @@
 
 {#if maxPairs >= 1}
 	<div
+		data-testid="truncate-bar"
 		class="flex flex-wrap items-center gap-2 rounded-md border border-line bg-panel px-3 py-2 text-xs"
 		role="toolbar"
 		aria-label="Conversation management"
@@ -47,6 +48,8 @@
 				<button
 					onclick={() => handleTruncate(n)}
 					disabled={isBusy}
+					data-testid="truncate-btn"
+					data-n={n}
 					class="rounded border border-line px-2 py-0.5 font-medium text-muted transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
 					title="Remove last {n} turn{n > 1 ? '-pairs' : '-pair'} from context"
 				>
@@ -59,6 +62,8 @@
 			<button
 				onclick={() => handleTruncate(maxPairs)}
 				disabled={isBusy}
+				data-testid="truncate-btn"
+				data-n="all"
 				class="rounded border border-line px-2 py-0.5 font-medium text-muted transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
 				title="Remove all {maxPairs} turns"
 			>

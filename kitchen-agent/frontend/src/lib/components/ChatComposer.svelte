@@ -164,6 +164,7 @@
 					bind:value={currentMessage}
 					onkeydown={handleKeydown}
 					use:pasteImage={chatStore.addPastedImage}
+					data-testid="chat-input"
 					placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
 					class="min-h-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
 					style="height: {promptHeight}px;"
@@ -173,6 +174,7 @@
 				<button
 					onclick={handleSend}
 					disabled={chatStore.chatState.status === 'loading' || !currentMessage.trim()}
+					data-testid="send-btn"
 					class="h-10 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45"
 				>
 					Send

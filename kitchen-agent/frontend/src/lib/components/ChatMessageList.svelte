@@ -97,6 +97,7 @@
 		{@const isEditing = editingTurnId !== null && msg.turn_id === editingTurnId}
 
 		<article
+			data-testid="chat-bubble"
 			data-chat-bubble={msg.role}
 			data-turn-id={msg.turn_id}
 			class="group/msg flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}"
@@ -145,6 +146,7 @@
 									<button
 										onclick={() => onedit(msg.turn_id!)}
 										disabled={isBusy}
+										data-testid="edit-btn"
 										title="Edit this message"
 										aria-label="Edit message"
 										class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
@@ -160,6 +162,7 @@
 								<button
 									onclick={() => confirmDelete(msg.turn_id!)}
 									disabled={isBusy}
+									data-testid="delete-btn"
 									title="Delete this message"
 									aria-label="Delete message"
 									class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
@@ -175,6 +178,7 @@
 									<button
 										onclick={() => confirmDeletePair(msg.turn_id!)}
 										disabled={isBusy}
+										data-testid="delete-pair-btn"
 										title="Delete this message and the assistant reply"
 										aria-label="Delete message and reply"
 										class="rounded px-1.5 py-0.5 text-xs text-muted transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-line hover:text-red-600"
@@ -188,6 +192,7 @@
 							<button
 								onclick={() => onfork(messageIndex)}
 								disabled={isBusy}
+								data-testid="fork-btn"
 								title="Fork conversation from this turn"
 								aria-label="Fork at this turn"
 								class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
@@ -284,7 +289,7 @@
 	{/each}
 
 	{#if isLoading}
-		<article class="flex justify-start">
+		<article data-testid="loading-indicator" class="flex justify-start">
 			<div class="w-full max-w-4xl rounded-md border border-line bg-panel p-4 shadow-sm">
 				<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Assistant</p>
 				<div class="mt-3 flex items-center gap-3 text-sm text-muted">
