@@ -46,48 +46,20 @@ test.describe('Message Deletion', () => {
     await chatPage.expectMessageCount(0);
   });
 
-  // ── Pair Delete ────────────────────────────────────────────────
+  // ── Smart Delete (auto-promote for user messages with reply) ───
 
-  test('delete pair removes user + assistant', async ({ page }) => {
+  test('smart delete on user message removes both user + assistant', async ({ page }) => {
     // Arrange
     const session = await seedSession(page, { pairs: 2 });
     await chatPage.goto();
     await chatPage.loadSession(session.title);
     await chatPage.expectMessageCount(4);
 
-    // Act - delete first pair
-    await chatPage.deletePair(0);
-
-    // Assert - two messages removed
-    await chatPage.expectMessageCount(2);
-    expect(await chatPage.getMessageRole(0)).toBe('user');
-    expect(await chatPage.getMessageRole(1)).toBe('assistant');
-  });
-
-  test('delete pair button only appears for user messages with assistant reply', async ({ page }) => {
-    // Arrange
-    const session = await seedSession(page, { pairs: 2 });
-    await chatPage.goto();
-    await chatPage.loadSession(session.title);
-
-    // Assert - delete-pair buttons count should match user messages with replies
-    const pairButtonCount = await chatPage.deletePairButtons.count();
-    expect(pairButtonCount).toBe(2); // Both user messages have assistant replies
-  });
-
-  // ── Auto-promote ───────────────────────────────────────────────
-
-  test('auto-promotes single delete to pair delete for user message with reply', async ({ page }) => {
-    // Arrange
-    const session = await seedSession(page, { pairs: 2 });
-    await chatPage.goto();
-    await chatPage.loadSession(session.title);
-    await chatPage.expectMessageCount(4);
-
-    // Act - click SINGLE delete on first user message (has assistant reply)
+    // Act - click delete on first user message (has assistant reply)
+    // The app should auto-promote to pair delete
     await chatPage.deleteMessage(0);
 
-    // Assert - both user and assistant removed (auto-promoted)
+    // Assert - both user and assistant removed
     await chatPage.expectMessageCount(2);
 
     // Verify backend confirms pair deletion
@@ -95,6 +67,21 @@ test.describe('Message Deletion', () => {
     expect(state.message_count).toBe(2);
     expect(state.roles[0]).toBe('user'); // Second pair's user
     expect(state.roles[1]).toBe('assistant'); // Second pair's assistant
+  });
+
+  test('only one delete button per message (no double-delete)', async ({ page }) => {
+    // Arrange
+    const session = await seedSession(page, { pairs: 2 });
+    await chatPage.goto();
+    await chatPage.loadSession(session.title);
+
+    // Assert - each message should have exactly one delete button
+    const deleteButtonCount = await chatPage.deleteButtons.count();
+    expect(deleteButtonCount).toBe(4); // One per message
+
+    // Verify no delete-pair buttons exist
+    const pairButtonCount = await chatPage.deletePairButtons.count();
+    expect(pairButtonCount).toBe(0);
   });
 
   // ── Cancel Delete ──────────────────────────────────────────────
@@ -116,7 +103,7 @@ test.describe('Message Deletion', () => {
 
   // ── Confirm Dialog ─────────────────────────────────────────────
 
-  test('confirm dialog shows correct message for single delete', async ({ page }) => {
+  test('confirm dialog shows correct message for delete', async ({ page }) => {
     // Arrange
     const session = await seedSession(page, { pairs: 1 });
     await chatPage.goto();

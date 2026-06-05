@@ -296,7 +296,7 @@
 					onfork={(i) => chatStore.forkSession(i)}
 					onedit={(turnId) => chatStore.startEditing(turnId)}
 					ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
-					ondeletepair={(turnId) => chatStore.deleteMessage(turnId, true)}
+					onregenerate={() => chatStore.regenerateMessage()}
 					onsaveedit={() => chatStore.saveEdit()}
 					oncanceledit={() => chatStore.cancelEditing()}
 					ondraftchange={(text) => chatStore.setEditDraft(text)}

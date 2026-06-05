@@ -40,7 +40,7 @@
 		onfork: (turnIndex: number) => void;
 		onedit: (turnId: string) => void;
 		ondelete: (turnId: string) => void;
-		ondeletepair: (turnId: string) => void;
+		onregenerate: () => void;
 		onsaveedit: () => void;
 		oncanceledit: () => void;
 		ondraftchange: (text: string) => void;
@@ -57,7 +57,7 @@
 		onfork,
 		onedit,
 		ondelete,
-		ondeletepair,
+		onregenerate,
 		onsaveedit,
 		oncanceledit,
 		ondraftchange
@@ -68,39 +68,29 @@
 	}
 
 	/**
-	 * Returns true when this message has a following assistant reply,
-	 * so we can offer "Delete with reply" in the menu.
+	 * Returns true if this is the last assistant message in the conversation.
+	 * Used to show the regenerate button.
 	 */
-	function hasNextAssistant(msgIndex: number): boolean {
-		return (
-			messages[msgIndex]?.role === 'user' &&
-			messages[msgIndex + 1]?.role === 'assistant'
-		);
+	function isLastAssistant(msgIndex: number): boolean {
+		if (messages[msgIndex]?.role !== 'assistant') return false;
+		// Check if there are any messages after this one
+		for (let i = msgIndex + 1; i < messages.length; i++) {
+			if (messages[i].role === 'assistant') return false;
+		}
+		return true;
 	}
 
 	/** Confirm before destructive delete */
 	let confirmDeleteId = $state<string | null>(null);
-	let confirmDeletePairId = $state<string | null>(null);
 
 	function requestDelete(turnId: string) {
 		confirmDeleteId = turnId;
-	}
-
-	function requestDeletePair(turnId: string) {
-		confirmDeletePairId = turnId;
 	}
 
 	function doConfirmDelete() {
 		if (confirmDeleteId) {
 			ondelete(confirmDeleteId);
 			confirmDeleteId = null;
-		}
-	}
-
-	function doConfirmDeletePair() {
-		if (confirmDeletePairId) {
-			ondeletepair(confirmDeletePairId);
-			confirmDeletePairId = null;
 		}
 	}
 </script>
@@ -172,7 +162,7 @@
 									</button>
 								{/if}
 
-								<!-- Delete button (single) -->
+								<!-- Delete button (single) - smart: auto-promotes for user messages with reply -->
 								<button
 									onclick={() => requestDelete(msg.turn_id!)}
 									disabled={isBusy}
@@ -187,17 +177,17 @@
 									🗑
 								</button>
 
-								<!-- Delete pair button (user messages only, when a reply follows) -->
-								{#if hasNextAssistant(messageIndex)}
+								<!-- Regenerate button (last assistant message only) -->
+								{#if isLastAssistant(messageIndex)}
 									<button
-										onclick={() => requestDeletePair(msg.turn_id!)}
-										disabled={isBusy}
-										data-testid="delete-pair-btn"
-										title="Delete this message and the assistant reply"
-										aria-label="Delete message and reply"
-										class="rounded px-1.5 py-0.5 text-xs text-muted transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-line hover:text-red-600"
+										onclick={() => onregenerate()}
+										disabled={isBusy || isLoading}
+										data-testid="regenerate-btn"
+										title="Regenerate response"
+										aria-label="Regenerate response"
+										class="rounded px-1.5 py-0.5 text-xs text-muted transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-line hover:text-accent"
 									>
-										🗑🗑
+										🔄
 									</button>
 								{/if}
 							{/if}
@@ -320,13 +310,5 @@
 		message="Delete this message from the conversation history?"
 		onconfirm={doConfirmDelete}
 		oncancel={() => (confirmDeleteId = null)}
-	/>
-{/if}
-
-{#if confirmDeletePairId}
-	<ConfirmDialog
-		message="Delete this message AND the assistant reply from the conversation history?"
-		onconfirm={doConfirmDeletePair}
-		oncancel={() => (confirmDeletePairId = null)}
 	/>
 {/if}

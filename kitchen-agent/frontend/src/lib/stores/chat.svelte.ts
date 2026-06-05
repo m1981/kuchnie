@@ -360,6 +360,64 @@ function createChatStore() {
 			}
 		},
 
+		/**
+		 * Regenerate the last assistant response.
+		 * Deletes the last assistant message and resends the last user message.
+		 */
+		async regenerateMessage() {
+			if (chatState.status === 'loading') return;
+
+			// Find the last assistant message
+			const lastAssistantIdx = messages.length - 1;
+			if (lastAssistantIdx < 0 || messages[lastAssistantIdx].role !== 'assistant') return;
+
+			// Find the last user message before it
+			let lastUserIdx = -1;
+			for (let i = lastAssistantIdx - 1; i >= 0; i--) {
+				if (messages[i].role === 'user') {
+					lastUserIdx = i;
+					break;
+				}
+			}
+			if (lastUserIdx === -1) return;
+
+			const lastUserMessage = messages[lastUserIdx];
+
+			// Optimistic: remove the last assistant message
+			const snapshot = [...messages];
+			messages = messages.slice(0, lastAssistantIdx);
+			chatState = { status: 'loading' };
+
+			try {
+				// Resend the last user message to get a new response
+				const data = await api.chat({
+					session_id: sessionId,
+					message: lastUserMessage.content,
+					mode_id: selectedModeId,
+					images: null,
+					context_files: null,
+					provider: selectedProvider || undefined,
+					model: selectedModel || undefined,
+					tools_enabled: toolsEnabled ? undefined : false
+				});
+
+				messages.push({
+					role: 'assistant',
+					content: data.text,
+					tools: data.tools_used
+				});
+
+				chatState = { status: 'success', data: undefined };
+				await sessionStore.refresh();
+				void this.refreshSessionTokens();
+			} catch (e) {
+				// Rollback — restore the snapshot
+				messages = snapshot;
+				const msg = e instanceof Error ? e.message : 'Unknown error connecting to API.';
+				chatState = { status: 'error', message: msg };
+			}
+		},
+
 		// ── Images ────────────────────────────────────────────────────────────
 
 		addPastedImage(img: PastedImage) {
