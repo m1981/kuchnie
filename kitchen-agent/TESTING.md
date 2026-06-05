@@ -194,8 +194,22 @@ scripts/browser-intercept.js --clear
 
 ## E2E Tests (Playwright)
 
+### Isolated Environment
+
+E2E tests run on dedicated ports to avoid conflicts with dev servers:
+
+| Service  | Dev Port | E2E Port    |
+| -------- | -------- | ----------- |
+| Backend  | 8000     | 8001        |
+| Frontend | 5173     | 5174        |
+| Data dir | `data/`  | `data-e2e/` |
+
+Playwright manages the E2E servers automatically - no need to start them manually.
+
+### Running Tests
+
 ```bash
-# Run all E2E tests
+# Run all E2E tests (starts isolated servers automatically)
 npm run test:e2e
 
 # Run with UI mode (interactive)
@@ -206,6 +220,9 @@ npm run test:e2e:debug
 
 # View test report
 npm run test:e2e:report
+
+# Clean up E2E data
+npm run e2e:cleanup
 ```
 
 ### Test Coverage
