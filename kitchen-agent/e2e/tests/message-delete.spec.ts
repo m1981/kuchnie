@@ -23,12 +23,11 @@ test.describe('Message Deletion', () => {
 
     // Assert - one message removed
     await chatPage.expectMessageCount(3);
-    expect(await chatPage.getMessageRole(2)).toBe('user');
-    expect(await chatPage.getMessageRole(3)).toBe('assistant');
-
-    // Verify backend state
+    
+    // Verify remaining messages are from first pair
     const state = await getSessionState(page, session.session_id);
     expect(state.message_count).toBe(3);
+    expect(state.roles).toEqual(['user', 'assistant', 'user']);
   });
 
   test('delete single user message without assistant reply', async ({ page }) => {
