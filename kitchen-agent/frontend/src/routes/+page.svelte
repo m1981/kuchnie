@@ -297,6 +297,8 @@
 					onedit={(turnId) => chatStore.startEditing(turnId)}
 					ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
 					onregenerate={() => chatStore.regenerateMessage()}
+					oncopytext={(content) => navigator.clipboard.writeText(content)}
+					oncopymarkdown={(content) => navigator.clipboard.writeText(content)}
 					onsaveedit={() => chatStore.saveEdit()}
 					oncanceledit={() => chatStore.cancelEditing()}
 					ondraftchange={(text) => chatStore.setEditDraft(text)}

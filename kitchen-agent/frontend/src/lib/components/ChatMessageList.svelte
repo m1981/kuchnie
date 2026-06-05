@@ -27,6 +27,7 @@
 	import type { Message, ToolLog } from '$lib/api';
 	import Markdown from './Markdown.svelte';
 	import MessageEditor from './MessageEditor.svelte';
+	import MessageActions from './MessageActions.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	type Props = {
@@ -41,6 +42,8 @@
 		onedit: (turnId: string) => void;
 		ondelete: (turnId: string) => void;
 		onregenerate: () => void;
+		oncopytext: (content: string) => void;
+		oncopymarkdown: (content: string) => void;
 		onsaveedit: () => void;
 		oncanceledit: () => void;
 		ondraftchange: (text: string) => void;
@@ -58,6 +61,8 @@
 		onedit,
 		ondelete,
 		onregenerate,
+		oncopytext,
+		oncopymarkdown,
 		onsaveedit,
 		oncanceledit,
 		ondraftchange
@@ -131,82 +136,29 @@
 							</span>
 						{/if}
 
-						<!-- ── Per-message action buttons (visible on hover) ───────────── -->
-						<div
-							class="flex items-center gap-1 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100"
-							aria-label="Message actions"
-						>
-							{#if !hasTurnId}
-								<!-- Legacy message: no stable identity, show muted indicator -->
-								<span
-									title="Legacy message — upgrade session by starting a new chat to enable editing"
-									class="rounded px-1.5 py-0.5 text-xs opacity-40"
-								>
-									⚠️
-								</span>
-							{:else}
-								<!-- Edit button -->
-								{#if !isEditing}
-									<button
-										onclick={() => onedit(msg.turn_id!)}
-										disabled={isBusy}
-										data-testid="edit-btn"
-										title="Edit this message"
-										aria-label="Edit message"
-										class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
-											{msg.role === 'user'
-												? 'text-white/60 hover:bg-white/10 hover:text-white'
-												: 'text-muted hover:bg-line hover:text-ink'}"
-									>
-										✏️
-									</button>
-								{/if}
-
-								<!-- Delete button (single) - smart: auto-promotes for user messages with reply -->
-								<button
-									onclick={() => requestDelete(msg.turn_id!)}
-									disabled={isBusy}
-									data-testid="delete-btn"
-									title="Delete this message"
-									aria-label="Delete message"
-									class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
-										{msg.role === 'user'
-											? 'text-white/60 hover:bg-white/10 hover:text-white'
-											: 'text-muted hover:bg-line hover:text-red-600'}"
-								>
-									🗑
-								</button>
-
-								<!-- Regenerate button (last assistant message only) -->
-								{#if isLastAssistant(messageIndex)}
-									<button
-										onclick={() => onregenerate()}
-										disabled={isBusy || isLoading}
-										data-testid="regenerate-btn"
-										title="Regenerate response"
-										aria-label="Regenerate response"
-										class="rounded px-1.5 py-0.5 text-xs text-muted transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-line hover:text-accent"
-									>
-										🔄
-									</button>
-								{/if}
-							{/if}
-
-							<!-- Fork button — still position-based -->
-							<button
-								onclick={() => onfork(messageIndex)}
-								disabled={isBusy}
-								data-testid="fork-btn"
-								title="Fork conversation from this turn"
-								aria-label="Fork at this turn"
-								class="rounded px-1.5 py-0.5 text-xs transition disabled:opacity-30 disabled:cursor-not-allowed
-									{msg.role === 'user'
-										? 'text-white/60 hover:bg-white/10 hover:text-white'
-										: 'text-muted hover:bg-line hover:text-ink'}"
+						{#if !hasTurnId}
+							<!-- Legacy message: no stable identity, show muted indicator -->
+							<span
+								title="Legacy message — upgrade session by starting a new chat to enable editing"
+								class="rounded px-1.5 py-0.5 text-xs opacity-40"
 							>
-								⎇
-							</button>
-						</div>
+								⚠️
+							</span>
+						{:else}
+							<MessageActions
+								role={msg.role}
+								turnId={msg.turn_id}
+								isLastAssistant={isLastAssistant(messageIndex)}
+								isBusy={isBusy}
+								isEditing={isEditing}
+								onedit={() => onedit(msg.turn_id!)}
+								ondelete={() => requestDelete(msg.turn_id!)}
+								onfork={() => onfork(messageIndex)}
+								onregenerate={onregenerate}
+								oncopytext={() => oncopytext?.(msg.content)}
+								oncopymarkdown={() => oncopymarkdown?.(msg.content)}
+							/>
+						{/if}
 					</div>
 				</div>
 

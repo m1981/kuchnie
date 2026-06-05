@@ -1,0 +1,281 @@
+<script lang="ts">
+	/**
+	 * MessageActions
+	 * ===============
+	 * Action bar for chat messages, inspired by Google AI Studio.
+	 *
+	 * Layout:
+	 *   - Primary actions inline: Edit, Regenerate
+	 *   - Secondary actions in dropdown: Delete, Fork, Copy
+	 *
+	 * Props:
+	 *   role          - 'user' | 'assistant'
+	 *   turnId        - message turn_id (null for legacy messages)
+	 *   isLastAssistant - show regenerate button
+	 *   isBusy        - disable all actions
+	 *   isEditing     - hide edit button when editing
+	 *   onedit        - edit callback
+	 *   ondelete      - delete callback
+	 *   onfork        - fork callback
+	 *   onregenerate  - regenerate callback
+	 *   oncopytext    - copy as text callback
+	 *   oncopymarkdown - copy as markdown callback
+	 */
+
+	import type { Snippet } from 'svelte';
+
+	type Props = {
+		role: 'user' | 'assistant';
+		turnId: string | null | undefined;
+		isLastAssistant?: boolean;
+		isBusy?: boolean;
+		isEditing?: boolean;
+		onedit?: () => void;
+		ondelete?: () => void;
+		onfork?: () => void;
+		onregenerate?: () => void;
+		oncopytext?: () => void;
+		oncopymarkdown?: () => void;
+	};
+
+	let {
+		role,
+		turnId,
+		isLastAssistant = false,
+		isBusy = false,
+		isEditing = false,
+		onedit,
+		ondelete,
+		onfork,
+		onregenerate,
+		oncopytext,
+		oncopymarkdown
+	}: Props = $props();
+
+	let menuOpen = $state(false);
+	let menuRef = $state<HTMLDivElement | null>(null);
+
+	function toggleMenu() {
+		menuOpen = !menuOpen;
+	}
+
+	function closeMenu() {
+		menuOpen = false;
+	}
+
+	function handleMenuAction(action: () => void) {
+		action();
+		closeMenu();
+	}
+
+	// Close menu on click outside
+	function handleClickOutside(e: MouseEvent) {
+		if (menuRef && !menuRef.contains(e.target as Node)) {
+			closeMenu();
+		}
+	}
+
+	// Close menu on escape
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') closeMenu();
+	}
+</script>
+
+<svelte:window on:click={handleClickOutside} on:keydown={handleKeydown} />
+
+{#if turnId}
+	<div
+		class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100"
+		aria-label="Message actions"
+	>
+		<!-- Edit button (primary) -->
+		{#if !isEditing && onedit}
+			<button
+				onclick={onedit}
+				disabled={isBusy}
+				data-testid="edit-btn"
+				title="Edit message"
+				aria-label="Edit message"
+				class="action-btn {role === 'user' ? 'action-btn-user' : 'action-btn-assistant'}"
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+					<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+				</svg>
+			</button>
+		{/if}
+
+		<!-- Regenerate button (primary, last assistant only) -->
+		{#if isLastAssistant && onregenerate}
+			<button
+				onclick={onregenerate}
+				disabled={isBusy}
+				data-testid="regenerate-btn"
+				title="Regenerate response"
+				aria-label="Regenerate response"
+				class="action-btn action-btn-assistant"
+			>
+				<svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+					<path
+						d="M10 17.5833C10 16.5278 9.79861 15.5417 9.39583 14.625C9.00694 13.7083 8.46528 12.9097 7.77083 12.2292C7.09028 11.5347 6.29167 10.9931 5.375 10.6042C4.45833 10.2014 3.47222 10 2.41667 10C3.47222 10 4.45833 9.80556 5.375 9.41667C6.29167 9.01389 7.09028 8.47222 7.77083 7.79167C8.46528 7.09722 9.00694 6.29167 9.39583 5.375C9.79861 4.44444 10 3.45833 10 2.41667C10 3.45833 10.1944 4.44444 10.5833 5.375C10.9861 6.29167 11.5278 7.09722 12.2083 7.79167C12.9028 8.47222 13.7083 9.01389 14.625 9.41667C15.5556 9.80556 16.5417 10 17.5833 10C16.5417 10 15.5556 10.2014 14.625 10.6042C13.7083 10.9931 12.9028 11.5347 12.2083 12.2292C11.5278 12.9097 10.9861 13.7083 10.5833 14.625C10.1944 15.5417 10 16.5278 10 17.5833Z"
+						fill="url(#regenerate-gradient)"
+					/>
+					<defs>
+						<linearGradient id="regenerate-gradient" x1="10" y1="0" x2="10" y2="20" gradientUnits="userSpaceOnUse">
+							<stop stop-color="#87A9FF" />
+							<stop offset="0.44" stop-color="#A7B8EE" />
+							<stop offset="0.88" stop-color="#F1DCC7" />
+						</linearGradient>
+					</defs>
+				</svg>
+			</button>
+		{/if}
+
+		<!-- More options button (secondary actions dropdown) -->
+		<div class="relative" bind:this={menuRef}>
+			<button
+				onclick={toggleMenu}
+				disabled={isBusy}
+				data-testid="more-options-btn"
+				title="More options"
+				aria-label="More options"
+				aria-haspopup="menu"
+				aria-expanded={menuOpen}
+				class="action-btn {role === 'user' ? 'action-btn-user' : 'action-btn-assistant'}"
+			>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+					<circle cx="12" cy="5" r="2" />
+					<circle cx="12" cy="12" r="2" />
+					<circle cx="12" cy="19" r="2" />
+				</svg>
+			</button>
+
+			<!-- Dropdown menu -->
+			{#if menuOpen}
+				<div
+					class="absolute right-0 z-50 mt-1 min-w-[180px] rounded-lg border border-line bg-white py-1 shadow-lg"
+					role="menu"
+				>
+					{#if oncopytext}
+						<button
+							onclick={() => handleMenuAction(oncopytext!)}
+							class="menu-item"
+							role="menuitem"
+							data-testid="copy-text-btn"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+							</svg>
+							<span>Copy as text</span>
+						</button>
+					{/if}
+
+					{#if oncopymarkdown}
+						<button
+							onclick={() => handleMenuAction(oncopymarkdown!)}
+							class="menu-item"
+							role="menuitem"
+							data-testid="copy-markdown-btn"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+								<polyline points="14 2 14 8 20 8" />
+								<line x1="16" y1="13" x2="8" y2="13" />
+								<line x1="16" y1="17" x2="8" y2="17" />
+							</svg>
+							<span>Copy as markdown</span>
+						</button>
+					{/if}
+
+					{#if onfork}
+						<button
+							onclick={() => handleMenuAction(onfork!)}
+							class="menu-item"
+							role="menuitem"
+							data-testid="fork-btn"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<circle cx="18" cy="18" r="3" />
+								<circle cx="6" cy="6" r="3" />
+								<path d="M13 6h3a2 2 0 0 1 2 2v7" />
+								<line x1="6" y1="9" x2="6" y2="21" />
+							</svg>
+							<span>Branch from here</span>
+						</button>
+					{/if}
+
+					{#if ondelete}
+						<div class="my-1 border-t border-line"></div>
+						<button
+							onclick={() => handleMenuAction(ondelete!)}
+							class="menu-item text-red-600 hover:bg-red-50"
+							role="menuitem"
+							data-testid="delete-btn"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="3 6 5 6 21 6" />
+								<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+							</svg>
+							<span>Delete</span>
+						</button>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
+<style>
+	.action-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border-radius: 6px;
+		transition: all 0.15s ease;
+	}
+
+	.action-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.action-btn-user {
+		color: rgba(255, 255, 255, 0.6);
+	}
+
+	.action-btn-user:hover:not(:disabled) {
+		background: rgba(255, 255, 255, 0.1);
+		color: white;
+	}
+
+	.action-btn-assistant {
+		color: var(--color-muted, #6b7280);
+	}
+
+	.action-btn-assistant:hover:not(:disabled) {
+		background: var(--color-line, #e5e7eb);
+		color: var(--color-ink, #111827);
+	}
+
+	.menu-item {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		padding: 8px 12px;
+		font-size: 13px;
+		text-align: left;
+		transition: background 0.15s ease;
+	}
+
+	.menu-item:hover {
+		background: var(--color-surface, #f9fafb);
+	}
+
+	.menu-item.text-red-600:hover {
+		background: #fef2f2;
+	}
+</style>

@@ -12,8 +12,8 @@ export class ChatPage {
   readonly userBubbles: Locator;
   readonly assistantBubbles: Locator;
   readonly editButtons: Locator;
+  readonly moreOptionsButtons: Locator;
   readonly deleteButtons: Locator;
-  readonly deletePairButtons: Locator;
   readonly forkButtons: Locator;
   readonly confirmDialog: Locator;
   readonly confirmOkButton: Locator;
@@ -35,8 +35,8 @@ export class ChatPage {
 
     // Action buttons (scoped to avoid conflicts)
     this.editButtons = page.getByTestId('edit-btn');
+    this.moreOptionsButtons = page.getByTestId('more-options-btn');
     this.deleteButtons = page.getByTestId('delete-btn');
-    this.deletePairButtons = page.getByTestId('delete-pair-btn');
     this.forkButtons = page.getByTestId('fork-btn');
 
     // Confirm dialog
@@ -127,21 +127,24 @@ export class ChatPage {
   }
 
   async deleteMessage(index: number) {
-    await this.deleteButtons.nth(index).click();
-    await this.waitForConfirmDialog();
-    await this.confirmOkButton.click();
-    await this.waitForBusyComplete();
-  }
-
-  async deletePair(index: number) {
-    await this.deletePairButtons.nth(index).click();
+    // Click the more options button for this message to open the dropdown
+    await this.moreOptionsButtons.nth(index).click();
+    // Wait for the dropdown menu to appear
+    await this.page.waitForSelector('[data-testid="delete-btn"]', { state: 'visible', timeout: 5_000 });
+    // Click the delete button in the dropdown
+    await this.deleteButtons.first().click();
     await this.waitForConfirmDialog();
     await this.confirmOkButton.click();
     await this.waitForBusyComplete();
   }
 
   async cancelDelete(index: number) {
-    await this.deleteButtons.nth(index).click();
+    // Click the more options button for this message to open the dropdown
+    await this.moreOptionsButtons.nth(index).click();
+    // Wait for the dropdown menu to appear
+    await this.page.waitForSelector('[data-testid="delete-btn"]', { state: 'visible', timeout: 5_000 });
+    // Click the delete button in the dropdown
+    await this.deleteButtons.first().click();
     await this.waitForConfirmDialog();
     await this.confirmCancelButton.click();
   }

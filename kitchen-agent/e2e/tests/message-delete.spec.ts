@@ -69,19 +69,15 @@ test.describe('Message Deletion', () => {
     expect(state.roles[1]).toBe('assistant'); // Second pair's assistant
   });
 
-  test('only one delete button per message (no double-delete)', async ({ page }) => {
+  test('only one more-options button per message (actions in dropdown)', async ({ page }) => {
     // Arrange
     const session = await seedSession(page, { pairs: 2 });
     await chatPage.goto();
     await chatPage.loadSession(session.title);
 
-    // Assert - each message should have exactly one delete button
-    const deleteButtonCount = await chatPage.deleteButtons.count();
-    expect(deleteButtonCount).toBe(4); // One per message
-
-    // Verify no delete-pair buttons exist
-    const pairButtonCount = await chatPage.deletePairButtons.count();
-    expect(pairButtonCount).toBe(0);
+    // Assert - each message should have exactly one more-options button
+    const moreOptionsCount = await chatPage.moreOptionsButtons.count();
+    expect(moreOptionsCount).toBe(4); // One per message
   });
 
   // ── Cancel Delete ──────────────────────────────────────────────
@@ -109,7 +105,9 @@ test.describe('Message Deletion', () => {
     await chatPage.goto();
     await chatPage.loadSession(session.title);
 
-    // Act
+    // Act - open dropdown and click delete
+    await chatPage.moreOptionsButtons.first().click();
+    await page.waitForSelector('[data-testid="delete-btn"]', { state: 'visible' });
     await chatPage.deleteButtons.first().click();
 
     // Assert
@@ -123,7 +121,9 @@ test.describe('Message Deletion', () => {
     await chatPage.goto();
     await chatPage.loadSession(session.title);
 
-    // Act
+    // Act - open dropdown and click delete
+    await chatPage.moreOptionsButtons.first().click();
+    await page.waitForSelector('[data-testid="delete-btn"]', { state: 'visible' });
     await chatPage.deleteButtons.first().click();
     await chatPage.expectConfirmDialogVisible();
     await page.keyboard.press('Escape');
@@ -155,7 +155,9 @@ test.describe('Message Deletion', () => {
       }
     });
 
-    // Act - attempt delete
+    // Act - attempt delete (open dropdown first)
+    await chatPage.moreOptionsButtons.first().click();
+    await page.waitForSelector('[data-testid="delete-btn"]', { state: 'visible' });
     await chatPage.deleteButtons.first().click();
     await chatPage.confirmOkButton.click();
 
