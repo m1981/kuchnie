@@ -14,6 +14,8 @@
 	 *   ontruncate(n)   — called with the number of pairs to remove
 	 */
 
+	import ConfirmDialog from './ConfirmDialog.svelte';
+
 	type Props = {
 		totalMessages: number;
 		isBusy: boolean;
@@ -26,10 +28,18 @@
 	// Max pairs we can remove (each pair = user + assistant = 2 messages).
 	const maxPairs = $derived(Math.floor(totalMessages / 2));
 
+	// Confirm dialog state
+	let pendingN = $state<number | null>(null);
+
 	function handleTruncate(n: number) {
 		if (isBusy || n < 1 || n > maxPairs) return;
-		if (confirm(`Remove the last ${n} turn${n > 1 ? 's' : ''} (user + assistant) from this conversation?`)) {
-			ontruncate(n);
+		pendingN = n;
+	}
+
+	function doConfirm() {
+		if (pendingN !== null) {
+			ontruncate(pendingN);
+			pendingN = null;
 		}
 	}
 </script>
@@ -79,4 +89,12 @@
 			<span class="ml-2 text-red-500" role="alert">{errorMessage}</span>
 		{/if}
 	</div>
+{/if}
+
+{#if pendingN !== null}
+	<ConfirmDialog
+		message={`Remove the last ${pendingN} turn${pendingN > 1 ? 's' : ''} (user + assistant) from this conversation?`}
+		onconfirm={doConfirm}
+		oncancel={() => (pendingN = null)}
+	/>
 {/if}

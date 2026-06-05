@@ -27,6 +27,7 @@
 	import type { Message, ToolLog } from '$lib/api';
 	import Markdown from './Markdown.svelte';
 	import MessageEditor from './MessageEditor.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	type Props = {
 		messages: Message[];
@@ -78,15 +79,28 @@
 	}
 
 	/** Confirm before destructive delete */
-	function confirmDelete(turnId: string) {
-		if (confirm('Delete this message from the conversation history?')) {
-			ondelete(turnId);
+	let confirmDeleteId = $state<string | null>(null);
+	let confirmDeletePairId = $state<string | null>(null);
+
+	function requestDelete(turnId: string) {
+		confirmDeleteId = turnId;
+	}
+
+	function requestDeletePair(turnId: string) {
+		confirmDeletePairId = turnId;
+	}
+
+	function doConfirmDelete() {
+		if (confirmDeleteId) {
+			ondelete(confirmDeleteId);
+			confirmDeleteId = null;
 		}
 	}
 
-	function confirmDeletePair(turnId: string) {
-		if (confirm('Delete this message AND the assistant reply from the conversation history?')) {
-			ondeletepair(turnId);
+	function doConfirmDeletePair() {
+		if (confirmDeletePairId) {
+			ondeletepair(confirmDeletePairId);
+			confirmDeletePairId = null;
 		}
 	}
 </script>
@@ -160,7 +174,7 @@
 
 								<!-- Delete button (single) -->
 								<button
-									onclick={() => confirmDelete(msg.turn_id!)}
+									onclick={() => requestDelete(msg.turn_id!)}
 									disabled={isBusy}
 									data-testid="delete-btn"
 									title="Delete this message"
@@ -176,7 +190,7 @@
 								<!-- Delete pair button (user messages only, when a reply follows) -->
 								{#if hasNextAssistant(messageIndex)}
 									<button
-										onclick={() => confirmDeletePair(msg.turn_id!)}
+										onclick={() => requestDeletePair(msg.turn_id!)}
 										disabled={isBusy}
 										data-testid="delete-pair-btn"
 										title="Delete this message and the assistant reply"
@@ -300,3 +314,19 @@
 		</article>
 	{/if}
 </div>
+
+{#if confirmDeleteId}
+	<ConfirmDialog
+		message="Delete this message from the conversation history?"
+		onconfirm={doConfirmDelete}
+		oncancel={() => (confirmDeleteId = null)}
+	/>
+{/if}
+
+{#if confirmDeletePairId}
+	<ConfirmDialog
+		message="Delete this message AND the assistant reply from the conversation history?"
+		onconfirm={doConfirmDeletePair}
+		oncancel={() => (confirmDeletePairId = null)}
+	/>
+{/if}
