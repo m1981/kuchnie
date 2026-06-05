@@ -1,5 +1,7 @@
-# .gitignore
-*.egg-info/
-__pycache__/
-.env
-.venv/
+# E2E Test Results
+e2e/test-results/
+e2e/.auth/
+
+# Playwright
+playwright-report/
+blob-report/
