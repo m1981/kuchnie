@@ -192,26 +192,48 @@ scripts/browser-intercept.js --clear
 
 ---
 
-## Running E2E Tests
+## E2E Tests (Playwright)
 
 ```bash
-# 1. Start backend with DEBUG=true
-DEBUG=true python -m uvicorn src.main:app --port 8000
+# Run all E2E tests
+npm run test:e2e
 
-# 2. Start frontend
-cd frontend && npm run dev
+# Run with UI mode (interactive)
+npm run test:e2e:ui
 
-# 3. Start Chrome with remote debugging
-~/.pi/agent/skills/pi-skills/browser-tools/browser-start.js
+# Run in debug mode (step through)
+npm run test:e2e:debug
 
-# 4. Seed test data (project-specific script)
-scripts/browser-seed.js --pairs 3
+# View test report
+npm run test:e2e:report
+```
 
-# 5. Run tests (generic tools)
-~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js --auto-confirm assert --count 6
-~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js click "[data-testid='delete-btn']"
-~/.pi/agent/skills/pi-skills/browser-tools/browser-wait.js --selector "[data-testid='app-busy'][data-busy-recent='false']"
-~/.pi/agent/skills/pi-skills/browser-tools/browser-test.js assert --count 5
+### Test Coverage
+
+| Spec File                | Tests | Coverage                                                         |
+| ------------------------ | ----- | ---------------------------------------------------------------- |
+| `message-delete.spec.ts` | 10    | Single delete, pair delete, auto-promote, cancel, error rollback |
+| `truncate.spec.ts`       | 6     | Truncate bar visibility, 1 turn, 2 turns, cancel                 |
+
+### Page Object Model
+
+All page interactions are in `e2e/page-objects/ChatPage.ts`:
+
+```typescript
+const chatPage = new ChatPage(page);
+await chatPage.goto();
+await chatPage.loadSession('Test Session');
+await chatPage.deleteMessage(0);
+await chatPage.expectMessageCount(3);
+```
+
+### Seed Fixtures
+
+Test data is created via `/api/_test/seed`:
+
+```typescript
+const session = await seedSession(page, { pairs: 3 });
+// session.session_id, session.turn_ids for assertions
 ```
 
 ---
