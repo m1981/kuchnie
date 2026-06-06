@@ -301,38 +301,46 @@ def count_session_tokens(
     # ── Re-hydrate to SDK Content objects ────────────────────────────────────
     history: list[types.Content] = hydrate_history(api_history_json)
 
-    config = types.CountTokensConfig(
-        system_instruction=system_prompt,
-    )
-
-    # ── Attempt live API count ────────────────────────────────────────────────
-    try:
-        response = _client.models.count_tokens(
-            model=resolved_model,
-            contents=history,
-            config=config,
-        )
-        total = response.total_tokens or 0
+    # Guard: if hydration returned empty (e.g. OpenAI/Anthropic format that
+    # can't be converted to Gemini SDK objects), fall back to heuristic.
+    if not history:
         logger.info(
-            "token_counter: exact count for %d history items → %d tokens",
-            len(items),
-            total,
+            "token_counter: hydrate_history returned empty list "
+            "(possibly Anthropic/OpenAI format) — using heuristic fallback",
         )
-        return TokenEstimate(
-            text_tokens=total,   # exact API doesn't split by type
-            image_tokens=0,
-            context_file_tokens=0,
-            system_prompt_tokens=0,
-            history_tokens=0,
-            total_tokens=total,
-            fallback_used=False,
+    else:
+        config = types.CountTokensConfig(
+            system_instruction=system_prompt,
         )
 
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            "token_counter: count_tokens API failed (%s) — using heuristic fallback",
-            exc,
-        )
+        # ── Attempt live API count ──────────────────────────────────────────
+        try:
+            response = _client.models.count_tokens(
+                model=resolved_model,
+                contents=history,
+                config=config,
+            )
+            total = response.total_tokens or 0
+            logger.info(
+                "token_counter: exact count for %d history items → %d tokens",
+                len(items),
+                total,
+            )
+            return TokenEstimate(
+                text_tokens=total,   # exact API doesn't split by type
+                image_tokens=0,
+                context_file_tokens=0,
+                system_prompt_tokens=0,
+                history_tokens=0,
+                total_tokens=total,
+                fallback_used=False,
+            )
+
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "token_counter: count_tokens API failed (%s) — using heuristic fallback",
+                exc,
+            )
 
     # ── Heuristic fallback ───────────────────────────────────────────────────
     heuristic_total = 0
