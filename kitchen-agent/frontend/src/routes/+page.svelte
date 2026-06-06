@@ -245,12 +245,8 @@
 			sessionId={chatStore.sessionId}
 			showRight={sidebarResize.showRight}
 			hasSystemPromptOverride={hasSystemPromptOverride}
-			providers={chatStore.providers}
-			selectedProvider={chatStore.selectedProvider}
-			selectedModel={chatStore.selectedModel}
 			ontoggleright={() => sidebarResize.toggleRight()}
 			oneditprompt={() => chatStore.openSystemPromptEditor()}
-			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
 		/>
 
 		<!-- Chat scroll area -->
@@ -307,12 +303,10 @@
 		</section>
 
 		<ChatComposer
-			{modes}
-			promptHeight={sidebarResize.promptHeight}
-			onStartDrag={sidebarResize.startPromptDrag}
-			onDblClickReset={sidebarResize.resetPrompt}
-			onResizeKeydown={kbResize.prompt}
-			onnewchat={() => chatStore.startNewChat()}
+			providers={chatStore.providers}
+			selectedProvider={chatStore.selectedProvider}
+			selectedModel={chatStore.selectedModel}
+			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
 			bind:currentMessage
 			bind:textareaEl
 		/>

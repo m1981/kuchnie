@@ -2,81 +2,79 @@
 	/**
 	 * ChatComposer
 	 * =============
-	 * The full input area at the bottom of the chat:
-	 *   - Drag-to-resize handle
-	 *   - Pasted image thumbnail strip
-	 *   - Textarea (with paste-image action + Enter-to-send)
-	 *   - Send button
-	 *   - Mode pill strip (bottom toolbar)
-	 *   - "New chat" shortcut pill
-	 *   - Context files status strip (names of files queued for injection)
+	 * AI Studio-style composer with:
+	 *   - Auto-resize textarea
+	 *   - Left: [🔑 API Key] [🧩 Tools]
+	 *   - Center: [Model selector ▾]
+	 *   - Right: [🎤] [➕] [Run ⌘↵]
 	 *
-	 * State it owns:
-	 *   - `currentMessage` — the typed text in the textarea
-	 *   - ref to the <textarea> element for programmatic focus
-	 *
-	 * Everything else (modes, pastedImages, chatState) comes from chatStore
-	 * or is received as a prop.
-	 *
-	 * Props:
-	 *   promptHeight    — textarea height in px (from sidebarResize store)
-	 *   onStartDrag     — mousedown on the resize handle
-	 *   onDblClickReset — dblclick on the resize handle
-	 *   onResizeKeydown — keydown on the resize handle
-	 *   onnewchat       — "New chat" shortcut clicked
-	 *
-	 * Bindable:
-	 *   currentMessage  — so the parent can inject notes into the composer
-	 *   textareaEl      — so the parent can focus it programmatically
+	 * Placeholder buttons (API Key, STT, Add Media) are grayed-out
+	 * and show a tooltip "Coming soon" on click.
 	 */
 
 	import { chatStore } from '$lib/stores/chat.svelte';
 	import { pasteImage } from '$lib/actions/pasteImage';
-	import TokenIndicator from '$lib/components/TokenIndicator.svelte';
-	import type { PromptMode } from '$lib/api';
+	import type { ProviderInfo } from '$lib/providers';
 
 	type Props = {
-		modes: PromptMode[];
-		promptHeight: number;
-		onStartDrag: (e: MouseEvent) => void;
-		onDblClickReset: () => void;
-		onResizeKeydown: (e: KeyboardEvent) => void;
-		onnewchat: () => void;
+		providers: ProviderInfo[];
+		selectedProvider: string;
+		selectedModel: string;
+		onproviderchange: (provider: string, model: string) => void;
 		// Bindable — parent can push notes into the textarea
 		currentMessage?: string;
 		textareaEl?: HTMLTextAreaElement | null;
 	};
 
 	let {
-		modes,
-		promptHeight,
-		onStartDrag,
-		onDblClickReset,
-		onResizeKeydown,
-		onnewchat,
+		providers,
+		selectedProvider,
+		selectedModel,
+		onproviderchange,
 		currentMessage = $bindable(''),
 		textareaEl = $bindable(null)
 	}: Props = $props();
 
-	// ── Mode icon map ─────────────────────────────────────────────────────────
+	// ── Auto-resize textarea ────────────────────────────────────────────────
 
-	const MODE_ICONS: Record<string, string> = {
-		general: '🔧',
-		design: '📐',
-		assembly: '🔨'
-	};
-
-	function modeIcon(id: string): string {
-		return MODE_ICONS[id] ?? '💬';
+	function autoResize(el: HTMLTextAreaElement) {
+		function resize() {
+			el.style.height = 'auto';
+			el.style.height = Math.min(el.scrollHeight, 210) + 'px';
+		}
+		el.addEventListener('input', resize);
+		resize();
+		return {
+			destroy() {
+				el.removeEventListener('input', resize);
+			}
+		};
 	}
 
-	// ── Context file display name ─────────────────────────────────────────────
-	/** Extract just the filename from a path for display. */
+	// ── Provider / model helpers ────────────────────────────────────────────
+
+	const activeProvider = $derived(providers.find((p) => p.id === selectedProvider));
+
+	function modelDisplayName(m: { id: string; label: string; context_k: number }, isDefault: boolean): string {
+		return `${m.label} (${m.context_k}k)${isDefault ? ' ★' : ''}`;
+	}
+
+	function handleProviderChange(e: Event) {
+		const pid = (e.target as HTMLSelectElement).value;
+		const p = providers.find((p) => p.id === pid);
+		onproviderchange(pid, p?.default_model ?? '');
+	}
+
+	function handleModelChange(e: Event) {
+		onproviderchange(selectedProvider, (e.target as HTMLSelectElement).value);
+	}
+
+	// ── Context file display name ──────────────────────────────────────────
 	function basename(path: string): string {
 		return path.split('/').pop() ?? path;
 	}
 
-	// ── Send ──────────────────────────────────────────────────────────────────
+	// ── Send ──────────────────────────────────────────────────────────────
 
 	function handleSend() {
 		if (!currentMessage.trim() || chatStore.chatState.status === 'loading') return;
@@ -91,10 +89,18 @@
 			handleSend();
 		}
 	}
+
+	// ── Placeholder handler ────────────────────────────────────────────────
+	let placeholderToast = $state('');
+
+	function showPlaceholder(name: string) {
+		placeholderToast = `${name} — coming soon`;
+		setTimeout(() => { placeholderToast = ''; }, 2000);
+	}
 </script>
 
-<footer class="border-t border-line bg-panel/95 px-4 py-4 backdrop-blur md:px-6">
-	<div class="mx-auto max-w-5xl">
+<footer class="composer-footer">
+	<div class="composer-container">
 
 		<!-- Pasted image previews -->
 		{#if chatStore.pastedImages.length > 0}
@@ -118,130 +124,419 @@
 			</div>
 		{/if}
 
-		<!-- Composer box -->
-		<div class="relative rounded-md border border-line bg-surface shadow-sm">
+		<!-- Context files strip -->
+		{#if chatStore.contextFiles.length > 0}
+			<div class="flex flex-wrap items-center gap-1.5 px-3 pt-3 pb-2">
+				<span class="text-xs text-muted">📎 Will inject:</span>
+				{#each chatStore.contextFiles as path (path)}
+					<span
+						title={path}
+						class="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent"
+					>
+						{basename(path)}
+						<button
+							onclick={() => {
+								const next = chatStore.contextFiles.filter((p) => p !== path);
+								chatStore.setContextFiles(next);
+							}}
+							aria-label="Remove {basename(path)} from context"
+							class="ml-0.5 rounded-full text-accent/60 hover:text-accent"
+						>✕</button>
+					</span>
+				{/each}
+			</div>
+		{/if}
 
-			<!-- Drag-to-resize handle (top of the box) -->
-			<button
-				type="button"
-				aria-label="Resize prompt area"
-				class="absolute -top-1 left-0 z-20 h-2 w-full cursor-row-resize touch-none rounded-t-md transition hover:bg-accent/30 focus:bg-accent/30 focus:outline-none"
-				onmousedown={onStartDrag}
-				ondblclick={onDblClickReset}
-				onkeydown={onResizeKeydown}
-				title="Drag to resize. Double-click to reset."
-			></button>
+		<!-- Main composer box -->
+		<div class="composer-box">
 
-			<!-- Context files strip — shown above textarea when files are queued -->
-			{#if chatStore.contextFiles.length > 0}
-				<div class="flex flex-wrap items-center gap-1.5 border-b border-line px-3 pt-3 pb-2">
-					<span class="text-xs text-muted">📎 Will inject:</span>
-					{#each chatStore.contextFiles as path (path)}
-						<span
-							title={path}
-							class="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent"
-						>
-							{basename(path)}
-							<button
-								onclick={() => {
-									const next = chatStore.contextFiles.filter((p) => p !== path);
-									chatStore.setContextFiles(next);
-								}}
-								aria-label="Remove {basename(path)} from context"
-								class="ml-0.5 rounded-full text-accent/60 hover:text-accent"
-							>✕</button>
-						</span>
-					{/each}
-				</div>
-			{/if}
-
-			<!-- Textarea + Send button -->
-			<div class="flex items-end gap-2 px-2 pt-3 pb-2">
-				<label class="sr-only" for="message-input">Message</label>
+			<!-- Textarea row -->
+			<div class="textarea-row">
 				<textarea
-					id="message-input"
 					bind:this={textareaEl}
 					bind:value={currentMessage}
 					onkeydown={handleKeydown}
 					use:pasteImage={chatStore.addPastedImage}
+					use:autoResize
 					data-testid="chat-input"
-					placeholder="Ask about layouts, materials, fittings, assembly… or paste an image with Ctrl+V"
-					class="min-h-0 flex-1 resize-none bg-transparent px-2 py-2 text-sm leading-6 text-ink placeholder:text-muted focus:outline-none"
-					style="height: {promptHeight}px;"
-					rows="2"
+					placeholder="Ask about layouts, materials, fittings, assembly… or paste an image"
+					rows="1"
 				></textarea>
-
-				<button
-					onclick={handleSend}
-					disabled={chatStore.chatState.status === 'loading' || !currentMessage.trim()}
-					data-testid="send-btn"
-					class="h-10 rounded-md bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-45"
-				>
-					Send
-				</button>
 			</div>
 
-			<!-- Token indicator bar -->
-			<TokenIndicator messageText={currentMessage} />
+			<!-- Buttons row -->
+			<div class="buttons-row">
+				<!-- Left: placeholder buttons + tools -->
+				<div class="buttons-left">
+					<!-- API Key placeholder -->
+					<button
+						type="button"
+						class="icon-btn"
+						onclick={() => showPlaceholder('API Key')}
+						title="API Key"
+						aria-label="API Key"
+						disabled
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+						</svg>
+					</button>
 
-			<!-- Mode pill strip -->
-			<div
-				class="flex items-center gap-1 border-t border-line px-3 py-2"
-				role="group"
-				aria-label="Prompt mode"
-			>
-				{#if chatStore.modesState.status === 'loading'}
-					<!-- Skeleton shimmer while modes load from the backend -->
-					<span class="h-7 w-20 animate-pulse rounded-full bg-line"></span>
-					<span class="h-7 w-16 animate-pulse rounded-full bg-line"></span>
-					<span class="h-7 w-20 animate-pulse rounded-full bg-line"></span>
-				{:else}
-					{#each modes as mode (mode.id)}
-						<button
-							type="button"
-							role="radio"
-							aria-checked={chatStore.selectedModeId === mode.id}
-							title={mode.eyebrow}
-							onclick={() => chatStore.setSelectedModeId(mode.id, modes)}
-							class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
-								{chatStore.selectedModeId === mode.id
-									? 'border-accent bg-accent text-white shadow-sm'
-									: 'border-line bg-transparent text-muted hover:border-accent/60 hover:bg-accent/8 hover:text-ink'}"
-						>
-							<span aria-hidden="true">{modeIcon(mode.id)}</span>
-							{mode.label}
-						</button>
-					{/each}
-				{/if}
+					<!-- Tools toggle -->
+					<button
+						type="button"
+						class="tools-btn"
+						class:tools-active={chatStore.toolsEnabled}
+						onclick={() => chatStore.toggleTools()}
+						aria-pressed={chatStore.toolsEnabled}
+						title={chatStore.toolsEnabled ? 'Tools ON — LLM can read and edit your knowledge base' : 'Tools OFF — Direct LLM reply, no file access'}
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<rect x="3" y="3" width="7" height="7" rx="1" />
+							<rect x="14" y="3" width="7" height="7" rx="1" />
+							<rect x="3" y="14" width="7" height="7" rx="1" />
+							<rect x="14" y="14" width="7" height="7" rx="1" />
+						</svg>
+						<span>{chatStore.toolsEnabled ? 'Tools' : 'Tools'}</span>
+					</button>
+				</div>
 
-				<!-- Spacer pushes right-side controls to the right -->
-				<span class="flex-1"></span>
+				<!-- Center: model selector -->
+				<div class="buttons-center">
+					{#if providers.length > 0 && selectedProvider}
+						<div class="model-selector">
+							<select
+								value={selectedProvider}
+								onchange={handleProviderChange}
+								class="provider-select"
+								aria-label="LLM provider"
+							>
+								{#each providers as p (p.id)}
+									<option value={p.id}>{p.label}</option>
+								{/each}
+							</select>
+							{#if activeProvider}
+								<select
+									value={selectedModel}
+									onchange={handleModelChange}
+									class="model-select"
+									aria-label="Model"
+								>
+									{#each activeProvider.models as m (m.id)}
+										<option value={m.id}>
+											{modelDisplayName(m, m.id === activeProvider.default_model)}
+										</option>
+									{/each}
+								</select>
+							{/if}
+						</div>
+					{/if}
+				</div>
 
-				<!-- Tools toggle — visible and stateful at all times -->
-				<button
-					type="button"
-					onclick={() => chatStore.toggleTools()}
-					aria-pressed={chatStore.toolsEnabled}
-					title={chatStore.toolsEnabled
-						? 'Tools ON — LLM can read and edit your knowledge base. Click to disable.'
-						: 'Tools OFF — Direct LLM reply, no file access. Click to enable.'}
-					class="flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
-						{chatStore.toolsEnabled
-							? 'border-accent/40 bg-accent/10 text-accent hover:bg-accent/20'
-							: 'border-line bg-transparent text-muted hover:border-accent/60 hover:text-ink'}"
-				>
-					<span aria-hidden="true">{chatStore.toolsEnabled ? '⚡' : '💬'}</span>
-					{chatStore.toolsEnabled ? 'Tools' : 'Chat'}
-				</button>
+				<!-- Right: placeholders + send -->
+				<div class="buttons-right">
+					<!-- Speech-to-text placeholder -->
+					<button
+						type="button"
+						class="icon-btn"
+						onclick={() => showPlaceholder('Speech to text')}
+						title="Speech to text"
+						aria-label="Speech to text"
+						disabled
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+							<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+							<line x1="12" y1="19" x2="12" y2="23" />
+							<line x1="8" y1="23" x2="16" y2="23" />
+						</svg>
+					</button>
 
-				<button
-					onclick={onnewchat}
-					class="rounded-full border border-line px-3 py-1 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1"
-					title="Start a new conversation"
-			>
-					+ New chat
-				</button>
+					<!-- Add media placeholder -->
+					<button
+						type="button"
+						class="icon-btn"
+						onclick={() => showPlaceholder('Add media')}
+						title="Insert images, videos, audio, or files"
+						aria-label="Add media"
+						disabled
+					>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="16" />
+							<line x1="8" y1="12" x2="16" y2="12" />
+						</svg>
+					</button>
+
+					<!-- Send / Run button -->
+					<button
+						onclick={handleSend}
+						disabled={chatStore.chatState.status === 'loading' || !currentMessage.trim()}
+						data-testid="send-btn"
+						class="run-btn"
+					>
+						<span class="run-btn-label">Run</span>
+						<span class="run-btn-shortcut">
+							<span class="key-icon">⌘</span>
+							<span class="key-icon">↵</span>
+						</span>
+					</button>
+				</div>
 			</div>
 		</div>
+
+		<!-- Placeholder toast -->
+		{#if placeholderToast}
+			<div class="placeholder-toast">{placeholderToast}</div>
+		{/if}
 	</div>
 </footer>
+
+<style>
+	/* ── Footer container ─────────────────────────────────────────────── */
+
+	.composer-footer {
+		border-top: 1px solid #e5e7eb;
+		background: rgba(255, 255, 255, 0.95);
+		backdrop-filter: blur(8px);
+		padding: 16px;
+	}
+
+	.composer-container {
+		max-width: 768px;
+		margin: 0 auto;
+	}
+
+	/* ── Composer box ─────────────────────────────────────────────────── */
+
+	.composer-box {
+		border: 1px solid #dadce0;
+		border-radius: 12px;
+		background: #fff;
+		overflow: hidden;
+	}
+
+	/* ── Textarea row ─────────────────────────────────────────────────── */
+
+	.textarea-row {
+		padding: 12px 16px 0;
+	}
+
+	.textarea-row textarea {
+		width: 100%;
+		min-height: 21px;
+		max-height: 210px;
+		resize: none;
+		border: none;
+		outline: none;
+		background: transparent;
+		font-size: 14px;
+		line-height: 24px;
+		color: #1f1f1f;
+		padding: 0;
+		font-family: inherit;
+	}
+
+	.textarea-row textarea::placeholder {
+		color: #80868b;
+	}
+
+	/* ── Buttons row ──────────────────────────────────────────────────── */
+
+	.buttons-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 8px 12px;
+		gap: 8px;
+	}
+
+	.buttons-left,
+	.buttons-right {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.buttons-center {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+	}
+
+	/* ── Icon buttons (placeholders) ──────────────────────────────────── */
+
+	.icon-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		border: none;
+		background: transparent;
+		color: #80868b;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+
+	.icon-btn:hover:not(:disabled) {
+		background: #f1f3f4;
+	}
+
+	.icon-btn:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+
+	/* ── Tools button ─────────────────────────────────────────────────── */
+
+	.tools-btn {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		height: 32px;
+		padding: 0 12px;
+		border-radius: 8px;
+		border: 1px solid #dadce0;
+		background: #fff;
+		color: #5f6368;
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.tools-btn:hover {
+		background: #f8f9fa;
+		border-color: #bdc1c6;
+	}
+
+	.tools-btn.tools-active {
+		background: #e8f0fe;
+		border-color: #4285f4;
+		color: #1a73e8;
+	}
+
+	.tools-btn.tools-active:hover {
+		background: #d2e3fc;
+	}
+
+	/* ── Model selector ───────────────────────────────────────────────── */
+
+	.model-selector {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	.provider-select,
+	.model-select {
+		height: 32px;
+		padding: 0 8px;
+		border-radius: 8px;
+		border: 1px solid #dadce0;
+		background: #fff;
+		color: #5f6368;
+		font-size: 12px;
+		cursor: pointer;
+		transition: all 0.15s;
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235f6368' d='M3 4.5L6 8l3-3.5H3z'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 6px center;
+		padding-right: 22px;
+	}
+
+	.provider-select:hover,
+	.model-select:hover {
+		background-color: #f8f9fa;
+		border-color: #bdc1c6;
+	}
+
+	.provider-select:focus,
+	.model-select:focus {
+		outline: none;
+		border-color: #4285f4;
+		box-shadow: 0 0 0 1px #4285f4;
+	}
+
+	/* ── Run button ───────────────────────────────────────────────────── */
+
+	.run-btn {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		height: 36px;
+		padding: 0 16px;
+		border-radius: 18px;
+		border: none;
+		background: #1a73e8;
+		color: #fff;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background 0.15s, box-shadow 0.15s;
+	}
+
+	.run-btn:hover:not(:disabled) {
+		background: #1557b0;
+		box-shadow: 0 1px 3px rgba(26, 115, 232, 0.4);
+	}
+
+	.run-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.run-btn-label {
+		font-weight: 600;
+	}
+
+	.run-btn-shortcut {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		opacity: 0.8;
+	}
+
+	.key-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 20px;
+		height: 20px;
+		border-radius: 4px;
+		background: rgba(255, 255, 255, 0.2);
+		font-size: 11px;
+		font-weight: 600;
+	}
+
+	/* ── Placeholder toast ────────────────────────────────────────────── */
+
+	.placeholder-toast {
+		position: fixed;
+		bottom: 100px;
+		left: 50%;
+		transform: translateX(-50%);
+		background: #323232;
+		color: #fff;
+		padding: 8px 16px;
+		border-radius: 8px;
+		font-size: 13px;
+		z-index: 1000;
+		animation: toast-in 0.2s ease;
+	}
+
+	@keyframes toast-in {
+		from {
+			opacity: 0;
+			transform: translateX(-50%) translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+	}
+</style>

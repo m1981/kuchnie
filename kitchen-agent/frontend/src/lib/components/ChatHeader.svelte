@@ -8,25 +8,15 @@
 	 * Also exposes a "Edit system prompt" button so the user can open the
 	 * session-scoped system prompt editor without having to touch the .md files.
 	 *
-	 * Also renders the ProviderPicker so the user can switch the LLM provider
-	 * and model without leaving the chat view.
-	 *
 	 * Props:
 	 *   modeIcon              — emoji icon for the active mode
 	 *   modeLabel             — human-readable label, e.g. "Design"
 	 *   sessionId             — current session UUID (first 8 chars displayed)
 	 *   showRight             — whether the context sidebar is currently visible
 	 *   hasSystemPromptOverride — true when a session-level override is active
-	 *   providers             — full ProviderInfo list from the store
-	 *   selectedProvider      — currently active provider id ('' = server default)
-	 *   selectedModel         — currently active model id ('' = provider default)
 	 *   ontoggleright         — callback to toggle the context sidebar
 	 *   oneditprompt          — callback to open the system prompt editor
-	 *   onproviderchange      — callback(provider, model) when picker changes
 	 */
-
-	import type { ProviderInfo } from '$lib/providers';
-	import ProviderPicker from '$lib/components/ProviderPicker.svelte';
 
 	type Props = {
 		appTitle: string;
@@ -35,12 +25,8 @@
 		sessionId: string;
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
-		providers: ProviderInfo[];
-		selectedProvider: string;
-		selectedModel: string;
 		ontoggleright: () => void;
 		oneditprompt: () => void;
-		onproviderchange: (provider: string, model: string) => void;
 	};
 
 	let {
@@ -50,12 +36,8 @@
 		sessionId,
 		showRight,
 		hasSystemPromptOverride,
-		providers,
-		selectedProvider,
-		selectedModel,
 		ontoggleright,
-		oneditprompt,
-		onproviderchange
+		oneditprompt
 	}: Props = $props();
 </script>
 
@@ -89,18 +71,8 @@
 			</div>
 		</div>
 
-		<!-- ── Right cluster: provider picker + action buttons ────────────── -->
+		<!-- ── Right cluster: action buttons ──────────────────────────────── -->
 		<div class="flex shrink-0 items-center gap-2">
-
-			<!-- Provider / model picker — hidden on small screens to save space -->
-			<div class="hidden md:flex">
-				<ProviderPicker
-					{providers}
-					{selectedProvider}
-					{selectedModel}
-					onchange={onproviderchange}
-				/>
-			</div>
 
 			<!-- Edit system prompt button -->
 			<button
@@ -122,15 +94,5 @@
 			</button>
 		</div>
 
-	</div>
-
-	<!-- ── Mobile-only provider picker row (shown below the title line) ──── -->
-	<div class="mt-2 flex md:hidden">
-		<ProviderPicker
-			{providers}
-			{selectedProvider}
-			{selectedModel}
-			onchange={onproviderchange}
-		/>
 	</div>
 </header>
