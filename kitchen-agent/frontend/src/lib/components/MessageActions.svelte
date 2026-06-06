@@ -7,19 +7,6 @@
 	 * Layout:
 	 *   - Primary actions inline: Edit, Regenerate
 	 *   - Secondary actions in dropdown: Delete, Fork, Copy
-	 *
-	 * Props:
-	 *   role          - 'user' | 'assistant'
-	 *   turnId        - message turn_id (null for legacy messages)
-	 *   isLastAssistant - show regenerate button
-	 *   isBusy        - disable all actions
-	 *   isEditing     - hide edit button when editing
-	 *   onedit        - edit callback
-	 *   ondelete      - delete callback
-	 *   onfork        - fork callback
-	 *   onregenerate  - regenerate callback
-	 *   oncopytext    - copy as text callback
-	 *   oncopymarkdown - copy as markdown callback
 	 */
 
 	import type { Snippet } from 'svelte';
@@ -153,7 +140,7 @@
 			<!-- Dropdown menu -->
 			{#if menuOpen}
 				<div
-					class="absolute right-0 z-50 mt-1 min-w-[180px] rounded-lg border border-line bg-white py-1 shadow-lg"
+					class="dropdown-menu"
 					role="menu"
 				>
 					{#if oncopytext}
@@ -163,7 +150,7 @@
 							role="menuitem"
 							data-testid="copy-text-btn"
 						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
 								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
 							</svg>
@@ -178,7 +165,7 @@
 							role="menuitem"
 							data-testid="copy-markdown-btn"
 						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
 								<polyline points="14 2 14 8 20 8" />
 								<line x1="16" y1="13" x2="8" y2="13" />
@@ -195,7 +182,7 @@
 							role="menuitem"
 							data-testid="fork-btn"
 						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<circle cx="18" cy="18" r="3" />
 								<circle cx="6" cy="6" r="3" />
 								<path d="M13 6h3a2 2 0 0 1 2 2v7" />
@@ -206,14 +193,14 @@
 					{/if}
 
 					{#if ondelete}
-						<div class="my-1 border-t border-line"></div>
+						<div class="menu-divider"></div>
 						<button
 							onclick={() => handleMenuAction(ondelete!)}
-							class="menu-item text-red-600 hover:bg-red-50"
+							class="menu-item menu-item-danger"
 							role="menuitem"
 							data-testid="delete-btn"
 						>
-							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<polyline points="3 6 5 6 21 6" />
 								<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
 							</svg>
@@ -260,6 +247,27 @@
 		color: var(--color-ink, #111827);
 	}
 
+	/* ── Dropdown menu: always dark text on white bg ── */
+
+	.dropdown-menu {
+		position: absolute;
+		right: 0;
+		z-index: 50;
+		margin-top: 4px;
+		min-width: 180px;
+		border-radius: 8px;
+		border: 1px solid #e5e7eb;
+		background: #ffffff;
+		padding: 4px 0;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		color: #111827;
+	}
+
+	.menu-divider {
+		margin: 4px 0;
+		border-top: 1px solid #e5e7eb;
+	}
+
 	.menu-item {
 		display: flex;
 		align-items: center;
@@ -268,14 +276,31 @@
 		padding: 8px 12px;
 		font-size: 13px;
 		text-align: left;
+		color: #111827;
+		background: transparent;
+		border: none;
+		cursor: pointer;
 		transition: background 0.15s ease;
 	}
 
-	.menu-item:hover {
-		background: var(--color-surface, #f9fafb);
+	.menu-item :global(.menu-icon) {
+		color: #6b7280;
+		flex-shrink: 0;
 	}
 
-	.menu-item.text-red-600:hover {
+	.menu-item:hover {
+		background: #f3f4f6;
+	}
+
+	.menu-item-danger {
+		color: #dc2626;
+	}
+
+	.menu-item-danger :global(.menu-icon) {
+		color: #dc2626;
+	}
+
+	.menu-item-danger:hover {
 		background: #fef2f2;
 	}
 </style>
