@@ -236,11 +236,11 @@ def test_full_round_trip_gemini_text_unchanged() -> None:
     restored = hydrate_history(json_str)
 
     assert len(restored) == 2
-    # Gemini items come back as Content objects
-    assert isinstance(restored[0], types.Content)
-    assert isinstance(restored[1], types.Content)
-    assert restored[0].parts[0].text == "Hello"
-    assert restored[1].parts[0].text == "Hi!"
+    # Now returns common format dicts
+    assert isinstance(restored[0], dict)
+    assert isinstance(restored[1], dict)
+    assert restored[0]["content"] == "Hello"
+    assert restored[1]["content"] == "Hi!"
 
 
 # ---------------------------------------------------------------------------

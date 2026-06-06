@@ -383,21 +383,24 @@ class TestDehydrateWithTurnIds:
         history = [types.Content(role="user", parts=[types.Part(text="hello")])]
         result = json.loads(dehydrate_history(history, turn_ids=["tid-text"]))
         assert result[0]["turn_id"] == "tid-text"
-        assert result[0]["type"] == "text"
+        assert result[0]["role"] == "user"
+        assert result[0]["content"] == "hello"
 
     def test_turn_id_on_function_call_item(self):
         fc = types.FunctionCall(name="read_file", args={"filepath": "x.md"}, id="c1")
         history = [types.Content(role="model", parts=[types.Part(function_call=fc)])]
         result = json.loads(dehydrate_history(history, turn_ids=["tid-fc"]))
         assert result[0]["turn_id"] == "tid-fc"
-        assert result[0]["type"] == "function_call"
+        assert result[0]["role"] == "assistant"
+        assert result[0]["tool_calls"][0]["name"] == "read_file"
 
     def test_turn_id_on_function_response_item(self):
         fr = types.FunctionResponse(name="read_file", response={"content": "ok"}, id="c1")
         history = [types.Content(role="user", parts=[types.Part(function_response=fr)])]
         result = json.loads(dehydrate_history(history, turn_ids=["tid-fr"]))
         assert result[0]["turn_id"] == "tid-fr"
-        assert result[0]["type"] == "function_response"
+        assert result[0]["role"] == "tool"
+        assert result[0]["tool_call_id"] == "c1"
 
     def test_no_turn_id_when_list_is_none(self):
         """Without turn_ids list, items must NOT carry turn_id."""
@@ -421,10 +424,12 @@ class TestDehydrateWithTurnIds:
         raw = dehydrate_history(history, turn_ids=["stable-id"])
         items = json.loads(raw)
         assert items[0]["turn_id"] == "stable-id"
-        # hydrate_history doesn't put turn_id back on Content objects — that's correct
+        # hydrate_history now returns common format dicts
         restored = hydrate_history(raw)
         assert len(restored) == 1
-        assert restored[0].parts[0].text == "hello"
+        assert restored[0]["role"] == "user"
+        assert restored[0]["content"] == "hello"
+        assert restored[0]["turn_id"] == "stable-id"
 
 
 # ===========================================================================

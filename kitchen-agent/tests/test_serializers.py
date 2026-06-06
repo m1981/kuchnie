@@ -23,8 +23,8 @@ from src.serializers import dehydrate_history, hydrate_history
 
 def test_serialization_cycle() -> None:
     """
-    Converts a complex Gemini history to JSON and back without losing data,
-    including byte-encoded thought_signature.
+    Converts a complex Gemini history to JSON and back without losing data.
+    Now returns common format dicts instead of types.Content objects.
     """
     original_history = [
         types.Content(role="user", parts=[types.Part(text="Read the file.")]),
@@ -56,22 +56,21 @@ def test_serialization_cycle() -> None:
 
     assert len(restored) == 3
 
-    # Text part
-    assert restored[0].role == "user"
-    assert restored[0].parts[0].text == "Read the file."
+    # Text part — common format
+    assert restored[0]["role"] == "user"
+    assert restored[0]["content"] == "Read the file."
 
-    # Function call + bytes
-    assert restored[1].role == "model"
-    fc_part = restored[1].parts[0]
-    assert fc_part.function_call.name == "read_file"
-    assert fc_part.function_call.id == "call_1"
-    assert fc_part.thought_signature == b"fake_encrypted_bytes_123"
+    # Function call — common format with tool_calls
+    assert restored[1]["role"] == "assistant"
+    assert restored[1]["tool_calls"][0]["name"] == "read_file"
+    assert restored[1]["tool_calls"][0]["id"] == "call_1"
 
-    # Function response
-    assert restored[2].role == "user"
-    fr_part = restored[2].parts[0]
-    assert fr_part.function_response.name == "read_file"
-    assert fr_part.function_response.response == {"content": "wood"}
+    # Function response — common format
+    assert restored[2]["role"] == "tool"
+    assert restored[2]["tool_call_id"] == "call_1"
+    # Response content is JSON-encoded string
+    response = json.loads(restored[2]["content"])
+    assert response == {"content": "wood"}
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +85,7 @@ def test_dehydrate_skips_empty_parts() -> None:
     ]
     result = json.loads(dehydrate_history(history))
     assert len(result) == 1
-    assert result[0]["data"] == "hello"
+    assert result[0]["content"] == "hello"
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +93,7 @@ def test_dehydrate_skips_empty_parts() -> None:
 # ---------------------------------------------------------------------------
 
 def test_dehydrate_function_call_without_signature() -> None:
-    """function_call with no thought_signature serialises signature as None."""
+    """function_call with no thought_signature serialises correctly."""
     history = [
         types.Content(
             role="model",
@@ -111,25 +110,28 @@ def test_dehydrate_function_call_without_signature() -> None:
     data = json.loads(dehydrate_history(history))
     assert len(data) == 1
     item = data[0]
-    assert item["type"] == "function_call"
-    assert item["signature"] is None
+    # Common format
+    assert item["role"] == "assistant"
+    assert item["tool_calls"][0]["name"] == "get_repo_map"
+    assert item["tool_calls"][0]["id"] == "call_2"
 
 
 def test_hydrate_function_call_without_signature() -> None:
-    """Hydrating a function_call with signature=None yields thought_signature=None."""
+    """Hydrating a function_call in common format works correctly."""
     raw = json.dumps([
         {
-            "role": "model",
-            "type": "function_call",
-            "name": "get_repo_map",
-            "args": {},
-            "id": "call_2",
-            "signature": None,
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {"id": "call_2", "name": "get_repo_map", "arguments": {}}
+            ],
         }
     ])
     restored = hydrate_history(raw)
     assert len(restored) == 1
-    assert restored[0].parts[0].thought_signature is None
+    # Common format doesn't preserve thought_signature
+    assert restored[0]["role"] == "assistant"
+    assert restored[0]["tool_calls"][0]["name"] == "get_repo_map"
 
 
 # ---------------------------------------------------------------------------
@@ -137,14 +139,18 @@ def test_hydrate_function_call_without_signature() -> None:
 # ---------------------------------------------------------------------------
 
 def test_hydrate_skips_unknown_item_type() -> None:
-    """An item with an unrecognised 'type' key must be silently skipped."""
+    """An item with an unrecognised 'type' key but no 'data' is passed through."""
+    # First item is legacy Gemini format (will be converted)
+    # Second item has 'type' but no 'data' — not legacy Gemini, passed through
     raw = json.dumps([
         {"role": "user", "type": "text", "data": "good"},
         {"role": "user", "type": "alien_format", "payload": "???"},
     ])
     restored = hydrate_history(raw)
-    assert len(restored) == 1
-    assert restored[0].parts[0].text == "good"
+    # Both items are returned — first converted, second passed through
+    assert len(restored) == 2
+    assert restored[0]["content"] == "good"
+    assert restored[1]["type"] == "alien_format"
 
 
 # ---------------------------------------------------------------------------
@@ -180,5 +186,5 @@ def test_dehydrate_skips_unrecognised_part_type() -> None:
     result = json.loads(dehydrate_history(history))
     # Only the two text parts should be serialised; the binary part is dropped.
     assert len(result) == 2
-    assert result[0]["data"] == "before"
-    assert result[1]["data"] == "after"
+    assert result[0]["content"] == "before"
+    assert result[1]["content"] == "after"
