@@ -74,8 +74,28 @@
 		)
 	);
 
-	/** Currently selected model id (flat). Falls back to first available. */
-	const currentModelId = $derived(selectedModel || allModels[0]?.id || '');
+	/** Group models by provider for optgroup rendering. */
+	type ModelGroup = {
+		providerId: string;
+		providerLabel: string;
+		models: { id: string; label: string }[];
+	};
+
+	const modelGroups: ModelGroup[] = $derived(
+		providers.map((p) => ({
+			providerId: p.id,
+			providerLabel: p.label,
+			models: p.models.map((m) => ({ id: m.id, label: m.label }))
+		}))
+	);
+
+	/** Currently selected model id. Falls back to mimo-v2.5-pro or first available. */
+	const currentModelId = $derived(
+		// Use selectedModel only if it exists in our list
+		allModels.some((m) => m.id === selectedModel)
+			? selectedModel
+			: 'mimo-v2.5-pro' // default
+	);
 
 	function handleModelChange(e: Event) {
 		const modelId = (e.target as HTMLSelectElement).value;
@@ -227,16 +247,16 @@
 							class="model-select"
 							aria-label="Model"
 						>
-							{#each allModels as m (m.id)}
-								<option value={m.id}>
-									{m.providerLabel} — {m.label} ({m.context_k}k)
-								</option>
+							{#each modelGroups as group (group.providerId)}
+								<optgroup label={group.providerLabel}>
+									{#each group.models as m (m.id)}
+										<option value={m.id}>{m.label}</option>
+									{/each}
+								</optgroup>
 							{/each}
 						</select>
 					{/if}
 				</div>
-
-				<!-- Right: placeholders + send -->
 				<div class="buttons-right">
 					<!-- Speech-to-text placeholder -->
 					<button
