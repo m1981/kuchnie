@@ -88,6 +88,62 @@ class AnthropicProvider:
 
         return schemas
 
+    # ── Common format → Anthropic format conversion ──────────────────
+
+    @staticmethod
+    def _common_to_anthropic(msg: dict, user_content: list | None = None) -> dict:
+        """
+        Convert a common format message to Anthropic format.
+
+        Common format:
+            {"role": "user", "content": "Hello"}
+            {"role": "assistant", "content": "", "tool_calls": [...]}
+            {"role": "tool", "tool_call_id": "...", "content": "result"}
+
+        Anthropic format:
+            {"role": "user", "content": "Hello"}
+            {"role": "assistant", "content": [{"type": "tool_use", ...}]}
+            {"role": "user", "content": [{"type": "tool_result", ...}]}
+        """
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        tool_calls = msg.get("tool_calls")
+        tool_call_id = msg.get("tool_call_id")
+
+        # Handle tool response messages
+        if role == "tool" and tool_call_id:
+            return {
+                "role": "user",
+                "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": tool_call_id,
+                    "content": content,
+                }],
+            }
+
+        # Handle assistant messages with tool calls
+        if tool_calls:
+            blocks: list[dict[str, Any]] = []
+            if content and isinstance(content, str):
+                blocks.append({"type": "text", "text": content})
+            for tc in tool_calls:
+                blocks.append({
+                    "type": "tool_use",
+                    "id": tc.get("id", ""),
+                    "name": tc.get("name", "unknown"),
+                    "input": tc.get("arguments", {}),
+                })
+            return {"role": "assistant", "content": blocks}
+
+        # Handle user messages with optional enrichment
+        if role == "user" and user_content:
+            enriched = list(user_content)
+            enriched.append({"type": "text", "text": content})
+            return {"role": "user", "content": enriched}
+
+        # Regular messages — pass through
+        return dict(msg)
+
     # ── LLMProvider interface (for TurnOrchestrator) ─────────────────────
 
     def complete(self, context: "AssembledContext") -> Any:
@@ -128,15 +184,13 @@ class AnthropicProvider:
                     logger.warning("image_decode_failed", error=str(exc))
 
         # Build conversation state from context messages
+        # Convert from common format to Anthropic format
         self._conversation_state: list[dict[str, Any]] = []
         for msg in context.messages:
+            converted = self._common_to_anthropic(msg, user_content)
+            self._conversation_state.append(converted)
             if msg.get("role") == "user" and user_content:
-                enriched = list(user_content)
-                enriched.append({"type": "text", "text": msg.get("content", "")})
-                self._conversation_state.append({"role": "user", "content": enriched})
                 user_content = []  # Only enrich once
-            else:
-                self._conversation_state.append(dict(msg))
 
         if user_content:
             self._conversation_state.append({"role": "user", "content": user_content})

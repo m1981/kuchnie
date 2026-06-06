@@ -253,32 +253,35 @@ class TurnOrchestrator:
             })
 
         # Build updated_api_history from session messages + new turns
+        # Using provider-agnostic common format
         updated_api_history: list = list(session.get("messages", []))
+        
         # User message
         updated_api_history.append({"role": "user", "content": turn_input.user_message})
+        
         # Tool call/response pairs
         for detail in tool_details:
+            # Assistant tool call message
             updated_api_history.append({
                 "role": "assistant",
-                "content": [{
-                    "type": "tool_use",
+                "content": "",
+                "tool_calls": [{
                     "id": detail.id,
                     "name": detail.name,
-                    "input": detail.arguments,
-                }]
+                    "arguments": detail.arguments,
+                }],
             })
+            # Tool response message
             updated_api_history.append({
-                "role": "user",
-                "content": [{
-                    "type": "tool_result",
-                    "tool_use_id": detail.id,
-                    "content": detail.result_content,
-                }]
+                "role": "tool",
+                "tool_call_id": detail.id,
+                "content": detail.result_content,
             })
+        
         # Assistant response
         updated_api_history.append({
             "role": "assistant",
-            "content": [{"type": "text", "text": normalized.text}],
+            "content": normalized.text,
         })
 
         # Generate stable turn IDs

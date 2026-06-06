@@ -298,15 +298,16 @@ def count_session_tokens(
             fallback_used=False,
         )
 
-    # ── Re-hydrate to SDK Content objects ────────────────────────────────────
-    history: list[types.Content] = hydrate_history(api_history_json)
+    # ── Re-hydrate to common format ─────────────────────────────────────────
+    history: list[dict] = hydrate_history(api_history_json)
 
-    # Guard: if hydration returned empty (e.g. OpenAI/Anthropic format that
-    # can't be converted to Gemini SDK objects), fall back to heuristic.
-    if not history:
+    # Convert common format to Gemini SDK objects for count_tokens API
+    from src.providers.gemini import _coerce_history_for_gemini
+    gemini_history = _coerce_history_for_gemini(history)
+
+    if not gemini_history:
         logger.info(
-            "token_counter: hydrate_history returned empty list "
-            "(possibly Anthropic/OpenAI format) — using heuristic fallback",
+            "token_counter: no convertible history items — using heuristic fallback",
         )
     else:
         config = types.CountTokensConfig(
@@ -317,7 +318,7 @@ def count_session_tokens(
         try:
             response = _client.models.count_tokens(
                 model=resolved_model,
-                contents=history,
+                contents=gemini_history,
                 config=config,
             )
             total = response.total_tokens or 0
@@ -342,18 +343,27 @@ def count_session_tokens(
                 exc,
             )
 
-    # ── Heuristic fallback ───────────────────────────────────────────────────
+    # ── Heuristic fallback (works with common format) ─────────────────────
     heuristic_total = 0
     for item in items:
-        if item.get("type") == "text":
-            heuristic_total += estimate_tokens_for_text(item.get("data", ""))
-        elif item.get("type") == "function_call":
+        role = item.get("role", "")
+        content = item.get("content", "")
+        tool_calls = item.get("tool_calls", [])
+
+        # Count text content
+        if isinstance(content, str) and content:
+            heuristic_total += estimate_tokens_for_text(content)
+        elif isinstance(content, list):
+            # Structured content (legacy format)
+            for block in content:
+                if isinstance(block, dict):
+                    if block.get("type") == "text":
+                        heuristic_total += estimate_tokens_for_text(block.get("text", ""))
+
+        # Count tool calls
+        for tc in tool_calls:
             heuristic_total += estimate_tokens_for_text(
-                item.get("name", "") + json.dumps(item.get("args", {}))
-            )
-        elif item.get("type") == "function_response":
-            heuristic_total += estimate_tokens_for_text(
-                json.dumps(item.get("response", {}))
+                tc.get("name", "") + json.dumps(tc.get("arguments", {}))
             )
 
     if system_prompt:

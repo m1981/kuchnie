@@ -50,32 +50,24 @@ def _build_default_registry():
 
 def _coerce_history_for_gemini(history: list) -> list:
     """
-    Return a new list where every Anthropic plain-dict item has been converted
-    to a ``types.Content`` object.  Existing ``types.Content`` objects are
-    passed through unchanged (same object, not a copy).
+    Convert common format dicts to Gemini ``types.Content`` objects.
 
-    This is needed when a session was created with the Anthropic provider and
-    is then continued with the Gemini provider.
+    Common format:
+        {"role": "user", "content": "Hello"}
+        {"role": "assistant", "content": "Hi!", "tool_calls": [...]}
+        {"role": "tool", "tool_call_id": "...", "content": "result"}
 
-    The original ``history`` list is **never mutated**.  Only a new list is
-    returned.
+    Existing ``types.Content`` objects are passed through unchanged.
     """
-    # Build a tool_id → function_name index as we scan forward, so that
-    # tool_result items can recover the name of their matching tool_use.
-    tool_id_to_name: dict[str, str] = {}
-
     result: list[types.Content] = []
 
     for item in history:
-        # ── Already a Gemini Content object — pass through untouched ─────────
+        # Already a Gemini Content object — pass through
         if isinstance(item, types.Content):
-            for part in item.parts or []:
-                if part.function_call and part.function_call.id:
-                    tool_id_to_name[part.function_call.id] = part.function_call.name
             result.append(item)
             continue
 
-        # ── Plain dict — Anthropic MessageParam shape ─────────────────────────
+        # Skip non-dict items
         if not isinstance(item, dict):
             logger.warning(
                 "coerce_history_for_gemini: skipping unknown item type %s",
@@ -83,96 +75,97 @@ def _coerce_history_for_gemini(history: list) -> list:
             )
             continue
 
-        anthropic_role: str = item.get("role", "user")
-        gemini_role: str = "model" if anthropic_role == "assistant" else anthropic_role
-        content_raw: Any = item.get("content", "")
+        role: str = item.get("role", "user")
+        content: Any = item.get("content", "")
+        tool_calls: list[dict] | None = item.get("tool_calls")
+        tool_call_id: str | None = item.get("tool_call_id")
 
-        # 1. Plain-string content
-        if isinstance(content_raw, str):
+        # Map roles: common format uses "assistant", Gemini uses "model"
+        gemini_role = "model" if role == "assistant" else role
+
+        # Handle tool response messages
+        if role == "tool" and tool_call_id:
+            # Parse content as JSON response
+            if isinstance(content, str):
+                try:
+                    response_dict: dict = json.loads(content)
+                except (json.JSONDecodeError, ValueError):
+                    response_dict = {"content": content}
+            elif isinstance(content, dict):
+                response_dict = content
+            else:
+                response_dict = {"content": str(content)}
+
             result.append(
-                types.Content(role=gemini_role, parts=[types.Part(text=content_raw)])
+                types.Content(
+                    role="user",  # Gemini uses "user" for tool responses
+                    parts=[
+                        types.Part(
+                            function_response=types.FunctionResponse(
+                                name="unknown",  # Will be resolved by tool_call_id
+                                response=response_dict,
+                                id=tool_call_id,
+                            )
+                        )
+                    ],
+                )
             )
             continue
 
-        # 2. List-of-blocks content
-        if isinstance(content_raw, list):
+        # Handle assistant messages with tool calls
+        if tool_calls:
             parts: list[types.Part] = []
 
-            for block in content_raw:
-                block_type = block.get("type") if isinstance(block, dict) else None
+            # Add text content if present
+            if content and isinstance(content, str):
+                parts.append(types.Part(text=content))
 
-                if block_type == "text":
-                    parts.append(types.Part(text=block["text"]))
-
-                elif block_type == "tool_use":
-                    tid = block.get("id", "")
-                    name = block.get("name", "unknown")
-                    tool_input = block.get("input", {})
-
-                    if tid:
-                        tool_id_to_name[tid] = name
-
-                    parts.append(
-                        types.Part(
-                            function_call=types.FunctionCall(
-                                name=name,
-                                args=tool_input,
-                                id=tid,
-                            )
+            # Add tool calls
+            for tc in tool_calls:
+                parts.append(
+                    types.Part(
+                        function_call=types.FunctionCall(
+                            name=tc.get("name", "unknown"),
+                            args=tc.get("arguments", {}),
+                            id=tc.get("id", ""),
                         )
                     )
+                )
 
-                elif block_type == "tool_result":
-                    tid = block.get("tool_use_id", "")
-                    func_name = tool_id_to_name.get(tid, "unknown")
+            if parts:
+                result.append(types.Content(role=gemini_role, parts=parts))
+            continue
 
-                    raw_content = block.get("content", "{}")
-                    if isinstance(raw_content, str):
-                        try:
-                            response_dict: dict = json.loads(raw_content)
-                        except (json.JSONDecodeError, ValueError):
-                            response_dict = {"content": raw_content}
-                    elif isinstance(raw_content, dict):
-                        response_dict = raw_content
+        # Handle regular text messages
+        if isinstance(content, str):
+            result.append(
+                types.Content(role=gemini_role, parts=[types.Part(text=content)])
+            )
+            continue
+
+        # Handle list content (structured content)
+        if isinstance(content, list):
+            parts = []
+            for block in content:
+                if isinstance(block, dict):
+                    if block.get("type") == "text":
+                        parts.append(types.Part(text=block.get("text", "")))
                     else:
-                        response_dict = {"content": str(raw_content)}
-
-                    parts.append(
-                        types.Part(
-                            function_response=types.FunctionResponse(
-                                name=func_name,
-                                response=response_dict,
-                                id=tid,
-                            )
-                        )
-                    )
-
+                        parts.append(types.Part(text=str(block)))
                 else:
-                    logger.warning(
-                        "coerce_history_for_gemini: unknown block type '%s' — using text fallback",
-                        block_type,
-                    )
                     parts.append(types.Part(text=str(block)))
 
             if parts:
                 result.append(types.Content(role=gemini_role, parts=parts))
-            else:
-                result.append(
-                    types.Content(role=gemini_role, parts=[types.Part(text="")])
-                )
             continue
 
-        # 3. Unexpected content type — stringify fallback.
+        # Fallback: stringify
         logger.warning(
-            "coerce_history_for_gemini: unexpected content type %s for role=%s",
-            type(content_raw).__name__,
-            anthropic_role,
+            "coerce_history_for_gemini: unexpected content type %s",
+            type(content).__name__,
         )
         result.append(
-            types.Content(
-                role=gemini_role,
-                parts=[types.Part(text=str(content_raw))],
-            )
+            types.Content(role=gemini_role, parts=[types.Part(text=str(content))])
         )
 
     return result
