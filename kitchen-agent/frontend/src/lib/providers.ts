@@ -26,6 +26,14 @@ export type ProviderInfo = {
 
 export const PROVIDERS: ProviderInfo[] = [
 	{
+		id: 'mimo',
+		label: 'MiMo',
+		default_model: 'mimo-v2.5-pro',
+		models: [
+			{ id: 'mimo-v2.5-pro', label: 'MiMo v2.5 Pro', context_k: 128 }
+		]
+	},
+	{
 		id: 'gemini',
 		label: 'Google Gemini',
 		default_model: 'gemini-2.5-flash',

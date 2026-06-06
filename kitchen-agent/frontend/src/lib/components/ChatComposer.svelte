@@ -51,22 +51,39 @@
 		};
 	}
 
-	// ── Provider / model helpers ────────────────────────────────────────────
+	// ── Flat model list ─────────────────────────────────────────────────────
 
-	const activeProvider = $derived(providers.find((p) => p.id === selectedProvider));
+	/** Flat list of all models across all providers, with provider prefix. */
+	type FlatModel = {
+		id: string;
+		label: string;
+		providerId: string;
+		providerLabel: string;
+		context_k: number;
+	};
 
-	function modelDisplayName(m: { id: string; label: string; context_k: number }, isDefault: boolean): string {
-		return `${m.label} (${m.context_k}k)${isDefault ? ' ★' : ''}`;
-	}
+	const allModels: FlatModel[] = $derived(
+		providers.flatMap((p) =>
+			p.models.map((m) => ({
+				id: m.id,
+				label: m.label,
+				providerId: p.id,
+				providerLabel: p.label,
+				context_k: m.context_k
+			}))
+		)
+	);
 
-	function handleProviderChange(e: Event) {
-		const pid = (e.target as HTMLSelectElement).value;
-		const p = providers.find((p) => p.id === pid);
-		onproviderchange(pid, p?.default_model ?? '');
-	}
+	/** Currently selected model id (flat). Falls back to first available. */
+	const currentModelId = $derived(selectedModel || allModels[0]?.id || '');
 
 	function handleModelChange(e: Event) {
-		onproviderchange(selectedProvider, (e.target as HTMLSelectElement).value);
+		const modelId = (e.target as HTMLSelectElement).value;
+		// Find which provider owns this model
+		const flat = allModels.find((m) => m.id === modelId);
+		if (flat) {
+			onproviderchange(flat.providerId, modelId);
+		}
 	}
 
 	// ── Context file display name ──────────────────────────────────────────
@@ -201,35 +218,21 @@
 					</button>
 				</div>
 
-				<!-- Center: model selector -->
+				<!-- Center: model selector (single flat list) -->
 				<div class="buttons-center">
-					{#if providers.length > 0 && selectedProvider}
-						<div class="model-selector">
-							<select
-								value={selectedProvider}
-								onchange={handleProviderChange}
-								class="provider-select"
-								aria-label="LLM provider"
-							>
-								{#each providers as p (p.id)}
-									<option value={p.id}>{p.label}</option>
-								{/each}
-							</select>
-							{#if activeProvider}
-								<select
-									value={selectedModel}
-									onchange={handleModelChange}
-									class="model-select"
-									aria-label="Model"
-								>
-									{#each activeProvider.models as m (m.id)}
-										<option value={m.id}>
-											{modelDisplayName(m, m.id === activeProvider.default_model)}
-										</option>
-									{/each}
-								</select>
-							{/if}
-						</div>
+					{#if allModels.length > 0}
+						<select
+							value={currentModelId}
+							onchange={handleModelChange}
+							class="model-select"
+							aria-label="Model"
+						>
+							{#each allModels as m (m.id)}
+								<option value={m.id}>
+									{m.providerLabel} — {m.label} ({m.context_k}k)
+								</option>
+							{/each}
+						</select>
 					{/if}
 				</div>
 
@@ -424,13 +427,7 @@
 
 	/* ── Model selector ───────────────────────────────────────────────── */
 
-	.model-selector {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-	}
 
-	.provider-select,
 	.model-select {
 		height: 32px;
 		padding: 0 8px;
@@ -449,13 +446,11 @@
 		padding-right: 22px;
 	}
 
-	.provider-select:hover,
 	.model-select:hover {
 		background-color: #f8f9fa;
 		border-color: #bdc1c6;
 	}
 
-	.provider-select:focus,
 	.model-select:focus {
 		outline: none;
 		border-color: #4285f4;
