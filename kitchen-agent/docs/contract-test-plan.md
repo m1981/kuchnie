@@ -8,6 +8,141 @@ Generated from `py-diagram` structural analysis on 2026-06-07.
 
 ---
 
+## Test Folder Structure
+
+### Why Structure Matters
+
+When an LLM agent (or a human) opens `tests/`, they need to answer
+three questions in under 5 seconds:
+
+1. **What kind of test is this?** → folder name tells you
+2. **What component does it test?** → mirrors `src/` structure
+3. **Is this boundary tested?** → contract/ folder has the answer
+
+### Current State (Problem)
+
+```
+tests/                              # 41 files dumped at root
+├── test_anthropic_provider.py      # unit? contract? integration? unclear
+├── test_chat_service.py            # unit with mocks
+├── test_chat_provider_routing.py   # integration
+├── test_providers_base.py          # protocol contract
+├── test_stream_final_message.py    # ← actually in unit/agent/
+├── ...39 more files...
+└── unit/                           # 12 more files, separate tree
+    ├── agent/
+    ├── providers/
+    └── ...
+```
+
+**Problems:**
+
+- Can't tell unit from contract from integration at a glance
+- `unit/` duplicates the root-level structure
+- No `contract/` folder — the most important tests are invisible
+- LLM agent has to read every file to find what's tested
+
+### Target State (Solution)
+
+```
+tests/
+├── conftest.py                     # shared fixtures
+│
+├── unit/                           # Component in isolation (1 mock per test)
+│   ├── agent/
+│   │   ├── test_context_assembler.py
+│   │   ├── test_tool_executor.py
+│   │   └── test_turn_orchestrator.py
+│   ├── providers/
+│   │   ├── test_anthropic_provider.py
+│   │   ├── test_gemini_provider.py
+│   │   ├── test_mimo_provider.py
+│   │   └── test_normalizer.py
+│   ├── content/
+│   │   ├── test_file_manager.py
+│   │   ├── test_note_manager.py
+│   │   └── test_search_coordinator.py
+│   ├── tools/
+│   │   ├── test_file_ops.py
+│   │   └── test_registry.py
+│   ├── repositories/
+│   │   ├── test_session_repo.py
+│   │   └── test_note_repo.py
+│   └── services/
+│       ├── test_chat_service.py
+│       ├── test_export_service.py
+│       └── test_message_editor.py
+│
+├── contract/                       # Real implementations on BOTH sides
+│   ├── test_provider_normalizer.py   # Provider → Normalizer
+│   ├── test_orchestrator_provider.py # Orchestrator → Provider
+│   ├── test_orchestrator_normalizer.py # Orchestrator → Normalizer (streaming)
+│   ├── test_orchestrator_tools.py    # Orchestrator → ToolExecutor
+│   ├── test_orchestrator_history.py  # Orchestrator → Serializer
+│   ├── test_chat_orchestrator.py     # ChatService → Orchestrator
+│   ├── test_protocol_compliance.py   # All Protocol implementations
+│   └── test_serializer_repo.py       # Serializer → Repository roundtrip
+│
+├── integration/                    # Multiple real components, mock external only
+│   ├── test_chat_flow.py           # Full chat turn (mock LLM API only)
+│   ├── test_streaming_flow.py      # Full streaming turn (mock LLM API only)
+│   ├── test_tool_loop_flow.py      # Full agentic loop (mock LLM API only)
+│   └── test_session_lifecycle.py   # Create → chat → fork → export
+│
+└── e2e/                            # Full system with real browser (Playwright)
+    ├── message-delete.spec.ts
+    ├── regenerate.spec.ts
+    └── truncate.spec.ts
+```
+
+### Mapping: Current Files → Target Location
+
+| Current file                                      | Target                     | Why                                |
+| ------------------------------------------------- | -------------------------- | ---------------------------------- |
+| `tests/test_anthropic_provider.py`                | `tests/unit/providers/`    | Unit test with mocks               |
+| `tests/test_gemini_provider.py`                   | `tests/unit/providers/`    | Unit test with mocks               |
+| `tests/test_mimo_provider.py`                     | `tests/unit/providers/`    | Unit test with mocks               |
+| `tests/test_chat_service.py`                      | `tests/unit/services/`     | Unit test with mocked orchestrator |
+| `tests/test_providers_base.py`                    | `tests/contract/`          | Tests Protocol compliance          |
+| `tests/test_serializers.py`                       | `tests/unit/`              | Unit test with mock data           |
+| `tests/test_chat_provider_routing.py`             | `tests/integration/`       | Tests provider routing flow        |
+| `tests/test_archive_delete.py`                    | `tests/integration/`       | Tests full session lifecycle       |
+| `tests/test_context_files.py`                     | `tests/integration/`       | Tests context file injection       |
+| `tests/test_main.py`                              | `tests/integration/`       | Tests FastAPI app with TestClient  |
+| `tests/test_repositories.py`                      | `tests/unit/repositories/` | Unit test with real SQLite         |
+| `tests/test_exporter.py`                          | `tests/unit/`              | Pure function tests                |
+| `tests/test_file_ops.py`                          | `tests/unit/tools/`        | Pure function tests                |
+| `tests/test_config.py`                            | `tests/unit/`              | Config parsing tests               |
+| `tests/unit/test_tool_call_canonical.py`          | `tests/contract/`          | Tests type identity contract       |
+| `tests/unit/test_llm_provider_protocol.py`        | `tests/contract/`          | Tests Protocol contract            |
+| `tests/unit/agent/test_stream_final_message.py`   | `tests/contract/`          | Tests streaming contract           |
+| `tests/unit/providers/test_normalizer.py`         | `tests/unit/providers/`    | Unit test with mock inputs         |
+| `tests/unit/providers/test_provider_streaming.py` | `tests/unit/providers/`    | Unit test with mock SDK            |
+
+---
+
+## LLM Agent Inspection Guide
+
+### How to find what's tested
+
+```bash
+# List all contract tests (boundaries)
+find tests/contract -name "test_*.py" -exec basename {} \;
+
+# List all untested boundaries
+# (compare contract/ files against boundary list below)
+
+# Check if a specific boundary is tested
+grep -l "Provider.*Normalizer" tests/contract/*.py
+```
+
+### How to find what's missing
+
+Look at the **Boundary Status Table** below. Any row with ❌ needs a test
+in `tests/contract/`.
+
+---
+
 ## Architecture Boundaries Map
 
 ```
@@ -73,178 +208,112 @@ Generated from `py-diagram` structural analysis on 2026-06-07.
 
 ---
 
-## Current Coverage Assessment
+## Boundary Status Table
 
-### Legend
+> **For LLM agents:** Look at the `Test File` column. If it says `—`,
+> the test doesn't exist yet. Check the `Gap` column for what to write.
 
-- ✅ **Contract tested** — real implementations on both sides
-- ⚠️ **Unit tested only** — one side mocked
-- ❌ **Not tested** — gap
+| ID  | Boundary                        | Status | Test File                                  | Gap                          |
+| --- | ------------------------------- | ------ | ------------------------------------------ | ---------------------------- |
+| B1  | API ↔ ChatService               | ⚠️     | `integration/test_chat_flow.py`            | SSE event format             |
+| B2  | API ↔ Repository                | ✅     | `integration/test_session_lifecycle.py`    | —                            |
+| B3  | ChatService ↔ Orchestrator      | ❌     | —                                          | Event propagation contract   |
+| B4  | Orchestrator ↔ ContextAssembler | ⚠️     | `unit/agent/test_context_assembler.py`     | Field completeness           |
+| B5  | Orchestrator ↔ Provider         | ❌     | —                                          | **complete/stream contract** |
+| B6  | Orchestrator ↔ Normalizer       | ✅     | `contract/test_orchestrator_normalizer.py` | —                            |
+| B7  | Orchestrator ↔ ToolExecutor     | ⚠️     | `unit/agent/test_tool_executor.py`         | Real registry handlers       |
+| B8  | Orchestrator ↔ History format   | ❌     | —                                          | Serialize roundtrip          |
+| B9  | Provider ↔ Normalizer           | ❌     | —                                          | **Stream event shape**       |
+| B10 | ToolRegistry ↔ ToolExecutor     | ⚠️     | `unit/tools/test_registry.py`              | Handler dispatch             |
+| B11 | ContextAssembler ↔ Protocols    | ⚠️     | `unit/agent/test_context_assembler.py`     | Real impl compliance         |
+| B12 | Serializer ↔ Repository         | ❌     | —                                          | SQLite roundtrip             |
+| B13 | Normalizer ↔ Consumers          | ⚠️     | `unit/providers/test_normalizer.py`        | Shape contract               |
+| B14 | Schema ↔ API                    | ✅     | `integration/test_main.py`                 | —                            |
 
-| ID     | Boundary                        | Status | Existing Tests                                           | Gap Description                                 |
-| ------ | ------------------------------- | ------ | -------------------------------------------------------- | ----------------------------------------------- |
-| B1     | API ↔ ChatService               | ⚠️     | `test_chat_service.py`, `test_chat_provider_routing.py`  | ChatService mocked in API tests                 |
-| B2     | API ↔ Repository                | ⚠️     | `test_archive_delete.py`, `test_fork.py`                 | API tests use real SQLite repo ✅               |
-| B3     | ChatService ↔ Orchestrator      | ⚠️     | `test_chat_service.py`                                   | Orchestrator mocked in ChatService tests        |
-| B4     | Orchestrator ↔ ContextAssembler | ⚠️     | `test_context_assembler.py`, `test_turn_orchestrator.py` | Uses fake token counter                         |
-| **B5** | **Orchestrator ↔ Provider**     | ❌     | `test_turn_orchestrator.py`                              | **FakeCompleter has no stream()**               |
-| **B6** | **Orchestrator ↔ Normalizer**   | ❌     | `test_stream_final_message.py` (new)                     | **Just added — was completely missing**         |
-| B7     | Orchestrator ↔ ToolExecutor     | ⚠️     | `test_tool_executor.py`, `test_turn_orchestrator.py`     | Fake registry, real executor                    |
-| B8     | Orchestrator ↔ History format   | ⚠️     | `test_serializers.py`                                    | Serializer tested in isolation                  |
-| **B9** | **Provider ↔ Normalizer**       | ❌     | `test_normalizer.py`, `test_provider_streaming.py`       | **Tests use mocks, never real provider output** |
-| B10    | ToolRegistry ↔ ToolExecutor     | ⚠️     | `test_tool_registry.py`, `test_registry.py`              | Real registry, fake executor                    |
-| B11    | ContextAssembler ↔ Protocols    | ⚠️     | `test_context_assembler.py`                              | Fake implementations                            |
-| B12    | Serializer ↔ Repository         | ⚠️     | `test_serializers.py`                                    | Roundtrip tested, but not with real repo        |
-| B13    | Normalizer ↔ Consumers          | ⚠️     | `test_normalizer.py`                                     | Shape tested, but not with real consumers       |
-| B14    | Schema ↔ API                    | ✅     | `test_main.py`, `test_provider_endpoints.py`             | Pydantic validation tested                      |
+### Status Legend
+
+- ✅ **Contract tested** — real implementations on both sides, file exists
+- ⚠️ **Unit tested only** — one side mocked, needs contract test
+- ❌ **Not tested** — gap, test file doesn't exist
 
 ---
 
 ## Priority 1 — Critical Boundaries (Fix Now)
 
-### B5: Orchestrator ↔ Provider (complete + stream)
-
-**Why critical:** This is the boundary where the Anthropic streaming bug lived.
-The FakeCompleter in orchestrator tests had no `stream()` method.
-
-**Contract rules:**
-
-1. `complete(context)` must return an object `normalize(raw, provider)` can parse
-2. `complete_with_tools(context, tool_calls, tool_results)` same
-3. `stream(context)` must yield events where:
-    - `normalize_chunk(chunk, provider)` returns `str` for text events
-    - The last meaningful event (or a `__final_message__` event) must be
-      parseable by `normalize(raw, provider)` for tool call detection
-4. `stream_with_tools(context, tool_calls, tool_results)` same as `stream()`
-
-**Test plan:**
-
-```python
-# tests/unit/agent/test_provider_orchestrator_contract.py
-
-class TestProviderOrchestratorContract:
-    """
-    Contract: Provider.stream() output must be consumable by
-    TurnOrchestrator.stream() without crashing.
-
-    Uses REAL ResponseNormalizer, REAL ContextAssembler.
-    Only the LLM API is mocked.
-    """
-
-    @pytest.fixture(params=["gemini", "anthropic", "mimo"])
-    def provider(self, request):
-        """Create real provider with mocked SDK client."""
-        ...
-
-    def test_complete_returns_normalizeable_response(self, provider):
-        """complete() output must work with normalize()."""
-        normalizer = ResponseNormalizer()
-        context = _make_assembled_context()
-        raw = provider.complete(context)
-        result = normalizer.normalize(raw, provider_name)
-        assert isinstance(result.text, str)
-        assert isinstance(result.tool_calls, list)
-
-    def test_stream_text_only(self, provider):
-        """stream() text-only response: chunks extract text, final message normalizes."""
-        normalizer = ResponseNormalizer()
-        context = _make_assembled_context()
-
-        chunks = list(provider.stream(context))
-        # Must have yielded something
-        assert len(chunks) > 0
-
-        # All text chunks must be extractable
-        text = ""
-        final_message = None
-        for chunk in chunks:
-            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
-                final_message = chunk["message"]
-                continue
-            delta = normalizer.normalize_chunk(chunk, provider_name)
-            text += delta
-
-        # Final message (or last chunk) must normalize for tool detection
-        msg = final_message or chunks[-1]
-        normalized = normalizer.normalize(msg, provider_name)
-        assert normalized.text  # non-empty for text response
-
-    def test_stream_with_tool_calls(self, provider):
-        """stream() with tool calls: final message must contain tool_calls."""
-        normalizer = ResponseNormalizer()
-        context = _make_assembled_context(tool_schemas=REAL_SCHEMAS)
-
-        chunks = list(provider.stream(context))
-        final_message = None
-        for chunk in chunks:
-            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
-                final_message = chunk["message"]
-
-        if final_message:
-            normalized = normalizer.normalize(final_message, provider_name)
-            # If the model returned tool calls, they must be parseable
-            if normalized.has_tool_calls:
-                assert all(tc.name for tc in normalized.tool_calls)
-```
-
 ### B9: Provider ↔ Normalizer (stream events)
 
-**Why critical:** The normalizer's `_from_anthropic()` assumed `raw.content` exists.
-Stream control events (ParsedMessageStopEvent) don't have `.content`.
+**Why critical:** The normalizer's `_from_anthropic()` assumed `raw.content`
+exists. Stream control events (ParsedMessageStopEvent) don't have `.content`.
 
 **Contract rules:**
 
-1. `normalize(raw, "gemini")` must handle objects with `candidates[0].content.parts`
-2. `normalize(raw, "anthropic")` must handle objects with `.content` list
-3. `normalize(raw, "mimo")` must handle objects with `choices[0].message`
-4. `normalize_chunk(chunk, provider)` must never raise — returns `""` for unknown events
-5. `normalize()` must handle objects WITHOUT `.content` gracefully (stream control events)
+1. `normalize_chunk(chunk, provider)` must never raise — returns `""` for
+   unknown events
+2. `normalize(raw, "anthropic")` must handle objects WITHOUT `.content`
+3. `normalize(raw, "mimo")` must handle objects with `choices[0].delta`
+   (streaming) not just `choices[0].message` (complete)
 
-**Test plan:**
+**Test file:** `tests/contract/test_provider_normalizer.py`
 
 ```python
-# tests/unit/providers/test_normalizer_contract.py
-
-class TestNormalizerContract:
+class TestProviderNormalizerContract:
     """
-    Contract: ResponseNormalizer must handle ALL event types that
-    providers can yield, including stream control events.
+    Uses REAL ResponseNormalizer.
+    Mocks only the SDK response objects (they come from Anthropic/OpenAI SDK).
     """
 
     def test_anthropic_handles_message_stop_event(self):
         """ParsedMessageStopEvent has no .content — must not crash."""
-        stop_event = MagicMock(spec=[])  # No .content attribute
-        normalizer = ResponseNormalizer()
-        # Should not raise AttributeError
-        result = normalizer.normalize_chunk(stop_event, "anthropic")
-        assert result == ""
 
-    def test_anthropic_handles_content_block_delta(self):
-        delta = MagicMock()
-        delta.type = "content_block_delta"
-        delta.delta = MagicMock(type="text_delta", text="hello")
-        normalizer = ResponseNormalizer()
-        assert normalizer.normalize_chunk(delta, "anthropic") == "hello"
+    def test_anthropic_normalize_chunk_all_event_types(self):
+        """All Anthropic stream event types must be handled."""
 
-    def test_gemini_handles_chunk_without_candidates(self):
-        chunk = MagicMock()
-        chunk.candidates = []
-        normalizer = ResponseNormalizer()
-        assert normalizer.normalize_chunk(chunk, "gemini") == ""
+    def test_gemini_normalize_chunk_all_event_types(self):
+        """All Gemini stream event types must be handled."""
 
-    def test_mimo_handles_chunk_without_choices(self):
-        chunk = MagicMock()
-        chunk.choices = []
-        normalizer = ResponseNormalizer()
-        assert normalizer.normalize_chunk(chunk, "mimo") == ""
+    def test_mimo_normalize_chunk_all_event_types(self):
+        """All Mimo stream event types must be handled."""
+
+    def test_normalize_with_realistic_gemini_response(self):
+        """Full Gemini response object must normalize correctly."""
+
+    def test_normalize_with_realistic_anthropic_response(self):
+        """Full Anthropic response object must normalize correctly."""
+
+    def test_normalize_with_realistic_mimo_response(self):
+        """Full Mimo response object must normalize correctly."""
 ```
 
-### B6: Orchestrator ↔ Normalizer (streaming pipeline)
+### B5: Orchestrator ↔ Provider (complete + stream)
 
-**Why critical:** This is the exact seam where the bug happened.
-Orchestrator passed the last raw chunk to `normalize()`.
+**Why critical:** FakeCompleter in orchestrator tests had no `stream()`.
+The streaming pipeline was completely untested.
 
-**Test plan:** ✅ Already added in `test_stream_final_message.py`
+**Contract rules:**
+
+1. `complete(context)` output must be parseable by `normalize(raw, provider)`
+2. `stream(context)` must yield events where:
+    - Text events return non-empty string from `normalize_chunk()`
+    - `__final_message__` event (or last chunk) must be parseable by `normalize()`
+3. `stream_with_tools()` same as `stream()`
+
+**Test file:** `tests/contract/test_orchestrator_provider.py`
+
+```python
+class TestOrchestratorProviderContract:
+    """
+    Uses REAL ResponseNormalizer, REAL ContextAssembler.
+    Mocks only the LLM API client (anthropic.OpenAI, google.genai, etc).
+    """
+
+    @pytest.fixture(params=["gemini", "anthropic", "mimo"])
+    def provider(self, request): ...
+
+    def test_complete_returns_normalizeable(self, provider): ...
+    def test_stream_text_only(self, provider): ...
+    def test_stream_with_tool_calls(self, provider): ...
+    def test_stream_with_tools_continues(self, provider): ...
+```
 
 ---
 
@@ -252,232 +321,184 @@ Orchestrator passed the last raw chunk to `normalize()`.
 
 ### B3: ChatService ↔ TurnOrchestrator
 
-**Contract:** `ChatService.stream_turn()` consumes `TurnOrchestrator.stream()` events.
+**Test file:** `tests/contract/test_chat_orchestrator.py`
 
 ```python
-# tests/test_chat_orchestrator_contract.py
-
-class TestChatServiceOrchestratorContract:
+class TestChatOrchestratorContract:
     """
-    Contract: ChatService.stream_turn() must correctly propagate
-    all TurnOrchestrator.stream() event types to the caller.
+    Uses REAL ChatService, REAL TurnOrchestrator.
+    Mocks only the LLM API and Repository.
     """
 
-    def test_text_deltas_propagated(self):
-        """text_delta events from orchestrator reach the caller."""
-
-    def test_tool_call_events_propagated(self):
-        """tool_call events from orchestrator reach the caller."""
-
-    def test_done_event_propagated(self):
-        """done event from orchestrator reaches the caller."""
-
-    def test_error_propagated(self):
-        """Exceptions from orchestrator are wrapped as error events."""
-```
-
-### B4: Orchestrator ↔ ContextAssembler
-
-**Contract:** `ContextAssembler.assemble()` returns `AssembledContext` with all required fields.
-
-```python
-# tests/unit/agent/test_context_assembler_contract.py
-
-class TestContextAssemblerContract:
-    """
-    Contract: AssembledContext must have all fields that
-    TurnOrchestrator and providers depend on.
-    """
-
-    def test_assembled_context_has_required_fields(self):
-        """All fields that orchestrator reads must be present."""
-        context = assembler.assemble(session, mode, message, ...)
-        assert hasattr(context, "system_prompt")
-        assert hasattr(context, "messages")
-        assert hasattr(context, "images")
-        assert hasattr(context, "context_files")
-        assert hasattr(context, "tool_schemas")
-        assert hasattr(context, "total_tokens_estimated")
-        assert hasattr(context, "slots_used")
-
-    def test_messages_in_common_format(self):
-        """Messages must be in the common format (role, content, tool_calls)."""
-        context = assembler.assemble(session, mode, message, ...)
-        for msg in context.messages:
-            assert "role" in msg
-            assert "content" in msg or "tool_calls" in msg
+    def test_text_deltas_reach_caller(self): ...
+    def test_tool_call_events_reach_caller(self): ...
+    def test_done_event_reaches_caller(self): ...
+    def test_error_wrapped_as_event(self): ...
 ```
 
 ### B7: Orchestrator ↔ ToolExecutor
 
-**Contract:** `ToolExecutor.execute_all()` returns `list[ToolResult]` that orchestrator can feed back.
+**Test file:** `tests/contract/test_orchestrator_tools.py`
 
 ```python
-# tests/unit/agent/test_tool_executor_contract.py
-
-class TestToolExecutorContract:
+class TestOrchestratorToolContract:
     """
-    Contract: ToolResult must be feedable to provider.complete_with_tools().
-    Uses real ToolRegistry + real file_ops handlers.
+    Uses REAL ToolExecutor, REAL ToolRegistry with REAL handlers.
+    Only mocks the LLM API.
     """
 
-    def test_read_file_returns_string_content(self):
-        """read_file tool must return string content in ToolResult."""
-        registry = build_default_registry()
-        executor = ToolExecutor(registry)
-        results = executor.execute_all([
-            ToolCall(id="1", name="read_file", arguments={"filepath": __file__})
-        ])
-        assert results[0].is_error is False
-        assert isinstance(results[0].content, str)
-        assert len(results[0].content) > 0
-
-    def test_unknown_tool_returns_error(self):
-        """Unknown tool name must not crash — returns error result."""
-        registry = build_default_registry()
-        executor = ToolExecutor(registry)
-        results = executor.execute_all([
-            ToolCall(id="1", name="nonexistent", arguments={})
-        ])
-        assert results[0].is_error is True
+    def test_read_file_returns_string_content(self): ...
+    def test_unknown_tool_returns_error_result(self): ...
+    def test_tool_result_feedable_to_provider(self): ...
 ```
 
 ### B8: Orchestrator ↔ History Format
 
-**Contract:** `TurnOutput.updated_api_history` must be dehydratable by serializers.
+**Test file:** `tests/contract/test_orchestrator_history.py`
 
 ```python
-# tests/unit/agent/test_history_format_contract.py
-
-class TestHistoryFormatContract:
+class TestOrchestratorHistoryContract:
     """
-    Contract: History produced by TurnOrchestrator must survive
-    serialize → deserialize roundtrip via dehydrate_history/hydrate_history.
+    History from TurnOrchestrator must survive dehydrate/hydrate roundtrip.
+    Uses REAL serializers.
     """
 
-    def test_history_survives_roundtrip(self):
-        orchestrator = make_orchestrator(text="Hello")
-        output = orchestrator.run(session=make_session(), turn_input=...)
+    def test_text_turn_survives_roundtrip(self): ...
+    def test_tool_turn_survives_roundtrip(self): ...
+    def test_multi_turn_survives_roundtrip(self): ...
+```
 
-        # Serialize
-        json_str = dehydrate_history(output.updated_api_history, turn_ids=None)
+### B4: Orchestrator ↔ ContextAssembler
 
-        # Deserialize
-        restored = hydrate_history(json_str)
+**Test file:** `tests/contract/test_orchestrator_context.py`
 
-        # Must preserve structure
-        assert len(restored) == len(output.updated_api_history)
-        assert restored[-1]["role"] == "assistant"
-        assert restored[-1]["content"] == "Hello"
+```python
+class TestOrchestratorContextContract:
+    """
+    AssembledContext must have all fields that orchestrator and providers read.
+    Uses REAL ContextAssembler, REAL PromptManager, REAL TokenCounter.
+    """
+
+    def test_context_has_all_required_fields(self): ...
+    def test_messages_in_common_format(self): ...
+    def test_budget_enforced(self): ...
 ```
 
 ---
 
 ## Priority 3 — Coverage Gaps (Backlog)
 
-### B1: API ↔ ChatService
-
-```python
-# tests/test_api_chat_contract.py
-
-class TestAPIChatContract:
-    """SSE stream format contract with frontend."""
-
-    def test_stream_sends_valid_sse_events(self):
-        """Every SSE event must have 'data:' prefix and valid JSON."""
-
-    def test_stream_text_delta_format(self):
-        """text_delta events: {"type": "text_delta", "content": "..."}"""
-
-    def test_stream_done_event_format(self):
-        """done event includes provider, model, user_turn_id, assistant_turn_id."""
-```
-
 ### B11: ContextAssembler ↔ Protocol Implementations
 
-```python
-# tests/unit/agent/test_protocol_implementation_contract.py
+**Test file:** `tests/contract/test_protocol_compliance.py`
 
-class TestProtocolImplementationContract:
+```python
+class TestProtocolCompliance:
     """Real implementations must satisfy their Protocol contracts."""
 
-    def test_prompt_manager_satisfies_protocol(self):
-        pm = PromptManager(prompts_dir=settings.prompts_dir)
-        assert isinstance(pm, PromptManagerProtocol)
+    def test_prompt_manager_satisfies_protocol(self): ...
+    def test_token_counter_satisfies_protocol(self): ...
+    def test_note_manager_satisfies_protocol(self): ...
+    def test_file_manager_satisfies_protocol(self): ...
+```
 
-    def test_token_counter_satisfies_protocol(self):
-        tc = TokenCounter()
-        assert isinstance(tc, TokenCounterProtocol)
+### B1: API ↔ ChatService (SSE format)
 
-    def test_note_manager_satisfies_protocol(self):
-        nm = NoteManager(repo=..., search=..., token_counter=...)
-        assert isinstance(nm, NoteManagerProtocol)
+**Test file:** `tests/integration/test_chat_flow.py`
 
-    def test_file_manager_satisfies_protocol(self):
-        fm = FileManager(token_counter=...)
-        assert isinstance(fm, FileManagerProtocol)
+```python
+class TestChatSSEFormat:
+    """SSE events must match frontend expectations."""
+
+    def test_text_delta_format(self): ...
+    def test_done_event_format(self): ...
+    def test_error_event_format(self): ...
 ```
 
 ### B12: Serializer ↔ Repository
 
-```python
-# tests/test_serializer_repo_contract.py
+**Test file:** `tests/contract/test_serializer_repo.py`
 
+```python
 class TestSerializerRepoContract:
     """dehydrate → save → load → hydrate must be lossless."""
 
-    def test_full_roundtrip_via_sqlite(self, tmp_path):
-        """Write session, read back, hydrate — must match original."""
+    def test_full_roundtrip_via_sqlite(self, tmp_path): ...
 ```
 
 ---
 
 ## Test Execution Matrix
 
-| Priority  | Tests                           | Estimated    | Dependencies             |
-| --------- | ------------------------------- | ------------ | ------------------------ |
-| P1-B5     | Provider ↔ Orchestrator         | 12 tests     | Real providers, mock SDK |
-| P1-B6     | Orchestrator ↔ Normalizer       | 7 tests ✅   | Done                     |
-| P1-B9     | Provider ↔ Normalizer           | 9 tests      | Real normalizer          |
-| P2-B3     | ChatService ↔ Orchestrator      | 6 tests      | Mock orchestrator events |
-| P2-B4     | Orchestrator ↔ ContextAssembler | 5 tests      | Real assembler           |
-| P2-B7     | Orchestrator ↔ ToolExecutor     | 4 tests      | Real registry            |
-| P2-B8     | Orchestrator ↔ History          | 3 tests      | Real serializers         |
-| P3-B1     | API ↔ ChatService               | 4 tests      | FastAPI TestClient       |
-| P3-B11    | ContextAssembler ↔ Protocols    | 4 tests      | Real implementations     |
-| P3-B12    | Serializer ↔ Repository         | 3 tests      | Real SQLite              |
-| **Total** |                                 | **57 tests** |                          |
-
----
-
-## Execution Order
-
-1. **P1-B9** — Provider ↔ Normalizer (catches stream event shape bugs)
-2. **P1-B5** — Provider ↔ Orchestrator (catches complete/stream contract bugs)
-3. P2-B7 — ToolExecutor contract (catches tool dispatch bugs)
-4. P2-B8 — History format contract (catches persistence bugs)
-5. P2-B4 — ContextAssembler contract (catches context building bugs)
-6. P2-B3 — ChatService ↔ Orchestrator (catches event propagation bugs)
-7. P3-B11 — Protocol implementations (catches interface drift)
-8. P3-B1 — API contract (catches SSE format bugs)
-9. P3-B12 — Serializer roundtrip (catches data loss bugs)
+| Priority | Boundary | Test File                                  | Tests  | Status     |
+| -------- | -------- | ------------------------------------------ | ------ | ---------- |
+| P1       | B9       | `contract/test_provider_normalizer.py`     | 7      | ❌ Write   |
+| P1       | B5       | `contract/test_orchestrator_provider.py`   | 12     | ❌ Write   |
+| P1       | B6       | `contract/test_orchestrator_normalizer.py` | 7      | ✅ Done    |
+| P2       | B3       | `contract/test_chat_orchestrator.py`       | 4      | ❌ Write   |
+| P2       | B7       | `contract/test_orchestrator_tools.py`      | 3      | ❌ Write   |
+| P2       | B8       | `contract/test_orchestrator_history.py`    | 3      | ❌ Write   |
+| P2       | B4       | `contract/test_orchestrator_context.py`    | 3      | ❌ Write   |
+| P3       | B11      | `contract/test_protocol_compliance.py`     | 4      | ⚠️ Partial |
+| P3       | B1       | `integration/test_chat_flow.py`            | 3      | ⚠️ Partial |
+| P3       | B12      | `contract/test_serializer_repo.py`         | 1      | ❌ Write   |
+|          |          |                                            | **47** |            |
 
 ---
 
 ## Checklist: Before Merging Any Provider Change
 
-- [ ] `test_provider_orchestrator_contract.py` passes for the changed provider
-- [ ] `test_normalizer_contract.py` passes for the changed provider's event types
-- [ ] `test_stream_final_message.py` passes (streaming pipeline)
-- [ ] `test_turn_orchestrator.py` passes (non-streaming pipeline)
+- [ ] `contract/test_orchestrator_provider.py` passes for the changed provider
+- [ ] `contract/test_provider_normalizer.py` passes for the changed provider
+- [ ] `contract/test_orchestrator_normalizer.py` passes (streaming pipeline)
+- [ ] `unit/agent/test_turn_orchestrator.py` passes (non-streaming pipeline)
 - [ ] Full suite passes (`pytest tests/`)
+
+---
+
+## Migration Plan
+
+Moving files is risky — it breaks git history and CI. Do it incrementally:
+
+### Phase 1: Create contract/ (done)
+
+- [x] `tests/contract/test_orchestrator_normalizer.py` (from `unit/agent/test_stream_final_message.py`)
+- [ ] `tests/contract/test_provider_normalizer.py` (new)
+- [ ] `tests/contract/test_orchestrator_provider.py` (new)
+
+### Phase 2: Move unit tests
+
+- [ ] Move `tests/test_anthropic_provider.py` → `tests/unit/providers/`
+- [ ] Move `tests/test_gemini_provider.py` → `tests/unit/providers/`
+- [ ] Move `tests/test_mimo_provider.py` → `tests/unit/providers/`
+- [ ] Move `tests/test_chat_service.py` → `tests/unit/services/`
+- [ ] Move `tests/test_exporter.py` → `tests/unit/`
+- [ ] Move `tests/test_file_ops.py` → `tests/unit/tools/`
+- [ ] Move `tests/test_repositories.py` → `tests/unit/repositories/`
+- [ ] Move remaining root-level unit tests → `tests/unit/`
+
+### Phase 3: Move integration tests
+
+- [ ] Move `tests/test_chat_provider_routing.py` → `tests/integration/`
+- [ ] Move `tests/test_archive_delete.py` → `tests/integration/`
+- [ ] Move `tests/test_context_files.py` → `tests/integration/`
+- [ ] Move `tests/test_main.py` → `tests/integration/`
+- [ ] Move remaining integration tests → `tests/integration/`
+
+### Phase 4: Clean up
+
+- [ ] Remove duplicate tests
+- [ ] Update CI paths
+- [ ] Update this document with final file locations
 
 ---
 
 ## Progress Log
 
-| Date       | Boundary     | Status  | Notes                                                    |
-| ---------- | ------------ | ------- | -------------------------------------------------------- |
-| 2026-06-07 | B6           | ✅ Done | `test_stream_final_message.py` — Anthropic streaming fix |
-| 2026-06-07 | B5 (partial) | ✅ Done | `test_llm_provider_protocol.py` — Protocol completeness  |
-|            |              |         |                                                          |
+| Date       | Boundary     | Status | Notes                                                    |
+| ---------- | ------------ | ------ | -------------------------------------------------------- |
+| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix |
+| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness  |
+| 2026-06-07 | B9           | ❌     | Not yet written                                          |
+| 2026-06-07 | B5 (full)    | ❌     | Not yet written                                          |
+|            |              |        |                                                          |
