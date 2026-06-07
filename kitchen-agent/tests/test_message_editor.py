@@ -18,9 +18,9 @@ Scenarios covered
 -----------------
 A. Edit a user message content  (by turn_id)
 B. Delete a single message      (by turn_id, with optional pair)
-C. Delete last N turns          (truncate — still tail-based, no turn_id needed)
+C. Delete last N turns          (truncate — tail-based)
 D. Update the session-scoped system prompt override
-E. Validation: unknown turn_id, empty content, legacy session, etc.
+E. Validation: unknown turn_id, empty content, etc.
 """
 
 import json
@@ -111,26 +111,6 @@ def service(populated_repo):
     return MessageEditService(populated_repo)
 
 
-@pytest.fixture
-def legacy_repo(repo):
-    """A repo with a session whose messages have NO turn_id (pre-refactor data)."""
-    ui = [
-        {"role": "user",      "content": "Old user message"},
-        {"role": "assistant", "content": "Old assistant reply", "tools": []},
-    ]
-    api = [
-        {"role": "user",  "type": "text", "data": "Old user message"},
-        {"role": "model", "type": "text", "data": "Old assistant reply"},
-    ]
-    repo.save_session(
-        session_id="sess-legacy",
-        title="Legacy session",
-        api_history_json=json.dumps(api),
-        ui_history_json=json.dumps(ui),
-    )
-    return repo
-
-
 # ===========================================================================
 # 1. MessageEditService — edit message by turn_id
 # ===========================================================================
@@ -186,15 +166,6 @@ class TestEditUserMessage:
     def test_edit_empty_content_raises(self, service):
         with pytest.raises(EditError, match="content"):
             service.edit_message("sess-edit", U0, "   ")
-
-    def test_edit_legacy_session_raises_on_unknown_turn_id(self, legacy_repo):
-        """
-        Legacy sessions have no turn_ids so any turn_id lookup raises EditError.
-        The error message clearly identifies the unknown turn_id.
-        """
-        svc = MessageEditService(legacy_repo)
-        with pytest.raises(EditError, match="No message found with turn_id"):
-            svc.edit_message("sess-legacy", "any-turn-id", "new text")
 
 
 # ===========================================================================
@@ -296,14 +267,6 @@ class TestTruncateTurns:
     def test_truncate_nonexistent_session_raises(self, service):
         with pytest.raises(EditError, match="not found"):
             service.truncate_turns("no-such", n=1)
-
-    def test_truncate_works_on_legacy_session(self, legacy_repo):
-        """Truncate still works on sessions without turn_ids (legacy fallback)."""
-        svc = MessageEditService(legacy_repo)
-        svc.truncate_turns("sess-legacy", n=1)
-        _, ui_json, _ = legacy_repo.load_session("sess-legacy")
-        ui = json.loads(ui_json)
-        assert len(ui) == 0
 
 
 # ===========================================================================

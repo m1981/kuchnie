@@ -204,34 +204,15 @@ class ChatService:
 
         title = _make_title(new_ui_history)
 
-        # ── 6. Build turn_ids for dehydration ─────────────────────────
-        # Map each item in updated_api_history to its turn_id
-        new_history_len = len(turn_output.updated_api_history)
-        old_history_len = len(api_history)
-        turn_ids: list[str | None] = []
-
-        # Items that existed before this turn get None (no turn_id)
-        for _ in range(old_history_len):
-            turn_ids.append(None)
-
-        # New items: user message, tool call/response pairs, assistant response
-        for i in range(old_history_len, new_history_len):
-            if i == old_history_len:
-                turn_ids.append(turn_output.user_turn_id)
-            else:
-                turn_ids.append(turn_output.assistant_turn_id)
-
-        # ── 7. Persist ────────────────────────────────────────────────
-        resolved_prompt = system_prompt
-
+        # ── 6. Persist ─────────────────────────────────────────────────
+        # dehydrate_history ensures every item has a turn_id (stamped by
+        # the orchestrator or generated as a UUID fallback).
         self._sessions.save_session(
             session_id=request.session_id,
             title=title,
-            api_history_json=dehydrate_history(
-                turn_output.updated_api_history, turn_ids=turn_ids
-            ),
+            api_history_json=dehydrate_history(turn_output.updated_api_history),
             ui_history_json=json.dumps(new_ui_history),
-            system_prompt=resolved_prompt,
+            system_prompt=system_prompt,
         )
 
         # ── 8. Log ────────────────────────────────────────────────────

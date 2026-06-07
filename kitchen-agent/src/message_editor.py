@@ -3,33 +3,13 @@ src/message_editor.py
 =====================
 Business-logic layer for chat message editing and deletion.
 
-Refactor — Decision 1: turn_id identity
------------------------------------------
-Previously this module contained a ~100-line walking algorithm
-(``_api_footprint_start_and_length``, ``_find_api_index_for_ui_index``) that
-reconstructed the mapping between ``ui_history`` positions and
-``api_history`` item ranges by counting tool-call footprints.
-
-After the Decision 1 refactor, every item in ``api_history_json`` carries a
-``"turn_id"`` field that was stamped at write time by ``chat_service.py``.
-Every item in ``ui_history_json`` also carries a ``"turn_id"``.
-
-All manipulation is now:
+Every message carries a ``turn_id`` (stamped at write time by
+``chat_service.py`` via the orchestrator).  All manipulation is:
   * ui_messages: filter/find by ``turn_id`` (O(n) scan, one field compare)
   * api_items:   filter by ``turn_id`` (O(n) scan, one field compare)
 
-No walking, no counting, no assumptions about tool-call counts.
-
-Backward compatibility
------------------------
-Sessions written before this refactor have no ``turn_id`` in their stored
-JSON.  ``_load_histories`` detects this and raises ``EditError`` with a clear
-message so the user knows to start a new session or use fork.  All other
-operations (system-prompt update, truncate which is tail-based) continue to
-work on legacy sessions.
-
-Public API (unchanged — HTTP routes do NOT change)
----------------------------------------------------
+Public API
+----------
   MessageEditService.edit_message(session_id, turn_id, new_content)
   MessageEditService.delete_message(session_id, turn_id, delete_pair)
   MessageEditService.truncate_turns(session_id, n)
@@ -108,23 +88,6 @@ def _save_histories(
     )
 
 
-def _require_turn_id(msg: dict[str, Any], context: str) -> str:
-    """
-    Extract the turn_id from a ui_message dict, raising EditError if absent.
-
-    Legacy sessions (written before the turn_id refactor) will not have this
-    field.  The error message guides the user to fork or start a new session.
-    """
-    turn_id = msg.get("turn_id")
-    if not turn_id:
-        raise EditError(
-            f"Cannot {context}: this message was recorded before turn-level "
-            "identity was introduced.  Fork the session or start a new one to "
-            "enable per-message editing."
-        )
-    return str(turn_id)
-
-
 def _find_ui_by_turn_id(
     ui_messages: list[dict[str, Any]],
     turn_id: str,
@@ -150,12 +113,6 @@ class MessageEditService:
     Manages editing and deletion of chat messages within a session.
 
     All methods are synchronous and safe to call from ``run_in_executor``.
-
-    After Decision 1 the public API changes slightly:
-      - ``edit_message``   now takes ``turn_id: str`` instead of ``ui_index: int``
-      - ``delete_message`` now takes ``turn_id: str`` instead of ``ui_index: int``
-      - ``truncate_turns`` is index-free (tail slice) — unchanged
-      - ``update_system_prompt`` — unchanged
     """
 
     def __init__(self, session_repo: SessionRepository) -> None:
@@ -182,8 +139,7 @@ class MessageEditService:
             new_content: Replacement text (must be non-empty after strip).
 
         Raises:
-            EditError: on validation failure, session not found, turn not found,
-                       or legacy session without turn_ids.
+            EditError: on validation failure, session not found, or turn not found.
         """
         if not new_content.strip():
             raise EditError("new_content must not be empty or blank.")
@@ -240,14 +196,9 @@ class MessageEditService:
         turn_ids_to_remove: set[str] = {turn_id}
 
         if delete_pair and ui_idx + 1 < len(ui_messages):
-            next_msg = ui_messages[ui_idx + 1]
-            next_turn_id = next_msg.get("turn_id")
+            next_turn_id = ui_messages[ui_idx + 1].get("turn_id")
             if next_turn_id:
                 turn_ids_to_remove.add(next_turn_id)
-            else:
-                # Legacy next message — remove by position only from ui layer
-                # (api layer cannot be matched; skip api removal for that one)
-                ui_messages.pop(ui_idx + 1)
 
         # ── Remove from ui_messages (high-to-low to keep indices stable) ─────
         indices_to_remove = sorted(
@@ -277,14 +228,6 @@ class MessageEditService:
         """
         Remove the last ``n`` complete turn-pairs (user + assistant) from the tail.
 
-        This operation is index-based (tail slice) and does not require turn_ids,
-        so it works on both legacy and modern sessions.
-
-        After collecting the turn_ids from the tail slice (when available),
-        the api layer is filtered by those ids; if turn_ids are absent the api
-        layer is truncated proportionally using the footprint count from the
-        ui layer.
-
         Raises:
             EditError: when ``n < 1``, session not found, or ``n`` exceeds
                        the available number of pairs.
@@ -305,27 +248,9 @@ class MessageEditService:
         first_ui_to_remove = total - items_to_remove
         tail_ui = ui_messages[first_ui_to_remove:]
 
-        # Collect turn_ids from the tail (may be empty for legacy rows).
-        tail_turn_ids: set[str] = {
-            m["turn_id"] for m in tail_ui if m.get("turn_id")
-        }
-
-        if tail_turn_ids:
-            # Modern path: filter by turn_id — exact and order-independent.
-            api_items = [
-                item for item in api_items
-                if item.get("turn_id") not in tail_turn_ids
-            ]
-        else:
-            # Legacy path: estimate the api footprint from the tail ui messages.
-            # Each user turn = 1 api item; each assistant turn = (tool_count*2)+1.
-            api_tail_count = 0
-            for msg in tail_ui:
-                if msg.get("role") == "user":
-                    api_tail_count += 1
-                else:
-                    api_tail_count += len(msg.get("tools") or []) * 2 + 1
-            del api_items[len(api_items) - api_tail_count:]
+        # Filter api_items by turn_ids from the tail.
+        tail_turn_ids: set[str] = {m["turn_id"] for m in tail_ui if m.get("turn_id")}
+        api_items = [item for item in api_items if item.get("turn_id") not in tail_turn_ids]
 
         del ui_messages[first_ui_to_remove:]
 

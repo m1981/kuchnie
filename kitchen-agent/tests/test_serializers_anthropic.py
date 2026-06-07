@@ -3,39 +3,22 @@ tests/test_serializers_anthropic.py
 =====================================
 Tests for serializer round-trip correctness with Anthropic provider history.
 
-Root cause of the bug
----------------------
-``dehydrate_history`` assumed every item in *history* is a
-``types.Content`` SDK object (Gemini).  When the Anthropic provider runs it
-appends plain dicts instead.  ``content.parts`` raises ``AttributeError``
-because dicts don't have a ``parts`` attribute.
-
-Fix contract
-------------
-``dehydrate_history`` must detect the item type and serialise accordingly:
-  - ``types.Content`` objects  → existing Gemini path (unchanged)
-  - plain ``dict`` items       → Anthropic path: stored verbatim as JSON
-
-``hydrate_history`` must reconstruct the correct type on load:
-  - items with ``"__provider": "anthropic"`` (or no Gemini-specific keys) →
-    returned as plain dicts (Anthropic path)
-  - items with ``"type": "text"|"function_call"|"function_response"`` →
-    returned as ``types.Content`` objects (Gemini path, unchanged)
+All provider-specific format detection has been removed.  The serializer
+now treats all dict items as common format and passes them through,
+ensuring every item has a ``turn_id``.
 
 Covers
 ------
-- dehydrate_history handles Anthropic plain-dict history without AttributeError
+- dehydrate_history handles Anthropic plain-dict history without errors
 - dehydrate_history round-trips Anthropic user text turn
 - dehydrate_history round-trips Anthropic assistant text turn
 - dehydrate_history round-trips Anthropic tool-use assistant turn
 - dehydrate_history round-trips Anthropic tool-result user turn
 - dehydrate_history + hydrate_history full round-trip (Anthropic)
 - dehydrate_history + hydrate_history full round-trip (Gemini, unchanged)
-- Mixed history (Gemini session with Anthropic continuation) is not tested
-  here — that path is explicitly unsupported (sessions are provider-specific)
 - turn_ids are attached to Anthropic items just as for Gemini items
 - Empty Anthropic history returns "[]"
-- chat_service round-trip with Anthropic provider: no AttributeError
+- chat_service construction with orchestrator works
 """
 import json
 from unittest.mock import MagicMock, patch
@@ -53,10 +36,6 @@ from tests.test_chat_service import FakeOrchestrator
 
 def _anthropic_user_text(text: str) -> dict:
     return {"role": "user", "content": text}
-
-
-def _anthropic_user_blocks(blocks: list) -> dict:
-    return {"role": "user", "content": blocks}
 
 
 def _anthropic_assistant_text(text: str) -> dict:
@@ -89,12 +68,11 @@ def _anthropic_user_tool_result(tool_id: str, result_json: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def test_dehydrate_does_not_raise_for_anthropic_dict_history() -> None:
-    """The AttributeError 'dict has no attribute parts' must not occur."""
+    """Plain dict history must not raise."""
     history = [
         _anthropic_user_text("Hello"),
         _anthropic_assistant_text("Hi there!"),
     ]
-    # Must not raise
     result = dehydrate_history(history)
     assert isinstance(result, str)
 
@@ -115,7 +93,6 @@ def test_dehydrate_anthropic_user_text_round_trip() -> None:
     original = _anthropic_user_text("What hinges?")
     result = json.loads(dehydrate_history([original]))
     assert result[0]["role"] == "user"
-    # Content preserved
     assert "What hinges?" in json.dumps(result[0])
 
 
@@ -162,10 +139,12 @@ def test_dehydrate_anthropic_attaches_turn_ids() -> None:
     assert result[1]["turn_id"] == "aid-1"
 
 
-def test_dehydrate_anthropic_no_turn_id_when_omitted() -> None:
+def test_dehydrate_anthropic_generates_turn_id_when_omitted() -> None:
+    """When no turn_ids provided, items get generated UUIDs."""
     history = [_anthropic_user_text("Hello")]
     result = json.loads(dehydrate_history(history))
-    assert "turn_id" not in result[0]
+    assert "turn_id" in result[0]
+    assert len(result[0]["turn_id"]) == 36  # UUID format
 
 
 # ---------------------------------------------------------------------------
@@ -182,7 +161,6 @@ def test_full_round_trip_anthropic_simple() -> None:
     restored  = hydrate_history(json_str)
 
     assert len(restored) == 2
-    # Both items must be plain dicts (not SDK Content objects)
     assert isinstance(restored[0], dict)
     assert isinstance(restored[1], dict)
     assert restored[0]["role"] == "user"
@@ -236,7 +214,6 @@ def test_full_round_trip_gemini_text_unchanged() -> None:
     restored = hydrate_history(json_str)
 
     assert len(restored) == 2
-    # Now returns common format dicts
     assert isinstance(restored[0], dict)
     assert isinstance(restored[1], dict)
     assert restored[0]["content"] == "Hello"
@@ -244,26 +221,16 @@ def test_full_round_trip_gemini_text_unchanged() -> None:
 
 
 # ---------------------------------------------------------------------------
-# chat_service integration: legacy provider path raises NotImplementedError
+# chat_service integration
 # ---------------------------------------------------------------------------
 
-def test_chat_service_anthropic_legacy_raises_not_implemented(tmp_path) -> None:
-    """
-    The legacy provider path (explicit provider_name) now raises NotImplementedError
-    since process_chat_turn was removed from providers.
-    """
+def test_chat_service_construction_with_orchestrator(tmp_path) -> None:
+    """ChatService can be constructed with a TurnOrchestrator."""
     from src.repositories import SQLiteConnection, SQLiteSessionRepository
-    from src.chat_service import ChatService, ChatTurnRequest
+    from src.chat_service import ChatService
 
     db   = SQLiteConnection(db_path=str(tmp_path / "test.db"))
     repo = SQLiteSessionRepository(db)
 
-    with patch("src.providers.base.get_provider") as mock_get_provider:
-        mock_provider = MagicMock()
-        mock_get_provider.return_value = mock_provider
-
-        service = ChatService(repo, turn_orchestrator=FakeOrchestrator())
-
-        # Legacy provider path is removed — handle_turn always uses orchestrator
-    # This test just verifies ChatService can be constructed
+    service = ChatService(repo, turn_orchestrator=FakeOrchestrator())
     assert service is not None

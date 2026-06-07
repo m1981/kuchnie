@@ -14,94 +14,16 @@ All messages are stored in a common OpenAI-compatible format:
 This format is provider-agnostic — both Gemini and Anthropic providers
 can consume it by converting to their native API format internally.
 
-**Migration from v1**
----------------------
-Legacy sessions may contain:
-- Gemini format: {"type": "text", "role": "user", "data": "..."}
-- Anthropic format: {"__provider": "anthropic", "role": "user", "content": "..."}
-
-These are automatically converted to the common format on load.
+Every item carries a ``turn_id`` for stable identity (used by edit/delete).
 """
 
 import json
+import uuid
 from typing import Any
 
 import structlog
 
 logger = structlog.get_logger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Legacy format detection
-# ---------------------------------------------------------------------------
-
-_ANTHROPIC_PROVIDER_KEY = "__provider"
-_ANTHROPIC_PROVIDER_VAL = "anthropic"
-
-
-def _is_legacy_gemini(item: dict) -> bool:
-    """Check if item is in legacy Gemini format (has 'type' field)."""
-    return "type" in item and "data" in item
-
-
-def _is_legacy_anthropic(item: dict) -> bool:
-    """Check if item is in legacy Anthropic format (has __provider sentinel)."""
-    return item.get(_ANTHROPIC_PROVIDER_KEY) == _ANTHROPIC_PROVIDER_VAL
-
-
-# ---------------------------------------------------------------------------
-# Legacy → Common format conversion
-# ---------------------------------------------------------------------------
-
-def _legacy_gemini_to_common(item: dict, turn_id: str | None) -> dict | None:
-    """Convert legacy Gemini format to common format."""
-    item_type = item.get("type")
-    role = item.get("role", "user")
-
-    if item_type == "text":
-        msg: dict[str, Any] = {"role": role, "content": item.get("data", "")}
-    elif item_type == "function_call":
-        # Assistant message with tool call
-        msg = {
-            "role": "assistant",
-            "content": "",
-            "tool_calls": [
-                {
-                    "id": item.get("id", ""),
-                    "name": item.get("name", ""),
-                    "arguments": item.get("args", {}),
-                }
-            ],
-        }
-    elif item_type == "function_response":
-        # Tool response message
-        msg = {
-            "role": "tool",
-            "tool_call_id": item.get("id", ""),
-            "content": json.dumps(item.get("response", {}))
-            if isinstance(item.get("response"), dict)
-            else str(item.get("response", "")),
-        }
-    else:
-        logger.warning("Unknown legacy Gemini type '%s' — skipped.", item_type)
-        return None
-
-    if turn_id:
-        msg["turn_id"] = turn_id
-    return msg
-
-
-def _legacy_anthropic_to_common(item: dict, turn_id: str | None) -> dict:
-    """Convert legacy Anthropic format to common format."""
-    # Strip internal keys
-    clean = {
-        k: v
-        for k, v in item.items()
-        if k not in (_ANTHROPIC_PROVIDER_KEY, "turn_id")
-    }
-    if turn_id:
-        clean["turn_id"] = turn_id
-    return clean
 
 
 # ---------------------------------------------------------------------------
@@ -113,13 +35,16 @@ def dehydrate_history(history: list, turn_ids: list[str] | None = None) -> str:
     Convert a conversation history to a JSON string for DB storage.
 
     Accepts:
-      - Common format dicts (pass through)
+      - Common format dicts (pass through, turn_id ensured)
       - Gemini ``types.Content`` objects (convert to common format)
-      - Legacy format dicts (convert to common format)
+
+    Every item in the output is guaranteed to have a ``turn_id`` field.
+    If an item already has one it is preserved; otherwise a UUID is generated.
 
     Args:
         history:  History list in any supported format.
-        turn_ids: Optional parallel list of ``turn_id`` strings.
+        turn_ids: Optional parallel list of ``turn_id`` strings.  When provided,
+                  used for items that don't already carry a ``turn_id``.
 
     Returns:
         JSON string of the dehydrated history in common format.
@@ -127,27 +52,17 @@ def dehydrate_history(history: list, turn_ids: list[str] | None = None) -> str:
     simple_list: list[dict] = []
 
     for idx, item in enumerate(history):
-        turn_id: str | None = turn_ids[idx] if turn_ids is not None else None
+        turn_id: str | None = turn_ids[idx] if turn_ids is not None and idx < len(turn_ids) else None
 
         if isinstance(item, dict):
-            # Already a dict — could be common format or legacy
-            if _is_legacy_anthropic(item):
-                # Legacy Anthropic format
-                converted = _legacy_anthropic_to_common(item, turn_id)
-                simple_list.append(converted)
-            elif _is_legacy_gemini(item):
-                # Legacy Gemini format
-                converted = _legacy_gemini_to_common(item, turn_id)
-                if converted is not None:
-                    simple_list.append(converted)
-            else:
-                # Already common format — pass through
-                if turn_id and "turn_id" not in item:
-                    item = {**item, "turn_id": turn_id}
-                simple_list.append(item)
-
+            # Already a dict — common format.  Ensure turn_id is present.
+            if turn_id and "turn_id" not in item:
+                item = {**item, "turn_id": turn_id}
+            if "turn_id" not in item:
+                item = {**item, "turn_id": str(uuid.uuid4())}
+            simple_list.append(item)
         else:
-            # Assume Gemini types.Content object
+            # Assume Gemini types.Content object — convert to common format
             try:
                 from google.genai import types
 
@@ -175,6 +90,9 @@ def _gemini_content_to_common(content: Any, turn_id: str | None) -> dict | None:
 
     role = content.role
     part = content.parts[0]
+
+    # Preserve turn_id from the Content object if present (stamped by orchestrator)
+    effective_turn_id = turn_id or getattr(content, "turn_id", None) or str(uuid.uuid4())
 
     if part.text is not None:
         msg: dict[str, Any] = {"role": role, "content": part.text}
@@ -205,8 +123,7 @@ def _gemini_content_to_common(content: Any, turn_id: str | None) -> dict | None:
         logger.warning("Skipping unrecognised Gemini part type")
         return None
 
-    if turn_id:
-        msg["turn_id"] = turn_id
+    msg["turn_id"] = effective_turn_id
     return msg
 
 
@@ -217,31 +134,9 @@ def hydrate_history(json_string: str) -> list[dict]:
     Always returns a list of dicts in **common format**:
         {"role": "user"|"assistant"|"tool", "content": "...", ...}
 
-    Legacy formats are automatically converted.
-
     ``turn_id`` is preserved in the output for stable message identity.
     """
     if not json_string or json_string.strip() in ("", "[]"):
         return []
 
-    simple_list: list[dict] = json.loads(json_string)
-    history: list[dict] = []
-
-    for item in simple_list:
-        # Legacy Anthropic format
-        if _is_legacy_anthropic(item):
-            converted = _legacy_anthropic_to_common(item, item.get("turn_id"))
-            history.append(converted)
-            continue
-
-        # Legacy Gemini format
-        if _is_legacy_gemini(item):
-            converted = _legacy_gemini_to_common(item, item.get("turn_id"))
-            if converted is not None:
-                history.append(converted)
-            continue
-
-        # Already common format — pass through
-        history.append(item)
-
-    return history
+    return json.loads(json_string)

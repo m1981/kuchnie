@@ -3,7 +3,6 @@ tests/test_session_tree.py
 ==========================
 """
 import json
-import sqlite3
 from pathlib import Path
 
 import pytest
@@ -79,51 +78,6 @@ class TestLineageColumns:
         assert rows[child_id]["parent_id"] == "parent-1"
         assert rows[child_id]["fork_turn_index"] == 0
 
-    def test_init_backfills_legacy_fork_titles(self, tmp_path: Path) -> None:
-        db_path = tmp_path / "legacy.db"
-        with sqlite3.connect(db_path) as conn:
-            conn.execute(
-                """
-                CREATE TABLE sessions (
-                    id               TEXT PRIMARY KEY,
-                    title            TEXT,
-                    api_history_json TEXT,
-                    ui_history_json  TEXT,
-                    updated_at       TIMESTAMP,
-                    parent_id        TEXT,
-                    fork_turn_index  INTEGER,
-                    root_id          TEXT,
-                    archived_at      TIMESTAMP
-                )
-                """
-            )
-            conn.executemany(
-                """
-                INSERT INTO sessions
-                    (id, title, api_history_json, ui_history_json, updated_at)
-                VALUES (?, ?, '[]', '[]', ?)
-                """,
-                [
-                    ("parent-1", "what image do you see?", "2026-01-01 10:00:00"),
-                    (
-                        "child-1",
-                        "what image do you see? (fork @ turn 1)",
-                        "2026-01-01 10:01:00",
-                    ),
-                ],
-            )
-
-        conn = SQLiteConnection(db_path=str(db_path))
-        repo = SQLiteSessionRepository(conn)
-
-        rows = {r["id"]: r for r in repo.list_sessions()}
-        assert rows["child-1"]["parent_id"] == "parent-1"
-        assert rows["child-1"]["fork_turn_index"] == 1
-        assert rows["child-1"]["root_id"] == "parent-1"
-
-        tree = repo.get_session_tree()
-        assert [root["id"] for root in tree] == ["parent-1"]
-        assert [child["id"] for child in tree[0]["children"]] == ["child-1"]
 
 
 class TestForkLineage:
