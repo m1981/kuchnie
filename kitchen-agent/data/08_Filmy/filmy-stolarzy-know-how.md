@@ -58,3 +58,17 @@ https://youtu.be/DiKCYFbHyqw?t=1767
 ## Montaż zlewu pod HPL
 
 https://youtu.be/DiKCYFbHyqw?t=3018
+
+# Corpus filmy szkoleniowe
+
+## Jak dodawać blendy górne
+
+https://youtu.be/uVEnJeYXmYM?list=PLnvYGeIBTN4flHgPWNfijSAISTkB51Ej9&t=401
+
+## Jak przysuwać elementy do siebie za pomocą punktów bazowych
+
+https://youtu.be/uVEnJeYXmYM?list=PLnvYGeIBTN4flHgPWNfijSAISTkB51Ej9&t=108
+
+# Jak wbudowac lodówkę w wnękę
+
+https://youtu.be/uVEnJeYXmYM?list=PLnvYGeIBTN4flHgPWNfijSAISTkB51Ej9&t=339
