@@ -223,7 +223,7 @@ in `tests/contract/`.
 | B6  | Orchestrator ↔ Normalizer       | ✅     | `contract/test_orchestrator_normalizer.py` | —                            |
 | B7  | Orchestrator ↔ ToolExecutor     | ⚠️     | `unit/agent/test_tool_executor.py`         | Real registry handlers       |
 | B8  | Orchestrator ↔ History format   | ❌     | —                                          | Serialize roundtrip          |
-| B9  | Provider ↔ Normalizer           | ❌     | —                                          | **Stream event shape**       |
+| B9  | Provider ↔ Normalizer           | ✅     | `contract/test_provider_normalizer.py`     | —                            |
 | B10 | ToolRegistry ↔ ToolExecutor     | ⚠️     | `unit/tools/test_registry.py`              | Handler dispatch             |
 | B11 | ContextAssembler ↔ Protocols    | ⚠️     | `unit/agent/test_context_assembler.py`     | Real impl compliance         |
 | B12 | Serializer ↔ Repository         | ❌     | —                                          | SQLite roundtrip             |
@@ -240,7 +240,7 @@ in `tests/contract/`.
 
 ## Priority 1 — Critical Boundaries (Fix Now)
 
-### B9: Provider ↔ Normalizer (stream events)
+### B9: Provider ↔ Normalizer (stream events) — ✅ DONE
 
 **Why critical:** The normalizer's `_from_anthropic()` assumed `raw.content`
 exists. Stream control events (ParsedMessageStopEvent) don't have `.content`.
@@ -253,36 +253,20 @@ exists. Stream control events (ParsedMessageStopEvent) don't have `.content`.
 3. `normalize(raw, "mimo")` must handle objects with `choices[0].delta`
    (streaming) not just `choices[0].message` (complete)
 
-**Test file:** `tests/contract/test_provider_normalizer.py`
+**Test file:** `tests/contract/test_provider_normalizer.py` — **35 tests**
 
-```python
-class TestProviderNormalizerContract:
-    """
-    Uses REAL ResponseNormalizer.
-    Mocks only the SDK response objects (they come from Anthropic/OpenAI SDK).
-    """
+**What's tested:**
 
-    def test_anthropic_handles_message_stop_event(self):
-        """ParsedMessageStopEvent has no .content — must not crash."""
-
-    def test_anthropic_normalize_chunk_all_event_types(self):
-        """All Anthropic stream event types must be handled."""
-
-    def test_gemini_normalize_chunk_all_event_types(self):
-        """All Gemini stream event types must be handled."""
-
-    def test_mimo_normalize_chunk_all_event_types(self):
-        """All Mimo stream event types must be handled."""
-
-    def test_normalize_with_realistic_gemini_response(self):
-        """Full Gemini response object must normalize correctly."""
-
-    def test_normalize_with_realistic_anthropic_response(self):
-        """Full Anthropic response object must normalize correctly."""
-
-    def test_normalize_with_realistic_mimo_response(self):
-        """Full Mimo response object must normalize correctly."""
-```
+- Anthropic: all 7 stream event types (MessageStart, ContentBlockStart,
+  ContentBlockDelta with TextDelta/InputJSONDelta, ContentBlockStop,
+  MessageDelta, MessageStop) — MessageStop has no `.content`, must not crash
+- Anthropic: complete Message with TextBlock, ToolUseBlock, mixed, usage
+- Gemini: chunks with text, empty candidates, function_call
+- Gemini: complete response with text, function_call, missing usage
+- Mimo: chunks with delta.content, empty choices, None content
+- Mimo: complete response with text, tool_calls, invalid JSON arguments
+- Cross-provider: normalize_chunk never raises on empty/None input
+- Contract: NormalizedResponse shape has all required fields
 
 ### B5: Orchestrator ↔ Provider (complete + stream)
 
@@ -432,7 +416,7 @@ class TestSerializerRepoContract:
 
 | Priority | Boundary | Test File                                  | Tests  | Status     |
 | -------- | -------- | ------------------------------------------ | ------ | ---------- |
-| P1       | B9       | `contract/test_provider_normalizer.py`     | 7      | ❌ Write   |
+| P1       | B9       | `contract/test_provider_normalizer.py`     | 35     | ✅ Done    |
 | P1       | B5       | `contract/test_orchestrator_provider.py`   | 12     | ❌ Write   |
 | P1       | B6       | `contract/test_orchestrator_normalizer.py` | 7      | ✅ Done    |
 | P2       | B3       | `contract/test_chat_orchestrator.py`       | 4      | ❌ Write   |
@@ -460,11 +444,11 @@ class TestSerializerRepoContract:
 
 Moving files is risky — it breaks git history and CI. Do it incrementally:
 
-### Phase 1: Create contract/ (done)
+### Phase 1: Create contract/ (in progress)
 
-- [x] `tests/contract/test_orchestrator_normalizer.py` (from `unit/agent/test_stream_final_message.py`)
-- [ ] `tests/contract/test_provider_normalizer.py` (new)
-- [ ] `tests/contract/test_orchestrator_provider.py` (new)
+- [x] `tests/contract/test_orchestrator_normalizer.py` — B6 — 7 tests
+- [x] `tests/contract/test_provider_normalizer.py` — B9 — 35 tests
+- [ ] `tests/contract/test_orchestrator_provider.py` — B5 — 12 tests
 
 ### Phase 2: Move unit tests
 
@@ -495,10 +479,10 @@ Moving files is risky — it breaks git history and CI. Do it incrementally:
 
 ## Progress Log
 
-| Date       | Boundary     | Status | Notes                                                    |
-| ---------- | ------------ | ------ | -------------------------------------------------------- |
-| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix |
-| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness  |
-| 2026-06-07 | B9           | ❌     | Not yet written                                          |
-| 2026-06-07 | B5 (full)    | ❌     | Not yet written                                          |
-|            |              |        |                                                          |
+| Date       | Boundary     | Status | Notes                                                             |
+| ---------- | ------------ | ------ | ----------------------------------------------------------------- |
+| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix          |
+| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness           |
+| 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types |
+| 2026-06-07 | B5 (full)    | ❌     | Not yet written                                                   |
+|            |              |        |                                                                   |
