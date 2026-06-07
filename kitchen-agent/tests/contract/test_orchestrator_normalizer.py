@@ -379,3 +379,135 @@ class TestMimoStreamingBug:
 
         done = [e for e in events if e["type"] == "done"][0]
         assert done["provider"] == "gemini"  # default provider name
+
+
+# ---------------------------------------------------------------------------
+# Tests: recursive streaming tool loop (Fix #4)
+# ---------------------------------------------------------------------------
+
+class TestRecursiveStreamingToolLoop:
+    """
+    stream() must handle multiple tool-call iterations, just like run().
+
+    Before Fix #4: stream() only handled one tool-call iteration.
+    After Fix #4: stream() has a while loop matching run() logic.
+    """
+
+    def test_stream_handles_sequential_tool_calls(self):
+        """LLM calls tool, gets result, calls another tool, then responds."""
+        first_tool = ToolCall(id="c1", name="read_file", arguments={"filepath": "/a.md"})
+        second_tool = ToolCall(id="c2", name="echo", arguments={"text": "processed"})
+
+        provider = FakeStreamingProvider(text="Final answer.")
+        call_count = 0
+
+        def multi_iter_stream(context, *args):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                yield {"type": "__final_message__", "message": _gemini_tool_call_response([first_tool])}
+            elif call_count == 2:
+                yield {"type": "__final_message__", "message": _gemini_tool_call_response([second_tool])}
+            else:
+                yield {"type": "__final_message__", "message": _gemini_text_response("Final answer.")}
+
+        provider.stream = multi_iter_stream
+        provider.stream_with_tools = multi_iter_stream  # same generator for both
+
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=provider,
+            response_normalizer=ResponseNormalizer(),
+            max_tool_iterations=10,
+        )
+
+        events = list(orchestrator.stream(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Multi-step"),
+        ))
+
+        tool_call_events = [e for e in events if e["type"] == "tool_call"]
+        tool_result_events = [e for e in events if e["type"] == "tool_result"]
+        done_events = [e for e in events if e["type"] == "done"]
+
+        assert len(tool_call_events) == 2
+        assert tool_call_events[0]["name"] == "read_file"
+        assert tool_call_events[1]["name"] == "echo"
+        assert len(tool_result_events) == 2
+        assert len(done_events) == 1
+        assert done_events[0]["tool_calls_made"] == ["read_file", "echo"]
+
+    def test_stream_max_iterations_enforced(self):
+        """Infinite tool loop in streaming must raise MaxToolIterationsError."""
+        provider = FakeStreamingProvider(text="loop")
+        tool_call = ToolCall(id="c1", name="read_file", arguments={"filepath": "/loop"})
+
+        def infinite_stream(context, *args):
+            yield {"type": "__final_message__", "message": _gemini_tool_call_response([tool_call])}
+
+        provider.stream = infinite_stream
+        provider.stream_with_tools = infinite_stream  # same for both
+
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=provider,
+            response_normalizer=ResponseNormalizer(),
+            max_tool_iterations=3,
+        )
+
+        with pytest.raises(MaxToolIterationsError) as exc_info:
+            list(orchestrator.stream(
+                session=make_session(),
+                turn_input=TurnInput(user_message="Loop"),
+            ))
+
+        assert exc_info.value.max_iterations == 3
+
+    def test_stream_tool_details_in_done_event(self):
+        """Done event must include tool_details for history building."""
+        tool_call = ToolCall(id="c1", name="read_file", arguments={"filepath": "/x.md"})
+        provider = FakeStreamingProvider(text="Done.")
+
+        call_count = 0
+
+        def two_iter_stream(context, *args):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                yield {"type": "__final_message__", "message": _gemini_tool_call_response([tool_call])}
+            else:
+                yield {"type": "__final_message__", "message": _gemini_text_response("Done.")}
+
+        provider.stream = two_iter_stream
+        provider.stream_with_tools = two_iter_stream  # same for both
+
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=provider,
+            response_normalizer=ResponseNormalizer(),
+        )
+
+        events = list(orchestrator.stream(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Read"),
+        ))
+
+        done = [e for e in events if e["type"] == "done"][0]
+        assert "tool_details" in done
+        assert len(done["tool_details"]) == 1
+        assert done["tool_details"][0].name == "read_file"

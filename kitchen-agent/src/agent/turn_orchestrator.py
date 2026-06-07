@@ -162,6 +162,57 @@ class TurnOrchestrator:
         self._tool_registry = tool_registry
         self._log = structlog.get_logger(__name__)
 
+    # ── Shared helpers ──────────────────────────────────────────────────
+
+    def _execute_tool_calls(
+        self,
+        normalized: NormalizedResponse,
+        tool_details: list[ToolCallDetail],
+    ) -> tuple[list[ToolCall], list[ToolResult]]:
+        """
+        Execute tool calls and record details for history.
+
+        Returns:
+            Tuple of (tool_calls, tool_results) for feeding back to the LLM.
+        """
+        tool_results = self._tools.execute_all(normalized.tool_calls)
+
+        for tc, tr in zip(normalized.tool_calls, tool_results):
+            tool_details.append(ToolCallDetail(
+                id=tc.id,
+                name=tc.name,
+                arguments=tc.arguments,
+                result_content=tr.content,
+                is_error=tr.is_error,
+            ))
+
+        return normalized.tool_calls, tool_results
+
+    @staticmethod
+    def _build_output_from_details(
+        tool_details: list[ToolCallDetail],
+    ) -> tuple[list[ToolCall], list[dict]]:
+        """
+        Convert internal ToolCallDetail list to serializable forms.
+
+        Returns:
+            Tuple of (tool_calls_made_objects, tool_logs) for TurnOutput.
+        """
+        calls = [
+            ToolCall(id=d.id, name=d.name, arguments=d.arguments)
+            for d in tool_details
+        ]
+        logs = [{
+            "name": d.name,
+            "args": d.arguments,
+            "result": ({"content": d.result_content}
+                       if not d.is_error
+                       else {"error": d.result_content}),
+        } for d in tool_details]
+        return calls, logs
+
+    # ── run() ────────────────────────────────────────────────────────────
+
     def run(
         self,
         session: dict,
@@ -278,47 +329,24 @@ class TurnOrchestrator:
                 tool_calls=[tc.name for tc in normalized.tool_calls],
             )
 
-            # Execute tools
+            # Execute tools and record details
             with log_timing(self._log, "orchestrator_tools_executed") as timing:
-                tool_results = self._tools.execute_all(normalized.tool_calls)
-            timing["tools_count"] = len(tool_results)
+                calls, results = self._execute_tool_calls(normalized, tool_details)
+            timing["tools_count"] = len(results)
 
             tool_calls_made.extend(
                 tc.name for tc in normalized.tool_calls
             )
 
-            # Record tool details for history persistence
-            for tc, tr in zip(normalized.tool_calls, tool_results):
-                tool_details.append(ToolCallDetail(
-                    id=tc.id,
-                    name=tc.name,
-                    arguments=tc.arguments,
-                    result_content=tr.content,
-                    is_error=tr.is_error,
-                ))
-
             # Feed results back to LLM
             self._log.info("orchestrator_feeding_tool_results_to_llm")
             raw_response = provider.complete_with_tools(
-                context, normalized.tool_calls, tool_results,
+                context, calls, results,
             )
             normalized = self._normalizer.normalize(raw_response, provider_name)
 
         # 4. Build output
-        # Build tool_logs (serializable) and tool_calls_made (ToolCall list)
-        tool_calls_made_objects: list[ToolCall] = []
-        tool_logs: list[dict] = []
-        for detail in tool_details:
-            tool_calls_made_objects.append(
-                ToolCall(id=detail.id, name=detail.name, arguments=detail.arguments)
-            )
-            tool_logs.append({
-                "name": detail.name,
-                "args": detail.arguments,
-                "result": ({"content": detail.result_content}
-                           if not detail.is_error
-                           else {"error": detail.result_content}),
-            })
+        tool_calls_made_objects, tool_logs = self._build_output_from_details(tool_details)
 
         # Build updated_api_history from session messages + new turns
         # Using provider-agnostic common format
@@ -385,6 +413,10 @@ class TurnOrchestrator:
           - {"type": "tool_call", "name": "...", "args": {...}, "id": "..."}
           - {"type": "tool_result", "name": "...", "result": {...}, "id": "..."}
           - {"type": "done", "provider": "...", "model": "...", ...}
+
+        Handles recursive tool loops (same as run()) — if the LLM makes
+        tool calls after stream_with_tools(), they are executed in the
+        next iteration.
         """
         # ── 1. Resolve provider ───────────────────────────────────────
         if turn_input.provider:
@@ -426,42 +458,42 @@ class TurnOrchestrator:
                 provider=provider_name,
             )
 
-        # ── 3. Stream LLM response ───────────────────────────────────
+        # ── 3. Stream LLM response + recursive tool loop ─────────────
         full_text = ""
         tool_calls_made: list[str] = []
         tool_details: list[ToolCallDetail] = []
-        final_message: Any = None  # __final_message__ from provider for normalization
-        last_raw_chunk: Any = None  # Fallback for providers without __final_message__
+        iterations = 0
 
         # Generate stable turn IDs
         user_turn_id = str(uuid.uuid4())
         assistant_turn_id = str(uuid.uuid4())
 
-        for chunk in provider.stream(context):
-            # Providers yield __final_message__ with the complete response
-            # for tool call detection.  Do NOT pass this to normalize_chunk.
-            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
-                final_message = chunk["message"]
-                continue
+        # First LLM streaming call
+        normalized = None
+        for event in self._stream_and_collect(
+            provider, context, provider_name, full_text,
+        ):
+            if event["type"] == "__normalized__":
+                normalized = event["response"]
+            else:
+                yield event  # forward text_delta
 
-            last_raw_chunk = chunk
-            # Extract text delta from chunk
-            text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
-            if text_delta:
-                full_text += text_delta
-                yield {"type": "text_delta", "content": text_delta}
+        if normalized:
+            full_text += normalized.text
 
-        # ── 4. Check for tool calls ──────────────────────────────────
-        # Use __final_message__ from the provider for normalization.
-        # Fallback to last raw chunk for providers that don't yield it
-        # (e.g. Gemini where each chunk is a full response object).
-        message_to_normalize = final_message if final_message is not None else last_raw_chunk
-        normalized = self._normalizer.normalize(
-            message_to_normalize, provider_name
-        ) if message_to_normalize is not None else None
+        # Recursive tool loop (mirrors run() logic)
+        while normalized and normalized.has_tool_calls and turn_input.use_tools:
+            iterations += 1
+            if iterations > self._max_tool_iterations:
+                raise MaxToolIterationsError(self._max_tool_iterations)
 
-        if normalized and normalized.has_tool_calls and turn_input.use_tools:
-            # Execute tools
+            self._log.info(
+                "orchestrator_stream_tool_iteration",
+                iteration=iterations,
+                tool_calls=[tc.name for tc in normalized.tool_calls],
+            )
+
+            # Yield tool_call events
             for tc in normalized.tool_calls:
                 tool_calls_made.append(tc.name)
                 yield {
@@ -471,16 +503,11 @@ class TurnOrchestrator:
                     "id": tc.id,
                 }
 
-            tool_results = self._tools.execute_all(normalized.tool_calls)
+            # Execute tools and record details
+            calls, results = self._execute_tool_calls(normalized, tool_details)
 
-            for tc, tr in zip(normalized.tool_calls, tool_results):
-                tool_details.append(ToolCallDetail(
-                    id=tc.id,
-                    name=tc.name,
-                    arguments=tc.arguments,
-                    result_content=tr.content,
-                    is_error=tr.is_error,
-                ))
+            # Yield tool_result events
+            for tc, tr in zip(calls, results):
                 yield {
                     "type": "tool_result",
                     "name": tc.name,
@@ -489,18 +516,20 @@ class TurnOrchestrator:
                     "id": tc.id,
                 }
 
-            # Continue streaming after tools
-            for chunk in provider.stream_with_tools(
-                context, normalized.tool_calls, tool_results
+            # Continue streaming after tools — next iteration
+            normalized = None
+            for event in self._stream_and_collect_with_tools(
+                provider, context, calls, results, provider_name, full_text,
             ):
-                if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
-                    continue
-                text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
-                if text_delta:
-                    full_text += text_delta
-                    yield {"type": "text_delta", "content": text_delta}
+                if event["type"] == "__normalized__":
+                    normalized = event["response"]
+                else:
+                    yield event  # forward text_delta
 
-        # ── 5. Done event ─────────────────────────────────────────────
+            if normalized:
+                full_text += normalized.text
+
+        # ── 4. Done event ─────────────────────────────────────────────
         yield {
             "type": "done",
             "provider": provider_name,
@@ -508,4 +537,88 @@ class TurnOrchestrator:
             "user_turn_id": user_turn_id,
             "assistant_turn_id": assistant_turn_id,
             "tool_calls_made": tool_calls_made,
+            "tool_details": tool_details,  # for history building
         }
+
+    def _stream_and_collect(
+        self,
+        provider: LLMProvider,
+        context: AssembledContext,
+        provider_name: str,
+        _accumulated: str,
+    ) -> Iterator[dict]:
+        """
+        Stream a single LLM call, yielding text_delta events in real-time.
+
+        After all chunks are consumed, yields a special ``__normalized__``
+        event containing the final ``NormalizedResponse``.  The caller
+        uses ``yield from`` to forward text deltas and receives the
+        normalized response as the generator's return value.
+
+        Yields:
+            {"type": "text_delta", "content": "..."} for each chunk.
+            {"type": "__normalized__", "response": NormalizedResponse} at the end.
+        """
+        final_message: Any = None
+        last_raw_chunk: Any = None
+        accumulated_text = ""
+
+        for chunk in provider.stream(context):
+            # Providers yield __final_message__ with the complete response
+            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
+                final_message = chunk["message"]
+                continue
+
+            last_raw_chunk = chunk
+            text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
+            if text_delta:
+                accumulated_text += text_delta
+                yield {"type": "text_delta", "content": text_delta}
+
+        # Normalize the final response
+        message_to_normalize = final_message if final_message is not None else last_raw_chunk
+        if message_to_normalize is not None:
+            normalized = self._normalizer.normalize(message_to_normalize, provider_name)
+            if accumulated_text:
+                normalized.text = accumulated_text
+            yield {"type": "__normalized__", "response": normalized}
+
+    def _stream_and_collect_with_tools(
+        self,
+        provider: LLMProvider,
+        context: AssembledContext,
+        tool_calls: list[ToolCall],
+        tool_results: list[ToolResult],
+        provider_name: str,
+        _accumulated: str,
+    ) -> Iterator[dict]:
+        """
+        Stream an LLM call after tool execution, yielding text_delta events.
+
+        Same pattern as _stream_and_collect but calls stream_with_tools().
+
+        Yields:
+            {"type": "text_delta", "content": "..."} for each chunk.
+            {"type": "__normalized__", "response": NormalizedResponse} at the end.
+        """
+        final_message: Any = None
+        last_raw_chunk: Any = None
+        accumulated_text = ""
+
+        for chunk in provider.stream_with_tools(context, tool_calls, tool_results):
+            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
+                final_message = chunk["message"]
+                continue
+
+            last_raw_chunk = chunk
+            text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
+            if text_delta:
+                accumulated_text += text_delta
+                yield {"type": "text_delta", "content": text_delta}
+
+        message_to_normalize = final_message if final_message is not None else last_raw_chunk
+        if message_to_normalize is not None:
+            normalized = self._normalizer.normalize(message_to_normalize, provider_name)
+            if accumulated_text:
+                normalized.text = accumulated_text
+            yield {"type": "__normalized__", "response": normalized}
