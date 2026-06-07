@@ -195,8 +195,9 @@ class AnthropicProvider:
         if user_content:
             self._conversation_state.append({"role": "user", "content": user_content})
 
-        # Use pre-built schemas from __init__
-        tool_schemas = self._tool_schemas
+        # Only send tools if orchestrator has set tool_schemas on context.
+        # When use_tools=False, context.tool_schemas will be None.
+        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
 
         response = self._client.messages.create(
             model=self._model,
@@ -244,8 +245,8 @@ class AnthropicProvider:
             })
         self._conversation_state.append({"role": "user", "content": result_content})
 
-        # Use pre-built schemas from __init__
-        tool_schemas = self._tool_schemas
+        # Only send tools if orchestrator has set tool_schemas on context.
+        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
 
         response = self._client.messages.create(
             model=self._model,
@@ -319,8 +320,9 @@ class AnthropicProvider:
         if user_content:
             self._conversation_state.append({"role": "user", "content": user_content})
 
-        # Use pre-built schemas from __init__
-        tool_schemas = self._tool_schemas
+        # Only send tools if orchestrator has set tool_schemas on context.
+        # When use_tools=False, context.tool_schemas will be None.
+        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
 
         logger.info(
             "anthropic_stream_start",
@@ -385,8 +387,8 @@ class AnthropicProvider:
             })
         self._conversation_state.append({"role": "user", "content": result_content})
 
-        # Use pre-built schemas from __init__
-        tool_schemas = self._tool_schemas
+        # Only send tools if orchestrator has set tool_schemas on context.
+        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
 
         # Use messages.stream() for streaming
         with self._client.messages.stream(

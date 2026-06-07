@@ -91,7 +91,7 @@ class AssembledContext:
     slots_used: dict[ContextSlot, int]  # for observability
     images: list[dict] = field(default_factory=list)  # inline images for the LLM
     context_files: list[str] = field(default_factory=list)  # file paths to inject
-    tool_schemas: list[dict] = field(default_factory=list)  # provider-format tool schemas
+    tool_schemas: list[dict] | None = None  # None = tools not requested, [] = no tools available
 
 
 # Protocols imported from src/protocols.py — single source of truth.
@@ -168,7 +168,7 @@ class ContextAssembler:
         return AssembledContext(
             system_prompt=system_prompt,
             messages=messages,
-            tool_schemas=[],
+            tool_schemas=None,
             total_tokens_estimated=sum(slots_used.values()),
             slots_used=slots_used,
         )
