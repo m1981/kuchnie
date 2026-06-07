@@ -39,9 +39,12 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable
 
+import structlog
 from google.genai import types
 
 from src.config import settings
+
+log = structlog.get_logger(__name__)
 from src.tools.file_ops import (
     create_file,
     edit_file,
@@ -352,6 +355,7 @@ class ToolRegistry:
             # Mimo uses OpenAI-compatible format — convert Gemini declarations
             from src.providers.mimo_provider import MimoProvider
             return self._to_openai_schemas(entries)
+        log.error("schemas_for_provider_unknown", provider=provider, supported=["gemini", "anthropic", "mimo"])
         raise ValueError(f"Unknown provider: {provider!r}")
 
     @staticmethod

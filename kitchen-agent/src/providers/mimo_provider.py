@@ -172,6 +172,7 @@ class MimoProvider:
             tool_schemas = self._build_tool_schemas()
         else:
             tool_schemas = []
+            logger.debug("mimo_tools_skipped", reason="context.tool_schemas is None (use_tools=False)")
 
         self._conversation_state = messages
 

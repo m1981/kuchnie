@@ -129,6 +129,13 @@ async def chat(
                 result=tl.get("result", {}),
             ))
 
+        log.debug(
+            "chat_tool_logs_converted",
+            tool_calls_made=result.tool_calls_made,
+            tool_logs_count=len(tool_log_objects),
+            tool_logs_preview=[t.name for t in tool_log_objects],
+        )
+
         return ChatResponse(
             text=result.assistant_message,
             tools_used=tool_log_objects,

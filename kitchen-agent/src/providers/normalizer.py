@@ -28,8 +28,11 @@ does not change.
 from __future__ import annotations
 
 import json
+import structlog
 from dataclasses import dataclass, field
 from typing import Any
+
+log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -91,13 +94,25 @@ class ResponseNormalizer:
         Raises:
             ValueError: when provider is not recognized.
         """
+        result = None
         if provider == "gemini":
-            return self._from_gemini(raw)
-        if provider == "anthropic":
-            return self._from_anthropic(raw)
-        if provider == "mimo":
-            return self._from_openai_compat(raw)
-        raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic', 'mimo'.")
+            result = self._from_gemini(raw)
+        elif provider == "anthropic":
+            result = self._from_anthropic(raw)
+        elif provider == "mimo":
+            result = self._from_openai_compat(raw)
+        else:
+            raise ValueError(f"Unknown provider: {provider!r}. Supported: 'gemini', 'anthropic', 'mimo'.")
+
+        log.debug(
+            "normalize_result",
+            provider=provider,
+            text_length=len(result.text),
+            has_tool_calls=result.has_tool_calls,
+            tool_calls_count=len(result.tool_calls),
+            usage=result.usage,
+        )
+        return result
 
     def normalize_chunk(self, chunk: Any, provider: str) -> str:
         """
@@ -124,6 +139,9 @@ class ResponseNormalizer:
         """
         candidate = raw.candidates[0]
         parts = candidate.content.parts if candidate.content and candidate.content.parts else []
+
+        if not parts and candidate.content:
+            log.warning("gemini_empty_parts", has_content=bool(candidate.content), has_parts=bool(getattr(candidate.content, 'parts', None)))
 
         text_parts: list[str] = []
         tool_calls: list[ToolCall] = []

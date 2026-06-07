@@ -258,6 +258,15 @@ class ChatService:
             session_title=title,
         )
 
+        log.debug(
+            "turn_result",
+            tool_calls_made=[t.name for t in turn_output.tool_calls_made],
+            tool_logs_count=len(turn_output.tool_logs),
+            response_length=len(turn_output.assistant_message),
+            provider=turn_output.provider_name,
+            model=turn_output.model_name,
+        )
+
         return ChatTurnResponse(
             session_id=request.session_id,
             assistant_message=turn_output.assistant_message,
