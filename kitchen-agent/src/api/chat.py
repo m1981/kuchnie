@@ -83,6 +83,8 @@ async def chat(
         context_files=resolved_context_files,
         mode=request.mode_id or "default",
         use_tools=use_tools,
+        provider=request.provider,
+        model=request.model,
     )
 
     try:

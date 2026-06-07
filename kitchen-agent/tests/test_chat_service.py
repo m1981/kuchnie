@@ -313,3 +313,75 @@ def test_use_tools_false_forwarded_to_orchestrator(
 
     assert orchestrator.last_turn_input is not None
     assert orchestrator.last_turn_input.use_tools is False
+
+
+# ---------------------------------------------------------------------------
+# Provider routing
+# ---------------------------------------------------------------------------
+
+@patch("src.chat_service.log_turn")
+def test_provider_forwarded_to_turn_input(
+    mock_log: MagicMock,
+    fake_orchestrator: FakeOrchestrator,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """provider from ChatTurnRequest must be forwarded to TurnInput."""
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=fake_orchestrator,
+    )
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-provider",
+        user_message="hello",
+        provider="anthropic",
+    ))
+
+    assert fake_orchestrator.last_turn_input is not None
+    assert fake_orchestrator.last_turn_input.provider == "anthropic"
+
+
+@patch("src.chat_service.log_turn")
+def test_model_forwarded_to_turn_input(
+    mock_log: MagicMock,
+    fake_orchestrator: FakeOrchestrator,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """model from ChatTurnRequest must be forwarded to TurnInput."""
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=fake_orchestrator,
+    )
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-model",
+        user_message="hello",
+        provider="gemini",
+        model="gemini-2.5-pro",
+    ))
+
+    assert fake_orchestrator.last_turn_input is not None
+    assert fake_orchestrator.last_turn_input.provider == "gemini"
+    assert fake_orchestrator.last_turn_input.model == "gemini-2.5-pro"
+
+
+@patch("src.chat_service.log_turn")
+def test_no_provider_uses_default(
+    mock_log: MagicMock,
+    fake_orchestrator: FakeOrchestrator,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """When provider is None, TurnInput.provider should be None (use default)."""
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=fake_orchestrator,
+    )
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-default",
+        user_message="hello",
+    ))
+
+    assert fake_orchestrator.last_turn_input is not None
+    assert fake_orchestrator.last_turn_input.provider is None
+    assert fake_orchestrator.last_turn_input.model is None

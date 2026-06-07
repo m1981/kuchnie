@@ -67,7 +67,6 @@ logger = structlog.get_logger(__name__)
 class ChatTurnRequest:
     """
     Everything ChatService needs for one turn.
-    Provider and model selection happen in DI — not here.
     """
 
     session_id: str
@@ -79,6 +78,9 @@ class ChatTurnRequest:
     note_ids: list[str] = field(default_factory=list)
     file_ids: list[str] = field(default_factory=list)
     use_tools: bool = True
+    # Provider routing — when set, overrides the server default for this turn.
+    provider: str | None = None
+    model: str | None = None
 
 
 @dataclass
@@ -188,6 +190,8 @@ class ChatService:
             file_ids=request.file_ids,
             use_tools=request.use_tools,
             system_prompt=system_prompt,
+            provider=request.provider,
+            model=request.model,
         )
 
         # ── 4. Execute turn ───────────────────────────────────────────

@@ -460,6 +460,82 @@ def test_chat_response_includes_turn_ids(tmp_path: Path, monkeypatch) -> None:
 
 
 # ---------------------------------------------------------------------------
+# POST /api/chat — provider routing
+# ---------------------------------------------------------------------------
+
+def test_chat_passes_provider_and_model(tmp_path: Path, monkeypatch) -> None:
+    """provider and model from request must be forwarded to ChatTurnRequest."""
+    pm = _make_prompt_manager(tmp_path)
+    captured: dict = {}
+
+    class ProviderCaptureSvc:
+        def handle_turn(self, request):
+            captured["provider"] = request.provider
+            captured["model"] = request.model
+            return ChatTurnResponse(
+                session_id=request.session_id,
+                assistant_message="ok",
+                ui_history=[],
+                user_turn_id="uid",
+                assistant_turn_id="aid",
+                tool_calls_made=[],
+            )
+
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    app.dependency_overrides[get_chat_service] = lambda: ProviderCaptureSvc()
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        resp = TestClient(app).post("/api/chat", json={
+            "session_id": "s-provider",
+            "message":    "hello",
+            "provider":   "anthropic",
+            "model":      "claude-sonnet-4-20250514",
+        })
+        assert resp.status_code == 200
+        assert captured["provider"] == "anthropic"
+        assert captured["model"] == "claude-sonnet-4-20250514"
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+        app.dependency_overrides.pop(get_chat_service, None)
+
+
+def test_chat_no_provider_uses_none(tmp_path: Path, monkeypatch) -> None:
+    """When provider/model omitted, ChatTurnRequest fields should be None."""
+    pm = _make_prompt_manager(tmp_path)
+    captured: dict = {}
+
+    class DefaultCaptureSvc:
+        def handle_turn(self, request):
+            captured["provider"] = request.provider
+            captured["model"] = request.model
+            return ChatTurnResponse(
+                session_id=request.session_id,
+                assistant_message="ok",
+                ui_history=[],
+                user_turn_id="uid",
+                assistant_turn_id="aid",
+                tool_calls_made=[],
+            )
+
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    app.dependency_overrides[get_chat_service] = lambda: DefaultCaptureSvc()
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        resp = TestClient(app).post("/api/chat", json={
+            "session_id": "s-default",
+            "message":    "hello",
+        })
+        assert resp.status_code == 200
+        assert captured["provider"] is None
+        assert captured["model"] is None
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+        app.dependency_overrides.pop(get_chat_service, None)
+
+
+# ---------------------------------------------------------------------------
 # DI factory
 # ---------------------------------------------------------------------------
 

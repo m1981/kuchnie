@@ -670,3 +670,111 @@ class TestLLMProviderProtocol:
         # Should not raise
         result = completer.complete(ctx)
         assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# Tests: provider routing
+# ---------------------------------------------------------------------------
+
+class TestProviderRouting:
+    def test_default_provider_used_when_no_override(self):
+        """When TurnInput.provider is None, the default provider is used."""
+        default_provider = FakeCompleter(text="default response")
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=default_provider,
+            response_normalizer=ResponseNormalizer(),
+            provider_name="gemini",
+        )
+
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello"),
+        )
+
+        assert output.assistant_message == "default response"
+        assert default_provider.complete_call_count == 1
+
+    def test_provider_override_creates_new_provider(self, monkeypatch):
+        """When TurnInput.provider is set, a new provider should be created."""
+        from src.providers.base import get_provider
+
+        default_provider = FakeCompleter(text="default response")
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=default_provider,
+            response_normalizer=ResponseNormalizer(),
+            provider_name="gemini",
+        )
+
+        # Track calls to get_provider
+        created_providers = []
+        original_get_provider = get_provider
+
+        def tracking_get_provider(provider_name=None, model_override=None):
+            provider = original_get_provider(provider_name=provider_name, model_override=model_override)
+            created_providers.append((provider_name, model_override))
+            return provider
+
+        monkeypatch.setattr("src.providers.base.get_provider", tracking_get_provider)
+
+        # Mock the actual provider to avoid real API calls
+        mock_provider = FakeCompleter(text="override response")
+        monkeypatch.setattr("src.providers.base.get_provider",
+            lambda provider_name=None, model_override=None: mock_provider)
+
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello", provider="anthropic", model="claude-sonnet"),
+        )
+
+        # The mock provider should have been called, not the default
+        assert mock_provider.complete_call_count == 1
+        assert default_provider.complete_call_count == 0
+
+    def test_provider_name_used_for_tool_schemas(self):
+        """When provider is overridden, tool schemas should use the new provider name."""
+        schema_calls = []
+
+        class TrackingRegistry:
+            def schemas_for_provider(self, provider):
+                schema_calls.append(provider)
+                return []
+
+        registry = TrackingRegistry()
+        orchestrator = TurnOrchestrator(
+            context_assembler=ContextAssembler(
+                token_budget=ContextBudget(total=10_000),
+                token_counter=FakeTokenCounter(),
+                prompt_manager=FakePromptManager(),
+            ),
+            tool_executor=ToolExecutor(registry=FakeRegistry()),
+            provider=FakeCompleter(text="response"),
+            response_normalizer=ResponseNormalizer(),
+            provider_name="gemini",
+            tool_registry=registry,
+        )
+
+        # With override
+        orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello", provider="anthropic", use_tools=True),
+        )
+        assert schema_calls[-1] == "anthropic"
+
+        # Without override
+        orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello", use_tools=True),
+        )
+        assert schema_calls[-1] == "gemini"

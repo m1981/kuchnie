@@ -72,6 +72,9 @@ class TurnInput:
     images: list[dict] = field(default_factory=list)
     context_files: list[str] = field(default_factory=list)
     use_tools: bool = True
+    # Provider routing — when set, overrides the server default for this turn.
+    provider: str | None = None
+    model: str | None = None
 
 
 @dataclass
@@ -173,6 +176,18 @@ class TurnOrchestrator:
         Raises:
             MaxToolIterationsError: if the tool loop exceeds the cap.
         """
+        # Resolve provider for this turn — per-request override or default.
+        if turn_input.provider:
+            from src.providers.base import get_provider
+            provider = get_provider(
+                provider_name=turn_input.provider,
+                model_override=turn_input.model,
+            )
+            provider_name = turn_input.provider
+        else:
+            provider = self._provider
+            provider_name = self._provider_name
+
         # 1. Assemble context
         context = self._ctx.assemble(
             session=session,
@@ -197,12 +212,12 @@ class TurnOrchestrator:
         # so TurnOrchestrator bridges them here.
         if self._tool_registry is not None and turn_input.use_tools:
             context.tool_schemas = self._tool_registry.schemas_for_provider(
-                provider=self._provider_name,
+                provider=provider_name,
             )
 
         # 2. Call LLM
-        raw_response = self._provider.complete(context)
-        normalized = self._normalizer.normalize(raw_response, self._provider_name)
+        raw_response = provider.complete(context)
+        normalized = self._normalizer.normalize(raw_response, provider_name)
 
         # 3. Agentic tool loop
         tool_calls_made: list[str] = []
@@ -231,10 +246,10 @@ class TurnOrchestrator:
                 ))
 
             # Feed results back to LLM
-            raw_response = self._provider.complete_with_tools(
+            raw_response = provider.complete_with_tools(
                 context, normalized.tool_calls, tool_results,
             )
-            normalized = self._normalizer.normalize(raw_response, self._provider_name)
+            normalized = self._normalizer.normalize(raw_response, provider_name)
 
         # 4. Build output
         # Build tool_logs (serializable) and tool_calls_made (ToolCall list)
