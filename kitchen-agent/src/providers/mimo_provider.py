@@ -68,53 +68,6 @@ class MimoProvider:
         self._registry = _build_default_registry()
         self._tool_executor = ToolExecutor(registry=self._registry)
 
-    def _build_tool_schemas(self) -> list[dict[str, Any]]:
-        """Build OpenAI-compatible tool schemas from registry declarations."""
-        schemas: list[dict[str, Any]] = []
-        for entry in self._registry.get_all_entries():
-            decl = entry.declaration
-            # Convert Gemini FunctionDeclaration to OpenAI function format
-            params = self._schema_to_dict(decl.parameters) if decl.parameters else {"type": "object", "properties": {}}
-            schemas.append({
-                "type": "function",
-                "function": {
-                    "name": decl.name,
-                    "description": decl.description or "",
-                    "parameters": params,
-                },
-            })
-        return schemas
-
-    @staticmethod
-    def _schema_to_dict(schema: Any) -> dict[str, Any]:
-        """Convert a google.genai types.Schema to a plain dict."""
-        if schema is None:
-            return {"type": "object", "properties": {}}
-
-        result: dict[str, Any] = {}
-        raw_type = str(getattr(schema, "type", "OBJECT"))
-        type_str = raw_type.split(".")[-1] if "." in raw_type else raw_type
-        type_map = {
-            "STRING": "string", "NUMBER": "number", "INTEGER": "integer",
-            "BOOLEAN": "boolean", "ARRAY": "array", "OBJECT": "object",
-        }
-        result["type"] = type_map.get(type_str.upper(), "string")
-
-        if result["type"] == "object":
-            props = getattr(schema, "properties", {}) or {}
-            result["properties"] = {}
-            for name, prop in props.items():
-                result["properties"][name] = MimoProvider._schema_to_dict(prop)
-            required = getattr(schema, "required", []) or []
-            if required:
-                result["required"] = list(required)
-
-        desc = getattr(schema, "description", None)
-        if desc:
-            result["description"] = desc
-
-        return result
-
     def _build_messages(self, context: "AssembledContext") -> list[dict[str, Any]]:
         """Build OpenAI-format messages from AssembledContext."""
         messages: list[dict[str, Any]] = []
@@ -178,11 +131,8 @@ class MimoProvider:
 
         # Only send tools if the orchestrator has set tool_schemas on the context.
         # When use_tools=False, context.tool_schemas will be None.
-        if context.tool_schemas is not None:
-            tool_schemas = self._build_tool_schemas()
-        else:
-            tool_schemas = []
-            logger.debug("mimo_tools_skipped", reason="context.tool_schemas is None (use_tools=False)")
+        # Use schemas from orchestrator — already in OpenAI format.
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         self._conversation_state = messages
 
@@ -234,7 +184,7 @@ class MimoProvider:
                 "content": tr.content,
             })
 
-        tool_schemas = self._build_tool_schemas()
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         response = self._client.chat.completions.create(
             model=self._model,
@@ -274,11 +224,8 @@ class MimoProvider:
         messages = self._build_messages(context)
 
         # Only send tools if the orchestrator has set tool_schemas on the context.
-        if context.tool_schemas is not None:
-            tool_schemas = self._build_tool_schemas()
-        else:
-            tool_schemas = []
-            logger.debug("mimo_stream_tools_skipped", reason="context.tool_schemas is None")
+        # Use schemas from orchestrator — already in OpenAI format.
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         self._conversation_state = messages
 
@@ -382,7 +329,7 @@ class MimoProvider:
                 "content": tr.content,
             })
 
-        tool_schemas = self._build_tool_schemas()
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         # Use stream=True for streaming
         stream = self._client.chat.completions.create(

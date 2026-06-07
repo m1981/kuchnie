@@ -36,7 +36,6 @@ class TestGeminiProviderStream:
             provider._model = "gemini-2.5-flash"
             provider._normalizer = MagicMock()
             provider._registry = MagicMock()
-            provider._declarations = []
             provider._tool_executor = MagicMock()
             provider._conversation_state = []
             

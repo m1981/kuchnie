@@ -74,20 +74,7 @@ class AnthropicProvider:
             from src.tools.registry import build_default_registry
             self._registry = build_default_registry()
 
-        self._declarations = [
-            e.declaration
-            for e in self._registry.get_all_entries()
-            if e.declaration is not None
-        ]
         self._tool_executor = ToolExecutor(registry=self._registry)
-        self._tool_schemas: list[dict[str, Any]] = self._build_tool_schemas()
-
-    def _build_tool_schemas(self) -> list[dict[str, Any]]:
-        """Build Anthropic tool schema list from captured declarations."""
-        return [
-            ToolSchemaConverter.to_anthropic(declaration)
-            for declaration in self._declarations
-        ]
 
     # ── Common format → Anthropic format conversion ──────────────────
 
@@ -196,9 +183,10 @@ class AnthropicProvider:
         if user_content:
             self._conversation_state.append({"role": "user", "content": user_content})
 
-        # Only send tools if orchestrator has set tool_schemas on context.
+        # Use schemas from orchestrator (context.tool_schemas) — these are
+        # already in Anthropic format from ToolRegistry.schemas_for_provider().
         # When use_tools=False, context.tool_schemas will be None.
-        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         response = self._client.messages.create(
             model=self._model,
@@ -247,7 +235,7 @@ class AnthropicProvider:
         self._conversation_state.append({"role": "user", "content": result_content})
 
         # Only send tools if orchestrator has set tool_schemas on context.
-        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         response = self._client.messages.create(
             model=self._model,
@@ -323,7 +311,7 @@ class AnthropicProvider:
 
         # Only send tools if orchestrator has set tool_schemas on context.
         # When use_tools=False, context.tool_schemas will be None.
-        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         logger.info(
             "anthropic_stream_start",
@@ -389,7 +377,7 @@ class AnthropicProvider:
         self._conversation_state.append({"role": "user", "content": result_content})
 
         # Only send tools if orchestrator has set tool_schemas on context.
-        tool_schemas = self._tool_schemas if context.tool_schemas is not None else []
+        tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
         # Use messages.stream() for streaming
         with self._client.messages.stream(

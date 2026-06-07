@@ -214,10 +214,8 @@ def test_complete_with_tools_continues_conversation(provider: AnthropicProvider)
 # Tool schemas
 # ---------------------------------------------------------------------------
 
-def test_tool_schemas_built_from_declarations(provider: AnthropicProvider) -> None:
-    """Provider builds Anthropic tool schemas from captured declarations."""
-    assert len(provider._tool_schemas) > 0
-    for schema in provider._tool_schemas:
-        assert "name" in schema
-        assert "description" in schema
-        assert "input_schema" in schema
+def test_provider_uses_context_tool_schemas(provider: AnthropicProvider) -> None:
+    """Provider must use context.tool_schemas from orchestrator, not build its own."""
+    # The provider should not have _tool_schemas — schemas come from context
+    assert not hasattr(provider, '_tool_schemas'), \
+        "Provider should not build tool_schemas internally; use context.tool_schemas"

@@ -212,11 +212,6 @@ class GeminiProvider:
         self._model: str = model_override or self._config.model
         self._normalizer = ResponseNormalizer()
         self._registry = _build_default_registry()
-        self._declarations = [
-            e.declaration
-            for e in self._registry.get_all_entries()
-            if e.declaration is not None
-        ]
         self._tool_executor = ToolExecutor(registry=self._registry)
 
     # ── LLMProvider interface (for TurnOrchestrator) ─────────────────────
@@ -268,14 +263,16 @@ class GeminiProvider:
             if last.role == "user":
                 self._conversation_state[-1] = types.Content(role="user", parts=user_parts)
 
-        # Always use provider's captured declarations
-        declarations = self._declarations
-        gemini_tools = types.Tool(function_declarations=declarations)
+        # Use schemas from orchestrator — already in Gemini FunctionDeclaration format.
+        # When use_tools=False, context.tool_schemas is None → no tools.
+        declarations = context.tool_schemas if context.tool_schemas is not None else []
+        gemini_tools = types.Tool(function_declarations=declarations) if declarations else None
 
         config_kwargs: dict = {}
         if context.system_prompt:
             config_kwargs["system_instruction"] = context.system_prompt
-        config_kwargs["tools"] = [gemini_tools]
+        if gemini_tools is not None:
+            config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
         log.info(
@@ -347,14 +344,16 @@ class GeminiProvider:
         tool_result_content = types.Content(role="user", parts=result_parts)
         self._conversation_state.append(tool_result_content)
 
-        # Always use provider's captured declarations
-        declarations = self._declarations
-        gemini_tools = types.Tool(function_declarations=declarations)
+        # Use schemas from orchestrator — already in Gemini FunctionDeclaration format.
+        # When use_tools=False, context.tool_schemas is None → no tools.
+        declarations = context.tool_schemas if context.tool_schemas is not None else []
+        gemini_tools = types.Tool(function_declarations=declarations) if declarations else None
 
         config_kwargs: dict = {}
         if context.system_prompt:
             config_kwargs["system_instruction"] = context.system_prompt
-        config_kwargs["tools"] = [gemini_tools]
+        if gemini_tools is not None:
+            config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
         response = self._client.models.generate_content(
@@ -416,14 +415,16 @@ class GeminiProvider:
             if last.role == "user":
                 self._conversation_state[-1] = types.Content(role="user", parts=user_parts)
 
-        # Always use provider's captured declarations
-        declarations = self._declarations
-        gemini_tools = types.Tool(function_declarations=declarations)
+        # Use schemas from orchestrator — already in Gemini FunctionDeclaration format.
+        # When use_tools=False, context.tool_schemas is None → no tools.
+        declarations = context.tool_schemas if context.tool_schemas is not None else []
+        gemini_tools = types.Tool(function_declarations=declarations) if declarations else None
 
         config_kwargs: dict = {}
         if context.system_prompt:
             config_kwargs["system_instruction"] = context.system_prompt
-        config_kwargs["tools"] = [gemini_tools]
+        if gemini_tools is not None:
+            config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
         log.info(
@@ -495,14 +496,16 @@ class GeminiProvider:
         tool_result_content = types.Content(role="user", parts=result_parts)
         self._conversation_state.append(tool_result_content)
 
-        # Always use provider's captured declarations
-        declarations = self._declarations
-        gemini_tools = types.Tool(function_declarations=declarations)
+        # Use schemas from orchestrator — already in Gemini FunctionDeclaration format.
+        # When use_tools=False, context.tool_schemas is None → no tools.
+        declarations = context.tool_schemas if context.tool_schemas is not None else []
+        gemini_tools = types.Tool(function_declarations=declarations) if declarations else None
 
         config_kwargs: dict = {}
         if context.system_prompt:
             config_kwargs["system_instruction"] = context.system_prompt
-        config_kwargs["tools"] = [gemini_tools]
+        if gemini_tools is not None:
+            config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
         # Use generate_content_stream for streaming
