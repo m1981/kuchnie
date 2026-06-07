@@ -6,9 +6,10 @@ LLMProvider Protocol + provider registry factory.
 Design
 ------
 ``LLMProvider`` is a ``runtime_checkable`` Protocol — any class that
-implements ``complete`` and ``complete_with_tools`` with the correct
-signatures satisfies it without inheritance.  This lets us test structural
-compliance easily and avoids coupling providers to a base class.
+implements ``complete``, ``complete_with_tools``, ``stream``, and
+``stream_with_tools`` with the correct signatures satisfies it without
+inheritance.  This lets us test structural compliance easily and avoids
+coupling providers to a base class.
 
 ``get_provider()`` is the single entry point for the rest of the application.
 It reads ``settings.llm_provider`` and returns the matching instance.  We
@@ -22,15 +23,15 @@ Providers available:
 
 Adding a new provider
 ---------------------
-1. Create ``src/providers/my_provider.py`` implementing ``complete`` and
-   ``complete_with_tools``.
+1. Create ``src/providers/my_provider.py`` implementing all 4 methods:
+   ``complete``, ``complete_with_tools``, ``stream``, ``stream_with_tools``.
 2. Add a new branch in ``get_provider()`` below.
 3. Document the provider name in ``config.py``.
 That is all — no other file needs to change.
 """
 from __future__ import annotations
 
-from typing import Protocol, Any, runtime_checkable
+from typing import Protocol, Any, Iterator, runtime_checkable
 
 from src.agent.context_assembler import AssembledContext
 from src.agent.tool_executor import ToolCall, ToolResult
@@ -49,6 +50,10 @@ class LLMProvider(Protocol):
     - Manage conversation history (ContextAssembler owns that)
     - Select models dynamically (Settings/DI owns that)
     - Know about ToolRegistry (they receive final schemas only)
+
+    All four methods are required:
+    - ``complete`` / ``stream`` for plain turns
+    - ``complete_with_tools`` / ``stream_with_tools`` for agentic tool loops
     """
 
     def complete(
@@ -65,6 +70,22 @@ class LLMProvider(Protocol):
         tool_results: list[ToolResult],
     ) -> Any:
         """Completion after tool results are available."""
+        ...
+
+    def stream(
+        self,
+        context: AssembledContext,
+    ) -> Iterator[Any]:
+        """Stream a single turn. Yields raw SDK chunks."""
+        ...
+
+    def stream_with_tools(
+        self,
+        context: AssembledContext,
+        tool_calls: list[ToolCall],
+        tool_results: list[ToolResult],
+    ) -> Iterator[Any]:
+        """Stream after tool results are available. Yields raw SDK chunks."""
         ...
 
 

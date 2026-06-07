@@ -24,7 +24,7 @@ from src.providers.anthropic_provider import AnthropicProvider
 # ---------------------------------------------------------------------------
 
 class _MinimalProvider:
-    """Minimal duck-type implementation to verify protocol shape."""
+    """Minimal duck-type implementation with ALL 4 required methods."""
 
     def complete(self, context):
         return MagicMock()
@@ -32,9 +32,15 @@ class _MinimalProvider:
     def complete_with_tools(self, context, tool_calls, tool_results):
         return MagicMock()
 
+    def stream(self, context):
+        return iter([])
+
+    def stream_with_tools(self, context, tool_calls, tool_results):
+        return iter([])
+
 
 def test_minimal_provider_satisfies_protocol() -> None:
-    """Any object with the right methods satisfies LLMProvider (structural subtyping)."""
+    """Any object with all 4 methods satisfies LLMProvider (structural subtyping)."""
     provider = _MinimalProvider()
     assert isinstance(provider, LLMProvider)
 
@@ -77,3 +83,55 @@ def test_get_provider_raises_for_unknown_provider() -> None:
         mock_settings.llm_provider = "openai"
         with pytest.raises(ValueError, match="Unknown provider"):
             get_provider()
+
+
+# ---------------------------------------------------------------------------
+# Protocol completeness — stream methods must be declared
+# ---------------------------------------------------------------------------
+
+class _FullProvider:
+    """Minimal duck-type with ALL 4 methods (complete + stream)."""
+
+    def complete(self, context):
+        return MagicMock()
+
+    def complete_with_tools(self, context, tool_calls, tool_results):
+        return MagicMock()
+
+    def stream(self, context):
+        return iter([])
+
+    def stream_with_tools(self, context, tool_calls, tool_results):
+        return iter([])
+
+
+def test_protocol_declares_stream() -> None:
+    """LLMProvider must declare stream() — all providers implement it."""
+    assert hasattr(LLMProvider, "stream")
+
+
+def test_protocol_declares_stream_with_tools() -> None:
+    """LLMProvider must declare stream_with_tools() — all providers implement it."""
+    assert hasattr(LLMProvider, "stream_with_tools")
+
+
+def test_full_provider_satisfies_protocol() -> None:
+    """Implementation with all 4 methods must satisfy protocol."""
+    provider = _FullProvider()
+    assert isinstance(provider, LLMProvider)
+
+
+class _IncompleteProvider:
+    """Only has complete + complete_with_tools — missing stream methods."""
+
+    def complete(self, context):
+        return MagicMock()
+
+    def complete_with_tools(self, context, tool_calls, tool_results):
+        return MagicMock()
+
+
+def test_incomplete_provider_fails_isinstance() -> None:
+    """Implementation missing stream() must NOT satisfy protocol."""
+    provider = _IncompleteProvider()
+    assert not isinstance(provider, LLMProvider)

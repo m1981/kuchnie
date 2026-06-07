@@ -32,25 +32,16 @@ import structlog
 from dataclasses import dataclass, field
 from typing import Any
 
+# Single canonical ToolCall — defined in tool_executor, re-exported here
+# so normalizer consumers don't need to import from agent.tool_executor.
+from src.agent.tool_executor import ToolCall  # noqa: F401
+
 log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
 # Data classes — the provider-agnostic contract
 # ---------------------------------------------------------------------------
-
-@dataclass
-class ToolCall:
-    """
-    A single tool call extracted from a provider response.
-
-    Provider-agnostic: ``id`` is the SDK call identifier,
-    ``name`` is the tool name, ``arguments`` is the dict of args.
-    """
-
-    id: str
-    name: str
-    arguments: dict
 
 
 @dataclass
