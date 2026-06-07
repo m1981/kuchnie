@@ -495,4 +495,8 @@ Moving files is risky — it breaks git history and CI. Do it incrementally:
 | 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness              |
 | 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types    |
 | 2026-06-07 | B5 (full)    | ✅     | `contract/test_orchestrator_provider.py` — 12 tests, all 3 providers |
+| 2026-06-07 | B3           | ✅     | `contract/test_chat_orchestrator.py` — 4 tests                       |
+| 2026-06-07 | B4           | ✅     | `contract/test_orchestrator_context.py` — 10 tests                   |
+| 2026-06-07 | B7           | ✅     | `contract/test_orchestrator_tools.py` — 8 tests                      |
+| 2026-06-07 | B8           | ✅     | `contract/test_orchestrator_history.py` — 4 tests                    |
 |            |              |        |                                                                      |
