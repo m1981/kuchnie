@@ -60,10 +60,16 @@ def _coerce_history_for_gemini(history: list) -> list:
     Existing ``types.Content`` objects are passed through unchanged.
     """
     result: list[types.Content] = []
+    # Build tool_call_id → function_name mapping as we scan forward
+    tool_id_to_name: dict[str, str] = {}
 
     for item in history:
         # Already a Gemini Content object — pass through
         if isinstance(item, types.Content):
+            # Extract tool_call IDs from existing Content objects
+            for part in item.parts or []:
+                if part.function_call and part.function_call.id:
+                    tool_id_to_name[part.function_call.id] = part.function_call.name
             result.append(item)
             continue
 
@@ -85,6 +91,9 @@ def _coerce_history_for_gemini(history: list) -> list:
 
         # Handle tool response messages
         if role == "tool" and tool_call_id:
+            # Look up function name from preceding tool_calls
+            func_name = tool_id_to_name.get(tool_call_id, "unknown")
+
             # Parse content as JSON response
             if isinstance(content, str):
                 try:
@@ -102,7 +111,7 @@ def _coerce_history_for_gemini(history: list) -> list:
                     parts=[
                         types.Part(
                             function_response=types.FunctionResponse(
-                                name="unknown",  # Will be resolved by tool_call_id
+                                name=func_name,
                                 response=response_dict,
                                 id=tool_call_id,
                             )
@@ -120,12 +129,16 @@ def _coerce_history_for_gemini(history: list) -> list:
             if content and isinstance(content, str):
                 parts.append(types.Part(text=content))
 
-            # Add tool calls
+            # Add tool calls and build mapping
             for tc in tool_calls:
+                tc_id = tc.get("id", "")
+                tc_name = tc.get("name", "unknown")
+                if tc_id:
+                    tool_id_to_name[tc_id] = tc_name
                 parts.append(
                     types.Part(
                         function_call=types.FunctionCall(
-                            name=tc.get("name", "unknown"),
+                            name=tc_name,
                             args=tc.get("arguments", {}),
                             id=tc.get("id", ""),
                         )
