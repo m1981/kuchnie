@@ -45,7 +45,7 @@ import json
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 import structlog
 
@@ -278,6 +278,143 @@ class ChatService:
             tokens_used=turn_output.tokens_used,
             provider_name=turn_output.provider_name,
             model_name=turn_output.model_name,
+        )
+
+    def stream_turn(self, request: ChatTurnRequest) -> Iterator[dict]:
+        """
+        Stream one complete chat turn.
+        Yields event dicts for SSE serialization.
+        """
+        self._log.info(
+            "stream_turn_started",
+            user_message_preview=request.user_message[:60],
+            mode=request.mode,
+            use_tools=request.use_tools,
+        )
+
+        # ── 1. Load session ───────────────────────────────────────────
+        api_history_json, ui_history_json, saved_system_prompt = (
+            self._sessions.load_session(request.session_id)
+        )
+        api_history = hydrate_history(api_history_json)
+        ui_history: list[dict] = json.loads(ui_history_json) if ui_history_json else []
+        system_prompt = request.system_prompt or saved_system_prompt
+
+        session = {
+            "session_id": request.session_id,
+            "messages": api_history,
+            "system_prompt": system_prompt,
+        }
+
+        from src.agent.turn_orchestrator import TurnInput
+
+        turn_input = TurnInput(
+            user_message=request.user_message,
+            mode=request.mode,
+            images=request.images,
+            context_files=request.context_files,
+            note_ids=request.note_ids,
+            file_ids=request.file_ids,
+            use_tools=request.use_tools,
+            system_prompt=system_prompt,
+            provider=request.provider,
+            model=request.model,
+        )
+
+        bind_request_context(
+            provider=request.provider or "(default)",
+            model=request.model or "(default)",
+        )
+
+        # ── 2. Stream from orchestrator ───────────────────────────────
+        full_text = ""
+        tool_calls_made: list[str] = []
+        tool_logs: list[dict] = []
+        provider_name = ""
+        model_name = ""
+        user_turn_id = ""
+        assistant_turn_id = ""
+
+        for event in self._orchestrator.stream(session, turn_input):
+            event_type = event.get("type")
+
+            if event_type == "text_delta":
+                full_text += event.get("content", "")
+                yield {"type": "text", "content": event.get("content", "")}
+
+            elif event_type == "tool_call":
+                tool_calls_made.append(event.get("name", ""))
+                yield {
+                    "type": "tool_call",
+                    "name": event.get("name"),
+                    "args": event.get("args"),
+                    "id": event.get("id"),
+                }
+
+            elif event_type == "tool_result":
+                tool_logs.append({
+                    "name": event.get("name"),
+                    "args": event.get("args", {}),
+                    "result": event.get("result", {}),
+                })
+                yield {
+                    "type": "tool_result",
+                    "name": event.get("name"),
+                    "result": event.get("result"),
+                    "id": event.get("id"),
+                }
+
+            elif event_type == "done":
+                provider_name = event.get("provider", "")
+                model_name = event.get("model", "")
+                user_turn_id = event.get("user_turn_id", "")
+                assistant_turn_id = event.get("assistant_turn_id", "")
+
+        # ── 3. Persist ────────────────────────────────────────────────
+        # Build updated history for persistence
+        updated_api_history = list(api_history)
+        updated_api_history.append({"role": "user", "content": request.user_message})
+        updated_api_history.append({"role": "assistant", "content": full_text})
+
+        new_ui_history = list(ui_history)
+        new_ui_history.append({"role": "user", "content": request.user_message})
+        new_ui_history.append({
+            "role": "assistant",
+            "content": full_text,
+            "tools": tool_logs if tool_logs else None,
+            "turn_id": assistant_turn_id,
+            "provider": provider_name,
+            "model": model_name,
+        })
+
+        title = _make_title(new_ui_history)
+
+        self._sessions.save_session(
+            session_id=request.session_id,
+            title=title,
+            api_history_json=dehydrate_history(updated_api_history),
+            ui_history_json=json.dumps(new_ui_history),
+            system_prompt=system_prompt,
+        )
+
+        # ── 4. Final done event ───────────────────────────────────────
+        yield {
+            "type": "done",
+            "provider": provider_name,
+            "model": model_name,
+            "user_turn_id": user_turn_id,
+            "assistant_turn_id": assistant_turn_id,
+            "tool_calls_made": tool_calls_made,
+            "tool_logs": tool_logs,
+            "tokens_used": {},  # TODO: extract from stream
+        }
+
+        self._log.info(
+            "stream_turn_completed",
+            response_length=len(full_text),
+            tool_calls=len(tool_calls_made),
+            provider=provider_name,
+            model=model_name,
         )
 
     def _build_ui_history(

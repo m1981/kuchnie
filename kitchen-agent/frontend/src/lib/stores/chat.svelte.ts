@@ -324,41 +324,94 @@ function createChatStore() {
 			contextFileTokenEstimate = 0;
 			chatState    = { status: 'loading' };
 
-			try {
-				const data = await api.chat({
-					session_id:    sessionId,
-					message:       text,
-					mode_id:       selectedModeId,
-					images:
-						imagesToSend.length > 0
-							? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
-							: null,
-					context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null,
-					// Only include provider/model when the user has made an explicit
-					// selection — omitting them lets the server use its configured defaults.
-					provider: selectedProvider || undefined,
-					model:    selectedModel    || undefined,
-					// Send tools_enabled=false explicitly only when the user has turned
-					// tools off — omitting it (or true) lets the server use mode default.
-					tools_enabled: toolsEnabled ? undefined : false
-				});
+			// Create placeholder assistant message for streaming
+			const assistantMsg: import('$lib/api').Message = {
+				role: 'assistant',
+				content: '',
+				isStreaming: true,
+			};
+			messages.push(assistantMsg);
+			const assistantIdx = messages.length - 1;
 
-				// Update the optimistic user message with its turn_id from the backend.
-				if (data.user_turn_id) {
-					const lastUserIdx = messages.length - 2; // -2 because assistant was just pushed
-					if (lastUserIdx >= 0 && messages[lastUserIdx].role === 'user' && !messages[lastUserIdx].turn_id) {
-						messages[lastUserIdx] = { ...messages[lastUserIdx], turn_id: data.user_turn_id };
+			const payload = {
+				session_id:    sessionId,
+				message:       text,
+				mode_id:       selectedModeId,
+				images:
+					imagesToSend.length > 0
+						? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
+						: null,
+				context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null,
+				provider: selectedProvider || undefined,
+				model:    selectedModel    || undefined,
+				tools_enabled: toolsEnabled ? undefined : false
+			};
+
+			try {
+				// Use streaming API
+				for await (const event of api.chatStream(payload)) {
+					switch (event.type) {
+						case 'text':
+						case 'text_delta': {
+							// Append text delta to assistant message
+							const current = messages[assistantIdx];
+							messages[assistantIdx] = {
+								...current,
+								content: (current.content || '') + event.content,
+							};
+							break;
+						}
+
+						case 'tool_call': {
+							// Show tool call in progress
+							const current = messages[assistantIdx];
+							const tools = [...(current.tools || [])];
+							tools.push({
+								name: event.name,
+								args: event.args,
+								id: event.id,
+								status: 'calling',
+							} as any);
+							messages[assistantIdx] = { ...current, tools };
+							break;
+						}
+
+						case 'tool_result': {
+							// Update tool result
+							const current = messages[assistantIdx];
+							const tools = (current.tools || []).map((t: any) =>
+								t.id === event.id ? { ...t, result: event.result, status: 'done' } : t
+							);
+							messages[assistantIdx] = { ...current, tools };
+							break;
+						}
+
+						case 'done': {
+							// Finalize message
+							const current = messages[assistantIdx];
+							messages[assistantIdx] = {
+								...current,
+								isStreaming: false,
+								turn_id: event.assistant_turn_id,
+								provider: event.provider,
+								model: event.model,
+							};
+
+							// Update user message with turn_id
+							if (event.user_turn_id) {
+								const lastUserIdx = assistantIdx - 1;
+								if (lastUserIdx >= 0 && messages[lastUserIdx].role === 'user' && !messages[lastUserIdx].turn_id) {
+									messages[lastUserIdx] = { ...messages[lastUserIdx], turn_id: event.user_turn_id };
+								}
+							}
+							break;
+						}
+
+						case 'error': {
+							throw new Error(event.message);
+						}
 					}
 				}
-
-				messages.push({
-					role:  'assistant',
-					content: data.text,
-					tools: data.tools_used,
-					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {}),
-					...(data.provider ? { provider: data.provider } : {}),
-					...(data.model ? { model: data.model } : {})
-				});
 
 				chatState = { status: 'success', data: undefined };
 				await sessionStore.refresh();
@@ -366,7 +419,12 @@ function createChatStore() {
 				void this.refreshSessionTokens();
 			} catch (e) {
 				const msg = e instanceof Error ? e.message : 'Unknown error connecting to API.';
-				messages.push({ role: 'assistant', content: `⚠️ Error: ${msg}` });
+				// Update the placeholder message with error
+				messages[assistantIdx] = {
+					...messages[assistantIdx],
+					content: `⚠️ Error: ${msg}`,
+					isStreaming: false,
+				};
 				chatState = { status: 'error', message: msg };
 			}
 		},

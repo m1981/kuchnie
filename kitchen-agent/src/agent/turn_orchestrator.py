@@ -48,7 +48,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Iterator, Protocol
 
 import structlog
 from src.agent.context_assembler import AssembledContext, ContextAssembler
@@ -363,3 +363,127 @@ class TurnOrchestrator:
             model_name=actual_model,
             context_slots=context.slots_used,
         )
+
+    def stream(
+        self,
+        session: dict,
+        turn_input: TurnInput,
+    ) -> Iterator[dict]:
+        """
+        Stream one complete chat turn.
+
+        Yields event dicts:
+          - {"type": "text_delta", "content": "..."}
+          - {"type": "tool_call", "name": "...", "args": {...}, "id": "..."}
+          - {"type": "tool_result", "name": "...", "result": {...}, "id": "..."}
+          - {"type": "done", "provider": "...", "model": "...", ...}
+        """
+        # ── 1. Resolve provider ───────────────────────────────────────
+        if turn_input.provider:
+            from src.providers.base import get_provider
+            provider = get_provider(
+                provider_name=turn_input.provider,
+                model_override=turn_input.model,
+            )
+            provider_name = turn_input.provider
+        else:
+            provider = self._provider
+            provider_name = self._provider_name
+
+        actual_model = getattr(provider, "_model", "unknown")
+
+        self._log.info(
+            "orchestrator_stream_start",
+            provider=provider_name,
+            model=actual_model,
+        )
+
+        # ── 2. Assemble context ───────────────────────────────────────
+        context = self._ctx.assemble(
+            session=session,
+            mode=turn_input.mode,
+            user_message=turn_input.user_message,
+            note_ids=turn_input.note_ids or None,
+            file_ids=turn_input.file_ids or None,
+        )
+
+        if turn_input.system_prompt is not None:
+            context.system_prompt = turn_input.system_prompt
+
+        context.images = turn_input.images or []
+        context.context_files = turn_input.context_files or []
+
+        if self._tool_registry is not None and turn_input.use_tools:
+            context.tool_schemas = self._tool_registry.schemas_for_provider(
+                provider=provider_name,
+            )
+
+        # ── 3. Stream LLM response ───────────────────────────────────
+        full_text = ""
+        tool_calls_made: list[str] = []
+        tool_details: list[ToolCallDetail] = []
+
+        # Generate stable turn IDs
+        user_turn_id = str(uuid.uuid4())
+        assistant_turn_id = str(uuid.uuid4())
+
+        for chunk in provider.stream(context):
+            # Extract text delta from chunk
+            text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
+            if text_delta:
+                full_text += text_delta
+                yield {"type": "text_delta", "content": text_delta}
+
+        # ── 4. Check for tool calls ──────────────────────────────────
+        # After streaming, check if the response contains tool calls
+        # For now, we need to get the full response to check for tool calls
+        # This is a limitation of the current approach
+        normalized = self._normalizer.normalize(chunk, provider_name) if chunk else None
+
+        if normalized and normalized.has_tool_calls:
+            # Execute tools
+            for tc in normalized.tool_calls:
+                tool_calls_made.append(tc.name)
+                yield {
+                    "type": "tool_call",
+                    "name": tc.name,
+                    "args": tc.arguments,
+                    "id": tc.id,
+                }
+
+            tool_results = self._tools.execute_all(normalized.tool_calls)
+
+            for tc, tr in zip(normalized.tool_calls, tool_results):
+                tool_details.append(ToolCallDetail(
+                    id=tc.id,
+                    name=tc.name,
+                    arguments=tc.arguments,
+                    result_content=tr.content,
+                    is_error=tr.is_error,
+                ))
+                yield {
+                    "type": "tool_result",
+                    "name": tc.name,
+                    "args": tc.arguments,
+                    "result": {"content": tr.content} if not tr.is_error else {"error": tr.content},
+                    "id": tc.id,
+                }
+
+            # Continue streaming after tools
+            for chunk in provider.stream_with_tools(
+                context, normalized.tool_calls, tool_results
+            ):
+                text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
+                if text_delta:
+                    full_text += text_delta
+                    yield {"type": "text_delta", "content": text_delta}
+
+        # ── 5. Done event ─────────────────────────────────────────────
+        yield {
+            "type": "done",
+            "provider": provider_name,
+            "model": actual_model,
+            "user_turn_id": user_turn_id,
+            "assistant_turn_id": assistant_turn_id,
+            "tool_calls_made": tool_calls_made,
+        }

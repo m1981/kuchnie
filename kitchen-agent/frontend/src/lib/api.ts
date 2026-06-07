@@ -84,6 +84,8 @@ export type Message = {
 	provider?: string;
 	/** Model used for this message (e.g. "gemini-2.5-flash"). Only on assistant messages. */
 	model?: string;
+	/** Whether this message is currently being streamed. */
+	isStreaming?: boolean;
 };
 
 export type FileItem = { path: string; name: string };
@@ -189,6 +191,22 @@ export type ChatResponse = {
 	provider?: string;
 	model?: string;
 };
+
+// Streaming event types
+export type StreamEvent =
+	| { type: 'text'; content: string }
+	| { type: 'text_delta'; content: string }
+	| { type: 'tool_call'; name: string; args: Record<string, unknown>; id: string }
+	| { type: 'tool_result'; name: string; result: Record<string, unknown>; id: string }
+	| {
+			type: 'done';
+			provider: string;
+			model: string;
+			user_turn_id: string;
+			assistant_turn_id: string;
+			tool_calls_made: string[];
+	  }
+	| { type: 'error'; message: string };
 
 // ---------------------------------------------------------------------------
 // F05 — Prompt mode types (mirrors PromptModeResponse Pydantic model)
@@ -436,6 +454,44 @@ export const api = {
 	// Chat
 	chat: (payload: ChatRequest) =>
 		request<ChatResponse>('/api/chat', json(payload)),
+
+	// Streaming chat — returns async generator of events
+	chatStream: async function* (payload: ChatRequest): AsyncGenerator<StreamEvent> {
+		const res = await fetch(`${API_BASE}/api/chat/stream`, {
+			...json(payload),
+			method: 'POST',
+		});
+
+		if (!res.ok) {
+			const text = await res.text();
+			throw new Error(text || `HTTP ${res.status}`);
+		}
+
+		const reader = res.body!.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+			const lines = buffer.split('\n\n');
+			buffer = lines.pop()!; // Keep incomplete chunk
+
+			for (const line of lines) {
+				if (line.startsWith('data: ')) {
+					const data = line.slice(6);
+					if (data === '[DONE]') return;
+					try {
+						yield JSON.parse(data) as StreamEvent;
+					} catch {
+						// Skip malformed JSON
+					}
+				}
+			}
+		}
+	},
 
 	// -------------------------------------------------------------------------
 	// F05 — Prompt mode management

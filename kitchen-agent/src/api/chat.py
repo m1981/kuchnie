@@ -11,11 +11,14 @@ Routes:
 from __future__ import annotations
 
 import asyncio
+import json
 from functools import partial
 from pathlib import Path
+from typing import Iterator
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 from src.chat_service import ChatService, ChatTurnRequest
 from src.config import settings
@@ -149,6 +152,100 @@ async def chat(
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         clear_request_context()
+
+
+# ── Streaming chat turn ────────────────────────────────────────────
+
+@router.post("/api/chat/stream")
+async def chat_stream(
+    request: ChatRequest,
+    service: ChatService = Depends(get_chat_service),
+    pm: PromptManager = Depends(get_prompt_manager),
+):
+    """
+    Stream a chat turn via Server-Sent Events (SSE).
+
+    Events:
+      data: {"type":"text", "content":"..."}
+      data: {"type":"tool_call", "name":"...", "args":{...}, "id":"..."}
+      data: {"type":"tool_result", "name":"...", "result":{...}, "id":"..."}
+      data: {"type":"done", "provider":"...", "model":"...", "turn_id":"..."}
+      data: {"type":"error", "message":"..."}
+      data: [DONE]
+    """
+    bind_request_context(
+        session_id=request.session_id[:8],
+        mode=request.mode_id,
+        req_provider=request.provider,
+        req_model=request.model,
+    )
+
+    log.info(
+        "chat_stream_request_received",
+        message_preview=request.message[:80],
+        has_images=bool(request.images),
+        has_context_files=bool(request.context_files),
+    )
+
+    # Resolve system instruction
+    if request.system_prompt is not None:
+        system_instruction: str | None = request.system_prompt
+    else:
+        resolved = pm.get_system_instruction(request.mode_id)
+        system_instruction = resolved if resolved else None
+
+    # Resolve use_tools flag
+    mode_obj = pm.get_mode(request.mode_id)
+    mode_tools_default = mode_obj.tools_enabled_default if mode_obj else True
+    use_tools: bool = request.tools_enabled and mode_tools_default
+
+    # Resolve context files
+    resolved_context_files = _resolve_context_file_paths(request.context_files)
+
+    chat_request = ChatTurnRequest(
+        session_id=request.session_id,
+        user_message=request.message,
+        system_prompt=system_instruction,
+        images=[img.model_dump() for img in request.images] if request.images else [],
+        context_files=resolved_context_files,
+        mode=request.mode_id or "default",
+        use_tools=use_tools,
+        provider=request.provider,
+        model=request.model,
+    )
+
+    async def event_generator():
+        try:
+            loop = asyncio.get_event_loop()
+
+            # Run streaming in executor to avoid blocking
+            # The generator yields events from the orchestrator
+            def run_stream():
+                yield from service.stream_turn(chat_request)
+
+            # Stream events
+            for event in await loop.run_in_executor(None, lambda: list(run_stream())):
+                data = json.dumps(event)
+                yield f"data: {data}\n\n"
+
+            yield "data: [DONE]\n\n"
+
+        except Exception as exc:
+            log.exception("chat_stream_failed", error=str(exc))
+            error_data = json.dumps({"type": "error", "message": str(exc)})
+            yield f"data: {error_data}\n\n"
+        finally:
+            clear_request_context()
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ── Token estimation ───────────────────────────────────────────────
