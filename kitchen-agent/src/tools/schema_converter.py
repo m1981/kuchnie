@@ -7,7 +7,6 @@ Single source of truth for converting Gemini ``FunctionDeclaration``
 objects to any provider's native tool format.
 
 Before this module, schema conversion logic was duplicated in three places:
-  - ``src/providers/schema_converters.py``  (schema_to_json_schema, declaration_to_anthropic_tool)
   - ``src/tools/registry.py``               (ToolRegistry._schema_to_dict, _to_openai_schemas)
   - ``src/providers/mimo_provider.py``       (MimoProvider._schema_to_dict)
 
