@@ -250,13 +250,21 @@ class TurnOrchestrator:
 
         # Edge case: LLM returned tool_calls but use_tools=False.
         # This can happen when the model hallucinates tools (e.g. mimo).
-        # Log a warning and execute tools anyway to avoid empty response.
+        # Do NOT execute tools — just log and return whatever text was produced.
         if normalized.has_tool_calls and not turn_input.use_tools:
             self._log.warning(
                 "orchestrator_unexpected_tool_calls",
                 tool_calls=[tc.name for tc in normalized.tool_calls],
                 message="use_tools=False but LLM returned tool_calls. "
-                        "Executing tools to avoid empty response.",
+                        "Ignoring tool calls.",
+            )
+            # Skip tool execution — return text-only response
+            normalized = NormalizedResponse(
+                text=normalized.text,
+                has_tool_calls=False,
+                tool_calls=[],
+                usage=normalized.usage,
+                raw=normalized.raw,
             )
 
         while normalized.has_tool_calls:
@@ -452,7 +460,7 @@ class TurnOrchestrator:
             message_to_normalize, provider_name
         ) if message_to_normalize is not None else None
 
-        if normalized and normalized.has_tool_calls:
+        if normalized and normalized.has_tool_calls and turn_input.use_tools:
             # Execute tools
             for tc in normalized.tool_calls:
                 tool_calls_made.append(tc.name)

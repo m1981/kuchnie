@@ -338,9 +338,10 @@ def count_session_tokens(
             )
 
         except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "token_counter: count_tokens API failed (%s) — using heuristic fallback",
-                exc,
+            logger.debug(
+                "token_counter: count_tokens API failed — using heuristic fallback. "
+                "This is expected for non-Gemini providers.",
+                error=str(exc),
             )
 
     # ── Heuristic fallback (works with common format) ─────────────────────
