@@ -268,7 +268,7 @@ exists. Stream control events (ParsedMessageStopEvent) don't have `.content`.
 - Cross-provider: normalize_chunk never raises on empty/None input
 - Contract: NormalizedResponse shape has all required fields
 
-### B5: Orchestrator ↔ Provider (complete + stream)
+### B5: Orchestrator ↔ Provider (complete + stream) — ✅ DONE
 
 **Why critical:** FakeCompleter in orchestrator tests had no `stream()`.
 The streaming pipeline was completely untested.
@@ -281,7 +281,17 @@ The streaming pipeline was completely untested.
     - `__final_message__` event (or last chunk) must be parseable by `normalize()`
 3. `stream_with_tools()` same as `stream()`
 
-**Test file:** `tests/contract/test_orchestrator_provider.py`
+**Test file:** `tests/contract/test_orchestrator_provider.py` — **12 tests**
+
+**What's tested:**
+
+- complete(): Gemini, Anthropic, Mimo text responses
+- complete(): Gemini, Anthropic, Mimo tool call detection + execution
+- stream(): Gemini streaming text chunks
+- stream(): Anthropic streaming (real Pydantic events + **final_message**)
+- stream(): Mimo streaming (deltas + **final_message**)
+- stream(): Tool call detection from **final_message**
+- Provider routing: turn_input.provider override via get_provider()
 
 ```python
 class TestOrchestratorProviderContract:
@@ -444,7 +454,7 @@ class TestSerializerRepoContract:
 
 Moving files is risky — it breaks git history and CI. Do it incrementally:
 
-### Phase 1: Create contract/ (in progress)
+### Phase 1: Create contract/ — ✅ DONE
 
 - [x] `tests/contract/test_orchestrator_normalizer.py` — B6 — 7 tests
 - [x] `tests/contract/test_provider_normalizer.py` — B9 — 35 tests
@@ -479,10 +489,10 @@ Moving files is risky — it breaks git history and CI. Do it incrementally:
 
 ## Progress Log
 
-| Date       | Boundary     | Status | Notes                                                             |
-| ---------- | ------------ | ------ | ----------------------------------------------------------------- |
-| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix          |
-| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness           |
-| 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types |
-| 2026-06-07 | B5 (full)    | ❌     | Not yet written                                                   |
-|            |              |        |                                                                   |
+| Date       | Boundary     | Status | Notes                                                                |
+| ---------- | ------------ | ------ | -------------------------------------------------------------------- |
+| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix             |
+| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness              |
+| 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types    |
+| 2026-06-07 | B5 (full)    | ✅     | `contract/test_orchestrator_provider.py` — 12 tests, all 3 providers |
+|            |              |        |                                                                      |
