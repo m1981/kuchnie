@@ -422,12 +422,21 @@ class TurnOrchestrator:
         full_text = ""
         tool_calls_made: list[str] = []
         tool_details: list[ToolCallDetail] = []
+        final_message: Any = None  # __final_message__ from provider for normalization
+        last_raw_chunk: Any = None  # Fallback for providers without __final_message__
 
         # Generate stable turn IDs
         user_turn_id = str(uuid.uuid4())
         assistant_turn_id = str(uuid.uuid4())
 
         for chunk in provider.stream(context):
+            # Providers yield __final_message__ with the complete response
+            # for tool call detection.  Do NOT pass this to normalize_chunk.
+            if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
+                final_message = chunk["message"]
+                continue
+
+            last_raw_chunk = chunk
             # Extract text delta from chunk
             text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
             if text_delta:
@@ -435,10 +444,13 @@ class TurnOrchestrator:
                 yield {"type": "text_delta", "content": text_delta}
 
         # ── 4. Check for tool calls ──────────────────────────────────
-        # After streaming, check if the response contains tool calls
-        # For now, we need to get the full response to check for tool calls
-        # This is a limitation of the current approach
-        normalized = self._normalizer.normalize(chunk, provider_name) if chunk else None
+        # Use __final_message__ from the provider for normalization.
+        # Fallback to last raw chunk for providers that don't yield it
+        # (e.g. Gemini where each chunk is a full response object).
+        message_to_normalize = final_message if final_message is not None else last_raw_chunk
+        normalized = self._normalizer.normalize(
+            message_to_normalize, provider_name
+        ) if message_to_normalize is not None else None
 
         if normalized and normalized.has_tool_calls:
             # Execute tools
@@ -473,6 +485,8 @@ class TurnOrchestrator:
             for chunk in provider.stream_with_tools(
                 context, normalized.tool_calls, tool_results
             ):
+                if isinstance(chunk, dict) and chunk.get("type") == "__final_message__":
+                    continue
                 text_delta = self._normalizer.normalize_chunk(chunk, provider_name)
                 if text_delta:
                     full_text += text_delta

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import base64
 import json
+from types import SimpleNamespace
 from typing import Any, Iterator
 
 import structlog
@@ -327,6 +328,31 @@ class MimoProvider:
             ]
         self._conversation_state.append(assistant_msg)
 
+        # Yield __final_message__ so orchestrator can detect tool calls.
+        # Build a SimpleNamespace mimicking OpenAI response shape.
+        tool_call_objects = None
+        if accumulated_tool_calls:
+            tool_call_objects = []
+            for idx in sorted(accumulated_tool_calls.keys()):
+                tc_data = accumulated_tool_calls[idx]
+                tool_call_objects.append(SimpleNamespace(
+                    id=tc_data["id"],
+                    function=SimpleNamespace(
+                        name=tc_data["function"]["name"],
+                        arguments=tc_data["function"]["arguments"],
+                    ),
+                ))
+
+        final_msg = SimpleNamespace(
+            content=accumulated_content or None,
+            tool_calls=tool_call_objects,
+        )
+        final_response = SimpleNamespace(
+            choices=[SimpleNamespace(message=final_msg)],
+            usage=None,
+        )
+        yield {"type": "__final_message__", "message": final_response}
+
     def stream_with_tools(
         self,
         context: "AssembledContext",
@@ -395,3 +421,27 @@ class MimoProvider:
                 accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls.keys())
             ]
         self._conversation_state.append(assistant_msg)
+
+        # Yield __final_message__ so orchestrator can detect tool calls.
+        tool_call_objects = None
+        if accumulated_tool_calls:
+            tool_call_objects = []
+            for idx in sorted(accumulated_tool_calls.keys()):
+                tc_data = accumulated_tool_calls[idx]
+                tool_call_objects.append(SimpleNamespace(
+                    id=tc_data["id"],
+                    function=SimpleNamespace(
+                        name=tc_data["function"]["name"],
+                        arguments=tc_data["function"]["arguments"],
+                    ),
+                ))
+
+        final_msg = SimpleNamespace(
+            content=accumulated_content or None,
+            tool_calls=tool_call_objects,
+        )
+        final_response = SimpleNamespace(
+            choices=[SimpleNamespace(message=final_msg)],
+            usage=None,
+        )
+        yield {"type": "__final_message__", "message": final_response}

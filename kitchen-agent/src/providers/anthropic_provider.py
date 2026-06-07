@@ -343,6 +343,11 @@ class AnthropicProvider:
         # The stream context manager provides access to the final message
         try:
             final_message = stream.get_final_message()
+
+            # Yield __final_message__ so orchestrator can detect tool calls
+            # without trying to normalize the last raw stream event.
+            yield {"type": "__final_message__", "message": final_message}
+
             assistant_content: list[dict[str, Any]] = []
             for block in final_message.content:
                 if block.type == "text":
@@ -397,6 +402,10 @@ class AnthropicProvider:
         # After streaming, get the final message for conversation state
         try:
             final_message = stream.get_final_message()
+
+            # Yield __final_message__ so orchestrator can detect tool calls
+            yield {"type": "__final_message__", "message": final_message}
+
             assistant_content: list[dict[str, Any]] = []
             for block in final_message.content:
                 if block.type == "text":
