@@ -12,7 +12,7 @@ The Anthropic API is fundamentally different from Gemini in several ways:
 
 2. **Tool schema format** — Anthropic uses its own ``ToolParam`` schema
    (``{"name", "description", "input_schema"}``) rather than Gemini's
-   ``FunctionDeclaration``.  Conversion lives in ``schema_converters.py``.
+   ``FunctionDeclaration``.  Conversion lives in ``schema_converter.py``.
 
 3. **System instruction** — passed as the top-level ``system`` kwarg, not
    inside the messages list.
