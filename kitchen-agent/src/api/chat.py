@@ -217,14 +217,35 @@ async def chat_stream(
     async def event_generator():
         try:
             loop = asyncio.get_event_loop()
+            queue: asyncio.Queue = asyncio.Queue()
+            sentinel = object()  # Signals end of stream
 
-            # Run streaming in executor to avoid blocking
-            # The generator yields events from the orchestrator
             def run_stream():
-                yield from service.stream_turn(chat_request)
+                """Run the synchronous generator in a thread."""
+                try:
+                    for event in service.stream_turn(chat_request):
+                        # Use call_soon_threadsafe to safely put events from
+                        # the thread into the async queue
+                        loop.call_soon_threadsafe(queue.put_nowait, event)
+                except Exception as exc:
+                    # Put the exception in the queue to propagate it
+                    loop.call_soon_threadsafe(queue.put_nowait, exc)
+                finally:
+                    # Signal that the stream is done
+                    loop.call_soon_threadsafe(queue.put_nowait, sentinel)
 
-            # Stream events
-            for event in await loop.run_in_executor(None, lambda: list(run_stream())):
+            # Start the stream in a thread
+            loop.run_in_executor(None, run_stream)
+
+            # Yield events from the queue as they arrive
+            while True:
+                event = await queue.get()
+                if event is sentinel:
+                    break
+                if isinstance(event, Exception):
+                    raise event
+
+                log.debug("chat_stream_event", event_type=event.get("type"))
                 data = json.dumps(event)
                 yield f"data: {data}\n\n"
 
