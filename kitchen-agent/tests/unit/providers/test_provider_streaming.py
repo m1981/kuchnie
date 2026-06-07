@@ -192,6 +192,8 @@ class TestMimoProviderStream:
             provider = MimoProvider.__new__(MimoProvider)
             provider._client = MagicMock()
             provider._model = "mimo-v2.5-pro"
+            provider._temperature = 0.7
+            provider._max_tokens = 4096
             provider._registry = MagicMock()
             provider._tool_executor = MagicMock()
             provider._conversation_state = []

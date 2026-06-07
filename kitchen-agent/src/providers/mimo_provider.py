@@ -50,12 +50,21 @@ class MimoProvider:
     it via ``complete()`` and ``complete_with_tools()``.
     """
 
-    def __init__(self, model_override: str | None = None) -> None:
+    def __init__(
+        self,
+        model_override: str | None = None,
+        config: "MimoConfig | None" = None,
+    ) -> None:
+        from src.providers.config import MimoConfig
+
+        self._config = config or MimoConfig()
         self._client = OpenAI(
-            api_key=settings.mimo_api_key,
-            base_url=settings.mimo_base_url,
+            api_key=self._config.api_key,
+            base_url=self._config.base_url,
         )
-        self._model: str = model_override or settings.mimo_model
+        self._model: str = model_override or self._config.model
+        self._temperature: float = self._config.temperature
+        self._max_tokens: int = self._config.max_tokens
         self._registry = _build_default_registry()
         self._tool_executor = ToolExecutor(registry=self._registry)
 
@@ -181,8 +190,8 @@ class MimoProvider:
             model=self._model,
             messages=messages,
             tools=tool_schemas if tool_schemas else None,
-            temperature=settings.mimo_temperature,
-            max_tokens=settings.mimo_max_tokens,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
         )
 
         # Store assistant response in conversation state
@@ -231,8 +240,8 @@ class MimoProvider:
             model=self._model,
             messages=self._conversation_state,
             tools=tool_schemas if tool_schemas else None,
-            temperature=settings.mimo_temperature,
-            max_tokens=settings.mimo_max_tokens,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
         )
 
         # Store assistant response in conversation state
@@ -285,8 +294,8 @@ class MimoProvider:
             messages=messages,
             tools=tool_schemas if tool_schemas else None,
             stream=True,
-            temperature=settings.mimo_temperature,
-            max_tokens=settings.mimo_max_tokens,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
         )
 
         # Accumulate content and tool calls for conversation state
@@ -381,8 +390,8 @@ class MimoProvider:
             messages=self._conversation_state,
             tools=tool_schemas if tool_schemas else None,
             stream=True,
-            temperature=settings.mimo_temperature,
-            max_tokens=settings.mimo_max_tokens,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
         )
 
         # Accumulate content and tool calls for conversation state

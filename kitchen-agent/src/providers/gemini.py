@@ -198,11 +198,18 @@ class GeminiProvider:
     lightweight — the SDK reuses the underlying HTTP session.
     """
 
-    def __init__(self, model_override: str | None = None) -> None:
+    def __init__(
+        self,
+        model_override: str | None = None,
+        config: "GeminiConfig | None" = None,
+    ) -> None:
+        from src.providers.config import GeminiConfig
+
+        self._config = config or GeminiConfig()
         self._client = genai.Client()
         # Resolved at construction so it is stable for the lifetime of this
         # instance and visible to tests via provider._model.
-        self._model: str = model_override or settings.gemini_model
+        self._model: str = model_override or self._config.model
         self._normalizer = ResponseNormalizer()
         self._registry = _build_default_registry()
         self._declarations = [

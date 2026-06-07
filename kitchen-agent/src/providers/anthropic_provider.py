@@ -55,11 +55,17 @@ class AnthropicProvider:
         self,
         model_override: str | None = None,
         registry: Any | None = None,
+        config: "AnthropicConfig | None" = None,
     ) -> None:
-        api_key = settings.anthropic_api_key or None
+        from src.providers.config import AnthropicConfig
+
+        self._config = config or AnthropicConfig()
+        api_key = self._config.api_key or None
         self._client = anthropic.Anthropic(api_key=api_key)
         # Resolved at construction; visible to tests via provider._model.
-        self._model: str = model_override or settings.anthropic_model
+        self._model: str = model_override or self._config.model
+        self._temperature: float = self._config.temperature
+        self._max_tokens: int = self._config.max_tokens
         self._normalizer = ResponseNormalizer()
 
         if registry is not None:
@@ -196,7 +202,7 @@ class AnthropicProvider:
 
         response = self._client.messages.create(
             model=self._model,
-            max_tokens=settings.anthropic_max_tokens,
+            max_tokens=self._max_tokens,
             tools=tool_schemas,
             messages=self._conversation_state,
             system=context.system_prompt or None,
@@ -245,7 +251,7 @@ class AnthropicProvider:
 
         response = self._client.messages.create(
             model=self._model,
-            max_tokens=settings.anthropic_max_tokens,
+            max_tokens=self._max_tokens,
             tools=tool_schemas,
             messages=self._conversation_state,
             system=context.system_prompt or None,
@@ -328,7 +334,7 @@ class AnthropicProvider:
         # Use messages.stream() for streaming
         with self._client.messages.stream(
             model=self._model,
-            max_tokens=settings.anthropic_max_tokens,
+            max_tokens=self._max_tokens,
             tools=tool_schemas,
             messages=self._conversation_state,
             system=context.system_prompt or None,
@@ -388,7 +394,7 @@ class AnthropicProvider:
         # Use messages.stream() for streaming
         with self._client.messages.stream(
             model=self._model,
-            max_tokens=settings.anthropic_max_tokens,
+            max_tokens=self._max_tokens,
             tools=tool_schemas,
             messages=self._conversation_state,
             system=context.system_prompt or None,

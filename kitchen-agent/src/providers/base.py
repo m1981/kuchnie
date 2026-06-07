@@ -100,13 +100,17 @@ def get_provider(
     """
     Return an LLM provider instance.
 
+    Builds provider-specific config from ``Settings`` and injects it
+    into the provider constructor.  Providers no longer read ``Settings``
+    directly.
+
     Args:
         provider_name:  Which provider to use.  When ``None`` (the default) the
                         value is read from ``settings.llm_provider`` so the
                         server default applies.
         model_override: Model id to use instead of the provider's configured
                         default.  When ``None`` the provider reads its own
-                        ``settings.*_model`` field.
+                        config field.
 
     Raises:
         ValueError: when the resolved provider name is not supported.
@@ -116,16 +120,36 @@ def get_provider(
     name = (provider_name or settings.llm_provider or "gemini").lower()
 
     if name == "gemini":
+        from src.providers.config import GeminiConfig
         from src.providers.gemini import GeminiProvider
-        return GeminiProvider(model_override=model_override)
+        config = GeminiConfig(
+            model=settings.gemini_model,
+            temperature=settings.gemini_temperature,
+        )
+        return GeminiProvider(model_override=model_override, config=config)
 
     if name == "anthropic":
+        from src.providers.config import AnthropicConfig
         from src.providers.anthropic_provider import AnthropicProvider
-        return AnthropicProvider(model_override=model_override)
+        config = AnthropicConfig(
+            api_key=settings.anthropic_api_key,
+            model=settings.anthropic_model,
+            temperature=settings.anthropic_temperature,
+            max_tokens=settings.anthropic_max_tokens,
+        )
+        return AnthropicProvider(model_override=model_override, config=config)
 
     if name == "mimo":
+        from src.providers.config import MimoConfig
         from src.providers.mimo_provider import MimoProvider
-        return MimoProvider(model_override=model_override)
+        config = MimoConfig(
+            api_key=settings.mimo_api_key,
+            base_url=settings.mimo_base_url,
+            model=settings.mimo_model,
+            temperature=settings.mimo_temperature,
+            max_tokens=settings.mimo_max_tokens,
+        )
+        return MimoProvider(model_override=model_override, config=config)
 
     raise ValueError(
         f"Unknown provider {name!r}. Valid: 'gemini', 'anthropic', 'mimo'"
