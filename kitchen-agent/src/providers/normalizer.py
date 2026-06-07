@@ -123,7 +123,7 @@ class ResponseNormalizer:
             response.usage_metadata → token counts
         """
         candidate = raw.candidates[0]
-        parts = candidate.content.parts if candidate.content else []
+        parts = candidate.content.parts if candidate.content and candidate.content.parts else []
 
         text_parts: list[str] = []
         tool_calls: list[ToolCall] = []

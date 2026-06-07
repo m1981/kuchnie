@@ -328,7 +328,7 @@ class ToolRegistry:
         Return provider-specific tool schemas.
 
         Args:
-            provider:   "gemini" or "anthropic".
+            provider:   "gemini", "anthropic", or "mimo" (OpenAI-compatible).
             categories: Optional filter by tool category.
                         None = return all tools.
         """
@@ -348,7 +348,59 @@ class ToolRegistry:
                 declaration_to_anthropic_tool(entry.declaration)
                 for entry in entries
             ]
+        elif provider == "mimo":
+            # Mimo uses OpenAI-compatible format — convert Gemini declarations
+            from src.providers.mimo_provider import MimoProvider
+            return self._to_openai_schemas(entries)
         raise ValueError(f"Unknown provider: {provider!r}")
+
+    @staticmethod
+    def _to_openai_schemas(entries: list) -> list[dict[str, Any]]:
+        """Convert Gemini FunctionDeclaration to OpenAI function format."""
+        schemas: list[dict[str, Any]] = []
+        for entry in entries:
+            decl = entry.declaration
+            # Convert Gemini Schema to JSON Schema dict
+            params = ToolRegistry._schema_to_dict(decl.parameters) if decl.parameters else {"type": "object", "properties": {}}
+            schemas.append({
+                "type": "function",
+                "function": {
+                    "name": decl.name,
+                    "description": decl.description or "",
+                    "parameters": params,
+                },
+            })
+        return schemas
+
+    @staticmethod
+    def _schema_to_dict(schema: Any) -> dict[str, Any]:
+        """Convert a google.genai types.Schema to a plain dict."""
+        if schema is None:
+            return {"type": "object", "properties": {}}
+
+        result: dict[str, Any] = {}
+        raw_type = str(getattr(schema, "type", "OBJECT"))
+        type_str = raw_type.split(".")[-1] if "." in raw_type else raw_type
+        type_map = {
+            "STRING": "string", "NUMBER": "number", "INTEGER": "integer",
+            "BOOLEAN": "boolean", "ARRAY": "array", "OBJECT": "object",
+        }
+        result["type"] = type_map.get(type_str.upper(), "string")
+
+        if result["type"] == "object":
+            props = getattr(schema, "properties", {}) or {}
+            result["properties"] = {}
+            for name, prop in props.items():
+                result["properties"][name] = ToolRegistry._schema_to_dict(prop)
+            required = getattr(schema, "required", []) or []
+            if required:
+                result["required"] = list(required)
+
+        desc = getattr(schema, "description", None)
+        if desc:
+            result["description"] = desc
+
+        return result
 
 
 def build_default_registry(

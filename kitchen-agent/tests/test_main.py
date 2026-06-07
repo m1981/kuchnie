@@ -298,7 +298,7 @@ def test_repo_map_error_branch(client: TestClient, monkeypatch) -> None:
 
 def _chat_override(text: str = "Great answer", tools: list | None = None):
     svc = MagicMock(spec=ChatService)
-    svc.handle_turn.return_value = ChatTurnResponse(session_id="s1", assistant_message=text, ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=tools or [])
+    svc.handle_turn.return_value = ChatTurnResponse(session_id="s1", assistant_message=text, ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=[t["name"] for t in tools] if tools else [], tool_logs=tools or [])
     return lambda: svc
 
 

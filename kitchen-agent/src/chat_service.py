@@ -96,6 +96,7 @@ class ChatTurnResponse:
     user_turn_id: str = ""
     assistant_turn_id: str = ""
     tool_calls_made: list[str] = field(default_factory=list)
+    tool_logs: list[dict] = field(default_factory=list)
     tokens_used: dict = field(default_factory=dict)
     provider_name: str = ""
     model_name: str = ""
@@ -264,6 +265,7 @@ class ChatService:
             user_turn_id=turn_output.user_turn_id,
             assistant_turn_id=turn_output.assistant_turn_id,
             tool_calls_made=[t.name for t in turn_output.tool_calls_made],
+            tool_logs=turn_output.tool_logs,
             tokens_used=turn_output.tokens_used,
             provider_name=turn_output.provider_name,
             model_name=turn_output.model_name,

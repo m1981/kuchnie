@@ -32,6 +32,7 @@ from src.schemas import (
     SessionTokensResponse,
     TokenEstimateRequest,
     TokenEstimateResponse,
+    ToolLog,
 )
 from src.logger import bind_request_context, clear_request_context, log_timing
 from src.token_counter import build_pending_context_estimate, count_session_tokens
@@ -119,9 +120,18 @@ async def chat(
             tools_used=result.tool_calls_made[:5],  # first 5 tool names
         )
 
+        # Convert tool_logs dicts to ToolLog objects for response
+        tool_log_objects = []
+        for tl in result.tool_logs:
+            tool_log_objects.append(ToolLog(
+                name=tl["name"],
+                args=tl.get("args", {}),
+                result=tl.get("result", {}),
+            ))
+
         return ChatResponse(
             text=result.assistant_message,
-            tools_used=result.tool_calls_made,
+            tools_used=tool_log_objects,
             user_turn_id=result.user_turn_id,
             assistant_turn_id=result.assistant_turn_id,
             provider=result.provider_name,
