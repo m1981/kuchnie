@@ -355,7 +355,9 @@ function createChatStore() {
 					role:  'assistant',
 					content: data.text,
 					tools: data.tools_used,
-					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {})
+					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {}),
+					...(data.provider ? { provider: data.provider } : {}),
+					...(data.model ? { model: data.model } : {})
 				});
 
 				chatState = { status: 'success', data: undefined };
@@ -414,7 +416,9 @@ function createChatStore() {
 					role: 'assistant',
 					content: data.text,
 					tools: data.tools_used,
-					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {})
+					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {}),
+					...(data.provider ? { provider: data.provider } : {}),
+					...(data.model ? { model: data.model } : {})
 				});
 
 				chatState = { status: 'success', data: undefined };

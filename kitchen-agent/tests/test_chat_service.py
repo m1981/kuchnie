@@ -385,3 +385,78 @@ def test_no_provider_uses_default(
     assert fake_orchestrator.last_turn_input is not None
     assert fake_orchestrator.last_turn_input.provider is None
     assert fake_orchestrator.last_turn_input.model is None
+
+
+# ---------------------------------------------------------------------------
+# Provider/model in response
+# ---------------------------------------------------------------------------
+
+@patch("src.chat_service.log_turn")
+def test_response_includes_provider_and_model(
+    mock_log: MagicMock,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """ChatTurnResponse must include provider_name and model_name from orchestrator."""
+    orchestrator = FakeOrchestrator(text="response")
+    # Simulate what the real orchestrator does
+    orchestrator._provider_name = "anthropic"
+    orchestrator._model_name = "claude-sonnet-4-20250514"
+
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=orchestrator,
+    )
+
+    # Monkey-patch the fake to return provider/model in TurnOutput
+    original_run = orchestrator.run
+    def patched_run(session, turn_input):
+        output = original_run(session, turn_input)
+        output.provider_name = turn_input.provider or "gemini"
+        output.model_name = turn_input.model or "gemini-2.5-flash"
+        return output
+    orchestrator.run = patched_run
+
+    result = service.handle_turn(ChatTurnRequest(
+        session_id="sess-provider-resp",
+        user_message="hello",
+        provider="anthropic",
+        model="claude-sonnet-4-20250514",
+    ))
+
+    assert result.provider_name == "anthropic"
+    assert result.model_name == "claude-sonnet-4-20250514"
+
+
+@patch("src.chat_service.log_turn")
+def test_ui_history_stores_provider_and_model(
+    mock_log: MagicMock,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """Provider/model must be persisted in ui_history assistant message."""
+    orchestrator = FakeOrchestrator(text="response")
+
+    # Patch run to add provider/model to output
+    original_run = orchestrator.run
+    def patched_run(session, turn_input):
+        output = original_run(session, turn_input)
+        output.provider_name = "gemini"
+        output.model_name = "gemini-2.5-pro"
+        return output
+    orchestrator.run = patched_run
+
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=orchestrator,
+    )
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-ui-model",
+        user_message="hello",
+    ))
+
+    _, ui_json, _ = repo.load_session("sess-ui-model")
+    ui_messages = json.loads(ui_json)
+    assistant_msg = next(m for m in ui_messages if m["role"] == "assistant")
+
+    assert assistant_msg["provider"] == "gemini"
+    assert assistant_msg["model"] == "gemini-2.5-pro"

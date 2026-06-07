@@ -101,6 +101,8 @@ class TurnOutput:
     tool_calls_made: list[ToolCall]    # all tool calls in execution order
     tool_logs: list[dict]              # serializable tool log for UI + PromptLogger
     tokens_used: dict                  # {input, output, total} from provider
+    provider_name: str = ""            # actual provider used (e.g. "gemini", "anthropic")
+    model_name: str = ""               # actual model used (e.g. "gemini-2.5-flash")
     context_slots: dict = field(default_factory=dict)  # observability
 
 
@@ -303,6 +305,9 @@ class TurnOrchestrator:
         user_turn_id = str(uuid.uuid4())
         assistant_turn_id = str(uuid.uuid4())
 
+        # Capture actual model used — provider._model holds the resolved value.
+        actual_model = getattr(provider, "_model", "") or ""
+
         return TurnOutput(
             assistant_message=normalized.text,
             updated_api_history=updated_api_history,
@@ -311,5 +316,7 @@ class TurnOrchestrator:
             tool_calls_made=tool_calls_made_objects,
             tool_logs=tool_logs,
             tokens_used=normalized.usage,
+            provider_name=provider_name,
+            model_name=actual_model,
             context_slots=context.slots_used,
         )

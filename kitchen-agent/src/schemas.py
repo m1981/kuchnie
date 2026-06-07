@@ -63,6 +63,8 @@ class ChatResponse(BaseModel):
     tools_used: list[ToolLog]
     user_turn_id: str | None = None
     assistant_turn_id: str | None = None
+    provider: str | None = None
+    model: str | None = None
 
 
 class ForkRequest(BaseModel):

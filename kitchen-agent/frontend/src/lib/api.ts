@@ -80,6 +80,10 @@ export type Message = {
 	 * no files were attached.  Only present on user messages.
 	 */
 	context_files?: string[];
+	/** Provider used for this message (e.g. "gemini", "anthropic"). Only on assistant messages. */
+	provider?: string;
+	/** Model used for this message (e.g. "gemini-2.5-flash"). Only on assistant messages. */
+	model?: string;
 };
 
 export type FileItem = { path: string; name: string };
@@ -182,6 +186,8 @@ export type ChatResponse = {
 	tools_used: ToolLog[];
 	user_turn_id?: string;
 	assistant_turn_id?: string;
+	provider?: string;
+	model?: string;
 };
 
 // ---------------------------------------------------------------------------

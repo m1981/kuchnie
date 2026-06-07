@@ -536,6 +536,45 @@ def test_chat_no_provider_uses_none(tmp_path: Path, monkeypatch) -> None:
 
 
 # ---------------------------------------------------------------------------
+# POST /api/chat — provider/model in response
+# ---------------------------------------------------------------------------
+
+def test_chat_response_includes_provider_and_model(tmp_path: Path, monkeypatch) -> None:
+    """ChatResponse must include provider and model from the orchestrator."""
+    pm = _make_prompt_manager(tmp_path)
+
+    class ProviderModelSvc:
+        def handle_turn(self, request):
+            return ChatTurnResponse(
+                session_id=request.session_id,
+                assistant_message="response",
+                ui_history=[],
+                user_turn_id="uid",
+                assistant_turn_id="aid",
+                tool_calls_made=[],
+                provider_name="anthropic",
+                model_name="claude-sonnet-4-20250514",
+            )
+
+    app.dependency_overrides[get_prompt_manager] = lambda: pm
+    app.dependency_overrides[get_chat_service] = lambda: ProviderModelSvc()
+    monkeypatch.setattr(config_module.settings, "data_dir", tmp_path)
+    monkeypatch.setattr(main_module.settings, "data_dir", tmp_path)
+    try:
+        resp = TestClient(app).post("/api/chat", json={
+            "session_id": "s-provider-model",
+            "message":    "hello",
+        })
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["provider"] == "anthropic"
+        assert body["model"] == "claude-sonnet-4-20250514"
+    finally:
+        app.dependency_overrides.pop(get_prompt_manager, None)
+        app.dependency_overrides.pop(get_chat_service, None)
+
+
+# ---------------------------------------------------------------------------
 # DI factory
 # ---------------------------------------------------------------------------
 

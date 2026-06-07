@@ -101,6 +101,8 @@ async def chat(
         tools_used=result.tool_calls_made,
         user_turn_id=result.user_turn_id,
         assistant_turn_id=result.assistant_turn_id,
+        provider=result.provider_name,
+        model=result.model_name,
     )
 
 

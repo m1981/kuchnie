@@ -96,6 +96,8 @@ class ChatTurnResponse:
     assistant_turn_id: str = ""
     tool_calls_made: list[str] = field(default_factory=list)
     tokens_used: dict = field(default_factory=dict)
+    provider_name: str = ""
+    model_name: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +239,8 @@ class ChatService:
             assistant_turn_id=turn_output.assistant_turn_id,
             tool_calls_made=[t.name for t in turn_output.tool_calls_made],
             tokens_used=turn_output.tokens_used,
+            provider_name=turn_output.provider_name,
+            model_name=turn_output.model_name,
         )
 
     def _build_ui_history(
@@ -263,11 +267,17 @@ class ChatService:
         updated.append(user_entry)
 
         # Assistant entry
-        updated.append({
+        assistant_entry: dict = {
             "role": "assistant",
             "content": turn_output.assistant_message,
             "turn_id": turn_output.assistant_turn_id,
             "tools": turn_output.tool_logs or [],
-        })
+        }
+        # Store actual provider/model used for this turn.
+        if turn_output.provider_name:
+            assistant_entry["provider"] = turn_output.provider_name
+        if turn_output.model_name:
+            assistant_entry["model"] = turn_output.model_name
+        updated.append(assistant_entry)
 
         return updated

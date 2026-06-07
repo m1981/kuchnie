@@ -113,13 +113,23 @@
 			>
 				<!-- Role label + badges + action buttons -->
 				<div class="mb-2 flex items-center justify-between gap-3">
-					<p
-						class={msg.role === 'user'
-							? 'text-xs font-semibold tracking-[0.14em] text-white/70 uppercase'
-							: 'text-xs font-semibold tracking-[0.14em] text-muted uppercase'}
-					>
-						{msg.role === 'user' ? 'You' : 'Assistant'}
-					</p>
+					<div class="flex items-center gap-2">
+						<p
+							class={msg.role === 'user'
+								? 'text-xs font-semibold tracking-[0.14em] text-white/70 uppercase'
+								: 'text-xs font-semibold tracking-[0.14em] text-muted uppercase'}
+						>
+							{msg.role === 'user' ? 'You' : 'Assistant'}
+						</p>
+						{#if msg.role === 'assistant' && msg.model}
+							<span
+								title="{msg.provider || 'unknown'}/{msg.model}"
+								class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+							>
+								{msg.model}
+							</span>
+						{/if}
+					</div>
 
 					<div class="flex items-center gap-1">
 						{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
