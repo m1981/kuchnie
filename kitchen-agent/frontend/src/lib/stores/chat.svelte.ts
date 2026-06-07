@@ -333,6 +333,10 @@ function createChatStore() {
 			messages.push(assistantMsg);
 			const assistantIdx = messages.length - 1;
 
+			// Set state to idle so loading indicator hides
+			// The isStreaming flag on the message shows the streaming state
+			chatState = { status: 'idle' };
+
 			const payload = {
 				session_id:    sessionId,
 				message:       text,

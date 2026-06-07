@@ -197,6 +197,9 @@
 					/>
 				{:else}
 					<Markdown content={msg.content} variant={msg.role} />
+					{#if msg.isStreaming}
+						<span class="inline-block h-4 w-0.5 animate-pulse bg-accent ml-0.5"></span>
+					{/if}
 				{/if}
 
 				<!-- Tool logs -->
