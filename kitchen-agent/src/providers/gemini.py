@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any
+from typing import Any, Iterator
 
 import structlog
 from dotenv import load_dotenv
@@ -361,3 +361,160 @@ class GeminiProvider:
             self._conversation_state.append(response.candidates[0].content)
 
         return response
+
+    def stream(self, context: "AssembledContext") -> Iterator[Any]:
+        """
+        Stream a single turn via the Gemini API.
+        Yields raw SDK chunks — normalizer handles text extraction.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build user parts with context files and images
+        user_parts: list[types.Part] = []
+
+        if context.context_files:
+            snippets: list[str] = []
+            for fp in context.context_files:
+                result = read_file(fp)
+                if "content" in result:
+                    snippets.append(f"=== {fp} ===\n{result['content']}")
+                else:
+                    log.warning("context_file_unreadable", path=fp, error=result.get("error"))
+            if snippets:
+                block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
+                user_parts.append(types.Part(text=block))
+
+        # Build messages list, injecting user parts into the last user message
+        messages = list(context.messages)
+        if messages and messages[-1].get("role") == "user":
+            user_parts.append(types.Part(text=messages[-1]["content"]))
+            messages[-1] = {"role": "user", "content": "", "_parts": user_parts}
+
+        if context.images:
+            for img in context.images:
+                try:
+                    raw_bytes = base64.b64decode(img["data"])
+                    user_parts.append(
+                        types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"])
+                    )
+                except Exception as exc:
+                    log.warning("image_decode_failed", error=str(exc))
+
+        # Convert messages to Gemini Content objects
+        self._conversation_state = _coerce_history_for_gemini(messages)
+
+        # If we have enriched user parts, replace the last user Content
+        if user_parts and self._conversation_state:
+            last = self._conversation_state[-1]
+            if last.role == "user":
+                self._conversation_state[-1] = types.Content(role="user", parts=user_parts)
+
+        # Always use provider's captured declarations
+        declarations = self._declarations
+        gemini_tools = types.Tool(function_declarations=declarations)
+
+        config_kwargs: dict = {}
+        if context.system_prompt:
+            config_kwargs["system_instruction"] = context.system_prompt
+        config_kwargs["tools"] = [gemini_tools]
+        config_kwargs["temperature"] = settings.gemini_temperature
+
+        log.info(
+            "gemini_stream_start",
+            model=self._model,
+            messages_count=len(self._conversation_state),
+        )
+
+        # Use generate_content_stream for streaming
+        accumulated_content = None
+        for chunk in self._client.models.generate_content_stream(
+            model=self._model,
+            contents=self._conversation_state,
+            config=types.GenerateContentConfig(**config_kwargs),
+        ):
+            # Accumulate content for conversation state
+            if chunk.candidates and chunk.candidates[0].content:
+                content = chunk.candidates[0].content
+                if accumulated_content is None:
+                    accumulated_content = content
+                else:
+                    # Append parts to accumulated content
+                    if content.parts:
+                        accumulated_content.parts.extend(content.parts)
+            yield chunk
+
+        # Store accumulated content in conversation state
+        if accumulated_content:
+            self._conversation_state.append(accumulated_content)
+
+    def stream_with_tools(
+        self,
+        context: "AssembledContext",
+        tool_calls: list["ToolCall"],
+        tool_results: list["ToolResult"],
+    ) -> Iterator[Any]:
+        """
+        Continue streaming after tool execution.
+        Yields raw SDK chunks.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build tool call message (assistant Content with function_call parts)
+        parts: list[types.Part] = []
+        for tc in tool_calls:
+            parts.append(types.Part(
+                function_call=types.FunctionCall(
+                    name=tc.name, args=tc.arguments, id=tc.id,
+                )
+            ))
+        tool_call_content = types.Content(role="model", parts=parts)
+        self._conversation_state.append(tool_call_content)
+
+        # Build tool result message (user Content with function_response parts)
+        result_parts: list[types.Part] = []
+        for tr in tool_results:
+            try:
+                import ast
+                response_dict = ast.literal_eval(tr.content)
+            except (ValueError, SyntaxError):
+                response_dict = {"content": tr.content}
+            result_parts.append(types.Part(
+                function_response=types.FunctionResponse(
+                    name=tr.name,
+                    response=response_dict,
+                    id=tr.tool_call_id,
+                )
+            ))
+        tool_result_content = types.Content(role="user", parts=result_parts)
+        self._conversation_state.append(tool_result_content)
+
+        # Always use provider's captured declarations
+        declarations = self._declarations
+        gemini_tools = types.Tool(function_declarations=declarations)
+
+        config_kwargs: dict = {}
+        if context.system_prompt:
+            config_kwargs["system_instruction"] = context.system_prompt
+        config_kwargs["tools"] = [gemini_tools]
+        config_kwargs["temperature"] = settings.gemini_temperature
+
+        # Use generate_content_stream for streaming
+        accumulated_content = None
+        for chunk in self._client.models.generate_content_stream(
+            model=self._model,
+            contents=self._conversation_state,
+            config=types.GenerateContentConfig(**config_kwargs),
+        ):
+            # Accumulate content for conversation state
+            if chunk.candidates and chunk.candidates[0].content:
+                content = chunk.candidates[0].content
+                if accumulated_content is None:
+                    accumulated_content = content
+                else:
+                    if content.parts:
+                        accumulated_content.parts.extend(content.parts)
+            yield chunk
+
+        # Store accumulated content in conversation state
+        if accumulated_content:
+            self._conversation_state.append(accumulated_content)

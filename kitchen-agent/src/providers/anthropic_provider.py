@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any
+from typing import Any, Iterator
 
 import anthropic
 import structlog
@@ -270,3 +270,144 @@ class AnthropicProvider:
         self._conversation_state.append({"role": "assistant", "content": assistant_content})
 
         return response
+
+    def stream(self, context: "AssembledContext") -> Iterator[Any]:
+        """
+        Stream a single turn via the Anthropic Messages API.
+        Yields raw SDK events — normalizer handles text extraction.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build user content with context files and images
+        user_content: list[dict[str, Any]] = []
+
+        if context.context_files:
+            snippets: list[str] = []
+            for fp in context.context_files:
+                result = read_file(fp)
+                if "content" in result:
+                    snippets.append(f"=== {fp} ===\n{result['content']}")
+                else:
+                    logger.warning("context_file_unreadable", path=fp, error=result.get("error"))
+            if snippets:
+                block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
+                user_content.append({"type": "text", "text": block})
+
+        if context.images:
+            for img in context.images:
+                try:
+                    base64.b64decode(img["data"], validate=True)
+                    user_content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": img["mime_type"],
+                            "data": img["data"],
+                        },
+                    })
+                except Exception as exc:
+                    logger.warning("image_decode_failed", error=str(exc))
+
+        # Build conversation state from context messages
+        self._conversation_state: list[dict[str, Any]] = []
+        for msg in context.messages:
+            converted = self._common_to_anthropic(msg, user_content)
+            self._conversation_state.append(converted)
+            if msg.get("role") == "user" and user_content:
+                user_content = []  # Only enrich once
+
+        if user_content:
+            self._conversation_state.append({"role": "user", "content": user_content})
+
+        # Use pre-built schemas from __init__
+        tool_schemas = self._tool_schemas
+
+        logger.info(
+            "anthropic_stream_start",
+            model=self._model,
+            messages_count=len(self._conversation_state),
+        )
+
+        # Use messages.stream() for streaming
+        with self._client.messages.stream(
+            model=self._model,
+            max_tokens=settings.anthropic_max_tokens,
+            tools=tool_schemas,
+            messages=self._conversation_state,
+            system=context.system_prompt or None,
+        ) as stream:
+            for event in stream:
+                yield event
+
+        # After streaming, get the final message for conversation state
+        # The stream context manager provides access to the final message
+        try:
+            final_message = stream.get_final_message()
+            assistant_content: list[dict[str, Any]] = []
+            for block in final_message.content:
+                if block.type == "text":
+                    assistant_content.append({"type": "text", "text": block.text})
+                elif block.type == "tool_use":
+                    assistant_content.append({
+                        "type": "tool_use",
+                        "id": block.id,
+                        "name": block.name,
+                        "input": block.input,
+                    })
+            self._conversation_state.append({"role": "assistant", "content": assistant_content})
+        except Exception:
+            logger.warning("anthropic_stream_final_message_failed")
+
+    def stream_with_tools(
+        self,
+        context: "AssembledContext",
+        tool_calls: list["ToolCall"],
+        tool_results: list["ToolResult"],
+    ) -> Iterator[Any]:
+        """
+        Continue streaming after tool execution.
+        Yields raw SDK events.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Build tool result message
+        result_content: list[dict[str, Any]] = []
+        for tr in tool_results:
+            result_content.append({
+                "type": "tool_result",
+                "tool_use_id": tr.tool_call_id,
+                "content": tr.content,
+            })
+        self._conversation_state.append({"role": "user", "content": result_content})
+
+        # Use pre-built schemas from __init__
+        tool_schemas = self._tool_schemas
+
+        # Use messages.stream() for streaming
+        with self._client.messages.stream(
+            model=self._model,
+            max_tokens=settings.anthropic_max_tokens,
+            tools=tool_schemas,
+            messages=self._conversation_state,
+            system=context.system_prompt or None,
+        ) as stream:
+            for event in stream:
+                yield event
+
+        # After streaming, get the final message for conversation state
+        try:
+            final_message = stream.get_final_message()
+            assistant_content: list[dict[str, Any]] = []
+            for block in final_message.content:
+                if block.type == "text":
+                    assistant_content.append({"type": "text", "text": block.text})
+                elif block.type == "tool_use":
+                    assistant_content.append({
+                        "type": "tool_use",
+                        "id": block.id,
+                        "name": block.name,
+                        "input": block.input,
+                    })
+            self._conversation_state.append({"role": "assistant", "content": assistant_content})
+        except Exception:
+            logger.warning("anthropic_stream_final_message_failed")

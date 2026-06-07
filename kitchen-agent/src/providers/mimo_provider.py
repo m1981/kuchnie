@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any
+from typing import Any, Iterator
 
 import structlog
 from dotenv import load_dotenv
@@ -253,3 +253,145 @@ class MimoProvider:
             self._conversation_state.append(assistant_msg)
 
         return response
+
+    def stream(self, context: "AssembledContext") -> Iterator[Any]:
+        """
+        Stream a single turn via the Mimo API.
+        Yields raw OpenAI-style chunks — normalizer handles text extraction.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        messages = self._build_messages(context)
+
+        # Only send tools if the orchestrator has set tool_schemas on the context.
+        if context.tool_schemas is not None:
+            tool_schemas = self._build_tool_schemas()
+        else:
+            tool_schemas = []
+            logger.debug("mimo_stream_tools_skipped", reason="context.tool_schemas is None")
+
+        self._conversation_state = messages
+
+        logger.info(
+            "mimo_stream_start",
+            model=self._model,
+            messages_count=len(messages),
+        )
+
+        # Use stream=True for streaming
+        stream = self._client.chat.completions.create(
+            model=self._model,
+            messages=messages,
+            tools=tool_schemas if tool_schemas else None,
+            stream=True,
+            temperature=settings.mimo_temperature,
+            max_tokens=settings.mimo_max_tokens,
+        )
+
+        # Accumulate content and tool calls for conversation state
+        accumulated_content = ""
+        accumulated_tool_calls: dict[int, dict] = {}  # index -> tool_call_data
+
+        for chunk in stream:
+            # Extract content from chunk
+            if chunk.choices:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    accumulated_content += delta.content
+                
+                # Accumulate tool calls
+                if delta and delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        if idx not in accumulated_tool_calls:
+                            accumulated_tool_calls[idx] = {
+                                "id": tc.id or "",
+                                "type": "function",
+                                "function": {"name": "", "arguments": ""},
+                            }
+                        if tc.id:
+                            accumulated_tool_calls[idx]["id"] = tc.id
+                        if tc.function:
+                            if tc.function.name:
+                                accumulated_tool_calls[idx]["function"]["name"] += tc.function.name
+                            if tc.function.arguments:
+                                accumulated_tool_calls[idx]["function"]["arguments"] += tc.function.arguments
+            
+            yield chunk
+
+        # Build assistant message for conversation state
+        assistant_msg: dict[str, Any] = {"role": "assistant", "content": accumulated_content or None}
+        if accumulated_tool_calls:
+            assistant_msg["tool_calls"] = [
+                accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls.keys())
+            ]
+        self._conversation_state.append(assistant_msg)
+
+    def stream_with_tools(
+        self,
+        context: "AssembledContext",
+        tool_calls: list["ToolCall"],
+        tool_results: list["ToolResult"],
+    ) -> Iterator[Any]:
+        """
+        Continue streaming after tool execution.
+        Yields raw OpenAI-style chunks.
+        """
+        from src.agent.context_assembler import AssembledContext
+
+        # Append tool results as tool messages
+        for tr in tool_results:
+            self._conversation_state.append({
+                "role": "tool",
+                "tool_call_id": tr.tool_call_id,
+                "content": tr.content,
+            })
+
+        tool_schemas = self._build_tool_schemas()
+
+        # Use stream=True for streaming
+        stream = self._client.chat.completions.create(
+            model=self._model,
+            messages=self._conversation_state,
+            tools=tool_schemas if tool_schemas else None,
+            stream=True,
+            temperature=settings.mimo_temperature,
+            max_tokens=settings.mimo_max_tokens,
+        )
+
+        # Accumulate content and tool calls for conversation state
+        accumulated_content = ""
+        accumulated_tool_calls: dict[int, dict] = {}
+
+        for chunk in stream:
+            if chunk.choices:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    accumulated_content += delta.content
+                
+                if delta and delta.tool_calls:
+                    for tc in delta.tool_calls:
+                        idx = tc.index
+                        if idx not in accumulated_tool_calls:
+                            accumulated_tool_calls[idx] = {
+                                "id": tc.id or "",
+                                "type": "function",
+                                "function": {"name": "", "arguments": ""},
+                            }
+                        if tc.id:
+                            accumulated_tool_calls[idx]["id"] = tc.id
+                        if tc.function:
+                            if tc.function.name:
+                                accumulated_tool_calls[idx]["function"]["name"] += tc.function.name
+                            if tc.function.arguments:
+                                accumulated_tool_calls[idx]["function"]["arguments"] += tc.function.arguments
+            
+            yield chunk
+
+        # Build assistant message for conversation state
+        assistant_msg: dict[str, Any] = {"role": "assistant", "content": accumulated_content or None}
+        if accumulated_tool_calls:
+            assistant_msg["tool_calls"] = [
+                accumulated_tool_calls[i] for i in sorted(accumulated_tool_calls.keys())
+            ]
+        self._conversation_state.append(assistant_msg)
