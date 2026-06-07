@@ -5,14 +5,9 @@
 	 * Renders the scrollable list of chat messages (user + assistant bubbles)
 	 * including tool logs, image previews, and the "Thinking…" loading state.
 	 *
-	 * Refactor — Decision 1: turn_id identity
-	 * -----------------------------------------
-	 * All per-message callbacks now pass ``turn_id`` (the stable UUID stamped
+	 * All per-message callbacks pass ``turn_id`` (the stable UUID stamped
 	 * at write time) instead of the array index.  This means the parent never
 	 * needs to track positions that shift when messages are deleted.
-	 *
-	 * Messages from legacy sessions may not have a turn_id.  Edit and delete
-	 * buttons are disabled for those messages to prevent silent failures.
 	 *
 	 * Fires:
 	 *   onfork(turnIndex: number)      — user clicked the ⎇ Fork button
@@ -102,7 +97,6 @@
 
 <div class="space-y-5">
 	{#each messages as msg, messageIndex (`${msg.role}-${msg.turn_id ?? messageIndex}`)}
-		{@const hasTurnId = !!msg.turn_id}
 		{@const isEditing = editingTurnId !== null && msg.turn_id === editingTurnId}
 
 		<article
@@ -136,15 +130,7 @@
 							</span>
 						{/if}
 
-						{#if !hasTurnId}
-							<!-- Legacy message: no stable identity, show muted indicator -->
-							<span
-								title="Legacy message — upgrade session by starting a new chat to enable editing"
-								class="rounded px-1.5 py-0.5 text-xs opacity-40"
-							>
-								⚠️
-							</span>
-						{:else}
+						{#if msg.turn_id}
 							<MessageActions
 								role={msg.role}
 								turnId={msg.turn_id}

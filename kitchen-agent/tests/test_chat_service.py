@@ -148,6 +148,8 @@ def test_handle_turn_saves_session(
 
     assert result.assistant_message == "response text"
     assert result.tool_calls_made == []
+    assert result.user_turn_id == "test-user-turn-id"
+    assert result.assistant_turn_id == "test-assistant-turn-id"
     assert fake_orchestrator.run_call_count == 1
 
     # Verify session persisted
@@ -160,6 +162,30 @@ def test_handle_turn_saves_session(
     assert ui_messages[1]["role"] == "assistant"
     assert ui_messages[1]["content"] == "response text"
     assert "turn_id" in ui_messages[1]
+
+
+@patch("src.chat_service.log_turn")
+def test_handle_turn_returns_turn_ids(
+    mock_log: MagicMock,
+    fake_orchestrator: FakeOrchestrator,
+    repo: SQLiteSessionRepository,
+) -> None:
+    """handle_turn must return user_turn_id and assistant_turn_id from orchestrator."""
+    service = ChatService(
+        session_repo=repo,
+        turn_orchestrator=fake_orchestrator,
+    )
+
+    result = service.handle_turn(ChatTurnRequest(
+        session_id="test-turn-ids",
+        user_message="Hello",
+    ))
+
+    assert result.user_turn_id == "test-user-turn-id"
+    assert result.assistant_turn_id == "test-assistant-turn-id"
+    # Verify they are non-empty strings (valid UUIDs in production)
+    assert len(result.user_turn_id) > 0
+    assert len(result.assistant_turn_id) > 0
 
 
 @patch("src.chat_service.log_turn")

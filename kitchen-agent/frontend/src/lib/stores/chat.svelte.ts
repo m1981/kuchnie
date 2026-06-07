@@ -343,10 +343,19 @@ function createChatStore() {
 					tools_enabled: toolsEnabled ? undefined : false
 				});
 
+				// Update the optimistic user message with its turn_id from the backend.
+				if (data.user_turn_id) {
+					const lastUserIdx = messages.length - 2; // -2 because assistant was just pushed
+					if (lastUserIdx >= 0 && messages[lastUserIdx].role === 'user' && !messages[lastUserIdx].turn_id) {
+						messages[lastUserIdx] = { ...messages[lastUserIdx], turn_id: data.user_turn_id };
+					}
+				}
+
 				messages.push({
 					role:  'assistant',
 					content: data.text,
-					tools: data.tools_used
+					tools: data.tools_used,
+					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {})
 				});
 
 				chatState = { status: 'success', data: undefined };
@@ -404,7 +413,8 @@ function createChatStore() {
 				messages.push({
 					role: 'assistant',
 					content: data.text,
-					tools: data.tools_used
+					tools: data.tools_used,
+					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {})
 				});
 
 				chatState = { status: 'success', data: undefined };

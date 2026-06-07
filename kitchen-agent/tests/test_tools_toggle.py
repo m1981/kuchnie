@@ -256,7 +256,7 @@ class TestChatEndpointToolsEnabled:
     def _make_capture_svc(self) -> tuple[MagicMock, callable]:
         """Returns (mock_svc, override_factory) for dependency injection."""
         mock_svc = MagicMock()
-        mock_svc.handle_turn.return_value = ChatTurnResponse(session_id="test-session", assistant_message="ok", ui_history=[], tool_calls_made=[])
+        mock_svc.handle_turn.return_value = ChatTurnResponse(session_id="test-session", assistant_message="ok", ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=[])
 
         def override():
             return mock_svc

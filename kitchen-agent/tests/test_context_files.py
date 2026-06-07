@@ -130,7 +130,7 @@ class TestContextFilePathResolution:
         from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 
         svc = MagicMock(spec=ChatService)
-        svc.handle_turn.side_effect = lambda req: (captured.append(req.context_files), ChatTurnResponse(session_id=req.session_id, assistant_message="ok", ui_history=[], tool_calls_made=[]))[1]
+        svc.handle_turn.side_effect = lambda req: (captured.append(req.context_files), ChatTurnResponse(session_id=req.session_id, assistant_message="ok", ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=[]))[1]
 
         monkeypatch.setattr(config.settings, "data_dir", data_dir)
         monkeypatch.setattr(config.settings, "data_dir", data_dir)

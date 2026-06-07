@@ -94,7 +94,12 @@ async def chat(
         logger.exception("agent_error", session_id=request.session_id[:8], error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    return ChatResponse(text=result.assistant_message, tools_used=result.tool_calls_made)
+    return ChatResponse(
+        text=result.assistant_message,
+        tools_used=result.tool_calls_made,
+        user_turn_id=result.user_turn_id,
+        assistant_turn_id=result.assistant_turn_id,
+    )
 
 
 # ── Token estimation ───────────────────────────────────────────────

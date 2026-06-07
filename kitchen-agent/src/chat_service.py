@@ -90,6 +90,8 @@ class ChatTurnResponse:
     session_id: str
     assistant_message: str
     ui_history: list[dict]
+    user_turn_id: str = ""
+    assistant_turn_id: str = ""
     tool_calls_made: list[str] = field(default_factory=list)
     tokens_used: dict = field(default_factory=dict)
 
@@ -227,6 +229,8 @@ class ChatService:
             session_id=request.session_id,
             assistant_message=turn_output.assistant_message,
             ui_history=new_ui_history,
+            user_turn_id=turn_output.user_turn_id,
+            assistant_turn_id=turn_output.assistant_turn_id,
             tool_calls_made=[t.name for t in turn_output.tool_calls_made],
             tokens_used=turn_output.tokens_used,
         )

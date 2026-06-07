@@ -67,9 +67,10 @@ export type Message = {
 	tools?: ToolLog[];
 	images?: string[]; // preview data-URLs stored locally; not sent to backend
 	/**
-	 * Stable UUID stamped by the backend at write time (Decision 1 refactor).
+	 * Stable UUID stamped by the backend at write time.
 	 * Used to identify messages for editing/deleting without relying on array
-	 * position.  May be undefined for messages from legacy sessions.
+	 * position.  Always present for messages from the chat API; may be
+	 * undefined only for very old sessions created before this feature.
 	 */
 	turn_id?: string;
 	/**
@@ -179,6 +180,8 @@ export type ChatRequest = {
 export type ChatResponse = {
 	text: string;
 	tools_used: ToolLog[];
+	user_turn_id?: string;
+	assistant_turn_id?: string;
 };
 
 // ---------------------------------------------------------------------------

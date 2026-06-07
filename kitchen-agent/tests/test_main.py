@@ -298,7 +298,7 @@ def test_repo_map_error_branch(client: TestClient, monkeypatch) -> None:
 
 def _chat_override(text: str = "Great answer", tools: list | None = None):
     svc = MagicMock(spec=ChatService)
-    svc.handle_turn.return_value = ChatTurnResponse(session_id="s1", assistant_message=text, ui_history=[], tool_calls_made=tools or [])
+    svc.handle_turn.return_value = ChatTurnResponse(session_id="s1", assistant_message=text, ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=tools or [])
     return lambda: svc
 
 
@@ -315,6 +315,8 @@ def test_chat_basic_success(tmp_path: Path, monkeypatch) -> None:
         body = resp.json()
         assert body["text"] == "Hello back"
         assert body["tools_used"] == []
+        assert body["user_turn_id"] == "test-user-id"
+        assert body["assistant_turn_id"] == "test-assistant-id"
     finally:
         app.dependency_overrides.pop(get_chat_service, None)
 
@@ -338,7 +340,7 @@ def test_chat_with_images_and_context(tmp_path: Path, monkeypatch) -> None:
     class CapturingSvc:
         def handle_turn(self, request):
             captured.update({"images": request.images, "context_files": request.context_files})
-            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], tool_calls_made=[])
+            return ChatTurnResponse(session_id=request.session_id, assistant_message="done", ui_history=[], user_turn_id="test-user-id", assistant_turn_id="test-assistant-id", tool_calls_made=[])
 
     app.dependency_overrides[get_chat_service] = lambda: CapturingSvc()
     try:
