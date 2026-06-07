@@ -27,7 +27,7 @@ import pytest
 from google.genai import types
 
 from src.serializers import dehydrate_history, hydrate_history
-from tests.test_chat_service import FakeOrchestrator
+from tests.helpers import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------

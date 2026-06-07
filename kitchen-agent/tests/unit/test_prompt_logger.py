@@ -45,7 +45,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from src.prompt_logger import log_prompt, log_turn, MAX_DIFF_LINES
-from tests.test_chat_service import FakeOrchestrator
+from tests.helpers import FakeOrchestrator
 
 
 # ---------------------------------------------------------------------------

@@ -39,7 +39,7 @@ from src.chat_service import ChatService, ChatTurnRequest, ChatTurnResponse
 from src.repositories import SQLiteConnection, SQLiteSessionRepository
 from src.main import app
 from src.dependencies import get_chat_service
-from tests.test_chat_service import FakeOrchestrator
+from tests.helpers import FakeOrchestrator
 
 
 # ===========================================================================

@@ -19,28 +19,10 @@ three questions in under 5 seconds:
 2. **What component does it test?** → mirrors `src/` structure
 3. **Is this boundary tested?** → contract/ folder has the answer
 
-### Current State (Problem)
+### Current State (Done ✅)
 
-```
-tests/                              # 41 files dumped at root
-├── test_anthropic_provider.py      # unit? contract? integration? unclear
-├── test_chat_service.py            # unit with mocks
-├── test_chat_provider_routing.py   # integration
-├── test_providers_base.py          # protocol contract
-├── test_stream_final_message.py    # ← actually in unit/agent/
-├── ...39 more files...
-└── unit/                           # 12 more files, separate tree
-    ├── agent/
-    ├── providers/
-    └── ...
-```
-
-**Problems:**
-
-- Can't tell unit from contract from integration at a glance
-- `unit/` duplicates the root-level structure
-- No `contract/` folder — the most important tests are invisible
-- LLM agent has to read every file to find what's tested
+All test files are now organized into the target structure.
+Zero root-level `test_*.py` files remain.
 
 ### Target State (Solution)
 
@@ -95,29 +77,30 @@ tests/
     └── truncate.spec.ts
 ```
 
-### Mapping: Current Files → Target Location
+### Mapping: Current Files → Actual Locations
 
-| Current file                                      | Target                     | Why                                |
-| ------------------------------------------------- | -------------------------- | ---------------------------------- |
-| `tests/test_anthropic_provider.py`                | `tests/unit/providers/`    | Unit test with mocks               |
-| `tests/test_gemini_provider.py`                   | `tests/unit/providers/`    | Unit test with mocks               |
-| `tests/test_mimo_provider.py`                     | `tests/unit/providers/`    | Unit test with mocks               |
-| `tests/test_chat_service.py`                      | `tests/unit/services/`     | Unit test with mocked orchestrator |
-| `tests/test_providers_base.py`                    | `tests/contract/`          | Tests Protocol compliance          |
-| `tests/test_serializers.py`                       | `tests/unit/`              | Unit test with mock data           |
-| `tests/test_chat_provider_routing.py`             | `tests/integration/`       | Tests provider routing flow        |
-| `tests/test_archive_delete.py`                    | `tests/integration/`       | Tests full session lifecycle       |
-| `tests/test_context_files.py`                     | `tests/integration/`       | Tests context file injection       |
-| `tests/test_main.py`                              | `tests/integration/`       | Tests FastAPI app with TestClient  |
-| `tests/test_repositories.py`                      | `tests/unit/repositories/` | Unit test with real SQLite         |
-| `tests/test_exporter.py`                          | `tests/unit/`              | Pure function tests                |
-| `tests/test_file_ops.py`                          | `tests/unit/tools/`        | Pure function tests                |
-| `tests/test_config.py`                            | `tests/unit/`              | Config parsing tests               |
-| `tests/unit/test_tool_call_canonical.py`          | `tests/contract/`          | Tests type identity contract       |
-| `tests/unit/test_llm_provider_protocol.py`        | `tests/contract/`          | Tests Protocol contract            |
-| `tests/unit/agent/test_stream_final_message.py`   | `tests/contract/`          | Tests streaming contract           |
-| `tests/unit/providers/test_normalizer.py`         | `tests/unit/providers/`    | Unit test with mock inputs         |
-| `tests/unit/providers/test_provider_streaming.py` | `tests/unit/providers/`    | Unit test with mock SDK            |
+| File                            | Location                   | Why                                               |
+| ------------------------------- | -------------------------- | ------------------------------------------------- |
+| `test_anthropic_provider.py`    | `tests/unit/providers/`    | Unit test with mocks                              |
+| `test_gemini_provider.py`       | `tests/unit/providers/`    | Unit test with mocks                              |
+| `test_mimo_provider.py`         | `tests/unit/providers/`    | Unit test with mocks                              |
+| `test_chat_service.py`          | `tests/unit/services/`     | Unit test with mocked orchestrator                |
+| `test_providers_base.py`        | `tests/contract/`          | → renamed `test_protocol_compliance.py`           |
+| `test_serializers.py`           | `tests/unit/`              | Unit test with mock data                          |
+| `test_chat_provider_routing.py` | `tests/integration/`       | Tests provider routing flow                       |
+| `test_archive_delete.py`        | `tests/integration/`       | Tests full session lifecycle                      |
+| `test_context_files.py`         | `tests/integration/`       | Tests context file injection                      |
+| `test_main.py`                  | `tests/integration/`       | Tests FastAPI app with TestClient                 |
+| `test_repositories.py`          | `tests/unit/repositories/` | Unit test with real SQLite                        |
+| `test_exporter.py`              | `tests/unit/services/`     | Export service tests                              |
+| `test_file_ops.py`              | `tests/unit/tools/`        | Pure function tests                               |
+| `test_config.py`                | `tests/unit/`              | Config parsing tests                              |
+| `test_tool_call_canonical.py`   | `tests/unit/`              | Type identity contract                            |
+| `test_llm_provider_protocol.py` | `tests/unit/`              | Protocol contract                                 |
+| `test_stream_final_message.py`  | `tests/contract/`          | → renamed `test_orchestrator_normalizer.py`       |
+| `test_normalizer.py`            | `tests/unit/providers/`    | Unit test with mock inputs                        |
+| `test_provider_streaming.py`    | `tests/unit/providers/`    | Unit test with mock SDK                           |
+| (shared helper)                 | `tests/helpers.py`         | FakeOrchestrator extracted from test_chat_service |
 
 ---
 
@@ -220,12 +203,12 @@ in `tests/contract/`.
 | B3  | ChatService ↔ Orchestrator      | ❌     | —                                          | Event propagation contract   |
 | B4  | Orchestrator ↔ ContextAssembler | ⚠️     | `unit/agent/test_context_assembler.py`     | Field completeness           |
 | B5  | Orchestrator ↔ Provider         | ❌     | —                                          | **complete/stream contract** |
-| B6  | Orchestrator ↔ Normalizer       | ✅     | `contract/test_orchestrator_normalizer.py` | —                            |
+| B6  | Orchestrator ↔ Normalizer       | ✅     | `contract/test_orchestrator_normalizer.py` | — (7 streaming tests)        |
 | B7  | Orchestrator ↔ ToolExecutor     | ⚠️     | `unit/agent/test_tool_executor.py`         | Real registry handlers       |
 | B8  | Orchestrator ↔ History format   | ❌     | —                                          | Serialize roundtrip          |
 | B9  | Provider ↔ Normalizer           | ✅     | `contract/test_provider_normalizer.py`     | —                            |
 | B10 | ToolRegistry ↔ ToolExecutor     | ⚠️     | `unit/tools/test_registry.py`              | Handler dispatch             |
-| B11 | ContextAssembler ↔ Protocols    | ⚠️     | `unit/agent/test_context_assembler.py`     | Real impl compliance         |
+| B11 | ContextAssembler ↔ Protocols    | ✅     | `contract/test_protocol_compliance.py`     | —                            |
 | B12 | Serializer ↔ Repository         | ❌     | —                                          | SQLite roundtrip             |
 | B13 | Normalizer ↔ Consumers          | ⚠️     | `unit/providers/test_normalizer.py`        | Shape contract               |
 | B14 | Schema ↔ API                    | ✅     | `integration/test_main.py`                 | —                            |
@@ -426,17 +409,17 @@ class TestSerializerRepoContract:
 
 | Priority | Boundary | Test File                                  | Tests  | Status     |
 | -------- | -------- | ------------------------------------------ | ------ | ---------- |
-| P1       | B9       | `contract/test_provider_normalizer.py`     | 35     | ✅ Done    |
-| P1       | B5       | `contract/test_orchestrator_provider.py`   | 12     | ❌ Write   |
+| P1       | B9       | `contract/test_provider_normalizer.py`     | 34     | ✅ Done    |
+| P1       | B5       | `contract/test_orchestrator_provider.py`   | 13     | ✅ Done    |
 | P1       | B6       | `contract/test_orchestrator_normalizer.py` | 7      | ✅ Done    |
-| P2       | B3       | `contract/test_chat_orchestrator.py`       | 4      | ❌ Write   |
-| P2       | B7       | `contract/test_orchestrator_tools.py`      | 3      | ❌ Write   |
-| P2       | B8       | `contract/test_orchestrator_history.py`    | 3      | ❌ Write   |
-| P2       | B4       | `contract/test_orchestrator_context.py`    | 3      | ❌ Write   |
-| P3       | B11      | `contract/test_protocol_compliance.py`     | 4      | ⚠️ Partial |
-| P3       | B1       | `integration/test_chat_flow.py`            | 3      | ⚠️ Partial |
-| P3       | B12      | `contract/test_serializer_repo.py`         | 1      | ❌ Write   |
-|          |          |                                            | **47** |            |
+| P2       | B3       | `contract/test_chat_orchestrator.py`       | 4      | ✅ Done    |
+| P2       | B7       | `contract/test_orchestrator_tools.py`      | 8      | ✅ Done    |
+| P2       | B8       | `contract/test_orchestrator_history.py`    | 4      | ✅ Done    |
+| P2       | B4       | `contract/test_orchestrator_context.py`    | 10     | ✅ Done    |
+| P3       | B11      | `contract/test_protocol_compliance.py`     | 10     | ✅ Done    |
+| P3       | B1       | `integration/test_main.py`                 | —      | ⚠️ Partial |
+| P3       | B12      | `contract/test_serializer_repo.py`         | —      | ❌ Write   |
+|          |          |                                            | **90** |            |
 
 ---
 
@@ -458,45 +441,51 @@ Moving files is risky — it breaks git history and CI. Do it incrementally:
 
 - [x] `tests/contract/test_orchestrator_normalizer.py` — B6 — 7 tests
 - [x] `tests/contract/test_provider_normalizer.py` — B9 — 35 tests
-- [ ] `tests/contract/test_orchestrator_provider.py` — B5 — 12 tests
+- [x] `tests/contract/test_orchestrator_provider.py` — B5 — 13 tests
+- [x] `tests/contract/test_protocol_compliance.py` — B11 — 10 tests
 
-### Phase 2: Move unit tests
+### Phase 2: Move unit tests — ✅ DONE
 
-- [ ] Move `tests/test_anthropic_provider.py` → `tests/unit/providers/`
-- [ ] Move `tests/test_gemini_provider.py` → `tests/unit/providers/`
-- [ ] Move `tests/test_mimo_provider.py` → `tests/unit/providers/`
-- [ ] Move `tests/test_chat_service.py` → `tests/unit/services/`
-- [ ] Move `tests/test_exporter.py` → `tests/unit/`
-- [ ] Move `tests/test_file_ops.py` → `tests/unit/tools/`
-- [ ] Move `tests/test_repositories.py` → `tests/unit/repositories/`
-- [ ] Move remaining root-level unit tests → `tests/unit/`
+- [x] Move `tests/test_anthropic_provider.py` → `tests/unit/providers/`
+- [x] Move `tests/test_gemini_provider.py` → `tests/unit/providers/`
+- [x] Move `tests/test_mimo_provider.py` → `tests/unit/providers/`
+- [x] Move `tests/test_chat_service.py` → `tests/unit/services/`
+- [x] Move `tests/test_exporter.py` → `tests/unit/services/`
+- [x] Move `tests/test_file_ops.py` → `tests/unit/tools/`
+- [x] Move `tests/test_repositories.py` → `tests/unit/repositories/`
+- [x] Move remaining root-level unit tests → `tests/unit/`
 
-### Phase 3: Move integration tests
+### Phase 3: Move integration tests — ✅ DONE
 
-- [ ] Move `tests/test_chat_provider_routing.py` → `tests/integration/`
-- [ ] Move `tests/test_archive_delete.py` → `tests/integration/`
-- [ ] Move `tests/test_context_files.py` → `tests/integration/`
-- [ ] Move `tests/test_main.py` → `tests/integration/`
-- [ ] Move remaining integration tests → `tests/integration/`
+- [x] Move `tests/test_chat_provider_routing.py` → `tests/integration/`
+- [x] Move `tests/test_archive_delete.py` → `tests/integration/`
+- [x] Move `tests/test_context_files.py` → `tests/integration/`
+- [x] Move `tests/test_main.py` → `tests/integration/`
+- [x] Move remaining integration tests → `tests/integration/`
 
-### Phase 4: Clean up
+### Phase 4: Clean up — ✅ DONE
 
-- [ ] Remove duplicate tests
-- [ ] Update CI paths
-- [ ] Update this document with final file locations
+- [x] Extract shared `FakeOrchestrator` to `tests/helpers.py`
+- [x] Remove duplicate tests (none found)
+- [x] Update this document with final file locations
+- [ ] Update CI paths (if applicable)
 
 ---
 
 ## Progress Log
 
-| Date       | Boundary     | Status | Notes                                                                |
-| ---------- | ------------ | ------ | -------------------------------------------------------------------- |
-| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix             |
-| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness              |
-| 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types    |
-| 2026-06-07 | B5 (full)    | ✅     | `contract/test_orchestrator_provider.py` — 12 tests, all 3 providers |
-| 2026-06-07 | B3           | ✅     | `contract/test_chat_orchestrator.py` — 4 tests                       |
-| 2026-06-07 | B4           | ✅     | `contract/test_orchestrator_context.py` — 10 tests                   |
-| 2026-06-07 | B7           | ✅     | `contract/test_orchestrator_tools.py` — 8 tests                      |
-| 2026-06-07 | B8           | ✅     | `contract/test_orchestrator_history.py` — 4 tests                    |
-|            |              |        |                                                                      |
+| Date       | Boundary     | Status | Notes                                                                              |
+| ---------- | ------------ | ------ | ---------------------------------------------------------------------------------- |
+| 2026-06-07 | B6           | ✅     | `test_stream_final_message.py` — Anthropic streaming fix                           |
+| 2026-06-07 | B5 (partial) | ✅     | `test_llm_provider_protocol.py` — Protocol completeness                            |
+| 2026-06-07 | B9           | ✅     | `contract/test_provider_normalizer.py` — 35 tests, real SDK types                  |
+| 2026-06-07 | B5 (full)    | ✅     | `contract/test_orchestrator_provider.py` — 12 tests, all 3 providers               |
+| 2026-06-07 | B3           | ✅     | `contract/test_chat_orchestrator.py` — 4 tests                                     |
+| 2026-06-07 | B4           | ✅     | `contract/test_orchestrator_context.py` — 10 tests                                 |
+| 2026-06-07 | B7           | ✅     | `contract/test_orchestrator_tools.py` — 8 tests                                    |
+| 2026-06-07 | B8           | ✅     | `contract/test_orchestrator_history.py` — 4 tests                                  |
+| 2026-06-08 | Migration    | ✅     | All 38 root-level test\_\*.py files moved to unit/integration/contract/            |
+| 2026-06-08 | B6           | ✅     | `test_stream_final_message.py` → `contract/test_orchestrator_normalizer.py`        |
+| 2026-06-08 | B11          | ✅     | `test_providers_base.py` → `contract/test_protocol_compliance.py` — 10 tests       |
+| 2026-06-08 | Cleanup      | ✅     | Extracted `FakeOrchestrator` to `tests/helpers.py` (was cross-imported by 6 files) |
+|            |              |        |                                                                                    |
