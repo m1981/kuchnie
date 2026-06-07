@@ -50,8 +50,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+import structlog
 from src.agent.context_assembler import AssembledContext, ContextAssembler
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
+from src.logger import log_timing
 from src.providers.base import LLMProvider
 from src.providers.normalizer import NormalizedResponse, ResponseNormalizer
 
@@ -158,6 +160,7 @@ class TurnOrchestrator:
         self._provider_name = provider_name
         self._max_tool_iterations = max_tool_iterations
         self._tool_registry = tool_registry
+        self._log = structlog.get_logger(__name__)
 
     def run(
         self,
@@ -178,7 +181,7 @@ class TurnOrchestrator:
         Raises:
             MaxToolIterationsError: if the tool loop exceeds the cap.
         """
-        # Resolve provider for this turn — per-request override or default.
+        # ── 1. Resolve provider for this turn ───────────────────────────
         if turn_input.provider:
             from src.providers.base import get_provider
             provider = get_provider(
@@ -190,14 +193,23 @@ class TurnOrchestrator:
             provider = self._provider
             provider_name = self._provider_name
 
-        # 1. Assemble context
-        context = self._ctx.assemble(
-            session=session,
-            mode=turn_input.mode,
-            user_message=turn_input.user_message,
-            note_ids=turn_input.note_ids or None,
-            file_ids=turn_input.file_ids or None,
+        actual_model = getattr(provider, "_model", "unknown")
+        self._log.info(
+            "orchestrator_provider_resolved",
+            provider=provider_name,
+            model=actual_model,
+            override_used=bool(turn_input.provider),
         )
+
+        # ── 2. Assemble context ─────────────────────────────────────────
+        with log_timing(self._log, "orchestrator_context_assembled"):
+            context = self._ctx.assemble(
+                session=session,
+                mode=turn_input.mode,
+                user_message=turn_input.user_message,
+                note_ids=turn_input.note_ids or None,
+                file_ids=turn_input.file_ids or None,
+            )
 
         # Override system prompt if provided in TurnInput
         if turn_input.system_prompt is not None:
@@ -209,19 +221,29 @@ class TurnOrchestrator:
         context.context_files = turn_input.context_files or []
 
         # Inject tool schemas from registry
-        # Schemas are provider-specific format (dicts).
-        # ContextAssembler does not know about providers,
-        # so TurnOrchestrator bridges them here.
         if self._tool_registry is not None and turn_input.use_tools:
             context.tool_schemas = self._tool_registry.schemas_for_provider(
                 provider=provider_name,
             )
 
-        # 2. Call LLM
-        raw_response = provider.complete(context)
-        normalized = self._normalizer.normalize(raw_response, provider_name)
+        self._log.info(
+            "orchestrator_llm_call_start",
+            provider=provider_name,
+            model=actual_model,
+            has_system_prompt=bool(context.system_prompt),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
+            tool_schemas_count=len(context.tool_schemas) if context.tool_schemas else 0,
+            use_tools=turn_input.use_tools,
+        )
 
-        # 3. Agentic tool loop
+        # ── 3. Call LLM ────────────────────────────────────────────────
+        with log_timing(self._log, "orchestrator_llm_call_complete") as timing:
+            raw_response = provider.complete(context)
+            normalized = self._normalizer.normalize(raw_response, provider_name)
+        timing["has_tool_calls"] = normalized.has_tool_calls
+
+        # ── 4. Agentic tool loop ───────────────────────────────────────
         tool_calls_made: list[str] = []
         tool_details: list[ToolCallDetail] = []
         iterations = 0
@@ -231,8 +253,17 @@ class TurnOrchestrator:
             if iterations > self._max_tool_iterations:
                 raise MaxToolIterationsError(self._max_tool_iterations)
 
+            self._log.info(
+                "orchestrator_tool_iteration",
+                iteration=iterations,
+                tool_calls=[tc.name for tc in normalized.tool_calls],
+            )
+
             # Execute tools
-            tool_results = self._tools.execute_all(normalized.tool_calls)
+            with log_timing(self._log, "orchestrator_tools_executed") as timing:
+                tool_results = self._tools.execute_all(normalized.tool_calls)
+            timing["tools_count"] = len(tool_results)
+
             tool_calls_made.extend(
                 tc.name for tc in normalized.tool_calls
             )
@@ -248,6 +279,7 @@ class TurnOrchestrator:
                 ))
 
             # Feed results back to LLM
+            self._log.info("orchestrator_feeding_tool_results_to_llm")
             raw_response = provider.complete_with_tools(
                 context, normalized.tool_calls, tool_results,
             )

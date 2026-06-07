@@ -33,10 +33,11 @@ from src.schemas import (
     TokenEstimateRequest,
     TokenEstimateResponse,
 )
+from src.logger import bind_request_context, clear_request_context, log_timing
 from src.token_counter import build_pending_context_estimate, count_session_tokens
 from src.tools.file_ops import read_file
 
-logger = structlog.get_logger(__name__)
+log = structlog.get_logger(__name__)
 
 router = APIRouter()
 
@@ -58,52 +59,79 @@ async def chat(
       1. ``request.system_prompt`` — explicit raw override (legacy / power-user)
       2. ``request.mode_id``       — resolved via PromptManager (new default)
     """
-    # Resolve the system instruction with the F05 priority rules
-    if request.system_prompt is not None:
-        system_instruction: str | None = request.system_prompt
-    else:
-        resolved = pm.get_system_instruction(request.mode_id)
-        system_instruction = resolved if resolved else None
+    # Bind request context for all subsequent log calls
+    bind_request_context(
+        session_id=request.session_id[:8],
+        mode=request.mode_id,
+        req_provider=request.provider,
+        req_model=request.model,
+    )
 
-    # Resolve effective use_tools flag
-    mode_obj = pm.get_mode(request.mode_id)
-    mode_tools_default = mode_obj.tools_enabled_default if mode_obj else True
-    use_tools: bool = request.tools_enabled and mode_tools_default
-
-    # Resolve context file paths
-    resolved_context_files = _resolve_context_file_paths(request.context_files)
-
-    loop = asyncio.get_event_loop()
-
-    chat_request = ChatTurnRequest(
-        session_id=request.session_id,
-        user_message=request.message,
-        system_prompt=system_instruction,
-        images=[img.model_dump() for img in request.images] if request.images else [],
-        context_files=resolved_context_files,
-        mode=request.mode_id or "default",
-        use_tools=use_tools,
-        provider=request.provider,
-        model=request.model,
+    log.info(
+        "chat_request_received",
+        message_preview=request.message[:80],
+        has_images=bool(request.images),
+        has_context_files=bool(request.context_files),
     )
 
     try:
-        result = await loop.run_in_executor(
-            None,
-            partial(service.handle_turn, chat_request),
+        # Resolve the system instruction with the F05 priority rules
+        if request.system_prompt is not None:
+            system_instruction: str | None = request.system_prompt
+        else:
+            resolved = pm.get_system_instruction(request.mode_id)
+            system_instruction = resolved if resolved else None
+
+        # Resolve effective use_tools flag
+        mode_obj = pm.get_mode(request.mode_id)
+        mode_tools_default = mode_obj.tools_enabled_default if mode_obj else True
+        use_tools: bool = request.tools_enabled and mode_tools_default
+
+        # Resolve context file paths
+        resolved_context_files = _resolve_context_file_paths(request.context_files)
+
+        loop = asyncio.get_event_loop()
+
+        chat_request = ChatTurnRequest(
+            session_id=request.session_id,
+            user_message=request.message,
+            system_prompt=system_instruction,
+            images=[img.model_dump() for img in request.images] if request.images else [],
+            context_files=resolved_context_files,
+            mode=request.mode_id or "default",
+            use_tools=use_tools,
+            provider=request.provider,
+            model=request.model,
+        )
+
+        with log_timing(log, "chat_request_complete") as timing:
+            result = await loop.run_in_executor(
+                None,
+                partial(service.handle_turn, chat_request),
+            )
+
+        log.info(
+            "chat_response_sent",
+            provider=result.provider_name,
+            model=result.model_name,
+            response_length=len(result.assistant_message),
+            tool_calls=len(result.tool_calls_made),
+            tools_used=result.tool_calls_made[:5],  # first 5 tool names
+        )
+
+        return ChatResponse(
+            text=result.assistant_message,
+            tools_used=result.tool_calls_made,
+            user_turn_id=result.user_turn_id,
+            assistant_turn_id=result.assistant_turn_id,
+            provider=result.provider_name,
+            model=result.model_name,
         )
     except Exception as exc:
-        logger.exception("agent_error", session_id=request.session_id[:8], error=str(exc))
+        log.exception("chat_request_failed", error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-    return ChatResponse(
-        text=result.assistant_message,
-        tools_used=result.tool_calls_made,
-        user_turn_id=result.user_turn_id,
-        assistant_turn_id=result.assistant_turn_id,
-        provider=result.provider_name,
-        model=result.model_name,
-    )
+    finally:
+        clear_request_context()
 
 
 # ── Token estimation ───────────────────────────────────────────────
@@ -195,7 +223,7 @@ def _resolve_context_file_paths(
             try:
                 candidate.resolve().relative_to(data_dir_resolved)
             except ValueError:
-                logger.warning(
+                log.warning(
                     "context_file_path_traversal_dropped",
                     path=fp,
                     data_dir=str(data_dir_resolved),
@@ -205,7 +233,7 @@ def _resolve_context_file_paths(
         else:
             prefixed = (settings.data_dir / fp).resolve()
             if not str(prefixed).startswith(str(data_dir_resolved)):
-                logger.warning(
+                log.warning(
                     "context_file_path_traversal_dropped",
                     path=fp,
                     resolved=str(prefixed),

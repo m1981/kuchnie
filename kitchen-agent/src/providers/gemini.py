@@ -29,13 +29,14 @@ from google import genai
 from google.genai import types
 
 from src.config import settings
+from src.logger import log_timing
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
 from src.providers.normalizer import ResponseNormalizer
 from src.tools.file_ops import read_file
 
 load_dotenv()
 
-logger = structlog.get_logger(__name__)
+log = structlog.get_logger(__name__)
 
 
 def _build_default_registry():
@@ -75,7 +76,7 @@ def _coerce_history_for_gemini(history: list) -> list:
 
         # Skip non-dict items
         if not isinstance(item, dict):
-            logger.warning(
+            log.warning(
                 "coerce_history_for_gemini: skipping unknown item type %s",
                 type(item).__name__,
             )
@@ -173,7 +174,7 @@ def _coerce_history_for_gemini(history: list) -> list:
             continue
 
         # Fallback: stringify
-        logger.warning(
+        log.warning(
             "coerce_history_for_gemini: unexpected content type %s",
             type(content).__name__,
         )
@@ -230,7 +231,7 @@ class GeminiProvider:
                 if "content" in result:
                     snippets.append(f"=== {fp} ===\n{result['content']}")
                 else:
-                    logger.warning("context_file_unreadable", path=fp, error=result.get("error"))
+                    log.warning("context_file_unreadable", path=fp, error=result.get("error"))
             if snippets:
                 block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
                 user_parts.append(types.Part(text=block))
@@ -249,7 +250,7 @@ class GeminiProvider:
                         types.Part.from_bytes(data=raw_bytes, mime_type=img["mime_type"])
                     )
                 except Exception as exc:
-                    logger.warning("image_decode_failed", error=str(exc))
+                    log.warning("image_decode_failed", error=str(exc))
 
         # Convert messages to Gemini Content objects
         self._conversation_state = _coerce_history_for_gemini(messages)
@@ -270,11 +271,27 @@ class GeminiProvider:
         config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
-        response = self._client.models.generate_content(
+        log.info(
+            "gemini_api_call",
             model=self._model,
-            contents=self._conversation_state,
-            config=types.GenerateContentConfig(**config_kwargs),
+            temperature=settings.gemini_temperature,
+            messages_count=len(self._conversation_state),
+            has_system_prompt=bool(context.system_prompt),
+            tool_declarations_count=len(declarations),
         )
+
+        with log_timing(log, "gemini_api_response") as timing:
+            response = self._client.models.generate_content(
+                model=self._model,
+                contents=self._conversation_state,
+                config=types.GenerateContentConfig(**config_kwargs),
+            )
+
+        # Log response metadata
+        if response.usage_metadata:
+            timing["prompt_tokens"] = response.usage_metadata.prompt_token_count
+            timing["response_tokens"] = response.usage_metadata.candidates_token_count
+            timing["total_tokens"] = response.usage_metadata.total_token_count
 
         # Store response in conversation state for tool loop continuity
         if response.candidates and response.candidates[0].content:

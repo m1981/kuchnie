@@ -49,6 +49,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
+from src.logger import bind_request_context, log_timing
 from src.prompt_logger import log_turn
 from src.repositories import SessionRepository
 from src.serializers import dehydrate_history, hydrate_history
@@ -56,7 +57,7 @@ from src.serializers import dehydrate_history, hydrate_history
 if TYPE_CHECKING:
     from src.agent.turn_orchestrator import TurnOrchestrator
 
-logger = structlog.get_logger(__name__)
+log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -162,16 +163,32 @@ class ChatService:
         Execute one complete chat turn.
         Single code path — always through TurnOrchestrator.
         """
-        # ── 1. Load ───────────────────────────────────────────────────
-        api_history_json, ui_history_json, saved_system_prompt = (
-            self._sessions.load_session(request.session_id)
+        self._log.info(
+            "turn_started",
+            user_message_preview=request.user_message[:60],
+            mode=request.mode,
+            use_tools=request.use_tools,
+            req_provider=request.provider,
+            req_model=request.model,
         )
+
+        # ── 1. Load ───────────────────────────────────────────────────
+        with log_timing(self._log, "turn_load_session"):
+            api_history_json, ui_history_json, saved_system_prompt = (
+                self._sessions.load_session(request.session_id)
+            )
 
         api_history = hydrate_history(api_history_json)
         ui_history: list[dict] = json.loads(ui_history_json) if ui_history_json else []
 
         # System prompt: explicit request value wins, then saved, then None
         system_prompt = request.system_prompt or saved_system_prompt
+
+        self._log.info(
+            "turn_session_loaded",
+            history_turns=len(api_history),
+            has_system_prompt=bool(system_prompt),
+        )
 
         # ── 2. Build session dict for orchestrator ────────────────────
         session = {
@@ -197,11 +214,20 @@ class ChatService:
         )
 
         # ── 4. Execute turn ───────────────────────────────────────────
-        self._log.info("running_turn", session_id=request.session_id[:8])
-        turn_output = self._orchestrator.run(
-            session=session,
-            turn_input=turn_input,
+        bind_request_context(
+            provider=request.provider or "(default)",
+            model=request.model or "(default)",
         )
+
+        with log_timing(self._log, "turn_orchestrator_complete") as timing:
+            turn_output = self._orchestrator.run(
+                session=session,
+                turn_input=turn_input,
+            )
+        timing["provider"] = turn_output.provider_name
+        timing["model"] = turn_output.model_name
+        timing["response_length"] = len(turn_output.assistant_message)
+        timing["tool_calls"] = len(turn_output.tool_calls_made)
 
         # ── 5. Build updated UI history ───────────────────────────────
         new_ui_history = self._build_ui_history(

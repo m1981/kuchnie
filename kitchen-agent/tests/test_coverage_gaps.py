@@ -468,3 +468,50 @@ class TestEditMessageApiSync:
         svc = MessageEditService(repo)
         with pytest.raises(EditError, match="No message found"):
             svc.edit_message(session_id, turn_id="wrong-id", new_content="anything")
+
+
+# ===========================================================================
+# Logger configuration
+# ===========================================================================
+
+class TestLoggerConfiguration:
+    def test_setup_logging_local_dev_does_not_raise(self):
+        """setup_logging(is_local_dev=True) must not raise."""
+        from src.logger import setup_logging
+        setup_logging(is_local_dev=True)
+
+    def test_setup_logging_production_does_not_raise(self):
+        """setup_logging(is_local_dev=False) must not raise."""
+        from src.logger import setup_logging
+        setup_logging(is_local_dev=False)
+
+    def test_bind_and_clear_request_context(self):
+        """bind_request_context and clear_request_context must not raise."""
+        from src.logger import bind_request_context, clear_request_context
+        bind_request_context(session_id="test", provider="gemini")
+        clear_request_context()
+
+    def test_log_timing_context_manager(self):
+        """log_timing context manager must measure duration."""
+        import structlog
+        from src.logger import log_timing
+
+        log = structlog.get_logger("test")
+        with log_timing(log, "test_event", extra_key="value") as timing:
+            pass  # instant operation
+
+        assert "duration_ms" in timing
+        assert timing["extra_key"] == "value"
+        assert timing["duration_ms"] >= 0
+
+    def test_log_timing_records_actual_duration(self):
+        """log_timing must record non-zero duration for slow operations."""
+        import time
+        import structlog
+        from src.logger import log_timing
+
+        log = structlog.get_logger("test")
+        with log_timing(log, "slow_event") as timing:
+            time.sleep(0.01)  # 10ms
+
+        assert timing["duration_ms"] >= 5  # at least 5ms
