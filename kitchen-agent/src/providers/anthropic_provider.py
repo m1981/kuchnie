@@ -32,10 +32,7 @@ from dotenv import load_dotenv
 from src.config import settings
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
 from src.providers.normalizer import ResponseNormalizer
-from src.providers.schema_converters import (
-    declaration_to_anthropic_tool as _declaration_to_anthropic_tool,
-    schema_to_json_schema as _schema_to_json_schema,
-)
+from src.tools.schema_converter import ToolSchemaConverter
 from src.tools.file_ops import read_file
 
 load_dotenv()
@@ -81,12 +78,10 @@ class AnthropicProvider:
 
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
         """Build Anthropic tool schema list from captured declarations."""
-        schemas: list[dict[str, Any]] = []
-
-        for declaration in self._declarations:
-            schemas.append(_declaration_to_anthropic_tool(declaration))
-
-        return schemas
+        return [
+            ToolSchemaConverter.to_anthropic(declaration)
+            for declaration in self._declarations
+        ]
 
     # ── Common format → Anthropic format conversion ──────────────────
 

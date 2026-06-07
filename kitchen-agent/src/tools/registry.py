@@ -43,6 +43,7 @@ import structlog
 from google.genai import types
 
 from src.config import settings
+from src.tools.schema_converter import ToolSchemaConverter
 
 log = structlog.get_logger(__name__)
 from src.tools.file_ops import (
@@ -330,11 +331,31 @@ class ToolRegistry:
         """
         Return provider-specific tool schemas.
 
+        Delegates to ``ToolSchemaConverter`` for all format conversion.
+
         Args:
             provider:   "gemini", "anthropic", or "mimo" (OpenAI-compatible).
             categories: Optional filter by tool category.
                         None = return all tools.
         """
+        _PROVIDER_FORMATTER = {
+            "gemini": ToolSchemaConverter.to_gemini,
+            "anthropic": ToolSchemaConverter.to_anthropic,
+            "mimo": ToolSchemaConverter.to_openai_compat,
+        }
+
+        formatter = _PROVIDER_FORMATTER.get(provider)
+        if formatter is None:
+            log.error(
+                "schemas_for_provider_unknown",
+                provider=provider,
+                supported=list(_PROVIDER_FORMATTER.keys()),
+            )
+            raise ValueError(
+                f"Unknown provider: {provider!r}. "
+                f"Supported: {list(_PROVIDER_FORMATTER.keys())}"
+            )
+
         # Filter by category if specified
         entries = self._tools
         if categories is not None:
@@ -343,68 +364,7 @@ class ToolRegistry:
                 if entry.category in categories
             ]
 
-        if provider == "gemini":
-            return [entry.declaration for entry in entries]
-        elif provider == "anthropic":
-            from src.providers.schema_converters import declaration_to_anthropic_tool
-            return [
-                declaration_to_anthropic_tool(entry.declaration)
-                for entry in entries
-            ]
-        elif provider == "mimo":
-            # Mimo uses OpenAI-compatible format — convert Gemini declarations
-            from src.providers.mimo_provider import MimoProvider
-            return self._to_openai_schemas(entries)
-        log.error("schemas_for_provider_unknown", provider=provider, supported=["gemini", "anthropic", "mimo"])
-        raise ValueError(f"Unknown provider: {provider!r}")
-
-    @staticmethod
-    def _to_openai_schemas(entries: list) -> list[dict[str, Any]]:
-        """Convert Gemini FunctionDeclaration to OpenAI function format."""
-        schemas: list[dict[str, Any]] = []
-        for entry in entries:
-            decl = entry.declaration
-            # Convert Gemini Schema to JSON Schema dict
-            params = ToolRegistry._schema_to_dict(decl.parameters) if decl.parameters else {"type": "object", "properties": {}}
-            schemas.append({
-                "type": "function",
-                "function": {
-                    "name": decl.name,
-                    "description": decl.description or "",
-                    "parameters": params,
-                },
-            })
-        return schemas
-
-    @staticmethod
-    def _schema_to_dict(schema: Any) -> dict[str, Any]:
-        """Convert a google.genai types.Schema to a plain dict."""
-        if schema is None:
-            return {"type": "object", "properties": {}}
-
-        result: dict[str, Any] = {}
-        raw_type = str(getattr(schema, "type", "OBJECT"))
-        type_str = raw_type.split(".")[-1] if "." in raw_type else raw_type
-        type_map = {
-            "STRING": "string", "NUMBER": "number", "INTEGER": "integer",
-            "BOOLEAN": "boolean", "ARRAY": "array", "OBJECT": "object",
-        }
-        result["type"] = type_map.get(type_str.upper(), "string")
-
-        if result["type"] == "object":
-            props = getattr(schema, "properties", {}) or {}
-            result["properties"] = {}
-            for name, prop in props.items():
-                result["properties"][name] = ToolRegistry._schema_to_dict(prop)
-            required = getattr(schema, "required", []) or []
-            if required:
-                result["required"] = list(required)
-
-        desc = getattr(schema, "description", None)
-        if desc:
-            result["description"] = desc
-
-        return result
+        return [formatter(entry.declaration) for entry in entries]
 
 
 def build_default_registry(
