@@ -334,6 +334,7 @@ class ChatService:
         model_name = ""
         user_turn_id = ""
         assistant_turn_id = ""
+        done_tool_details: list = []  # ToolCallDetail from done event
 
         for event in self._orchestrator.stream(session, turn_input):
             event_type = event.get("type")
@@ -369,11 +370,34 @@ class ChatService:
                 model_name = event.get("model", "")
                 user_turn_id = event.get("user_turn_id", "")
                 assistant_turn_id = event.get("assistant_turn_id", "")
+                # Capture tool_details for history building (Fix #5)
+                done_tool_details = event.get("tool_details", [])
 
         # ── 3. Persist ────────────────────────────────────────────────
-        # Build updated history for persistence
+        # Build updated API history with tool call/response pairs.
+        # Before Fix #5: tool calls were lost in streaming history.
+        # After Fix #5: tool_details from done event used to build proper history.
         updated_api_history = list(api_history)
         updated_api_history.append({"role": "user", "content": request.user_message})
+
+        # Add tool call/response pairs from tool_details
+        for detail in done_tool_details:
+            updated_api_history.append({
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{
+                    "id": detail.id,
+                    "name": detail.name,
+                    "arguments": detail.arguments,
+                }],
+            })
+            updated_api_history.append({
+                "role": "tool",
+                "tool_call_id": detail.id,
+                "content": detail.result_content,
+            })
+
+        # Final assistant message
         updated_api_history.append({"role": "assistant", "content": full_text})
 
         new_ui_history = list(ui_history)

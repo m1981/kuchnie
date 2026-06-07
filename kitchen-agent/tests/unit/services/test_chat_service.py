@@ -396,3 +396,116 @@ def test_ui_history_stores_provider_and_model(
 
     assert assistant_msg["provider"] == "gemini"
     assert assistant_msg["model"] == "gemini-2.5-pro"
+
+
+# ---------------------------------------------------------------------------
+# ChatService.stream_turn
+# ---------------------------------------------------------------------------
+
+class TestStreamTurn:
+    """Tests for ChatService.stream_turn() — streaming path."""
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_yields_text_delta(self, mock_log, repo):
+        """stream_turn must yield text_delta events."""
+        orchestrator = FakeOrchestrator(text="Hello!")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        events = list(service.stream_turn(ChatTurnRequest(
+            session_id="stream-001",
+            user_message="Hi",
+        )))
+
+        text_events = [e for e in events if e["type"] == "text"]
+        assert len(text_events) >= 1
+        assert "Hello!" in text_events[0]["content"]
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_yields_done_event(self, mock_log, repo):
+        """stream_turn must yield a done event at the end."""
+        orchestrator = FakeOrchestrator(text="Response.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        events = list(service.stream_turn(ChatTurnRequest(
+            session_id="stream-002",
+            user_message="Hello",
+        )))
+
+        done_events = [e for e in events if e["type"] == "done"]
+        assert len(done_events) == 1
+        assert done_events[0]["provider"] == "gemini"
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_persists_session(self, mock_log, repo):
+        """stream_turn must persist the session after streaming."""
+        orchestrator = FakeOrchestrator(text="Persisted.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        list(service.stream_turn(ChatTurnRequest(
+            session_id="stream-003",
+            user_message="Save me",
+        )))
+
+        _, ui_json, _ = repo.load_session("stream-003")
+        ui_messages = json.loads(ui_json)
+        assert len(ui_messages) == 2
+        assert ui_messages[0]["role"] == "user"
+        assert ui_messages[0]["content"] == "Save me"
+        assert ui_messages[1]["role"] == "assistant"
+        assert ui_messages[1]["content"] == "Persisted."
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_history_includes_tool_calls(self, mock_log, repo):
+        """Fix #5: streaming history must include tool call/response pairs."""
+        tool_details = [
+            ToolCallDetail(
+                id="call_1",
+                name="read_file",
+                arguments={"filepath": "/test.md"},
+                result_content="file content",
+                is_error=False,
+            )
+        ]
+        orchestrator = FakeOrchestrator(
+            text="Based on the file.",
+            tool_details=tool_details,
+        )
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        list(service.stream_turn(ChatTurnRequest(
+            session_id="stream-tools",
+            user_message="Read file",
+        )))
+
+        # Load the persisted API history
+        api_json, _, _ = repo.load_session("stream-tools")
+        from src.serializers import hydrate_history
+        api_history = hydrate_history(api_json)
+
+        # Must have: user, assistant(tool_call), tool(result), assistant(text)
+        assert len(api_history) == 4
+        assert api_history[0]["role"] == "user"
+        assert api_history[1]["role"] == "assistant"
+        assert "tool_calls" in api_history[1] or "content" in api_history[1]
+        assert api_history[2]["role"] == "tool"
+        assert api_history[3]["role"] == "assistant"
+        assert api_history[3]["content"] == "Based on the file."
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_no_tools_has_flat_history(self, mock_log, repo):
+        """Without tools, streaming history should be user + assistant."""
+        orchestrator = FakeOrchestrator(text="Simple.", tool_details=[])
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        list(service.stream_turn(ChatTurnRequest(
+            session_id="stream-simple",
+            user_message="Hello",
+        )))
+
+        api_json, _, _ = repo.load_session("stream-simple")
+        from src.serializers import hydrate_history
+        api_history = hydrate_history(api_json)
+
+        assert len(api_history) == 2
+        assert api_history[0]["role"] == "user"
+        assert api_history[1]["role"] == "assistant"

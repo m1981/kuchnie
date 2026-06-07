@@ -16,6 +16,7 @@ class FakeOrchestrator:
     """
     Minimal fake TurnOrchestrator for ChatService and integration tests.
     Records calls. Returns controllable output.
+    Supports both run() and stream().
     """
 
     def __init__(
@@ -26,6 +27,7 @@ class FakeOrchestrator:
         self._text = text
         self._tool_details = tool_details or []
         self.run_call_count = 0
+        self.stream_call_count = 0
         self.last_turn_input: TurnInput | None = None
         self.last_session: dict | None = None
 
@@ -74,3 +76,48 @@ class FakeOrchestrator:
             tokens_used={"input": 10, "output": 5, "total": 15},
             context_slots={ContextSlot.SYSTEM_PROMPT: 20},
         )
+
+    def stream(self, session: dict, turn_input: TurnInput):
+        """Fake streaming — yields text_delta events then done."""
+        from typing import Iterator
+        self.stream_call_count += 1
+        self.last_turn_input = turn_input
+        self.last_session = session
+
+        # Build tool_logs
+        tool_logs = []
+        tool_calls_made = []
+        for d in self._tool_details:
+            tool_calls_made.append(d.name)
+            tool_logs.append({
+                "name": d.name,
+                "args": d.arguments,
+                "result": {"content": d.result_content} if not d.is_error else {"error": d.result_content},
+            })
+            yield {
+                "type": "tool_call",
+                "name": d.name,
+                "args": d.arguments,
+                "id": d.id,
+            }
+            yield {
+                "type": "tool_result",
+                "name": d.name,
+                "args": d.arguments,
+                "result": {"content": d.result_content} if not d.is_error else {"error": d.result_content},
+                "id": d.id,
+            }
+
+        # Yield text in chunks
+        yield {"type": "text_delta", "content": self._text}
+
+        # Done event with tool_details for history building
+        yield {
+            "type": "done",
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "user_turn_id": "test-user-turn-id",
+            "assistant_turn_id": "test-assistant-turn-id",
+            "tool_calls_made": tool_calls_made,
+            "tool_details": self._tool_details,
+        }
