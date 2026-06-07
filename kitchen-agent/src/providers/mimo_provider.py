@@ -165,7 +165,13 @@ class MimoProvider:
         from src.agent.context_assembler import AssembledContext
 
         messages = self._build_messages(context)
-        tool_schemas = self._build_tool_schemas()
+
+        # Only send tools if the orchestrator has set tool_schemas on the context.
+        # When use_tools=False, context.tool_schemas will be None.
+        if context.tool_schemas is not None:
+            tool_schemas = self._build_tool_schemas()
+        else:
+            tool_schemas = []
 
         self._conversation_state = messages
 

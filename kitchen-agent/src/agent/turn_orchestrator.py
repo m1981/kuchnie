@@ -248,7 +248,18 @@ class TurnOrchestrator:
         tool_details: list[ToolCallDetail] = []
         iterations = 0
 
-        while normalized.has_tool_calls and turn_input.use_tools:
+        # Edge case: LLM returned tool_calls but use_tools=False.
+        # This can happen when the model hallucinates tools (e.g. mimo).
+        # Log a warning and execute tools anyway to avoid empty response.
+        if normalized.has_tool_calls and not turn_input.use_tools:
+            self._log.warning(
+                "orchestrator_unexpected_tool_calls",
+                tool_calls=[tc.name for tc in normalized.tool_calls],
+                message="use_tools=False but LLM returned tool_calls. "
+                        "Executing tools to avoid empty response.",
+            )
+
+        while normalized.has_tool_calls:
             iterations += 1
             if iterations > self._max_tool_iterations:
                 raise MaxToolIterationsError(self._max_tool_iterations)
