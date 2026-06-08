@@ -129,8 +129,10 @@ class AnthropicProvider:
             enriched.append({"type": "text", "text": content})
             return {"role": "user", "content": enriched}
 
-        # Regular messages — pass through
-        return dict(msg)
+        # Regular messages — pass through only role and content.
+        # Strip extra fields (turn_id, provider, model, etc.) that are
+        # stored in UI history but not accepted by the Anthropic API.
+        return {"role": role, "content": content}
 
     # ── LLMProvider interface (for TurnOrchestrator) ─────────────────────
 
