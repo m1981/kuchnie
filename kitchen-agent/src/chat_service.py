@@ -401,7 +401,11 @@ class ChatService:
         updated_api_history.append({"role": "assistant", "content": full_text})
 
         new_ui_history = list(ui_history)
-        new_ui_history.append({"role": "user", "content": request.user_message})
+        new_ui_history.append({
+            "role": "user",
+            "content": request.user_message,
+            "turn_id": user_turn_id,
+        })
         new_ui_history.append({
             "role": "assistant",
             "content": full_text,
