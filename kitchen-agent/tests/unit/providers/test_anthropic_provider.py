@@ -219,3 +219,37 @@ def test_provider_uses_context_tool_schemas(provider: AnthropicProvider) -> None
     # The provider should not have _tool_schemas — schemas come from context
     assert not hasattr(provider, '_tool_schemas'), \
         "Provider should not build tool_schemas internally; use context.tool_schemas"
+
+
+# ---------------------------------------------------------------------------
+# Regression: turn_id must not leak to Anthropic API
+# ---------------------------------------------------------------------------
+
+def test_turn_id_stripped_from_messages(provider: AnthropicProvider) -> None:
+    """
+    Messages with turn_id, provider, model fields must be stripped
+    before sending to Anthropic API.
+
+    Regression test for: messages.0.turn_id: Extra inputs are not permitted
+    """
+    resp = _make_response([_text_block("ok")])
+    provider._client.messages.create.return_value = resp
+
+    # Context with messages containing extra fields (as stored in UI history)
+    ctx = _make_context()
+    ctx.messages = [
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi there",
+         "turn_id": "abc-123", "provider": "anthropic", "model": "claude-sonnet-4-6"},
+        {"role": "user", "content": "Follow up"},
+    ]
+
+    provider.complete(ctx)
+
+    # Verify the messages sent to Anthropic don't contain turn_id
+    call_args = provider._client.messages.create.call_args
+    messages = call_args.kwargs.get("messages", call_args[1].get("messages", []))
+    for msg in messages:
+        assert "turn_id" not in msg, f"turn_id leaked to API: {msg}"
+        assert "provider" not in msg, f"provider leaked to API: {msg}"
+        assert "model" not in msg, f"model leaked to API: {msg}"
