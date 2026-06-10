@@ -68,6 +68,59 @@ class MimoProvider:
         self._registry = _build_default_registry()
         self._tool_executor = ToolExecutor(registry=self._registry)
 
+    @staticmethod
+    def _common_to_openai(msg: dict) -> dict:
+        """
+        Convert a common format message to OpenAI format.
+
+        Common format (stored in DB):
+            {"role": "user", "content": "Hello"}
+            {"role": "assistant", "content": "", "tool_calls": [{"id": "...", "name": "...", "arguments": {...}}]}
+            {"role": "tool", "tool_call_id": "...", "content": "result"}
+
+        OpenAI format (sent to API):
+            {"role": "user", "content": "Hello"}
+            {"role": "assistant", "content": null, "tool_calls": [{"id": "...", "type": "function", "function": {"name": "...", "arguments": "..."}}]}
+            {"role": "tool", "tool_call_id": "...", "content": "result"}
+        """
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        tool_calls = msg.get("tool_calls")
+        tool_call_id = msg.get("tool_call_id")
+
+        # Handle tool response messages — pass through tool_call_id
+        if role == "tool" and tool_call_id:
+            return {
+                "role": "tool",
+                "tool_call_id": tool_call_id,
+                "content": content,
+            }
+
+        # Handle assistant messages with tool calls — convert to OpenAI format
+        if tool_calls:
+            openai_tool_calls = []
+            for tc in tool_calls:
+                arguments = tc.get("arguments", {})
+                # OpenAI API expects arguments as a JSON string
+                if isinstance(arguments, dict):
+                    arguments = json.dumps(arguments)
+                openai_tool_calls.append({
+                    "id": tc.get("id", ""),
+                    "type": "function",
+                    "function": {
+                        "name": tc.get("name", "unknown"),
+                        "arguments": arguments,
+                    },
+                })
+            return {
+                "role": "assistant",
+                "content": content or None,
+                "tool_calls": openai_tool_calls,
+            }
+
+        # Regular messages — pass through role and content only
+        return {"role": role, "content": content}
+
     def _build_messages(self, context: "AssembledContext") -> list[dict[str, Any]]:
         """Build OpenAI-format messages from AssembledContext."""
         messages: list[dict[str, Any]] = []
@@ -89,10 +142,9 @@ class MimoProvider:
             if snippets:
                 context_block = "[Context files injected by user]\n\n" + "\n\n".join(snippets)
 
-        # Conversation messages
+        # Conversation messages — convert from common format to OpenAI format
         for msg in context.messages:
             role = msg.get("role", "user")
-            content = msg.get("content", "")
 
             # Enrich last user message with context files and images
             if role == "user" and (context_block or context.images):
@@ -113,10 +165,11 @@ class MimoProvider:
                         except Exception as exc:
                             logger.warning("image_decode_failed", error=str(exc))
                     context.images = []  # Only inject once
-                parts.append({"type": "text", "text": content})
+                parts.append({"type": "text", "text": msg.get("content", "")})
                 messages.append({"role": role, "content": parts})
             else:
-                messages.append({"role": role, "content": content})
+                # Convert from common format to OpenAI format
+                messages.append(self._common_to_openai(msg))
 
         return messages
 

@@ -237,3 +237,167 @@ def test_active_provider_mimo() -> None:
         result = get_active_provider()
     assert result.provider == "mimo"
     assert result.model == "mimo-v2.5-pro"
+
+
+# ---------------------------------------------------------------------------
+# Regression: tool_call_id preserved across turns (OpenAI format)
+# ---------------------------------------------------------------------------
+
+class TestToolHistoryConversion:
+    """
+    Regression tests for the bug where tool call/response messages from
+    previous turns were passed through naively, losing tool_calls and
+    tool_call_id fields. This caused:
+        openai.BadRequestError: '`tool_call_id` is not set'
+    """
+
+    @staticmethod
+    def _make_context_with_tool_history():
+        """Build a mock context with tool call/response history (common format)."""
+        from unittest.mock import MagicMock
+
+        context = MagicMock()
+        context.system_prompt = "You are helpful."
+        context.messages = [
+            {"role": "user", "content": "Find hinges", "turn_id": "t1"},
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call-abc123",
+                        "name": "search_knowledge_base",
+                        "arguments": {"query": "hinge"},
+                    }
+                ],
+                "turn_id": "t2",
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "call-abc123",
+                "content": '{"content": "Blum hinges are..."}',
+                "turn_id": "t2",
+            },
+            {
+                "role": "assistant",
+                "content": "I found info about Blum hinges.",
+                "turn_id": "t3",
+            },
+        ]
+        context.context_files = []
+        context.images = []
+        return context
+
+    def test_assistant_tool_call_message_has_tool_calls_key(self):
+        """Assistant messages with tool_calls must preserve tool_calls in OpenAI format."""
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = self._make_context_with_tool_history()
+        messages = provider._build_messages(context)
+
+        # Message 2 is the assistant tool call (index 0=system, 1=user, 2=assistant)
+        tool_call_msg = messages[2]
+        assert tool_call_msg["role"] == "assistant"
+        assert "tool_calls" in tool_call_msg
+        assert len(tool_call_msg["tool_calls"]) == 1
+
+    def test_assistant_tool_call_has_openai_structure(self):
+        """Tool calls must have id, type, and function wrapper (OpenAI format)."""
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = self._make_context_with_tool_history()
+        messages = provider._build_messages(context)
+
+        tc = messages[2]["tool_calls"][0]
+        assert tc["id"] == "call-abc123"
+        assert tc["type"] == "function"
+        assert tc["function"]["name"] == "search_knowledge_base"
+        assert tc["function"]["arguments"] == '{"query": "hinge"}'
+
+    def test_tool_result_message_has_tool_call_id(self):
+        """Tool result messages must preserve tool_call_id for OpenAI API."""
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = self._make_context_with_tool_history()
+        messages = provider._build_messages(context)
+
+        # Message 3 is the tool result
+        tool_result_msg = messages[3]
+        assert tool_result_msg["role"] == "tool"
+        assert tool_result_msg["tool_call_id"] == "call-abc123"
+        assert "content" in tool_result_msg
+
+    def test_tool_result_message_stripped_of_extra_fields(self):
+        """Extra fields like turn_id should not leak into API messages."""
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = self._make_context_with_tool_history()
+        messages = provider._build_messages(context)
+
+        tool_result_msg = messages[3]
+        assert "turn_id" not in tool_result_msg
+        # Only role, tool_call_id, content should be present
+        assert set(tool_result_msg.keys()) == {"role", "tool_call_id", "content"}
+
+    def test_multiple_tool_calls_all_converted(self):
+        """Multiple tool calls in one assistant message are all converted."""
+        from unittest.mock import MagicMock
+
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = MagicMock()
+        context.system_prompt = None
+        context.messages = [
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {"id": "call-1", "name": "read_file", "arguments": {"filepath": "a.md"}},
+                    {"id": "call-2", "name": "read_file", "arguments": {"filepath": "b.md"}},
+                ],
+            },
+            {"role": "tool", "tool_call_id": "call-1", "content": "content A"},
+            {"role": "tool", "tool_call_id": "call-2", "content": "content B"},
+        ]
+        context.context_files = []
+        context.images = []
+
+        messages = provider._build_messages(context)
+
+        # First message: assistant with 2 tool calls
+        assert len(messages[0]["tool_calls"]) == 2
+        assert messages[0]["tool_calls"][0]["id"] == "call-1"
+        assert messages[0]["tool_calls"][1]["id"] == "call-2"
+
+        # Tool results
+        assert messages[1]["tool_call_id"] == "call-1"
+        assert messages[2]["tool_call_id"] == "call-2"
+
+    def test_user_message_without_tools_passes_through(self):
+        """Plain user/assistant messages without tools are unaffected."""
+        from unittest.mock import MagicMock
+
+        with patch("src.providers.mimo_provider.OpenAI"):
+            provider = MimoProvider()
+
+        context = MagicMock()
+        context.system_prompt = None
+        context.messages = [
+            {"role": "user", "content": "Hello", "turn_id": "t1"},
+            {"role": "assistant", "content": "Hi!", "turn_id": "t2"},
+        ]
+        context.context_files = []
+        context.images = []
+
+        messages = provider._build_messages(context)
+
+        assert messages[0] == {"role": "user", "content": "Hello"}
+        assert messages[1] == {"role": "assistant", "content": "Hi!"}
+        # turn_id should be stripped
+        assert "turn_id" not in messages[0]
+        assert "turn_id" not in messages[1]
