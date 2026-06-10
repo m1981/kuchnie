@@ -26,7 +26,6 @@
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
 		ontoggleright: () => void;
-		oneditprompt: () => void;
 	};
 
 	let {
@@ -36,8 +35,7 @@
 		sessionId,
 		showRight,
 		hasSystemPromptOverride,
-		ontoggleright,
-		oneditprompt
+		ontoggleright
 	}: Props = $props();
 </script>
 
@@ -73,16 +71,6 @@
 
 		<!-- ── Right cluster: action buttons ──────────────────────────────── -->
 		<div class="flex shrink-0 items-center gap-2">
-
-			<!-- Edit system prompt button -->
-			<button
-				onclick={oneditprompt}
-				class="hidden rounded-md border border-line bg-surface px-3 py-2 text-xs font-semibold text-muted transition hover:border-accent hover:text-ink lg:flex"
-				title="Edit the system prompt for this session (temporary override)"
-				aria-label="Edit session system prompt"
-			>
-				⚙️ Prompt
-			</button>
 
 			<!-- Context sidebar toggle -->
 			<button

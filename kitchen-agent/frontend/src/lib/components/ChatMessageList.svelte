@@ -24,8 +24,19 @@
 	import MessageEditor from './MessageEditor.svelte';
 	import MessageActions from './MessageActions.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
+	import SystemPromptBubble from './SystemPromptBubble.svelte';
+	import type { AsyncState } from '$lib/types';
 
 	type Props = {
+		// System prompt bubble
+		systemPromptText: string;
+		systemPromptIsOverride: boolean;
+		systemPromptModeLabel: string;
+		systemPromptSaveState: AsyncState<void>;
+		systemPromptError: string;
+		onsystemprompsave: (newText: string) => void;
+		onsystempromptreset: () => void;
+		// Messages
 		messages: Message[];
 		isLoading: boolean;
 		isBusy: boolean;
@@ -45,6 +56,13 @@
 	};
 
 	let {
+		systemPromptText,
+		systemPromptIsOverride,
+		systemPromptModeLabel,
+		systemPromptSaveState,
+		systemPromptError,
+		onsystemprompsave,
+		onsystempromptreset,
 		messages,
 		isLoading,
 		isBusy,
@@ -96,6 +114,17 @@
 </script>
 
 <div class="space-y-5">
+	<!-- System prompt bubble — always first -->
+	<SystemPromptBubble
+		text={systemPromptText}
+		isOverride={systemPromptIsOverride}
+		modeLabel={systemPromptModeLabel}
+		saveState={systemPromptSaveState}
+		errorMessage={systemPromptError}
+		onsave={onsystemprompsave}
+		onreset={onsystempromptreset}
+	/>
+
 	{#each messages as msg, messageIndex (`${msg.role}-${msg.turn_id ?? messageIndex}`)}
 		{@const isEditing = editingTurnId !== null && msg.turn_id === editingTurnId}
 

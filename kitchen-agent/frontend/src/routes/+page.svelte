@@ -16,7 +16,7 @@
 	 *   - Wiring the textSelection action to the note popup $state
 	 *   - Wiring keyboard resize handlers to drag-handle buttons
 	 *   - Mounting child components with the correct props
-	 *   - Wiring the message editor and system prompt editor
+	 *   - Wiring the message editor
 	 *   - Passing provider/model selection props to ChatHeader
 	 */
 
@@ -38,7 +38,6 @@
 	import SessionTree        from '$lib/components/SessionTree.svelte';
 	import ContextSidebar     from '$lib/components/ContextSidebar.svelte';
 	import NotePopup          from '$lib/components/NotePopup.svelte';
-	import SystemPromptEditor from '$lib/components/SystemPromptEditor.svelte';
 	import TruncateBar        from '$lib/components/TruncateBar.svelte';
 
 	// ---------------------------------------------------------------------------
@@ -90,23 +89,17 @@
 		chatStore.sessionSystemPrompt !== null && chatStore.sessionSystemPrompt !== ''
 	);
 
+	// Resolved system prompt text for the bubble: override ?? mode default
+	const systemPromptText = $derived(
+		chatStore.sessionSystemPrompt ?? ''
+	);
+
 	// Derived: edit state helpers
 	const isEditSaving = $derived(chatStore.editState.status === 'loading');
 	const editError    = $derived(
 		chatStore.editState.status === 'error' ? chatStore.editState.message : ''
 	);
-	// isTruncating shares the same editState — it is loading during any edit op
 	const isTruncating = $derived(chatStore.editState.status === 'loading');
-
-	// System prompt editor helpers
-	const isSystemPromptLoading = $derived(
-		chatStore.systemPromptState.status === 'loading'
-	);
-	const systemPromptError = $derived(
-		chatStore.systemPromptState.status === 'error'
-			? chatStore.systemPromptState.message
-			: ''
-	);
 
 	// ---------------------------------------------------------------------------
 	// Busy-recent indicator — stays true for 300ms after operation completes
@@ -139,14 +132,12 @@
 			(window as any).__sessionStore = sessionStore;
 			(window as any).__testHelpers = {
 				autoConfirm: false,
-				/** Enable auto-confirm for all ConfirmDialog instances */
 				confirmAll() { (window as any).__testHelpers.autoConfirm = true; },
-				/** Disable auto-confirm */
 				confirmNone() { (window as any).__testHelpers.autoConfirm = false; },
 			};
 		}
 
-			// Fire all three in parallel — none depends on the others.
+		// Fire all three in parallel — none depends on the others.
 		const [fetched] = await Promise.all([
 			chatStore.loadModes(),
 			chatStore.loadProviders(),
@@ -246,7 +237,6 @@
 			showRight={sidebarResize.showRight}
 			hasSystemPromptOverride={hasSystemPromptOverride}
 			ontoggleright={() => sidebarResize.toggleRight()}
-			oneditprompt={() => chatStore.openSystemPromptEditor()}
 		/>
 
 		<!-- Chat scroll area -->
@@ -282,6 +272,13 @@
 				{/if}
 
 				<ChatMessageList
+					systemPromptText={systemPromptText}
+					systemPromptIsOverride={hasSystemPromptOverride}
+					systemPromptModeLabel={activeMode.label}
+					systemPromptSaveState={chatStore.systemPromptState}
+					systemPromptError={chatStore.systemPromptError}
+					onsystemprompsave={(text) => chatStore.saveSystemPrompt(text)}
+					onsystempromptreset={() => chatStore.clearSystemPrompt()}
 					messages={chatStore.messages}
 					isLoading={chatStore.chatState.status === 'loading'}
 					isBusy={chatStore.editState.status === 'loading'}
@@ -351,23 +348,6 @@
 			sessionId={chatStore.sessionId}
 			sourceRole={notePopup.sourceRole}
 			ondismiss={() => (notePopup = null)}
-		/>
-	{/if}
-
-	<!-- ===================================================================== -->
-	<!-- SYSTEM PROMPT EDITOR — floating modal                                 -->
-	<!-- ===================================================================== -->
-	{#if chatStore.systemPromptEditorOpen}
-		<SystemPromptEditor
-			draft={chatStore.systemPromptDraft}
-			isLoading={isSystemPromptLoading}
-			isSaving={isSystemPromptLoading}
-			errorMessage={systemPromptError ?? ''}
-			hasOverride={hasSystemPromptOverride}
-			onsave={() => chatStore.saveSystemPrompt()}
-			onclear={() => chatStore.clearSystemPrompt()}
-			onclose={() => chatStore.closeSystemPromptEditor()}
-			ondraftchange={(text) => chatStore.setSystemPromptDraft(text)}
 		/>
 	{/if}
 </div>

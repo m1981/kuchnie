@@ -23,11 +23,10 @@ function createEditorStore() {
 	let editDraft      = $state<string>('');
 	let editState      = $state<AsyncState<void>>({ status: 'idle' });
 
-	// ── System prompt editor ──────────────────────────────────────────────
-	let sessionSystemPrompt     = $state<string | null>(null);
-	let systemPromptEditorOpen  = $state(false);
-	let systemPromptDraft       = $state<string>('');
-	let systemPromptState       = $state<AsyncState<void>>({ status: 'idle' });
+	// ── System prompt ─────────────────────────────────────────────────
+	let sessionSystemPrompt    = $state<string | null>(null);
+	let systemPromptDraft      = $state<string>('');
+	let systemPromptState      = $state<AsyncState<void>>({ status: 'idle' });
 
 	return {
 		// Message editor
@@ -35,11 +34,13 @@ function createEditorStore() {
 		get editDraft()     { return editDraft; },
 		get editState()     { return editState; },
 
-		// System prompt editor
+		// System prompt
 		get sessionSystemPrompt()    { return sessionSystemPrompt; },
-		get systemPromptEditorOpen() { return systemPromptEditorOpen; },
 		get systemPromptDraft()      { return systemPromptDraft; },
 		get systemPromptState()      { return systemPromptState; },
+		get systemPromptError() {
+			return systemPromptState.status === 'error' ? systemPromptState.message : '';
+		},
 
 		/** True when any edit/delete/truncate operation is in flight. */
 		get isMutating() {
@@ -169,19 +170,17 @@ function createEditorStore() {
 			}
 		},
 
-		// ── System prompt editor ──────────────────────────────────────
+		// ── System prompt ──────────────────────────────────────────────
 
-		async openSystemPromptEditor(sessionId: string) {
-			systemPromptEditorOpen = true;
-			if (sessionSystemPrompt !== null) {
-				systemPromptDraft = sessionSystemPrompt ?? '';
-				return;
-			}
+		/**
+		 * Load the session's system prompt override from the backend.
+		 * Called on session load. null = no override (use mode default).
+		 */
+		async loadSystemPrompt(sessionId: string) {
 			systemPromptState = { status: 'loading' };
 			try {
-				const data          = await api.getSystemPrompt(sessionId);
-				sessionSystemPrompt = data.system_prompt;
-				systemPromptDraft   = data.system_prompt ?? '';
+				const data = await api.getSystemPrompt(sessionId);
+				sessionSystemPrompt = data.system_prompt ?? null;
 				systemPromptState   = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
@@ -191,21 +190,13 @@ function createEditorStore() {
 			}
 		},
 
-		closeSystemPromptEditor() {
-			systemPromptEditorOpen = false;
-		},
-
-		setSystemPromptDraft(text: string) {
-			systemPromptDraft = text;
-		},
-
-		async saveSystemPrompt(sessionId: string) {
+		/** Save a new system prompt override for the session. */
+		async saveSystemPrompt(sessionId: string, newPrompt: string) {
 			systemPromptState = { status: 'loading' };
 			try {
-				await api.updateSystemPrompt(sessionId, systemPromptDraft);
-				sessionSystemPrompt    = systemPromptDraft;
-				systemPromptEditorOpen = false;
-				systemPromptState      = { status: 'success', data: undefined };
+				await api.updateSystemPrompt(sessionId, newPrompt);
+				sessionSystemPrompt = newPrompt;
+				systemPromptState   = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
 					status:  'error',
@@ -214,13 +205,13 @@ function createEditorStore() {
 			}
 		},
 
+		/** Clear the session override, reverting to mode default. */
 		async clearSystemPrompt(sessionId: string) {
 			systemPromptState = { status: 'loading' };
 			try {
 				await api.updateSystemPrompt(sessionId, '');
-				sessionSystemPrompt    = '';
-				systemPromptEditorOpen = false;
-				systemPromptState      = { status: 'success', data: undefined };
+				sessionSystemPrompt = null;
+				systemPromptState   = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
 					status:  'error',
@@ -231,13 +222,12 @@ function createEditorStore() {
 
 		/** Reset all editor state. Called on startNewChat / loadSession. */
 		reset() {
-			editingTurnId         = null;
-			editDraft             = '';
-			editState             = { status: 'idle' };
-			sessionSystemPrompt   = null;
-			systemPromptDraft     = '';
-			systemPromptEditorOpen = false;
-			systemPromptState     = { status: 'idle' };
+			editingTurnId       = null;
+			editDraft           = '';
+			editState           = { status: 'idle' };
+			sessionSystemPrompt = null;
+			systemPromptDraft   = '';
+			systemPromptState   = { status: 'idle' };
 		}
 	};
 }

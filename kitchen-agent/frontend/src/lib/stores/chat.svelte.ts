@@ -87,9 +87,9 @@ function createChatStore() {
 		get editDraft()           { return editorStore.editDraft; },
 		get editState()           { return editorStore.editState; },
 		get sessionSystemPrompt()    { return editorStore.sessionSystemPrompt; },
-		get systemPromptEditorOpen() { return editorStore.systemPromptEditorOpen; },
 		get systemPromptDraft()      { return editorStore.systemPromptDraft; },
 		get systemPromptState()      { return editorStore.systemPromptState; },
+		get systemPromptError()      { return editorStore.systemPromptError; },
 
 		// ── Delegated getters (tokenStore) ────────────────────────────────────────
 		get sessionTokenCount()      { return tokenStore.sessionTokenCount; },
@@ -156,11 +156,9 @@ function createChatStore() {
 			});
 		},
 
-		async openSystemPromptEditor() { return editorStore.openSystemPromptEditor(sessionId); },
-		closeSystemPromptEditor()      { editorStore.closeSystemPromptEditor(); },
-		setSystemPromptDraft(t: string) { editorStore.setSystemPromptDraft(t); },
-		async saveSystemPrompt()        { return editorStore.saveSystemPrompt(sessionId); },
-		async clearSystemPrompt()       { return editorStore.clearSystemPrompt(sessionId); },
+		async loadSystemPrompt()    { return editorStore.loadSystemPrompt(sessionId); },
+		async saveSystemPrompt(text: string) { return editorStore.saveSystemPrompt(sessionId, text); },
+		async clearSystemPrompt()   { return editorStore.clearSystemPrompt(sessionId); },
 
 		// ── Delegated methods (tokenStore) ─────────────────────────────────────────
 
@@ -233,6 +231,9 @@ function createChatStore() {
 				forkStatus   = '';
 
 				editorStore.reset();
+
+				// Load session's system prompt override (if any).
+				void editorStore.loadSystemPrompt(id);
 
 				// Restore provider/model picker from the last assistant message.
 				for (let i = messages.length - 1; i >= 0; i--) {
