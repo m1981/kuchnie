@@ -97,38 +97,55 @@
 	<div class="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
 		<div class="flex items-center gap-2 min-w-0">
 			<span class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-				⚙️ System Prompt
+				<!-- Gear SVG icon -->
+				<svg class="inline-block h-3.5 w-3.5 mr-1 -mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="3" />
+					<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+				</svg>
+				System Prompt
 			</span>
 			{#if isOverride}
 				<span
-					class="rounded-full border border-accent-soft bg-accent-soft px-2 py-0.5 text-[10px] font-semibold text-accent"
+					class="rounded-full border border-accent-soft bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent"
 				>
 					custom
 				</span>
 			{/if}
-			<span class="text-[10px] text-muted">
-				mode: {modeLabel}
+			<span
+				class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+			>
+				{modeLabel}
 			</span>
 		</div>
 
-		<div class="flex shrink-0 items-center gap-1.5">
+		<div class="flex shrink-0 items-center gap-1">
 			{#if !isEditing}
 				<button
 					onclick={startEditing}
 					disabled={isBusy}
-					class="rounded px-2 py-1 text-xs font-medium text-muted transition hover:bg-line hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+					class="action-btn action-btn-assistant"
 					title="Edit system prompt"
+					aria-label="Edit system prompt"
 				>
-					✏️ Edit
+					<!-- Pencil SVG icon -->
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+						<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+					</svg>
 				</button>
 				{#if isOverride}
 					<button
 						onclick={onreset}
 						disabled={isBusy}
-						class="rounded px-2 py-1 text-xs font-medium text-muted transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+						class="action-btn action-btn-assistant"
 						title="Reset to mode default"
+						aria-label="Reset to mode default"
 					>
-						🔄 Reset
+						<!-- Refresh/undo SVG icon -->
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+							<path d="M3 3v5h5" />
+						</svg>
 					</button>
 				{/if}
 			{/if}
@@ -199,3 +216,29 @@
 		{/if}
 	</div>
 </article>
+
+<style>
+	.action-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		border-radius: 6px;
+		transition: all 0.15s ease;
+	}
+
+	.action-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.action-btn-assistant {
+		color: var(--color-muted, #6b7280);
+	}
+
+	.action-btn-assistant:hover:not(:disabled) {
+		background: var(--color-line, #e5e7eb);
+		color: var(--color-ink, #111827);
+	}
+</style>
