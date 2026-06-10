@@ -33,7 +33,7 @@ from dataclasses import dataclass
 class GeminiConfig:
     """Configuration for the Google Gemini provider."""
 
-    model: str = "gemini-2.5-flash"
+    model: str = "gemini-3.1-pro-preview"
     temperature: float = 0.2
 
 
@@ -42,7 +42,7 @@ class AnthropicConfig:
     """Configuration for the Anthropic Claude provider."""
 
     api_key: str | None = None
-    model: str = "claude-sonnet-4-5"
+    model: str = "claude-sonnet-4-6"
     temperature: float = 0.2
     max_tokens: int = 8096
 

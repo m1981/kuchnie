@@ -26,31 +26,30 @@ export type ProviderInfo = {
 
 export const PROVIDERS: ProviderInfo[] = [
 	{
-		id: 'mimo',
-		label: 'MiMo',
-		default_model: 'mimo-v2.5-pro',
-		models: [
-			{ id: 'mimo-v2.5-pro', label: 'MiMo v2.5 Pro', context_k: 128 }
-		]
-	},
-	{
 		id: 'gemini',
 		label: 'Google Gemini',
-		default_model: 'gemini-2.5-flash',
+		default_model: 'gemini-3.1-pro-preview',
 		models: [
-			{ id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', context_k: 1000 },
-			{ id: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro',   context_k: 1000 },
-			{ id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', context_k: 1000 }
+			{ id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro', context_k: 1000 },
+			{ id: 'gemini-3.5-flash',       label: 'Gemini 3.5 Flash', context_k: 1000 }
 		]
 	},
 	{
 		id: 'anthropic',
 		label: 'Anthropic Claude',
-		default_model: 'claude-sonnet-4-5',
+		default_model: 'claude-sonnet-4-6',
 		models: [
-			{ id: 'claude-opus-4-5',   label: 'Claude Opus 4.5',   context_k: 200 },
-			{ id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', context_k: 200 },
-			{ id: 'claude-haiku-3-5',  label: 'Claude Haiku 3.5',  context_k: 200 }
+			{ id: 'claude-opus-4-8',   label: 'Claude Opus 4.8',   context_k: 200 },
+			{ id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', context_k: 200 }
+		]
+	},
+	{
+		id: 'mimo',
+		label: 'Xiaomi MiMo',
+		default_model: 'mimo-v2.5-pro',
+		models: [
+			{ id: 'mimo-v2.5-pro', label: 'MiMo V2.5 Pro', context_k: 1000 },
+			{ id: 'mimo-v2.5',     label: 'MiMo V2.5',     context_k: 1000 }
 		]
 	}
 ];

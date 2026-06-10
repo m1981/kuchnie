@@ -73,7 +73,7 @@ class Settings(BaseSettings):
         return self.data_dir / "prompt_log.md"
 
     # ── Gemini ───────────────────────────────────────────────────────────────
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.1-pro-preview"
     gemini_temperature: float = 0.2
 
     # ── Anthropic ────────────────────────────────────────────────────────────
@@ -81,8 +81,8 @@ class Settings(BaseSettings):
     # Required when LLM_PROVIDER=anthropic.
     anthropic_api_key: str | None = None
 
-    # Model name.  Default: claude-sonnet-4-5 (fast, capable, cost-effective).
-    anthropic_model: str = "claude-sonnet-4-5"
+    # Model name.  Default: claude-sonnet-4-6 (fast, capable, cost-effective).
+    anthropic_model: str = "claude-sonnet-4-6"
 
     # Sampling temperature (0.0–1.0 recommended for Claude).
     anthropic_temperature: float = 0.2

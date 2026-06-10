@@ -277,6 +277,18 @@ function createChatStore() {
 				systemPromptDraft      = '';
 				sessionSystemPrompt    = null;
 				systemPromptState      = { status: 'idle' };
+
+				// Restore provider/model picker from the last assistant message
+				// so reopening a session shows the provider that was actually used.
+				for (let i = messages.length - 1; i >= 0; i--) {
+					const m = messages[i];
+					if (m.role === 'assistant' && m.provider) {
+						selectedProvider = m.provider;
+						selectedModel    = m.model ?? '';
+						break;
+					}
+				}
+
 				// Auto-fetch session token count
 				void this.refreshSessionTokens();
 			} catch (e) {
@@ -400,6 +412,12 @@ function createChatStore() {
 								provider: event.provider,
 								model: event.model,
 							};
+
+							// Sync picker to the provider that actually responded —
+							// keeps the selection in sync when the user switches
+							// providers mid-conversation.
+							if (event.provider) selectedProvider = event.provider;
+							if (event.model)    selectedModel    = event.model;
 
 							// Update user message with turn_id
 							if (event.user_turn_id) {

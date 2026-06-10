@@ -135,14 +135,16 @@ def test_gemini_provider_uses_model_override_in_api_call() -> None:
 
 
 def test_gemini_provider_uses_settings_model_by_default() -> None:
-    import src.config as cfg
     from google.genai import types
     from src.providers.gemini import GeminiProvider
+    from src.providers.config import GeminiConfig
     from src.agent.context_assembler import AssembledContext, ContextSlot
 
-    with patch.object(cfg.settings, "gemini_model", "gemini-2.5-flash"), \
-         patch("src.providers.gemini.genai.Client") as mock_cls:
-        provider = GeminiProvider()
+    # The provider reads model from GeminiConfig, not directly from settings.
+    # In production, dependencies.py builds config from settings.
+    config = GeminiConfig(model="gemini-2.5-flash")
+    with patch("src.providers.gemini.genai.Client") as mock_cls:
+        provider = GeminiProvider(config=config)
         mock_client = mock_cls.return_value
 
         part = types.Part(text="ok")
@@ -196,13 +198,14 @@ def test_anthropic_provider_uses_model_override_in_api_call() -> None:
 
 
 def test_anthropic_provider_uses_settings_model_by_default() -> None:
-    import src.config as cfg
     from src.providers.anthropic_provider import AnthropicProvider
+    from src.providers.config import AnthropicConfig
     from src.agent.context_assembler import AssembledContext, ContextSlot
 
-    with patch.object(cfg.settings, "anthropic_model", "claude-sonnet-4-5"), \
-         patch("src.providers.anthropic_provider.anthropic.Anthropic") as mock_cls:
-        provider = AnthropicProvider()
+    # The provider reads model from AnthropicConfig, not directly from settings.
+    config = AnthropicConfig(model="claude-sonnet-4-5")
+    with patch("src.providers.anthropic_provider.anthropic.Anthropic") as mock_cls:
+        provider = AnthropicProvider(config=config)
         mock_client = mock_cls.return_value
 
         tb = MagicMock()

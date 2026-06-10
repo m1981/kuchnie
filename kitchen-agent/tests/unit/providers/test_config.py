@@ -21,7 +21,7 @@ from src.providers.config import AnthropicConfig, GeminiConfig, MimoConfig
 class TestGeminiConfig:
     def test_defaults(self):
         config = GeminiConfig()
-        assert config.model == "gemini-2.5-flash"
+        assert config.model == "gemini-3.1-pro-preview"
         assert config.temperature == 0.2
 
     def test_custom_values(self):
@@ -43,7 +43,7 @@ class TestAnthropicConfig:
     def test_defaults(self):
         config = AnthropicConfig()
         assert config.api_key is None
-        assert config.model == "claude-sonnet-4-5"
+        assert config.model == "claude-sonnet-4-6"
         assert config.temperature == 0.2
         assert config.max_tokens == 8096
 
