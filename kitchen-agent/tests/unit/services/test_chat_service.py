@@ -252,6 +252,115 @@ def test_use_tools_false_forwarded_to_orchestrator(
 
 
 # ---------------------------------------------------------------------------
+# System prompt priority in _load_session
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def repo_for_priority(tmp_path):
+    conn = SQLiteConnection(db_path=str(tmp_path / "test.db"))
+    return SQLiteSessionRepository(conn)
+
+
+@patch("src.chat_service.log_turn")
+def test_load_session_uses_saved_prompt_when_request_is_none(
+    mock_log: MagicMock,
+    repo_for_priority: SQLiteSessionRepository,
+) -> None:
+    """When request.system_prompt is None, should use saved_system_prompt."""
+    repo_for_priority.save_session(
+        session_id="sess-priority",
+        title="Test",
+        api_history_json="[]",
+        ui_history_json="[]",
+        system_prompt="Saved override",
+    )
+    orchestrator = FakeOrchestrator()
+    service = ChatService(session_repo=repo_for_priority, turn_orchestrator=orchestrator)
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-priority",
+        user_message="hello",
+        system_prompt=None,  # not provided
+    ))
+
+    # The orchestrator should receive the saved prompt
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.system_prompt == "Saved override"
+
+
+@patch("src.chat_service.log_turn")
+def test_load_session_uses_request_prompt_over_saved(
+    mock_log: MagicMock,
+    repo_for_priority: SQLiteSessionRepository,
+) -> None:
+    """When request.system_prompt is provided, should use it over saved."""
+    repo_for_priority.save_session(
+        session_id="sess-priority-2",
+        title="Test",
+        api_history_json="[]",
+        ui_history_json="[]",
+        system_prompt="Saved override",
+    )
+    orchestrator = FakeOrchestrator()
+    service = ChatService(session_repo=repo_for_priority, turn_orchestrator=orchestrator)
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-priority-2",
+        user_message="hello",
+        system_prompt="Request override",
+    ))
+
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.system_prompt == "Request override"
+
+
+@patch("src.chat_service.log_turn")
+def test_load_session_empty_string_clears_saved(
+    mock_log: MagicMock,
+    repo_for_priority: SQLiteSessionRepository,
+) -> None:
+    """When request.system_prompt is empty string, should clear (not use saved)."""
+    repo_for_priority.save_session(
+        session_id="sess-priority-3",
+        title="Test",
+        api_history_json="[]",
+        ui_history_json="[]",
+        system_prompt="Saved override",
+    )
+    orchestrator = FakeOrchestrator()
+    service = ChatService(session_repo=repo_for_priority, turn_orchestrator=orchestrator)
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-priority-3",
+        user_message="hello",
+        system_prompt="",  # explicitly clear
+    ))
+
+    # Empty string means "clear override" - should NOT fall back to saved
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.system_prompt == ""
+
+
+@patch("src.chat_service.log_turn")
+def test_load_session_none_when_no_saved(
+    mock_log: MagicMock,
+    repo_for_priority: SQLiteSessionRepository,
+) -> None:
+    """When no saved prompt and request is None, should be None."""
+    orchestrator = FakeOrchestrator()
+    service = ChatService(session_repo=repo_for_priority, turn_orchestrator=orchestrator)
+
+    service.handle_turn(ChatTurnRequest(
+        session_id="sess-new",
+        user_message="hello",
+        system_prompt=None,
+    ))
+
+    assert orchestrator.last_turn_input is not None
+    assert orchestrator.last_turn_input.system_prompt is None
+
+
+# ---------------------------------------------------------------------------
 # Provider routing
 # ---------------------------------------------------------------------------
 
