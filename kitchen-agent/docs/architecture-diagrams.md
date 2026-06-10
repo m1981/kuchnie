@@ -330,7 +330,7 @@ graph TB
 
     subgraph EditorState["editorStore owns"]
         ES_Edit["editingTurnId, editDraft, editState"]
-        ES_System["sessionSystemPrompt, draft, open"]
+        ES_System["sessionSystemPrompt (loaded on session switch)"]
     end
 
     subgraph TokenState["tokenStore owns"]
