@@ -1,0 +1,245 @@
+/**
+ * lib/stores/editor.svelte.ts
+ * =============================
+ * Rune-based store for message editing and system prompt editing.
+ *
+ * Responsibilities:
+ *   - Inline message editing (start, cancel, save, draft)
+ *   - Message deletion (single, pair-delete)
+ *   - Turn truncation
+ *   - System prompt editor (open, close, save, clear)
+ *
+ * Cross-store reads (passed as args, not imported):
+ *   - sessionId (from chatMessagingStore)
+ *   - messages (from chatMessagingStore)
+ */
+
+import { api, type Message } from '$lib/api';
+import type { AsyncState } from '$lib/types';
+
+function createEditorStore() {
+	// ── Message editor ────────────────────────────────────────────────────
+	let editingTurnId  = $state<string | null>(null);
+	let editDraft      = $state<string>('');
+	let editState      = $state<AsyncState<void>>({ status: 'idle' });
+
+	// ── System prompt editor ──────────────────────────────────────────────
+	let sessionSystemPrompt     = $state<string | null>(null);
+	let systemPromptEditorOpen  = $state(false);
+	let systemPromptDraft       = $state<string>('');
+	let systemPromptState       = $state<AsyncState<void>>({ status: 'idle' });
+
+	return {
+		// Message editor
+		get editingTurnId() { return editingTurnId; },
+		get editDraft()     { return editDraft; },
+		get editState()     { return editState; },
+
+		// System prompt editor
+		get sessionSystemPrompt()    { return sessionSystemPrompt; },
+		get systemPromptEditorOpen() { return systemPromptEditorOpen; },
+		get systemPromptDraft()      { return systemPromptDraft; },
+		get systemPromptState()      { return systemPromptState; },
+
+		/** True when any edit/delete/truncate operation is in flight. */
+		get isMutating() {
+			return editState.status === 'loading';
+		},
+
+		// ── Message editing ─────────────────────────────────────────────
+
+		startEditing(turnId: string, messages: Message[]) {
+			const msg = messages.find(m => m.turn_id === turnId);
+			if (!msg) return;
+			editingTurnId = turnId;
+			editDraft     = msg.content;
+			editState     = { status: 'idle' };
+		},
+
+		cancelEditing() {
+			editingTurnId = null;
+			editDraft     = '';
+			editState     = { status: 'idle' };
+		},
+
+		setEditDraft(text: string) {
+			editDraft = text;
+		},
+
+		async saveEdit(
+			sessionId: string,
+			messages: Message[],
+			onUpdate: (idx: number, updated: Message) => void
+		): Promise<void> {
+			if (!editingTurnId || !editDraft.trim()) return;
+			const turnId = editingTurnId;
+			editState = { status: 'loading' };
+			try {
+				await api.editMessage(sessionId, turnId, editDraft);
+				// Optimistic local update — find by turn_id, not by index.
+				const idx = messages.findIndex(m => m.turn_id === turnId);
+				if (idx !== -1) {
+					onUpdate(idx, { ...messages[idx], content: editDraft });
+				}
+				editingTurnId = null;
+				editDraft     = '';
+				editState     = { status: 'success', data: undefined };
+			} catch (e) {
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Edit failed.'
+				};
+			}
+		},
+
+		async deleteMessage(
+			sessionId: string,
+			messages: Message[],
+			turnId: string,
+			deletePair: boolean,
+			onReplace: (newMessages: Message[]) => void
+		): Promise<void> {
+			if (editState.status === 'loading') return;
+
+			// Auto-cancel edit if deleting the message currently being edited.
+			if (editingTurnId === turnId) {
+				this.cancelEditing();
+			}
+
+			// Auto-promote to pair-delete.
+			const idx = messages.findIndex(m => m.turn_id === turnId);
+			if (idx !== -1 && messages[idx].role === 'user' && !deletePair) {
+				const next = messages[idx + 1];
+				if (next?.role === 'assistant') {
+					deletePair = true;
+				}
+			}
+
+			// Snapshot for rollback.
+			const snapshot = [...messages];
+
+			// Optimistic local removal.
+			if (deletePair) {
+				onReplace(messages.filter((m, i) => {
+					if (m.turn_id === turnId) return false;
+					if (i === idx + 1 && m.role === 'assistant') return false;
+					return true;
+				}));
+			} else {
+				onReplace(messages.filter(m => m.turn_id !== turnId));
+			}
+
+			editState = { status: 'loading' };
+			try {
+				await api.deleteMessage(sessionId, turnId, deletePair);
+				editState = { status: 'success', data: undefined };
+			} catch (e) {
+				onReplace(snapshot); // rollback
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Delete failed.'
+				};
+			}
+		},
+
+		async truncateMessages(
+			sessionId: string,
+			messages: Message[],
+			n: number,
+			onReplace: (newMessages: Message[]) => void,
+			onSuccess: () => void
+		): Promise<void> {
+			if (n < 1 || editState.status === 'loading') return;
+
+			const snapshot = [...messages];
+			const pairsToRemove = n * 2;
+			onReplace(messages.slice(0, Math.max(0, messages.length - pairsToRemove)));
+
+			editState = { status: 'loading' };
+			try {
+				await api.truncateMessages(sessionId, n);
+				editState = { status: 'success', data: undefined };
+				onSuccess();
+			} catch (e) {
+				onReplace(snapshot); // rollback
+				editState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Truncate failed.'
+				};
+			}
+		},
+
+		// ── System prompt editor ──────────────────────────────────────
+
+		async openSystemPromptEditor(sessionId: string) {
+			systemPromptEditorOpen = true;
+			if (sessionSystemPrompt !== null) {
+				systemPromptDraft = sessionSystemPrompt ?? '';
+				return;
+			}
+			systemPromptState = { status: 'loading' };
+			try {
+				const data          = await api.getSystemPrompt(sessionId);
+				sessionSystemPrompt = data.system_prompt;
+				systemPromptDraft   = data.system_prompt ?? '';
+				systemPromptState   = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to load system prompt.'
+				};
+			}
+		},
+
+		closeSystemPromptEditor() {
+			systemPromptEditorOpen = false;
+		},
+
+		setSystemPromptDraft(text: string) {
+			systemPromptDraft = text;
+		},
+
+		async saveSystemPrompt(sessionId: string) {
+			systemPromptState = { status: 'loading' };
+			try {
+				await api.updateSystemPrompt(sessionId, systemPromptDraft);
+				sessionSystemPrompt    = systemPromptDraft;
+				systemPromptEditorOpen = false;
+				systemPromptState      = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to save system prompt.'
+				};
+			}
+		},
+
+		async clearSystemPrompt(sessionId: string) {
+			systemPromptState = { status: 'loading' };
+			try {
+				await api.updateSystemPrompt(sessionId, '');
+				sessionSystemPrompt    = '';
+				systemPromptEditorOpen = false;
+				systemPromptState      = { status: 'success', data: undefined };
+			} catch (e) {
+				systemPromptState = {
+					status:  'error',
+					message: e instanceof Error ? e.message : 'Failed to clear system prompt.'
+				};
+			}
+		},
+
+		/** Reset all editor state. Called on startNewChat / loadSession. */
+		reset() {
+			editingTurnId         = null;
+			editDraft             = '';
+			editState             = { status: 'idle' };
+			sessionSystemPrompt   = null;
+			systemPromptDraft     = '';
+			systemPromptEditorOpen = false;
+			systemPromptState     = { status: 'idle' };
+		}
+	};
+}
+
+export const editorStore = createEditorStore();
