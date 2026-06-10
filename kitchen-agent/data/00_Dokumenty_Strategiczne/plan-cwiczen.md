@@ -1,5 +1,11 @@
 ### ETAP 1: Fundamenty – Materiałoznawstwo i Okucia
 
+## Makra
+
+### Dodawanie zmiennych i równania
+
+https://youtu.be/P0mBZGfTSQg?list=PLnvYGeIBTN4flHgPWNfijSAISTkB51Ej9&t=778
+
 Nie zaprojektujesz szafki, jeśli nie wiesz, z czego i jak jest zrobiona.
 
 1.  **Płyty i obrzeża:** Standardy grubości (18 mm korpusy, czasem 16 mm; fronty 18-19 mm). Rodzaje obrzeży (ABS 0.8 mm, 1 mm, 2 mm) i jak wpływają na wymiar końcowy formatki.
