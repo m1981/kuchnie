@@ -40,8 +40,15 @@ function createEditorStore() {
 		get modeDefaultPrompt()      { return modeDefaultPrompt; },
 		/** Resolved text: session override ?? mode default */
 		get resolvedSystemPrompt()   { return sessionSystemPrompt ?? modeDefaultPrompt; },
-		/** Whether the displayed text is a session-specific override */
-		get isSystemPromptOverride() { return sessionSystemPrompt !== null && sessionSystemPrompt !== ''; },
+		/**
+		 * Whether the displayed text is a session-specific override.
+		 * An override is only active when the saved prompt is non-null,
+		 * non-empty, AND differs from the mode default.
+		 */
+		get isSystemPromptOverride() {
+			if (sessionSystemPrompt === null || sessionSystemPrompt === '') return false;
+			return sessionSystemPrompt !== modeDefaultPrompt;
+		},
 		get systemPromptDraft()      { return systemPromptDraft; },
 		get systemPromptState()      { return systemPromptState; },
 		get systemPromptError() {

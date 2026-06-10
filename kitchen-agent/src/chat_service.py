@@ -170,7 +170,12 @@ class ChatService:
         )
         api_history = hydrate_history(api_history_json)
         ui_history: list[dict] = json.loads(ui_history_json) if ui_history_json else []
-        system_prompt = request.system_prompt or saved_system_prompt
+        # Priority: explicit request override > saved override > None (use mode default)
+        # Use 'is not None' to distinguish between "not provided" (None) and "explicitly cleared" ("")
+        if request.system_prompt is not None:
+            system_prompt = request.system_prompt
+        else:
+            system_prompt = saved_system_prompt
         return api_history, ui_history, system_prompt
 
     def _build_turn_input(
