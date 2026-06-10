@@ -456,10 +456,11 @@ export const api = {
 		request<ChatResponse>('/api/chat', json(payload)),
 
 	// Streaming chat — returns async generator of events
-	chatStream: async function* (payload: ChatRequest): AsyncGenerator<StreamEvent> {
+	chatStream: async function* (payload: ChatRequest, signal?: AbortSignal): AsyncGenerator<StreamEvent> {
 		const res = await fetch(`${API_BASE}/api/chat/stream`, {
 			...json(payload),
 			method: 'POST',
+			signal,
 		});
 
 		if (!res.ok) {

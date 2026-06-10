@@ -42,6 +42,9 @@ function createChatStore() {
 	let messages  = $state<Message[]>([]);
 	let chatState = $state<AsyncState<void>>({ status: 'idle' });
 
+	// ── Streaming control ────────────────────────────────────────────────────
+	let abortController = $state<AbortController | null>(null);
+
 	// ── Pasted images ────────────────────────────────────────────────────────
 	let pastedImages = $state<PastedImage[]>([]);
 
@@ -51,11 +54,15 @@ function createChatStore() {
 	// ── Fork feedback ────────────────────────────────────────────────────────
 	let forkStatus = $state('');
 
+	// ── Derived streaming state ──────────────────────────────────────────────
+	let isStreaming = $derived(messages.some((m) => m.isStreaming === true));
+
 	return {
 		// ── Derived guards ────────────────────────────────────────────────────────
 		get isMutating() {
 			return editorStore.editState.status === 'loading' || chatState.status === 'loading';
 		},
+		get isStreaming() { return isStreaming; },
 
 		// ── Core session ──────────────────────────────────────────────────────────
 		get sessionId()    { return sessionId; },
@@ -165,6 +172,24 @@ function createChatStore() {
 			void tokenStore.refreshContextFileTokens(paths);
 		},
 
+		// ── Streaming control ──────────────────────────────────────────────────────
+
+		/**
+		 * Abort the current streaming response.
+		 * Marks any streaming messages as done and resets state.
+		 */
+		stopStreaming() {
+			if (abortController) {
+				abortController.abort();
+				abortController = null;
+			}
+			// Mark any streaming messages as done
+			messages = messages.map((m) =>
+				m.isStreaming ? { ...m, isStreaming: false, content: m.content + '\n\n⚠️ Stopped by user' } : m
+			);
+			chatState = { status: 'idle' };
+		},
+
 		// ── Images ────────────────────────────────────────────────────────────────
 
 		addPastedImage(img: PastedImage) {
@@ -202,6 +227,7 @@ function createChatStore() {
 		// ── Session lifecycle ─────────────────────────────────────────────────────
 
 		startNewChat() {
+			if (isStreaming) return; // Don't allow switching during streaming
 			sessionId    = crypto.randomUUID();
 			messages     = [];
 			pastedImages = [];
@@ -216,6 +242,7 @@ function createChatStore() {
 		},
 
 		async loadSession(id: string) {
+			if (isStreaming) return; // Don't allow switching during streaming
 			try {
 				const data = await api.getSession(id);
 				sessionId    = id;
@@ -259,10 +286,13 @@ function createChatStore() {
 		// ── Messaging ─────────────────────────────────────────────────────────────
 
 		async sendMessage(text: string) {
-			if (!text.trim() || chatState.status === 'loading') return;
+			if (!text.trim() || chatState.status === 'loading' || isStreaming) return;
 
 			const imagesToSend       = [...pastedImages];
 			const contextFilesToSend = [...contextFiles];
+
+			// Create abort controller for this stream
+			abortController = new AbortController();
 
 			// Optimistic UI — push user message immediately.
 			const optimisticMsg: Message = {
@@ -305,7 +335,7 @@ function createChatStore() {
 			};
 
 			try {
-				for await (const event of api.chatStream(payload)) {
+				for await (const event of api.chatStream(payload, abortController?.signal)) {
 					switch (event.type) {
 						case 'text':
 						case 'text_delta': {
@@ -369,9 +399,16 @@ function createChatStore() {
 				}
 
 				chatState = { status: 'success', data: undefined };
+				abortController = null;
 				await sessionStore.refresh();
 				void tokenStore.refreshSessionTokens(sessionId);
 			} catch (e) {
+				abortController = null;
+				// Don't show error for user-initiated abort
+				if (e instanceof DOMException && e.name === 'AbortError') {
+					chatState = { status: 'idle' };
+					return;
+				}
 				const msg = e instanceof Error ? e.message : 'Unknown error connecting to API.';
 				messages[assistantIdx] = {
 					...messages[assistantIdx],

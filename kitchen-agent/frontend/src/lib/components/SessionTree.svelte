@@ -16,9 +16,10 @@
 	type Props = {
 		activeId: string | null;
 		onload: (id: string) => void;
+		isStreaming?: boolean;
 	};
 
-	let { activeId, onload }: Props = $props();
+	let { activeId, onload, isStreaming = false }: Props = $props();
 
 	// ── Error toast for failed operations ────────────────────────────────────
 	let opError = $state('');
@@ -144,6 +145,16 @@
 	</div>
 </div>
 
+<!-- Streaming lock -->
+{#if isStreaming}
+	<div
+		class="mb-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700"
+		role="status"
+	>
+		Generating response — sessions locked
+	</div>
+{/if}
+
 <!-- Error toast -->
 {#if opError}
 	<div
@@ -176,7 +187,7 @@
 
 	<!-- Tree -->
 {:else}
-	<div class="flex min-h-0 flex-col overflow-y-auto pr-1">
+	<div class="flex min-h-0 flex-col overflow-y-auto pr-1 {isStreaming ? 'pointer-events-none opacity-50' : ''}">
 		<div class="space-y-0.5">
 			{#each visibleRoots as root (root.id)}
 				<SessionTreeNode

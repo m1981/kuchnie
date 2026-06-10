@@ -21,6 +21,9 @@
 		selectedProvider: string;
 		selectedModel: string;
 		onproviderchange: (provider: string, model: string) => void;
+		// Streaming state
+		isStreaming?: boolean;
+		onstop?: () => void;
 		// Bindable — parent can push notes into the textarea
 		currentMessage?: string;
 		textareaEl?: HTMLTextAreaElement | null;
@@ -31,6 +34,8 @@
 		selectedProvider,
 		selectedModel,
 		onproviderchange,
+		isStreaming = false,
+		onstop,
 		currentMessage = $bindable(''),
 		textareaEl = $bindable(null)
 	}: Props = $props();
@@ -291,19 +296,32 @@
 						</svg>
 					</button>
 
-					<!-- Send / Run button -->
-					<button
-						onclick={handleSend}
-						disabled={chatStore.chatState.status === 'loading' || !currentMessage.trim()}
-						data-testid="send-btn"
-						class="run-btn"
-					>
-						<span class="run-btn-label">Run</span>
-						<span class="run-btn-shortcut">
-							<span class="key-icon">⌘</span>
-							<span class="key-icon">↵</span>
-						</span>
-					</button>
+					<!-- Send / Stop button -->
+					{#if isStreaming}
+						<button
+							onclick={() => onstop?.()}
+							data-testid="stop-btn"
+							class="stop-btn"
+						>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+								<rect x="6" y="6" width="12" height="12" rx="2" />
+							</svg>
+							<span class="run-btn-label">Stop</span>
+						</button>
+					{:else}
+						<button
+							onclick={handleSend}
+							disabled={chatStore.chatState.status === 'loading' || !currentMessage.trim()}
+							data-testid="send-btn"
+							class="run-btn"
+						>
+							<span class="run-btn-label">Run</span>
+							<span class="run-btn-shortcut">
+								<span class="key-icon">⌘</span>
+								<span class="key-icon">↵</span>
+							</span>
+						</button>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -479,7 +497,8 @@
 
 	/* ── Run button ───────────────────────────────────────────────────── */
 
-	.run-btn {
+	.run-btn,
+	.stop-btn {
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -503,6 +522,15 @@
 	.run-btn:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.stop-btn {
+		background: #ea4335;
+	}
+
+	.stop-btn:hover {
+		background: #c5221f;
+		box-shadow: 0 1px 3px rgba(234, 67, 53, 0.4);
 	}
 
 	.run-btn-label {

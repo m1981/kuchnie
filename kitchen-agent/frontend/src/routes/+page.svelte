@@ -192,7 +192,8 @@
 
 		<button
 			onclick={() => chatStore.startNewChat()}
-			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none"
+			disabled={chatStore.isStreaming}
+			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
 		>
 			<span aria-hidden="true">+</span>
 			New chat
@@ -202,6 +203,7 @@
 			<SessionTree
 				activeId={chatStore.sessionId}
 				onload={(id) => chatStore.loadSession(id)}
+				isStreaming={chatStore.isStreaming}
 			/>
 		</div>
 
@@ -276,6 +278,8 @@
 			selectedProvider={chatStore.selectedProvider}
 			selectedModel={chatStore.selectedModel}
 			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
+			isStreaming={chatStore.isStreaming}
+			onstop={() => chatStore.stopStreaming()}
 			bind:currentMessage
 			bind:textareaEl
 		/>
