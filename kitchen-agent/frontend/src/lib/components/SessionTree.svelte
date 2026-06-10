@@ -145,16 +145,6 @@
 	</div>
 </div>
 
-<!-- Streaming lock -->
-{#if isStreaming}
-	<div
-		class="mb-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700"
-		role="status"
-	>
-		Generating response — sessions locked
-	</div>
-{/if}
-
 <!-- Error toast -->
 {#if opError}
 	<div
