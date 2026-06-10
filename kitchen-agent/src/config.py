@@ -37,6 +37,12 @@ from typing import Literal
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.providers.config import (
+    ANTHROPIC_DEFAULT_MODEL,
+    GEMINI_DEFAULT_MODEL,
+    MIMO_DEFAULT_MODEL,
+)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -73,7 +79,7 @@ class Settings(BaseSettings):
         return self.data_dir / "prompt_log.md"
 
     # ── Gemini ───────────────────────────────────────────────────────────────
-    gemini_model: str = "gemini-3.1-pro-preview"
+    gemini_model: str = GEMINI_DEFAULT_MODEL
     gemini_temperature: float = 0.2
 
     # ── Anthropic ────────────────────────────────────────────────────────────
@@ -82,7 +88,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
 
     # Model name.  Default: claude-sonnet-4-6 (fast, capable, cost-effective).
-    anthropic_model: str = "claude-sonnet-4-6"
+    anthropic_model: str = ANTHROPIC_DEFAULT_MODEL
 
     # Sampling temperature (0.0–1.0 recommended for Claude).
     anthropic_temperature: float = 0.2
@@ -95,7 +101,7 @@ class Settings(BaseSettings):
     # OpenAI-compatible API provided by Xiaomi.
     mimo_api_key: str | None = None
     mimo_base_url: str = "https://api.xiaomimimo.com/v1"
-    mimo_model: str = "mimo-v2.5-pro"
+    mimo_model: str = MIMO_DEFAULT_MODEL
     mimo_temperature: float = 0.2
     mimo_max_tokens: int = 8096
 

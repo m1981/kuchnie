@@ -3,37 +3,51 @@ src/providers/config.py
 ========================
 Provider-specific configuration dataclasses.
 
-Decouples provider implementations from the global ``Settings`` singleton.
-The DI layer (``dependencies.py``) builds these from ``Settings``; providers
-receive them via constructor injection.
+**Single Source of Truth for default model names.**
 
-Benefits
---------
-* Providers are testable without monkeypatching global settings.
-* Adding a new provider doesn't grow the ``Settings`` class.
-* Config is explicit at the type level — each provider knows exactly
-  what it needs.
+The constants ``GEMINI_DEFAULT_MODEL``, ``ANTHROPIC_DEFAULT_MODEL``,
+``MIMO_DEFAULT_MODEL`` are the canonical default model ids.  All other
+modules reference these constants instead of hardcoding strings:
+
+- ``config.py`` (Settings defaults)
+- ``api/providers.py`` (_PROVIDER_CATALOGUE, get_active_provider)
+- ``providers/config.py`` (dataclass defaults — same module)
+
+This eliminates the 4-way duplication that caused sync bugs when
+adding or changing models.
 
 Usage::
 
-    # In dependencies.py
-    config = GeminiConfig(model=settings.gemini_model, temperature=0.2)
-    provider = GeminiProvider(config=config)
+    # In api/providers.py
+    from src.providers.config import GEMINI_DEFAULT_MODEL
+    _PROVIDER_CATALOGUE = [
+        ProviderInfo(default_model=GEMINI_DEFAULT_MODEL, ...),
+    ]
 
-    # In tests
-    config = GeminiConfig(model="test-model", temperature=0.0)
-    provider = GeminiProvider(config=config)
+    # In config.py
+    from src.providers.config import GEMINI_DEFAULT_MODEL
+    class Settings:
+        gemini_model: str = GEMINI_DEFAULT_MODEL
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 
+# ── Canonical default model names (SINGLE SOURCE OF TRUTH) ──────────────────
+
+GEMINI_DEFAULT_MODEL: str = "gemini-3.1-pro-preview"
+ANTHROPIC_DEFAULT_MODEL: str = "claude-sonnet-4-6"
+MIMO_DEFAULT_MODEL: str = "mimo-v2.5-pro"
+
+
+# ── Provider config dataclasses ─────────────────────────────────────────────
+
 @dataclass(frozen=True)
 class GeminiConfig:
     """Configuration for the Google Gemini provider."""
 
-    model: str = "gemini-3.1-pro-preview"
+    model: str = GEMINI_DEFAULT_MODEL
     temperature: float = 0.2
 
 
@@ -42,7 +56,7 @@ class AnthropicConfig:
     """Configuration for the Anthropic Claude provider."""
 
     api_key: str | None = None
-    model: str = "claude-sonnet-4-6"
+    model: str = ANTHROPIC_DEFAULT_MODEL
     temperature: float = 0.2
     max_tokens: int = 8096
 
@@ -53,6 +67,6 @@ class MimoConfig:
 
     api_key: str | None = None
     base_url: str = "https://api.xiaomimimo.com/v1"
-    model: str = "mimo-v2.5-pro"
+    model: str = MIMO_DEFAULT_MODEL
     temperature: float = 0.2
     max_tokens: int = 8096
