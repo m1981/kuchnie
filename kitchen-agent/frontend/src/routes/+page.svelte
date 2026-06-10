@@ -34,11 +34,9 @@
 	import ChatHeader         from '$lib/components/ChatHeader.svelte';
 	import ChatMessageList    from '$lib/components/ChatMessageList.svelte';
 	import ChatComposer       from '$lib/components/ChatComposer.svelte';
-	import PromptInspector    from '$lib/components/PromptInspector.svelte';
 	import SessionTree        from '$lib/components/SessionTree.svelte';
 	import ContextSidebar     from '$lib/components/ContextSidebar.svelte';
 	import NotePopup          from '$lib/components/NotePopup.svelte';
-	import TruncateBar        from '$lib/components/TruncateBar.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Layout resize
@@ -99,7 +97,6 @@
 	const editError    = $derived(
 		chatStore.editState.status === 'error' ? chatStore.editState.message : ''
 	);
-	const isTruncating = $derived(chatStore.editState.status === 'loading');
 
 	// ---------------------------------------------------------------------------
 	// Busy-recent indicator — stays true for 300ms after operation completes
@@ -243,32 +240,11 @@
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
 
-				<PromptInspector
-					modeLabel={activeMode.label}
-					modeEyebrow={activeMode.eyebrow}
-					content={chatStore.promptDetailContent}
-					isLoading={chatStore.promptDetailState.status === 'loading'}
-					error={chatStore.promptDetailState.status === 'error'
-						? chatStore.promptDetailState.message
-						: ''}
-					ontoggle={(open) => chatStore.setPromptInspectorOpen(open)}
-				/>
-
 				<!-- Fork status pill -->
 				{#if chatStore.forkStatus}
 					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
 						{chatStore.forkStatus}
 					</p>
-				{/if}
-
-				<!-- Truncate bar — quick turn removal (only shown when there are messages) -->
-				{#if chatStore.messages.length >= 2}
-					<TruncateBar
-						totalMessages={chatStore.messages.length}
-						isBusy={isTruncating}
-						errorMessage={editError ?? ''}
-						ontruncate={(n) => chatStore.truncateMessages(n)}
-					/>
 				{/if}
 
 				<ChatMessageList

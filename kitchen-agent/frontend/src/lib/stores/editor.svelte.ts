@@ -143,33 +143,6 @@ function createEditorStore() {
 			}
 		},
 
-		async truncateMessages(
-			sessionId: string,
-			messages: Message[],
-			n: number,
-			onReplace: (newMessages: Message[]) => void,
-			onSuccess: () => void
-		): Promise<void> {
-			if (n < 1 || editState.status === 'loading') return;
-
-			const snapshot = [...messages];
-			const pairsToRemove = n * 2;
-			onReplace(messages.slice(0, Math.max(0, messages.length - pairsToRemove)));
-
-			editState = { status: 'loading' };
-			try {
-				await api.truncateMessages(sessionId, n);
-				editState = { status: 'success', data: undefined };
-				onSuccess();
-			} catch (e) {
-				onReplace(snapshot); // rollback
-				editState = {
-					status:  'error',
-					message: e instanceof Error ? e.message : 'Truncate failed.'
-				};
-			}
-		},
-
 		// ── System prompt ──────────────────────────────────────────────
 
 		/**

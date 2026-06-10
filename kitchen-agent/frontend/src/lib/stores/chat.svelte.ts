@@ -77,10 +77,6 @@ function createChatStore() {
 		get selectedModeId()      { return promptStore.selectedModeId; },
 		get modesState()          { return promptStore.modesState; },
 		get toolsEnabled()        { return promptStore.toolsEnabled; },
-		get promptDetailContent() { return promptStore.promptDetailContent; },
-		get promptDetailState()   { return promptStore.promptDetailState; },
-		get promptDetailForId()   { return promptStore.promptDetailForId; },
-		get promptInspectorOpen() { return promptStore.promptInspectorOpen; },
 
 		// ── Delegated getters (editorStore) ───────────────────────────────────────
 		get editingTurnId()       { return editorStore.editingTurnId; },
@@ -124,8 +120,6 @@ function createChatStore() {
 		toggleTools()               { promptStore.toggleTools(); },
 		setToolsEnabled(v: boolean) { promptStore.setToolsEnabled(v); },
 
-		setPromptInspectorOpen(open: boolean) { promptStore.setPromptInspectorOpen(open); },
-
 		// ── Delegated methods (editorStore) ───────────────────────────────────────
 
 		startEditing(turnId: string) {
@@ -144,15 +138,6 @@ function createChatStore() {
 		async deleteMessage(turnId: string, deletePair: boolean) {
 			await editorStore.deleteMessage(sessionId, messages, turnId, deletePair, (newMsgs) => {
 				messages = newMsgs;
-			});
-		},
-
-		async truncateMessages(n: number) {
-			await editorStore.truncateMessages(sessionId, messages, n, (newMsgs) => {
-				messages = newMsgs;
-			}, async () => {
-				await sessionStore.refresh();
-				void tokenStore.refreshSessionTokens(sessionId);
 			});
 		},
 

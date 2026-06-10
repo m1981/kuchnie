@@ -5,9 +5,6 @@
 	 * Top bar showing the active mode label, session badge, and the
 	 * context-sidebar toggle button.
 	 *
-	 * Also exposes a "Edit system prompt" button so the user can open the
-	 * session-scoped system prompt editor without having to touch the .md files.
-	 *
 	 * Props:
 	 *   modeIcon              — emoji icon for the active mode
 	 *   modeLabel             — human-readable label, e.g. "Design"
@@ -15,7 +12,6 @@
 	 *   showRight             — whether the context sidebar is currently visible
 	 *   hasSystemPromptOverride — true when a session-level override is active
 	 *   ontoggleright         — callback to toggle the context sidebar
-	 *   oneditprompt          — callback to open the system prompt editor
 	 */
 
 	type Props = {
