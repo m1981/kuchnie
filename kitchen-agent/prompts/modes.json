@@ -1,7 +1,7 @@
 [
   {
     "id":      "general",
-    "label":   "General2",
+    "label":   "General",
     "eyebrow": "Workspace help",
     "file":    "general.md"
   },
@@ -13,7 +13,7 @@
   },
   {
     "id":      "assembly",
-    "label":   "Assembly3",
+    "label":   "Assembly",
     "eyebrow": "Build and fitting",
     "file":    "assembly.md"
   }
