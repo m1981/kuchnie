@@ -83,14 +83,10 @@
 	);
 
 	// Derived: true when the session has a non-empty system prompt override.
-	const hasSystemPromptOverride = $derived(
-		chatStore.sessionSystemPrompt !== null && chatStore.sessionSystemPrompt !== ''
-	);
+	const hasSystemPromptOverride = $derived(chatStore.isSystemPromptOverride);
 
-	// Resolved system prompt text for the bubble: override ?? mode default
-	const systemPromptText = $derived(
-		chatStore.sessionSystemPrompt ?? ''
-	);
+	// Resolved system prompt text: override ?? mode default
+	const systemPromptText = $derived(chatStore.resolvedSystemPrompt);
 
 	// Derived: edit state helpers
 	const isEditSaving = $derived(chatStore.editState.status === 'loading');

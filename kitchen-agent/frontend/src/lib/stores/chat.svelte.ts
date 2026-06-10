@@ -83,6 +83,8 @@ function createChatStore() {
 		get editDraft()           { return editorStore.editDraft; },
 		get editState()           { return editorStore.editState; },
 		get sessionSystemPrompt()    { return editorStore.sessionSystemPrompt; },
+		get resolvedSystemPrompt()   { return editorStore.resolvedSystemPrompt; },
+		get isSystemPromptOverride() { return editorStore.isSystemPromptOverride; },
 		get systemPromptDraft()      { return editorStore.systemPromptDraft; },
 		get systemPromptState()      { return editorStore.systemPromptState; },
 		get systemPromptError()      { return editorStore.systemPromptError; },
@@ -109,12 +111,19 @@ function createChatStore() {
 
 		// ── Delegated methods (promptStore) ───────────────────────────────────────
 
-		async loadModes() { return promptStore.loadModes(); },
+		async loadModes() {
+			const result = await promptStore.loadModes();
+			// Load mode default prompt for the bubble
+			void editorStore.loadModeDefaultPrompt(promptStore.selectedModeId);
+			return result;
+		},
 
 		setSelectedModeId(id: string, modes?: import('$lib/api').PromptMode[]) {
 			promptStore.setSelectedModeId(id, modes);
 			// Update cached system prompt for token estimation
 			void tokenStore.refreshCachedSystemPrompt(promptStore.selectedModeId);
+			// Reload mode default prompt for the bubble
+			void editorStore.loadModeDefaultPrompt(promptStore.selectedModeId);
 		},
 
 		toggleTools()               { promptStore.toggleTools(); },

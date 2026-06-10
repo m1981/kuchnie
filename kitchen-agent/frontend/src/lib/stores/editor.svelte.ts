@@ -25,6 +25,7 @@ function createEditorStore() {
 
 	// ── System prompt ─────────────────────────────────────────────────
 	let sessionSystemPrompt    = $state<string | null>(null);
+	let modeDefaultPrompt      = $state<string>('');
 	let systemPromptDraft      = $state<string>('');
 	let systemPromptState      = $state<AsyncState<void>>({ status: 'idle' });
 
@@ -36,6 +37,11 @@ function createEditorStore() {
 
 		// System prompt
 		get sessionSystemPrompt()    { return sessionSystemPrompt; },
+		get modeDefaultPrompt()      { return modeDefaultPrompt; },
+		/** Resolved text: session override ?? mode default */
+		get resolvedSystemPrompt()   { return sessionSystemPrompt ?? modeDefaultPrompt; },
+		/** Whether the displayed text is a session-specific override */
+		get isSystemPromptOverride() { return sessionSystemPrompt !== null && sessionSystemPrompt !== ''; },
 		get systemPromptDraft()      { return systemPromptDraft; },
 		get systemPromptState()      { return systemPromptState; },
 		get systemPromptError() {
@@ -146,6 +152,19 @@ function createEditorStore() {
 		// ── System prompt ──────────────────────────────────────────────
 
 		/**
+		 * Load the mode's default system prompt from the API.
+		 * Called on mount and when the mode changes.
+		 */
+		async loadModeDefaultPrompt(modeId: string) {
+			try {
+				const detail = await api.getPromptModeDetail(modeId);
+				modeDefaultPrompt = detail.content ?? '';
+			} catch {
+				modeDefaultPrompt = '';
+			}
+		},
+
+		/**
 		 * Load the session's system prompt override from the backend.
 		 * Called on session load. null = no override (use mode default).
 		 */
@@ -199,6 +218,7 @@ function createEditorStore() {
 			editDraft           = '';
 			editState           = { status: 'idle' };
 			sessionSystemPrompt = null;
+			// modeDefaultPrompt persists — it's mode-scoped, not session-scoped
 			systemPromptDraft   = '';
 			systemPromptState   = { status: 'idle' };
 		}
