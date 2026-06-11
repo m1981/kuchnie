@@ -66,11 +66,11 @@ class ContextBudget:
     total: int = 128_000
     allocations: dict[ContextSlot, float] = field(default_factory=lambda: {
         ContextSlot.SYSTEM_PROMPT:        0.05,
-        ContextSlot.CONVERSATION_HISTORY: 0.50,
+        ContextSlot.CONVERSATION_HISTORY: 0.35,
         ContextSlot.ATTACHED_NOTES:       0.15,
         ContextSlot.ATTACHED_FILES:       0.15,
         ContextSlot.SEARCH_RESULTS:       0.10,
-        ContextSlot.TOOL_RESULTS:         0.05,
+        ContextSlot.TOOL_RESULTS:         0.20,
     })
 
     def tokens_for(self, slot: ContextSlot) -> int:

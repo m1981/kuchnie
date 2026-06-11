@@ -90,9 +90,9 @@ class TestContextBudget:
         budget = ContextBudget(total=100_000)
         assert budget.tokens_for(ContextSlot.SYSTEM_PROMPT) == 5_000
 
-    def test_tokens_for_history_is_50_percent(self):
+    def test_tokens_for_history_is_35_percent(self):
         budget = ContextBudget(total=100_000)
-        assert budget.tokens_for(ContextSlot.CONVERSATION_HISTORY) == 50_000
+        assert budget.tokens_for(ContextSlot.CONVERSATION_HISTORY) == 35_000
 
     def test_custom_total(self):
         budget = ContextBudget(total=50_000)
