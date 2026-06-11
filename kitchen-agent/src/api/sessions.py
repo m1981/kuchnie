@@ -24,8 +24,11 @@ from __future__ import annotations
 import json
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+
+log = structlog.get_logger(__name__)
 
 from src.dependencies import (
     get_export_service,
