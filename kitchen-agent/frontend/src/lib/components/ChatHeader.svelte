@@ -19,6 +19,8 @@
 		modeIcon: string;
 		modeLabel: string;
 		sessionId: string;
+		/** Session title from the database. Falls back to session ID if null. */
+		title?: string | null;
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
 		ontoggleright: () => void;
@@ -29,10 +31,14 @@
 		modeIcon,
 		modeLabel,
 		sessionId,
+		title = null,
 		showRight,
 		hasSystemPromptOverride,
 		ontoggleright
 	}: Props = $props();
+
+	/** Display title: use provided title, or fallback to short session ID */
+	const displayTitle = $derived(title ?? `Session ${sessionId.substring(0, 8)}`);
 </script>
 
 <header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
@@ -45,12 +51,12 @@
 			</p>
 			<div class="mt-1 flex flex-wrap items-center gap-2">
 				<h2 class="text-xl font-semibold text-ink md:text-2xl">
-					{modeIcon}&nbsp;{modeLabel} mode
+					{displayTitle}
 				</h2>
 				<span
 					class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted"
 				>
-					Session {sessionId.substring(0, 8)}
+					{modeIcon}&nbsp;{modeLabel}
 				</span>
 
 				<!-- Prompt override indicator badge -->

@@ -98,6 +98,15 @@ function createSessionStore() {
 			return activeId;
 		},
 
+		/**
+		 * Get the title for a specific session by ID.
+		 * Returns null if session not found or has no title.
+		 */
+		getTitleById(id: string): string | null {
+			const node = flat.find((n) => n.id === id);
+			return node?.title ?? null;
+		},
+
 		// ── Mutations ────────────────────────────────────────────────────────
 
 		setActive(id: string) {

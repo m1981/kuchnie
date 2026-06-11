@@ -120,6 +120,9 @@
 	// Derived: current session ID from URL (guaranteed to exist for this route)
 	const currentSessionId = $derived($page.params.id ?? '');
 
+	// Session title from the session store (null if new/unknown session)
+	const sessionTitle = $derived(sessionStore.getTitleById(currentSessionId));
+
 	$effect(() => {
 		const id = currentSessionId;
 
@@ -283,6 +286,7 @@
 			modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
 			modeLabel={activeMode.label}
 			sessionId={currentSessionId}
+			title={sessionTitle}
 			showRight={sidebarResize.showRight}
 			hasSystemPromptOverride={hasSystemPromptOverride}
 			ontoggleright={() => sidebarResize.toggleRight()}
