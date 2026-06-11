@@ -1,62 +1,15 @@
 """
 tests/unit/tools/test_search_improvements.py
 ==============================================
-Regression tests for search_knowledge_base improvements.
+Regression tests for search_knowledge_base tool.
 
-Problem observed (2026-06-11):
-  Anthropic Claude used spaces instead of | for OR queries:
-    "Blum szuflady Tandembox" → No matches (wrong!)
-    "Blum|szuflady|Tandembox" → Found results (correct)
-
-Root cause: Tool description was unclear about regex syntax.
-Fixes:
-  1. Improved tool description with WRONG vs RIGHT examples
-  2. Auto-sanitization: convert spaces to | when query has no |
-  3. Fallback hint in "No matches" response
+These tests verify correct regex behavior for LLM-driven searches.
+The LLM is expected to use regex syntax (| for OR) as instructed
+in the system prompt.
 """
 import os
 import pytest
 from pathlib import Path
-
-
-@pytest.fixture
-def tmp_kb(tmp_path: Path):
-    """Creates a temporary knowledge base with Blum-related content."""
-    (tmp_path / "blum_compendium.md").write_text(
-        """# Szuflady Blum
-
-## Tandembox Antaro
-Klasyczny system szufladowy. Prowadnice widoczne.
-
-## Merivobox
-Złoty standard na 2026. Prowadnica ukryta.
-
-## Legrabox
-Premium. Szklane ścianki boczne.
-""",
-        encoding="utf-8",
-    )
-    (tmp_path / "standards.md").write_text(
-        """# Standardy materiałowe
-
-- Zawiasy: Blum Clip Top Blumotion
-- Szuflady: Blum Merivobox lub Tandembox Antaro
-- Podnośniki: Blum Aventos HF
-""",
-        encoding="utf-8",
-    )
-    (tmp_path / "playbook.md").write_text(
-        """# Playbook
-
-## Montaż
-Fronty, szuflady, AGD — 12:30-15:00
-
-## Okucia
-Koszt okuć Blum komplet: 1500-2000 zł
-""",
-        encoding="utf-8",
-    )
-    return tmp_path
 
 
 # ---------------------------------------------------------------------------
@@ -76,53 +29,27 @@ def test_or_query_with_pipe(tmp_kb):
 
 
 # ---------------------------------------------------------------------------
-# Test 2: Space-separated queries get auto-converted to OR
+# Test 2: Multi-word OR queries work correctly
 # ---------------------------------------------------------------------------
 
-def test_space_separated_autoconverted_to_or(tmp_kb):
-    """When query has spaces but no |, auto-convert to OR for LLM convenience."""
+def test_multi_word_or_query(tmp_kb):
+    """Multiple terms with pipes should find all terms."""
     from src.tools.file_ops import search_knowledge_base
 
-    # This is what Claude did wrong — spaces instead of |
-    result = search_knowledge_base("Blum szuflady Tandembox", base_dir=str(tmp_kb))
+    result = search_knowledge_base("Merivobox|Legrabox|Tandembox", base_dir=str(tmp_kb))
     assert "error" not in result
     content = result["content"]
-    # Should find matches (auto-converted to Blum|szuflady|Tandembox)
-    assert "No matches" not in content
-    assert "blum_compendium.md" in content or "standards.md" in content
-
-
-def test_space_separated_finds_all_terms(tmp_kb):
-    """3+ word queries should be auto-converted to OR to find all terms."""
-    from src.tools.file_ops import search_knowledge_base
-
-    # 3+ words: auto-convert to OR
-    result = search_knowledge_base("Merivobox Legrabox Tandembox", base_dir=str(tmp_kb))
-    assert "error" not in result
-    content = result["content"]
-    # All terms should be found (auto-converted to Merivobox|Legrabox|Tandembox)
+    # All terms should be found
     assert "Merivobox" in content or "merivobox" in content.lower()
     assert "Legrabox" in content or "legrabox" in content.lower()
 
 
-def test_two_word_phrase_not_converted(tmp_kb):
-    """Two-word phrases should NOT be auto-converted (often specific terms)."""
-    from src.tools.file_ops import search_knowledge_base
-
-    # "Blum komplet" is a specific phrase, not two separate terms
-    result = search_knowledge_base("Blum komplet", base_dir=str(tmp_kb))
-    assert "error" not in result
-    content = result["content"]
-    # Should find the exact phrase "Blum komplet" (from playbook.md)
-    assert "Blum komplet" in content
-
-
 # ---------------------------------------------------------------------------
-# Test 3: Exact phrases (quoted) are NOT auto-converted
+# Test 3: Exact phrases (quoted) work correctly
 # ---------------------------------------------------------------------------
 
-def test_quoted_phrase_not_converted(tmp_kb):
-    """Quoted phrases should be preserved as-is."""
+def test_quoted_phrase_search(tmp_kb):
+    """Quoted phrases should find exact matches."""
     from src.tools.file_ops import search_knowledge_base
 
     # Quoted phrase should be kept intact
@@ -134,35 +61,7 @@ def test_quoted_phrase_not_converted(tmp_kb):
 
 
 # ---------------------------------------------------------------------------
-# Test 4: Queries with | are passed through unchanged
-# ---------------------------------------------------------------------------
-
-def test_pipe_query_passed_through(tmp_kb):
-    """Queries already using | should not be modified."""
-    from src.tools.file_ops import search_knowledge_base
-
-    result = search_knowledge_base("Blum|Antaro|Merivobox", base_dir=str(tmp_kb))
-    assert "error" not in result
-    content = result["content"]
-    assert "No matches" not in content
-
-
-# ---------------------------------------------------------------------------
-# Test 5: "No matches" response includes helpful hint
-# ---------------------------------------------------------------------------
-
-def test_no_matches_hint(tmp_kb):
-    """When no matches found, response should suggest using | for OR."""
-    from src.tools.file_ops import search_knowledge_base
-
-    result = search_knowledge_base("unicorn|dragon", base_dir=str(tmp_kb))
-    assert "error" not in result
-    content = result["content"]
-    assert "No matches" in content
-
-
-# ---------------------------------------------------------------------------
-# Test 6: Single word queries still work
+# Test 4: Single word queries work
 # ---------------------------------------------------------------------------
 
 def test_single_word_query(tmp_kb):
@@ -177,7 +76,7 @@ def test_single_word_query(tmp_kb):
 
 
 # ---------------------------------------------------------------------------
-# Test 7: Regex special characters are handled
+# Test 5: Regex special characters work
 # ---------------------------------------------------------------------------
 
 def test_regex_special_chars(tmp_kb):
@@ -192,18 +91,47 @@ def test_regex_special_chars(tmp_kb):
 
 
 # ---------------------------------------------------------------------------
-# Test 8: context_lines parameter works with auto-conversion
+# Test 6: "No matches" response is clear
 # ---------------------------------------------------------------------------
 
-def test_context_lines_with_autoconversion(tmp_kb):
-    """context_lines should work correctly after auto-conversion."""
+def test_no_matches_response(tmp_kb):
+    """When no matches found, response should be clear."""
     from src.tools.file_ops import search_knowledge_base
 
-    # 3+ words: auto-convert to OR
+    result = search_knowledge_base("unicorn|dragon", base_dir=str(tmp_kb))
+    assert "error" not in result
+    content = result["content"]
+    assert "No matches" in content
+
+
+# ---------------------------------------------------------------------------
+# Test 7: context_lines parameter works
+# ---------------------------------------------------------------------------
+
+def test_context_lines_works(tmp_kb):
+    """context_lines should control how many lines around match are shown."""
+    from src.tools.file_ops import search_knowledge_base
+
     result = search_knowledge_base(
-        "Blum szuflady Tandembox", base_dir=str(tmp_kb), context_lines=3,
+        "Blum|szuflady|Tandembox", base_dir=str(tmp_kb), context_lines=3,
     )
     assert "error" not in result
     content = result["content"]
     # Should have context lines (>> markers)
     assert ">>" in content
+
+
+# ---------------------------------------------------------------------------
+# Test 8: Two-word phrase searches work (e.g., "37 mm")
+# ---------------------------------------------------------------------------
+
+def test_two_word_phrase_search(tmp_kb):
+    """Two-word phrases should be searched as-is (not split)."""
+    from src.tools.file_ops import search_knowledge_base
+
+    # "Blum komplet" is a specific phrase in playbook.md
+    result = search_knowledge_base("Blum komplet", base_dir=str(tmp_kb))
+    assert "error" not in result
+    content = result["content"]
+    # Should find the exact phrase
+    assert "Blum komplet" in content
