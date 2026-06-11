@@ -380,7 +380,7 @@ class TestWarningMessageOnTruncation:
         assert len(output.tool_logs) == 1
         result_content = output.tool_logs[0]["result"]["content"]
         assert "truncat" in result_content.lower()
-        assert "narrow your search" in result_content.lower()
+        assert "answer from what you have" in result_content.lower()
 
 
 # ---------------------------------------------------------------------------

@@ -242,8 +242,9 @@ class TurnOrchestrator:
         """
         truncated = False
         warning_suffix = (
-            "\n\n... [truncated: result was too large for context budget."
-            " Ask a more specific question or narrow your search.]"
+            "\n\n... [truncated: content above is partial. "
+            "Answer from what you have. If you need more detail on a specific file, "
+            "use read_file on the most relevant file path shown above.]"
         )
         warning_tokens = self._token_counter.count(warning_suffix)
 
