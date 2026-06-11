@@ -13,16 +13,23 @@
 
 import { api, type PromptMode } from '$lib/api';
 import type { AsyncState } from '$lib/types';
+import { persisted } from '$lib/persist.svelte';
 
 function createPromptStore() {
-	let selectedModeId = $state('general');
-	let modesState     = $state<AsyncState<void>>({ status: 'idle' });
-	let toolsEnabled   = $state<boolean>(true);
+	let selectedModeId = persisted<string>('ka:mode', 'general');
+	let modesState = $state<AsyncState<void>>({ status: 'idle' });
+	let toolsEnabled = persisted<boolean>('ka:tools', true);
 
 	return {
-		get selectedModeId() { return selectedModeId; },
-		get modesState()     { return modesState; },
-		get toolsEnabled()   { return toolsEnabled; },
+		get selectedModeId() {
+			return selectedModeId.current;
+		},
+		get modesState() {
+			return modesState;
+		},
+		get toolsEnabled() {
+			return toolsEnabled.current;
+		},
 
 		async loadModes(): Promise<PromptMode[]> {
 			if (modesState.status === 'loading') return [];
@@ -31,12 +38,19 @@ function createPromptStore() {
 				const fetched = await api.getPromptModes();
 				modesState = { status: 'success', data: undefined };
 				// Keep selectedModeId when still valid, otherwise fall back to first.
-				if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId)) {
-					selectedModeId = fetched[0].id;
+				let modeReset = false;
+				if (fetched.length > 0 && !fetched.find((m) => m.id === selectedModeId.current)) {
+					selectedModeId.current = fetched[0].id;
+					modeReset = true;
 				}
-				// Sync toolsEnabled to the selected mode's default from the live list.
-				const activeModeData = fetched.find((m) => m.id === selectedModeId);
-				if (activeModeData !== undefined) toolsEnabled = activeModeData.tools_enabled_default ?? true;
+				// Sync toolsEnabled to mode default only when the mode was just reset
+				// (i.e. the persisted mode no longer exists). Otherwise respect the
+				// user's persisted toggle choice.
+				if (modeReset) {
+					const activeModeData = fetched.find((m) => m.id === selectedModeId.current);
+					if (activeModeData !== undefined)
+						toolsEnabled.current = activeModeData.tools_enabled_default ?? true;
+				}
 				return fetched;
 			} catch (e) {
 				console.error('Failed to load prompt modes', e);
@@ -46,21 +60,21 @@ function createPromptStore() {
 		},
 
 		setSelectedModeId(id: string, modes?: PromptMode[]) {
-			if (id === selectedModeId) return;
-			selectedModeId = id;
+			if (id === selectedModeId.current) return;
+			selectedModeId.current = id;
 			// Sync toolsEnabled to the new mode's default when provided.
 			if (modes) {
 				const mode = modes.find((m) => m.id === id);
-				if (mode !== undefined) toolsEnabled = mode.tools_enabled_default ?? true;
+				if (mode !== undefined) toolsEnabled.current = mode.tools_enabled_default ?? true;
 			}
 		},
 
 		toggleTools() {
-			toolsEnabled = !toolsEnabled;
+			toolsEnabled.current = !toolsEnabled.current;
 		},
 
 		setToolsEnabled(value: boolean) {
-			toolsEnabled = value;
+			toolsEnabled.current = value;
 		},
 
 		/** Reset to defaults. Called on startNewChat. */

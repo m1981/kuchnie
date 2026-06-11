@@ -11,38 +11,49 @@
  * Independent — no cross-store dependencies.
  */
 
-import { api }          from '$lib/api';
+import { api } from '$lib/api';
 import { PROVIDERS, type ProviderInfo } from '$lib/providers';
+import { persisted } from '$lib/persist.svelte';
 
 function createProviderStore() {
-	let providers        = $state<ProviderInfo[]>(PROVIDERS);
-	let selectedProvider = $state<string>('');
-	let selectedModel    = $state<string>('');
-	let appTitle         = $state('Agentic Workspace');
-	let appDescription   = $state('');
+	let providers = $state<ProviderInfo[]>(PROVIDERS);
+	let selectedProvider = persisted<string>('ka:provider', '');
+	let selectedModel = persisted<string>('ka:model', '');
+	let appTitle = $state('Agentic Workspace');
+	let appDescription = $state('');
 
 	return {
-		get providers()        { return providers; },
-		get selectedProvider() { return selectedProvider; },
-		get selectedModel()    { return selectedModel; },
-		get appTitle()         { return appTitle; },
-		get appDescription()   { return appDescription; },
+		get providers() {
+			return providers;
+		},
+		get selectedProvider() {
+			return selectedProvider.current;
+		},
+		get selectedModel() {
+			return selectedModel.current;
+		},
+		get appTitle() {
+			return appTitle;
+		},
+		get appDescription() {
+			return appDescription;
+		},
 
 		/**
 		 * Return the context window size in thousands of tokens for the
 		 * currently selected model. Falls back to 1000 (Gemini default).
 		 */
 		get contextWindowK(): number {
-			const provider = providers.find(p => p.id === selectedProvider);
+			const provider = providers.find((p) => p.id === selectedProvider.current);
 			if (!provider) return 1000;
-			const model = provider.models.find(m => m.id === selectedModel);
+			const model = provider.models.find((m) => m.id === selectedModel.current);
 			return model?.context_k ?? provider.models[0]?.context_k ?? 1000;
 		},
 
 		async loadAppInfo() {
 			try {
 				const info = await api.getAppInfo();
-				appTitle       = info.title;
+				appTitle = info.title;
 				appDescription = info.description;
 			} catch {
 				// Backend not yet updated — keep generic defaults.
@@ -60,24 +71,24 @@ function createProviderStore() {
 					providers = providerList;
 				}
 
-				if (!selectedProvider) selectedProvider = active.provider;
-				if (!selectedModel)    selectedModel    = active.model;
+				if (!selectedProvider.current) selectedProvider.current = active.provider;
+				if (!selectedModel.current) selectedModel.current = active.model;
 			} catch {
-				if (!selectedProvider && providers.length > 0) {
-					selectedProvider = providers[0].id;
-					selectedModel    = providers[0].default_model;
+				if (!selectedProvider.current && providers.length > 0) {
+					selectedProvider.current = providers[0].id;
+					selectedModel.current = providers[0].default_model;
 				}
 			}
 		},
 
 		setProvider(id: string) {
-			selectedProvider = id;
+			selectedProvider.current = id;
 			const p = providers.find((p) => p.id === id);
-			selectedModel = p?.default_model ?? '';
+			selectedModel.current = p?.default_model ?? '';
 		},
 
 		setModel(id: string) {
-			selectedModel = id;
+			selectedModel.current = id;
 		},
 
 		/**
@@ -85,8 +96,8 @@ function createProviderStore() {
 		 * Called after session load and after each chat response.
 		 */
 		syncFromMessage(provider?: string, model?: string) {
-			if (provider) selectedProvider = provider;
-			if (model)    selectedModel    = model;
+			if (provider) selectedProvider.current = provider;
+			if (model) selectedModel.current = model;
 		},
 
 		/**
