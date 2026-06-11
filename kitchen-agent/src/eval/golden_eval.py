@@ -89,6 +89,7 @@ class EvalRun:
     """Complete evaluation run with all results."""
     results: list[EvalResult]
     total_duration_ms: float
+    prompts: dict[str, str] = field(default_factory=dict)  # mode -> prompt content
 
     @property
     def total_cases(self) -> int:
@@ -148,7 +149,7 @@ class EvalRun:
 
     def to_dict(self) -> dict:
         """Convert to JSON-serializable dict."""
-        return {
+        result = {
             "summary": {
                 "total_cases": self.total_cases,
                 "passed_cases": self.passed_cases,
@@ -177,6 +178,9 @@ class EvalRun:
                 for r in self.results
             ],
         }
+        if self.prompts:
+            result["prompts"] = self.prompts
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +249,9 @@ class GoldenDatasetEval:
         if case_ids:
             cases = [c for c in cases if c.id in case_ids]
 
+        # Capture prompts used in this evaluation run
+        prompts = self._capture_prompts(cases)
+
         results = []
         for case in cases:
             log.info("eval_running_case", case_id=case.id, question=case.question[:50])
@@ -258,7 +265,7 @@ class GoldenDatasetEval:
             )
 
         total_duration = (time.time() - start_time) * 1000
-        return EvalRun(results=results, total_duration_ms=total_duration)
+        return EvalRun(results=results, total_duration_ms=total_duration, prompts=prompts)
 
     def _load_dataset(self, path: Path) -> list[EvalCase]:
         """Load and parse the YAML dataset."""
@@ -277,6 +284,37 @@ class GoldenDatasetEval:
             ))
 
         return cases
+
+    def _capture_prompts(self, cases: list[EvalCase]) -> dict[str, str]:
+        """
+        Capture the prompts used in this evaluation run.
+        
+        Returns dict mapping mode_id -> prompt content.
+        """
+        prompts = {}
+        
+        # Get unique modes from cases
+        modes = set(c.mode for c in cases)
+        
+        # Access prompt manager through orchestrator's context assembler
+        # Guard against mock objects in tests
+        ctx = getattr(self._orchestrator, '_ctx', None)
+        if ctx is None:
+            return prompts
+        
+        prompt_manager = getattr(ctx, '_prompts', None)
+        if prompt_manager is None:
+            return prompts
+        
+        for mode in modes:
+            try:
+                prompt_content = prompt_manager.get_system_instruction(mode)
+                prompts[mode] = prompt_content
+            except Exception as e:
+                log.warning("prompt_capture_failed", mode=mode, error=str(e))
+                prompts[mode] = f"[Error capturing prompt: {e}]"
+        
+        return prompts
 
     def _run_case(self, case: EvalCase) -> EvalResult:
         """Run a single evaluation case."""
