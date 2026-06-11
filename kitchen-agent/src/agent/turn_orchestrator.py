@@ -152,6 +152,8 @@ class TurnOrchestrator:
         provider_name: str = "gemini",
         max_tool_iterations: int = 10,
         tool_registry: Any | None = None,
+        token_counter: Any | None = None,
+        context_budget: Any | None = None,
     ) -> None:
         self._ctx = context_assembler
         self._tools = tool_executor
@@ -160,6 +162,8 @@ class TurnOrchestrator:
         self._provider_name = provider_name
         self._max_tool_iterations = max_tool_iterations
         self._tool_registry = tool_registry
+        self._token_counter = token_counter
+        self._context_budget = context_budget
         self._log = structlog.get_logger(__name__)
 
     # ── Shared helpers ──────────────────────────────────────────────────
@@ -210,6 +214,56 @@ class TurnOrchestrator:
                        else {"error": d.result_content}),
         } for d in tool_details]
         return calls, logs
+
+    # ── Tool budget enforcement ────────────────────────────────────────
+
+    def _get_tool_budget_tokens(self) -> int | None:
+        """Return the tool budget in tokens, or None if no budget configured."""
+        if self._context_budget is None or self._token_counter is None:
+            return None
+        from src.agent.context_assembler import ContextSlot
+        return self._context_budget.tokens_for(ContextSlot.TOOL_RESULTS)
+
+    def _count_and_truncate_tool_results(
+        self,
+        tool_results: list[ToolResult],
+        tool_tokens_used: int,
+        tool_budget_tokens: int,
+    ) -> tuple[list[ToolResult], int, bool]:
+        """
+        Count tokens for tool results and truncate if over budget.
+
+        Returns:
+            (possibly_truncated_results, new_tool_tokens_used, was_truncated)
+        """
+        truncated = False
+        warning_suffix = (
+            "\n\n... [truncated: result was too large for context budget."
+            " Ask a more specific question or narrow your search.]"
+        )
+        warning_tokens = self._token_counter.count(warning_suffix)
+
+        for tr in tool_results:
+            tokens = self._token_counter.count(tr.content)
+            remaining_budget = tool_budget_tokens - tool_tokens_used
+
+            if tokens > remaining_budget and remaining_budget > 0:
+                # Reserve space for the warning text
+                truncate_budget = max(0, remaining_budget - warning_tokens)
+                tr.content = self._token_counter.trim_to(tr.content, truncate_budget)
+                tr.content += warning_suffix
+                tokens = self._token_counter.count(tr.content)
+                truncated = True
+                self._log.warning(
+                    "tool_result_truncated",
+                    tool_name=tr.name,
+                    original_tokens=tokens,
+                    remaining_budget=remaining_budget,
+                )
+
+            tool_tokens_used += tokens
+
+        return tool_results, tool_tokens_used, truncated
 
     # ── run() ────────────────────────────────────────────────────────────
 
@@ -298,6 +352,8 @@ class TurnOrchestrator:
         tool_calls_made: list[str] = []
         tool_details: list[ToolCallDetail] = []
         iterations = 0
+        tool_tokens_used = 0
+        tool_budget_tokens = self._get_tool_budget_tokens()
 
         # Edge case: LLM returned tool_calls but use_tools=False.
         # This can happen when the model hallucinates tools (e.g. mimo).
@@ -334,16 +390,57 @@ class TurnOrchestrator:
                 calls, results = self._execute_tool_calls(normalized, tool_details)
             timing["tools_count"] = len(results)
 
+            # ── Token budget enforcement ──────────────────────────────
+            was_truncated = False
+            if tool_budget_tokens is not None:
+                results, tool_tokens_used, was_truncated = (
+                    self._count_and_truncate_tool_results(
+                        results, tool_tokens_used, tool_budget_tokens,
+                    )
+                )
+                # Update tool_details with possibly truncated content
+                for detail, tr in zip(tool_details[-len(results):], results):
+                    detail.result_content = tr.content
+
+                self._log.info(
+                    "orchestrator_tool_budget",
+                    tool_tokens_used=tool_tokens_used,
+                    tool_budget_tokens=tool_budget_tokens,
+                    was_truncated=was_truncated,
+                )
+
             tool_calls_made.extend(
                 tc.name for tc in normalized.tool_calls
             )
 
-            # Feed results back to LLM
-            self._log.info("orchestrator_feeding_tool_results_to_llm")
-            raw_response = provider.complete_with_tools(
-                context, calls, results,
-            )
-            normalized = self._normalizer.normalize(raw_response, provider_name)
+            # If budget exceeded, stop the tool loop
+            if was_truncated:
+                self._log.warning(
+                    "orchestrator_tool_budget_exceeded",
+                    tool_tokens_used=tool_tokens_used,
+                    tool_budget_tokens=tool_budget_tokens,
+                    message="Tool results exceeded budget. Stopping tool loop.",
+                )
+                # Force LLM to produce a text response from partial results
+                raw_response = provider.complete_with_tools(
+                    context, calls, results,
+                )
+                normalized = self._normalizer.normalize(raw_response, provider_name)
+                # Override: don't allow more tool calls
+                normalized = NormalizedResponse(
+                    text=normalized.text,
+                    has_tool_calls=False,
+                    tool_calls=[],
+                    usage=normalized.usage,
+                    raw=normalized.raw,
+                )
+            else:
+                # Feed results back to LLM normally
+                self._log.info("orchestrator_feeding_tool_results_to_llm")
+                raw_response = provider.complete_with_tools(
+                    context, calls, results,
+                )
+                normalized = self._normalizer.normalize(raw_response, provider_name)
 
         # 4. Build output
         tool_calls_made_objects, tool_logs = self._build_output_from_details(tool_details)
@@ -386,6 +483,11 @@ class TurnOrchestrator:
 
         # Capture actual model used — provider._model holds the resolved value.
         actual_model = getattr(provider, "_model", "") or ""
+
+        # Record tool token usage for observability
+        if tool_budget_tokens is not None:
+            from src.agent.context_assembler import ContextSlot
+            context.slots_used[ContextSlot.TOOL_RESULTS] = tool_tokens_used
 
         return TurnOutput(
             assistant_message=normalized.text,
@@ -463,6 +565,8 @@ class TurnOrchestrator:
         tool_calls_made: list[str] = []
         tool_details: list[ToolCallDetail] = []
         iterations = 0
+        tool_tokens_used = 0
+        tool_budget_tokens = self._get_tool_budget_tokens()
 
         # Generate stable turn IDs
         user_turn_id = str(uuid.uuid4())
@@ -506,6 +610,18 @@ class TurnOrchestrator:
             # Execute tools and record details
             calls, results = self._execute_tool_calls(normalized, tool_details)
 
+            # ── Token budget enforcement ──────────────────────────────
+            was_truncated = False
+            if tool_budget_tokens is not None:
+                results, tool_tokens_used, was_truncated = (
+                    self._count_and_truncate_tool_results(
+                        results, tool_tokens_used, tool_budget_tokens,
+                    )
+                )
+                # Update tool_details with possibly truncated content
+                for detail, tr in zip(tool_details[-len(results):], results):
+                    detail.result_content = tr.content
+
             # Yield tool_result events
             for tc, tr in zip(calls, results):
                 yield {
@@ -516,18 +632,45 @@ class TurnOrchestrator:
                     "id": tc.id,
                 }
 
-            # Continue streaming after tools — next iteration
-            normalized = None
-            for event in self._stream_and_collect_with_tools(
-                provider, context, calls, results, provider_name, full_text,
-            ):
-                if event["type"] == "__normalized__":
-                    normalized = event["response"]
-                else:
-                    yield event  # forward text_delta
+            # If budget exceeded, stop the tool loop
+            if was_truncated:
+                self._log.warning(
+                    "orchestrator_stream_tool_budget_exceeded",
+                    tool_tokens_used=tool_tokens_used,
+                    tool_budget_tokens=tool_budget_tokens,
+                )
+                # Force LLM to produce text from partial results
+                normalized = None
+                for event in self._stream_and_collect_with_tools(
+                    provider, context, calls, results, provider_name, full_text,
+                ):
+                    if event["type"] == "__normalized__":
+                        normalized = event["response"]
+                    else:
+                        yield event
+                if normalized:
+                    full_text += normalized.text
+                # Override: no more tool calls
+                normalized = NormalizedResponse(
+                    text=full_text,
+                    has_tool_calls=False,
+                    tool_calls=[],
+                    usage=normalized.usage if normalized else {},
+                    raw=normalized,
+                ) if normalized else None
+            else:
+                # Continue streaming after tools — next iteration
+                normalized = None
+                for event in self._stream_and_collect_with_tools(
+                    provider, context, calls, results, provider_name, full_text,
+                ):
+                    if event["type"] == "__normalized__":
+                        normalized = event["response"]
+                    else:
+                        yield event  # forward text_delta
 
-            if normalized:
-                full_text += normalized.text
+                if normalized:
+                    full_text += normalized.text
 
         # ── 4. Done event ─────────────────────────────────────────────
         yield {

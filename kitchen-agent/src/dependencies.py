@@ -207,6 +207,8 @@ def get_turn_orchestrator() -> "TurnOrchestrator":
         response_normalizer=get_response_normalizer(),
         provider_name=provider_name,
         tool_registry=get_tool_registry(),
+        token_counter=get_token_counter(),
+        context_budget=get_context_budget(),
     )
 
 
