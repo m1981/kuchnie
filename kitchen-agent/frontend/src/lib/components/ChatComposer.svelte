@@ -15,6 +15,7 @@
 	import { chatStore } from '$lib/stores/chat.svelte';
 	import { pasteImage } from '$lib/actions/pasteImage';
 	import type { ProviderInfo } from '$lib/providers';
+	import TokenIndicator from './TokenIndicator.svelte';
 
 	type Props = {
 		providers: ProviderInfo[];
@@ -188,6 +189,9 @@
 				{/each}
 			</div>
 		{/if}
+
+		<!-- Token indicator bar -->
+		<TokenIndicator messageText={currentMessage} />
 
 		<!-- Main composer box -->
 		<div class="composer-box">
