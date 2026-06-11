@@ -130,7 +130,9 @@ def _build_search_entry(
             "Supports OR logic (e.g., 'keyword1|keyword2|term3'). "
             "IMPORTANT: the knowledge base may contain contradicting notes across files — "
             "use context_lines=3 or higher for ambiguous queries so you can see surrounding "
-            "text and detect conflicts before answering."
+            "text and detect conflicts before answering. "
+            "CITATION: The output shows file paths (=== data/... ===) and line numbers (>> N: ...). "
+            "You MUST cite these in your answer under '## Źródła'."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
@@ -195,7 +197,8 @@ _read_file_entry = ToolEntry(
         description=(
             "Reads the full contents of a local markdown file. "
             "CRITICAL: You MUST use this tool to read a file BEFORE you attempt to use edit_file. "
-            "You cannot edit a file safely without reading its exact current contents first."
+            "You cannot edit a file safely without reading its exact current contents first. "
+            "IMPORTANT: Note the file path and line numbers for your source citations."
         ),
         parameters=types.Schema(
             type=types.Type.OBJECT,
