@@ -189,9 +189,12 @@ def update_session_title(
 def generate_session_title(
     session_id: str,
     session_repo: SessionRepository = Depends(get_session_repo),
-    llm_provider: Any = Depends(get_llm_provider),
 ) -> TitleGenerateResponse:
-    """Generate a title for the session using the LLM."""
+    """Generate a title for the session using the LLM.
+    
+    Uses mimo-v2.5-pro model specifically for title generation.
+    Extracts first and last message pairs for context.
+    """
     # Load session messages
     _, ui_json, _ = session_repo.load_session(session_id)
     ui_messages = json.loads(ui_json) if ui_json and ui_json != "[]" else []
@@ -202,15 +205,27 @@ def generate_session_title(
             detail="Cannot generate title for empty session",
         )
     
-    # Take first user message and first assistant response
-    user_msgs = [m for m in ui_messages if m.get("role") == "user"][:2]
-    asst_msgs = [m for m in ui_messages if m.get("role") == "assistant"][:2]
+    # Separate user and assistant messages
+    user_msgs = [m for m in ui_messages if m.get("role") == "user"]
+    asst_msgs = [m for m in ui_messages if m.get("role") == "assistant"]
     
-    conversation_excerpt = ""
-    for m in user_msgs:
-        conversation_excerpt += f"User: {m.get('content', '')[:200]}\n"
-    for m in asst_msgs:
-        conversation_excerpt += f"Assistant: {m.get('content', '')[:200]}\n"
+    # Build conversation excerpt with first and last pairs
+    conversation_parts = []
+    
+    # First pair (beginning of conversation)
+    if user_msgs:
+        conversation_parts.append(f"User: {user_msgs[0].get('content', '')[:300]}")
+    if asst_msgs:
+        conversation_parts.append(f"Assistant: {asst_msgs[0].get('content', '')[:300]}")
+    
+    # Last pair (end of conversation) - if different from first
+    if len(user_msgs) > 1:
+        conversation_parts.append(f"\n...\n")
+        conversation_parts.append(f"User: {user_msgs[-1].get('content', '')[:300]}")
+    if len(asst_msgs) > 1:
+        conversation_parts.append(f"Assistant: {asst_msgs[-1].get('content', '')[:300]}")
+    
+    conversation_excerpt = "\n".join(conversation_parts)
     
     # Generate title using LLM
     prompt = f"""Generate a short, descriptive title (max 50 chars) for this conversation.
@@ -222,6 +237,10 @@ Conversation:
     try:
         from src.agent.context_assembler import AssembledContext, ContextSlot
         from src.providers.normalizer import ResponseNormalizer
+        from src.providers.base import get_provider
+        
+        # Use mimo-v2.5-pro specifically for title generation
+        title_provider = get_provider(provider_name='mimo', model_override='mimo-v2.5-pro')
         
         # Create minimal context for title generation
         context = AssembledContext(
@@ -232,19 +251,10 @@ Conversation:
             total_tokens_estimated=0,
         )
         
-        raw_response = llm_provider.complete(context)
+        raw_response = title_provider.complete(context)
         normalizer = ResponseNormalizer()
         
-        # Determine provider name from class
-        provider_class_name = llm_provider.__class__.__name__
-        provider_name_map = {
-            'GeminiProvider': 'gemini',
-            'AnthropicProvider': 'anthropic',
-            'MimoProvider': 'mimo',
-        }
-        provider_name = provider_name_map.get(provider_class_name, 'gemini')
-        
-        normalized = normalizer.normalize(raw_response, provider_name)
+        normalized = normalizer.normalize(raw_response, 'mimo')
         
         # Clean up the title
         title = normalized.text.strip()
