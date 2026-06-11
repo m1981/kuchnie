@@ -8,3 +8,10 @@ data-e2e/
 # Playwright
 playwright-report/
 blob-report/
+__pychache__
+*.pyc
+.DS_Store
+*.xml
+.idea/*
+*.egg-info
+.coverage
