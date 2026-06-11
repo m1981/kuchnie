@@ -226,9 +226,13 @@ function createChatStore() {
 
 		// ── Session lifecycle ─────────────────────────────────────────────────────
 
-		startNewChat() {
+		/**
+		 * Reset store state for a new chat session.
+		 * Note: Navigation to the new URL is handled by the page component.
+		 * The sessionId will be set by loadSession() when the URL changes.
+		 */
+		resetForNewChat() {
 			if (isStreaming) return; // Don't allow switching during streaming
-			sessionId    = crypto.randomUUID();
 			messages     = [];
 			pastedImages = [];
 			chatState    = { status: 'idle' };
@@ -267,19 +271,29 @@ function createChatStore() {
 
 				void tokenStore.refreshSessionTokens(id);
 			} catch (e) {
-				console.error('Failed to load session', e);
+				// 404 or network error — treat as new chat (empty state)
+				// This handles: new UUID in URL, deleted session, or network issues
+				console.warn('Session not found or failed to load, starting fresh:', id);
+				sessionId    = id;
+				messages     = [];
+				chatState    = { status: 'idle' };
+				contextFiles = [];
+				forkStatus   = '';
+				editorStore.reset();
+				tokenStore.reset();
 			}
 		},
 
-		async forkSession(turnIndex: number) {
+		async forkSession(turnIndex: number): Promise<string | null> {
 			forkStatus = '';
 			try {
 				const data = await api.forkSession(sessionId, turnIndex);
-				await this.loadSession(data.new_session_id);
 				await sessionStore.refresh();
 				forkStatus = `Forked at turn ${turnIndex}`;
+				return data.new_session_id;
 			} catch (e) {
 				forkStatus = `Fork failed: ${e}`;
+				return null;
 			}
 		},
 

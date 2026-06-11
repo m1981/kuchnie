@@ -10,7 +10,8 @@ GitLab, Obsidian, or any Mermaid-compatible Markdown viewer.
 ```mermaid
 graph TB
     subgraph Frontend["Frontend (Svelte 5)"]
-        Page["+page.svelte"]
+        RootPage["/+page.svelte<br/>(redirect to /chat/{uuid})"]
+        ChatPage["/chat/[id]/+page.svelte<br/>(URL-driven session)"]
         Stores["Stores (runes)"]
         Components["Components"]
         API["api.ts (fetch client)"]
@@ -64,7 +65,8 @@ graph TB
         Prompts["PromptManager"]
     end
 
-    Page --> Stores
+    RootPage -->|"goto(/chat/{uuid})"| ChatPage
+    ChatPage --> Stores
     Stores --> API
     Components --> Stores
     API -->|HTTP/SSE| ChatRoute
@@ -350,7 +352,8 @@ graph TB
     end
 
     subgraph Consumers["Component Consumers"]
-        Page["+page.svelte"]
+        RootPage["/+page.svelte (redirect)"]
+        ChatPage["/chat/[id]/+page.svelte"]
         ChatComposer["ChatComposer"]
         TokenIndicator["TokenIndicator"]
         SessionTree["SessionTree"]
@@ -366,9 +369,10 @@ graph TB
     ChatStore -->|"refresh after mutations"| SessionStore
 
     %% Consumer reads
-    Page -->|"reads all getters"| ChatStore
-    Page -->|"loadSession, startNewChat"| ChatStore
-    Page -->|"refresh, setActive"| SessionStore
+    RootPage -->|"goto(/chat/{uuid})"| ChatPage
+    ChatPage -->|"reads all getters"| ChatStore
+    ChatPage -->|"loadSession"| ChatStore
+    ChatPage -->|"refresh, setActive"| SessionStore
 
     ChatComposer -->|"providers, selectedProvider"| ChatStore
     ChatComposer -->|"sendMessage, addPastedImage"| ChatStore
@@ -444,6 +448,119 @@ graph TD
 
 ---
 
+## 7. URL-Based Session Routing
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant SvelteKit as SvelteKit Router
+    participant ChatPage as /chat/[id]/+page.svelte
+    participant ChatStore as chatStore
+    participant Backend as FastAPI
+
+    Note over User,Browser: ── SCENARIO 1: New Chat ──
+
+    User->>Browser: Opens app (/)
+    Browser->>SvelteKit: Navigate to /
+    SvelteKit->>ChatPage: Mount +page.svelte (redirect)
+    ChatPage->>SvelteKit: goto(/chat/{new-uuid})
+    SvelteKit->>ChatPage: Mount /chat/[id]/+page.svelte
+    ChatPage->>ChatPage: $effect → currentSessionId = params.id
+    ChatPage->>ChatStore: loadSession(uuid)
+    ChatStore->>Backend: GET /api/sessions/{uuid}
+    Backend-->>ChatStore: 404 Not Found
+    ChatStore->>ChatStore: Reset to empty state
+    ChatStore-->>ChatPage: Empty chat ready
+    User->>ChatPage: Types message
+    ChatPage->>ChatStore: sendMessage(text)
+    ChatStore->>Backend: POST /api/chat/stream
+    Backend->>Backend: Create session in SQLite
+    Backend-->>ChatStore: SSE stream
+    ChatStore-->>ChatPage: Update messages[]
+
+    Note over User,Browser: ── SCENARIO 2: Browser Refresh ──
+
+    User->>Browser: Press F5 (refresh)
+    Browser->>SvelteKit: Reload /chat/{id}
+    SvelteKit->>ChatPage: Mount /chat/[id]/+page.svelte
+    ChatPage->>ChatPage: $effect → currentSessionId = params.id
+    ChatPage->>ChatStore: loadSession(id)
+    ChatStore->>Backend: GET /api/sessions/{id}
+    Backend-->>ChatStore: 200 OK (messages from DB)
+    ChatStore-->>ChatPage: Restored session!
+
+    Note over User,Browser: ── SCENARIO 3: Sidebar Navigation ──
+
+    User->>ChatPage: Click session in sidebar
+    ChatPage->>SvelteKit: goto(/chat/{other-id})
+    SvelteKit->>ChatPage: $page.params.id changes
+    ChatPage->>ChatPage: $effect fires
+    ChatPage->>ChatStore: loadSession(other-id)
+    ChatStore->>Backend: GET /api/sessions/{other-id}
+    Backend-->>ChatStore: 200 OK
+    ChatStore-->>ChatPage: Session loaded
+
+    Note over User,Browser: ── SCENARIO 4: Streaming + Navigation Guard ──
+
+    User->>ChatPage: Types message
+    ChatPage->>ChatStore: sendMessage(text)
+    ChatStore->>Backend: POST /api/chat/stream
+    Backend-->>ChatStore: SSE streaming...
+    User->>ChatPage: Clicks different session
+    ChatPage->>ChatPage: beforeNavigate → cancel()
+    ChatPage-->>User: Navigation blocked!
+    Backend-->>ChatStore: SSE done
+    ChatStore-->>ChatPage: isStreaming = false
+    User->>ChatPage: Clicks different session
+    ChatPage->>SvelteKit: goto(/chat/{other-id})
+```
+
+---
+
+## 8. URL Routing State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Root: User opens /
+    Root --> NewChat: goto(/chat/{uuid})
+
+    state NewChat {
+        [*] --> LoadingSession
+        LoadingSession --> EmptyChat: 404 (new UUID)
+        LoadingSession --> ExistingChat: 200 (session exists)
+        EmptyChat --> FirstMessage: User sends message
+        FirstMessage --> Streaming: POST /api/chat/stream
+        Streaming --> SessionSaved: SSE done + saved to DB
+        SessionSaved --> [*]
+    }
+
+    state ExistingChat {
+        [*] --> MessagesLoaded
+        MessagesLoaded --> UserAction
+        UserAction --> SendMessage: Type & send
+        UserAction --> NavigateAway: Click sidebar
+        UserAction --> Refresh: Press F5
+        SendMessage --> Streaming
+        Refresh --> [*]
+    }
+
+    NewChat --> ExistingChat: Session now exists
+    ExistingChat --> NavigateToSession: goto(/chat/{id})
+    NavigateToSession --> ExistingChat
+
+    state "Streaming Guard" as StreamGuard {
+        [*] --> Idle
+        Idle --> Streaming: sendMessage()
+        Streaming --> Blocked: Navigation attempt
+        Blocked --> Streaming: Cancel navigation
+        Streaming --> Idle: SSE done
+        Idle --> [*]
+    }
+```
+
+---
+
 ## Diagram Maintenance
 
 When the architecture changes:
@@ -453,3 +570,10 @@ When the architecture changes:
 3. **Changing turn orchestration** → Update Diagram 3 (Agent Layer)
 4. **Adding a new store** → Update Diagram 5 (Store Topology). chatStore is now a facade; sub-stores are providerStore, promptStore, editorStore, tokenStore
 5. **Adding a new DI dependency** → Update Diagram 6 (DI Graph)
+6. **Changing routing/navigation** → Update Diagram 7 (URL Routing) and Diagram 8 (State Machine)
+
+### Recent Changes
+
+| Date       | Change                                   | Diagrams Updated       |
+| ---------- | ---------------------------------------- | ---------------------- |
+| 2026-06-12 | URL-based session routing (`/chat/[id]`) | 1, 5, 7 (new), 8 (new) |

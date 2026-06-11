@@ -182,7 +182,7 @@ User clicks Reset
 sequenceDiagram
     participant User
     participant Bubble as SystemPromptBubble
-    participant Page as +page.svelte
+    participant Page as /chat/[id]/+page.svelte
     participant Store as editorStore
     participant PromptStore as promptStore
     participant API as Backend API
@@ -404,15 +404,15 @@ class SystemPromptUpdateResponse(BaseModel):
 
 ## Files
 
-| File                                                    | Role                                                 |
-| ------------------------------------------------------- | ---------------------------------------------------- |
-| `frontend/src/lib/components/SystemPromptBubble.svelte` | **Component** — inline bubble with edit/reset        |
-| `frontend/src/lib/components/ChatMessageList.svelte`    | **Parent** — renders bubble as first item            |
-| `frontend/src/lib/stores/editor.svelte.ts`              | **Store** — system prompt state management           |
-| `frontend/src/lib/stores/chat.svelte.ts`                | **Facade** — delegates to editorStore                |
-| `frontend/src/routes/+page.svelte`                      | **Page** — wires props and callbacks                 |
-| `frontend/src/lib/components/ChatHeader.svelte`         | **Header** — shows override badge                    |
-| `frontend/src/lib/api.ts`                               | **API client** — getSystemPrompt, updateSystemPrompt |
-| `src/api/sessions.py`                                   | **Backend routes** — GET/PATCH endpoints             |
-| `src/message_editor.py`                                 | **Backend service** — persistence logic              |
-| `src/schemas.py`                                        | **Backend schemas** — Pydantic models                |
+| File                                                    | Role                                                      |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| `frontend/src/lib/components/SystemPromptBubble.svelte` | **Component** — inline bubble with edit/reset             |
+| `frontend/src/lib/components/ChatMessageList.svelte`    | **Parent** — renders bubble as first item                 |
+| `frontend/src/lib/stores/editor.svelte.ts`              | **Store** — system prompt state management                |
+| `frontend/src/lib/stores/chat.svelte.ts`                | **Facade** — delegates to editorStore                     |
+| `frontend/src/routes/chat/[id]/+page.svelte`            | **Page** — wires props and callbacks (URL-driven session) |
+| `frontend/src/lib/components/ChatHeader.svelte`         | **Header** — shows override badge                         |
+| `frontend/src/lib/api.ts`                               | **API client** — getSystemPrompt, updateSystemPrompt      |
+| `src/api/sessions.py`                                   | **Backend routes** — GET/PATCH endpoints                  |
+| `src/message_editor.py`                                 | **Backend service** — persistence logic                   |
+| `src/schemas.py`                                        | **Backend schemas** — Pydantic models                     |
