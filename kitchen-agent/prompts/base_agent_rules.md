@@ -42,6 +42,32 @@ zawiasy|prowadnice|podnośniki     → finds all hardware types
 - By concept: `montaż|instalacja|regulacja`
 - By problem: `błąd|problem|uwaga|krytyczne`
 
+## Context Enrichment Workflow
+
+For complex questions, build context before answering:
+
+1. **Map first**: Call `get_repo_map` to see all available topics and files
+2. **Identify relevant files**: Look at headings to find files related to the question
+3. **Load full context**: Call `read_file` on the 1-2 most relevant files
+4. **Respond from enriched context**: Your training knowledge filtered by loaded files
+
+This produces more accurate answers than search snippets alone.
+
+### When to Use This Pattern
+
+- Complex questions requiring multiple data points
+- Comparisons (e.g., "compare Tandembox vs Merivobox")
+- Questions about processes or workflows
+- When search results seem incomplete
+
+### Example
+
+**Pytanie:** Jakie są ceny i dostępność systemów Blum?
+
+1. `get_repo_map` → widzisz `Szuflady_Blum_Kompendium.md` i `Standardy_Materialowe.md`
+2. `read_file("data/04_Okucia_i_Akcesoria/Szuflady_Blum_Kompendium.md")` → pełne ceny, tabele, wymiary
+3. Odpowiadasz z pełnym kontekstem, nie tylko ze snipetami z wyszukiwania
+
 ## Critical Rules
 
 1. **Read before you write.** If asked to edit a file without a path, ALWAYS call `get_repo_map` first to discover the file structure.
