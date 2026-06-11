@@ -278,6 +278,67 @@ class TurnOrchestrator:
 
         return tool_results, tool_tokens_used, truncated
 
+    def _build_truncation_summary(self, tool_details: list[ToolCallDetail]) -> str:
+        """
+        Build a synthetic response when the LLM returns no text after
+        tool results were truncated.
+
+        Extracts key information from the tool results to give the user
+        a useful answer even when the LLM didn't produce one.
+        """
+        if not tool_details:
+            return "Przepraszam, nie udało mi się wygenerować odpowiedzi. Spróbuj zadać bardziej konkretne pytanie."
+
+        # Get the last tool result (the one that was truncated)
+        last_detail = tool_details[-1]
+        result_content = last_detail.result_content
+
+        # Extract file paths and line numbers from the result
+        lines = result_content.split("\n")
+        file_paths: list[str] = []
+        key_findings: list[str] = []
+
+        for line in lines:
+            # File headers: === data/... ===
+            if line.startswith("=== ") and line.endswith(" ==="):
+                file_path = line[4:-4].strip()
+                if file_path not in file_paths:
+                    file_paths.append(file_path)
+            # Matching lines with >> marker
+            elif line.strip().startswith(">>") and ":" in line:
+                # Extract the content after line number
+                parts = line.split(":", 1)
+                if len(parts) > 1:
+                    content = parts[1].strip()
+                    if len(content) > 20:  # Skip very short lines
+                        key_findings.append(content[:100])
+
+        # Build the response
+        response_parts = [
+            "Na podstawie przeszukania bazy wiedzy znalazłem informacje w nastêpuj¹cych plikach:",
+            ""
+        ]
+
+        if file_paths:
+            for fp in file_paths[:5]:  # Show top 5 files
+                response_parts.append(f"- `{fp}`")
+            response_parts.append("")
+
+        if key_findings:
+            response_parts.append("Kluczowe znaleziska:")
+            for i, finding in enumerate(key_findings[:5], 1):
+                response_parts.append(f"{i}. {finding}...")
+            response_parts.append("")
+
+        response_parts.extend([
+            "---",
+            "_Uwaga: Wyniki zostały ograniczone limitem tokenów. "
+            "Aby uzyskać pełną odpowiedź, zadaj bardziej szczegółowe pytanie "
+            "lub użyj `read_file` na konkretnym pliku z listy powyżej._"
+        ])
+
+        return "\n".join(response_parts)
+
     # ── run() ────────────────────────────────────────────────────────────
 
     def run(
@@ -439,14 +500,32 @@ class TurnOrchestrator:
                     context, calls, results,
                 )
                 normalized = self._normalizer.normalize(raw_response, provider_name)
-                # Override: don't allow more tool calls
-                normalized = NormalizedResponse(
-                    text=normalized.text,
-                    has_tool_calls=False,
-                    tool_calls=[],
-                    usage=normalized.usage,
-                    raw=normalized.raw,
-                )
+                
+                # If LLM returned tool calls instead of text, force a synthetic response
+                if normalized.has_tool_calls or not normalized.text.strip():
+                    self._log.warning(
+                        "orchestrator_forcing_text_response",
+                        had_tool_calls=normalized.has_tool_calls,
+                        had_text=bool(normalized.text.strip()),
+                    )
+                    # Build a summary from the tool results we have
+                    result_summary = self._build_truncation_summary(tool_details)
+                    normalized = NormalizedResponse(
+                        text=result_summary,
+                        has_tool_calls=False,
+                        tool_calls=[],
+                        usage=normalized.usage,
+                        raw=normalized.raw,
+                    )
+                else:
+                    # LLM returned text — use it, but don't allow more tool calls
+                    normalized = NormalizedResponse(
+                        text=normalized.text,
+                        has_tool_calls=False,
+                        tool_calls=[],
+                        usage=normalized.usage,
+                        raw=normalized.raw,
+                    )
             else:
                 # Feed results back to LLM normally
                 self._log.info("orchestrator_feeding_tool_results_to_llm")
@@ -661,8 +740,26 @@ class TurnOrchestrator:
                         normalized = event["response"]
                     else:
                         yield event
+                
                 if normalized:
                     full_text += normalized.text
+                    
+                    # If LLM returned tool calls instead of text, force synthetic response
+                    if normalized.has_tool_calls or not normalized.text.strip():
+                        self._log.warning(
+                            "orchestrator_stream_forcing_text_response",
+                            had_tool_calls=normalized.has_tool_calls,
+                            had_text=bool(normalized.text.strip()),
+                        )
+                        result_summary = self._build_truncation_summary(tool_details)
+                        full_text = result_summary
+                        yield {"type": "text_delta", "content": result_summary}
+                else:
+                    # No normalized response at all — use synthetic
+                    result_summary = self._build_truncation_summary(tool_details)
+                    full_text = result_summary
+                    yield {"type": "text_delta", "content": result_summary}
+                
                 # Override: no more tool calls
                 normalized = NormalizedResponse(
                     text=full_text,
