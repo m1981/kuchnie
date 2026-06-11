@@ -113,6 +113,12 @@ class TitleUpdateResponse(BaseModel):
     title: str
 
 
+class TitleGenerateResponse(BaseModel):
+    """Response for POST /api/sessions/{id}/title/generate."""
+    generated: bool
+    title: str
+
+
 class FileReadResponse(BaseModel):
     filepath: str
     content: str

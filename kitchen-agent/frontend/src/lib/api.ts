@@ -446,6 +446,16 @@ export const api = {
 			jsonPatch({ title })
 		),
 
+	/**
+	 * POST /api/sessions/{id}/title/generate
+	 * Generate a title for the session using the LLM.
+	 */
+	generateSessionTitle: (id: string) =>
+		request<{ generated: boolean; title: string }>(
+			`/api/sessions/${id}/title/generate`,
+			{ method: 'POST' }
+		),
+
 	// Notes
 	getNotes: (sessionId: string) =>
 		request<Note[]>(`/api/sessions/${sessionId}/notes`),

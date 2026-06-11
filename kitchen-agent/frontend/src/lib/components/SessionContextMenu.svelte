@@ -14,7 +14,7 @@
 	import { focusTrap } from '$lib/actions/focustrap';
 	import type { SessionNode } from '$lib/api';
 
-	type MenuState = 'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm';
+	type MenuState = 'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm' | 'generating-title';
 
 	type Props = {
 		node: SessionNode;
@@ -23,15 +23,17 @@
 		ondelete: (id: string) => void;
 		onexport: (id: string) => Promise<void>;
 		onexportllm: (id: string) => Promise<void>;
+		/** Called when user clicks "Regenerate Title". */
+		ontitlegenerate?: (id: string) => Promise<void>;
 	};
 
-	let { node, onarchive, onunarchive, ondelete, onexport, onexportllm }: Props = $props();
+	let { node, onarchive, onunarchive, ondelete, onexport, onexportllm, ontitlegenerate }: Props = $props();
 
 	let menuState = $state<MenuState>('closed');
 	let errorMsg = $state('');
 
 	const isArchived = $derived(node.archived_at !== null);
-	const isBusy = $derived(menuState === 'exporting-md' || menuState === 'exporting-llm');
+	const isBusy = $derived(menuState === 'exporting-md' || menuState === 'exporting-llm' || menuState === 'generating-title');
 
 	function open(e: MouseEvent) {
 		e.stopPropagation();
@@ -92,6 +94,20 @@
 			menuState = 'closed';
 		} catch (err) {
 			errorMsg = `LLM export failed: ${err instanceof Error ? err.message : String(err)}`;
+			menuState = 'open';
+		}
+	}
+
+	async function handleTitleGenerate(e: MouseEvent) {
+		e.stopPropagation();
+		if (!ontitlegenerate) return;
+		menuState = 'generating-title';
+		errorMsg = '';
+		try {
+			await ontitlegenerate(node.id);
+			menuState = 'closed';
+		} catch (err) {
+			errorMsg = `Title generation failed: ${err instanceof Error ? err.message : String(err)}`;
 			menuState = 'open';
 		}
 	}
@@ -178,6 +194,19 @@
 					<span aria-hidden="true">📁</span> Archive
 				{/if}
 			</button>
+
+			{#if ontitlegenerate}
+				<div class="my-1 border-t border-line"></div>
+
+				<!-- Regenerate Title -->
+				<button
+					onclick={handleTitleGenerate}
+					class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink
+					       hover:bg-surface"
+				>
+					<span aria-hidden="true">✨</span> Regenerate Title
+				</button>
+			{/if}
 
 			<div class="my-1 border-t border-line"></div>
 

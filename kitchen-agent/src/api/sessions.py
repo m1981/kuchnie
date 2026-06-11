@@ -22,12 +22,14 @@ Routes:
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
 from src.dependencies import (
     get_export_service,
+    get_llm_provider,
     get_message_editor,
     get_session_repo,
 )
@@ -49,6 +51,7 @@ from src.schemas import (
     SystemPromptResponse,
     SystemPromptUpdateRequest,
     SystemPromptUpdateResponse,
+    TitleGenerateResponse,
     TitleUpdateRequest,
     TitleUpdateResponse,
     TruncateRequest,
@@ -177,6 +180,75 @@ def update_session_title(
             detail=f"Session not found: {session_id}",
         )
     return TitleUpdateResponse(updated=True, title=request.title)
+
+
+@router.post("/api/sessions/{session_id}/title/generate", response_model=TitleGenerateResponse)
+def generate_session_title(
+    session_id: str,
+    session_repo: SessionRepository = Depends(get_session_repo),
+    llm_provider: Any = Depends(get_llm_provider),
+) -> TitleGenerateResponse:
+    """Generate a title for the session using the LLM."""
+    # Load session messages
+    _, ui_json, _ = session_repo.load_session(session_id)
+    ui_messages = json.loads(ui_json) if ui_json and ui_json != "[]" else []
+    
+    if not ui_messages:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot generate title for empty session",
+        )
+    
+    # Take first user message and first assistant response
+    user_msgs = [m for m in ui_messages if m.get("role") == "user"][:2]
+    asst_msgs = [m for m in ui_messages if m.get("role") == "assistant"][:2]
+    
+    conversation_excerpt = ""
+    for m in user_msgs:
+        conversation_excerpt += f"User: {m.get('content', '')[:200]}\n"
+    for m in asst_msgs:
+        conversation_excerpt += f"Assistant: {m.get('content', '')[:200]}\n"
+    
+    # Generate title using LLM
+    prompt = f"""Generate a short, descriptive title (max 50 chars) for this conversation.
+Return ONLY the title, no quotes or explanation.
+
+Conversation:
+{conversation_excerpt}"""
+    
+    try:
+        from src.agent.context_assembler import AssembledContext
+        from src.providers.normalizer import ResponseNormalizer
+        
+        # Create minimal context for title generation
+        context = AssembledContext(
+            messages=[{"role": "user", "content": prompt}],
+            system_prompt="You are a title generator. Return only a short title.",
+            tool_schemas=[],
+            slots_used={},
+            total_tokens=0,
+        )
+        
+        raw_response = llm_provider.complete(context)
+        normalizer = ResponseNormalizer()
+        normalized = normalizer.normalize(raw_response, llm_provider.__class__.__name__)
+        
+        # Clean up the title
+        title = normalized.text.strip()
+        title = title.strip('"').strip("'")
+        if len(title) > 60:
+            title = title[:57] + "..."
+        
+        # Update the session title
+        session_repo.update_title(session_id, title)
+        
+        return TitleGenerateResponse(generated=True, title=title)
+    except Exception as e:
+        log.error("title_generation_failed", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate title: {str(e)}",
+        ) from e
 
 
 @router.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)

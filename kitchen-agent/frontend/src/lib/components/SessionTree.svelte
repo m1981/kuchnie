@@ -121,6 +121,11 @@
 		);
 	}
 
+	async function handleTitleGenerate(id: string): Promise<void> {
+		const result = await api.generateSessionTitle(id);
+		await sessionStore.refresh();
+	}
+
 	// Derived counts for the header badges.
 	const activeCount = $derived(sessionStore.flat.filter((n) => n.archived_at === null).length);
 	const visibleRoots = $derived(sessionStore.tree.filter((n) => n.archived_at === null));
@@ -190,6 +195,7 @@
 					ondelete={handleDelete}
 					onexport={handleExport}
 					onexportllm={handleExportLlm}
+					ontitlegenerate={handleTitleGenerate}
 				/>
 			{/each}
 		</div>
