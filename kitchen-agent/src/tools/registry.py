@@ -127,7 +127,8 @@ def _build_search_entry(
             "Searches all markdown files for lines matching a regex pattern. "
             "Use this if get_repo_map doesn't give you enough detail, or if you need to find "
             "specific terms, part numbers, or dimensions across the entire workspace. "
-            "Supports OR logic (e.g., 'keyword1|keyword2|term3'). "
+            "QUERY FORMAT: Use pipe (|) for OR logic: 'Blum|szuflady|Tandembox'. "
+            "Multi-word queries are auto-converted to OR: 'Blum szuflady' becomes 'Blum|szuflady'. "
             "IMPORTANT: the knowledge base may contain contradicting notes across files — "
             "use context_lines=3 or higher for ambiguous queries so you can see surrounding "
             "text and detect conflicts before answering. "
@@ -140,9 +141,11 @@ def _build_search_entry(
                 "query": types.Schema(
                     type=types.Type.STRING,
                     description=(
-                        "A regex pattern to search for, e.g., 'keyword1|keyword2' or 'exact phrase'. "
-                        "Matching is case-insensitive. Use OR (|) for synonyms or "
-                        "alternative spellings of the same term."
+                        "A regex pattern to search for. "
+                        "Use pipe (|) for OR logic: 'keyword1|keyword2'. "
+                        "Matching is case-insensitive. "
+                        "Examples: 'Blum|Antaro|Merivobox' finds all three terms. "
+                        "Multi-word queries auto-convert to OR: 'Blum szuflady' = 'Blum|szuflady'."
                     ),
                 ),
                 "context_lines": types.Schema(

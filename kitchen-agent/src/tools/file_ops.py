@@ -268,6 +268,41 @@ def append_to_file(
     return result
 
 
+def _sanitize_search_query(query: str) -> str:
+    """
+    Auto-convert space-separated words to OR (pipe) queries.
+
+    LLMs often write "Blum szuflady Tandembox" when they mean
+    "Blum|szuflady|Tandembox".  This function detects that pattern
+    and converts it, while preserving:
+    - Already pipe-separated queries ("Blum|szuflady")
+    - Quoted phrases ('"exact phrase"')
+    - Single-word queries ("Blum")
+    - Two-word phrases ("37 mm", "Blum Merivobox") — often specific terms
+    - Regex patterns with special chars ("\\d{4}")
+    """
+    # Already has pipes — pass through
+    if "|" in query:
+        return query
+
+    # Quoted phrase — pass through
+    if '"' in query or "'" in query:
+        return query
+
+    # Has regex special chars — pass through
+    if any(c in query for c in r"\^${}[]().*+?\\"):
+        return query
+
+    # 3+ words without pipes — convert to OR
+    # (Two-word phrases like "37 mm" are usually specific terms, not OR queries)
+    words = query.split()
+    if len(words) >= 3:
+        return "|".join(words)
+
+    # Single or two-word query — pass through
+    return query
+
+
 def search_knowledge_base(
     query: str,
     base_dir: str = "data",
@@ -278,9 +313,12 @@ def search_knowledge_base(
     case-insensitive regex pattern.
 
     Supports OR logic via the pipe character, e.g. ``'hinge|blum|runner'``.
+    Multi-word queries without pipes are auto-converted to OR queries,
+    e.g. ``'Blum szuflady Tandembox'`` becomes ``'Blum|szuflady|Tandembox'``.
 
     Args:
         query:         Regex pattern (case-insensitive).  Pipe = OR logic.
+                     Multi-word queries are auto-converted to OR queries.
         base_dir:      Root directory to scan.  Fixed by the registry lambda.
         context_lines: Number of lines to include BEFORE and AFTER each match.
                        Default 2 gives the model enough surrounding text to
@@ -296,6 +334,10 @@ def search_knowledge_base(
     base_path = Path(base_dir)
     if not base_path.exists():
         return {"error": f"Directory not found: {base_dir}"}
+
+    # Auto-convert space-separated words to OR queries
+    original_query = query
+    query = _sanitize_search_query(query)
 
     try:
         pattern = re.compile(query, re.IGNORECASE)
