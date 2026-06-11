@@ -220,7 +220,7 @@ Conversation:
 {conversation_excerpt}"""
     
     try:
-        from src.agent.context_assembler import AssembledContext
+        from src.agent.context_assembler import AssembledContext, ContextSlot
         from src.providers.normalizer import ResponseNormalizer
         
         # Create minimal context for title generation
@@ -228,8 +228,8 @@ Conversation:
             messages=[{"role": "user", "content": prompt}],
             system_prompt="You are a title generator. Return only a short title.",
             tool_schemas=[],
-            slots_used={},
-            total_tokens=0,
+            slots_used={ContextSlot.CONVERSATION_HISTORY: 0},
+            total_tokens_estimated=0,
         )
         
         raw_response = llm_provider.complete(context)
