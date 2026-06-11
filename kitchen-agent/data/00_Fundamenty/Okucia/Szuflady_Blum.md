@@ -154,6 +154,20 @@ Legrabox to system dla projektów **architektonicznych i premium**. Ścianka boc
 - **Legrabox Nature** — ścianka drewnopodobna (fornir / dekor)
 - **Legrabox Free** — szklana ścianka boczna (efekt "pływającej" szuflady)
 
+### **Kolory ścianki Legrabox:**
+
+| Kolor                       | Kod | Uwagi                                                                                    |
+| --------------------------- | --- | ---------------------------------------------------------------------------------------- |
+| Biały                       | W   | Klasyk do jasnych frontów i blatów                                                       |
+| Szary Jedwab                | SA  | **Nasz domyślny — pasuje do 90% projektów**                                              |
+| Czarny                      | SW  | Premium look, minimalistyczne projekty                                                   |
+| Szary Orion                 | OG  | Do ciemnych frontów (antracyt, grafit)                                                   |
+| Terra Szary _(nowość 2025)_ | TG  | 🆕 Ciepły, ziemisty odcień szarości — ideał do stylów wabi-sabi i blatów drewnopodobnych |
+
+> 💡 **Kiedy używać Terra Szarego (TG):**  
+> Nowy kolor świetnie komponuje się z frontami w deklinacji drewna (dąb, orzech) i blatami w ciepłej szarości lub piaskowcu. Polecany do kuchni otwartych na salon, gdzie szuflada jest widoczna i musi "grać" z resztą wystroju. Sprawdź dostępność w Admar (3-5 dni roboczych) lub na blum.com/pl.  
+> ⚠️ Kolor TG jest nowością — przed zamówieniem produkcyjnym zawsze weryfikuj dostępność u dystrybutora!
+
 ### **Kiedy proponować klientowi Legrabox:**
 
 - Projekty powyżej **15 000 zł** za kuchnię
