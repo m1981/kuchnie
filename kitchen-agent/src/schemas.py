@@ -102,6 +102,17 @@ class SessionNode(BaseModel):
 SessionNode.model_rebuild()
 
 
+class TitleUpdateRequest(BaseModel):
+    """Request body for PATCH /api/sessions/{id}/title."""
+    title: str
+
+
+class TitleUpdateResponse(BaseModel):
+    """Response for PATCH /api/sessions/{id}/title."""
+    updated: bool
+    title: str
+
+
 class FileReadResponse(BaseModel):
     filepath: str
     content: str

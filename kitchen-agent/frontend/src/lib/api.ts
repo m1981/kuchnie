@@ -436,6 +436,16 @@ export const api = {
 				return r.text().then((t) => { throw new Error(t || `HTTP ${r.status}`); });
 		}),
 
+	/**
+	 * PATCH /api/sessions/{id}/title
+	 * Update the title of a session.
+	 */
+	updateSessionTitle: (id: string, title: string) =>
+		request<{ updated: boolean; title: string }>(
+			`/api/sessions/${id}/title`,
+			jsonPatch({ title })
+		),
+
 	// Notes
 	getNotes: (sessionId: string) =>
 		request<Note[]>(`/api/sessions/${sessionId}/notes`),

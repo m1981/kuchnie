@@ -26,7 +26,7 @@
 	import { textSelection }       from '$lib/actions/textSelection';
 	import { createKeyboardResize} from '$lib/hooks/useKeyboardResize.svelte';
 
-	import type { PromptMode, Note } from '$lib/api';
+	import { api, type PromptMode, type Note } from '$lib/api';
 	import type { ChatSelectionHit } from '$lib/actions/textSelection';
 
 	import ChatHeader         from '$lib/components/ChatHeader.svelte';
@@ -196,6 +196,15 @@
 		}
 	}
 
+	async function handleSaveTitle(newTitle: string) {
+		try {
+			await api.updateSessionTitle(currentSessionId, newTitle);
+			await sessionStore.refresh();
+		} catch (e) {
+			console.error('Failed to update title:', e);
+		}
+	}
+
 	// ---------------------------------------------------------------------------
 	// Notes → Composer injection (called from ContextSidebar)
 	// ---------------------------------------------------------------------------
@@ -290,6 +299,7 @@
 			showRight={sidebarResize.showRight}
 			hasSystemPromptOverride={hasSystemPromptOverride}
 			ontoggleright={() => sidebarResize.toggleRight()}
+			onsave={handleSaveTitle}
 		/>
 
 		<!-- Chat scroll area -->

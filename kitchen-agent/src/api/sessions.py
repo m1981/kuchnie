@@ -49,6 +49,8 @@ from src.schemas import (
     SystemPromptResponse,
     SystemPromptUpdateRequest,
     SystemPromptUpdateResponse,
+    TitleUpdateRequest,
+    TitleUpdateResponse,
     TruncateRequest,
     TruncateResponse,
 )
@@ -159,6 +161,22 @@ def unarchive_session(
             detail=f"Session not found or not archived: {session_id}",
         )
     return {"archived": False, "session_id": session_id}
+
+
+@router.patch("/api/sessions/{session_id}/title", response_model=TitleUpdateResponse)
+def update_session_title(
+    session_id: str,
+    request: TitleUpdateRequest,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> TitleUpdateResponse:
+    """Update the title of a session."""
+    updated = session_repo.update_title(session_id, request.title)
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Session not found: {session_id}",
+        )
+    return TitleUpdateResponse(updated=True, title=request.title)
 
 
 @router.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)

@@ -117,6 +117,16 @@ class SQLiteSessionRepository:
             conn.commit()
         return cursor.rowcount > 0
 
+    def update_title(self, session_id: str, title: str) -> bool:
+        """Update the title of a session. Returns True if the session was found and updated."""
+        with self.db.get_connection() as conn:
+            cursor = conn.execute(
+                "UPDATE sessions SET title = ?, updated_at = ? WHERE id = ?",
+                (title, datetime.now(), session_id),
+            )
+            conn.commit()
+        return cursor.rowcount > 0
+
     def delete_session(self, session_id: str) -> None:
         with self.db.get_connection() as conn:
             row = conn.execute(

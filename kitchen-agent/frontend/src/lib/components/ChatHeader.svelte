@@ -2,16 +2,18 @@
 	/**
 	 * ChatHeader
 	 * ===========
-	 * Top bar showing the active mode label, session badge, and the
+	 * Top bar showing the session title, active mode badge, and the
 	 * context-sidebar toggle button.
 	 *
 	 * Props:
 	 *   modeIcon              — emoji icon for the active mode
 	 *   modeLabel             — human-readable label, e.g. "Design"
 	 *   sessionId             — current session UUID (first 8 chars displayed)
+	 *   title                 — session title from database (null for new sessions)
 	 *   showRight             — whether the context sidebar is currently visible
 	 *   hasSystemPromptOverride — true when a session-level override is active
 	 *   ontoggleright         — callback to toggle the context sidebar
+	 *   onsave                — callback when user saves an edited title
 	 */
 
 	type Props = {
@@ -24,6 +26,8 @@
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
 		ontoggleright: () => void;
+		/** Called when user saves an edited title. */
+		onsave?: (newTitle: string) => void;
 	};
 
 	let {
@@ -34,11 +38,51 @@
 		title = null,
 		showRight,
 		hasSystemPromptOverride,
-		ontoggleright
+		ontoggleright,
+		onsave
 	}: Props = $props();
 
 	/** Display title: use provided title, or fallback to short session ID */
 	const displayTitle = $derived(title ?? `Session ${sessionId.substring(0, 8)}`);
+
+	// ── Inline editing state ────────────────────────────────────────────────
+
+	let isEditing = $state(false);
+	let draft = $state('');
+	let inputEl = $state<HTMLInputElement | null>(null);
+
+	function startEditing() {
+		draft = displayTitle;
+		isEditing = true;
+		// Focus the input after it renders
+		requestAnimationFrame(() => {
+			inputEl?.focus();
+			inputEl?.select();
+		});
+	}
+
+	function cancelEditing() {
+		isEditing = false;
+		draft = '';
+	}
+
+	function saveEditing() {
+		const trimmed = draft.trim();
+		if (trimmed && trimmed !== displayTitle) {
+			onsave?.(trimmed);
+		}
+		isEditing = false;
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			saveEditing();
+		} else if (event.key === 'Escape') {
+			event.preventDefault();
+			cancelEditing();
+		}
+	}
 </script>
 
 <header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
@@ -50,9 +94,25 @@
 				{appTitle}
 			</p>
 			<div class="mt-1 flex flex-wrap items-center gap-2">
-				<h2 class="text-xl font-semibold text-ink md:text-2xl">
-					{displayTitle}
-				</h2>
+				{#if isEditing}
+					<input
+						bind:this={inputEl}
+						bind:value={draft}
+						onkeydown={handleKeydown}
+						onblur={saveEditing}
+						class="h-8 rounded-md border border-accent bg-surface px-2 text-xl font-semibold text-ink shadow-sm outline-none focus:ring-2 focus:ring-accent/50 md:text-2xl"
+						maxlength="100"
+					/>
+				{:else}
+					<button
+						type="button"
+						class="cursor-pointer rounded-md px-1 text-left text-xl font-semibold text-ink transition hover:bg-surface/80 md:text-2xl"
+						onclick={startEditing}
+						title="Click to edit title"
+					>
+						{displayTitle}
+					</button>
+				{/if}
 				<span
 					class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted"
 				>
