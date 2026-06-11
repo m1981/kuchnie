@@ -150,9 +150,8 @@ def _build_search_entry(
                     type=types.Type.INTEGER,
                     description=(
                         "Number of lines to include BEFORE and AFTER each matching line "
-                        "(default 2). Increase to 3–5 for topics that may be scattered "
-                        "across multiple files or where older notes may contradict newer ones. "
-                        "Use 0 only when you need a quick count of occurrences."
+                        "(default 1). Use 0 for quick counts, 2-3 for ambiguous queries. "
+                        "Lower values = smaller output = more room for other tools."
                     ),
                 ),
             },
@@ -163,7 +162,7 @@ def _build_search_entry(
     if search_coordinator is not None:
         # Route through SearchCoordinator — enables future backends
         # (BM25, embeddings) without changing the tool handler.
-        def _search_via_coordinator(query: str, context_lines: int = 2) -> dict:
+        def _search_via_coordinator(query: str, context_lines: int = 1) -> dict:
             results = search_coordinator.search(
                 query, limit=200, context_lines=context_lines,
             )
@@ -182,7 +181,7 @@ def _build_search_entry(
     return ToolEntry(
         declaration=declaration,
         # base_dir is fixed to settings.data_dir — never exposed to the LLM.
-        fn=lambda query, context_lines=2: search_knowledge_base(
+        fn=lambda query, context_lines=1: search_knowledge_base(
             query, base_dir=str(settings.data_dir), context_lines=context_lines
         ),
         category=ToolCategory.SEARCH,

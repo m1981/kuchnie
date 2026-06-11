@@ -339,6 +339,39 @@ class TurnOrchestrator:
 
         return "\n".join(response_parts)
 
+    def _check_citation_compliance(
+        self,
+        response: str,
+        tool_details: list[ToolCallDetail],
+    ) -> None:
+        """
+        Check if response includes citations when tools were used.
+        Logs a warning if citations are missing — does NOT modify the response.
+        """
+        response_lower = response.lower()
+        has_citation_section = "## źródła" in response_lower
+        has_inline_marker = "[1]" in response or "[2]" in response
+
+        if not has_citation_section and not has_inline_marker:
+            # Extract tool names used
+            tools_used = list(set(d.name for d in tool_details))
+            self._log.warning(
+                "citation_compliance_missing",
+                tools_used=tools_used,
+                response_length=len(response),
+                message=(
+                    "Response uses knowledge base tools but has no citations. "
+                    "Expected ## Źródła section with [1] inline markers."
+                ),
+            )
+        elif not has_citation_section:
+            self._log.warning(
+                "citation_compliance_partial",
+                has_inline=has_inline_marker,
+                has_section=has_citation_section,
+                message="Response has inline markers but missing ## Źródła section.",
+            )
+
     # ── run() ────────────────────────────────────────────────────────────
 
     def run(
@@ -580,6 +613,10 @@ class TurnOrchestrator:
         if tool_budget_tokens is not None:
             from src.agent.context_assembler import ContextSlot
             context.slots_used[ContextSlot.TOOL_RESULTS] = tool_tokens_used
+
+        # ── 5. Citation compliance check ───────────────────────────────
+        if tool_details:
+            self._check_citation_compliance(normalized.text, tool_details)
 
         return TurnOutput(
             assistant_message=normalized.text,
