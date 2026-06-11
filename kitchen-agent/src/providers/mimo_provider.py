@@ -28,6 +28,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from src.config import settings
+from src.logger import log_timing
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
 from src.tools.file_ops import read_file
 
@@ -189,12 +190,55 @@ class MimoProvider:
 
         self._conversation_state = messages
 
-        response = self._client.chat.completions.create(
+        logger.info(
+            "mimo_complete_start",
             model=self._model,
-            messages=messages,
-            tools=tool_schemas if tool_schemas else None,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
+            messages_count=len(messages),
+            has_system_prompt=bool(context.system_prompt),
+            tool_schemas_count=len(tool_schemas),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
+        )
+
+        with log_timing(logger, "mimo_complete_end") as timing:
+            response = self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                tools=tool_schemas if tool_schemas else None,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+            )
+
+        # Log response metadata
+        if response.usage:
+            timing["input_tokens"] = response.usage.prompt_tokens
+            timing["output_tokens"] = response.usage.completion_tokens
+            timing["total_tokens"] = response.usage.total_tokens
+
+        # Log tool calls and response details
+        tool_call_names: list[str] = []
+        if response.choices:
+            msg = response.choices[0].message
+            if msg.tool_calls:
+                for tc in msg.tool_calls:
+                    tool_call_names.append(tc.function.name)
+                    logger.debug(
+                        "mimo_tool_call",
+                        tool_name=tc.function.name,
+                        tool_call_id=tc.id,
+                    )
+            timing["finish_reason"] = response.choices[0].finish_reason
+
+        if tool_call_names:
+            timing["tool_calls"] = tool_call_names
+
+        logger.debug(
+            "mimo_complete_result",
+            text_length=len(msg.content) if response.choices and msg.content else 0,
+            tool_calls_count=len(tool_call_names),
+            finish_reason=response.choices[0].finish_reason if response.choices else None,
         )
 
         # Store assistant response in conversation state
@@ -236,16 +280,47 @@ class MimoProvider:
                 "tool_call_id": tr.tool_call_id,
                 "content": tr.content,
             })
+            logger.debug(
+                "mimo_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
 
         tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
-        response = self._client.chat.completions.create(
+        logger.debug(
+            "mimo_complete_with_tools_start",
             model=self._model,
-            messages=self._conversation_state,
-            tools=tool_schemas if tool_schemas else None,
-            temperature=self._temperature,
-            max_tokens=self._max_tokens,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
         )
+
+        with log_timing(logger, "mimo_complete_with_tools_end") as timing:
+            response = self._client.chat.completions.create(
+                model=self._model,
+                messages=self._conversation_state,
+                tools=tool_schemas if tool_schemas else None,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+            )
+
+        if response.usage:
+            timing["input_tokens"] = response.usage.prompt_tokens
+            timing["output_tokens"] = response.usage.completion_tokens
+            timing["total_tokens"] = response.usage.total_tokens
+
+        # Log tool calls in response
+        tool_call_names: list[str] = []
+        if response.choices:
+            msg = response.choices[0].message
+            if msg.tool_calls:
+                for tc in msg.tool_calls:
+                    tool_call_names.append(tc.function.name)
+            timing["finish_reason"] = response.choices[0].finish_reason
+        if tool_call_names:
+            timing["tool_calls"] = tool_call_names
 
         # Store assistant response in conversation state
         if response.choices:
@@ -285,7 +360,13 @@ class MimoProvider:
         logger.info(
             "mimo_stream_start",
             model=self._model,
+            temperature=self._temperature,
+            max_tokens=self._max_tokens,
             messages_count=len(messages),
+            has_system_prompt=bool(context.system_prompt),
+            tool_schemas_count=len(tool_schemas),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
         )
 
         # Use stream=True for streaming
@@ -301,8 +382,10 @@ class MimoProvider:
         # Accumulate content and tool calls for conversation state
         accumulated_content = ""
         accumulated_tool_calls: dict[int, dict] = {}  # index -> tool_call_data
+        chunk_count = 0
 
         for chunk in stream:
+            chunk_count += 1
             # Extract content from chunk
             if chunk.choices:
                 delta = chunk.choices[0].delta
@@ -328,6 +411,19 @@ class MimoProvider:
                                 accumulated_tool_calls[idx]["function"]["arguments"] += tc.function.arguments
             
             yield chunk
+
+        # Log stream completion
+        tool_names = [
+            accumulated_tool_calls[i]["function"]["name"]
+            for i in sorted(accumulated_tool_calls.keys())
+        ] if accumulated_tool_calls else []
+        logger.debug(
+            "mimo_stream_end",
+            chunks_received=chunk_count,
+            text_length=len(accumulated_content),
+            tool_calls_count=len(tool_names),
+            tool_names=tool_names if tool_names else None,
+        )
 
         # Build assistant message for conversation state
         assistant_msg: dict[str, Any] = {"role": "assistant", "content": accumulated_content or None}
@@ -381,8 +477,22 @@ class MimoProvider:
                 "tool_call_id": tr.tool_call_id,
                 "content": tr.content,
             })
+            logger.debug(
+                "mimo_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
 
         tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
+
+        logger.debug(
+            "mimo_stream_with_tools_start",
+            model=self._model,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
+        )
 
         # Use stream=True for streaming
         stream = self._client.chat.completions.create(
@@ -397,8 +507,10 @@ class MimoProvider:
         # Accumulate content and tool calls for conversation state
         accumulated_content = ""
         accumulated_tool_calls: dict[int, dict] = {}
+        chunk_count = 0
 
         for chunk in stream:
+            chunk_count += 1
             if chunk.choices:
                 delta = chunk.choices[0].delta
                 if delta and delta.content:
@@ -422,6 +534,19 @@ class MimoProvider:
                                 accumulated_tool_calls[idx]["function"]["arguments"] += tc.function.arguments
             
             yield chunk
+
+        # Log stream completion
+        tool_names = [
+            accumulated_tool_calls[i]["function"]["name"]
+            for i in sorted(accumulated_tool_calls.keys())
+        ] if accumulated_tool_calls else []
+        logger.debug(
+            "mimo_stream_with_tools_end",
+            chunks_received=chunk_count,
+            text_length=len(accumulated_content),
+            tool_calls_count=len(tool_names),
+            tool_names=tool_names if tool_names else None,
+        )
 
         # Build assistant message for conversation state
         assistant_msg: dict[str, Any] = {"role": "assistant", "content": accumulated_content or None}

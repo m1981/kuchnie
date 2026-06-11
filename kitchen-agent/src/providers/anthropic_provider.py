@@ -30,6 +30,7 @@ import structlog
 from dotenv import load_dotenv
 
 from src.config import settings
+from src.logger import log_timing
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
 from src.providers.normalizer import ResponseNormalizer
 from src.tools.schema_converter import ToolSchemaConverter
@@ -190,12 +191,52 @@ class AnthropicProvider:
         # When use_tools=False, context.tool_schemas will be None.
         tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
-        response = self._client.messages.create(
+        logger.info(
+            "anthropic_complete_start",
             model=self._model,
             max_tokens=self._max_tokens,
-            tools=tool_schemas,
-            messages=self._conversation_state,
-            system=context.system_prompt or None,
+            messages_count=len(self._conversation_state),
+            has_system_prompt=bool(context.system_prompt),
+            tool_schemas_count=len(tool_schemas),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
+        )
+
+        with log_timing(logger, "anthropic_complete_end") as timing:
+            response = self._client.messages.create(
+                model=self._model,
+                max_tokens=self._max_tokens,
+                tools=tool_schemas,
+                messages=self._conversation_state,
+                system=context.system_prompt or None,
+            )
+
+        # Log response metadata
+        if hasattr(response, "usage") and response.usage:
+            timing["input_tokens"] = response.usage.input_tokens
+            timing["output_tokens"] = response.usage.output_tokens
+            timing["total_tokens"] = response.usage.input_tokens + response.usage.output_tokens
+        timing["stop_reason"] = response.stop_reason
+
+        # Log tool calls in response
+        tool_call_names: list[str] = []
+        for block in response.content:
+            if block.type == "tool_use":
+                tool_call_names.append(block.name)
+                logger.debug(
+                    "anthropic_tool_call",
+                    tool_name=block.name,
+                    tool_call_id=block.id,
+                    args_keys=list(block.input.keys()) if isinstance(block.input, dict) else [],
+                )
+        if tool_call_names:
+            timing["tool_calls"] = tool_call_names
+
+        logger.debug(
+            "anthropic_complete_result",
+            text_length=sum(len(b.text) for b in response.content if b.type == "text"),
+            tool_calls_count=len(tool_call_names),
+            stop_reason=response.stop_reason,
         )
 
         # Store response in conversation state for tool loop continuity
@@ -234,18 +275,38 @@ class AnthropicProvider:
                 "tool_use_id": tr.tool_call_id,
                 "content": tr.content,
             })
+            logger.debug(
+                "anthropic_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
         self._conversation_state.append({"role": "user", "content": result_content})
 
         # Only send tools if orchestrator has set tool_schemas on context.
         tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
 
-        response = self._client.messages.create(
+        logger.debug(
+            "anthropic_complete_with_tools_start",
             model=self._model,
-            max_tokens=self._max_tokens,
-            tools=tool_schemas,
-            messages=self._conversation_state,
-            system=context.system_prompt or None,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
         )
+
+        with log_timing(logger, "anthropic_complete_with_tools_end") as timing:
+            response = self._client.messages.create(
+                model=self._model,
+                max_tokens=self._max_tokens,
+                tools=tool_schemas,
+                messages=self._conversation_state,
+                system=context.system_prompt or None,
+            )
+
+        if hasattr(response, "usage") and response.usage:
+            timing["input_tokens"] = response.usage.input_tokens
+            timing["output_tokens"] = response.usage.output_tokens
+        timing["stop_reason"] = response.stop_reason
 
         # Store response in conversation state for next iteration
         assistant_content: list[dict[str, Any]] = []
@@ -318,7 +379,12 @@ class AnthropicProvider:
         logger.info(
             "anthropic_stream_start",
             model=self._model,
+            max_tokens=self._max_tokens,
             messages_count=len(self._conversation_state),
+            has_system_prompt=bool(context.system_prompt),
+            tool_schemas_count=len(tool_schemas),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
         )
 
         # Use messages.stream() for streaming
@@ -376,10 +442,24 @@ class AnthropicProvider:
                 "tool_use_id": tr.tool_call_id,
                 "content": tr.content,
             })
+            logger.debug(
+                "anthropic_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
         self._conversation_state.append({"role": "user", "content": result_content})
 
         # Only send tools if orchestrator has set tool_schemas on context.
         tool_schemas = context.tool_schemas if context.tool_schemas is not None else []
+
+        logger.debug(
+            "anthropic_stream_with_tools_start",
+            model=self._model,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
+        )
 
         # Use messages.stream() for streaming
         with self._client.messages.stream(
@@ -399,17 +479,26 @@ class AnthropicProvider:
             # Yield __final_message__ so orchestrator can detect tool calls
             yield {"type": "__final_message__", "message": final_message}
 
+            # Log tool calls from final message
+            tool_call_names: list[str] = []
             assistant_content: list[dict[str, Any]] = []
             for block in final_message.content:
                 if block.type == "text":
                     assistant_content.append({"type": "text", "text": block.text})
                 elif block.type == "tool_use":
+                    tool_call_names.append(block.name)
                     assistant_content.append({
                         "type": "tool_use",
                         "id": block.id,
                         "name": block.name,
                         "input": block.input,
                     })
+            if tool_call_names:
+                logger.debug(
+                    "anthropic_stream_with_tools_result",
+                    tool_calls_count=len(tool_call_names),
+                    tool_names=tool_call_names,
+                )
             self._conversation_state.append({"role": "assistant", "content": assistant_content})
         except Exception:
             logger.warning("anthropic_stream_final_message_failed")

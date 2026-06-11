@@ -276,15 +276,17 @@ class GeminiProvider:
         config_kwargs["temperature"] = settings.gemini_temperature
 
         log.info(
-            "gemini_api_call",
+            "gemini_complete_start",
             model=self._model,
             temperature=settings.gemini_temperature,
             messages_count=len(self._conversation_state),
             has_system_prompt=bool(context.system_prompt),
             tool_declarations_count=len(declarations),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
         )
 
-        with log_timing(log, "gemini_api_response") as timing:
+        with log_timing(log, "gemini_complete_end") as timing:
             response = self._client.models.generate_content(
                 model=self._model,
                 contents=self._conversation_state,
@@ -293,9 +295,34 @@ class GeminiProvider:
 
         # Log response metadata
         if response.usage_metadata:
-            timing["prompt_tokens"] = response.usage_metadata.prompt_token_count
-            timing["response_tokens"] = response.usage_metadata.candidates_token_count
+            timing["input_tokens"] = response.usage_metadata.prompt_token_count
+            timing["output_tokens"] = response.usage_metadata.candidates_token_count
             timing["total_tokens"] = response.usage_metadata.total_token_count
+
+        # Log tool calls in response
+        tool_call_names: list[str] = []
+        if response.candidates and response.candidates[0].content:
+            for part in response.candidates[0].content.parts or []:
+                if part.function_call:
+                    tool_call_names.append(part.function_call.name)
+                    log.debug(
+                        "gemini_tool_call",
+                        tool_name=part.function_call.name,
+                        tool_call_id=getattr(part.function_call, "id", None),
+                        args_keys=list(part.function_call.args.keys()) if part.function_call.args else [],
+                    )
+        if tool_call_names:
+            timing["tool_calls"] = tool_call_names
+
+        log.debug(
+            "gemini_complete_result",
+            text_length=sum(
+                len(p.text)
+                for p in (response.candidates[0].content.parts if response.candidates and response.candidates[0].content else [])
+                if hasattr(p, "text") and p.text
+            ),
+            tool_calls_count=len(tool_call_names),
+        )
 
         # Store response in conversation state for tool loop continuity
         if response.candidates and response.candidates[0].content:
@@ -315,6 +342,13 @@ class GeminiProvider:
         """
         from src.agent.context_assembler import AssembledContext
 
+        log.debug(
+            "gemini_complete_with_tools_start",
+            model=self._model,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
+        )
+
         # Build tool call message (assistant Content with function_call parts)
         parts: list[types.Part] = []
         for tc in tool_calls:
@@ -323,6 +357,12 @@ class GeminiProvider:
                     name=tc.name, args=tc.arguments, id=tc.id,
                 )
             ))
+            log.debug(
+                "gemini_tool_call_sent",
+                tool_name=tc.name,
+                tool_call_id=tc.id,
+                args_keys=list(tc.arguments.keys()),
+            )
         tool_call_content = types.Content(role="model", parts=parts)
         self._conversation_state.append(tool_call_content)
 
@@ -341,11 +381,17 @@ class GeminiProvider:
                     id=tr.tool_call_id,
                 )
             ))
+            log.debug(
+                "gemini_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
         tool_result_content = types.Content(role="user", parts=result_parts)
         self._conversation_state.append(tool_result_content)
 
-        # Use schemas from orchestrator — already in Gemini FunctionDeclaration format.
-        # When use_tools=False, context.tool_schemas is None → no tools.
+        # Use schemas from orchestrator
         declarations = context.tool_schemas if context.tool_schemas is not None else []
         gemini_tools = types.Tool(function_declarations=declarations) if declarations else None
 
@@ -356,11 +402,17 @@ class GeminiProvider:
             config_kwargs["tools"] = [gemini_tools]
         config_kwargs["temperature"] = settings.gemini_temperature
 
-        response = self._client.models.generate_content(
-            model=self._model,
-            contents=self._conversation_state,
-            config=types.GenerateContentConfig(**config_kwargs),
-        )
+        with log_timing(log, "gemini_complete_with_tools_end") as timing:
+            response = self._client.models.generate_content(
+                model=self._model,
+                contents=self._conversation_state,
+                config=types.GenerateContentConfig(**config_kwargs),
+            )
+
+        if response.usage_metadata:
+            timing["input_tokens"] = response.usage_metadata.prompt_token_count
+            timing["output_tokens"] = response.usage_metadata.candidates_token_count
+            timing["total_tokens"] = response.usage_metadata.total_token_count
 
         # Store response in conversation state for next iteration
         if response.candidates and response.candidates[0].content:
@@ -431,15 +483,21 @@ class GeminiProvider:
             "gemini_stream_start",
             model=self._model,
             messages_count=len(self._conversation_state),
+            has_system_prompt=bool(context.system_prompt),
+            tool_declarations_count=len(declarations),
+            has_images=bool(context.images),
+            has_context_files=bool(context.context_files),
         )
 
         # Use generate_content_stream for streaming
         accumulated_content = None
+        chunk_count = 0
         for chunk in self._client.models.generate_content_stream(
             model=self._model,
             contents=self._conversation_state,
             config=types.GenerateContentConfig(**config_kwargs),
         ):
+            chunk_count += 1
             # Accumulate content for conversation state
             if chunk.candidates and chunk.candidates[0].content:
                 content = chunk.candidates[0].content
@@ -449,7 +507,31 @@ class GeminiProvider:
                     # Append parts to accumulated content
                     if content.parts:
                         accumulated_content.parts.extend(content.parts)
+
+                # Log tool calls as they stream in
+                for part in content.parts or []:
+                    if part.function_call:
+                        log.debug(
+                            "gemini_stream_tool_call",
+                            tool_name=part.function_call.name,
+                            tool_call_id=getattr(part.function_call, "id", None),
+                        )
             yield chunk
+
+        # Log stream completion
+        tool_calls_found = []
+        if accumulated_content and accumulated_content.parts:
+            tool_calls_found = [
+                p.function_call.name
+                for p in accumulated_content.parts
+                if p.function_call
+            ]
+        log.debug(
+            "gemini_stream_end",
+            chunks_received=chunk_count,
+            tool_calls_count=len(tool_calls_found),
+            tool_names=tool_calls_found if tool_calls_found else None,
+        )
 
         # Store accumulated content in conversation state
         if accumulated_content:
@@ -467,6 +549,13 @@ class GeminiProvider:
         """
         from src.agent.context_assembler import AssembledContext
 
+        log.debug(
+            "gemini_stream_with_tools_start",
+            model=self._model,
+            tool_calls_count=len(tool_calls),
+            tool_results_count=len(tool_results),
+        )
+
         # Build tool call message (assistant Content with function_call parts)
         parts: list[types.Part] = []
         for tc in tool_calls:
@@ -475,6 +564,12 @@ class GeminiProvider:
                     name=tc.name, args=tc.arguments, id=tc.id,
                 )
             ))
+            log.debug(
+                "gemini_tool_call_sent",
+                tool_name=tc.name,
+                tool_call_id=tc.id,
+                args_keys=list(tc.arguments.keys()),
+            )
         tool_call_content = types.Content(role="model", parts=parts)
         self._conversation_state.append(tool_call_content)
 
@@ -493,6 +588,13 @@ class GeminiProvider:
                     id=tr.tool_call_id,
                 )
             ))
+            log.debug(
+                "gemini_tool_result_sent",
+                tool_name=tr.name,
+                tool_call_id=tr.tool_call_id,
+                result_size=len(tr.content),
+                is_error=tr.is_error,
+            )
         tool_result_content = types.Content(role="user", parts=result_parts)
         self._conversation_state.append(tool_result_content)
 

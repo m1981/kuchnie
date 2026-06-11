@@ -28,10 +28,15 @@ ToolExecutor for the same behavior.
 """
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Any
 
+import structlog
+
 from src.protocols import ToolRegistryProtocol
+
+log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -94,25 +99,64 @@ class ToolExecutor:
             List of ToolResult objects — one per tool call.
             Errors are wrapped, never raised.
         """
-        return [self._execute_one(tc) for tc in tool_calls]
+        log.debug(
+            "tool_executor_batch_start",
+            tool_count=len(tool_calls),
+            tool_names=[tc.name for tc in tool_calls],
+        )
+        results = [self._execute_one(tc) for tc in tool_calls]
+        log.debug(
+            "tool_executor_batch_complete",
+            tool_count=len(results),
+            errors=sum(1 for r in results if r.is_error),
+        )
+        return results
 
     def _execute_one(self, tool_call: ToolCall) -> ToolResult:
+        log.debug(
+            "tool_executing",
+            tool_name=tool_call.name,
+            tool_call_id=tool_call.id,
+            args_keys=list(tool_call.arguments.keys()),
+        )
+        start = time.perf_counter()
         try:
             handler = self._registry.get_handler(tool_call.name)
             result = handler(**tool_call.arguments)
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+
+            content = str(result)
+            log.debug(
+                "tool_executed",
+                tool_name=tool_call.name,
+                tool_call_id=tool_call.id,
+                result_size=len(content),
+                is_error=False,
+                duration_ms=duration_ms,
+            )
 
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
-                content=str(result),
+                content=content,
                 is_error=False,
             )
 
         except Exception as e:
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            error_content = f"Tool error: {type(e).__name__}: {e}"
+            log.warning(
+                "tool_execution_error",
+                tool_name=tool_call.name,
+                tool_call_id=tool_call.id,
+                error_type=type(e).__name__,
+                error_message=str(e),
+                duration_ms=duration_ms,
+            )
             # Never crash the turn — return structured error to LLM
             return ToolResult(
                 tool_call_id=tool_call.id,
                 name=tool_call.name,
-                content=f"Tool error: {type(e).__name__}: {e}",
+                content=error_content,
                 is_error=True,
             )
