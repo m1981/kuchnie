@@ -239,6 +239,18 @@ Conversation:
         # Clean up the title
         title = normalized.text.strip()
         title = title.strip('"').strip("'")
+        
+        # Fallback if LLM returned empty text
+        if not title:
+            log.warning("title_generation_empty_response", session_id=session_id)
+            if user_msgs:
+                title = user_msgs[0].get("content", "")[:50].strip()
+                if len(user_msgs[0].get("content", "")) > 50:
+                    title += "..."
+            else:
+                title = f"Session {session_id[:8]}"
+        
+        # Truncate if too long
         if len(title) > 60:
             title = title[:57] + "..."
         
@@ -247,11 +259,22 @@ Conversation:
         
         return TitleGenerateResponse(generated=True, title=title)
     except Exception as e:
-        log.error("title_generation_failed", error=str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate title: {str(e)}",
-        ) from e
+        error_msg = str(e)
+        log.error("title_generation_failed", error=error_msg, session_id=session_id)
+        
+        # Provide user-friendly error messages
+        if "api_key" in error_msg.lower() or "auth" in error_msg.lower():
+            detail = "API key invalid or missing"
+        elif "rate" in error_msg.lower() or "429" in error_msg:
+            detail = "Rate limited, try again later"
+        elif "timeout" in error_msg.lower():
+            detail = "Request timed out, try again"
+        elif "connection" in error_msg.lower():
+            detail = "Cannot connect to LLM service"
+        else:
+            detail = f"Title generation failed: {error_msg}"
+        
+        raise HTTPException(status_code=500, detail=detail) from e
 
 
 @router.post("/api/sessions/{session_id}/fork", response_model=ForkResponse)

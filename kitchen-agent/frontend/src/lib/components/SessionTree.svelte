@@ -122,8 +122,14 @@
 	}
 
 	async function handleTitleGenerate(id: string): Promise<void> {
-		const result = await api.generateSessionTitle(id);
-		await sessionStore.refresh();
+		try {
+			await api.generateSessionTitle(id);
+			await sessionStore.refresh();
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : 'Unknown error';
+			showError(`Title generation failed: ${msg}`);
+			throw e; // Re-throw so context menu can handle state
+		}
 	}
 
 	// Derived counts for the header badges.
