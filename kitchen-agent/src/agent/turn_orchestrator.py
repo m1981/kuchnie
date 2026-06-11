@@ -233,6 +233,10 @@ class TurnOrchestrator:
         """
         Count tokens for tool results and truncate if over budget.
 
+        When a result is truncated, remaining results in the batch are
+        zeroed out (replaced with a short message) to prevent them from
+        inflating the token count beyond the budget.
+
         Returns:
             (possibly_truncated_results, new_tool_tokens_used, was_truncated)
         """
@@ -243,13 +247,20 @@ class TurnOrchestrator:
         )
         warning_tokens = self._token_counter.count(warning_suffix)
 
-        for tr in tool_results:
+        for i, tr in enumerate(tool_results):
+            if truncated:
+                # Previous result was truncated — zero out remaining results
+                tr.content = "[skipped: context budget exceeded]"
+                tool_tokens_used += self._token_counter.count(tr.content)
+                continue
+
             tokens = self._token_counter.count(tr.content)
             remaining_budget = tool_budget_tokens - tool_tokens_used
 
             if tokens > remaining_budget and remaining_budget > 0:
                 # Reserve space for the warning text
                 truncate_budget = max(0, remaining_budget - warning_tokens)
+                original_content = tr.content
                 tr.content = self._token_counter.trim_to(tr.content, truncate_budget)
                 tr.content += warning_suffix
                 tokens = self._token_counter.count(tr.content)
@@ -257,7 +268,8 @@ class TurnOrchestrator:
                 self._log.warning(
                     "tool_result_truncated",
                     tool_name=tr.name,
-                    original_tokens=tokens,
+                    original_tokens=self._token_counter.count(original_content),
+                    truncated_tokens=tokens,
                     remaining_budget=remaining_budget,
                 )
 
