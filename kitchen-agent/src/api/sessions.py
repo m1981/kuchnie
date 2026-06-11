@@ -234,7 +234,17 @@ Conversation:
         
         raw_response = llm_provider.complete(context)
         normalizer = ResponseNormalizer()
-        normalized = normalizer.normalize(raw_response, llm_provider.__class__.__name__)
+        
+        # Determine provider name from class
+        provider_class_name = llm_provider.__class__.__name__
+        provider_name_map = {
+            'GeminiProvider': 'gemini',
+            'AnthropicProvider': 'anthropic',
+            'MimoProvider': 'mimo',
+        }
+        provider_name = provider_name_map.get(provider_class_name, 'gemini')
+        
+        normalized = normalizer.normalize(raw_response, provider_name)
         
         # Clean up the title
         title = normalized.text.strip()
