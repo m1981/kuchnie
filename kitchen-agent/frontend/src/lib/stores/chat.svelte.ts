@@ -416,6 +416,11 @@ function createChatStore() {
 				abortController = null;
 				await sessionStore.refresh();
 				void tokenStore.refreshSessionTokens(sessionId);
+
+				// Auto-generate title after first message (background, non-blocking)
+				if (messages.length <= 3) { // user + assistant = 2 messages (first turn)
+					void generateTitleInBackground(sessionId);
+				}
 			} catch (e) {
 				abortController = null;
 				// Don't show error for user-initiated abort
@@ -487,6 +492,23 @@ function createChatStore() {
 			}
 		}
 	};
+}
+
+/**
+ * Generate title in background after first message.
+ * Non-blocking — runs asynchronously and updates sidebar when complete.
+ */
+async function generateTitleInBackground(sid: string): Promise<void> {
+	try {
+		const result = await api.generateSessionTitle(sid);
+		if (result.generated) {
+			// Refresh the session tree to show the new title
+			await sessionStore.refresh();
+		}
+	} catch {
+		// Silent fail — title generation is optional, don't disrupt the user
+		console.warn('Background title generation failed');
+	}
 }
 
 // Singleton — one instance for the whole app lifecycle.
