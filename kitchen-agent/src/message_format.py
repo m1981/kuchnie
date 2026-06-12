@@ -46,6 +46,7 @@ class MessageDict(TypedDict, total=False):
     tool_calls: list[ToolCallDict]  # only for assistant messages
     tool_call_id: str  # only for tool messages
     turn_id: str  # optional stable identity
+    token_count: int  # token count for this message
 
 
 def make_user_message(content: str, turn_id: str | None = None) -> MessageDict:

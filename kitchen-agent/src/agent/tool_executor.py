@@ -34,7 +34,7 @@ from typing import Any
 
 import structlog
 
-from src.protocols import ToolRegistryProtocol
+from src.protocols import TokenCounterProtocol, ToolRegistryProtocol
 
 log = structlog.get_logger(__name__)
 
@@ -50,6 +50,7 @@ class ToolCall:
     id: str
     name: str
     arguments: dict
+    token_count: int = 0  # token count for the call arguments
 
 
 @dataclass
@@ -60,6 +61,7 @@ class ToolResult:
     name: str
     content: str
     is_error: bool = False
+    token_count: int = 0  # token count for this tool result
 
 
 # ToolRegistryProtocol imported from src/protocols.py — single source of truth.
@@ -78,8 +80,9 @@ class ToolExecutor:
     - Does NOT know about providers or sessions
     """
 
-    def __init__(self, registry: ToolRegistryProtocol) -> None:
+    def __init__(self, registry: ToolRegistryProtocol, token_counter: TokenCounterProtocol | None = None) -> None:
         self._registry = registry
+        self._token_counter = token_counter
 
     def execute_all(
         self,
@@ -104,6 +107,11 @@ class ToolExecutor:
             tool_count=len(tool_calls),
             tool_names=[tc.name for tc in tool_calls],
         )
+        # Count tokens for tool call arguments
+        if self._token_counter:
+            for tc in tool_calls:
+                args_str = str(tc.arguments)
+                tc.token_count = self._token_counter.count(tc.name + args_str)
         results = [self._execute_one(tc) for tc in tool_calls]
         log.debug(
             "tool_executor_batch_complete",
@@ -140,6 +148,7 @@ class ToolExecutor:
                 name=tool_call.name,
                 content=content,
                 is_error=False,
+                token_count=self._token_counter.count(content) if self._token_counter else 0,
             )
 
         except Exception as e:
@@ -159,4 +168,5 @@ class ToolExecutor:
                 name=tool_call.name,
                 content=error_content,
                 is_error=True,
+                token_count=self._token_counter.count(error_content) if self._token_counter else 0,
             )

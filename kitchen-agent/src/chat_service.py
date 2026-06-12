@@ -100,6 +100,7 @@ class ChatTurnResponse:
     tokens_used: dict = field(default_factory=dict)
     provider_name: str = ""
     model_name: str = ""
+    token_breakdown: dict = field(default_factory=dict)  # per-turn token breakdown
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +210,8 @@ class ChatService:
         provider_name: str,
         model_name: str,
         context_files: list[str] | None,
+        user_tokens: int = 0,
+        assistant_tokens: int = 0,
     ) -> list[dict]:
         """
         Append the new user + assistant turn to UI history.
@@ -221,6 +224,7 @@ class ChatService:
             "role": "user",
             "content": user_message,
             "turn_id": user_turn_id,
+            "token_count": user_tokens,
         }
         file_basenames = _context_file_basenames(context_files)
         if file_basenames is not None:
@@ -233,6 +237,7 @@ class ChatService:
             "content": assistant_message,
             "turn_id": assistant_turn_id,
             "tools": tool_logs or [],
+            "token_count": assistant_tokens,
         }
         if provider_name:
             assistant_entry["provider"] = provider_name
@@ -322,6 +327,8 @@ class ChatService:
             provider_name=turn_output.provider_name,
             model_name=turn_output.model_name,
             context_files=request.context_files,
+            user_tokens=turn_output.token_breakdown.user_message_tokens,
+            assistant_tokens=turn_output.token_breakdown.assistant_tokens,
         )
 
         # ── 5. Persist ────────────────────────────────────────────────
@@ -358,6 +365,14 @@ class ChatService:
             tokens_used=turn_output.tokens_used,
             provider_name=turn_output.provider_name,
             model_name=turn_output.model_name,
+            token_breakdown={
+                "user_message_tokens": turn_output.token_breakdown.user_message_tokens,
+                "tool_calls_tokens": turn_output.token_breakdown.tool_calls_tokens,
+                "tool_results_tokens": turn_output.token_breakdown.tool_results_tokens,
+                "assistant_tokens": turn_output.token_breakdown.assistant_tokens,
+                "turn_total": turn_output.token_breakdown.turn_total,
+                "conversation_total": turn_output.token_breakdown.conversation_total,
+            },
         )
 
     # ── Streaming turn ──────────────────────────────────────────────────
@@ -436,10 +451,20 @@ class ChatService:
                 done_tool_details = event.get("tool_details", [])
 
         # ── 3. Build updated API history ──────────────────────────────
+        # Calculate token counts for this turn
+        token_counter = getattr(self._orchestrator, '_token_counter', None)
+        
+        user_tokens = token_counter.count(request.user_message) if token_counter else 0
         updated_api_history = list(api_history)
-        updated_api_history.append({"role": "user", "content": request.user_message})
+        updated_api_history.append({"role": "user", "content": request.user_message, "token_count": user_tokens})
 
+        tool_calls_tokens = 0
+        tool_results_tokens = 0
         for detail in done_tool_details:
+            call_tokens = getattr(detail, 'call_tokens', 0)
+            result_tokens = getattr(detail, 'result_tokens', 0)
+            tool_calls_tokens += call_tokens
+            tool_results_tokens += result_tokens
             updated_api_history.append({
                 "role": "assistant",
                 "content": "",
@@ -448,14 +473,30 @@ class ChatService:
                     "name": detail.name,
                     "arguments": detail.arguments,
                 }],
+                "token_count": call_tokens,
             })
             updated_api_history.append({
                 "role": "tool",
                 "tool_call_id": detail.id,
                 "content": detail.result_content,
+                "token_count": result_tokens,
             })
 
-        updated_api_history.append({"role": "assistant", "content": full_text})
+        assistant_tokens = token_counter.count(full_text) if token_counter else 0
+        updated_api_history.append({"role": "assistant", "content": full_text, "token_count": assistant_tokens})
+
+        # Calculate conversation total
+        conversation_total = sum(msg.get("token_count", 0) for msg in updated_api_history if isinstance(msg, dict))
+        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
+
+        token_breakdown = {
+            "user_message_tokens": user_tokens,
+            "tool_calls_tokens": tool_calls_tokens,
+            "tool_results_tokens": tool_results_tokens,
+            "assistant_tokens": assistant_tokens,
+            "turn_total": turn_total,
+            "conversation_total": conversation_total,
+        }
 
         # ── 4. Build UI history (shared helper) ───────────────────────
         new_ui_history = self._build_ui_history(
@@ -468,6 +509,8 @@ class ChatService:
             provider_name=provider_name,
             model_name=model_name,
             context_files=request.context_files,
+            user_tokens=user_tokens,
+            assistant_tokens=assistant_tokens,
         )
 
         # ── 5. Persist (shared helper) ────────────────────────────────
@@ -486,6 +529,7 @@ class ChatService:
             "tool_calls_made": tool_calls_made,
             "tool_logs": tool_logs,
             "tokens_used": {},  # TODO: extract from stream
+            "token_breakdown": token_breakdown,
         }
 
         self._log.info(

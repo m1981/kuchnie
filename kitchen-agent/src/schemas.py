@@ -56,6 +56,26 @@ class ToolLog(BaseModel):
     name: str
     args: dict[str, Any]
     result: dict[str, Any]
+    token_count: int = 0  # token count for this tool call + result
+
+
+class TokenBreakdown(BaseModel):
+    """
+    Per-turn token breakdown.
+
+    user_message_tokens  : Tokens in the user's message.
+    tool_calls_tokens    : Total tokens across all tool call arguments.
+    tool_results_tokens  : Total tokens across all tool results.
+    assistant_tokens     : Tokens in the assistant's final response.
+    turn_total           : Sum of all above for this turn.
+    conversation_total   : Running total across the entire conversation.
+    """
+    user_message_tokens: int = 0
+    tool_calls_tokens: int = 0
+    tool_results_tokens: int = 0
+    assistant_tokens: int = 0
+    turn_total: int = 0
+    conversation_total: int = 0
 
 
 class ChatResponse(BaseModel):
@@ -65,6 +85,7 @@ class ChatResponse(BaseModel):
     assistant_turn_id: str | None = None
     provider: str | None = None
     model: str | None = None
+    token_breakdown: TokenBreakdown | None = None  # per-turn token breakdown
 
 
 class ForkRequest(BaseModel):

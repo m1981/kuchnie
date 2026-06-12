@@ -88,6 +88,20 @@ class ToolCallDetail:
     arguments: dict
     result_content: str
     is_error: bool = False
+    call_tokens: int = 0    # tokens in the tool call arguments
+    result_tokens: int = 0  # tokens in the tool result content
+
+
+@dataclass
+class TokenBreakdown:
+    """Per-turn token breakdown."""
+
+    user_message_tokens: int = 0
+    tool_calls_tokens: int = 0
+    tool_results_tokens: int = 0
+    assistant_tokens: int = 0
+    turn_total: int = 0
+    conversation_total: int = 0
 
 
 @dataclass
@@ -106,6 +120,7 @@ class TurnOutput:
     provider_name: str = ""            # actual provider used (e.g. "gemini", "anthropic")
     model_name: str = ""               # actual model used (e.g. "gemini-2.5-flash")
     context_slots: dict = field(default_factory=dict)  # observability
+    token_breakdown: TokenBreakdown = field(default_factory=TokenBreakdown)  # per-turn token breakdown
 
 
 
@@ -188,6 +203,8 @@ class TurnOrchestrator:
                 arguments=tc.arguments,
                 result_content=tr.content,
                 is_error=tr.is_error,
+                call_tokens=tc.token_count,
+                result_tokens=tr.token_count,
             ))
 
         return normalized.tool_calls, tool_results
@@ -203,7 +220,7 @@ class TurnOrchestrator:
             Tuple of (tool_calls_made_objects, tool_logs) for TurnOutput.
         """
         calls = [
-            ToolCall(id=d.id, name=d.name, arguments=d.arguments)
+            ToolCall(id=d.id, name=d.name, arguments=d.arguments, token_count=d.call_tokens)
             for d in tool_details
         ]
         logs = [{
@@ -212,6 +229,7 @@ class TurnOrchestrator:
             "result": ({"content": d.result_content}
                        if not d.is_error
                        else {"error": d.result_content}),
+            "token_count": d.call_tokens + d.result_tokens,
         } for d in tool_details]
         return calls, logs
 
@@ -575,10 +593,15 @@ class TurnOrchestrator:
         updated_api_history: list = list(session.get("messages", []))
         
         # User message
-        updated_api_history.append({"role": "user", "content": turn_input.user_message})
+        user_tokens = self._token_counter.count(turn_input.user_message) if self._token_counter else 0
+        updated_api_history.append({"role": "user", "content": turn_input.user_message, "token_count": user_tokens})
         
         # Tool call/response pairs
+        tool_calls_tokens = 0
+        tool_results_tokens = 0
         for detail in tool_details:
+            tool_calls_tokens += detail.call_tokens
+            tool_results_tokens += detail.result_tokens
             # Assistant tool call message
             updated_api_history.append({
                 "role": "assistant",
@@ -588,18 +611,22 @@ class TurnOrchestrator:
                     "name": detail.name,
                     "arguments": detail.arguments,
                 }],
+                "token_count": detail.call_tokens,
             })
             # Tool response message
             updated_api_history.append({
                 "role": "tool",
                 "tool_call_id": detail.id,
                 "content": detail.result_content,
+                "token_count": detail.result_tokens,
             })
         
         # Assistant response
+        assistant_tokens = self._token_counter.count(normalized.text) if self._token_counter else 0
         updated_api_history.append({
             "role": "assistant",
             "content": normalized.text,
+            "token_count": assistant_tokens,
         })
 
         # Generate stable turn IDs
@@ -618,6 +645,24 @@ class TurnOrchestrator:
         if tool_details:
             self._check_citation_compliance(normalized.text, tool_details)
 
+        # ── 6. Calculate token breakdown ───────────────────────────────
+        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
+
+        # Calculate conversation total (sum of all message token_counts)
+        conversation_total = 0
+        for msg in updated_api_history:
+            if isinstance(msg, dict):
+                conversation_total += msg.get("token_count", 0)
+
+        token_breakdown = TokenBreakdown(
+            user_message_tokens=user_tokens,
+            tool_calls_tokens=tool_calls_tokens,
+            tool_results_tokens=tool_results_tokens,
+            assistant_tokens=assistant_tokens,
+            turn_total=turn_total,
+            conversation_total=conversation_total,
+        )
+
         return TurnOutput(
             assistant_message=normalized.text,
             updated_api_history=updated_api_history,
@@ -629,6 +674,7 @@ class TurnOrchestrator:
             provider_name=provider_name,
             model_name=actual_model,
             context_slots=context.slots_used,
+            token_breakdown=token_breakdown,
         )
 
     def stream(

@@ -35,6 +35,7 @@ from src.schemas import (
     SessionTokensResponse,
     TokenEstimateRequest,
     TokenEstimateResponse,
+    TokenBreakdown,
     ToolLog,
 )
 from src.logger import bind_request_context, clear_request_context, log_timing
@@ -146,6 +147,7 @@ async def chat(
             assistant_turn_id=result.assistant_turn_id,
             provider=result.provider_name,
             model=result.model_name,
+            token_breakdown=TokenBreakdown(**result.token_breakdown) if result.token_breakdown else None,
         )
     except Exception as exc:
         log.exception("chat_request_failed", error=str(exc))

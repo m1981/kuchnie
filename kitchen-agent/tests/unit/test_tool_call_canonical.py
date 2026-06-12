@@ -33,7 +33,7 @@ class TestToolCallCanonicalSource:
 
         assert hasattr(ToolCall, "__dataclass_fields__")
         field_names = {f.name for f in fields(ToolCall)}
-        assert field_names == {"id", "name", "arguments"}
+        assert field_names == {"id", "name", "arguments", "token_count"}
 
     def test_normalizer_reexports_same_class(self):
         """normalizer.ToolCall must be the SAME class as tool_executor.ToolCall."""

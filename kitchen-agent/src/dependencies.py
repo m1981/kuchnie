@@ -187,7 +187,7 @@ def get_context_assembler():
 def get_tool_executor():
     """ToolExecutor — resolves and runs tool calls safely."""
     from src.agent.tool_executor import ToolExecutor
-    return ToolExecutor(registry=get_tool_registry())
+    return ToolExecutor(registry=get_tool_registry(), token_counter=get_token_counter())
 
 
 @lru_cache
