@@ -9,7 +9,7 @@ multiple test files belong here.  Single-use fakes stay in their test file.
 from __future__ import annotations
 
 from src.agent.context_assembler import ContextSlot
-from src.agent.turn_orchestrator import ToolCall, ToolCallDetail, TurnInput, TurnOutput
+from src.agent.turn_orchestrator import ToolCall, ToolCallDetail, TokenBreakdown, TurnInput, TurnOutput
 
 
 class FakeOrchestrator:
@@ -39,32 +39,48 @@ class FakeOrchestrator:
         # Build tool_logs and tool_calls_made from tool_details
         tool_logs = []
         tool_calls_made = []
+        tool_calls_tokens = 0
+        tool_results_tokens = 0
         for d in self._tool_details:
             tool_calls_made.append(
-                ToolCall(id=d.id, name=d.name, arguments=d.arguments)
+                ToolCall(id=d.id, name=d.name, arguments=d.arguments, token_count=d.call_tokens)
             )
+            tool_calls_tokens += d.call_tokens
+            tool_results_tokens += d.result_tokens
             tool_logs.append({
                 "name": d.name,
                 "args": d.arguments,
                 "result": {"content": d.result_content} if not d.is_error else {"error": d.result_content},
+                "token_count": d.call_tokens + d.result_tokens,
             })
 
-        # Build updated_api_history
+        # Simulate token counts
+        user_tokens = max(1, len(turn_input.user_message) // 4)
+        assistant_tokens = max(1, len(self._text) // 4)
+        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
+
+        # Build updated_api_history with token counts
         updated_api_history = list(session.get("messages", []))
-        updated_api_history.append({"role": "user", "content": turn_input.user_message})
+        updated_api_history.append({"role": "user", "content": turn_input.user_message, "token_count": user_tokens})
         for d in self._tool_details:
             updated_api_history.append({
                 "role": "assistant",
                 "content": [{"type": "tool_use", "id": d.id, "name": d.name, "input": d.arguments}],
+                "token_count": d.call_tokens,
             })
             updated_api_history.append({
                 "role": "user",
                 "content": [{"type": "tool_result", "tool_use_id": d.id, "content": d.result_content}],
+                "token_count": d.result_tokens,
             })
         updated_api_history.append({
             "role": "assistant",
             "content": [{"type": "text", "text": self._text}],
+            "token_count": assistant_tokens,
         })
+
+        # Calculate conversation total
+        conversation_total = sum(msg.get("token_count", 0) for msg in updated_api_history if isinstance(msg, dict))
 
         return TurnOutput(
             assistant_message=self._text,
@@ -75,6 +91,14 @@ class FakeOrchestrator:
             tool_logs=tool_logs,
             tokens_used={"input": 10, "output": 5, "total": 15},
             context_slots={ContextSlot.SYSTEM_PROMPT: 20},
+            token_breakdown=TokenBreakdown(
+                user_message_tokens=user_tokens,
+                tool_calls_tokens=tool_calls_tokens,
+                tool_results_tokens=tool_results_tokens,
+                assistant_tokens=assistant_tokens,
+                turn_total=turn_total,
+                conversation_total=conversation_total,
+            ),
         )
 
     def stream(self, session: dict, turn_input: TurnInput):
@@ -87,12 +111,17 @@ class FakeOrchestrator:
         # Build tool_logs
         tool_logs = []
         tool_calls_made = []
+        tool_calls_tokens = 0
+        tool_results_tokens = 0
         for d in self._tool_details:
             tool_calls_made.append(d.name)
+            tool_calls_tokens += d.call_tokens
+            tool_results_tokens += d.result_tokens
             tool_logs.append({
                 "name": d.name,
                 "args": d.arguments,
                 "result": {"content": d.result_content} if not d.is_error else {"error": d.result_content},
+                "token_count": d.call_tokens + d.result_tokens,
             })
             yield {
                 "type": "tool_call",
@@ -111,7 +140,12 @@ class FakeOrchestrator:
         # Yield text in chunks
         yield {"type": "text_delta", "content": self._text}
 
-        # Done event with tool_details for history building
+        # Simulate token counts
+        user_tokens = max(1, len(turn_input.user_message) // 4)
+        assistant_tokens = max(1, len(self._text) // 4)
+        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
+
+        # Done event with tool_details and token_breakdown
         yield {
             "type": "done",
             "provider": "gemini",
@@ -120,4 +154,11 @@ class FakeOrchestrator:
             "assistant_turn_id": "test-assistant-turn-id",
             "tool_calls_made": tool_calls_made,
             "tool_details": self._tool_details,
+            "token_breakdown": {
+                "user_message_tokens": user_tokens,
+                "tool_calls_tokens": tool_calls_tokens,
+                "tool_results_tokens": tool_results_tokens,
+                "assistant_tokens": assistant_tokens,
+                "turn_total": turn_total,
+            },
         }

@@ -618,3 +618,103 @@ class TestStreamTurn:
         assert len(api_history) == 2
         assert api_history[0]["role"] == "user"
         assert api_history[1]["role"] == "assistant"
+
+
+# ---------------------------------------------------------------------------
+# ChatService token_breakdown tests
+# ---------------------------------------------------------------------------
+
+class TestTokenBreakdown:
+    """Tests for token_breakdown in ChatTurnResponse."""
+
+    @patch("src.chat_service.log_turn")
+    def test_handle_turn_returns_token_breakdown(self, mock_log, repo):
+        """handle_turn should return token_breakdown with all fields."""
+        orchestrator = FakeOrchestrator(text="Response.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        result = service.handle_turn(ChatTurnRequest(
+            session_id="test-breakdown",
+            user_message="Hello",
+        ))
+
+        assert "user_message_tokens" in result.token_breakdown
+        assert "tool_calls_tokens" in result.token_breakdown
+        assert "tool_results_tokens" in result.token_breakdown
+        assert "assistant_tokens" in result.token_breakdown
+        assert "turn_total" in result.token_breakdown
+        assert "conversation_total" in result.token_breakdown
+
+    @patch("src.chat_service.log_turn")
+    def test_handle_turn_token_counts_positive(self, mock_log, repo):
+        """Token counts should be positive for non-empty messages."""
+        orchestrator = FakeOrchestrator(text="Hello back!")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        result = service.handle_turn(ChatTurnRequest(
+            session_id="test-counts",
+            user_message="Hello there",
+        ))
+
+        assert result.token_breakdown["user_message_tokens"] > 0
+        assert result.token_breakdown["assistant_tokens"] > 0
+        assert result.token_breakdown["turn_total"] > 0
+
+    @patch("src.chat_service.log_turn")
+    def test_ui_history_has_token_count(self, mock_log, repo):
+        """UI history messages should have token_count field."""
+        orchestrator = FakeOrchestrator(text="Response.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        result = service.handle_turn(ChatTurnRequest(
+            session_id="test-ui-tokens",
+            user_message="Hello",
+        ))
+
+        # Check UI history has token_count
+        user_msg = next(m for m in result.ui_history if m["role"] == "user")
+        assistant_msg = next(m for m in result.ui_history if m["role"] == "assistant")
+
+        assert "token_count" in user_msg
+        assert user_msg["token_count"] > 0
+        assert "token_count" in assistant_msg
+        assert assistant_msg["token_count"] > 0
+
+    @patch("src.chat_service.log_turn")
+    def test_conversation_total_accumulates(self, mock_log, repo):
+        """conversation_total should grow across multiple turns."""
+        orchestrator = FakeOrchestrator(text="Response.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        # First turn
+        result1 = service.handle_turn(ChatTurnRequest(
+            session_id="test-accum",
+            user_message="First",
+        ))
+        total1 = result1.token_breakdown["conversation_total"]
+
+        # Second turn
+        result2 = service.handle_turn(ChatTurnRequest(
+            session_id="test-accum",
+            user_message="Second",
+        ))
+        total2 = result2.token_breakdown["conversation_total"]
+
+        # Total should grow
+        assert total2 > total1
+
+    @patch("src.chat_service.log_turn")
+    def test_stream_turn_returns_token_breakdown(self, mock_log, repo):
+        """stream_turn done event should include token_breakdown."""
+        orchestrator = FakeOrchestrator(text="Streamed.")
+        service = ChatService(session_repo=repo, turn_orchestrator=orchestrator)
+
+        events = list(service.stream_turn(ChatTurnRequest(
+            session_id="test-stream-breakdown",
+            user_message="Hello",
+        )))
+
+        done_events = [e for e in events if e["type"] == "done"]
+        assert len(done_events) == 1
+        assert "token_breakdown" in done_events[0]
+        assert done_events[0]["token_breakdown"]["user_message_tokens"] > 0

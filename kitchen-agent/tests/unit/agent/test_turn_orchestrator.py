@@ -201,15 +201,17 @@ def make_orchestrator(
     raises: Exception | None = None,
     total_tokens: int = 10_000,
     max_tool_iterations: int = 10,
+    token_counter: FakeTokenCounter | None = None,
 ) -> TurnOrchestrator:
     """Test factory — keeps tests clean."""
+    tc = token_counter or FakeTokenCounter()
     return TurnOrchestrator(
         context_assembler=ContextAssembler(
             token_budget=ContextBudget(total=total_tokens),
-            token_counter=FakeTokenCounter(),
+            token_counter=tc,
             prompt_manager=FakePromptManager(),
         ),
-        tool_executor=ToolExecutor(registry=FakeRegistry()),
+        tool_executor=ToolExecutor(registry=FakeRegistry(), token_counter=tc),
         provider=FakeCompleter(
             text=text,
             tool_calls=tool_calls,
@@ -219,6 +221,7 @@ def make_orchestrator(
         ),
         response_normalizer=ResponseNormalizer(),
         max_tool_iterations=max_tool_iterations,
+        token_counter=tc,
     )
 
 
@@ -778,3 +781,100 @@ class TestProviderRouting:
             turn_input=TurnInput(user_message="Hello", use_tools=True),
         )
         assert schema_calls[-1] == "gemini"
+
+
+# ---------------------------------------------------------------------------
+# Tests: token_breakdown in TurnOutput
+# ---------------------------------------------------------------------------
+
+class TestTokenBreakdown:
+    """TurnOutput.token_breakdown should be populated correctly."""
+
+    def test_text_only_has_user_and_assistant_tokens(self):
+        orchestrator = make_orchestrator(text="Hello back!")
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello"),
+        )
+        assert output.token_breakdown.user_message_tokens > 0
+        assert output.token_breakdown.assistant_tokens > 0
+        assert output.token_breakdown.tool_calls_tokens == 0
+        assert output.token_breakdown.tool_results_tokens == 0
+        assert output.token_breakdown.turn_total > 0
+
+    def test_turn_total_sums_all_components(self):
+        orchestrator = make_orchestrator(text="Response.")
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello"),
+        )
+        expected = (
+            output.token_breakdown.user_message_tokens
+            + output.token_breakdown.tool_calls_tokens
+            + output.token_breakdown.tool_results_tokens
+            + output.token_breakdown.assistant_tokens
+        )
+        assert output.token_breakdown.turn_total == expected
+
+    def test_tool_calls_have_tokens(self):
+        tool_call = ToolCall(id="c1", name="echo", arguments={"text": "hi"})
+        orchestrator = make_orchestrator(
+            responses=[
+                ("", [tool_call]),
+                ("Done.", []),
+            ]
+        )
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Echo hi"),
+        )
+        assert output.token_breakdown.tool_calls_tokens > 0
+        assert output.token_breakdown.tool_results_tokens > 0
+
+    def test_conversation_total_includes_history(self):
+        session = make_session(messages=[
+            {"role": "user", "content": "Previous question", "token_count": 5},
+            {"role": "assistant", "content": "Previous answer", "token_count": 4},
+        ])
+        orchestrator = make_orchestrator(text="New response.")
+        output = orchestrator.run(
+            session=session,
+            turn_input=TurnInput(user_message="New question"),
+        )
+        # conversation_total should include history + new turn
+        assert output.token_breakdown.conversation_total > 9  # history(9) + new tokens
+
+    def test_user_message_token_count_matches_counter(self):
+        counter = FakeTokenCounter()
+        orchestrator = make_orchestrator(text="Ok.")
+        orchestrator._token_counter = counter
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Test message"),
+        )
+        expected = counter.count("Test message")
+        assert output.token_breakdown.user_message_tokens == expected
+
+    def test_assistant_tokens_match_counter(self):
+        counter = FakeTokenCounter()
+        orchestrator = make_orchestrator(text="Hello back!")
+        orchestrator._token_counter = counter
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello"),
+        )
+        expected = counter.count("Hello back!")
+        assert output.token_breakdown.assistant_tokens == expected
+
+    def test_updated_api_history_has_token_counts(self):
+        orchestrator = make_orchestrator(text="Response.")
+        output = orchestrator.run(
+            session=make_session(),
+            turn_input=TurnInput(user_message="Hello"),
+        )
+        # Check that messages in updated_api_history have token_count
+        for msg in output.updated_api_history:
+            if isinstance(msg, dict):
+                assert "token_count" in msg
+                assert isinstance(msg["token_count"], int)
+                assert msg["token_count"] >= 0

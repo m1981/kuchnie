@@ -15,6 +15,7 @@ import time
 import pytest
 
 from src.agent.tool_executor import ToolCall, ToolExecutor, ToolResult
+from src.protocols import TokenCounterProtocol
 
 
 # ---------------------------------------------------------------------------
@@ -35,6 +36,19 @@ class FakeRegistry:
         if name not in self._handlers:
             raise ValueError(f"Unknown tool: {name!r}")
         return self._handlers[name]
+
+
+class FakeTokenCounter:
+    """Test double — 1 token per 4 chars (matches real heuristic)."""
+
+    def count(self, text: str) -> int:
+        return max(1, len(text) // 4) if text else 0
+
+    def count_message(self, message: dict) -> int:
+        return self.count(str(message.get("content", "")))
+
+    def trim_to(self, text: str, max_tokens: int) -> str:
+        return text[:max_tokens * 4]
 
 
 class FailingRegistry:
@@ -210,3 +224,65 @@ class TestSyncExecution:
         ])
         assert "key" in results[0].content
         assert "42" in results[0].content
+
+
+# ---------------------------------------------------------------------------
+# Tests: token counting
+# ---------------------------------------------------------------------------
+
+class TestTokenCounting:
+    """ToolExecutor should count tokens when TokenCounter is provided."""
+
+    def test_token_count_set_on_tool_call_args(self):
+        """ToolCall.token_count should be set to token count of name + args."""
+        counter = FakeTokenCounter()
+        executor = ToolExecutor(registry=FakeRegistry(), token_counter=counter)
+        tc = ToolCall(id="1", name="read_file", arguments={"filepath": "/test.md"})
+        executor.execute_all([tc])
+        # name + args = "read_file" + "{'filepath': '/test.md'}"
+        expected = counter.count("read_file" + str({"filepath": "/test.md"}))
+        assert tc.token_count == expected
+        assert tc.token_count > 0
+
+    def test_token_count_set_on_tool_result(self):
+        """ToolResult.token_count should be set to token count of content."""
+        counter = FakeTokenCounter()
+        executor = ToolExecutor(registry=FakeRegistry(), token_counter=counter)
+        results = executor.execute_all([
+            ToolCall(id="1", name="echo", arguments={"text": "hello world"})
+        ])
+        assert results[0].token_count > 0
+        expected = counter.count(results[0].content)
+        assert results[0].token_count == expected
+
+    def test_token_count_zero_without_counter(self):
+        """When no TokenCounter provided, token_count should remain 0."""
+        executor = ToolExecutor(registry=FakeRegistry())
+        tc = ToolCall(id="1", name="echo", arguments={"text": "hello"})
+        results = executor.execute_all([tc])
+        assert tc.token_count == 0
+        assert results[0].token_count == 0
+
+    def test_error_result_has_token_count(self):
+        """Error results should also have token_count set."""
+        counter = FakeTokenCounter()
+        executor = ToolExecutor(registry=FailingRegistry(), token_counter=counter)
+        results = executor.execute_all([
+            ToolCall(id="1", name="bad", arguments={})
+        ])
+        assert results[0].is_error is True
+        assert results[0].token_count > 0
+        expected = counter.count(results[0].content)
+        assert results[0].token_count == expected
+
+    def test_multiple_calls_count_each(self):
+        """Each tool call should have its own token count."""
+        counter = FakeTokenCounter()
+        executor = ToolExecutor(registry=FakeRegistry(), token_counter=counter)
+        calls = [
+            ToolCall(id="1", name="echo", arguments={"text": "short"}),
+            ToolCall(id="2", name="echo", arguments={"text": "a much longer text here"}),
+        ]
+        executor.execute_all(calls)
+        # Second call has longer args, so should have more tokens
+        assert calls[1].token_count > calls[0].token_count
