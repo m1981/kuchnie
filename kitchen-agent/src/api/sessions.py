@@ -229,6 +229,11 @@ def generate_session_title(
     
     # Generate title using LLM
     prompt = f"""Generate a short, descriptive title (max 50 chars) for this conversation.
+
+IMPORTANT: The title MUST be in the same language as the conversation.
+If the conversation is in Polish, write the title in Polish.
+If the conversation is in English, write the title in English.
+
 Return ONLY the title, no quotes or explanation.
 
 Conversation:
