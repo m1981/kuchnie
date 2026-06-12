@@ -449,22 +449,22 @@ class ChatService:
                 user_turn_id = event.get("user_turn_id", "")
                 assistant_turn_id = event.get("assistant_turn_id", "")
                 done_tool_details = event.get("tool_details", [])
+                done_token_breakdown = event.get("token_breakdown", {})
 
         # ── 3. Build updated API history ──────────────────────────────
-        # Calculate token counts for this turn
-        token_counter = getattr(self._orchestrator, '_token_counter', None)
-        
-        user_tokens = token_counter.count(request.user_message) if token_counter else 0
+        # Use token counts from orchestrator's done event
+        user_tokens = done_token_breakdown.get("user_message_tokens", 0)
+        tool_calls_tokens = done_token_breakdown.get("tool_calls_tokens", 0)
+        tool_results_tokens = done_token_breakdown.get("tool_results_tokens", 0)
+        assistant_tokens = done_token_breakdown.get("assistant_tokens", 0)
+        turn_total = done_token_breakdown.get("turn_total", 0)
+
         updated_api_history = list(api_history)
         updated_api_history.append({"role": "user", "content": request.user_message, "token_count": user_tokens})
 
-        tool_calls_tokens = 0
-        tool_results_tokens = 0
         for detail in done_tool_details:
-            call_tokens = getattr(detail, 'call_tokens', 0)
-            result_tokens = getattr(detail, 'result_tokens', 0)
-            tool_calls_tokens += call_tokens
-            tool_results_tokens += result_tokens
+            call_tokens = detail.call_tokens if hasattr(detail, 'call_tokens') else 0
+            result_tokens = detail.result_tokens if hasattr(detail, 'result_tokens') else 0
             updated_api_history.append({
                 "role": "assistant",
                 "content": "",
@@ -482,12 +482,10 @@ class ChatService:
                 "token_count": result_tokens,
             })
 
-        assistant_tokens = token_counter.count(full_text) if token_counter else 0
         updated_api_history.append({"role": "assistant", "content": full_text, "token_count": assistant_tokens})
 
         # Calculate conversation total
         conversation_total = sum(msg.get("token_count", 0) for msg in updated_api_history if isinstance(msg, dict))
-        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
 
         token_breakdown = {
             "user_message_tokens": user_tokens,

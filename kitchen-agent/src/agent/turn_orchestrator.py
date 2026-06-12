@@ -866,6 +866,13 @@ class TurnOrchestrator:
                     full_text += normalized.text
 
         # ── 4. Done event ─────────────────────────────────────────────
+        # Calculate token breakdown for streaming
+        user_tokens = self._token_counter.count(turn_input.user_message) if self._token_counter else 0
+        tool_calls_tokens = sum(d.call_tokens for d in tool_details)
+        tool_results_tokens = sum(d.result_tokens for d in tool_details)
+        assistant_tokens = self._token_counter.count(full_text) if self._token_counter else 0
+        turn_total = user_tokens + tool_calls_tokens + tool_results_tokens + assistant_tokens
+
         yield {
             "type": "done",
             "provider": provider_name,
@@ -874,6 +881,13 @@ class TurnOrchestrator:
             "assistant_turn_id": assistant_turn_id,
             "tool_calls_made": tool_calls_made,
             "tool_details": tool_details,  # for history building
+            "token_breakdown": {
+                "user_message_tokens": user_tokens,
+                "tool_calls_tokens": tool_calls_tokens,
+                "tool_results_tokens": tool_results_tokens,
+                "assistant_tokens": assistant_tokens,
+                "turn_total": turn_total,
+            },
         }
 
     def _stream_and_collect(
