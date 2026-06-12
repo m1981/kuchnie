@@ -244,8 +244,8 @@ Conversation:
         from src.providers.normalizer import ResponseNormalizer
         from src.providers.base import get_provider
         
-        # Use mimo-v2.5-pro specifically for title generation
-        title_provider = get_provider(provider_name='mimo', model_override='mimo-v2.5-pro')
+        # Use claude-haiku-4-5 for fast title generation (~2s vs ~25s with mimo)
+        title_provider = get_provider(provider_name='anthropic', model_override='claude-haiku-4-5')
         
         # Create minimal context for title generation
         context = AssembledContext(
@@ -259,7 +259,7 @@ Conversation:
         raw_response = title_provider.complete(context)
         normalizer = ResponseNormalizer()
         
-        normalized = normalizer.normalize(raw_response, 'mimo')
+        normalized = normalizer.normalize(raw_response, 'anthropic')
         
         # Clean up the title
         title = normalized.text.strip()
