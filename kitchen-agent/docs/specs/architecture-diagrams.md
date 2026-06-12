@@ -561,6 +561,250 @@ stateDiagram-v2
 
 ---
 
+## 9. Title Generation Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend as chatStore
+    participant API as POST /title/generate
+    participant Provider as claude-haiku-4-5
+    participant DB as SQLite
+
+    Note over User,DB: ── Automatic: After First Message ──
+
+    User->>Frontend: sendMessage("Jakie zawiasy...")
+    Frontend->>API: POST /api/chat/stream
+    API-->>Frontend: SSE stream (response)
+    Frontend-->>User: Assistant response displayed
+
+    Note over Frontend: messages.length <= 3 → first turn
+    Frontend->>Frontend: generateTitleInBackground()
+
+    rect rgb(240, 248, 255)
+        Note right of Frontend: Background (non-blocking)
+        Frontend->>API: POST /api/sessions/{id}/title/generate
+        API->>DB: Load first + last message pairs
+        DB-->>API: ui_messages JSON
+        API->>Provider: Generate title (max 50 chars)
+        Provider-->>API: "Zawiasy Blum do szafek"
+        API->>DB: UPDATE sessions SET title = ...
+        API-->>Frontend: { generated: true, title: "..." }
+        Frontend->>Frontend: sessionStore.refresh()
+        Frontend-->>User: Sidebar updates with new title
+    end
+
+    Note over User,DB: ── Manual: Context Menu ──
+
+    User->>Frontend: Right-click session → "✨ Regenerate Title"
+    Frontend->>API: POST /api/sessions/{id}/title/generate
+    API->>Provider: Generate title
+    Provider-->>API: New title
+    API->>DB: UPDATE sessions SET title = ...
+    API-->>Frontend: { generated: true, title: "..." }
+    Frontend->>Frontend: sessionStore.refresh()
+```
+
+### Title Generation Prompt Structure
+
+```mermaid
+graph LR
+    subgraph Input["Context Sent to LLM"]
+        System["System: You are a title generator."]
+        Prompt["Generate title (max 50 chars)\nSame language as conversation"]
+        First["User: First msg[:300]\nAssistant: First response[:300]"]
+        Last["User: Last msg[:300]\nAssistant: Last response[:300]"]
+    end
+
+    subgraph Output["LLM Response"]
+        Title["Zawiasy Blum do szafek"]
+    end
+
+    System --> Provider["claude-haiku-4-5"]
+    Prompt --> Provider
+    First --> Provider
+    Last --> Provider
+    Provider --> Title
+
+    style Input fill:#e8f4f8,stroke:#2196F3
+    style Output fill:#e8f5e9,stroke:#4CAF50
+```
+
+---
+
+## 10. Token Indicator Architecture
+
+```mermaid
+graph TB
+    subgraph Stores["Svelte Stores"]
+        ChatStore["chatStore"]
+        TokenStore["tokenStore"]
+    end
+
+    subgraph Components["Components"]
+        Composer["ChatComposer"]
+        Indicator["TokenIndicator"]
+    end
+
+    subgraph Backend["Backend API"]
+        TokenAPI["GET /sessions/{id}/tokens"]
+    end
+
+    subgraph Data["Token Data"]
+        Session["Session Tokens\n(cumulated)"]
+        Input["Input Tokens\n(estimated)"]
+        Context["Context Window\n(percentage)"]
+    end
+
+    Composer -->|"messageText prop"| Indicator
+    Indicator -->|"reads"| ChatStore
+    ChatStore -->|"delegates"| TokenStore
+    TokenStore -->|"refreshSessionTokens()"| TokenAPI
+    TokenAPI -->|"SessionTokensResponse"| TokenStore
+
+    TokenStore --> Session
+    TokenStore --> Input
+    TokenStore --> Context
+
+    Indicator -->|"📊 sessionTokens"| Session
+    Indicator -->|"→ ~inputTokens"| Input
+    Indicator -->|"██░░ 32%"| Context
+
+    style Indicator fill:#e3f2fd,stroke:#1565C0
+    style TokenStore fill:#fff8e1,stroke:#FFC107
+    style TokenAPI fill:#fff3e0,stroke:#FF9800
+```
+
+### Token Indicator Display
+
+```mermaid
+graph LR
+    subgraph Composer["ChatComposer"]
+        TI["TokenIndicator"]
+        PB["Progress Bar"]
+        ST["📊 4,271"]
+        IT["→ ~127"]
+        PCT["32%"]
+    end
+
+    TI --> PB
+    TI --> ST
+    TI --> IT
+    TI --> PCT
+
+    PB -->|"width"| Calc["Math.min(100, pct)%"]
+    Calc -->|"color"| Color{"contextWindowColor()"}
+    Color -->|"< 70%"| Green["bg-accent"]
+    Color -->|"70-90%"| Yellow["bg-amber-500"]
+    Color -->|"> 90%"| Red["bg-red-500"]
+
+    style TI fill:#e3f2fd,stroke:#1565C0
+    style Green fill:#e8f5e9,stroke:#4CAF50
+    style Yellow fill:#fff8e1,stroke:#FFC107
+    style Red fill:#fce4ec,stroke:#E91E63
+```
+
+---
+
+## 11. Session Title Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> NoTitle: New session (URL only)
+
+    state NoTitle {
+        [*] --> ShowSessionID
+        ShowSessionID: Display "Session {id[:8]}"
+    }
+
+    NoTitle --> AutoTitle: First message sent
+
+    state AutoTitle {
+        [*] --> BasicTitle
+        BasicTitle: First 30 chars of message
+        BasicTitle --> AITitle: Background generation
+        AITitle: claude-haiku-4-5 generates title
+    }
+
+    AutoTitle --> ManualEdit: User clicks title
+
+    state ManualEdit {
+        [*] --> InputVisible
+        InputVisible: Input field with current title
+        InputVisible --> Save: Enter / blur
+        InputVisible --> Cancel: Escape
+        Save --> [*]
+        Cancel --> [*]
+    }
+
+    ManualEdit --> AITitleRegen: Context menu → "✨ Regenerate"
+
+    state AITitleRegen {
+        [*] --> Generating
+        Generating: Loading spinner
+        Generating --> NewTitle: API success
+        Generating --> Error: API failure
+        NewTitle --> [*]
+        Error --> [*]
+    }
+
+    AITitleRegen --> ManualEdit
+
+    note right of NoTitle
+        Fallback: Session ID
+    end note
+
+    note right of AutoTitle
+        Automatic after first turn
+    end note
+
+    note right of ManualEdit
+        Inline editing
+    end note
+
+    note right of AITitleRegen
+        On-demand via context menu
+    end note
+```
+
+### Title Display Logic
+
+```mermaid
+flowchart TD
+    Start([Header Render]) --> Check{title prop?}
+
+    Check -->|"title != null"| ShowTitle["Display: {title}"]
+    Check -->|"title == null"| ShowID["Display: Session {id[:8]}"]
+
+    ShowTitle --> Badge["🔧 General"]
+    ShowID --> Badge
+
+    Badge --> Click{User clicks?}
+
+    Click -->|"Click title"| EditMode["Show input field"]
+    Click -->|"No click"| Done([Done])
+
+    EditMode --> Action{User action}
+
+    Action -->|"Enter / blur"| Save{Empty?}
+    Action -->|"Escape"| Cancel["Revert"]
+
+    Save -->|"Not empty"| API["PATCH /sessions/{id}/title"]
+    Save -->|"Empty"| Cancel
+
+    API --> Refresh["sessionStore.refresh()"]
+    Refresh --> Done
+    Cancel --> Done
+
+    style Start fill:#e3f2fd,stroke:#1565C0
+    style ShowTitle fill:#e8f5e9,stroke:#4CAF50
+    style ShowID fill:#fff8e1,stroke:#FFC107
+    style EditMode fill:#f3e5f5,stroke:#9C27B0
+    style API fill:#fff3e0,stroke:#FF9800
+```
+
+---
+
 ## Diagram Maintenance
 
 When the architecture changes:
@@ -577,6 +821,7 @@ When the architecture changes:
 | Date       | Change                                       | Diagrams Updated       |
 | ---------- | -------------------------------------------- | ---------------------- |
 | 2026-06-12 | URL-based session routing (`/chat/[id]`)     | 1, 5, 7 (new), 8 (new) |
-| 2026-06-12 | TokenIndicator in ChatComposer               | 5 (store topology)     |
-| 2026-06-12 | Session title display & inline editing       | — (UI only)            |
-| 2026-06-12 | AI title regeneration (POST /title/generate) | — (API endpoint)       |
+| 2026-06-12 | TokenIndicator in ChatComposer               | 5, 10 (new)            |
+| 2026-06-12 | Session title display & inline editing       | 11 (new)               |
+| 2026-06-12 | AI title regeneration (POST /title/generate) | 9 (new), 11 (new)      |
+| 2026-06-12 | Auto-generate title on first message         | 9 (updated)            |
