@@ -574,6 +574,9 @@ When the architecture changes:
 
 ### Recent Changes
 
-| Date       | Change                                   | Diagrams Updated       |
-| ---------- | ---------------------------------------- | ---------------------- |
-| 2026-06-12 | URL-based session routing (`/chat/[id]`) | 1, 5, 7 (new), 8 (new) |
+| Date       | Change                                       | Diagrams Updated       |
+| ---------- | -------------------------------------------- | ---------------------- |
+| 2026-06-12 | URL-based session routing (`/chat/[id]`)     | 1, 5, 7 (new), 8 (new) |
+| 2026-06-12 | TokenIndicator in ChatComposer               | 5 (store topology)     |
+| 2026-06-12 | Session title display & inline editing       | — (UI only)            |
+| 2026-06-12 | AI title regeneration (POST /title/generate) | — (API endpoint)       |
