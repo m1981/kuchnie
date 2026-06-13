@@ -21,7 +21,7 @@
  *   - Cross-store coordination on state transitions
  */
 
-import { api, type Message, type Note } from '$lib/api';
+import { api, type Message, type Note, type TokenBreakdown } from '$lib/api';
 import { sessionStore }   from '$lib/stores/sessions.svelte';
 import { providerStore }  from '$lib/stores/provider.svelte';
 import { promptStore }    from '$lib/stores/prompt.svelte';
@@ -41,6 +41,7 @@ function createChatStore() {
 	let sessionId = $state<string>(crypto.randomUUID());
 	let messages  = $state<Message[]>([]);
 	let chatState = $state<AsyncState<void>>({ status: 'idle' });
+	let lastTokenBreakdown = $state<TokenBreakdown | null>(null);
 
 	// ── Streaming control ────────────────────────────────────────────────────
 	let abortController = $state<AbortController | null>(null);
@@ -71,6 +72,7 @@ function createChatStore() {
 		get pastedImages() { return pastedImages; },
 		get contextFiles() { return contextFiles; },
 		get forkStatus()   { return forkStatus; },
+		get lastTokenBreakdown() { return lastTokenBreakdown; },
 
 		// ── Delegated getters (providerStore) ─────────────────────────────────────
 		get providers()        { return providerStore.providers; },
@@ -238,6 +240,7 @@ function createChatStore() {
 			chatState    = { status: 'idle' };
 			contextFiles = [];
 			forkStatus   = '';
+			lastTokenBreakdown = null;
 
 			editorStore.reset();
 			tokenStore.reset();
@@ -254,6 +257,7 @@ function createChatStore() {
 				chatState    = { status: 'idle' };
 				contextFiles = [];
 				forkStatus   = '';
+				lastTokenBreakdown = null;
 
 				editorStore.reset();
 
@@ -279,6 +283,7 @@ function createChatStore() {
 				chatState    = { status: 'idle' };
 				contextFiles = [];
 				forkStatus   = '';
+				lastTokenBreakdown = null;
 				editorStore.reset();
 				tokenStore.reset();
 			}
@@ -391,16 +396,23 @@ function createChatStore() {
 								turn_id: event.assistant_turn_id,
 								provider: event.provider,
 								model: event.model,
+								...(event.token_breakdown ? { token_count: event.token_breakdown.assistant_tokens } : {}),
 							};
+							// Store full breakdown for the TokenIndicator
+							lastTokenBreakdown = event.token_breakdown ?? null;
 
 							// Sync picker to the provider that actually responded.
 							providerStore.syncFromMessage(event.provider, event.model);
 
-							// Update user message with turn_id.
+								// Update user message with turn_id and token_count.
 							if (event.user_turn_id) {
 								const lastUserIdx = assistantIdx - 1;
 								if (lastUserIdx >= 0 && messages[lastUserIdx].role === 'user' && !messages[lastUserIdx].turn_id) {
-									messages[lastUserIdx] = { ...messages[lastUserIdx], turn_id: event.user_turn_id };
+									messages[lastUserIdx] = {
+										...messages[lastUserIdx],
+										turn_id: event.user_turn_id,
+										...(event.token_breakdown ? { token_count: event.token_breakdown.user_message_tokens } : {}),
+									};
 								}
 							}
 							break;
@@ -479,8 +491,17 @@ function createChatStore() {
 					tools: data.tools_used,
 					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {}),
 					...(data.provider ? { provider: data.provider } : {}),
-					...(data.model ? { model: data.model } : {})
+					...(data.model ? { model: data.model } : {}),
+					...(data.token_breakdown ? { token_count: data.token_breakdown.assistant_tokens } : {}),
 				});
+				lastTokenBreakdown = data.token_breakdown ?? null;
+				// Update user message token_count from breakdown
+				if (data.token_breakdown && lastUserIdx >= 0) {
+					messages[lastUserIdx] = {
+						...messages[lastUserIdx],
+						token_count: data.token_breakdown.user_message_tokens,
+					};
+				}
 
 				chatState = { status: 'success', data: undefined };
 				await sessionStore.refresh();

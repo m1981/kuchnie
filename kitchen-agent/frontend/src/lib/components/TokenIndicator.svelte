@@ -29,11 +29,18 @@
 		chatStore.estimateInputTokensFor(messageText)
 	);
 
+	// Prefer exact conversation_total from last token breakdown over the estimate
 	const sessionTokens = $derived(
-		chatStore.sessionTokenCount >= 0 ? chatStore.sessionTokenCount : 0
+		chatStore.lastTokenBreakdown?.conversation_total
+			? chatStore.lastTokenBreakdown.conversation_total
+			: chatStore.sessionTokenCount >= 0
+				? chatStore.sessionTokenCount
+				: 0
 	);
 
-	const totalTokens = $derived(sessionTokens + inputTokens);
+	// inputTokens already includes history + system prompt + new message.
+	// Using it directly avoids double-counting sessionTokens.
+	const totalTokens = $derived(inputTokens);
 
 	const pct = $derived(
 		contextWindowPercent(totalTokens, chatStore.contextWindowK)

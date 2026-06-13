@@ -59,6 +59,7 @@ export type ToolLog = {
 	name: string;
 	args: Record<string, unknown>;
 	result: { content?: string; [key: string]: unknown };
+	token_count?: number;
 };
 
 export type Message = {
@@ -86,6 +87,8 @@ export type Message = {
 	model?: string;
 	/** Whether this message is currently being streamed. */
 	isStreaming?: boolean;
+	/** Token count for this message (from backend per-message counting). */
+	token_count?: number;
 };
 
 export type FileItem = { path: string; name: string };
@@ -183,6 +186,15 @@ export type ChatRequest = {
 	tools_enabled?: boolean;
 };
 
+export type TokenBreakdown = {
+	user_message_tokens: number;
+	tool_calls_tokens: number;
+	tool_results_tokens: number;
+	assistant_tokens: number;
+	turn_total: number;
+	conversation_total: number;
+};
+
 export type ChatResponse = {
 	text: string;
 	tools_used: ToolLog[];
@@ -190,6 +202,7 @@ export type ChatResponse = {
 	assistant_turn_id?: string;
 	provider?: string;
 	model?: string;
+	token_breakdown?: TokenBreakdown;
 };
 
 // Streaming event types
@@ -205,6 +218,7 @@ export type StreamEvent =
 			user_turn_id: string;
 			assistant_turn_id: string;
 			tool_calls_made: string[];
+			token_breakdown?: TokenBreakdown;
 	  }
 	| { type: 'error'; message: string };
 

@@ -36,6 +36,7 @@
 		systemPromptError: string;
 		onsystemprompsave: (newText: string) => void;
 		onsystempromptreset: () => void;
+		systemPromptTokenCount?: number;
 		// Messages
 		messages: Message[];
 		isLoading: boolean;
@@ -63,6 +64,7 @@
 		systemPromptError,
 		onsystemprompsave,
 		onsystempromptreset,
+		systemPromptTokenCount,
 		messages,
 		isLoading,
 		isBusy,
@@ -123,6 +125,7 @@
 		errorMessage={systemPromptError}
 		onsave={onsystemprompsave}
 		onreset={onsystempromptreset}
+		tokenCount={systemPromptTokenCount}
 	/>
 
 	{#each messages as msg, messageIndex (`${msg.role}-${msg.turn_id ?? messageIndex}`)}
@@ -150,6 +153,14 @@
 						>
 							{msg.role === 'user' ? 'You' : 'Assistant'}
 						</p>
+						{#if msg.token_count !== undefined && msg.token_count > 0}
+							<span
+								title="Tokens used for this message"
+								class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+							>
+								{msg.token_count.toLocaleString()} tok
+							</span>
+						{/if}
 						{#if msg.role === 'assistant' && msg.model}
 							<span
 								title="{msg.provider || 'unknown'}/{msg.model}"
@@ -246,6 +257,9 @@
 									<span class="min-w-0">
 										<span class="font-semibold text-ink">{tool.name}</span>
 										<span class="ml-2 text-xs text-muted">Args and result</span>
+											{#if (tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)) > 0}
+												<span class="ml-1 text-[10px] text-muted/70">{tool.token_count !== undefined ? '' : '~'}{(tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)).toLocaleString()} tok</span>
+											{/if}
 									</span>
 									<span class="text-xs font-medium text-accent group-open:hidden">View</span>
 									<span class="hidden text-xs font-medium text-accent group-open:inline">Hide</span>

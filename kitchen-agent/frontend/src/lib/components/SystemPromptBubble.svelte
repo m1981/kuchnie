@@ -26,6 +26,8 @@
 		onsave: (newText: string) => void;
 		/** Called when user resets to mode default. */
 		onreset: () => void;
+		/** Estimated token count for the system prompt. */
+		tokenCount?: number;
 	};
 
 	let {
@@ -35,7 +37,8 @@
 		saveState,
 		errorMessage,
 		onsave,
-		onreset
+		onreset,
+		tokenCount
 	}: Props = $props();
 
 	// ── Local UI state ──────────────────────────────────────────────────
@@ -104,6 +107,14 @@
 				</svg>
 				System Prompt
 			</span>
+			{#if tokenCount !== undefined && tokenCount > 0}
+				<span
+					title="Estimated tokens for system prompt"
+					class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+				>
+					~{tokenCount.toLocaleString()} tok
+				</span>
+			{/if}
 			{#if isOverride}
 				<span
 					class="rounded-full border border-accent-soft bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-accent"

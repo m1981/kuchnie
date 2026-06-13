@@ -86,6 +86,11 @@
 	// Resolved system prompt text: override ?? mode default
 	const systemPromptText = $derived(chatStore.resolvedSystemPrompt);
 
+	// Estimated system prompt token count (chars/4 heuristic)
+	const systemPromptTokenCount = $derived(
+		systemPromptText ? Math.ceil(systemPromptText.length / 4) : 0
+	);
+
 	// Derived: edit state helpers
 	const isEditSaving = $derived(chatStore.editState.status === 'loading');
 	const editError    = $derived(
@@ -319,6 +324,7 @@
 					systemPromptModeLabel={activeMode.label}
 					systemPromptSaveState={chatStore.systemPromptState}
 					systemPromptError={chatStore.systemPromptError}
+					systemPromptTokenCount={systemPromptTokenCount}
 					onsystemprompsave={(text) => chatStore.saveSystemPrompt(text)}
 					onsystempromptreset={() => chatStore.clearSystemPrompt()}
 					messages={chatStore.messages}
