@@ -240,3 +240,14 @@ def get_export_service(
     """ExportService — formats sessions for export."""
     from src.export_service import ExportService
     return ExportService(session_repo=session_repo)
+
+
+def get_import_service(
+    session_repo: "SessionRepository" = Depends(get_session_repo),
+) -> "ImportService":
+    """ImportService — imports chat sessions from external JSON."""
+    from src.import_service import ImportService
+    return ImportService(
+        session_repo=session_repo,
+        token_counter=get_token_counter(),
+    )

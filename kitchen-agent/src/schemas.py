@@ -483,3 +483,28 @@ class AppInfo(BaseModel):
     """
     title: str
     description: str
+
+
+# ── Import schemas ─────────────────────────────────────────────────────────────
+
+class ImportMessage(BaseModel):
+    """Single message in an import payload."""
+    role: str  # "user" or "assistant"
+    content: str
+    model: str | None = None
+    provider: str | None = None
+
+
+class ImportRequest(BaseModel):
+    """Request body for POST /api/sessions/import."""
+    title: str | None = None  # Optional; auto-generated if absent
+    messages: list[ImportMessage]
+    system_prompt: str | None = None
+
+
+class ImportResponse(BaseModel):
+    """Response for POST /api/sessions/import."""
+    session_id: str
+    title: str
+    message_count: int
+    turn_count: int
