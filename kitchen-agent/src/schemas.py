@@ -5,7 +5,7 @@ Pydantic models for API requests and responses.
 """
 
 from typing import Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatImagePart(BaseModel):
@@ -508,3 +508,45 @@ class ImportResponse(BaseModel):
     title: str
     message_count: int
     turn_count: int
+
+
+# ── Folder schemas ─────────────────────────────────────────────────────────────
+
+class FolderCreateRequest(BaseModel):
+    """Request body for POST /api/folders."""
+    name: str = Field(..., min_length=1, max_length=100)
+    color: str = Field(default="#6B7280", pattern=r"^#[0-9A-Fa-f]{6}$")
+    icon: str = Field(default="📁", max_length=10)
+    parent_id: str | None = None
+
+
+class FolderUpdateRequest(BaseModel):
+    """Request body for PATCH /api/folders/{id}."""
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    icon: str | None = Field(default=None, max_length=10)
+    order_index: int | None = None
+
+
+class FolderResponse(BaseModel):
+    """Response for folder operations."""
+    id: str
+    name: str
+    color: str
+    icon: str
+    parent_id: str | None
+    order_index: int
+    session_count: int = 0
+    created_at: str
+    updated_at: str
+
+
+class FolderListResponse(BaseModel):
+    """Response for GET /api/folders."""
+    folders: list[FolderResponse]
+    total: int
+
+
+class FolderAssignRequest(BaseModel):
+    """Request body for POST /api/folders/{id}/sessions/{session_id}."""
+    session_id: str
