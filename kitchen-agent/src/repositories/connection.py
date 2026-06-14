@@ -67,4 +67,47 @@ class SQLiteConnection:
                 )
                 """
             )
+
+            # Folders table
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS folders (
+                    id           TEXT PRIMARY KEY,
+                    name         TEXT NOT NULL,
+                    color        TEXT DEFAULT '#6B7280',
+                    icon         TEXT DEFAULT '📁',
+                    parent_id    TEXT,
+                    order_index  INTEGER DEFAULT 0,
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE CASCADE
+                )
+                """
+            )
+
+            # Session-Folder junction table
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS session_folders (
+                    session_id   TEXT NOT NULL,
+                    folder_id    TEXT NOT NULL,
+                    assigned_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (session_id, folder_id),
+                    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE,
+                    FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
+                )
+                """
+            )
+
+            # Indexes for folders
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_session_folders_session ON session_folders(session_id)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_session_folders_folder ON session_folders(folder_id)"
+            )
+
             conn.commit()

@@ -15,6 +15,7 @@ Submodules:
 """
 from src.repositories.base import NoteRepository, SessionRepository
 from src.repositories.connection import SQLiteConnection
+from src.repositories.folder_repo import SQLiteFolderRepository
 from src.repositories.note_repo import SQLiteNoteRepository
 from src.repositories.session_repo import SQLiteSessionRepository
 
