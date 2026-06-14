@@ -21,6 +21,7 @@ graph TB
         subgraph API_Layer["API Layer"]
             ChatRoute["api/chat.py"]
             SessionRoute["api/sessions.py"]
+            ImportRoute["api/import_chat.py"]
             ProviderRoute["api/providers.py"]
             NoteRoute["api/notes.py"]
             FileRoute["api/files.py"]
@@ -31,6 +32,7 @@ graph TB
             ChatSvc["ChatService"]
             MsgEditor["MessageEditService"]
             ExportSvc["ExportService"]
+            ImportSvc["ImportService"]
         end
 
         subgraph Agent_Layer["Agent Layer"]
@@ -71,11 +73,13 @@ graph TB
     Components --> Stores
     API -->|HTTP/SSE| ChatRoute
     API -->|HTTP| SessionRoute
+    API -->|HTTP| ImportRoute
     API -->|HTTP| ProviderRoute
 
     ChatRoute --> ChatSvc
     SessionRoute --> MsgEditor
     SessionRoute --> ExportSvc
+    ImportRoute --> ImportSvc
 
     ChatSvc --> Orchestrator
     Orchestrator --> Context
@@ -94,11 +98,13 @@ graph TB
     ChatSvc --> SessionRepo
     MsgEditor --> SessionRepo
     ExportSvc --> SessionRepo
+    ImportSvc --> SessionRepo
     NoteMgr --> NoteRepo
     SessionRepo --> SQLite
     NoteRepo --> SQLite
 
     DI --> ChatSvc
+    DI --> ImportSvc
     DI --> Orchestrator
     DI --> LLMProvider
 
@@ -421,6 +427,7 @@ graph TD
         ChatSvc["get_chat_service()"]
         MsgEditor["get_message_editor()"]
         ExportSvc["get_export_service()"]
+        ImportSvc["get_import_service()"]
     end
 
     Settings --> DB
@@ -441,6 +448,8 @@ graph TD
     Orchestrator --> ChatSvc
     SessionRepo --> MsgEditor
     SessionRepo --> ExportSvc
+    SessionRepo --> ImportSvc
+    TokenCounter --> ImportSvc
 
     style Singletons fill:#e8f5e9,stroke:#2E7D32
     style RequestScoped fill:#fff3e0,stroke:#E65100
@@ -805,6 +814,125 @@ flowchart TD
 
 ---
 
+## 12. Import/Export Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant API as POST /api/sessions/import
+    participant IS as ImportService
+    participant TC as TokenCounter
+    participant DG as derive_title()
+    participant SR as SessionRepository
+    participant SQLite as SQLite
+
+    Client->>API: ImportRequest {title?, messages[], system_prompt?}
+    API->>IS: import_chat(request)
+
+    IS->>IS: Validate messages not empty
+
+    loop For each message
+        IS->>IS: Generate turn_id (UUID)
+        IS->>TC: count(content)
+        TC-->>IS: token_count
+        IS->>IS: Build api_history item
+        IS->>IS: Build ui_history item
+    end
+
+    alt title not provided
+        IS->>DG: derive_title(ui_messages)
+        DG-->>IS: Auto-generated title
+    end
+
+    IS->>SR: save_session(session_id, title, api_json, ui_json, system_prompt)
+    SR->>SQLite: INSERT INTO sessions
+    SQLite-->>SR: OK
+    SR-->>IS: OK
+
+    IS-->>API: ImportResponse {session_id, title, message_count, turn_count}
+    API-->>Client: 201 Created
+```
+
+### Export Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant API as GET /api/sessions/{id}/export
+    participant ES as ExportService
+    participant SR as SessionRepository
+    participant EX as exporter.py
+
+    Client->>API: GET /api/sessions/{id}/export
+    API->>ES: export_markdown(session_id)
+
+    ES->>SR: get_export_data(session_id)
+    SR-->>ES: {title, ui_history_json, ...}
+
+    ES->>ES: json.loads(ui_history_json)
+    ES->>EX: export_session_to_markdown(ui_messages, title)
+    EX-->>ES: Markdown string
+
+    ES-->>API: Markdown
+    API-->>Client: text/markdown
+
+    Note over Client,API: ── LLM JSON Export ──
+
+    Client->>API: GET /api/sessions/{id}/export/llm
+    API->>ES: export_llm_json(session_id)
+
+    ES->>SR: get_export_data(session_id)
+    SR-->>ES: {title, api_history_json, system_prompt, ...}
+
+    ES->>ES: json.loads(api_history_json)
+    ES->>EX: export_session_to_llm_json(api_items, title, ...)
+    EX-->>ES: {metadata, config, turns}
+
+    ES-->>API: LLM JSON
+    API-->>Client: application/json
+```
+
+### Import/Export Architecture
+
+```mermaid
+graph TB
+    subgraph Import["Import Path"]
+        ImportRequest["ImportRequest<br/>{title?, messages[], system_prompt?}"]
+        ImportService["ImportService"]
+        BuildHistories["_build_histories()<br/>Generate turn_ids<br/>Estimate tokens"]
+        TitleGen["derive_title()<br/>First user message"]
+    end
+
+    subgraph Export["Export Path"]
+        ExportService["ExportService"]
+        MarkdownExport["export_session_to_markdown()<br/>Human-readable"]
+        LLMExport["export_session_to_llm_json()<br/>LLM replay format"]
+    end
+
+    subgraph Storage["SQLite Storage"]
+        Sessions["sessions table"]
+        APIHistory["api_history_json<br/>{role, content, turn_id}"]
+        UIHistory["ui_history_json<br/>{role, content, turn_id,<br/>provider, model, token_count}"]
+    end
+
+    ImportRequest --> ImportService
+    ImportService --> BuildHistories
+    BuildHistories --> TitleGen
+    ImportService --> Sessions
+    Sessions --> APIHistory
+    Sessions --> UIHistory
+
+    Sessions --> ExportService
+    UIHistory --> MarkdownExport
+    APIHistory --> LLMExport
+
+    style Import fill:#e3f2fd,stroke:#1565C0
+    style Export fill:#e8f5e9,stroke:#2E7D32
+    style Storage fill:#fff3e0,stroke:#FF9800
+```
+
+---
+
 ## Diagram Maintenance
 
 When the architecture changes:
@@ -815,13 +943,16 @@ When the architecture changes:
 4. **Adding a new store** → Update Diagram 5 (Store Topology). chatStore is now a facade; sub-stores are providerStore, promptStore, editorStore, tokenStore
 5. **Adding a new DI dependency** → Update Diagram 6 (DI Graph)
 6. **Changing routing/navigation** → Update Diagram 7 (URL Routing) and Diagram 8 (State Machine)
+7. **Changing import/export** → Update Diagram 12 (Import/Export Data Flow) and docs/specs/f002-import-export.md
 
 ### Recent Changes
 
-| Date       | Change                                       | Diagrams Updated       |
-| ---------- | -------------------------------------------- | ---------------------- |
-| 2026-06-12 | URL-based session routing (`/chat/[id]`)     | 1, 5, 7 (new), 8 (new) |
-| 2026-06-12 | TokenIndicator in ChatComposer               | 5, 10 (new)            |
-| 2026-06-12 | Session title display & inline editing       | 11 (new)               |
-| 2026-06-12 | AI title regeneration (POST /title/generate) | 9 (new), 11 (new)      |
-| 2026-06-12 | Auto-generate title on first message         | 9 (updated)            |
+| Date       | Change                                                      | Diagrams Updated       |
+| ---------- | ----------------------------------------------------------- | ---------------------- |
+| 2026-06-14 | Import chats from external JSON (POST /api/sessions/import) | 1, 6, 12 (new)         |
+| 2026-06-14 | Shared title derivation (src/title_generator.py)            | 9 (updated)            |
+| 2026-06-12 | URL-based session routing (`/chat/[id]`)                    | 1, 5, 7 (new), 8 (new) |
+| 2026-06-12 | TokenIndicator in ChatComposer                              | 5, 10 (new)            |
+| 2026-06-12 | Session title display & inline editing                      | 11 (new)               |
+| 2026-06-12 | AI title regeneration (POST /title/generate)                | 9 (new), 11 (new)      |
+| 2026-06-12 | Auto-generate title on first message                        | 9 (updated)            |
