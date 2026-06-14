@@ -53,6 +53,7 @@ from src.logger import bind_request_context, log_timing
 from src.prompt_logger import log_turn
 from src.repositories import SessionRepository
 from src.serializers import dehydrate_history, hydrate_history
+from src.title_generator import derive_title
 
 if TYPE_CHECKING:
     from src.agent.turn_orchestrator import TurnOrchestrator, TurnOutput
@@ -108,11 +109,13 @@ class ChatTurnResponse:
 # ---------------------------------------------------------------------------
 
 def _make_title(ui_messages: list[dict]) -> str:
-    """Derives a session title from the first user message (max 30 chars)."""
-    first_content = next(
-        (m["content"] for m in ui_messages if m.get("role") == "user"), "New Chat"
-    )
-    return first_content[:30] + "..." if len(first_content) > 30 else first_content
+    """Derives a session title from the first user message (max 30 chars).
+
+    .. deprecated::
+        Use ``derive_title`` from ``src.title_generator`` directly.
+        This wrapper remains for backward compatibility with existing imports.
+    """
+    return derive_title(ui_messages)
 
 
 def _context_file_basenames(context_files: list[str] | None) -> list[str] | None:
