@@ -251,3 +251,17 @@ def get_import_service(
         session_repo=session_repo,
         token_counter=get_token_counter(),
     )
+
+
+def get_folder_repo() -> "SQLiteFolderRepository":
+    """FolderRepository backed by SQLite."""
+    from src.repositories import SQLiteFolderRepository
+    return SQLiteFolderRepository(get_db_connection())
+
+
+def get_folder_service(
+    folder_repo: "SQLiteFolderRepository" = Depends(get_folder_repo),
+) -> "FolderService":
+    """FolderService — folder business logic."""
+    from src.folder_service import FolderService
+    return FolderService(folder_repo=folder_repo)
