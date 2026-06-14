@@ -25,7 +25,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.config import settings
 from src.logger import setup_logging
-from src.api import chat, sessions, files, notes, prompts, providers, test_helpers
+from src.api import chat, sessions, files, notes, prompts, providers, test_helpers, import_chat
 
 
 # ── Logging ────────────────────────────────────────────────────────
@@ -104,3 +104,4 @@ app.include_router(notes.router)
 app.include_router(prompts.router)
 app.include_router(providers.router)
 app.include_router(test_helpers.router)
+app.include_router(import_chat.router)
