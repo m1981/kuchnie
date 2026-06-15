@@ -111,7 +111,10 @@ change color, delete) * - Drop target highlight */
 	<!-- Context menu button -->
 	<button
 		type="button"
-		onclick|stopPropagation={() => (showMenu = !showMenu)}
+		onclick={(e) => {
+			e.stopPropagation();
+			showMenu = !showMenu;
+		}}
 		class="flex h-6 w-6 items-center justify-center rounded-md text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
 		aria-label="Folder options"
 	>

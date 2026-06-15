@@ -61,9 +61,12 @@ Create/Cancel buttons */
 <!-- Backdrop -->
 <div
 	class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-	onclick|self={onclose}
+	onclick={(e) => {
+		if (e.target === e.currentTarget) onclose();
+	}}
 	onkeydown={handleKeydown}
 	role="dialog"
+	tabindex="-1"
 	aria-modal="true"
 	aria-labelledby="create-folder-title"
 >
