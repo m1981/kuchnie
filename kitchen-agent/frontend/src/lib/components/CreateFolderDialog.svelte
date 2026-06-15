@@ -54,10 +54,6 @@
 	}
 </script>
 
-/** * CreateFolderDialog.svelte * ========================= * Modal dialog for creating a new
-folder. * * Features: * - Name input with validation * - Color picker * - Icon picker (emoji) * -
-Create/Cancel buttons */
-
 <!-- Backdrop -->
 <div
 	class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"

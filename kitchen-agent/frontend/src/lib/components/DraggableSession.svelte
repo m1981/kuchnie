@@ -26,17 +26,6 @@
 	});
 </script>
 
-/** * DraggableSession.svelte * ======================= * Wrapper that makes a session draggable for
-folder assignment. * * Usage: * <DraggableSession
-	sessionId={session.id}
-	sessionTitle={session.title}
->
-	* <SessionTreeNode ... />
-	*
-</DraggableSession>
-* * The session can be dragged onto any FolderItem in the sidebar. * Visual feedback is provided via CSS
-classes during drag operations. */
-
 <div
 	use:draggable={dragOptions}
 	class="draggable-session"
