@@ -84,7 +84,15 @@
 			<div
 				use:droppable={{
 					target: { type: 'folder', id: folder.id },
-					acceptTypes: ['session']
+					acceptTypes: ['session'],
+					ondragenter: (target) => folderStore.setDropTarget(target),
+					ondragleave: () => folderStore.setDropTarget(null),
+					ondrop: async (payload, target) => {
+						if (payload.type === 'session' && target.type === 'folder') {
+							await folderStore.assignSession(target.id, payload.id);
+						}
+						folderStore.endDrag();
+					}
 				}}
 				class="folder-drop-zone"
 				class:drag-over={folderStore.dropTarget?.id === folder.id}
