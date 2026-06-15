@@ -58,10 +58,6 @@
 	];
 </script>
 
-/** * FolderItem.svelte * ================= * Single folder in the sidebar tree. * * Features: * -
-Expand/collapse toggle * - Color dot indicator * - Session count badge * - Context menu (rename,
-change color, delete) * - Drop target highlight */
-
 <div class="group flex items-center gap-1.5 rounded-md px-2 py-1.5 transition hover:bg-surface">
 	<!-- Expand/collapse toggle -->
 	<button
