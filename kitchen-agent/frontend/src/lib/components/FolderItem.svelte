@@ -1,17 +1,44 @@
 <script lang="ts">
 	import type { Folder } from '$lib/api';
+	import { api } from '$lib/api';
 	import { folderStore } from '$lib/stores/folder.svelte';
 
 	type Props = {
 		folder: Folder;
 		isExpanded: boolean;
 		ontoggle: () => void;
+		onloadsession?: (sessionId: string) => void;
 	};
 
-	let { folder, isExpanded, ontoggle }: Props = $props();
+	let { folder, isExpanded, ontoggle, onloadsession }: Props = $props();
 
 	let showMenu = $state(false);
 	let menuRef = $state<HTMLElement | null>(null);
+
+	// Folder sessions state
+	type FolderSession = { id: string; title: string; updated_at: string };
+	let sessions = $state<FolderSession[]>([]);
+	let sessionsLoading = $state(false);
+	let sessionsError = $state<string | null>(null);
+
+	// Fetch sessions when expanded
+	$effect(() => {
+		if (isExpanded && sessions.length === 0 && !sessionsLoading) {
+			sessionsLoading = true;
+			api
+				.getFolderSessions(folder.id)
+				.then((data) => {
+					sessions = data;
+					sessionsError = null;
+				})
+				.catch((e) => {
+					sessionsError = e instanceof Error ? e.message : String(e);
+				})
+				.finally(() => {
+					sessionsLoading = false;
+				});
+		}
+	});
 
 	// Close menu on outside click
 	function handleClickOutside(e: MouseEvent) {
@@ -58,68 +85,101 @@
 	];
 </script>
 
-<div class="group flex items-center gap-1.5 rounded-md px-2 py-1.5 transition hover:bg-surface">
-	<!-- Expand/collapse toggle -->
-	<button
-		type="button"
-		onclick={ontoggle}
-		class="flex h-4 w-4 shrink-0 items-center justify-center text-muted transition-transform"
-		aria-expanded={isExpanded}
-		aria-label="{isExpanded ? 'Collapse' : 'Expand'} {folder.name}"
-	>
-		<svg
-			width="10"
-			height="10"
-			viewBox="0 0 10 10"
-			fill="currentColor"
-			class="transition-transform {isExpanded ? 'rotate-90' : ''}"
+<div class="rounded-md transition hover:bg-surface">
+	<!-- Folder header row -->
+	<div class="group flex items-center gap-1.5 px-2 py-1.5">
+		<!-- Expand/collapse toggle -->
+		<button
+			type="button"
+			onclick={ontoggle}
+			class="flex h-4 w-4 shrink-0 items-center justify-center text-muted transition-transform"
+			aria-expanded={isExpanded}
+			aria-label="{isExpanded ? 'Collapse' : 'Expand'} {folder.name}"
 		>
-			<path d="M3 2 L7 5 L3 8 Z" />
-		</svg>
-	</button>
+			<svg
+				width="10"
+				height="10"
+				viewBox="0 0 10 10"
+				fill="currentColor"
+				class="transition-transform {isExpanded ? 'rotate-90' : ''}"
+			>
+				<path d="M3 2 L7 5 L3 8 Z" />
+			</svg>
+		</button>
 
-	<!-- Color dot -->
-	<span
-		class="h-3 w-3 shrink-0 rounded-full"
-		style="background-color: {folder.color}"
-		aria-hidden="true"
-	></span>
-
-	<!-- Folder name -->
-	<button
-		type="button"
-		onclick={ontoggle}
-		class="min-w-0 flex-1 truncate text-left text-sm text-ink"
-	>
-		{folder.icon}
-		{folder.name}
-	</button>
-
-	<!-- Session count badge -->
-	{#if folder.session_count > 0}
+		<!-- Color dot -->
 		<span
-			class="rounded-full border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted"
-		>
-			{folder.session_count}
-		</span>
-	{/if}
+			class="h-3 w-3 shrink-0 rounded-full"
+			style="background-color: {folder.color}"
+			aria-hidden="true"
+		></span>
 
-	<!-- Context menu button -->
-	<button
-		type="button"
-		onclick={(e) => {
-			e.stopPropagation();
-			showMenu = !showMenu;
-		}}
-		class="flex h-6 w-6 items-center justify-center rounded-md text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
-		aria-label="Folder options"
-	>
-		<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-			<circle cx="7" cy="3" r="1.5" />
-			<circle cx="7" cy="7" r="1.5" />
-			<circle cx="7" cy="11" r="1.5" />
-		</svg>
-	</button>
+		<!-- Folder name -->
+		<button
+			type="button"
+			onclick={ontoggle}
+			class="min-w-0 flex-1 truncate text-left text-sm text-ink"
+		>
+			{folder.icon}
+			{folder.name}
+		</button>
+
+		<!-- Session count badge -->
+		{#if folder.session_count > 0}
+			<span
+				class="rounded-full border border-line bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted"
+			>
+				{folder.session_count}
+			</span>
+		{/if}
+
+		<!-- Context menu button -->
+		<button
+			type="button"
+			onclick={(e) => {
+				e.stopPropagation();
+				showMenu = !showMenu;
+			}}
+			class="flex h-6 w-6 items-center justify-center rounded-md text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
+			aria-label="Folder options"
+		>
+			<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+				<circle cx="7" cy="3" r="1.5" />
+				<circle cx="7" cy="7" r="1.5" />
+				<circle cx="7" cy="11" r="1.5" />
+			</svg>
+		</button>
+	</div>
+
+	<!-- Expanded: show sessions -->
+	{#if isExpanded}
+		<div class="ml-6 border-l border-line pb-1 pl-2">
+			{#if sessionsLoading}
+				<div class="space-y-1 py-1">
+					{#each [1, 2] as i (i)}
+						<div class="h-6 animate-pulse rounded bg-line"></div>
+					{/each}
+				</div>
+			{:else if sessionsError}
+				<p class="py-1 text-xs text-red-600">{sessionsError}</p>
+			{:else if sessions.length === 0}
+				<p class="py-1 text-xs text-muted italic">No sessions in this folder</p>
+			{:else}
+				<div class="space-y-0.5">
+					{#each sessions as session (session.id)}
+						<button
+							type="button"
+							onclick={() => onloadsession?.(session.id)}
+							class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface"
+							title={session.title}
+						>
+							<span class="min-w-0 flex-1 truncate">{session.title}</span>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <!-- Context menu dropdown -->

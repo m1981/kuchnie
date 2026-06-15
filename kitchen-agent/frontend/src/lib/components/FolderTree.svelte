@@ -7,9 +7,10 @@
 
 	type Props = {
 		children?: Snippet;
+		onloadsession?: (sessionId: string) => void;
 	};
 
-	let { children }: Props = $props();
+	let { children, onloadsession }: Props = $props();
 
 	// Expanded state per folder
 	import { SvelteSet } from 'svelte/reactivity';
@@ -101,6 +102,7 @@
 					{folder}
 					isExpanded={expandedFolders.has(folder.id)}
 					ontoggle={() => toggleExpand(folder.id)}
+					{onloadsession}
 				/>
 			</div>
 		{/each}

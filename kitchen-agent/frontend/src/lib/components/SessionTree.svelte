@@ -147,7 +147,7 @@
 </script>
 
 <!-- Folder tree -->
-<FolderTree>
+<FolderTree {onload}>
 	<!-- Unorganized sessions will render below folders -->
 </FolderTree>
 
