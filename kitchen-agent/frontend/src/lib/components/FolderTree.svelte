@@ -6,12 +6,10 @@
 	import type { Snippet } from 'svelte';
 
 	type Props = {
-		activeId: string | null;
-		onload: (id: string) => void;
 		children?: Snippet;
 	};
 
-	let { activeId, onload, children }: Props = $props();
+	let { children }: Props = $props();
 
 	// Expanded state per folder
 	import { SvelteSet } from 'svelte/reactivity';
@@ -25,11 +23,6 @@
 		}
 	}
 </script>
-
-/** * FolderTree.svelte * ================= * Renders the folder list in the sidebar with drag &
-drop support. * * Features: * - Collapsible folder sections * - Color-coded folder icons * - Session
-count badges * - Drag & drop target for sessions * - Context menu for folder actions * * Props: *
-activeId — currently loaded session ID * onload — called when user clicks a session title */
 
 <!-- Header -->
 <div class="mb-2 flex items-center justify-between">
@@ -98,8 +91,6 @@ activeId — currently loaded session ID * onload — called when user clicks a 
 			>
 				<FolderItem
 					{folder}
-					{activeId}
-					{onload}
 					isExpanded={expandedFolders.has(folder.id)}
 					ontoggle={() => toggleExpand(folder.id)}
 				/>
