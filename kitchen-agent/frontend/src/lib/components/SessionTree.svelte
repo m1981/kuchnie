@@ -11,7 +11,10 @@
 	 */
 	import { api } from '$lib/api';
 	import { sessionStore } from '$lib/stores/sessions.svelte';
+	import { folderStore } from '$lib/stores/folder.svelte';
 	import SessionTreeNode from './SessionTreeNode.svelte';
+	import FolderTree from './FolderTree.svelte';
+	import DraggableSession from './DraggableSession.svelte';
 
 	type Props = {
 		activeId: string | null;
@@ -96,11 +99,7 @@
 	 */
 	async function handleExport(id: string): Promise<void> {
 		const markdown = await api.exportSession(id);
-		triggerDownload(
-			markdown,
-			`${safeFilename(id)}.md`,
-			'text/markdown;charset=utf-8'
-		);
+		triggerDownload(markdown, `${safeFilename(id)}.md`, 'text/markdown;charset=utf-8');
 	}
 
 	/**
@@ -114,11 +113,7 @@
 		const data = await api.exportSessionLlm(id);
 		// Pretty-print so the file is immediately human-readable in any text editor.
 		const json = JSON.stringify(data, null, 2);
-		triggerDownload(
-			json,
-			`${safeFilename(id)}.llm.json`,
-			'application/json;charset=utf-8'
-		);
+		triggerDownload(json, `${safeFilename(id)}.llm.json`, 'application/json;charset=utf-8');
 	}
 
 	async function handleTitleGenerate(id: string): Promise<void> {
@@ -144,10 +139,20 @@
 	$effect(() => {
 		if (activeArchived) archivedExpanded = true;
 	});
+
+	// Initialize folder store on mount
+	$effect(() => {
+		folderStore.refresh();
+	});
 </script>
 
-<!-- Header row -->
-<div class="mb-2 flex items-center justify-between">
+<!-- Folder tree -->
+<FolderTree {activeId} {onload}>
+	<!-- Unorganized sessions will render below folders -->
+</FolderTree>
+
+<!-- Header row for uncategorized sessions -->
+<div class="mt-3 mb-2 flex items-center justify-between">
 	<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
 	<div class="flex items-center gap-1.5">
 		<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
@@ -188,21 +193,27 @@
 
 	<!-- Tree -->
 {:else}
-	<div class="flex min-h-0 flex-col overflow-y-auto pr-1 {isStreaming ? 'pointer-events-none opacity-50' : ''}">
+	<div
+		class="flex min-h-0 flex-col overflow-y-auto pr-1 {isStreaming
+			? 'pointer-events-none opacity-50'
+			: ''}"
+	>
 		<div class="space-y-0.5">
 			{#each visibleRoots as root (root.id)}
-				<SessionTreeNode
-					node={root}
-					depth={0}
-					{activeId}
-					{onload}
-					onarchive={handleArchive}
-					onunarchive={handleUnarchive}
-					ondelete={handleDelete}
-					onexport={handleExport}
-					onexportllm={handleExportLlm}
-					ontitlegenerate={handleTitleGenerate}
-				/>
+				<DraggableSession sessionId={root.id} sessionTitle={root.title ?? root.id.slice(0, 8)}>
+					<SessionTreeNode
+						node={root}
+						depth={0}
+						{activeId}
+						{onload}
+						onarchive={handleArchive}
+						onunarchive={handleUnarchive}
+						ondelete={handleDelete}
+						onexport={handleExport}
+						onexportllm={handleExportLlm}
+						ontitlegenerate={handleTitleGenerate}
+					/>
+				</DraggableSession>
 			{/each}
 		</div>
 
@@ -235,17 +246,22 @@
 				{#if archivedExpanded}
 					<div class="mt-1 space-y-0.5">
 						{#each archivedRoots as root (root.id)}
-							<SessionTreeNode
-								node={root}
-								depth={0}
-								{activeId}
-								{onload}
-								onarchive={handleArchive}
-								onunarchive={handleUnarchive}
-								ondelete={handleDelete}
-								onexport={handleExport}
-								onexportllm={handleExportLlm}
-							/>
+							<DraggableSession
+								sessionId={root.id}
+								sessionTitle={root.title ?? root.id.slice(0, 8)}
+							>
+								<SessionTreeNode
+									node={root}
+									depth={0}
+									{activeId}
+									{onload}
+									onarchive={handleArchive}
+									onunarchive={handleUnarchive}
+									ondelete={handleDelete}
+									onexport={handleExport}
+									onexportllm={handleExportLlm}
+								/>
+							</DraggableSession>
 						{/each}
 					</div>
 				{/if}

@@ -140,6 +140,41 @@ export type AppInfo = {
 };
 
 // ---------------------------------------------------------------------------
+// Folder types
+// ---------------------------------------------------------------------------
+
+export type Folder = {
+	id: string;
+	name: string;
+	color: string;
+	icon: string;
+	parent_id: string | null;
+	order_index: number;
+	session_count: number;
+	created_at: string;
+	updated_at: string;
+};
+
+export type FolderCreateRequest = {
+	name: string;
+	color?: string;
+	icon?: string;
+	parent_id?: string;
+};
+
+export type FolderUpdateRequest = {
+	name?: string;
+	color?: string;
+	icon?: string;
+	order_index?: number;
+};
+
+export type FolderListResponse = {
+	folders: Folder[];
+	total: number;
+};
+
+// ---------------------------------------------------------------------------
 // Chat types
 // ---------------------------------------------------------------------------
 
@@ -376,24 +411,21 @@ export const api = {
 	// Sessions
 	getSessions: () => request<SessionSummary[]>('/api/sessions'),
 
-	getSession: (id: string) =>
-		request<{ ui_messages: Message[] }>(`/api/sessions/${id}`),
+	getSession: (id: string) => request<{ ui_messages: Message[] }>(`/api/sessions/${id}`),
 
 	/**
 	 * GET /api/sessions/{id}/state
 	 * Lightweight state check for test verification.
 	 * Returns message count, turn_ids, and roles without full message content.
 	 */
-	getSessionState: (id: string) =>
-		request<SessionState>(`/api/sessions/${id}/state`),
+	getSessionState: (id: string) => request<SessionState>(`/api/sessions/${id}/state`),
 
 	/**
 	 * GET /api/sessions/{id}/export
 	 * Returns the session as a human-readable Markdown string.
 	 * Content-Type: text/markdown
 	 */
-	exportSession: (id: string): Promise<string> =>
-		requestText(`/api/sessions/${id}/export`),
+	exportSession: (id: string): Promise<string> => requestText(`/api/sessions/${id}/export`),
 
 	/**
 	 * GET /api/sessions/{id}/export/llm
@@ -412,8 +444,7 @@ export const api = {
 	// Files
 	listFiles: () => request<FileItem[]>('/api/files'),
 
-	readFile: (path: string) =>
-		request<{ filepath: string; content: string }>(`/api/files/${path}`),
+	readFile: (path: string) => request<{ filepath: string; content: string }>(`/api/files/${path}`),
 
 	writeFile: (path: string, content: string) =>
 		request<{ success: string }>(`/api/files/${path}`, {
@@ -433,21 +464,21 @@ export const api = {
 		request<SessionNode[]>(`/api/sessions/tree?include_archived=${includeArchived}`),
 
 	archiveSession: (id: string) =>
-		request<{ archived: boolean; session_id: string }>(
-			`/api/sessions/${id}/archive`,
-			{ method: 'PATCH' }
-		),
+		request<{ archived: boolean; session_id: string }>(`/api/sessions/${id}/archive`, {
+			method: 'PATCH'
+		}),
 
 	unarchiveSession: (id: string) =>
-		request<{ archived: boolean; session_id: string }>(
-			`/api/sessions/${id}/archive`,
-			{ method: 'DELETE' }
-		),
+		request<{ archived: boolean; session_id: string }>(`/api/sessions/${id}/archive`, {
+			method: 'DELETE'
+		}),
 
 	deleteSession: (id: string) =>
 		fetch(`${API_BASE}/api/sessions/${id}`, { method: 'DELETE' }).then((r) => {
 			if (!r.ok && r.status !== 204)
-				return r.text().then((t) => { throw new Error(t || `HTTP ${r.status}`); });
+				return r.text().then((t) => {
+					throw new Error(t || `HTTP ${r.status}`);
+				});
 		}),
 
 	/**
@@ -455,24 +486,19 @@ export const api = {
 	 * Update the title of a session.
 	 */
 	updateSessionTitle: (id: string, title: string) =>
-		request<{ updated: boolean; title: string }>(
-			`/api/sessions/${id}/title`,
-			jsonPatch({ title })
-		),
+		request<{ updated: boolean; title: string }>(`/api/sessions/${id}/title`, jsonPatch({ title })),
 
 	/**
 	 * POST /api/sessions/{id}/title/generate
 	 * Generate a title for the session using the LLM.
 	 */
 	generateSessionTitle: (id: string) =>
-		request<{ generated: boolean; title: string }>(
-			`/api/sessions/${id}/title/generate`,
-			{ method: 'POST' }
-		),
+		request<{ generated: boolean; title: string }>(`/api/sessions/${id}/title/generate`, {
+			method: 'POST'
+		}),
 
 	// Notes
-	getNotes: (sessionId: string) =>
-		request<Note[]>(`/api/sessions/${sessionId}/notes`),
+	getNotes: (sessionId: string) => request<Note[]>(`/api/sessions/${sessionId}/notes`),
 
 	createNote: (sessionId: string, body: NoteCreateRequest) =>
 		request<Note>(`/api/sessions/${sessionId}/notes`, json(body)),
@@ -481,20 +507,24 @@ export const api = {
 		fetch(`${API_BASE}/api/sessions/${sessionId}/notes/${noteId}`, { method: 'DELETE' }).then(
 			(r) => {
 				if (!r.ok && r.status !== 204)
-					return r.text().then((t) => { throw new Error(t || `HTTP ${r.status}`); });
+					return r.text().then((t) => {
+						throw new Error(t || `HTTP ${r.status}`);
+					});
 			}
 		),
 
 	// Chat
-	chat: (payload: ChatRequest) =>
-		request<ChatResponse>('/api/chat', json(payload)),
+	chat: (payload: ChatRequest) => request<ChatResponse>('/api/chat', json(payload)),
 
 	// Streaming chat — returns async generator of events
-	chatStream: async function* (payload: ChatRequest, signal?: AbortSignal): AsyncGenerator<StreamEvent> {
+	chatStream: async function* (
+		payload: ChatRequest,
+		signal?: AbortSignal
+	): AsyncGenerator<StreamEvent> {
 		const res = await fetch(`${API_BASE}/api/chat/stream`, {
 			...json(payload),
 			method: 'POST',
-			signal,
+			signal
 		});
 
 		if (!res.ok) {
@@ -537,8 +567,7 @@ export const api = {
 	 * Returns metadata (id, label, eyebrow) for all backend prompt modes.
 	 * Use this to populate the mode switcher instead of hardcoding templates.
 	 */
-	getPromptModes: (): Promise<PromptMode[]> =>
-		request<PromptMode[]>('/api/prompts/modes'),
+	getPromptModes: (): Promise<PromptMode[]> => request<PromptMode[]>('/api/prompts/modes'),
 
 	/**
 	 * GET /api/prompts/modes/{mode_id}
@@ -588,10 +617,7 @@ export const api = {
 	 * Remove the last n complete turn-pairs from the conversation.
 	 */
 	truncateMessages: (sessionId: string, n: number) =>
-		request<TruncateResponse>(
-			`/api/sessions/${sessionId}/messages/truncate`,
-			json({ n })
-		),
+		request<TruncateResponse>(`/api/sessions/${sessionId}/messages/truncate`, json({ n })),
 
 	/**
 	 * GET /api/sessions/{id}/system-prompt
@@ -622,8 +648,7 @@ export const api = {
 	 * Falls back to the static PROVIDERS catalog in src/lib/providers.ts
 	 * when the endpoint is not yet available on the backend.
 	 */
-	getProviders: (): Promise<ProviderInfo[]> =>
-		request<ProviderInfo[]>('/api/providers'),
+	getProviders: (): Promise<ProviderInfo[]> => request<ProviderInfo[]>('/api/providers'),
 
 	/**
 	 * GET /api/providers/active
@@ -639,8 +664,7 @@ export const api = {
 	 * Call once on app mount to replace hardcoded domain strings in the UI.
 	 * Graceful degradation: falls back to generic defaults on error.
 	 */
-	getAppInfo: (): Promise<AppInfo> =>
-		request<AppInfo>('/api/app-info'),
+	getAppInfo: (): Promise<AppInfo> => request<AppInfo>('/api/app-info'),
 
 	// -------------------------------------------------------------------------
 	// Token counting
@@ -668,5 +692,77 @@ export const api = {
 		system_prompt?: string | null;
 		history_token_count?: number;
 	}): Promise<TokenEstimateResponse> =>
-		request<TokenEstimateResponse>('/api/tokens/estimate', json(payload))
+		request<TokenEstimateResponse>('/api/tokens/estimate', json(payload)),
+
+	// -------------------------------------------------------------------------
+	// Folders
+	// -------------------------------------------------------------------------
+
+	/**
+	 * GET /api/folders
+	 * Returns all folders with session counts.
+	 */
+	getFolders: (): Promise<FolderListResponse> => request<FolderListResponse>('/api/folders'),
+
+	/**
+	 * POST /api/folders
+	 * Create a new folder.
+	 */
+	createFolder: (data: FolderCreateRequest): Promise<Folder> =>
+		request<Folder>('/api/folders', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		}),
+
+	/**
+	 * PATCH /api/folders/{id}
+	 * Update folder fields.
+	 */
+	updateFolder: (id: string, data: FolderUpdateRequest): Promise<Folder> =>
+		request<Folder>(`/api/folders/${id}`, {
+			method: 'PATCH',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(data)
+		}),
+
+	/**
+	 * DELETE /api/folders/{id}
+	 * Delete a folder.
+	 */
+	deleteFolder: (id: string): Promise<void> =>
+		fetch(`${API_BASE}/api/folders/${id}`, { method: 'DELETE' }).then((r) => {
+			if (!r.ok && r.status !== 204) throw new Error(`Delete folder failed: ${r.status}`);
+		}),
+
+	/**
+	 * POST /api/folders/{folderId}/sessions/{sessionId}
+	 * Assign a session to a folder.
+	 */
+	assignSessionToFolder: (folderId: string, sessionId: string): Promise<{ assigned: boolean }> =>
+		request<{ assigned: boolean }>(`/api/folders/${folderId}/sessions/${sessionId}`, {
+			method: 'POST'
+		}),
+
+	/**
+	 * DELETE /api/folders/{folderId}/sessions/{sessionId}
+	 * Remove session from folder.
+	 */
+	unassignSessionFromFolder: (folderId: string, sessionId: string): Promise<void> =>
+		fetch(`${API_BASE}/api/folders/${folderId}/sessions/${sessionId}`, { method: 'DELETE' }).then(
+			(r) => {
+				if (!r.ok && r.status !== 204) throw new Error(`Unassign failed: ${r.status}`);
+			}
+		),
+
+	/**
+	 * GET /api/folders/{id}/sessions
+	 * Get all sessions in a folder.
+	 */
+	getFolderSessions: (
+		folderId: string
+	): Promise<{ id: string; title: string; updated_at: string }[]> =>
+		request<{ id: string; title: string; updated_at: string }[]>(
+			`/api/folders/${folderId}/sessions`
+		)
 };
