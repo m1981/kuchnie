@@ -5,9 +5,10 @@
 Feature for organizing chat sessions into folders with colors, ordering, and
 expand/collapse functionality. Inspired by the chat_collector's folder system.
 
-**Status**: Design  
+**Status**: Implemented (bug-fixed 2026-06-17)  
 **Date**: 2026-06-14  
-**Vertical Slices**: Backend API → Frontend UI → E2E Tests
+**Vertical Slices**: Backend API → Frontend UI → E2E Tests  
+**Last Updated**: 2026-06-17 — Fixed SvelteMap/SvelteSet reactivity bug
 
 ---
 
@@ -375,3 +376,234 @@ Since we're adding new tables (not modifying existing), migration is straightfor
 | `frontend/src/lib/stores/folder.svelte.ts`      | Frontend state           | 3     |
 | `frontend/src/lib/components/FolderTree.svelte` | Tree component           | 4     |
 | `e2e/tests/folder-organization.spec.ts`         | E2E tests                | 5     |
+
+---
+
+## 11. Implementation Notes
+
+### 11.1 Store Architecture
+
+The `folderStore` is **class-based** (not closure-based like other stores). This
+was chosen because the folder feature has many interrelated methods and benefits
+from `this` context.
+
+```typescript
+class FolderStore {
+    // $state — plain reactive primitives
+    folders = $state<Folder[]>([]);
+    fetchState = $state<AsyncState<Folder[]>>({ status: 'idle' });
+    dragPayload = $state<DragPayload | null>(null);
+    dropTarget = $state<DropTarget | null>(null);
+    createDialogOpen = $state(false);
+    editingFolderId = $state<string | null>(null);
+    error = $state<string | null>(null);
+
+    // SvelteMap/SvelteSet — built-in reactivity, NO $state wrapping
+    folderSessions = new SvelteMap<string, FolderSession[]>();
+    sessionsLoading = new SvelteMap<string, boolean>();
+    sessionsError = new SvelteMap<string, string | null>();
+    expandedFolders = new SvelteSet<string>();
+    pendingOps = new SvelteMap<string, { type: string; targetId: string }>();
+}
+```
+
+**Key rule:** `SvelteMap` and `SvelteSet` from `svelte/reactivity` have their own
+built-in reactive signals. They must NOT be wrapped in `$state`. See §11.3 for
+details on the bug this caused.
+
+### 11.2 Session Cache
+
+Folder sessions are lazily loaded and cached to avoid repeated API calls on
+expand/collapse cycles. Three `SvelteMap` instances work together:
+
+| Map               | Type                                 | Purpose                    |
+| ----------------- | ------------------------------------ | -------------------------- | ------------------------- |
+| `folderSessions`  | `SvelteMap<string, FolderSession[]>` | The actual cached data     |
+| `sessionsLoading` | `SvelteMap<string, boolean>`         | Prevents duplicate fetches |
+| `sessionsError`   | `SvelteMap<string, string            | null>`                     | Per-folder error messages |
+
+**Cache lifecycle:**
+
+```
+First expand                    Collapse + expand again
+────────────                    ──────────────────────
+getSessions("f1")               getSessions("f1")
+       │                               │
+       ▼                               ▼
+folderSessions.has("f1")=false  folderSessions.has("f1")=true
+       │                               │
+       ▼                               ▼
+queueMicrotask(                 return cached data
+  → fetchSessions()            (no API call)
+)
+       │
+       ▼
+return [] (loading skeleton)
+       │
+       ▼
+API: GET /api/folders/f1/sessions
+       │
+       ▼
+folderSessions.set("f1", data)
+       │
+       ▼
+$derived recomputes → sessions appear
+```
+
+**`getSessions()` — called from `$derived`:**
+
+```typescript
+// In FolderItem.svelte
+const sessions = $derived(folderStore.getSessions(folderId));
+```
+
+The method must be **pure** — Svelte 5 forbids state mutations inside
+`$derived`. On cache miss, it defers the fetch with `queueMicrotask`:
+
+```typescript
+getSessions(folderId: string): FolderSession[] {
+  if (!this.folderSessions.has(folderId)) {
+    // Defer fetch — cannot mutate state inside $derived
+    queueMicrotask(() => this.fetchSessions(folderId));
+    return [];
+  }
+  return this.folderSessions.get(folderId) ?? [];
+}
+```
+
+**`fetchSessions()` — duplicate guard:**
+
+```typescript
+async fetchSessions(folderId: string): Promise<void> {
+  if (this.sessionsLoading.get(folderId)) return;  // skip if already loading
+
+  this.sessionsLoading.set(folderId, true);
+  this.sessionsError.set(folderId, null);
+
+  try {
+    const data = await api.getFolderSessions(folderId);
+    this.folderSessions.set(folderId, data);  // populate cache
+  } catch (e) {
+    this.sessionsError.set(folderId, msg);    // store error
+  } finally {
+    this.sessionsLoading.set(folderId, false);
+  }
+}
+```
+
+The `sessionsLoading` guard prevents duplicate API calls when `getSessions()`
+is called multiple times before the first fetch completes (e.g. rapid
+expand/collapse).
+
+**Cache invalidation:**
+
+When a session is assigned or unassigned from a folder, the cache entry is
+deleted so the next expand triggers a fresh fetch:
+
+```typescript
+async assignSession(folderId: string, sessionId: string): Promise<boolean> {
+  // ... API call ...
+  this.invalidateSessions(folderId);  // ← deletes cache entry
+  return true;
+}
+
+invalidateSessions(folderId: string): void {
+  this.folderSessions.delete(folderId);
+}
+```
+
+This ensures the folder shows the newly assigned/unassigned session on next
+expand without requiring a full page reload.
+
+### 11.3 Bug: SvelteMap/SvelteSet Reactivity (Fixed 2026-06-17)
+
+**Symptom:** Expanding a folder showed infinite loading skeleton. The API
+returned 5 sessions but they never appeared in the UI.
+
+**Root cause:** Two compounding bugs:
+
+1. **`$state<SvelteMap>` wrapping broke reactivity.** `SvelteMap` has its own
+   internal reactive signals. Wrapping it in `$state` created a proxy that
+   intercepted `.set()` calls but didn't forward them to SvelteMap's
+   notification mechanism. Reads (`.get()`, `.has()`) worked because the proxy
+   returned the underlying SvelteMap, but writes (`.set()`) silently failed to
+   notify dependents.
+
+2. **State mutation inside `$derived`.** `getSessions()` was called from
+   `$derived(folderStore.getSessions(folderId))` in FolderItem. On cache miss,
+   it called `fetchSessions()` which mutated `sessionsLoading` — a state write
+   inside a pure computation. Svelte 5 threw `state_unsafe_mutation`.
+
+**Fix:**
+
+```diff
+- folderSessions = $state<SvelteMap<string, FolderSession[]>>(new SvelteMap());
+- sessionsLoading = $state<SvelteMap<string, boolean>>(new SvelteMap());
+- sessionsError = $state<SvelteMap<string, string | null>>(new SvelteMap());
+- expandedFolders = $state<SvelteSet<string>>(new SvelteSet());
++ folderSessions = new SvelteMap<string, FolderSession[]>();
++ sessionsLoading = new SvelteMap<string, boolean>();
++ sessionsError = new SvelteMap<string, string | null>();
++ expandedFolders = new SvelteSet<string>();
+
+  getSessions(folderId: string): FolderSession[] {
+    if (!this.folderSessions.has(folderId)) {
+-     this.fetchSessions(folderId);  // ❌ state_unsafe_mutation
++     queueMicrotask(() => this.fetchSessions(folderId));  // ✅ deferred
+      return [];
+    }
+    return this.folderSessions.get(folderId) ?? [];
+  }
+```
+
+**Lesson:** In Svelte 5:
+
+- `SvelteMap`/`SvelteSet` are reactive primitives — they replace `$state`
+  wrappers, not complement them. Never wrap in `$state`.
+- `$derived` and template expressions are pure read contexts. Methods called
+  from them must not trigger writes. Use `queueMicrotask` to defer side effects.
+
+### 11.4 Drag & Drop Architecture
+
+Drag and drop uses native HTML5 DnD API via Svelte actions:
+
+- `use:draggable` on `DraggableSession` — sets drag data, calls
+  `folderStore.startDrag(payload)`
+- `use:droppable` on folder drop zones in `FolderTree` — handles
+  `dragenter`/`dragover`/`dragleave`/`drop` events
+- Data transfer via `application/json` MIME type
+- Custom drag ghost image (positioned off-screen div)
+- `dragCounter` for nested enter/leave handling
+
+```
+┌──────────────┐    dragstart    ┌──────────────┐
+│  Draggable   │───────────────▶│ folderStore  │
+│  Session     │                │ .startDrag() │
+└──────────────┘                └──────┬───────┘
+                                       │
+┌──────────────┐    dragenter    ┌──────▼───────┐
+│  FolderItem  │───────────────▶│ folderStore  │
+│  (drop zone) │                │ .setDropTarget│
+└──────┬───────┘                └──────┬───────┘
+       │ drop                          │
+       ▼                               ▼
+┌──────────────┐                ┌──────────────┐
+│  assignSession(folderId, sessionId)     │
+│  → API call → invalidateSessions cache  │
+└──────────────┘                └──────────────┘
+```
+
+### 11.5 Optimistic Updates
+
+All folder mutations use optimistic updates with rollback:
+
+| Operation      | Optimistic Action           | Rollback               |
+| -------------- | --------------------------- | ---------------------- |
+| Assign session | Increment `session_count`   | Restore previous state |
+| Unassign       | Decrement `session_count`   | Restore previous state |
+| Create folder  | Append to `folders` array   | (no rollback needed)   |
+| Delete folder  | Remove from `folders` array | Restore previous array |
+| Update folder  | Merge fields optimistically | Restore previous array |
+
+Pending operations are tracked in `pendingOps: SvelteMap` for UI feedback
+(disabled buttons, pulse animation).
