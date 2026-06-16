@@ -1,44 +1,22 @@
 <script lang="ts">
-	import type { Folder } from '$lib/api';
-	import { api } from '$lib/api';
 	import { folderStore } from '$lib/stores/folder.svelte';
 
 	type Props = {
-		folder: Folder;
-		isExpanded: boolean;
-		ontoggle: () => void;
+		folderId: string;
 		onloadsession?: (sessionId: string) => void;
 	};
 
-	let { folder, isExpanded, ontoggle, onloadsession }: Props = $props();
+	let { folderId, onloadsession }: Props = $props();
+
+	// Get folder from store reactively
+	const folder = $derived(folderStore.getFolderById(folderId)!);
+	const isExpanded = $derived(folderStore.isExpanded(folderId));
+	const sessions = $derived(folderStore.getSessions(folderId));
+	const isLoading = $derived(folderStore.sessionsLoading.get(folderId) ?? false);
+	const sessionsError = $derived(folderStore.sessionsError.get(folderId) ?? null);
 
 	let showMenu = $state(false);
 	let menuRef = $state<HTMLElement | null>(null);
-
-	// Folder sessions state
-	type FolderSession = { id: string; title: string; updated_at: string };
-	let sessions = $state<FolderSession[]>([]);
-	let sessionsLoading = $state(false);
-	let sessionsError = $state<string | null>(null);
-
-	// Fetch sessions when expanded
-	$effect(() => {
-		if (isExpanded && sessions.length === 0 && !sessionsLoading) {
-			sessionsLoading = true;
-			api
-				.getFolderSessions(folder.id)
-				.then((data) => {
-					sessions = data;
-					sessionsError = null;
-				})
-				.catch((e) => {
-					sessionsError = e instanceof Error ? e.message : String(e);
-				})
-				.finally(() => {
-					sessionsLoading = false;
-				});
-		}
-	});
 
 	// Close menu on outside click
 	function handleClickOutside(e: MouseEvent) {
@@ -91,7 +69,7 @@
 		<!-- Expand/collapse toggle -->
 		<button
 			type="button"
-			onclick={ontoggle}
+			onclick={() => folderStore.toggleExpand(folderId)}
 			class="flex h-4 w-4 shrink-0 items-center justify-center text-muted transition-transform"
 			aria-expanded={isExpanded}
 			aria-label="{isExpanded ? 'Collapse' : 'Expand'} {folder.name}"
@@ -117,7 +95,7 @@
 		<!-- Folder name -->
 		<button
 			type="button"
-			onclick={ontoggle}
+			onclick={() => folderStore.toggleExpand(folderId)}
 			class="min-w-0 flex-1 truncate text-left text-sm text-ink"
 		>
 			{folder.icon}
@@ -151,10 +129,10 @@
 		</button>
 	</div>
 
-	<!-- Expanded: show sessions -->
+	<!-- Expanded: show sessions (derived from store — no $effect needed) -->
 	{#if isExpanded}
 		<div class="ml-6 border-l border-line pb-1 pl-2">
-			{#if sessionsLoading}
+			{#if isLoading}
 				<div class="space-y-1 py-1">
 					{#each [1, 2] as i (i)}
 						<div class="h-6 animate-pulse rounded bg-line"></div>

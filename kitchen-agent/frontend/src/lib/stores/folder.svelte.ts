@@ -1,26 +1,29 @@
 /**
  * src/lib/stores/folder.svelte.ts
  * ================================
- * Rune-based store for folder organization.
+ * Class-based rune store for folder organization.
  *
  * Owns:
  *   - the folder list fetched from GET /api/folders
+ *   - session cache per folder (moved from FolderItem)
+ *   - expanded state per folder (moved from FolderTree)
  *   - drag and drop state for session-to-folder assignment
  *   - CRUD operations with optimistic updates
  *
- * Drag & Drop design:
- *   - Sessions can be dragged onto folders in the sidebar
- *   - Folders can be reordered by dragging
- *   - Visual feedback via CSS classes during drag
+ * Design decisions:
+ *   - Class-based (not closure-based) for reliable $state reactivity
+ *   - Session cache co-located here to fix drag-drop refresh bug
+ *   - expandedFolders uses SvelteSet for reactive .has()
  */
 
 import { api, type Folder, type FolderCreateRequest, type FolderUpdateRequest } from '$lib/api';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 // ---------------------------------------------------------------------------
 // RemoteData state machine
 // ---------------------------------------------------------------------------
 
-type RemoteData<T> =
+export type RemoteData<T> =
 	| { status: 'idle' }
 	| { status: 'loading' }
 	| { status: 'error'; error: string }
@@ -41,238 +44,297 @@ export type DropTarget = {
 	id: string;
 };
 
+/** Lightweight session type for folder views. */
+export type FolderSession = {
+	id: string;
+	title: string;
+	updated_at: string;
+};
+
 // ---------------------------------------------------------------------------
-// Store factory
+// Store class
 // ---------------------------------------------------------------------------
 
-function createFolderStore() {
-	// ── State ──────────────────────────────────────────────────────────────────
-	let folders = $state<Folder[]>([]);
-	let fetchState = $state<RemoteData<Folder[]>>({ status: 'idle' });
+class FolderStore {
+	// ── Folder CRUD state ──────────────────────────────────────────────────
+	folders = $state<Folder[]>([]);
+	fetchState = $state<RemoteData<Folder[]>>({ status: 'idle' });
 
-	// Drag & drop state
-	let dragPayload = $state<DragPayload | null>(null);
-	let dropTarget = $state<DropTarget | null>(null);
-	const isDragging = $derived(dragPayload !== null);
+	// ── Session cache (moved from FolderItem) ──────────────────────────────
+	// Using SvelteMap for reactive .has()/.get()/.set()/.delete()
+	folderSessions = $state<SvelteMap<string, FolderSession[]>>(new SvelteMap());
+	sessionsLoading = $state<SvelteMap<string, boolean>>(new SvelteMap());
+	sessionsError = $state<SvelteMap<string, string | null>>(new SvelteMap());
 
-	// Dialog state
-	let createDialogOpen = $state(false);
-	let editingFolderId = $state<string | null>(null);
+	// ── Expanded state (moved from FolderTree) ─────────────────────────────
+	expandedFolders = $state<SvelteSet<string>>(new SvelteSet());
 
-	// Error toast
-	let error = $state<string | null>(null);
-	let errorTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+	// ── Drag & drop state ──────────────────────────────────────────────────
+	dragPayload = $state<DragPayload | null>(null);
+	dropTarget = $state<DropTarget | null>(null);
 
-	// ── Derived ────────────────────────────────────────────────────────────────
-	const sortedFolders = $derived([...folders].sort((a, b) => a.order_index - b.order_index));
+	// ── Dialog state ───────────────────────────────────────────────────────
+	createDialogOpen = $state(false);
+	editingFolderId = $state<string | null>(null);
 
-	const folderMap = $derived(new Map(folders.map((f) => [f.id, f])));
+	// ── Error toast ────────────────────────────────────────────────────────
+	error = $state<string | null>(null);
+	private errorTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// ── Helpers ────────────────────────────────────────────────────────────────
+	// ── Derived ────────────────────────────────────────────────────────────
 
-	function showError(msg: string) {
-		if (errorTimer) clearTimeout(errorTimer);
-		error = msg;
-		errorTimer = setTimeout(() => {
-			error = null;
-			errorTimer = null;
+	get sortedFolders(): Folder[] {
+		return [...this.folders].sort((a, b) => a.order_index - b.order_index);
+	}
+
+	get folderMap(): Map<string, Folder> {
+		return new Map(this.folders.map((f) => [f.id, f]));
+	}
+
+	get isDragging(): boolean {
+		return this.dragPayload !== null;
+	}
+
+	// ── Helpers ────────────────────────────────────────────────────────────
+
+	private showError(msg: string): void {
+		if (this.errorTimer) clearTimeout(this.errorTimer);
+		this.error = msg;
+		this.errorTimer = setTimeout(() => {
+			this.error = null;
+			this.errorTimer = null;
 		}, 4000);
 	}
 
-	// ── Public API ─────────────────────────────────────────────────────────────
+	// ── Folder CRUD ────────────────────────────────────────────────────────
 
-	return {
-		// ── Reads ──────────────────────────────────────────────────────────────
-		get folders() {
-			return folders;
-		},
-		get sortedFolders() {
-			return sortedFolders;
-		},
-		get fetchState() {
-			return fetchState;
-		},
-		get isDragging() {
-			return isDragging;
-		},
-		get dragPayload() {
-			return dragPayload;
-		},
-		get dropTarget() {
-			return dropTarget;
-		},
-		get createDialogOpen() {
-			return createDialogOpen;
-		},
-		get editingFolderId() {
-			return editingFolderId;
-		},
-		get error() {
-			return error;
-		},
+	getFolderById(id: string): Folder | undefined {
+		return this.folderMap.get(id);
+	}
 
-		getFolderById(id: string): Folder | undefined {
-			return folderMap.get(id);
-		},
-
-		// ── Fetch ──────────────────────────────────────────────────────────────
-
-		async refresh() {
-			fetchState = { status: 'loading' };
-			try {
-				const response = await api.getFolders();
-				folders = response.folders;
-				fetchState = { status: 'success', data: folders };
-			} catch (e) {
-				const msg = e instanceof Error ? e.message : String(e);
-				fetchState = { status: 'error', error: msg };
-				showError(`Failed to load folders: ${msg}`);
-			}
-		},
-
-		// ── CRUD ───────────────────────────────────────────────────────────────
-
-		async createFolder(request: FolderCreateRequest): Promise<Folder | null> {
-			try {
-				const folder = await api.createFolder(request);
-				// Optimistic: add to local state
-				folders = [...folders, folder];
-				return folder;
-			} catch (e) {
-				const msg = e instanceof Error ? e.message : String(e);
-				showError(`Failed to create folder: ${msg}`);
-				return null;
-			}
-		},
-
-		async updateFolder(id: string, request: FolderUpdateRequest): Promise<Folder | null> {
-			// Optimistic: update local state
-			const previous = folders;
-			folders = folders.map((f) =>
-				f.id === id ? { ...f, ...request, updated_at: new Date().toISOString() } : f
-			);
-
-			try {
-				const updated = await api.updateFolder(id, request);
-				// Replace with server response (has correct timestamps)
-				folders = folders.map((f) => (f.id === id ? updated : f));
-				return updated;
-			} catch (e) {
-				// Rollback
-				folders = previous;
-				const msg = e instanceof Error ? e.message : String(e);
-				showError(`Failed to update folder: ${msg}`);
-				return null;
-			}
-		},
-
-		async deleteFolder(id: string): Promise<boolean> {
-			// Optimistic: remove from local state
-			const previous = folders;
-			folders = folders.filter((f) => f.id !== id);
-
-			try {
-				await api.deleteFolder(id);
-				return true;
-			} catch (e) {
-				// Rollback
-				folders = previous;
-				const msg = e instanceof Error ? e.message : String(e);
-				showError(`Failed to delete folder: ${msg}`);
-				return false;
-			}
-		},
-
-		// ── Session Assignment ─────────────────────────────────────────────────
-
-		async assignSession(folderId: string, sessionId: string): Promise<boolean> {
-			// Optimistic: increment count
-			const previous = folders;
-			folders = folders.map((f) =>
-				f.id === folderId ? { ...f, session_count: f.session_count + 1 } : f
-			);
-
-			try {
-				await api.assignSessionToFolder(folderId, sessionId);
-				return true;
-			} catch (e) {
-				// Rollback
-				folders = previous;
-				const msg = e instanceof Error ? e.message : String(e);
-				showError(`Failed to assign session: ${msg}`);
-				return false;
-			}
-		},
-
-		async unassignSession(folderId: string, sessionId: string): Promise<boolean> {
-			// Optimistic: decrement count
-			const previous = folders;
-			folders = folders.map((f) =>
-				f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
-			);
-
-			try {
-				await api.unassignSessionFromFolder(folderId, sessionId);
-				return true;
-			} catch (e) {
-				// Rollback
-				folders = previous;
-				const msg = e instanceof Error ? e.message : String(e);
-				showError(`Failed to unassign session: ${msg}`);
-				return false;
-			}
-		},
-
-		// ── Drag & Drop ────────────────────────────────────────────────────────
-
-		startDrag(payload: DragPayload) {
-			dragPayload = payload;
-		},
-
-		endDrag() {
-			dragPayload = null;
-			dropTarget = null;
-		},
-
-		setDropTarget(target: DropTarget | null) {
-			dropTarget = target;
-		},
-
-		/**
-		 * Complete a drop operation.
-		 * If dragging a session onto a folder, assign it.
-		 * If dragging a folder onto a folder (reorder), update order_index.
-		 */
-		async handleDrop() {
-			if (!dragPayload || !dropTarget) return;
-
-			if (dragPayload.type === 'session' && dropTarget.type === 'folder') {
-				await this.assignSession(dropTarget.id, dragPayload.id);
-			}
-
-			// Clear drag state
-			this.endDrag();
-		},
-
-		// ── Dialog State ───────────────────────────────────────────────────────
-
-		openCreateDialog() {
-			createDialogOpen = true;
-		},
-
-		closeCreateDialog() {
-			createDialogOpen = false;
-		},
-
-		startEditing(folderId: string) {
-			editingFolderId = folderId;
-		},
-
-		stopEditing() {
-			editingFolderId = null;
+	async refresh(): Promise<void> {
+		this.fetchState = { status: 'loading' };
+		try {
+			const response = await api.getFolders();
+			this.folders = response.folders;
+			this.fetchState = { status: 'success', data: this.folders };
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			this.fetchState = { status: 'error', error: msg };
+			this.showError(`Failed to load folders: ${msg}`);
 		}
-	};
+	}
+
+	async createFolder(request: FolderCreateRequest): Promise<Folder | null> {
+		try {
+			const folder = await api.createFolder(request);
+			this.folders = [...this.folders, folder];
+			return folder;
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to create folder: ${msg}`);
+			return null;
+		}
+	}
+
+	async updateFolder(id: string, request: FolderUpdateRequest): Promise<Folder | null> {
+		const previous = this.folders;
+		this.folders = this.folders.map((f) =>
+			f.id === id ? { ...f, ...request, updated_at: new Date().toISOString() } : f
+		);
+
+		try {
+			const updated = await api.updateFolder(id, request);
+			this.folders = this.folders.map((f) => (f.id === id ? updated : f));
+			return updated;
+		} catch (e) {
+			this.folders = previous;
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to update folder: ${msg}`);
+			return null;
+		}
+	}
+
+	async deleteFolder(id: string): Promise<boolean> {
+		const previous = this.folders;
+		this.folders = this.folders.filter((f) => f.id !== id);
+
+		try {
+			await api.deleteFolder(id);
+			return true;
+		} catch (e) {
+			this.folders = previous;
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to delete folder: ${msg}`);
+			return false;
+		}
+	}
+
+	// ── Session Assignment ─────────────────────────────────────────────────
+
+	async assignSession(folderId: string, sessionId: string): Promise<boolean> {
+		// Optimistic: increment count
+		const previous = this.folders;
+		this.folders = this.folders.map((f) =>
+			f.id === folderId ? { ...f, session_count: f.session_count + 1 } : f
+		);
+
+		try {
+			await api.assignSessionToFolder(folderId, sessionId);
+			// Invalidate cache so expanded folders re-fetch
+			this.invalidateSessions(folderId);
+			return true;
+		} catch (e) {
+			// Rollback
+			this.folders = previous;
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to assign session: ${msg}`);
+			return false;
+		}
+	}
+
+	async unassignSession(folderId: string, sessionId: string): Promise<boolean> {
+		// Optimistic: decrement count
+		const previous = this.folders;
+		this.folders = this.folders.map((f) =>
+			f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
+		);
+
+		try {
+			await api.unassignSessionFromFolder(folderId, sessionId);
+			this.invalidateSessions(folderId);
+			return true;
+		} catch (e) {
+			// Rollback
+			this.folders = previous;
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to unassign session: ${msg}`);
+			return false;
+		}
+	}
+
+	// ── Session Cache ──────────────────────────────────────────────────────
+
+	/**
+	 * Get sessions for a folder. Returns cached data or empty array.
+	 * Triggers async fetch if not cached.
+	 */
+	getSessions(folderId: string): FolderSession[] {
+		if (!this.folderSessions.has(folderId)) {
+			// Trigger async fetch (fire-and-forget)
+			this.fetchSessions(folderId);
+			return [];
+		}
+		return this.folderSessions.get(folderId) ?? [];
+	}
+
+	/**
+	 * Fetch sessions for a folder and cache them.
+	 * Skips if already loading (prevents duplicate fetches).
+	 */
+	async fetchSessions(folderId: string): Promise<void> {
+		if (this.sessionsLoading.get(folderId)) return;
+
+		// SvelteMap.set() is reactive — no need to reassign the whole map
+		this.sessionsLoading.set(folderId, true);
+		this.sessionsError.set(folderId, null);
+
+		try {
+			const data = await api.getFolderSessions(folderId);
+			this.folderSessions.set(folderId, data);
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			this.sessionsError.set(folderId, msg);
+		} finally {
+			this.sessionsLoading.set(folderId, false);
+		}
+	}
+
+	/**
+	 * Invalidate sessions cache for a folder.
+	 * Triggers re-fetch on next getSessions() call.
+	 */
+	invalidateSessions(folderId: string): void {
+		this.folderSessions.delete(folderId);
+	}
+
+	// ── Expand / Collapse ──────────────────────────────────────────────────
+
+	toggleExpand(folderId: string): void {
+		if (this.expandedFolders.has(folderId)) {
+			this.expandedFolders.delete(folderId);
+		} else {
+			this.expandedFolders.add(folderId);
+		}
+	}
+
+	isExpanded(folderId: string): boolean {
+		return this.expandedFolders.has(folderId);
+	}
+
+	// ── Drag & Drop ────────────────────────────────────────────────────────
+
+	startDrag(payload: DragPayload): void {
+		this.dragPayload = payload;
+	}
+
+	endDrag(): void {
+		this.dragPayload = null;
+		this.dropTarget = null;
+	}
+
+	setDropTarget(target: DropTarget | null): void {
+		this.dropTarget = target;
+	}
+
+	async handleDrop(): Promise<void> {
+		if (!this.dragPayload || !this.dropTarget) return;
+
+		if (this.dragPayload.type === 'session' && this.dropTarget.type === 'folder') {
+			await this.assignSession(this.dropTarget.id, this.dragPayload.id);
+		}
+
+		this.endDrag();
+	}
+
+	// ── Dialog State ───────────────────────────────────────────────────────
+
+	openCreateDialog(): void {
+		this.createDialogOpen = true;
+	}
+
+	closeCreateDialog(): void {
+		this.createDialogOpen = false;
+	}
+
+	startEditing(folderId: string): void {
+		this.editingFolderId = folderId;
+	}
+
+	stopEditing(): void {
+		this.editingFolderId = null;
+	}
+
+	// ── Reset (for testing) ────────────────────────────────────────────────
+
+	reset(): void {
+		this.folders = [];
+		this.fetchState = { status: 'idle' };
+		this.folderSessions = new SvelteMap();
+		this.sessionsLoading = new SvelteMap();
+		this.sessionsError = new SvelteMap();
+		this.expandedFolders = new SvelteSet();
+		this.dragPayload = null;
+		this.dropTarget = null;
+		this.createDialogOpen = false;
+		this.editingFolderId = null;
+		this.error = null;
+		if (this.errorTimer) {
+			clearTimeout(this.errorTimer);
+			this.errorTimer = null;
+		}
+	}
 }
 
 // Singleton
-export const folderStore = createFolderStore();
+export const folderStore = new FolderStore();

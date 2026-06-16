@@ -7,22 +7,12 @@
 
 	type Props = {
 		children?: Snippet;
-		onloadsession?: (sessionId: string) => void;
+		onload?: (sessionId: string) => void;
 	};
 
-	let { children, onloadsession }: Props = $props();
+	let { children, onload }: Props = $props();
 
-	// Expanded state per folder
-	import { SvelteSet } from 'svelte/reactivity';
-	let expandedFolders = new SvelteSet<string>();
-
-	function toggleExpand(folderId: string) {
-		if (expandedFolders.has(folderId)) {
-			expandedFolders.delete(folderId);
-		} else {
-			expandedFolders.add(folderId);
-		}
-	}
+	// No local expandedFolders state — it's in the store now
 </script>
 
 <!-- Header -->
@@ -98,12 +88,7 @@
 				class="folder-drop-zone"
 				class:drag-over={folderStore.dropTarget?.id === folder.id}
 			>
-				<FolderItem
-					{folder}
-					isExpanded={expandedFolders.has(folder.id)}
-					ontoggle={() => toggleExpand(folder.id)}
-					{onloadsession}
-				/>
+				<FolderItem folderId={folder.id} onloadsession={onload} />
 			</div>
 		{/each}
 	</div>
