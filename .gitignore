@@ -1,5 +1,4 @@
 .env
-
 .venv
 .husky
 node_modules
@@ -7,3 +6,7 @@ node_modules
 .synthadoc/
 log.md
 .synthadoc/extracted/
+*.pyc
+__pychache__
+.DS_Store
+.idea
