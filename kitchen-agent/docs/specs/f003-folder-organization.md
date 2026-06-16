@@ -67,18 +67,18 @@ CREATE TABLE IF NOT EXISTS session_folders (
 
 ## 4. File Reference
 
-| File                                                  | Purpose             |
-| ----------------------------------------------------- | ------------------- |
-| `src/repositories/folder_repo.py`                     | SQLite repository   |
-| `src/folder_service.py`                               | Business logic      |
-| `src/schemas.py`                                      | Pydantic schemas    |
-| `src/api/folders.py`                                  | FastAPI router      |
-| `frontend/src/lib/stores/folder.svelte.ts`            | Frontend store      |
-| `frontend/src/lib/stores/folder.test.ts`              | Store unit tests    |
-| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops |
-| `frontend/src/lib/components/FolderItem.svelte`       | Single folder       |
-| `frontend/src/lib/components/DraggableSession.svelte` | Drag wrapper        |
-| `frontend/src/lib/actions/dragdrop.ts`                | HTML5 DnD actions   |
+| File                                                  | Purpose                              |
+| ----------------------------------------------------- | ------------------------------------ |
+| `src/repositories/folder_repo.py`                     | SQLite repository                    |
+| `src/folder_service.py`                               | Business logic                       |
+| `src/schemas.py`                                      | Pydantic schemas                     |
+| `src/api/folders.py`                                  | FastAPI router                       |
+| `frontend/src/lib/stores/folder.svelte.ts`            | Frontend store                       |
+| `frontend/src/lib/stores/folder.test.ts`              | Store unit tests                     |
+| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops                  |
+| `frontend/src/lib/components/FolderItem.svelte`       | Single folder + session context menu |
+| `frontend/src/lib/components/DraggableSession.svelte` | Drag wrapper                         |
+| `frontend/src/lib/actions/dragdrop.ts`                | HTML5 DnD actions                    |
 
 ---
 
