@@ -12,8 +12,8 @@
 | 1 | Two async state types | Low | ✅ **Fixed** — merged into single `AsyncState<T>` (11ab1d9) |
 | 2 | chatStore God Object | Medium | ✅ **Fixed** — direct store imports, delegation getters removed (1607140) |
 | 3 | No page loading state | Medium | +page.svelte fetches on mount with no skeleton |
-| 4 | Component size imbalance | Medium | 5 components over 250 lines, 4 under 80 lines |
-| 5 | No error boundary | Medium | Render errors crash the whole page |
+| 4 | Component size imbalance | Medium | 4 components over 250 lines, 4 under 80 lines |
+| 5 | No defensive rendering | Medium | Render errors crash the whole page |
 | 6 | Silent optimistic rollbacks | Low | Error toasts exist but rollbacks are invisible |
 | 7 | No shared Dialog/Dropdown | Low | 3 different modal patterns, each with own focus trap |
 | 8 | Monolithic SessionTree | Medium | 271 lines, 5 responsibilities |
@@ -393,11 +393,13 @@ Each has its own focus trap logic, keyboard handling, and backdrop click handlin
 `+page.svelte` fetches 3 things on mount with no loading indicator:
 
 ```typescript
-$effect(() => {
-    chatStore.loadSession(id);
-    chatStore.loadModes();
-    chatStore.loadProviders();
-    chatStore.loadAppInfo();
+onMount(async () => {
+    const [fetched] = await Promise.all([
+        promptStore.loadModes(),
+        providerStore.loadProviders(),
+        providerStore.loadAppInfo()
+    ]);
+    if (fetched) modes = fetched;
 });
 ```
 
@@ -410,13 +412,28 @@ User sees a blank page until all fetches complete.
 ```typescript
 let pageReady = $state(false);
 
+// Session loading (critical path — blocks UI)
 $effect(() => {
-    Promise.all([
-        chatStore.loadSession(id),
-        providerStore.loadProviders(),
+    const id = currentSessionId;
+    if (!id || id === lastLoadedId) return;
+    lastLoadedId = id;
+    
+    chatStore.loadSession(id).then(() => {
+        pageReady = true;
+    });
+});
+
+// Non-blocking: providers/modes load async
+onMount(async () => {
+    void sessionStore.refresh();
+    
+    // Fire in parallel — don't block pageReady
+    const [fetched] = await Promise.all([
         promptStore.loadModes(),
+        providerStore.loadProviders(),
         providerStore.loadAppInfo()
-    ]).then(() => { pageReady = true; });
+    ]);
+    if (fetched) modes = fetched;
 });
 ```
 
@@ -461,85 +478,90 @@ If `loadProviders` fails but `loadSession` succeeds, still show the page (provid
 
 ---
 
-## Phase 6: Add Error Boundary
+## Phase 6: Defensive Rendering Patterns
 
-**Why sixth**: Prevents full-page crashes from component render errors.
+**Why sixth**: Prevents full-page crashes from malformed data.
+
+**Note**: Svelte 5 does NOT have error boundaries (no `componentDidCatch` equivalent). The proposed `ErrorBoundary.svelte` component would NOT catch render errors. Instead, we focus on defensive patterns.
 
 ### Problem
 
-If `ChatMessageList` throws during render (e.g., malformed message data), the entire page crashes with no recovery.
+If `ChatMessageList` encounters malformed message data (e.g., `null` content, missing `turn_id`), the entire page crashes with no recovery.
 
 ### Plan
 
-**Step 6a: Create `ErrorBoundary.svelte`**
+**Step 6a: Audit message rendering for null/undefined**
 
-Svelte 5 doesn't have built-in error boundaries, but we can use `{#await}` with a try-catch wrapper:
+Add defensive guards to all message rendering:
 
 ```svelte
-<!-- ErrorBoundary.svelte -->
-<script lang="ts">
-    import type { Snippet } from 'svelte';
-    
-    type Props = {
-        children: Snippet;
-        fallback?: Snippet;
-    };
-    
-    let { children, fallback }: Props = $props();
-    let error = $state<Error | null>(null);
-    
-    // Reset error when children change
-    $effect(() => {
-        error = null;
-    });
+<!-- BEFORE -->
+<p>{message.content}</p>
+
+<!-- AFTER -->
+<p>{message?.content ?? ''}</p>
+```
+
+**Step 6b: Add try-catch to all event handlers**
+
+```svelte
+<!-- BEFORE -->
+<button onclick={() => chatStore.deleteMessage(turnId, false)}>Delete</button>
+
+<!-- AFTER -->
+<button onclick={() => {
+    try {
+        chatStore.deleteMessage(turnId, false);
+    } catch (e) {
+        console.error('Delete failed:', e);
+    }
+}}>Delete</button>
+```
+
+**Step 6c: Use `{#await}` blocks for async data**
+
+```svelte
+{#await chatStore.loadSession(id)}
+    <p>Loading...</p>
+{:then}
+    <ChatMessageList ... />
+{:catch error}
+    <p class="error">Failed to load: {error.message}</p>
+{/await}
+```
+
+**Step 6d: Add `+error.svelte` route**
+
+SvelteKit provides `+error.svelte` for route-level error handling:
+
+```svelte
+<!-- src/routes/chat/[id]/+error.svelte -->
+<script>
+    import { page } from '$app/stores';
 </script>
 
-{#if error}
-    {#if fallback}
-        {@render fallback()}
-    {:else}
-        <div class="error-boundary">
-            <p>Something went wrong: {error.message}</p>
-            <button onclick={() => error = null}>Retry</button>
-        </div>
-    {/if}
-{:else}
-    {@render children()}
-{/if}
+<div class="error-page">
+    <h1>Something went wrong</h1>
+    <p>{$page.error?.message ?? 'Unknown error'}</p>
+    <a href="/chat/{crypto.randomUUID()}">Start new chat</a>
+</div>
 ```
-
-**Step 6b: Wrap key sections**
-
-```svelte
-<!-- +page.svelte -->
-<ErrorBoundary>
-    <ChatMessageList ... />
-    {#snippet fallback()}
-        <p class="error">Failed to load messages. <button onclick={() => chatStore.loadSession(id)}>Retry</button></p>
-    {/snippet}
-</ErrorBoundary>
-```
-
-**Note**: Svelte's error boundary support is limited. The real protection comes from:
-1. Defensive rendering (`message?.content ?? ''`)
-2. Try-catch in event handlers
-3. `{#await}` blocks for async data
-
-The `ErrorBoundary` component is a best-effort wrapper, not a React-style catch-all.
 
 ### Files Changed
 
-- `src/lib/components/ErrorBoundary.svelte` — new
-- `src/routes/chat/[id]/+page.svelte` — wrap key sections
+- `src/routes/chat/[id]/+page.svelte` — defensive rendering
+- `src/lib/components/ChatMessageList.svelte` — defensive rendering
+- `src/lib/components/MessageActions.svelte` — try-catch in handlers
+- `src/routes/chat/[id]/+error.svelte` — new
 
 ### Test Plan
 
-- Manually inject a throw in ChatMessageList → fallback shows
+- Manually inject null message → page doesn't crash
 - Normal operation → no visual change
 
 ### Risk
 
-**Low**. Additive. Doesn't change existing behavior.
+**Very low**. Additive. Existing behavior unchanged.
 
 ### Effort
 
@@ -570,23 +592,24 @@ User sees count badge flash +1 then -1 with no explanation.
 
 ### Plan
 
-**Step 7a: Add `pendingOperations` tracking**
+**Step 7a: Add `pendingOperations` tracking using SvelteMap**
 
 ```typescript
+import { SvelteMap } from 'svelte/reactivity';
+
 class FolderStore {
-    pendingOps = $state<Map<string, { type: string; targetId: string }>>(new Map());
+    pendingOps = new SvelteMap<string, { type: string; targetId: string }>();
     
     async assignSession(folderId: string, sessionId: string) {
         // ... optimistic update ...
-        this.pendingOps = new Map(this.pendingOps).set(sessionId, { type: 'assign', targetId: folderId });
+        this.pendingOps.set(sessionId, { type: 'assign', targetId: folderId });
         
         try {
             await api.assignSessionToFolder(folderId, sessionId);
         } catch {
             // rollback + show error
         } finally {
-            this.pendingOps = new Map(this.pendingOps);
-            this.pendingOps.delete(sessionId);
+            this.pendingOps.delete(sessionId); // Reactive!
         }
     }
 }
@@ -636,14 +659,13 @@ The existing `showError()` toast is fine. Just make sure it's always visible whe
 
 ### Problem
 
-5 components over 250 lines:
+4 components over 250 lines (SessionTree addressed in Phase 3):
 
 | Component | Lines | Responsibilities |
 |-----------|-------|-----------------|
 | ChatComposer | 492 | Textarea, images, context files, tools, send/stop |
 | ChatMessageList | 308 | Scroll, message rendering, selection |
 | MessageActions | 306 | Edit, delete, fork, copy, selection, keyboard |
-| SessionTree | 271 | (Already addressed in Phase 3) |
 | SystemPromptBubble | 255 | Collapsed view, expanded view, inspector |
 
 ### Plan
@@ -760,8 +782,8 @@ SystemPromptBubble drops from 255 to ~150 lines.
 | 2. Break chatStore facade | #2 God Object | 2-3h | Medium | ✅ Done (1607140) |
 | 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | ⬜ Ready |
 | 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | ⬜ Ready |
-| 5. Page loading state | #3 No loading state | 1h | Very low | ⬜ After Phase 2 |
-| 6. Error boundary | #5 No error boundary | 1h | Low | ⬜ Ready |
+| 5. Page loading state | #3 No loading state | 1h | Very low | ⬜ Ready |
+| 6. Defensive rendering | #5 No error boundary | 1h | Very low | ⬜ Ready |
 | 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | ⬜ Ready |
 | 8. Break down components | #4 Size imbalance | 3-4h | Medium | ⬜ After Phase 3 |
 
@@ -773,17 +795,16 @@ SystemPromptBubble drops from 255 to ~150 lines.
 ✅ Phase 1 (30m) — DONE
 ✅ Phase 2 (2-3h) — DONE
 
-Next up (any order):
-  Phase 3 (2h)    →  Phase 8 (3-4h)
-  Phase 4 (2-3h)
-  Phase 5 (1h)
-  Phase 6 (1h)
-  Phase 7 (1h)
+Next up (in order):
+  Phase 3 (2h)    →  Phase 8 (3-4h)  // Sequential: sidebar split first
+  Phase 4 (2-3h)                      // Independent
+  Phase 5 (1h)                        // Independent
+  Phase 6 (1h)                        // Independent
+  Phase 7 (1h)                        // Independent
 ```
 
-Phases 3, 4, 5, 6, 7 are **independent** — they can be done in any order.
 Phases 3 → 8 are sequential (component breakdown after sidebar split).
-Phase 5 is now unblocked (was waiting for Phase 2).
+Phases 4, 5, 6, 7 are **independent** — can be done in any order.
 
 ### What This Does NOT Address
 
