@@ -145,11 +145,13 @@
 			{:else}
 				<div class="space-y-0.5">
 					{#each sessions as session (session.id)}
+						{@const isPending = folderStore.pendingOps.has(session.id)}
 						<button
 							type="button"
 							onclick={() => onloadsession?.(session.id)}
-							class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface"
+							class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface {isPending ? 'opacity-50 animate-pulse' : ''}"
 							title={session.title}
+							 disabled={isPending}
 						>
 							<span class="min-w-0 flex-1 truncate">{session.title}</span>
 						</button>

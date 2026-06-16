@@ -42,6 +42,9 @@ class FolderStore {
 	dragPayload = $state<DragPayload | null>(null);
 	dropTarget = $state<DropTarget | null>(null);
 
+	// ── Pending operations (for optimistic update UX) ─────────────────────
+	pendingOps = new SvelteMap<string, { type: string; targetId: string }>();
+
 	// ── Dialog state ───────────────────────────────────────────────────────
 	createDialogOpen = $state(false);
 	editingFolderId = $state<string | null>(null);
@@ -147,6 +150,7 @@ class FolderStore {
 		this.folders = this.folders.map((f) =>
 			f.id === folderId ? { ...f, session_count: f.session_count + 1 } : f
 		);
+		this.pendingOps.set(sessionId, { type: 'assign', targetId: folderId });
 
 		try {
 			await api.assignSessionToFolder(folderId, sessionId);
@@ -159,6 +163,8 @@ class FolderStore {
 			const msg = e instanceof Error ? e.message : String(e);
 			this.showError(`Failed to assign session: ${msg}`);
 			return false;
+		} finally {
+			this.pendingOps.delete(sessionId);
 		}
 	}
 
@@ -168,6 +174,7 @@ class FolderStore {
 		this.folders = this.folders.map((f) =>
 			f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
 		);
+		this.pendingOps.set(sessionId, { type: 'unassign', targetId: folderId });
 
 		try {
 			await api.unassignSessionFromFolder(folderId, sessionId);
@@ -179,6 +186,8 @@ class FolderStore {
 			const msg = e instanceof Error ? e.message : String(e);
 			this.showError(`Failed to unassign session: ${msg}`);
 			return false;
+		} finally {
+			this.pendingOps.delete(sessionId);
 		}
 	}
 
