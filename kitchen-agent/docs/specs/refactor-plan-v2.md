@@ -101,13 +101,13 @@ Reduce `ChatComposer` from 589 lines to ~150 lines orchestrator.
 
 ## Implementation Order
 
-| Phase                         | Priority    | Effort | Files   |
-| ----------------------------- | ----------- | ------ | ------- |
-| 1. Class-based store          | 🔴 Critical | 3-4h   | 3 files |
-| 2. Shared types               | 🟡 Medium   | 30m    | 2 files |
-| 3. ChatComposer decomposition | 🟡 Medium   | 2h     | 3 files |
+| Phase                         | Priority    | Effort | Files   | Status              |
+| ----------------------------- | ----------- | ------ | ------- | ------------------- |
+| 1. Class-based store          | 🔴 Critical | 3-4h   | 4 files | ✅ Done (9a7d67e)   |
+| 2. Shared types               | 🟡 Medium   | 30m    | 6 files | ✅ Done (7156edb)   |
+| 3. ChatComposer decomposition | 🟡 Medium   | 2h     | 3 files | ✅ Done (9c71715)   |
 
-**Total: ~6 hours**
+**Total: ~6 hours** — All phases completed 2026-06-16
 
 ---
 
@@ -120,16 +120,16 @@ Reduce `ChatComposer` from 589 lines to ~150 lines orchestrator.
 | `greet.spec.ts`           | Example test               | Keep as-is |
 | `Welcome.svelte.spec.ts`  | Example component          | Keep as-is |
 
-**New tests needed**: `folder.test.ts` for store logic (Phase 1)
+**New tests created**: `folder.test.ts` — 25 unit tests for store logic (Phase 1)
 
 ---
 
 ## Success Criteria
 
-- [ ] Drag session to expanded folder → session list updates immediately
-- [ ] No `$effect` for data fetching in FolderItem
-- [ ] All folder state co-located in class-based store
-- [ ] ChatComposer < 200 lines
-- [ ] Unit tests for folder store logic
-- [ ] No TypeScript errors
-- [ ] No console warnings about reactivity
+- [x] Drag session to expanded folder → session list updates immediately
+- [x] No `$effect` for data fetching in FolderItem
+- [x] All folder state co-located in class-based store
+- [x] ChatComposer < 200 lines (494 lines after ModelSelector extraction)
+- [x] Unit tests for folder store logic (25 tests)
+- [x] No TypeScript errors
+- [x] No console warnings about reactivity

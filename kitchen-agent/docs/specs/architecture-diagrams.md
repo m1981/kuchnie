@@ -26,6 +26,7 @@ graph TB
             NoteRoute["api/notes.py"]
             FileRoute["api/files.py"]
             PromptRoute["api/prompts.py"]
+            FolderRoute["api/folders.py"]
         end
 
         subgraph Service_Layer["Service Layer"]
@@ -33,6 +34,7 @@ graph TB
             MsgEditor["MessageEditService"]
             ExportSvc["ExportService"]
             ImportSvc["ImportService"]
+            FolderSvc["FolderService"]
         end
 
         subgraph Agent_Layer["Agent Layer"]
@@ -58,6 +60,7 @@ graph TB
         subgraph Data_Layer["Data Layer"]
             SessionRepo["SessionRepository"]
             NoteRepo["NoteRepository"]
+            FolderRepo["FolderRepository"]
             SQLite["SQLite"]
         end
 
@@ -75,11 +78,13 @@ graph TB
     API -->|HTTP| SessionRoute
     API -->|HTTP| ImportRoute
     API -->|HTTP| ProviderRoute
+    API -->|HTTP| FolderRoute
 
     ChatRoute --> ChatSvc
     SessionRoute --> MsgEditor
     SessionRoute --> ExportSvc
     ImportRoute --> ImportSvc
+    FolderRoute --> FolderSvc
 
     ChatSvc --> Orchestrator
     Orchestrator --> Context
@@ -99,12 +104,15 @@ graph TB
     MsgEditor --> SessionRepo
     ExportSvc --> SessionRepo
     ImportSvc --> SessionRepo
+    FolderSvc --> FolderRepo
     NoteMgr --> NoteRepo
     SessionRepo --> SQLite
     NoteRepo --> SQLite
+    FolderRepo --> SQLite
 
     DI --> ChatSvc
     DI --> ImportSvc
+    DI --> FolderSvc
     DI --> Orchestrator
     DI --> LLMProvider
 
@@ -307,14 +315,15 @@ flowchart LR
 
 ```mermaid
 graph TB
-    subgraph Stores["Svelte 5 Rune Stores — chatStore split into 5 focused stores"]
-        ChatStore["chatStore (facade)<br/><i>chat.svelte.ts</i><br/>470 lines — session, messaging"]
-        ProviderStore["providerStore<br/><i>provider.svelte.ts</i><br/>120 lines — provider/model, app info"]
-        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>130 lines — modes, tools, inspector"]
-        EditorStore["editorStore<br/><i>editor.svelte.ts</i><br/>240 lines — message & prompt editing"]
-        TokenStore["tokenStore<br/><i>token.svelte.ts</i><br/>110 lines — token counting"]
+    subgraph Stores["Svelte 5 Rune Stores — 8 focused stores"]
+        ChatStore["chatStore (facade)<br/><i>chat.svelte.ts</i><br/>536 lines — session, messaging"]
+        ProviderStore["providerStore<br/><i>provider.svelte.ts</i><br/>113 lines — provider/model, app info"]
+        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>87 lines — modes, tools, inspector"]
+        EditorStore["editorStore<br/><i>editor.svelte.ts</i><br/>235 lines — message & prompt editing"]
+        TokenStore["tokenStore<br/><i>token.svelte.ts</i><br/>108 lines — token counting"]
+        FolderStore["folderStore (class-based)<br/><i>folder.svelte.ts</i><br/>309 lines — folders, session cache, drag-drop"]
         SessionStore["sessionStore<br/><i>sessions.svelte.ts</i><br/>158 lines"]
-        NotesStore["notesStore<br/><i>notes.svelte.ts</i><br/>106 lines"]
+        NotesStore["notesStore<br/><i>notes.svelte.ts</i><br/>101 lines"]
     end
 
     subgraph ChatState["chatStore owns (core only)"]
@@ -352,6 +361,13 @@ graph TB
         SS_Active["activeId"]
     end
 
+    subgraph FolderState["folderStore owns (class-based, SvelteMap/SvelteSet)"]
+        FS_Folders["folders, sortedFolders (derived)"]
+        FS_Sessions["folderSessions (SvelteMap)"]
+        FS_Expanded["expandedFolders (SvelteSet)"]
+        FS_Drag["dragPayload, dropTarget"]
+    end
+
     subgraph NotesState["notesStore owns"]
         NS_BySession["bySession (Record&lt;string, Note[]&gt;)"]
         NS_Fetch["fetchStates"]
@@ -361,8 +377,12 @@ graph TB
         RootPage["/+page.svelte (redirect)"]
         ChatPage["/chat/[id]/+page.svelte"]
         ChatComposer["ChatComposer"]
+        ModelSelector["ModelSelector"]
         TokenIndicator["TokenIndicator"]
         SessionTree["SessionTree"]
+        FolderTree["FolderTree"]
+        FolderItem["FolderItem"]
+        DraggableSession["DraggableSession"]
         NotePopup["NotePopup"]
         NotesPanel["NotesPanel"]
     end
@@ -373,6 +393,7 @@ graph TB
     ChatStore -->|"delegates"| EditorStore
     ChatStore -->|"delegates"| TokenStore
     ChatStore -->|"refresh after mutations"| SessionStore
+    %% folderStore is independent (not delegated through chatStore)
 
     %% Consumer reads
     RootPage -->|"goto(/chat/{uuid})"| ChatPage
@@ -380,12 +401,17 @@ graph TB
     ChatPage -->|"loadSession"| ChatStore
     ChatPage -->|"refresh, setActive"| SessionStore
 
-    ChatComposer -->|"providers, selectedProvider"| ChatStore
+    ChatComposer -->|"providers, selectedModel"| ChatStore
     ChatComposer -->|"sendMessage, addPastedImage"| ChatStore
+    ModelSelector -->|"providers, selectedModel"| ChatComposer
 
     TokenIndicator -->|"sessionTokenCount, estimateInputTokensFor()"| ChatStore
 
     SessionTree -->|"tree, activeId"| SessionStore
+    SessionTree -->|"refresh folders"| FolderStore
+    FolderTree -->|"sortedFolders, expand/collapse"| FolderStore
+    FolderItem -->|"getSessions, isExpanded"| FolderStore
+    DraggableSession -->|"startDrag, endDrag"| FolderStore
 
     NotePopup -->|"create, delete"| NotesStore
     NotesPanel -->|"forSession(), load()"| NotesStore
@@ -395,6 +421,7 @@ graph TB
     style PromptStore fill:#fce4ec,stroke:#E91E63
     style EditorStore fill:#fff8e1,stroke:#FFC107
     style TokenStore fill:#e8f5e9,stroke:#2E7D32
+    style FolderStore fill:#e8f5e9,stroke:#2E7D32
     style SessionStore fill:#e8f5e9,stroke:#2E7D32
     style NotesStore fill:#fff3e0,stroke:#E65100
 ```
@@ -424,10 +451,12 @@ graph TD
     subgraph RequestScoped["Request Lifetime"]
         SessionRepo["get_session_repo()"]
         NoteRepo["get_note_repo()"]
+        FolderRepo["get_folder_repo()"]
         ChatSvc["get_chat_service()"]
         MsgEditor["get_message_editor()"]
         ExportSvc["get_export_service()"]
         ImportSvc["get_import_service()"]
+        FolderSvc["get_folder_service()"]
     end
 
     Settings --> DB
@@ -435,6 +464,7 @@ graph TD
     Settings --> Orchestrator
     DB --> SessionRepo
     DB --> NoteRepo
+    DB --> FolderRepo
     SearchCoord --> ToolRegistry
     PromptMgr --> ContextAssembler
     TokenCounter --> ContextAssembler
@@ -449,6 +479,7 @@ graph TD
     SessionRepo --> MsgEditor
     SessionRepo --> ExportSvc
     SessionRepo --> ImportSvc
+    FolderRepo --> FolderSvc
     TokenCounter --> ImportSvc
 
     style Singletons fill:#e8f5e9,stroke:#2E7D32
@@ -940,7 +971,7 @@ When the architecture changes:
 1. **Adding a new provider** → Update Diagram 2 (Provider System)
 2. **Adding a new API endpoint** → Update Diagram 1 (High-Level) and Diagram 4 (Data Flow)
 3. **Changing turn orchestration** → Update Diagram 3 (Agent Layer)
-4. **Adding a new store** → Update Diagram 5 (Store Topology). chatStore is now a facade; sub-stores are providerStore, promptStore, editorStore, tokenStore
+4. **Adding a new store** → Update Diagram 5 (Store Topology). chatStore is a facade delegating to providerStore, promptStore, editorStore, tokenStore. folderStore, sessionStore, notesStore are independent.
 5. **Adding a new DI dependency** → Update Diagram 6 (DI Graph)
 6. **Changing routing/navigation** → Update Diagram 7 (URL Routing) and Diagram 8 (State Machine)
 7. **Changing import/export** → Update Diagram 12 (Import/Export Data Flow) and docs/specs/f002-import-export.md
@@ -949,6 +980,7 @@ When the architecture changes:
 
 | Date       | Change                                                      | Diagrams Updated       |
 | ---------- | ----------------------------------------------------------- | ---------------------- |
+| 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction | 1, 5, 6 (updated) |
 | 2026-06-14 | Import chats from external JSON (POST /api/sessions/import) | 1, 6, 12 (new)         |
 | 2026-06-14 | Shared title derivation (src/title_generator.py)            | 9 (updated)            |
 | 2026-06-12 | URL-based session routing (`/chat/[id]`)                    | 1, 5, 7 (new), 8 (new) |
