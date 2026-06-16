@@ -316,12 +316,12 @@ flowchart LR
 ```mermaid
 graph TB
     subgraph Stores["Svelte 5 Rune Stores — 8 focused stores"]
-        ChatStore["chatStore (facade)<br/><i>chat.svelte.ts</i><br/>536 lines — session, messaging"]
+        ChatStore["chatStore<br/><i>chat.svelte.ts</i><br/>~430 lines — session, messaging"]
         ProviderStore["providerStore<br/><i>provider.svelte.ts</i><br/>113 lines — provider/model, app info"]
-        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>87 lines — modes, tools, inspector"]
+        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>87 lines — modes, tools"]
         EditorStore["editorStore<br/><i>editor.svelte.ts</i><br/>235 lines — message & prompt editing"]
         TokenStore["tokenStore<br/><i>token.svelte.ts</i><br/>108 lines — token counting"]
-        FolderStore["folderStore (class-based)<br/><i>folder.svelte.ts</i><br/>309 lines — folders, session cache, drag-drop"]
+        FolderStore["folderStore (class-based)<br/><i>folder.svelte.ts</i><br/>~320 lines — folders, session cache, drag-drop, pendingOps"]
         SessionStore["sessionStore<br/><i>sessions.svelte.ts</i><br/>158 lines"]
         NotesStore["notesStore<br/><i>notes.svelte.ts</i><br/>101 lines"]
     end
@@ -366,6 +366,7 @@ graph TB
         FS_Sessions["folderSessions (SvelteMap)"]
         FS_Expanded["expandedFolders (SvelteSet)"]
         FS_Drag["dragPayload, dropTarget"]
+        FS_Pending["pendingOps (SvelteMap)"]
     end
 
     subgraph NotesState["notesStore owns"]
@@ -373,13 +374,14 @@ graph TB
         NS_Fetch["fetchStates"]
     end
 
-    subgraph Consumers["Component Consumers"]
-        RootPage["/+page.svelte (redirect)"]
+    subgraph Consumers["Component Consumers (Direct Imports)"]
         ChatPage["/chat/[id]/+page.svelte"]
+        ComposerActions["ComposerActions"]
         ChatComposer["ChatComposer"]
-        ModelSelector["ModelSelector"]
         TokenIndicator["TokenIndicator"]
-        SessionTree["SessionTree"]
+        SidebarLayout["SidebarLayout"]
+        SessionPanel["SessionPanel"]
+        ArchivedPanel["ArchivedPanel"]
         FolderTree["FolderTree"]
         FolderItem["FolderItem"]
         DraggableSession["DraggableSession"]
@@ -387,30 +389,22 @@ graph TB
         NotesPanel["NotesPanel"]
     end
 
-    %% Facade pattern — consumers import chatStore, it delegates
-    ChatStore -->|"delegates"| ProviderStore
-    ChatStore -->|"delegates"| PromptStore
-    ChatStore -->|"delegates"| EditorStore
-    ChatStore -->|"delegates"| TokenStore
-    ChatStore -->|"refresh after mutations"| SessionStore
-    %% folderStore is independent (not delegated through chatStore)
+    %% Direct imports — no facade pattern
+    ChatPage -->|"loadSession, sendMessage"| ChatStore
+    ChatPage -->|"providers, appTitle"| ProviderStore
+    ChatPage -->|"selectedModeId, loadModes"| PromptStore
+    ChatPage -->|"editState, startEditing"| EditorStore
 
-    %% Consumer reads
-    RootPage -->|"goto(/chat/{uuid})"| ChatPage
-    ChatPage -->|"reads all getters"| ChatStore
-    ChatPage -->|"loadSession"| ChatStore
-    ChatPage -->|"refresh, setActive"| SessionStore
+    ComposerActions -->|"toolsEnabled, toggleTools"| PromptStore
+    ChatComposer -->|"pastedImages, chatState"| ChatStore
+    TokenIndicator -->|"sessionTokenCount"| TokenStore
+    TokenIndicator -->|"contextWindowK"| ProviderStore
 
-    ChatComposer -->|"providers, selectedModel"| ChatStore
-    ChatComposer -->|"sendMessage, addPastedImage"| ChatStore
-    ModelSelector -->|"providers, selectedModel"| ChatComposer
-
-    TokenIndicator -->|"sessionTokenCount, estimateInputTokensFor()"| ChatStore
-
-    SessionTree -->|"tree, activeId"| SessionStore
-    SessionTree -->|"refresh folders"| FolderStore
-    FolderTree -->|"sortedFolders, expand/collapse"| FolderStore
-    FolderItem -->|"getSessions, isExpanded"| FolderStore
+    SidebarLayout -->|"refresh"| FolderStore
+    SessionPanel -->|"tree, activeId"| SessionStore
+    ArchivedPanel -->|"tree, archived_at"| SessionStore
+    FolderTree -->|"sortedFolders"| FolderStore
+    FolderItem -->|"getSessions, pendingOps"| FolderStore
     DraggableSession -->|"startDrag, endDrag"| FolderStore
 
     NotePopup -->|"create, delete"| NotesStore
@@ -971,7 +965,7 @@ When the architecture changes:
 1. **Adding a new provider** → Update Diagram 2 (Provider System)
 2. **Adding a new API endpoint** → Update Diagram 1 (High-Level) and Diagram 4 (Data Flow)
 3. **Changing turn orchestration** → Update Diagram 3 (Agent Layer)
-4. **Adding a new store** → Update Diagram 5 (Store Topology). chatStore is a facade delegating to providerStore, promptStore, editorStore, tokenStore. folderStore, sessionStore, notesStore are independent.
+4. **Adding a new store** → Update Diagram 5 (Store Topology). All stores are imported directly by components. chatStore owns session state and coordinates cross-store operations.
 5. **Adding a new DI dependency** → Update Diagram 6 (DI Graph)
 6. **Changing routing/navigation** → Update Diagram 7 (URL Routing) and Diagram 8 (State Machine)
 7. **Changing import/export** → Update Diagram 12 (Import/Export Data Flow) and docs/specs/f002-import-export.md
@@ -980,6 +974,7 @@ When the architecture changes:
 
 | Date       | Change                                                      | Diagrams Updated       |
 | ---------- | ----------------------------------------------------------- | ---------------------- |
+| 2026-06-17 | Refactor v2 complete: direct imports, Dialog, SidebarLayout, ComposerActions | 1, 5, 10 (updated) |
 | 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction | 1, 5, 6 (updated) |
 | 2026-06-14 | Import chats from external JSON (POST /api/sessions/import) | 1, 6, 12 (new)         |
 | 2026-06-14 | Shared title derivation (src/title_generator.py)            | 9 (updated)            |

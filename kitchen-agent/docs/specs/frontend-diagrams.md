@@ -1,7 +1,7 @@
 # Kitchen Agent — Frontend Architecture Diagrams
 
 Mermaid diagrams documenting the Svelte 5 frontend architecture.
-Generated from `svelte-map` analysis, updated 2026-06-16.
+Generated from `svelte-map` analysis, updated 2026-06-17 (post-refactor).
 
 ---
 
@@ -12,21 +12,29 @@ graph TB
     subgraph Routes["SvelteKit Routes"]
         Layout["+layout.svelte<br/>favicon, global head"]
         RootPage["+page.svelte<br/>redirect → /chat/{uuid}"]
-        ChatPage["chat/[id]/+page.svelte<br/>402 lines — main orchestrator"]
+        ChatPage["chat/[id]/+page.svelte<br/>437 lines — main orchestrator"]
+        ErrorPage["chat/[id]/+error.svelte<br/>33 lines — error boundary"]
     end
 
     subgraph ChatArea["Chat Area (left panel)"]
         ChatHeader["ChatHeader<br/>148 lines — title, mode badge"]
         ChatMessageList["ChatMessageList<br/>308 lines — scrollable messages"]
-        ChatComposer["ChatComposer<br/>492 lines — input orchestrator"]
+        ChatComposer["ChatComposer<br/>214 lines — input orchestrator"]
     end
 
-    subgraph Sidebar["Sidebar (right panel)"]
-        SessionTree["SessionTree<br/>271 lines — session forest + folders"]
+    subgraph Sidebar["Sidebar (left panel)"]
+        SidebarLayout["SidebarLayout<br/>46 lines — composes panels"]
         ContextSidebar["ContextSidebar<br/>188 lines — files + notes"]
     end
 
+    subgraph SidebarPanels["Sidebar Panels"]
+        FolderTree["FolderTree<br/>127 lines — folder list + drop zones"]
+        SessionPanel["SessionPanel<br/>175 lines — session forest"]
+        ArchivedPanel["ArchivedPanel<br/>168 lines — archived sessions"]
+    end
+
     subgraph ComposerSubs["Composer Sub-Components"]
+        ComposerActions["ComposerActions<br/>326 lines — buttons, tools, send/stop"]
         ModelSelector["ModelSelector<br/>118 lines — optgroup select"]
         TokenIndicator["TokenIndicator<br/>107 lines — token bar"]
     end
@@ -40,11 +48,10 @@ graph TB
 
     subgraph SessionSubs["Session Sub-Components"]
         DraggableSession["DraggableSession<br/>54 lines — drag wrapper"]
-        FolderTree["FolderTree<br/>127 lines — folder list + drop zones"]
-        FolderItem["FolderItem<br/>210 lines — single folder + sessions"]
+        FolderItem["FolderItem<br/>212 lines — single folder + sessions"]
         SessionTreeNode["SessionTreeNode<br/>163 lines — recursive tree node"]
         SessionContextMenu["SessionContextMenu<br/>262 lines — right-click menu"]
-        CreateFolderDialog["CreateFolderDialog<br/>161 lines — new folder modal"]
+        CreateFolderDialog["CreateFolderDialog<br/>145 lines — new folder modal"]
     end
 
     subgraph SidebarSubs["Sidebar Sub-Components"]
@@ -53,22 +60,29 @@ graph TB
         FileEditor["FileEditor<br/>116 lines — edit context file"]
     end
 
-    subgraph Shared["Shared / Utility"]
-        ConfirmDialog["ConfirmDialog<br/>81 lines — modal confirm"]
+    subgraph Shared["Shared / UI Components"]
+        Dialog["Dialog<br/>90 lines — base modal"]
+        ConfirmDialog["ConfirmDialog<br/>58 lines — modal confirm"]
         ProviderPicker["ProviderPicker<br/>107 lines — provider select"]
     end
 
     %% Route hierarchy
     Layout --> RootPage
     Layout --> ChatPage
+    Layout --> ErrorPage
 
     %% Page composition
     ChatPage --> ChatHeader
     ChatPage --> ChatMessageList
     ChatPage --> ChatComposer
-    ChatPage --> SessionTree
+    ChatPage --> SidebarLayout
     ChatPage --> ContextSidebar
     ChatPage --> NotePopup
+
+    %% Sidebar composition
+    SidebarLayout --> FolderTree
+    SidebarLayout --> SessionPanel
+    SidebarLayout --> ArchivedPanel
 
     %% Chat area composition
     ChatMessageList --> MessageActions
@@ -77,13 +91,19 @@ graph TB
     ChatMessageList --> Markdown
     ChatMessageList --> ConfirmDialog
 
-    ChatComposer --> ModelSelector
+    ChatComposer --> ComposerActions
     ChatComposer --> TokenIndicator
+    ComposerActions --> ModelSelector
+
+    %% Shared UI
+    ConfirmDialog --> Dialog
+    CreateFolderDialog --> Dialog
 
     %% Session tree composition
-    SessionTree --> DraggableSession
-    SessionTree --> FolderTree
-    SessionTree --> SessionTreeNode
+    SessionPanel --> DraggableSession
+    SessionPanel --> SessionTreeNode
+    ArchivedPanel --> DraggableSession
+    ArchivedPanel --> SessionTreeNode
     FolderTree --> FolderItem
     FolderTree --> CreateFolderDialog
     SessionTreeNode --> SessionContextMenu
@@ -98,6 +118,7 @@ graph TB
     style Routes fill:#e8f4f8,stroke:#2196F3
     style ChatArea fill:#e3f2fd,stroke:#1565C0
     style Sidebar fill:#fff3e0,stroke:#FF9800
+    style SidebarPanys fill:#fff3e0,stroke:#FF9800
     style ComposerSubs fill:#f3e5f5,stroke:#9C27B0
     style MessageSubs fill:#fce4ec,stroke:#E91E63
     style SessionSubs fill:#e8f5e9,stroke:#4CAF50
@@ -111,12 +132,12 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph Facade["chatStore — Session State Only"]
+    subgraph ChatStore["chatStore — Session State Only"]
         ChatCore["chat.svelte.ts<br/>~430 lines<br/>closure-based factory"]
         ChatOwns["Owns:<br/>sessionId, messages<br/>chatState (AsyncState)<br/>pastedImages, contextFiles<br/>isStreaming, forkStatus"]
     end
 
-    subgraph DirectStores["Direct Import Stores (no facade)"]
+    subgraph DirectStores["Direct Import Stores"]
         ProviderStore["providerStore<br/>113 lines — closure-based<br/>providers, selectedProvider/Model<br/>appTitle, appDescription"]
         PromptStore["promptStore<br/>87 lines — closure-based<br/>selectedModeId, modesState<br/>toolsEnabled"]
         EditorStore["editorStore<br/>235 lines — closure-based<br/>editingTurnId, editDraft<br/>sessionSystemPrompt"]
@@ -124,7 +145,7 @@ graph TB
     end
 
     subgraph Independent["Independent Stores"]
-        FolderStore["folderStore<br/>309 lines — <b>class-based</b><br/>folders, folderSessions (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>dragPayload, dropTarget"]
+        FolderStore["folderStore<br/>~320 lines — <b>class-based</b><br/>folders, folderSessions (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)"]
         SessionStore["sessionStore<br/>158 lines — closure-based<br/>tree (SessionNode[])<br/>flat (derived), activeId"]
         NotesStore["notesStore<br/>101 lines — closure-based<br/>bySession (Record&lt;string, Note[]&gt;)<br/>fetchStates"]
     end
@@ -146,7 +167,7 @@ graph TB
     ChatCore -.->|"uses"| Closure
     ProviderStore -.->|"uses"| Closure
 
-    style Facade fill:#e3f2fd,stroke:#1565C0
+    style ChatStore fill:#e3f2fd,stroke:#1565C0
     style DirectStores fill:#f3e5f5,stroke:#9C27B0
     style Independent fill:#e8f5e9,stroke:#4CAF50
     style Patterns fill:#fff8e1,stroke:#FFC107
@@ -154,7 +175,7 @@ graph TB
 
 ---
 
-## 3. Store → Component Consumer Map
+## 3. Store → Component Consumer Map (Post-Refactor)
 
 ```mermaid
 graph LR
@@ -170,37 +191,58 @@ graph LR
     end
 
     subgraph Components["Components"]
+        PG["+page.svelte"]
+        CA["ComposerActions"]
         CP["ChatComposer"]
         TI["TokenIndicator"]
-        ST["SessionTree"]
+        SL["SidebarLayout"]
+        SP["SessionPanel"]
+        AP["ArchivedPanel"]
         FT["FolderTree"]
         FI["FolderItem"]
         DS["DraggableSession"]
         NP["NotePopup"]
         NPL["NotesPanel"]
-        PG["+page.svelte"]
     end
 
-    CS -->|"sendMessage, pastedImages<br/>chatState, messages"| CP
-    PR -->|"toolsEnabled, toggleTools"| CP
-    CS -->|"chatState, messages"| TI
-    TS -->|"sessionTokenCount, estimateInputTokens()"| TI
-    PS -->|"contextWindowK"| TI
-
-    SS -->|"tree, activeId"| ST
-    FS -->|"sortedFolders"| FT
-    FS -->|"getSessions, isExpanded"| FI
-    FS -->|"startDrag, endDrag"| DS
-    FS -->|"assignSession, refresh"| ST
-
-    NS -->|"create, delete"| NP
-    NS -->|"forSession(), load()"| NPL
-
+    %% +page.svelte direct imports
     CS -->|"loadSession, sendMessage"| PG
     PS -->|"providers, appTitle, loadProviders"| PG
     PR -->|"selectedModeId, loadModes"| PG
     ES -->|"editState, startEditing, saveEdit"| PG
     SS -->|"refresh, setActive"| PG
+
+    %% ComposerActions direct imports
+    PR -->|"toolsEnabled, toggleTools"| CA
+
+    %% ChatComposer
+    CS -->|"pastedImages, chatState"| CP
+
+    %% TokenIndicator direct imports
+    TS -->|"sessionTokenCount, estimateInputTokens()"| TI
+    PS -->|"contextWindowK"| TI
+
+    %% SidebarLayout
+    FS -->|"refresh"| SL
+
+    %% SessionPanel direct imports
+    SS -->|"tree, activeId"| SP
+
+    %% ArchivedPanel direct imports
+    SS -->|"tree, archived_at"| AP
+
+    %% FolderTree
+    FS -->|"sortedFolders"| FT
+
+    %% FolderItem
+    FS -->|"getSessions, isExpanded, pendingOps"| FI
+
+    %% DraggableSession
+    FS -->|"startDrag, endDrag"| DS
+
+    %% Notes
+    NS -->|"create, delete"| NP
+    NS -->|"forSession(), load()"| NPL
 
     style Stores fill:#e8f5e9,stroke:#4CAF50
     style Components fill:#e3f2fd,stroke:#1565C0
@@ -213,12 +255,14 @@ graph LR
 ```mermaid
 sequenceDiagram
     participant User
+    participant Actions as ComposerActions
     participant Composer as ChatComposer
     participant Store as chatStore
     participant API as api.ts
     participant Backend as FastAPI
 
-    User->>Composer: Types message + Enter
+    User->>Actions: Clicks Run button
+    Actions->>Composer: onsend()
     Composer->>Composer: handleSend()
     Composer->>Store: sendMessage(text)
 
@@ -256,13 +300,11 @@ sequenceDiagram
 
 ---
 
-## 5. Sidebar Architecture (Sessions + Folders + Drag-Drop)
+## 5. Sidebar Architecture (Post-Refactor)
 
 ```mermaid
 graph TB
-    subgraph SessionTree["SessionTree — Top-Level Container"]
-        Header["Header: 'History' + count badge"]
-        ErrorToast["Error toast (opError)"]
+    subgraph SidebarLayout["SidebarLayout — Top-Level Container"]
         FolderSection["Folder Section"]
         SessionSection["Session Section"]
         ArchivedSection["Archived Section"]
@@ -271,14 +313,20 @@ graph TB
     subgraph FolderSystem["Folder System"]
         FolderTree["FolderTree<br/>Creates drop zones per folder"]
         FolderItem["FolderItem<br/>Expandable folder with sessions"]
-        CreateFolder["CreateFolderDialog"]
+        CreateFolder["CreateFolderDialog → Dialog"]
         DropZone["use:droppable<br/>accepts: session"]
     end
 
-    subgraph SessionSystem["Session System"]
+    subgraph SessionSystem["Session Panel"]
+        SessionPanel["SessionPanel<br/>Header + error toast + forest"]
         DraggableSession["DraggableSession<br/>use:draggable"]
         SessionTreeNode["SessionTreeNode<br/>Recursive: renders children"]
         ContextMenu["SessionContextMenu<br/>Right-click actions"]
+    end
+
+    subgraph ArchivedSystem["Archived Panel"]
+        ArchivedPanel["ArchivedPanel<br/>Expand/collapse toggle"]
+        ArchivedSessions["Archived session rendering"]
     end
 
     subgraph DragDrop["Drag & Drop Flow"]
@@ -286,6 +334,7 @@ graph TB
         DragOver["Drag Over<br/>folderStore.setDropTarget(target)"]
         Drop["Drop<br/>folderStore.assignSession(folderId, sessionId)"]
         DragEnd["Drag End<br/>folderStore.endDrag()"]
+        PendingOps["pendingOps tracking<br/>SvelteMap for UX"]
     end
 
     subgraph folderStore["folderStore (class-based)"]
@@ -293,20 +342,24 @@ graph TB
         Expanded["$state: expandedFolders (SvelteSet)"]
         Sessions["$state: folderSessions (SvelteMap)"]
         Drag["$state: dragPayload, dropTarget"]
+        Pending["$state: pendingOps (SvelteMap)"]
         Methods["assignSession(), invalidateSessions()<br/>toggleExpand(), isExpanded()<br/>getSessions(), fetchSessions()"]
     end
 
-    Header --> FolderSection
     FolderSection --> FolderTree
     FolderTree --> DropZone
     DropZone --> FolderItem
     FolderItem -->|"expanded"| Sessions
     FolderTree --> CreateFolder
 
-    SessionSection --> DraggableSession
+    SessionSection --> SessionPanel
+    SessionPanel --> DraggableSession
     DraggableSession --> SessionTreeNode
     SessionTreeNode --> ContextMenu
     SessionTreeNode -->|"children"| SessionTreeNode
+
+    ArchivedSection --> ArchivedPanel
+    ArchivedPanel --> ArchivedSessions
 
     DraggableSession -->|"ondragstart"| DragStart
     DropZone -->|"ondragenter"| DragOver
@@ -317,18 +370,20 @@ graph TB
     DragOver --> Drag
     Drop --> Methods
     Drop --> Sessions
+    Drop --> PendingOps
     DragEnd --> Drag
 
-    SessionTree --> folderStore
+    SidebarLayout --> folderStore
     FolderTree --> folderStore
     FolderItem --> folderStore
     DraggableSession --> folderStore
 
-    style SessionTree fill:#e3f2fd,stroke:#1565C0
+    style SidebarLayout fill:#e3f2fd,stroke:#1565C0
     style FolderSystem fill:#e8f5e9,stroke:#4CAF50
     style SessionSystem fill:#fff3e0,stroke:#FF9800
-    style DragDrop fill:#fce4ec,stroke:#E91E63
-    style folderStore fill:#f3e5f5,stroke:#9C27B0
+    style ArchivedSystem fill:#fce4ec,stroke:#E91E63
+    style DragDrop fill:#f3e5f5,stroke:#9C27B0
+    style folderStore fill:#fff8e1,stroke:#FFC107
 ```
 
 ---
@@ -346,7 +401,7 @@ graph TB
     end
 
     subgraph Reactivity["Svelte Reactivity Collections"]
-        SvelteMap["SvelteMap<br/>folderSessions, sessionsLoading,<br/>sessionsError"]
+        SvelteMap["SvelteMap<br/>folderSessions, sessionsLoading,<br/>sessionsError, pendingOps"]
         SvelteSet["SvelteSet<br/>expandedFolders"]
     end
 
@@ -379,14 +434,14 @@ graph TB
     Props -->|"every component"| Components
     Bindable -->|"ChatComposer.currentMessage"| Components
 
-    Draggable -->|"DraggableSession"| SessionTree["SessionTree"]
+    Draggable -->|"DraggableSession"| SessionPanel["SessionPanel"]
     Droppable -->|"FolderTree drop zones"| FolderTree["FolderTree"]
     PasteImage -->|"ChatComposer"| Composer["ChatComposer"]
     AutoResize -->|"ChatComposer textarea"| Composer
     FocusTrap -->|"SessionContextMenu, NotePopup"| Modals["Modals"]
 
-    Snippets -->|"FolderTree, SessionTree"| Layout["Layout"]
-    Children -->|"FolderTree"| Layout
+    Snippets -->|"Dialog, FolderTree"| Layout["Layout"]
+    Children -->|"FolderTree, Dialog"| Layout
 
     style Runes fill:#e3f2fd,stroke:#1565C0
     style Reactivity fill:#f3e5f5,stroke:#9C27B0
@@ -404,6 +459,7 @@ graph TB
     subgraph Routes["SvelteKit File-Based Routing"]
         Root["/<br/>+page.svelte<br/>Redirects to /chat/{uuid}"]
         Chat["/chat/[id]/<br/>+page.svelte<br/>URL-driven session"]
+        Error["+error.svelte<br/>Error boundary page"]
         Layout["+layout.svelte<br/>Global: favicon, head"]
     end
 
@@ -419,7 +475,7 @@ graph TB
     end
 
     subgraph RightContent["Right Panel Content"]
-        SessionTree["SessionTree"]
+        SidebarLayout["SidebarLayout"]
         ContextSidebar["ContextSidebar"]
     end
 
@@ -427,10 +483,12 @@ graph TB
         Goto["goto(/chat/{uuid})"]
         BeforeNav["beforeNavigate<br/>cancel() during streaming"]
         PageStore["$page.params.id<br/>Reactive URL param"]
+        PageReady["pageReady state<br/>Loading spinner"]
     end
 
     Layout --> Root
     Layout --> Chat
+    Layout --> Error
 
     Root -->|"goto()"| Chat
 
@@ -441,14 +499,15 @@ graph TB
     LeftPanel --> Messages
     LeftPanel --> Composer
 
-    RightPanel --> SessionTree
+    RightPanel --> SidebarLayout
     RightPanel --> ContextSidebar
 
-    SessionTree -->|"click session"| Goto
+    SidebarLayout -->|"click session"| Goto
     Root -->|"new UUID"| Goto
     Chat -->|"streaming"| BeforeNav
     Chat -->|"params.id changes"| PageStore
     PageStore -->|"loadSession()"| ChatPage
+    ChatPage -->|"loading"| PageReady
 
     style Routes fill:#e8f4f8,stroke:#2196F3
     style ChatPage fill:#e3f2fd,stroke:#1565C0
@@ -459,20 +518,20 @@ graph TB
 
 ---
 
-## 8. Component Responsibility Matrix
+## 8. Component Responsibility Matrix (Post-Refactor)
 
 ```mermaid
 graph LR
     subgraph Orchestration["Page-Level Orchestrators"]
-        ChatPage["+page.svelte<br/>━━━━━━━━━━━━━━<br/>• Mount + load session<br/>• Sidebar resize<br/>• Keyboard shortcuts<br/>• Navigation guards<br/>• Note popup state"]
-        SessionTree["SessionTree<br/>━━━━━━━━━━━━━━<br/>• Fetch sessions on mount<br/>• Render folder tree<br/>• Render session forest<br/>• Drag-drop coordination<br/>• Archive/delete handlers"]
+        ChatPage["+page.svelte<br/>━━━━━━━━━━━━━━<br/>• Mount + load session<br/>• Sidebar resize<br/>• Keyboard shortcuts<br/>• Navigation guards<br/>• Note popup state<br/>• pageReady loading state"]
+        SidebarLayout["SidebarLayout<br/>━━━━━━━━━━━━━━<br/>• Compose panels<br/>• Folder store init"]
     end
 
     subgraph ChatComponents["Chat Components"]
         ChatHeader["ChatHeader<br/>━━━━━━━━━━━━━━<br/>• Title display + edit<br/>• Mode badge<br/>• Provider info"]
         ChatMessageList["ChatMessageList<br/>━━━━━━━━━━━━━━<br/>• Scroll management<br/>• Auto-scroll on new msg<br/>• Message rendering<br/>• Selection tracking"]
-        ChatComposer["ChatComposer<br/>━━━━━━━━━━━━━━<br/>• Textarea + auto-resize<br/>• Image paste handling<br/>• Context files strip<br/>• Tools toggle<br/>• Send/stop button"]
-        ModelSelector["ModelSelector<br/>━━━━━━━━━━━━━━<br/>• Optgroup select<br/>• Provider grouping<br/>• Model validation"]
+        ChatComposer["ChatComposer<br/>━━━━━━━━━━━━━━<br/>• Textarea + auto-resize<br/>• Image paste handling<br/>• Context files strip"]
+        ComposerActions["ComposerActions<br/>━━━━━━━━━━━━━━<br/>• Tools toggle<br/>• Model selector<br/>• Send/stop button<br/>• Placeholder toasts"]
     end
 
     subgraph MessageComponents["Message Components"]
@@ -481,38 +540,38 @@ graph LR
         SystemPromptBubble["SystemPromptBubble<br/>━━━━━━━━━━━━━━<br/>• Collapsed preview<br/>• Expanded content<br/>• Prompt inspector"]
     end
 
-    subgraph SidebarComponents["Sidebar Components"]
+    subgraph SidebarComponents["Sidebar Panels"]
+        SessionPanel["SessionPanel<br/>━━━━━━━━━━━━━━<br/>• Header + count badge<br/>• Error toast<br/>• Session forest<br/>• Event handlers"]
+        ArchivedPanel["ArchivedPanel<br/>━━━━━━━━━━━━━━<br/>• Expand/collapse<br/>• Count badge<br/>• Archived sessions"]
         FolderTree["FolderTree<br/>━━━━━━━━━━━━━━<br/>• Drop zones<br/>• Create button<br/>• Error toast"]
-        FolderItem["FolderItem<br/>━━━━━━━━━━━━━━<br/>• Expand/collapse<br/>• Session list<br/>• Context menu<br/>• Color picker"]
-        SessionTreeNode["SessionTreeNode<br/>━━━━━━━━━━━━━━<br/>• Recursive rendering<br/>• Active highlight<br/>• Archive indicator<br/>• Depth indentation"]
+        FolderItem["FolderItem<br/>━━━━━━━━━━━━━━<br/>• Expand/collapse<br/>• Session list<br/>• Pending state<br/>• Context menu"]
     end
 
-    subgraph UtilityComponents["Utility Components"]
+    subgraph UIComponents["Shared UI"]
+        Dialog["Dialog<br/>━━━━━━━━━━━━━━<br/>• Escape key<br/>• Backdrop click<br/>• Scroll lock<br/>• Snippet slots"]
+        ConfirmDialog["ConfirmDialog<br/>━━━━━━━━━━━━━━<br/>• Uses Dialog<br/>• Auto-confirm mode"]
         TokenIndicator["TokenIndicator<br/>━━━━━━━━━━━━━━<br/>• Progress bar<br/>• Session tokens<br/>• Input estimate<br/>• Context %"]
-        NotesPanel["NotesPanel<br/>━━━━━━━━━━━━━━<br/>• Notes list<br/>• Create/delete<br/>• Source role badge"]
-        Markdown["Markdown<br/>━━━━━━━━━━━━━━<br/>• Parse markdown<br/>• Render HTML<br/>• tick() updates"]
     end
 
     style Orchestration fill:#e3f2fd,stroke:#1565C0
     style ChatComponents fill:#f3e5f5,stroke:#9C27B0
     style MessageComponents fill:#fce4ec,stroke:#E91E63
     style SidebarComponents fill:#e8f5e9,stroke:#4CAF50
-    style UtilityComponents fill:#fff8e1,stroke:#FFC107
+    style UIComponents fill:#fff8e1,stroke:#FFC107
 ```
 
 ---
 
-## 9. Hotspot Analysis (Import Frequency)
+## 9. Hotspot Analysis (Post-Refactor)
 
 ```mermaid
 graph TB
     subgraph Hotspots["Most Imported Modules"]
-        FS["folderStore — 4 importers<br/>DraggableSession, FolderItem,<br/>FolderTree, SessionTree"]
-        API["api.ts — 4 importers<br/>SessionTree, ContextSidebar,<br/>FileEditor, +page"]
-        PS["providerStore — 3 importers<br/>ChatComposer, TokenIndicator,<br/>+page"]
-        ES["editorStore — 2 importers<br/>TokenIndicator (indirect),<br/>+page"]
-        PI["ProviderInfo — 3 importers<br/>ChatComposer, ModelSelector,<br/>ProviderPicker"]
-        NOTE["Note type — 3 importers<br/>ContextSidebar, NotePopup,<br/>NotesPanel"]
+        FS["folderStore — 5 importers<br/>DraggableSession, FolderItem,<br/>FolderTree, SessionPanel,<br/>SidebarLayout"]
+        API["api.ts — 6 importers<br/>SessionPanel, ArchivedPanel,<br/>ContextSidebar, FileEditor,<br/>+page, +error"]
+        SS["sessionStore — 4 importers<br/>+page, SessionPanel,<br/>ArchivedPanel, SessionTree"]
+        PR["promptStore — 3 importers<br/>ComposerActions, +page,<br/>(indirect via ChatComposer)"]
+        PS["providerStore — 3 importers<br/>TokenIndicator, +page,<br/>(indirect via ChatComposer)"]
     end
 
     subgraph Risk["Coupling Risk Assessment"]
@@ -523,14 +582,14 @@ graph TB
 
     FS -->|"High"| HighRisk
     API -->|"High"| HighRisk
+    SS -->|"Medium"| MedRisk
+    PR -->|"Medium"| MedRisk
     PS -->|"Medium"| MedRisk
-    PI -->|"Low"| LowRisk
-    NOTE -->|"Low"| LowRisk
 
-    subgraph Recommendations["Recommendations"]
-        R1["folderStore: Keep stable API<br/>— most imported store"]
-        R2["api.ts: Consider typed wrappers<br/>— reduces import surface"]
-        R3["chatStore: Session state only<br/>— no more delegation getters"]
+    subgraph Recommendations["Post-Refactor Status"]
+        R1["folderStore: Stable API<br/>— most imported store, uses SvelteMap"]
+        R2["chatStore: Session state only<br/>— no delegation getters"]
+        R3["Direct imports: All stores<br/>— no facade pattern"]
     end
 
     style Hotspots fill:#e3f2fd,stroke:#1565C0
@@ -540,22 +599,22 @@ graph TB
 
 ---
 
-## 10. File Size Distribution
+## 10. File Size Distribution (Post-Refactor)
 
 ```mermaid
 xychart-beta
-    title "Component Line Counts"
-    x-axis ["Composer", "MsgList", "MsgActions", "SessionTree", "SysPrompt", "FolderItem", "SessionCtx", "CtxSidebar", "NotesPanel", "FolderTree", "ChatHeader", "NotePopup", "FileEditor", "ProvPicker", "TokenInd", "ModelSel", "MsgEditor", "Confirm", "DragSess", "Markdown"]
+    title "Component Line Counts (Post-Refactor)"
+    x-axis ["Composer", "MsgList", "MsgActions", "SysPrompt", "FolderItem", "SessionCtx", "ComposerActions", "SessionPanel", "ArchivedPanel", "CtxSidebar", "NotesPanel", "FolderTree", "ChatHeader", "NotePopup", "FileEditor", "ProvPicker", "TokenInd", "ModelSel", "MsgEditor", "Confirm", "DragSess", "Markdown"]
     y-axis "Lines" 0 --> 550
-    bar [492, 308, 306, 271, 255, 210, 262, 188, 205, 127, 148, 136, 116, 107, 107, 118, 94, 81, 54, 49]
+    bar [214, 308, 306, 255, 212, 262, 326, 175, 168, 188, 205, 127, 148, 136, 116, 107, 107, 118, 94, 58, 54, 49]
 ```
 
 ```mermaid
 xychart-beta
-    title "Store Line Counts"
+    title "Store Line Counts (Post-Refactor)"
     x-axis ["chatStore", "folderStore", "editorStore", "sessionStore", "providerStore", "tokenStore", "notesStore", "promptStore"]
     y-axis "Lines" 0 --> 600
-    bar [430, 309, 235, 158, 113, 108, 101, 87]
+    bar [430, 320, 235, 158, 113, 108, 101, 87]
 ```
 
 ---
@@ -633,6 +692,12 @@ graph TB
 
 | Date | Change | Diagrams |
 |------|--------|----------|
-| 2026-06-16 | Phase 2: break chatStore facade — direct store imports | 2, 3, 9, 10 (updated) |
-| 2026-06-16 | Remove RemoteData — all stores use AsyncState | 11 (updated) |
-| 2026-06-16 | Initial creation from svelte-map analysis | All (new) |
+| 2026-06-17 | Refactor v2 complete (all 8 phases) | All (updated) |
+| 2026-06-17 | Phase 8: ComposerActions extracted | 1, 4, 8, 10 |
+| 2026-17 | Phase 7: pendingOps in folderStore | 2, 5 |
+| 2026-06-17 | Phase 6: +error.svelte route | 1, 7 |
+| 2026-06-17 | Phase 5: pageReady loading state | 1, 7 |
+| 2026-06-17 | Phase 4: shared Dialog component | 1, 8 |
+| 2026-06-17 | Phase 3: SidebarLayout, SessionPanel, ArchivedPanel | 1, 5, 8 |
+| 2026-06-16 | Phase 2: direct store imports | 2, 3, 9 |
+| 2026-06-16 | Phase 1: merge RemoteData → AsyncState | 11 |
