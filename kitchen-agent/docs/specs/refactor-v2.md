@@ -780,31 +780,29 @@ SystemPromptBubble drops from 255 to ~150 lines.
 |-------|---------|--------|------|--------|
 | 1. Merge async types | #1 Two state types | 30m | Very low | ✅ Done (11ab1d9) |
 | 2. Break chatStore facade | #2 God Object | 2-3h | Medium | ✅ Done (1607140) |
-| 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | ⬜ Ready |
-| 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | ⬜ Ready |
-| 5. Page loading state | #3 No loading state | 1h | Very low | ⬜ Ready |
-| 6. Defensive rendering | #5 No error boundary | 1h | Very low | ⬜ Ready |
-| 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | ⬜ Ready |
-| 8. Break down components | #4 Size imbalance | 3-4h | Medium | ⬜ After Phase 3 |
+| 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | ✅ Done (60c3a12) |
+| 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | ✅ Done (f7c5f5d) |
+| 5. Page loading state | #3 No loading state | 1h | Very low | ✅ Done (d607514) |
+| 6. Defensive rendering | #5 No error boundary | 1h | Very low | ✅ Done (a82914c) |
+| 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | ✅ Done (acf17ac) |
+| 8. Break down components | #4 Size imbalance | 3-4h | Medium | ✅ Done (602e8b0) |
 
-**Remaining: ~10-12 hours** (Phases 1-2 complete)
+**All phases complete!** ~10-12 hours invested.
 
 ### Recommended Order
 
 ```
 ✅ Phase 1 (30m) — DONE
 ✅ Phase 2 (2-3h) — DONE
-
-Next up (in order):
-  Phase 3 (2h)    →  Phase 8 (3-4h)  // Sequential: sidebar split first
-  Phase 4 (2-3h)                      // Independent
-  Phase 5 (1h)                        // Independent
-  Phase 6 (1h)                        // Independent
-  Phase 7 (1h)                        // Independent
+✅ Phase 3 (2h) — DONE
+✅ Phase 4 (2-3h) — DONE
+✅ Phase 5 (1h) — DONE
+✅ Phase 6 (1h) — DONE
+✅ Phase 7 (1h) — DONE
+✅ Phase 8 (3-4h) — DONE
 ```
 
-Phases 3 → 8 are sequential (component breakdown after sidebar split).
-Phases 4, 5, 6, 7 are **independent** — can be done in any order.
+All phases complete. Refactor plan v2 is finished.
 
 ### What This Does NOT Address
 
