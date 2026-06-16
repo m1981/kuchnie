@@ -145,7 +145,7 @@ graph TB
     end
 
     subgraph Independent["Independent Stores"]
-        FolderStore["folderStore<br/>~320 lines — <b>class-based</b><br/>folders, folderSessions (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)"]
+        FolderStore["folderStore<br/>~320 lines — <b>class-based</b><br/>folders ($state)<br/>folderSessions, sessionsLoading, sessionsError (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)<br/><i>Note: SvelteMap/SvelteSet NOT wrapped in $state</i>"]
         SessionStore["sessionStore<br/>158 lines — closure-based<br/>tree (SessionNode[])<br/>flat (derived), activeId"]
         NotesStore["notesStore<br/>101 lines — closure-based<br/>bySession (Record&lt;string, Note[]&gt;)<br/>fetchStates"]
     end
@@ -339,11 +339,11 @@ graph TB
 
     subgraph folderStore["folderStore (class-based)"]
         Folders["$state: folders[]"]
-        Expanded["$state: expandedFolders (SvelteSet)"]
-        Sessions["$state: folderSessions (SvelteMap)"]
+        Expanded["SvelteSet: expandedFolders<br/>(no $state — built-in reactivity)"]
+        Sessions["SvelteMap: folderSessions,<br/>sessionsLoading, sessionsError<br/>(no $state — built-in reactivity)"]
         Drag["$state: dragPayload, dropTarget"]
-        Pending["$state: pendingOps (SvelteMap)"]
-        Methods["assignSession(), invalidateSessions()<br/>toggleExpand(), isExpanded()<br/>getSessions(), fetchSessions()"]
+        Pending["SvelteMap: pendingOps<br/>(no $state — built-in reactivity)"]
+        Methods["assignSession(), invalidateSessions()<br/>toggleExpand(), isExpanded()<br/>getSessions() → queueMicrotask(fetchSessions)"]
     end
 
     FolderSection --> FolderTree
@@ -401,8 +401,12 @@ graph TB
     end
 
     subgraph Reactivity["Svelte Reactivity Collections"]
-        SvelteMap["SvelteMap<br/>folderSessions, sessionsLoading,<br/>sessionsError, pendingOps"]
-        SvelteSet["SvelteSet<br/>expandedFolders"]
+        SvelteMap["SvelteMap<br/>folderSessions, sessionsLoading,<br/>sessionsError, pendingOps<br/><i>NOT wrapped in $state</i>"]
+        SvelteSet["SvelteSet<br/>expandedFolders<br/><i>NOT wrapped in $state</i>"]
+    end
+
+    subgraph Patterns["Svelte 5 Patterns"]
+        QueueMicrotask["queueMicrotask()<br/>Defer side effects from $derived<br/>Used in: folderStore.getSessions()"]
     end
 
     subgraph Actions["Svelte Actions (use:)"]
@@ -448,6 +452,7 @@ graph TB
     style Actions fill:#e8f5e9,stroke:#4CAF50
     style Components fill:#fff8e1,stroke:#FFC107
     style Legacy fill:#efebe9,stroke:#795548
+    style Patterns fill:#fce4ec,stroke:#E91E63
 ```
 
 ---
@@ -676,28 +681,29 @@ graph TB
 
 ## Diagram Maintenance
 
-| Change | Diagrams to Update |
-|--------|-------------------|
-| New component | 1 (Hierarchy), 8 (Responsibility), 10 (Size) |
-| New store | 2 (Architecture), 3 (Consumer Map), 10 (Size) |
-| New route | 7 (Routes) |
-| New action (use:) | 6 (Svelte 5 Features) |
-| New type | 11 (Shared Types) |
-| Store refactor | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots), 10 (Size) |
-| Component refactor | 1 (Hierarchy), 8 (Responsibility), 10 (Size) |
-| Drag-drop changes | 5 (Sidebar Architecture) |
-| Chat flow changes | 4 (Chat Data Flow) |
+| Change             | Diagrams to Update                                          |
+| ------------------ | ----------------------------------------------------------- |
+| New component      | 1 (Hierarchy), 8 (Responsibility), 10 (Size)                |
+| New store          | 2 (Architecture), 3 (Consumer Map), 10 (Size)               |
+| New route          | 7 (Routes)                                                  |
+| New action (use:)  | 6 (Svelte 5 Features)                                       |
+| New type           | 11 (Shared Types)                                           |
+| Store refactor     | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots), 10 (Size) |
+| Component refactor | 1 (Hierarchy), 8 (Responsibility), 10 (Size)                |
+| Drag-drop changes  | 5 (Sidebar Architecture)                                    |
+| Chat flow changes  | 4 (Chat Data Flow)                                          |
 
 ### Last Updated
 
-| Date | Change | Diagrams |
-|------|--------|----------|
-| 2026-06-17 | Refactor v2 complete (all 8 phases) | All (updated) |
-| 2026-06-17 | Phase 8: ComposerActions extracted | 1, 4, 8, 10 |
-| 2026-17 | Phase 7: pendingOps in folderStore | 2, 5 |
-| 2026-06-17 | Phase 6: +error.svelte route | 1, 7 |
-| 2026-06-17 | Phase 5: pageReady loading state | 1, 7 |
-| 2026-06-17 | Phase 4: shared Dialog component | 1, 8 |
-| 2026-06-17 | Phase 3: SidebarLayout, SessionPanel, ArchivedPanel | 1, 5, 8 |
-| 2026-06-16 | Phase 2: direct store imports | 2, 3, 9 |
-| 2026-06-16 | Phase 1: merge RemoteData → AsyncState | 11 |
+| Date       | Change                                                                                | Diagrams      |
+| ---------- | ------------------------------------------------------------------------------------- | ------------- |
+| 2026-06-17 | Fix: SvelteMap/SvelteSet reactivity (remove $state wrapping, defer getSessions fetch) | 2, 5, 6       |
+| 2026-06-17 | Refactor v2 complete (all 8 phases)                                                   | All (updated) |
+| 2026-06-17 | Phase 8: ComposerActions extracted                                                    | 1, 4, 8, 10   |
+| 2026-17    | Phase 7: pendingOps in folderStore                                                    | 2, 5          |
+| 2026-06-17 | Phase 6: +error.svelte route                                                          | 1, 7          |
+| 2026-06-17 | Phase 5: pageReady loading state                                                      | 1, 7          |
+| 2026-06-17 | Phase 4: shared Dialog component                                                      | 1, 8          |
+| 2026-06-17 | Phase 3: SidebarLayout, SessionPanel, ArchivedPanel                                   | 1, 5, 8       |
+| 2026-06-16 | Phase 2: direct store imports                                                         | 2, 3, 9       |
+| 2026-06-16 | Phase 1: merge RemoteData → AsyncState                                                | 11            |
