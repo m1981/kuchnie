@@ -35,7 +35,7 @@
 	import ChatHeader from '$lib/components/ChatHeader.svelte';
 	import ChatMessageList from '$lib/components/ChatMessageList.svelte';
 	import ChatComposer from '$lib/components/ChatComposer.svelte';
-	import SessionTree from '$lib/components/SessionTree.svelte';
+	import SidebarLayout from '$lib/components/SidebarLayout.svelte';
 	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
 	import NotePopup from '$lib/components/NotePopup.svelte';
 
@@ -288,7 +288,7 @@
 		</button>
 
 		<div class="min-h-0 flex-1 overflow-y-auto">
-			<SessionTree
+			<SidebarLayout
 				activeId={currentSessionId}
 				onload={navigateToSession}
 				isStreaming={chatStore.isStreaming}
