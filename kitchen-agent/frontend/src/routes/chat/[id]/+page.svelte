@@ -349,7 +349,6 @@
 
 		<ChatComposer
 			providers={chatStore.providers}
-			selectedProvider={chatStore.selectedProvider}
 			selectedModel={chatStore.selectedModel}
 			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
 			isStreaming={chatStore.isStreaming}
