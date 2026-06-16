@@ -108,6 +108,9 @@
 	let busyRecent = $state(false);
 	let busyTimer: ReturnType<typeof setTimeout> | undefined;
 
+	// ── Page loading state ────────────────────────────────────────────────────
+	let pageReady = $state(false);
+
 	$effect(() => {
 		const isBusy =
 			editorStore.editState.status === 'loading' || chatStore.chatState.status === 'loading';
@@ -140,9 +143,12 @@
 		// Skip if empty or already loaded
 		if (!id || id === lastLoadedId) return;
 		lastLoadedId = id;
+		pageReady = false;
 
 		// Load session — handles 404 gracefully (treats as new chat)
-		chatStore.loadSession(id);
+		chatStore.loadSession(id).then(() => {
+			pageReady = true;
+		});
 		sessionStore.setActive(id);
 	});
 
@@ -261,6 +267,7 @@
 		data-loading={editorStore.editState.status === 'loading' ||
 			chatStore.chatState.status === 'loading'}
 		data-busy-recent={busyRecent}
+		data-page-ready={pageReady}
 		class="hidden"
 	></div>
 
@@ -311,7 +318,16 @@
 	<!-- MAIN AREA                                                              -->
 	<!-- ===================================================================== -->
 	<main class="flex min-w-0 flex-1 flex-col">
-		<ChatHeader
+		{#if !pageReady}
+			<!-- Loading skeleton -->
+			<div class="flex flex-1 items-center justify-center">
+				<div class="space-y-4 text-center">
+					<div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+					<p class="text-sm text-muted">Loading session...</p>
+				</div>
+			</div>
+		{:else}
+			<ChatHeader
 			appTitle={providerStore.appTitle}
 			modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
 			modeLabel={activeMode.label}
@@ -374,6 +390,7 @@
 			bind:currentMessage
 			bind:textareaEl
 		/>
+		{/if}
 	</main>
 
 	<!-- ===================================================================== -->
