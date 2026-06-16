@@ -8,7 +8,7 @@
  * and components.
  */
 
-export type { AsyncState, RemoteData } from './states';
+export type { AsyncState } from './states';
 
 // ---------------------------------------------------------------------------
 // Drag & Drop types (shared between actions and stores)

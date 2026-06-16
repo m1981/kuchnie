@@ -12,13 +12,13 @@
  */
 
 import { api, type Note, type NoteCreateRequest } from '$lib/api';
-import type { RemoteData } from '$lib/types';
+import type { AsyncState } from '$lib/types';
 
 function createNotesStore() {
 	// bySession[sessionId] = reactive Note[]
 	let bySession = $state<Record<string, Note[]>>({});
 	// track per-session fetch status
-	let fetchStates = $state<Record<string, RemoteData<Note[]>>>({});
+	let fetchStates = $state<Record<string, AsyncState<Note[]>>>({});
 
 	return {
 		// ── Reads ────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ function createNotesStore() {
 			return bySession[sessionId] ?? [];
 		},
 
-		fetchStateFor(sessionId: string): RemoteData<Note[]> {
+		fetchStateFor(sessionId: string): AsyncState<Note[]> {
 			return fetchStates[sessionId] ?? { status: 'idle' };
 		},
 
@@ -47,7 +47,7 @@ function createNotesStore() {
 			} catch (e) {
 				fetchStates = {
 					...fetchStates,
-					[sessionId]: { status: 'error', error: String(e) }
+					[sessionId]: { status: 'error', message: String(e) }
 				};
 			}
 		},
@@ -64,7 +64,7 @@ function createNotesStore() {
 			} catch (e) {
 				fetchStates = {
 					...fetchStates,
-					[sessionId]: { status: 'error', error: String(e) }
+					[sessionId]: { status: 'error', message: String(e) }
 				};
 			}
 		},

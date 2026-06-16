@@ -13,7 +13,7 @@
  */
 
 import { api, type SessionNode } from '$lib/api';
-import type { RemoteData } from '$lib/types';
+import type { AsyncState } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -67,7 +67,7 @@ function stampArchived(nodes: SessionNode[], id: string, stamp: string | null): 
 
 function createSessionStore() {
 	let tree = $state<SessionNode[]>([]);
-	let fetchState = $state<RemoteData<SessionNode[]>>({ status: 'idle' });
+	let fetchState = $state<AsyncState<SessionNode[]>>({ status: 'idle' });
 	let activeId = $state<string | null>(null);
 
 	// Derived flat list — recomputed whenever `tree` mutates.
@@ -110,7 +110,7 @@ function createSessionStore() {
 				tree = normalizeTree(await api.getSessionTree());
 				fetchState = { status: 'success', data: tree };
 			} catch (e) {
-				fetchState = { status: 'error', error: String(e) };
+				fetchState = { status: 'error', message: String(e) };
 			}
 		},
 

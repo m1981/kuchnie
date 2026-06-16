@@ -128,7 +128,7 @@
 	<!-- Fetch error -->
 	{:else if fetchState.status === 'error'}
 		<p class="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-			{fetchState.error}
+			{fetchState.message}
 		</p>
 
 	<!-- Empty state -->

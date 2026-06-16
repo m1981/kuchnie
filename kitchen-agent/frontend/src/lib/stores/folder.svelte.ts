@@ -17,7 +17,7 @@
  */
 
 import { api, type Folder, type FolderCreateRequest, type FolderUpdateRequest } from '$lib/api';
-import type { RemoteData, DragPayload, DropTarget, FolderSession } from '$lib/types';
+import type { AsyncState, DragPayload, DropTarget, FolderSession } from '$lib/types';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +27,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 class FolderStore {
 	// ── Folder CRUD state ──────────────────────────────────────────────────
 	folders = $state<Folder[]>([]);
-	fetchState = $state<RemoteData<Folder[]>>({ status: 'idle' });
+	fetchState = $state<AsyncState<Folder[]>>({ status: 'idle' });
 
 	// ── Session cache (moved from FolderItem) ──────────────────────────────
 	// Using SvelteMap for reactive .has()/.get()/.set()/.delete()
@@ -89,7 +89,7 @@ class FolderStore {
 			this.fetchState = { status: 'success', data: this.folders };
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
-			this.fetchState = { status: 'error', error: msg };
+			this.fetchState = { status: 'error', message: msg };
 			this.showError(`Failed to load folders: ${msg}`);
 		}
 	}

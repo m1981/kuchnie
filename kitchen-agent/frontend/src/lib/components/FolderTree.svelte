@@ -59,7 +59,7 @@
 	<!-- Error state -->
 {:else if folderStore.fetchState.status === 'error'}
 	<p class="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-		{folderStore.fetchState.error}
+		{folderStore.fetchState.message}
 	</p>
 
 	<!-- Empty state -->
