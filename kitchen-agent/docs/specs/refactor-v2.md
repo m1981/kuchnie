@@ -9,7 +9,7 @@
 
 | # | Concern | Severity | Current State |
 |---|---------|----------|---------------|
-| 1 | Two async state types | Low | `AsyncState` and `RemoteData` are identical shapes with different field names |
+| 1 | Two async state types | Low | ✅ **Fixed** — merged into single `AsyncState<T>` (11ab1d9) |
 | 2 | chatStore God Object | Medium | chatStore re-exports 4 sub-stores; +page.svelte accesses sub-store state through facade |
 | 3 | No page loading state | Medium | +page.svelte fetches on mount with no skeleton |
 | 4 | Component size imbalance | Medium | 5 components over 250 lines, 4 under 80 lines |
@@ -20,54 +20,27 @@
 
 ---
 
-## Phase 1: Merge AsyncState and RemoteData
+## Phase 1: Merge AsyncState and RemoteData ✅
+
+**Status**: Done (11ab1d9) — 8 files changed, 16 insertions, 38 deletions.
 
 **Why first**: Zero risk, zero dependencies, removes confusion for all future work.
 
-### Problem
+### What Changed
 
-```typescript
-// types/states.ts — two identical shapes
-type AsyncState<T>  = ... | { status: 'error'; message: string } | ...
-type RemoteData<T>  = ... | { status: 'error'; error: string } | ...
-```
+Removed `RemoteData<T>` type entirely. All stores now use `AsyncState<T>` with `.message` field for errors.
 
-Every developer asks: "which one do I use?" The answer is arbitrary.
+**Files changed**:
+- `src/lib/types/states.ts` — removed `RemoteData`
+- `src/lib/types/index.ts` — removed `RemoteData` export
+- `src/lib/stores/folder.svelte.ts` — `RemoteData` → `AsyncState`, `.error` → `.message`
+- `src/lib/stores/sessions.svelte.ts` — same
+- `src/lib/stores/notes.svelte.ts` — same
+- `src/lib/components/FolderTree.svelte` — `fetchState.error` → `fetchState.message`
+- `src/lib/components/SessionTree.svelte` — same
+- `src/lib/components/NotesPanel.svelte` — same
 
-### Plan
-
-1. **Pick one name**: `AsyncState<T>` with field `message` (more generic)
-2. **Update `types/states.ts`**: Remove `RemoteData`, keep only `AsyncState`
-3. **Find-and-replace in 3 stores**:
-   - `folder.svelte.ts`: `RemoteData` → `AsyncState`, `.error` → `.message`
-   - `sessions.svelte.ts`: same
-   - `notes.svelte.ts`: same
-4. **Update components** that read `.error` from these stores:
-   - `FolderTree.svelte`: `fetchState.error` → `fetchState.message`
-   - Any error display in `FolderItem`, `SessionTree`
-
-### Files Changed
-
-- `src/lib/types/states.ts` — remove `RemoteData`
-- `src/lib/types/index.ts` — remove `RemoteData` export
-- `src/lib/stores/folder.svelte.ts` — import `AsyncState`, rename field
-- `src/lib/stores/sessions.svelte.ts` — import `AsyncState`, rename field
-- `src/lib/stores/notes.svelte.ts` — import `AsyncState`, rename field
-- `src/lib/components/FolderTree.svelte` — `.error` → `.message`
-- `src/lib/stores/folder.test.ts` — update assertions
-
-### Test Plan
-
-- Run existing 53 tests (should all pass — rename only)
-- `svelte-check` for TypeScript validation
-
-### Risk
-
-**Very low**. Pure rename. No behavior change.
-
-### Effort
-
-**30 minutes**.
+**Validation**: 0 TypeScript errors, 53 tests passing.
 
 ---
 
@@ -779,30 +752,33 @@ SystemPromptBubble drops from 255 to ~150 lines.
 
 ## Summary
 
-| Phase | Concern | Effort | Risk | Dependencies |
-|-------|---------|--------|------|-------------|
-| 1. Merge async types | #1 Two state types | 30m | Very low | None |
-| 2. Break chatStore facade | #2 God Object | 2-3h | Medium | None |
-| 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | None |
-| 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | None |
-| 5. Page loading state | #3 No loading state | 1h | Very low | Phase 2 |
-| 6. Error boundary | #5 No error boundary | 1h | Low | None |
-| 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | None |
-| 8. Break down components | #4 Size imbalance | 3-4h | Medium | Phase 3 |
+| Phase | Concern | Effort | Risk | Status |
+|-------|---------|--------|------|--------|
+| 1. Merge async types | #1 Two state types | 30m | Very low | ✅ Done (11ab1d9) |
+| 2. Break chatStore facade | #2 God Object | 2-3h | Medium | ⬜ Ready |
+| 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | ⬜ Ready |
+| 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | ⬜ Ready |
+| 5. Page loading state | #3 No loading state | 1h | Very low | ⬜ After Phase 2 |
+| 6. Error boundary | #5 No error boundary | 1h | Low | ⬜ Ready |
+| 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | ⬜ Ready |
+| 8. Break down components | #4 Size imbalance | 3-4h | Medium | ⬜ After Phase 3 |
 
-**Total: ~13-16 hours**
+**Remaining: ~12-15 hours** (Phase 1 complete)
 
 ### Recommended Order
 
 ```
-Phase 1 (30m)  →  Phase 2 (2-3h)  →  Phase 5 (1h)
-                                    →  Phase 3 (2h)  →  Phase 8 (3-4h)
-Phase 4 (2-3h) — can run in parallel with Phase 2
-Phase 6 (1h)   — can run anytime
-Phase 7 (1h)   — can run anytime
+✅ Phase 1 (30m) — DONE
+
+Next up (any order):
+  Phase 2 (2-3h)  →  Phase 5 (1h)
+  Phase 3 (2h)    →  Phase 8 (3-4h)
+  Phase 4 (2-3h)
+  Phase 6 (1h)
+  Phase 7 (1h)
 ```
 
-Phases 1, 4, 6, 7 are **independent** — they can be done in any order or in parallel.
+Phases 2, 3, 4, 6, 7 are **independent** — they can be done in any order.
 Phases 2 → 5 are sequential (page loading needs direct imports).
 Phases 3 → 8 are sequential (component breakdown after sidebar split).
 

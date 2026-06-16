@@ -562,13 +562,15 @@ xychart-beta
 graph TB
     subgraph Types["$lib/types/"]
         Index["index.ts<br/>Re-exports all types"]
-        States["states.ts<br/>AsyncState, RemoteData"]
+        States["states.ts<br/>AsyncState only<br/>(RemoteData removed 2026-06-16)"]
         TypesOwn["Owns:<br/>PastedImage, NotePopupState<br/>DragPayload, DropTarget<br/>FolderSession"]
     end
 
-    subgraph AsyncTypes["Async State Machines"]
-        AsyncState["AsyncState&lt;T&gt;<br/>{ status: 'idle' }<br/>{ status: 'loading' }<br/>{ status: 'error', message }<br/>{ status: 'success', data }"]
-        RemoteData["RemoteData&lt;T&gt;<br/>{ status: 'idle' }<br/>{ status: 'loading' }<br/>{ status: 'error', error }<br/>{ status: 'success', data }"]
+    subgraph AsyncState["AsyncState&lt;T&gt; — Single State Machine"]
+        Idle["{ status: 'idle' }"]
+        Loading["{ status: 'loading' }"]
+        Error["{ status: 'error', message: string }"]
+        Success["{ status: 'success', data: T }"]
     end
 
     subgraph DragTypes["Drag & Drop Types"]
@@ -576,34 +578,33 @@ graph TB
         DropTarget["DropTarget<br/>{ type, id }"]
     end
 
-    subgraph Consumers["Store Consumers"]
-        ChatStore["chatStore → AsyncState"]
-        EditorStore["editorStore → AsyncState"]
-        PromptStore["promptStore → AsyncState"]
-        FolderStore["folderStore → RemoteData"]
-        SessionStore["sessionStore → RemoteData"]
-        NotesStore["notesStore → RemoteData"]
+    subgraph Consumers["All Stores Use AsyncState"]
+        ChatStore["chatStore"]
+        EditorStore["editorStore"]
+        PromptStore["promptStore"]
+        FolderStore["folderStore"]
+        SessionStore["sessionStore"]
+        NotesStore["notesStore"]
         DragActions["dragdrop.ts → DragPayload, DropTarget"]
     end
 
     Index --> States
     Index --> TypesOwn
     States --> AsyncState
-    States --> RemoteData
     TypesOwn --> DragPayload
     TypesOwn --> DropTarget
 
     AsyncState --> ChatStore
     AsyncState --> EditorStore
     AsyncState --> PromptStore
-    RemoteData --> FolderStore
-    RemoteData --> SessionStore
-    RemoteData --> NotesStore
+    AsyncState --> FolderStore
+    AsyncState --> SessionStore
+    AsyncState --> NotesStore
     DragPayload --> DragActions
     DropTarget --> DragActions
 
     style Types fill:#e8f4f8,stroke:#2196F3
-    style AsyncTypes fill:#f3e5f5,stroke:#9C27B0
+    style AsyncState fill:#f3e5f5,stroke:#9C27B0
     style DragTypes fill:#e8f5e9,stroke:#4CAF50
     style Consumers fill:#fff3e0,stroke:#FF9800
 ```
@@ -628,4 +629,5 @@ graph TB
 
 | Date | Change | Diagrams |
 |------|--------|----------|
+| 2026-06-16 | Remove RemoteData — all stores use AsyncState | 11 (updated) |
 | 2026-06-16 | Initial creation from svelte-map analysis | All (new) |
