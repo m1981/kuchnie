@@ -30,13 +30,15 @@ class FolderStore {
 	fetchState = $state<AsyncState<Folder[]>>({ status: 'idle' });
 
 	// ── Session cache (moved from FolderItem) ──────────────────────────────
-	// Using SvelteMap for reactive .has()/.get()/.set()/.delete()
-	folderSessions = $state<SvelteMap<string, FolderSession[]>>(new SvelteMap());
-	sessionsLoading = $state<SvelteMap<string, boolean>>(new SvelteMap());
-	sessionsError = $state<SvelteMap<string, string | null>>(new SvelteMap());
+	// SvelteMap/SvelteSet have built-in reactivity — do NOT wrap in $state.
+	// Wrapping in $state creates a deep proxy that intercepts .set()/.delete()
+	// calls and breaks SvelteMap's internal notification mechanism.
+	folderSessions = new SvelteMap<string, FolderSession[]>();
+	sessionsLoading = new SvelteMap<string, boolean>();
+	sessionsError = new SvelteMap<string, string | null>();
 
 	// ── Expanded state (moved from FolderTree) ─────────────────────────────
-	expandedFolders = $state<SvelteSet<string>>(new SvelteSet());
+	expandedFolders = new SvelteSet<string>();
 
 	// ── Drag & drop state ──────────────────────────────────────────────────
 	dragPayload = $state<DragPayload | null>(null);
@@ -199,8 +201,9 @@ class FolderStore {
 	 */
 	getSessions(folderId: string): FolderSession[] {
 		if (!this.folderSessions.has(folderId)) {
-			// Trigger async fetch (fire-and-forget)
-			this.fetchSessions(folderId);
+			// Defer fetch to avoid state mutation inside $derived computation.
+			// Svelte 5 forbids mutating state inside $derived, $inspect, or templates.
+			queueMicrotask(() => this.fetchSessions(folderId));
 			return [];
 		}
 		return this.folderSessions.get(folderId) ?? [];
@@ -213,7 +216,6 @@ class FolderStore {
 	async fetchSessions(folderId: string): Promise<void> {
 		if (this.sessionsLoading.get(folderId)) return;
 
-		// SvelteMap.set() is reactive — no need to reassign the whole map
 		this.sessionsLoading.set(folderId, true);
 		this.sessionsError.set(folderId, null);
 

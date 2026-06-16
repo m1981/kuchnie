@@ -188,7 +188,7 @@ describe('FolderStore.getSessions', () => {
 		expect(result).toEqual(sessions);
 	});
 
-	it('should return empty array and trigger fetch if not cached', () => {
+	it('should return empty array and trigger fetch if not cached', async () => {
 		// Arrange
 		const fetchSpy = vi.spyOn(folderStore, 'fetchSessions');
 		vi.mocked(api.getFolderSessions).mockResolvedValue([]);
@@ -196,9 +196,12 @@ describe('FolderStore.getSessions', () => {
 		// Act
 		const result = folderStore.getSessions('f1');
 
-		// Assert
+		// Assert — empty array returned immediately
 		expect(result).toEqual([]);
-		expect(fetchSpy).toHaveBeenCalledWith('f1');
+		// fetchSessions is deferred via queueMicrotask, flush it
+		await vi.waitFor(() => {
+			expect(fetchSpy).toHaveBeenCalledWith('f1');
+		});
 	});
 
 	it('should not trigger duplicate fetch if already loading', async () => {
@@ -211,8 +214,10 @@ describe('FolderStore.getSessions', () => {
 		folderStore.getSessions('f1');
 		folderStore.getSessions('f1');
 
-		// Assert — API should only be called once
-		expect(api.getFolderSessions).toHaveBeenCalledTimes(1);
+		// Assert — API should only be called once (microtask deduped by sessionsLoading guard)
+		await vi.waitFor(() => {
+			expect(api.getFolderSessions).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	it('should populate cache after successful fetch', async () => {
