@@ -12,12 +12,7 @@
  */
 
 import { api, type Note, type NoteCreateRequest } from '$lib/api';
-
-type RemoteData<T> =
-	| { status: 'idle' }
-	| { status: 'loading' }
-	| { status: 'error'; error: string }
-	| { status: 'success'; data: T };
+import type { RemoteData } from '$lib/types';
 
 function createNotesStore() {
 	// bySession[sessionId] = reactive Note[]

@@ -15,7 +15,7 @@
  */
 
 import type { Action } from 'svelte/action';
-import type { DragPayload, DropTarget } from '$lib/stores/folder.svelte';
+import type { DragPayload, DropTarget } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Draggable action

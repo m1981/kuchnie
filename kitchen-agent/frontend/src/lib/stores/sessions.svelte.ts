@@ -13,16 +13,7 @@
  */
 
 import { api, type SessionNode } from '$lib/api';
-
-// ---------------------------------------------------------------------------
-// RemoteData state machine (no boolean flags)
-// ---------------------------------------------------------------------------
-
-type RemoteData<T> =
-	| { status: 'idle' }
-	| { status: 'loading' }
-	| { status: 'error'; error: string }
-	| { status: 'success'; data: T };
+import type { RemoteData } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -113,13 +104,13 @@ function createSessionStore() {
 			activeId = id;
 		},
 
-			async refresh() {
-				fetchState = { status: 'loading' };
-				try {
-					tree = normalizeTree(await api.getSessionTree());
-					fetchState = { status: 'success', data: tree };
-				} catch (e) {
-					fetchState = { status: 'error', error: String(e) };
+		async refresh() {
+			fetchState = { status: 'loading' };
+			try {
+				tree = normalizeTree(await api.getSessionTree());
+				fetchState = { status: 'success', data: tree };
+			} catch (e) {
+				fetchState = { status: 'error', error: String(e) };
 			}
 		},
 

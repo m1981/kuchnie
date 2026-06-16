@@ -8,7 +8,35 @@
  * and components.
  */
 
-export type { AsyncState } from './states';
+export type { AsyncState, RemoteData } from './states';
+
+// ---------------------------------------------------------------------------
+// Drag & Drop types (shared between actions and stores)
+// ---------------------------------------------------------------------------
+
+/** Payload carried during a drag operation. */
+export type DragPayload = {
+	type: 'session' | 'folder';
+	id: string;
+	title: string;
+};
+
+/** Info about a drop target. */
+export type DropTarget = {
+	type: 'folder';
+	id: string;
+};
+
+/** Lightweight session type for folder views. */
+export type FolderSession = {
+	id: string;
+	title: string;
+	updated_at: string;
+};
+
+// ---------------------------------------------------------------------------
+// Image types
+// ---------------------------------------------------------------------------
 
 /** An image the user pasted with Ctrl+V, held in memory until the message is sent. */
 export type PastedImage = {

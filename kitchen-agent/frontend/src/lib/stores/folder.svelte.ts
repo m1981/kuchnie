@@ -17,39 +17,8 @@
  */
 
 import { api, type Folder, type FolderCreateRequest, type FolderUpdateRequest } from '$lib/api';
+import type { RemoteData, DragPayload, DropTarget, FolderSession } from '$lib/types';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-
-// ---------------------------------------------------------------------------
-// RemoteData state machine
-// ---------------------------------------------------------------------------
-
-export type RemoteData<T> =
-	| { status: 'idle' }
-	| { status: 'loading' }
-	| { status: 'error'; error: string }
-	| { status: 'success'; data: T };
-
-// ---------------------------------------------------------------------------
-// Drag & Drop types
-// ---------------------------------------------------------------------------
-
-export type DragPayload = {
-	type: 'session' | 'folder';
-	id: string;
-	title: string;
-};
-
-export type DropTarget = {
-	type: 'folder';
-	id: string;
-};
-
-/** Lightweight session type for folder views. */
-export type FolderSession = {
-	id: string;
-	title: string;
-	updated_at: string;
-};
 
 // ---------------------------------------------------------------------------
 // Store class
