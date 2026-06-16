@@ -10,10 +10,11 @@
 	 * - **Input tokens** — what you'll pay when you click Send (client-side estimate)
 	 * - **Context bar** — visual gauge of context window usage
 	 *
-	 * State comes entirely from chatStore — this component has no local state.
+	 * State comes from tokenStore and providerStore directly.
 	 */
 
-	import { chatStore } from '$lib/stores/chat.svelte';
+	import { tokenStore } from '$lib/stores/token.svelte';
+	import { providerStore } from '$lib/stores/provider.svelte';
 	import { formatTokenCount, contextWindowPercent, contextWindowColor } from '$lib/token_estimator';
 
 	type Props = {
@@ -26,16 +27,15 @@
 	// ── Derived values ──────────────────────────────────────────────────────
 
 	const inputTokens = $derived(
-		chatStore.estimateInputTokensFor(messageText)
+		tokenStore.estimateInputTokensFor(messageText, 0, tokenStore.contextFileTokenEstimate)
 	);
 
 	// Prefer exact conversation_total from last token breakdown over the estimate
+	// Note: lastTokenBreakdown is in chatStore, but we'll use sessionTokenCount from tokenStore
 	const sessionTokens = $derived(
-		chatStore.lastTokenBreakdown?.conversation_total
-			? chatStore.lastTokenBreakdown.conversation_total
-			: chatStore.sessionTokenCount >= 0
-				? chatStore.sessionTokenCount
-				: 0
+		tokenStore.sessionTokenCount >= 0
+			? tokenStore.sessionTokenCount
+			: 0
 	);
 
 	// inputTokens already includes history + system prompt + new message.
@@ -43,7 +43,7 @@
 	const totalTokens = $derived(inputTokens);
 
 	const pct = $derived(
-		contextWindowPercent(totalTokens, chatStore.contextWindowK)
+		contextWindowPercent(totalTokens, providerStore.contextWindowK)
 	);
 
 	const color = $derived(contextWindowColor(pct));
@@ -101,7 +101,7 @@
 	</span>
 
 	<!-- Fallback indicator -->
-	{#if chatStore.sessionTokenFallback && chatStore.sessionTokenCount >= 0}
+	{#if tokenStore.sessionTokenFallback && tokenStore.sessionTokenCount >= 0}
 		<span class="text-[10px] text-muted/60" title="Token count is approximate (API fallback)">≈</span>
 	{/if}
 </div>

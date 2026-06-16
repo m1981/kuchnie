@@ -20,28 +20,31 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	import { chatStore }           from '$lib/stores/chat.svelte';
-	import { sessionStore }        from '$lib/stores/sessions.svelte';
+	import { chatStore } from '$lib/stores/chat.svelte';
+	import { providerStore } from '$lib/stores/provider.svelte';
+	import { promptStore } from '$lib/stores/prompt.svelte';
+	import { editorStore } from '$lib/stores/editor.svelte';
+	import { sessionStore } from '$lib/stores/sessions.svelte';
 	import { createSidebarResize } from '$lib/sidebar-resize.svelte';
-	import { textSelection }       from '$lib/actions/textSelection';
-	import { createKeyboardResize} from '$lib/hooks/useKeyboardResize.svelte';
+	import { textSelection } from '$lib/actions/textSelection';
+	import { createKeyboardResize } from '$lib/hooks/useKeyboardResize.svelte';
 
 	import { api, type PromptMode, type Note } from '$lib/api';
 	import type { ChatSelectionHit } from '$lib/actions/textSelection';
 
-	import ChatHeader         from '$lib/components/ChatHeader.svelte';
-	import ChatMessageList    from '$lib/components/ChatMessageList.svelte';
-	import ChatComposer       from '$lib/components/ChatComposer.svelte';
-	import SessionTree        from '$lib/components/SessionTree.svelte';
-	import ContextSidebar     from '$lib/components/ContextSidebar.svelte';
-	import NotePopup          from '$lib/components/NotePopup.svelte';
+	import ChatHeader from '$lib/components/ChatHeader.svelte';
+	import ChatMessageList from '$lib/components/ChatMessageList.svelte';
+	import ChatComposer from '$lib/components/ChatComposer.svelte';
+	import SessionTree from '$lib/components/SessionTree.svelte';
+	import ContextSidebar from '$lib/components/ContextSidebar.svelte';
+	import NotePopup from '$lib/components/NotePopup.svelte';
 
 	// ---------------------------------------------------------------------------
 	// Layout resize
 	// ---------------------------------------------------------------------------
 
 	const sidebarResize = createSidebarResize();
-	const kbResize      = createKeyboardResize(sidebarResize);
+	const kbResize = createKeyboardResize(sidebarResize);
 
 	// ---------------------------------------------------------------------------
 	// Prompt mode list — fetched once on mount; selectedModeId lives in chatStore
@@ -60,31 +63,31 @@
 	// ---------------------------------------------------------------------------
 
 	let currentMessage = $state('');
-	let textareaEl     = $state<HTMLTextAreaElement | null>(null);
+	let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
 	// ---------------------------------------------------------------------------
 	// Derived — active mode label / icon resolved from the live modes list
 	// ---------------------------------------------------------------------------
 
 	const MODE_ICONS: Record<string, string> = {
-		general:  '🔧',
-		design:   '📐',
-		assembly: '🔨',
+		general: '🔧',
+		design: '📐',
+		assembly: '🔨'
 	};
 
 	const activeMode = $derived(
-		modes.find((m) => m.id === chatStore.selectedModeId) ?? {
-			id:      chatStore.selectedModeId,
-			label:   chatStore.selectedModeId,
-			eyebrow: '',
+		modes.find((m) => m.id === promptStore.selectedModeId) ?? {
+			id: promptStore.selectedModeId,
+			label: promptStore.selectedModeId,
+			eyebrow: ''
 		}
 	);
 
 	// Derived: true when the session has a non-empty system prompt override.
-	const hasSystemPromptOverride = $derived(chatStore.isSystemPromptOverride);
+	const hasSystemPromptOverride = $derived(editorStore.isSystemPromptOverride);
 
 	// Resolved system prompt text: override ?? mode default
-	const systemPromptText = $derived(chatStore.resolvedSystemPrompt);
+	const systemPromptText = $derived(editorStore.resolvedSystemPrompt);
 
 	// Estimated system prompt token count (chars/4 heuristic)
 	const systemPromptTokenCount = $derived(
@@ -92,9 +95,9 @@
 	);
 
 	// Derived: edit state helpers
-	const isEditSaving = $derived(chatStore.editState.status === 'loading');
-	const editError    = $derived(
-		chatStore.editState.status === 'error' ? chatStore.editState.message : ''
+	const isEditSaving = $derived(editorStore.editState.status === 'loading');
+	const editError = $derived(
+		editorStore.editState.status === 'error' ? editorStore.editState.message : ''
 	);
 
 	// ---------------------------------------------------------------------------
@@ -106,12 +109,15 @@
 	let busyTimer: ReturnType<typeof setTimeout> | undefined;
 
 	$effect(() => {
-		const isBusy = chatStore.editState.status === 'loading' || chatStore.chatState.status === 'loading';
+		const isBusy =
+			editorStore.editState.status === 'loading' || chatStore.chatState.status === 'loading';
 		if (isBusy) {
 			busyRecent = true;
 			if (busyTimer) clearTimeout(busyTimer);
 		} else if (busyRecent) {
-			busyTimer = setTimeout(() => { busyRecent = false; }, 300);
+			busyTimer = setTimeout(() => {
+				busyRecent = false;
+			}, 300);
 		}
 	});
 
@@ -149,20 +155,29 @@
 
 		// Expose stores and test helpers on window for browser-based testing (dev mode only)
 		if (import.meta.env.DEV) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dev-only test helpers
 			(window as any).__chatStore = chatStore;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(window as any).__sessionStore = sessionStore;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(window as any).__testHelpers = {
 				autoConfirm: false,
-				confirmAll() { (window as any).__testHelpers.autoConfirm = true; },
-				confirmNone() { (window as any).__testHelpers.autoConfirm = false; },
+				confirmAll() {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(window as any).__testHelpers.autoConfirm = true;
+				},
+				confirmNone() {
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					(window as any).__testHelpers.autoConfirm = false;
+				}
 			};
 		}
 
 		// Fire all three in parallel — none depends on the others.
 		const [fetched] = await Promise.all([
-			chatStore.loadModes(),
-			chatStore.loadProviders(),
-			chatStore.loadAppInfo()
+			promptStore.loadModes(),
+			providerStore.loadProviders(),
+			providerStore.loadAppInfo()
 		]);
 		if (fetched) modes = fetched;
 	});
@@ -185,11 +200,13 @@
 		if (chatStore.isStreaming) return;
 		chatStore.resetForNewChat();
 		const newId = crypto.randomUUID();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- URL is source of truth
 		goto(`/chat/${newId}`);
 	}
 
 	function navigateToSession(id: string) {
 		if (id !== $page.params.id) {
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
 			goto(`/chat/${id}`);
 		}
 	}
@@ -197,6 +214,7 @@
 	async function handleFork(turnIndex: number) {
 		const newId = await chatStore.forkSession(turnIndex);
 		if (newId) {
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
 			goto(`/chat/${newId}`);
 		}
 	}
@@ -216,9 +234,7 @@
 
 	function insertNotesIntoComposer(notes: Note[]) {
 		const block = chatStore.formatNotesForPrompt(notes);
-		currentMessage = currentMessage.trim()
-			? `${currentMessage.trimEnd()}\n\n${block}`
-			: block;
+		currentMessage = currentMessage.trim() ? `${currentMessage.trimEnd()}\n\n${block}` : block;
 
 		requestAnimationFrame(() => {
 			textareaEl?.focus();
@@ -228,23 +244,22 @@
 </script>
 
 <svelte:head>
-	<title>{chatStore.appTitle}</title>
+	<title>{providerStore.appTitle}</title>
 </svelte:head>
 
 <!--
   use:textSelection handles the full mouseup + click-away lifecycle.
   The onchatselect callback is the only wiring needed here.
 -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="flex h-screen overflow-hidden bg-surface text-ink"
 	use:textSelection={{ onchatselect: (hit) => (notePopup = hit) }}
 >
-
 	<!-- Global busy indicator for browser-based testing -->
 	<div
 		data-testid="app-busy"
-		data-loading={chatStore.editState.status === 'loading' || chatStore.chatState.status === 'loading'}
+		data-loading={editorStore.editState.status === 'loading' ||
+			chatStore.chatState.status === 'loading'}
 		data-busy-recent={busyRecent}
 		class="hidden"
 	></div>
@@ -257,14 +272,16 @@
 		style="width: {sidebarResize.leftWidth}px;"
 	>
 		<div class="mb-5">
-			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">{chatStore.appTitle}</p>
+			<p class="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
+				{providerStore.appTitle}
+			</p>
 			<h1 class="mt-2 text-xl font-semibold text-ink">Project conversations</h1>
 		</div>
 
 		<button
 			onclick={navigateToNewChat}
 			disabled={chatStore.isStreaming}
-			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			<span aria-hidden="true">+</span>
 			New chat
@@ -294,15 +311,14 @@
 	<!-- MAIN AREA                                                              -->
 	<!-- ===================================================================== -->
 	<main class="flex min-w-0 flex-1 flex-col">
-
 		<ChatHeader
-			appTitle={chatStore.appTitle}
+			appTitle={providerStore.appTitle}
 			modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
 			modeLabel={activeMode.label}
 			sessionId={currentSessionId}
 			title={sessionTitle}
 			showRight={sidebarResize.showRight}
-			hasSystemPromptOverride={hasSystemPromptOverride}
+			{hasSystemPromptOverride}
 			ontoggleright={() => sidebarResize.toggleRight()}
 			onsave={handleSaveTitle}
 		/>
@@ -310,7 +326,6 @@
 		<!-- Chat scroll area -->
 		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
 			<div class="mx-auto max-w-5xl space-y-5">
-
 				<!-- Fork status pill -->
 				{#if chatStore.forkStatus}
 					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
@@ -319,38 +334,41 @@
 				{/if}
 
 				<ChatMessageList
-					systemPromptText={systemPromptText}
+					{systemPromptText}
 					systemPromptIsOverride={hasSystemPromptOverride}
 					systemPromptModeLabel={activeMode.label}
-					systemPromptSaveState={chatStore.systemPromptState}
-					systemPromptError={chatStore.systemPromptError}
-					systemPromptTokenCount={systemPromptTokenCount}
-					onsystemprompsave={(text) => chatStore.saveSystemPrompt(text)}
-					onsystempromptreset={() => chatStore.clearSystemPrompt()}
+					systemPromptSaveState={editorStore.systemPromptState}
+					systemPromptError={editorStore.systemPromptError}
+					{systemPromptTokenCount}
+					onsystemprompsave={(text) => editorStore.saveSystemPrompt(chatStore.sessionId, text)}
+					onsystempromptreset={() => editorStore.clearSystemPrompt(chatStore.sessionId)}
 					messages={chatStore.messages}
 					isLoading={chatStore.chatState.status === 'loading'}
-					isBusy={chatStore.editState.status === 'loading'}
-					editingTurnId={chatStore.editingTurnId}
-					editDraft={chatStore.editDraft}
+					isBusy={editorStore.editState.status === 'loading'}
+					editingTurnId={editorStore.editingTurnId}
+					editDraft={editorStore.editDraft}
 					isSavingEdit={isEditSaving}
 					editErrorMessage={editError ?? ''}
 					onfork={handleFork}
-					onedit={(turnId) => chatStore.startEditing(turnId)}
+					onedit={(turnId) => editorStore.startEditing(turnId, chatStore.messages)}
 					ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
 					onregenerate={() => chatStore.regenerateMessage()}
 					oncopytext={(content) => navigator.clipboard.writeText(content)}
 					oncopymarkdown={(content) => navigator.clipboard.writeText(content)}
 					onsaveedit={() => chatStore.saveEdit()}
-					oncanceledit={() => chatStore.cancelEditing()}
-					ondraftchange={(text) => chatStore.setEditDraft(text)}
+					oncanceledit={() => editorStore.cancelEditing()}
+					ondraftchange={(text) => editorStore.setEditDraft(text)}
 				/>
 			</div>
 		</section>
 
 		<ChatComposer
-			providers={chatStore.providers}
-			selectedModel={chatStore.selectedModel}
-			onproviderchange={(p, m) => { chatStore.setProvider(p); chatStore.setModel(m); }}
+			providers={providerStore.providers}
+			selectedModel={providerStore.selectedModel}
+			onproviderchange={(p, m) => {
+				providerStore.setProvider(p);
+				providerStore.setModel(m);
+			}}
 			isStreaming={chatStore.isStreaming}
 			onstop={() => chatStore.stopStreaming()}
 			bind:currentMessage

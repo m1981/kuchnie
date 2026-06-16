@@ -56,6 +56,7 @@ function createChatStore() {
 	let forkStatus = $state('');
 
 	// ── Derived streaming state ──────────────────────────────────────────────
+	// eslint-disable-next-line prefer-const -- $derived rune requires let
 	let isStreaming = $derived(messages.some((m) => m.isStreaming === true));
 
 	return {
@@ -73,35 +74,6 @@ function createChatStore() {
 		get contextFiles() { return contextFiles; },
 		get forkStatus()   { return forkStatus; },
 		get lastTokenBreakdown() { return lastTokenBreakdown; },
-
-		// ── Delegated getters (providerStore) ─────────────────────────────────────
-		get providers()        { return providerStore.providers; },
-		get selectedProvider() { return providerStore.selectedProvider; },
-		get selectedModel()    { return providerStore.selectedModel; },
-		get appTitle()         { return providerStore.appTitle; },
-		get appDescription()   { return providerStore.appDescription; },
-		get contextWindowK()   { return providerStore.contextWindowK; },
-
-		// ── Delegated getters (promptStore) ───────────────────────────────────────
-		get selectedModeId()      { return promptStore.selectedModeId; },
-		get modesState()          { return promptStore.modesState; },
-		get toolsEnabled()        { return promptStore.toolsEnabled; },
-
-		// ── Delegated getters (editorStore) ───────────────────────────────────────
-		get editingTurnId()       { return editorStore.editingTurnId; },
-		get editDraft()           { return editorStore.editDraft; },
-		get editState()           { return editorStore.editState; },
-		get sessionSystemPrompt()    { return editorStore.sessionSystemPrompt; },
-		get resolvedSystemPrompt()   { return editorStore.resolvedSystemPrompt; },
-		get isSystemPromptOverride() { return editorStore.isSystemPromptOverride; },
-		get systemPromptDraft()      { return editorStore.systemPromptDraft; },
-		get systemPromptState()      { return editorStore.systemPromptState; },
-		get systemPromptError()      { return editorStore.systemPromptError; },
-
-		// ── Delegated getters (tokenStore) ────────────────────────────────────────
-		get sessionTokenCount()      { return tokenStore.sessionTokenCount; },
-		get sessionTokenFallback()   { return tokenStore.sessionTokenFallback; },
-		get contextFileTokenEstimate() { return tokenStore.contextFileTokenEstimate; },
 
 		estimateInputTokensFor(messageText: string): number {
 			return tokenStore.estimateInputTokensFor(
@@ -274,7 +246,7 @@ function createChatStore() {
 				}
 
 				void tokenStore.refreshSessionTokens(id);
-			} catch (e) {
+			} catch {
 				// 404 or network error — treat as new chat (empty state)
 				// This handles: new UUID in URL, deleted session, or network issues
 				console.warn('Session not found or failed to load, starting fresh:', id);
@@ -374,6 +346,7 @@ function createChatStore() {
 								args: event.args,
 								id: event.id,
 								status: 'calling',
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							} as any);
 							messages[assistantIdx] = { ...current, tools };
 							break;
@@ -381,7 +354,7 @@ function createChatStore() {
 
 						case 'tool_result': {
 							const current = messages[assistantIdx];
-							const tools = (current.tools || []).map((t: any) =>
+							const tools = (current.tools || []).map((t: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
 								t.id === event.id ? { ...t, result: event.result, status: 'done' } : t
 							);
 							messages[assistantIdx] = { ...current, tools };

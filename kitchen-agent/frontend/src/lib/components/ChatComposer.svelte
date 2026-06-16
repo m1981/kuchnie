@@ -13,6 +13,7 @@
 	 */
 
 	import { chatStore } from '$lib/stores/chat.svelte';
+	import { promptStore } from '$lib/stores/prompt.svelte';
 	import { pasteImage } from '$lib/actions/pasteImage';
 	import type { ProviderInfo } from '$lib/providers';
 	import TokenIndicator from './TokenIndicator.svelte';
@@ -178,10 +179,10 @@
 					<button
 						type="button"
 						class="tools-btn"
-						class:tools-active={chatStore.toolsEnabled}
-						onclick={() => chatStore.toggleTools()}
-						aria-pressed={chatStore.toolsEnabled}
-						title={chatStore.toolsEnabled ? 'Tools ON — LLM can read and edit your knowledge base' : 'Tools OFF — Direct LLM reply, no file access'}
+						class:tools-active={promptStore.toolsEnabled}
+						onclick={() => promptStore.toggleTools()}
+						aria-pressed={promptStore.toolsEnabled}
+						title={promptStore.toolsEnabled ? 'Tools ON — LLM can read and edit your knowledge base' : 'Tools OFF — Direct LLM reply, no file access'}
 					>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<rect x="3" y="3" width="7" height="7" rx="1" />
@@ -189,7 +190,7 @@
 							<rect x="3" y="14" width="7" height="7" rx="1" />
 							<rect x="14" y="14" width="7" height="7" rx="1" />
 						</svg>
-						<span>{chatStore.toolsEnabled ? 'Tools' : 'Tools'}</span>
+						<span>{promptStore.toolsEnabled ? 'Tools' : 'Tools'}</span>
 					</button>
 				</div>
 
