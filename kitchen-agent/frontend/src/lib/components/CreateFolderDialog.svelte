@@ -1,5 +1,11 @@
 <script lang="ts">
+	/**
+	 * CreateFolderDialog
+	 * ==================
+	 * Modal dialog for creating a new folder with name, color, and icon.
+	 */
 	import type { FolderCreateRequest } from '$lib/api';
+	import Dialog from './ui/Dialog.svelte';
 
 	type Props = {
 		onclose: () => void;
@@ -47,115 +53,93 @@
 			icon: selectedIcon
 		});
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') onclose();
-		if (e.key === 'Enter') handleSubmit();
-	}
 </script>
 
-<!-- Backdrop -->
-<div
-	class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-	onclick={(e) => {
-		if (e.target === e.currentTarget) onclose();
-	}}
-	onkeydown={handleKeydown}
-	role="dialog"
-	tabindex="-1"
-	aria-modal="true"
-	aria-labelledby="create-folder-title"
->
-	<!-- Dialog -->
-	<div class="w-full max-w-md rounded-xl bg-surface p-6 shadow-xl">
-		<h2 id="create-folder-title" class="mb-4 text-lg font-semibold text-ink">Create Folder</h2>
+<Dialog open={true} {onclose} title="Create Folder">
+	<!-- Name input -->
+	<div class="mb-4">
+		<label for="folder-name" class="mb-1 block text-sm font-medium text-ink"> Name </label>
+		<input
+			id="folder-name"
+			type="text"
+			bind:value={name}
+			placeholder="e.g., Kitchen Projects"
+			maxlength="100"
+			class="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none {nameError
+				? 'border-red-500'
+				: ''}"
+		/>
+		{#if nameError}
+			<p class="mt-1 text-xs text-red-600">{nameError}</p>
+		{/if}
+	</div>
 
-		<!-- Name input -->
-		<div class="mb-4">
-			<label for="folder-name" class="mb-1 block text-sm font-medium text-ink"> Name </label>
-			<input
-				id="folder-name"
-				type="text"
-				bind:value={name}
-				placeholder="e.g., Kitchen Projects"
-				maxlength="100"
-				class="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none {nameError
-					? 'border-red-500'
-					: ''}"
-			/>
-			{#if nameError}
-				<p class="mt-1 text-xs text-red-600">{nameError}</p>
-			{/if}
-		</div>
-
-		<!-- Color picker -->
-		<div class="mb-4">
-			<p class="mb-2 text-sm font-medium text-ink">Color</p>
-			<div class="flex gap-2">
-				{#each colors as color (color.hex)}
-					<button
-						type="button"
-						onclick={() => (selectedColor = color.hex)}
-						class="h-8 w-8 rounded-full transition-transform hover:scale-110 {selectedColor ===
-						color.hex
-							? 'ring-2 ring-accent ring-offset-2'
-							: ''}"
-						style="background-color: {color.hex}"
-						aria-label={color.name}
-						title={color.name}
-					></button>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Icon picker -->
-		<div class="mb-6">
-			<p class="mb-2 text-sm font-medium text-ink">Icon</p>
-			<div class="flex flex-wrap gap-2">
-				{#each icons as icon (icon)}
-					<button
-						type="button"
-						onclick={() => (selectedIcon = icon)}
-						class="flex h-10 w-10 items-center justify-center rounded-lg border border-line text-xl transition hover:bg-surface {selectedIcon ===
-						icon
-							? 'border-accent bg-accent/10'
-							: ''}"
-						aria-label={icon}
-					>
-						{icon}
-					</button>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Preview -->
-		<div class="mb-4 rounded-lg border border-line bg-surface p-3">
-			<p class="mb-1 text-xs text-muted">Preview</p>
-			<div class="flex items-center gap-2">
-				<span class="h-4 w-4 rounded-full" style="background-color: {selectedColor}"></span>
-				<span class="text-sm text-ink">
-					{selectedIcon}
-					{name || 'Folder Name'}
-				</span>
-			</div>
-		</div>
-
-		<!-- Actions -->
-		<div class="flex justify-end gap-3">
-			<button
-				type="button"
-				onclick={onclose}
-				class="rounded-md border border-line px-4 py-2 text-sm text-ink transition hover:bg-surface"
-			>
-				Cancel
-			</button>
-			<button
-				type="button"
-				onclick={handleSubmit}
-				class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent/90"
-			>
-				Create Folder
-			</button>
+	<!-- Color picker -->
+	<div class="mb-4">
+		<p class="mb-2 text-sm font-medium text-ink">Color</p>
+		<div class="flex gap-2">
+			{#each colors as color (color.hex)}
+				<button
+					type="button"
+					onclick={() => (selectedColor = color.hex)}
+					class="h-8 w-8 rounded-full transition-transform hover:scale-110 {selectedColor ===
+					color.hex
+						? 'ring-2 ring-accent ring-offset-2'
+						: ''}"
+					style="background-color: {color.hex}"
+					aria-label={color.name}
+					title={color.name}
+				></button>
+			{/each}
 		</div>
 	</div>
-</div>
+
+	<!-- Icon picker -->
+	<div class="mb-6">
+		<p class="mb-2 text-sm font-medium text-ink">Icon</p>
+		<div class="flex flex-wrap gap-2">
+			{#each icons as icon (icon)}
+				<button
+					type="button"
+					onclick={() => (selectedIcon = icon)}
+					class="flex h-10 w-10 items-center justify-center rounded-lg border border-line text-xl transition hover:bg-surface {selectedIcon ===
+					icon
+						? 'border-accent bg-accent/10'
+						: ''}"
+					aria-label={icon}
+				>
+					{icon}
+				</button>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Preview -->
+	<div class="mb-4 rounded-lg border border-line bg-surface p-3">
+		<p class="mb-1 text-xs text-muted">Preview</p>
+		<div class="flex items-center gap-2">
+			<span class="h-4 w-4 rounded-full" style="background-color: {selectedColor}"></span>
+			<span class="text-sm text-ink">
+				{selectedIcon}
+				{name || 'Folder Name'}
+			</span>
+		</div>
+	</div>
+
+	{#snippet footer()}
+		<button
+			type="button"
+			onclick={onclose}
+			class="rounded-md border border-line px-4 py-2 text-sm text-ink transition hover:bg-surface"
+		>
+			Cancel
+		</button>
+		<button
+			type="button"
+			onclick={handleSubmit}
+			class="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-accent/90"
+		>
+			Create Folder
+		</button>
+	{/snippet}
+</Dialog>
