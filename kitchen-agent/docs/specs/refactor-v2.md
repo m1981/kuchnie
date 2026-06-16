@@ -10,7 +10,7 @@
 | # | Concern | Severity | Current State |
 |---|---------|----------|---------------|
 | 1 | Two async state types | Low | ✅ **Fixed** — merged into single `AsyncState<T>` (11ab1d9) |
-| 2 | chatStore God Object | Medium | chatStore re-exports 4 sub-stores; +page.svelte accesses sub-store state through facade |
+| 2 | chatStore God Object | Medium | ✅ **Fixed** — direct store imports, delegation getters removed (1607140) |
 | 3 | No page loading state | Medium | +page.svelte fetches on mount with no skeleton |
 | 4 | Component size imbalance | Medium | 5 components over 250 lines, 4 under 80 lines |
 | 5 | No error boundary | Medium | Render errors crash the whole page |
@@ -44,7 +44,9 @@ Removed `RemoteData<T>` type entirely. All stores now use `AsyncState<T>` with `
 
 ---
 
-## Phase 2: Break chatStore Facade — Direct Store Imports
+## Phase 2: Break chatStore Facade — Direct Store Imports ✅
+
+**Status**: Done (1607140) — 5 files changed, 386 insertions, 105 deletions.
 
 **Why second**: Unlocks cleaner component architecture for later phases.
 
@@ -755,7 +757,7 @@ SystemPromptBubble drops from 255 to ~150 lines.
 | Phase | Concern | Effort | Risk | Status |
 |-------|---------|--------|------|--------|
 | 1. Merge async types | #1 Two state types | 30m | Very low | ✅ Done (11ab1d9) |
-| 2. Break chatStore facade | #2 God Object | 2-3h | Medium | ⬜ Ready |
+| 2. Break chatStore facade | #2 God Object | 2-3h | Medium | ✅ Done (1607140) |
 | 3. Split SessionTree | #8 Monolithic sidebar | 2h | Low-med | ⬜ Ready |
 | 4. Shared Dialog/Dropdown | #7 No shared components | 2-3h | Low | ⬜ Ready |
 | 5. Page loading state | #3 No loading state | 1h | Very low | ⬜ After Phase 2 |
@@ -763,24 +765,25 @@ SystemPromptBubble drops from 255 to ~150 lines.
 | 7. Rollback UX | #6 Silent rollbacks | 1h | Very low | ⬜ Ready |
 | 8. Break down components | #4 Size imbalance | 3-4h | Medium | ⬜ After Phase 3 |
 
-**Remaining: ~12-15 hours** (Phase 1 complete)
+**Remaining: ~10-12 hours** (Phases 1-2 complete)
 
 ### Recommended Order
 
 ```
 ✅ Phase 1 (30m) — DONE
+✅ Phase 2 (2-3h) — DONE
 
 Next up (any order):
-  Phase 2 (2-3h)  →  Phase 5 (1h)
   Phase 3 (2h)    →  Phase 8 (3-4h)
   Phase 4 (2-3h)
+  Phase 5 (1h)
   Phase 6 (1h)
   Phase 7 (1h)
 ```
 
-Phases 2, 3, 4, 6, 7 are **independent** — they can be done in any order.
-Phases 2 → 5 are sequential (page loading needs direct imports).
+Phases 3, 4, 5, 6, 7 are **independent** — they can be done in any order.
 Phases 3 → 8 are sequential (component breakdown after sidebar split).
+Phase 5 is now unblocked (was waiting for Phase 2).
 
 ### What This Does NOT Address
 

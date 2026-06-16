@@ -111,14 +111,14 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph Facade["chatStore — Facade Pattern"]
-        ChatCore["chat.svelte.ts<br/>536 lines<br/>closure-based factory"]
-        ChatOwns["Owns:<br/>sessionId, messages<br/>chatState (AsyncState)<br/>pastedImages, contextFiles<br/>isStreaming, toolsEnabled"]
+    subgraph Facade["chatStore — Session State Only"]
+        ChatCore["chat.svelte.ts<br/>~430 lines<br/>closure-based factory"]
+        ChatOwns["Owns:<br/>sessionId, messages<br/>chatState (AsyncState)<br/>pastedImages, contextFiles<br/>isStreaming, forkStatus"]
     end
 
-    subgraph Delegated["Delegated Stores (chatStore re-exports)"]
+    subgraph DirectStores["Direct Import Stores (no facade)"]
         ProviderStore["providerStore<br/>113 lines — closure-based<br/>providers, selectedProvider/Model<br/>appTitle, appDescription"]
-        PromptStore["promptStore<br/>87 lines — closure-based<br/>selectedModeId, modesState<br/>toolsEnabled, inspectorOpen"]
+        PromptStore["promptStore<br/>87 lines — closure-based<br/>selectedModeId, modesState<br/>toolsEnabled"]
         EditorStore["editorStore<br/>235 lines — closure-based<br/>editingTurnId, editDraft<br/>sessionSystemPrompt"]
         TokenStore["tokenStore<br/>108 lines — closure-based<br/>sessionTokenCount, fallback<br/>contextFileTokenEstimate"]
     end
@@ -135,10 +135,10 @@ graph TB
         SvelteReactivity["Svelte Reactivity<br/>SvelteMap — reactive .get()/.set()<br/>SvelteSet — reactive .has()/.add()"]
     end
 
-    ChatCore -->|"delegates getters"| ProviderStore
-    ChatCore -->|"delegates"| PromptStore
-    ChatCore -->|"delegates"| EditorStore
-    ChatCore -->|"delegates"| TokenStore
+    ChatCore -->|"cross-store coordination"| ProviderStore
+    ChatCore -->|"loadModes triggers"| PromptStore
+    ChatCore -->|"saveEdit, deleteMessage"| EditorStore
+    ChatCore -->|"refreshSessionTokens"| TokenStore
     ChatCore -->|"refresh after mutations"| SessionStore
 
     FolderStore -.->|"uses"| ClassBased
@@ -147,7 +147,7 @@ graph TB
     ProviderStore -.->|"uses"| Closure
 
     style Facade fill:#e3f2fd,stroke:#1565C0
-    style Delegated fill:#f3e5f5,stroke:#9C27B0
+    style DirectStores fill:#f3e5f5,stroke:#9C27B0
     style Independent fill:#e8f5e9,stroke:#4CAF50
     style Patterns fill:#fff8e1,stroke:#FFC107
 ```
@@ -181,11 +181,11 @@ graph LR
         PG["+page.svelte"]
     end
 
-    CS -->|"providers, selectedModel<br/>sendMessage, pastedImages"| CP
-    CS -->|"sessionTokenCount"| TI
-    TS -->|"estimateInputTokens()"| TI
-
-    PS -->|"via chatStore facade"| CP
+    CS -->|"sendMessage, pastedImages<br/>chatState, messages"| CP
+    PR -->|"toolsEnabled, toggleTools"| CP
+    CS -->|"chatState, messages"| TI
+    TS -->|"sessionTokenCount, estimateInputTokens()"| TI
+    PS -->|"contextWindowK"| TI
 
     SS -->|"tree, activeId"| ST
     FS -->|"sortedFolders"| FT
@@ -196,7 +196,10 @@ graph LR
     NS -->|"create, delete"| NP
     NS -->|"forSession(), load()"| NPL
 
-    CS -->|"loadSession, all getters"| PG
+    CS -->|"loadSession, sendMessage"| PG
+    PS -->|"providers, appTitle, loadProviders"| PG
+    PR -->|"selectedModeId, loadModes"| PG
+    ES -->|"editState, startEditing, saveEdit"| PG
     SS -->|"refresh, setActive"| PG
 
     style Stores fill:#e8f5e9,stroke:#4CAF50
@@ -506,7 +509,8 @@ graph TB
     subgraph Hotspots["Most Imported Modules"]
         FS["folderStore — 4 importers<br/>DraggableSession, FolderItem,<br/>FolderTree, SessionTree"]
         API["api.ts — 4 importers<br/>SessionTree, ContextSidebar,<br/>FileEditor, +page"]
-        CS["chatStore — 3 importers<br/>ChatComposer, TokenIndicator,<br/>+page"]
+        PS["providerStore — 3 importers<br/>ChatComposer, TokenIndicator,<br/>+page"]
+        ES["editorStore — 2 importers<br/>TokenIndicator (indirect),<br/>+page"]
         PI["ProviderInfo — 3 importers<br/>ChatComposer, ModelSelector,<br/>ProviderPicker"]
         NOTE["Note type — 3 importers<br/>ContextSidebar, NotePopup,<br/>NotesPanel"]
     end
@@ -519,14 +523,14 @@ graph TB
 
     FS -->|"High"| HighRisk
     API -->|"High"| HighRisk
-    CS -->|"Medium"| MedRisk
+    PS -->|"Medium"| MedRisk
     PI -->|"Low"| LowRisk
     NOTE -->|"Low"| LowRisk
 
     subgraph Recommendations["Recommendations"]
         R1["folderStore: Keep stable API<br/>— most imported store"]
         R2["api.ts: Consider typed wrappers<br/>— reduces import surface"]
-        R3["chatStore: Facade pattern works<br/>— delegation is clean"]
+        R3["chatStore: Session state only<br/>— no more delegation getters"]
     end
 
     style Hotspots fill:#e3f2fd,stroke:#1565C0
@@ -551,7 +555,7 @@ xychart-beta
     title "Store Line Counts"
     x-axis ["chatStore", "folderStore", "editorStore", "sessionStore", "providerStore", "tokenStore", "notesStore", "promptStore"]
     y-axis "Lines" 0 --> 600
-    bar [536, 309, 235, 158, 113, 108, 101, 87]
+    bar [430, 309, 235, 158, 113, 108, 101, 87]
 ```
 
 ---
@@ -620,7 +624,7 @@ graph TB
 | New route | 7 (Routes) |
 | New action (use:) | 6 (Svelte 5 Features) |
 | New type | 11 (Shared Types) |
-| Store refactor | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots) |
+| Store refactor | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots), 10 (Size) |
 | Component refactor | 1 (Hierarchy), 8 (Responsibility), 10 (Size) |
 | Drag-drop changes | 5 (Sidebar Architecture) |
 | Chat flow changes | 4 (Chat Data Flow) |
@@ -629,5 +633,6 @@ graph TB
 
 | Date | Change | Diagrams |
 |------|--------|----------|
+| 2026-06-16 | Phase 2: break chatStore facade — direct store imports | 2, 3, 9, 10 (updated) |
 | 2026-06-16 | Remove RemoteData — all stores use AsyncState | 11 (updated) |
 | 2026-06-16 | Initial creation from svelte-map analysis | All (new) |
