@@ -17,20 +17,36 @@
 
 	let showMenu = $state(false);
 	let menuRef = $state<HTMLElement | null>(null);
+	let sessionMenuId = $state<string | null>(null);
+	let sessionMenuRef = $state<HTMLElement | null>(null);
 
 	// Close menu on outside click
 	function handleClickOutside(e: MouseEvent) {
 		if (menuRef && !menuRef.contains(e.target as Node)) {
 			showMenu = false;
 		}
+		if (sessionMenuRef && !sessionMenuRef.contains(e.target as Node)) {
+			sessionMenuId = null;
+		}
 	}
 
 	$effect(() => {
-		if (showMenu) {
+		if (showMenu || sessionMenuId !== null) {
 			document.addEventListener('click', handleClickOutside);
 			return () => document.removeEventListener('click', handleClickOutside);
 		}
 	});
+
+	// Session menu actions
+	function toggleSessionMenu(e: MouseEvent, sessionId: string) {
+		e.stopPropagation();
+		sessionMenuId = sessionMenuId === sessionId ? null : sessionId;
+	}
+
+	async function handleUnassign(sessionId: string) {
+		sessionMenuId = null;
+		await folderStore.unassignSession(folderId, sessionId);
+	}
 
 	// Menu actions
 	function handleRename() {
@@ -146,15 +162,62 @@
 				<div class="space-y-0.5">
 					{#each sessions as session (session.id)}
 						{@const isPending = folderStore.pendingOps.has(session.id)}
-						<button
-							type="button"
-							onclick={() => onloadsession?.(session.id)}
-							class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface {isPending ? 'opacity-50 animate-pulse' : ''}"
-							title={session.title}
-							 disabled={isPending}
-						>
-							<span class="min-w-0 flex-1 truncate">{session.title}</span>
-						</button>
+						<div class="group relative">
+							<button
+								type="button"
+								onclick={() => onloadsession?.(session.id)}
+								class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface {isPending
+									? 'animate-pulse opacity-50'
+									: ''}"
+								title={session.title}
+								disabled={isPending}
+							>
+								<span class="min-w-0 flex-1 truncate">{session.title}</span>
+							</button>
+							<!-- Session context menu button -->
+							<button
+								type="button"
+								onclick={(e) => toggleSessionMenu(e, session.id)}
+								class="absolute top-1/2 right-1 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
+								aria-label="Session options"
+							>
+								<svg width="12" height="12" viewBox="0 0 14 14" fill="currentColor">
+									<circle cx="7" cy="3" r="1.5" />
+									<circle cx="7" cy="7" r="1.5" />
+									<circle cx="7" cy="11" r="1.5" />
+								</svg>
+							</button>
+							<!-- Session context menu dropdown -->
+							{#if sessionMenuId === session.id}
+								<div
+									bind:this={sessionMenuRef}
+									class="absolute right-0 z-50 mt-1 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
+									role="menu"
+								>
+									<button
+										type="button"
+										onclick={() => {
+											sessionMenuId = null;
+											onloadsession?.(session.id);
+										}}
+										class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-surface"
+										role="menuitem"
+									>
+										📂 Open
+									</button>
+									<div class="border-t border-line">
+										<button
+											type="button"
+											onclick={() => handleUnassign(session.id)}
+											class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-muted hover:bg-surface hover:text-ink"
+											role="menuitem"
+										>
+											↩️ Remove from folder
+										</button>
+									</div>
+								</div>
+							{/if}
+						</div>
 					{/each}
 				</div>
 			{/if}
