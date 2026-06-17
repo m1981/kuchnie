@@ -93,25 +93,25 @@ async function connectBrowser() {
  */
 async function waitForSessionInSidebar(page, sessionTitle, timeout = 10000) {
     const selector = `aside button`;
-    
+
     // Wait for sidebar to have any buttons
     await page.waitForSelector(selector, { timeout });
-    
+
     // Wait for the specific session button
     // Use XPath-like text matching since Puppeteer doesn't have has-text
     const startTime = Date.now();
     while (Date.now() - startTime < timeout) {
         const buttons = await page.$$(selector);
         for (const button of buttons) {
-            const text = await button.evaluate(el => el.textContent?.trim() || '');
+            const text = await button.evaluate((el) => el.textContent?.trim() || '');
             if (text.includes(sessionTitle) || text.includes('Test session')) {
                 return button;
             }
         }
         // Wait a bit before retrying
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise((r) => setTimeout(r, 100));
     }
-    
+
     return null;
 }
 
@@ -122,24 +122,24 @@ async function waitForSessionInSidebar(page, sessionTitle, timeout = 10000) {
 async function clickSessionButton(page, sessionTitle) {
     // First try to find the specific session
     const button = await waitForSessionInSidebar(page, sessionTitle);
-    
+
     if (button) {
         await button.click();
         return true;
     }
-    
+
     // Fallback: click the first session-like button (not "New chat")
     console.log(`⚠ Session "${sessionTitle}" not found, clicking first available session`);
-    
+
     const buttons = await page.$$('aside button');
     for (const btn of buttons) {
-        const text = await btn.evaluate(el => el.textContent?.trim() || '');
+        const text = await btn.evaluate((el) => el.textContent?.trim() || '');
         if (text !== '+ New chat' && text !== '' && !text.includes('New chat')) {
             await btn.click();
             return true;
         }
     }
-    
+
     return false;
 }
 
@@ -150,7 +150,7 @@ async function clickSessionButton(page, sessionTitle) {
 async function waitForMessagesLoaded(page, timeout = 10000) {
     // Wait for at least one chat bubble to appear
     await page.waitForSelector('[data-testid="chat-bubble"]', { timeout });
-    
+
     // Wait for loading to complete
     await page.waitForFunction(
         () => {
@@ -179,7 +179,7 @@ async function run() {
 
         // Wait a bit for the session list to refresh from API
         // This replaces the fragile page.evaluate() with setTimeout
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Click the session in the sidebar using proper DOM access
         const clicked = await clickSessionButton(page, sessionTitle);

@@ -838,15 +838,11 @@ export const api = {
 		sessionId: string,
 		includeChildren: boolean = false
 	): Promise<void> =>
-		fetch(
-			`${API_BASE}/api/folders/${folderId}/sessions/${sessionId}/tree`,
-			{
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ include_children: includeChildren })
-			}
-		).then((r) => {
-			if (!r.ok && r.status !== 204)
-				throw new Error(`Unassign tree failed: ${r.status}`);
+		fetch(`${API_BASE}/api/folders/${folderId}/sessions/${sessionId}/tree`, {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ include_children: includeChildren })
+		}).then((r) => {
+			if (!r.ok && r.status !== 204) throw new Error(`Unassign tree failed: ${r.status}`);
 		})
 };

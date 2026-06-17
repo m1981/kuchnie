@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS session_folders (
 | `src/api/folders.py`                                  | FastAPI router                       |
 | `frontend/src/lib/stores/folder.svelte.ts`            | Frontend store                       |
 | `frontend/src/lib/stores/folder.test.ts`              | Store unit tests                     |
-| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops + activeId prop |
+| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops + activeId prop  |
 | `frontend/src/lib/components/FolderItem.svelte`       | Single folder + session context menu |
 | `frontend/src/lib/components/DraggableSession.svelte` | Drag wrapper                         |
 | `frontend/src/lib/actions/dragdrop.ts`                | HTML5 DnD actions                    |
@@ -105,6 +105,7 @@ that are assigned to any folder. `SessionPanel` filters the session tree to
 exclude these IDs.
 
 The set is updated on:
+
 - `refresh()` — fetches all folder sessions on mount
 - `assignSession()` — adds ID optimistically
 - `unassignSession()` — removes ID optimistically
@@ -259,6 +260,7 @@ History now shows only unfiled sessions (not assigned to any folder).
 Sessions appear in ONE place only — either a folder or History.
 
 **Changes:**
+
 - Added `folderedSessionIds: SvelteSet<string>` to track foldered sessions
 - `SessionPanel` filters `visibleRoots` and `activeCount` to exclude foldered IDs
 - `FolderItem` updated with `activeId` prop for consistent active state styling

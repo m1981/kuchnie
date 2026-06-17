@@ -240,22 +240,26 @@ class FolderStore {
 	/**
 	 * Assign session tree (session + optionally children) to folder.
 	 */
-	async assignSessionTree(folderId: string, sessionId: string, includeChildren: boolean = false): Promise<boolean> {
+	async assignSessionTree(
+		folderId: string,
+		sessionId: string,
+		includeChildren: boolean = false
+	): Promise<boolean> {
 		this.pendingOps.set(sessionId, { type: 'assign-tree', targetId: folderId });
 
 		try {
 			const result = await api.assignSessionTreeToFolder(folderId, sessionId, includeChildren);
-			
+
 			// Update local state with all assigned IDs
 			for (const assignedId of result.session_ids) {
 				this.folderedSessionIds.add(assignedId);
 			}
-			
+
 			// Update folder count
 			this.folders = this.folders.map((f) =>
 				f.id === folderId ? { ...f, session_count: f.session_count + result.count } : f
 			);
-			
+
 			this.invalidateSessions(folderId);
 			return true;
 		} catch (e) {
@@ -270,24 +274,28 @@ class FolderStore {
 	/**
 	 * Unassign session tree (session + optionally children) from folder.
 	 */
-	async unassignSessionTree(folderId: string, sessionId: string, includeChildren: boolean = false): Promise<boolean> {
+	async unassignSessionTree(
+		folderId: string,
+		sessionId: string,
+		includeChildren: boolean = false
+	): Promise<boolean> {
 		this.pendingOps.set(sessionId, { type: 'unassign-tree', targetId: folderId });
 
 		try {
 			await api.unassignSessionTreeFromFolder(folderId, sessionId, includeChildren);
-			
+
 			// Update local state
 			this.folderedSessionIds.delete(sessionId);
 			if (includeChildren) {
 				// We'd need the session store to get children, but for now just refresh
 				await this.refresh();
 			}
-			
+
 			// Update folder count (approximate - actual count comes from server)
 			this.folders = this.folders.map((f) =>
 				f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
 			);
-			
+
 			this.invalidateSessions(folderId);
 			return true;
 		} catch (e) {

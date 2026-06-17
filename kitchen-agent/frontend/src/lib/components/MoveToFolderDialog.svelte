@@ -69,12 +69,15 @@
 
 	const hasChanges = $derived(
 		selectedFolders.size !== currentFolderIds.length ||
-		!currentFolderIds.every(id => selectedFolders.has(id))
+			!currentFolderIds.every((id) => selectedFolders.has(id))
 	);
 </script>
 
 {#if open}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onclick={handleCancel}>
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+		onclick={handleCancel}
+	>
 		<div
 			class="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
 			onclick={(e) => e.stopPropagation()}
@@ -86,9 +89,7 @@
 			</p>
 
 			{#if folders.length === 0}
-				<p class="mb-4 text-sm text-muted italic">
-					No folders available. Create a folder first.
-				</p>
+				<p class="mb-4 text-sm text-muted italic">No folders available. Create a folder first.</p>
 			{:else}
 				<div class="mb-4 max-h-48 space-y-2 overflow-y-auto">
 					{#each folders as folder (folder.id)}
@@ -100,7 +101,8 @@
 								class="h-4 w-4 rounded border-line text-accent focus:ring-accent"
 							/>
 							<span class="text-sm">
-								{folder.icon} {folder.name}
+								{folder.icon}
+								{folder.name}
 							</span>
 						</label>
 					{/each}

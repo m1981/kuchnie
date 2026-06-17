@@ -50,7 +50,10 @@
 </script>
 
 {#if open}
-	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onclick={handleCancel}>
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+		onclick={handleCancel}
+	>
 		<div
 			class="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
 			onclick={(e) => e.stopPropagation()}

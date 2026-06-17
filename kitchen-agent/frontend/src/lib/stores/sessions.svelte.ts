@@ -169,7 +169,7 @@ function createSessionStore() {
 			const idsToArchive = [id];
 			if (includeChildren) {
 				// Get children from tree
-				const node = flat.find(n => n.id === id);
+				const node = flat.find((n) => n.id === id);
 				if (node) {
 					function collectChildren(n: typeof node): string[] {
 						const ids: string[] = [];
@@ -207,7 +207,7 @@ function createSessionStore() {
 			// Optimistic: clear stamp for all affected sessions
 			const idsToUnarchive = [id];
 			if (includeChildren) {
-				const node = flat.find(n => n.id === id);
+				const node = flat.find((n) => n.id === id);
 				if (node) {
 					function collectChildren(n: typeof node): string[] {
 						const ids: string[] = [];
@@ -239,7 +239,7 @@ function createSessionStore() {
 		 * Check if session has children (is fork parent).
 		 */
 		hasChildren(id: string): boolean {
-			const node = flat.find(n => n.id === id);
+			const node = flat.find((n) => n.id === id);
 			return node ? node.children.length > 0 : false;
 		},
 
@@ -247,7 +247,7 @@ function createSessionStore() {
 		 * Get children count for a session.
 		 */
 		getChildrenCount(id: string): number {
-			const node = flat.find(n => n.id === id);
+			const node = flat.find((n) => n.id === id);
 			return node ? node.children.length : 0;
 		}
 	};

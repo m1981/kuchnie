@@ -6,27 +6,27 @@ Quick reference for implementing session state transitions.
 
 ## State Table
 
-| archived_at | in folder | parent_id | Display State | Location |
-|-------------|-----------|-----------|---------------|----------|
-| NULL | No | NULL | **Active** | History |
-| NULL | Yes | NULL | **Foldered** | Folder only |
-| NULL | No | set | **Forked** | History |
-| NULL | Yes | set | **Forked + Foldered** | Folder only |
-| set | No | NULL | **Archived** | Archive view |
-| set | Yes | NULL | **Archived + Foldered** | Archive view |
-| set | No | set | **Archived Fork** | Archive view |
-| set | Yes | set | **Archived Fork + Foldered** | Archive view |
+| archived_at | in folder | parent_id | Display State                | Location     |
+| ----------- | --------- | --------- | ---------------------------- | ------------ |
+| NULL        | No        | NULL      | **Active**                   | History      |
+| NULL        | Yes       | NULL      | **Foldered**                 | Folder only  |
+| NULL        | No        | set       | **Forked**                   | History      |
+| NULL        | Yes       | set       | **Forked + Foldered**        | Folder only  |
+| set         | No        | NULL      | **Archived**                 | Archive view |
+| set         | Yes       | NULL      | **Archived + Foldered**      | Archive view |
+| set         | No        | set       | **Archived Fork**            | Archive view |
+| set         | Yes       | set       | **Archived Fork + Foldered** | Archive view |
 
 ---
 
 ## Valid Operations by State
 
-| State | Can Send? | Can Archive? | Can Folder? | Can Fork? | Can Delete? |
-|-------|-----------|--------------|-------------|-----------|-------------|
-| Active | ✅ | ✅ | ✅ | ✅ | ✅ (if no children) |
-| Foldered | ✅ | ✅ (ask unassign) | ✅ (add to another) | ✅ | ✅ (if no children) |
-| Forked | ✅ | ✅ (ask children) | ✅ | ✅ | ✅ (if no children) |
-| Archived | ❌ | ❌ | ❌ | ❌ | ✅ (if no children) |
+| State    | Can Send? | Can Archive?      | Can Folder?         | Can Fork? | Can Delete?         |
+| -------- | --------- | ----------------- | ------------------- | --------- | ------------------- |
+| Active   | ✅        | ✅                | ✅                  | ✅        | ✅ (if no children) |
+| Foldered | ✅        | ✅ (ask unassign) | ✅ (add to another) | ✅        | ✅ (if no children) |
+| Forked   | ✅        | ✅ (ask children) | ✅                  | ✅        | ✅ (if no children) |
+| Archived | ❌        | ❌                | ❌                  | ❌        | ✅ (if no children) |
 
 ---
 
@@ -281,11 +281,11 @@ async assignTree(folderId: string, sessionId: string, includeChildren: boolean):
 <!-- src/lib/components/ArchivedPanel.svelte -->
 <script lang="ts">
   import { sessionStore } from '$lib/stores/sessions.svelte';
-  
+
   const archivedSessions = $derived(
     sessionStore.flat.filter(n => n.archived_at !== null)
   );
-  
+
   let expanded = $state(false);
 </script>
 
@@ -294,7 +294,7 @@ async assignTree(folderId: string, sessionId: string, includeChildren: boolean):
     <button onclick={() => expanded = !expanded}>
       🗄️ Archive ({archivedSessions.length})
     </button>
-    
+
     {#if expanded}
       {#each archivedSessions as session (session.id)}
         <div class="flex items-center justify-between opacity-60">
@@ -318,25 +318,25 @@ async assignTree(folderId: string, sessionId: string, includeChildren: boolean):
 ```typescript
 // Current menu items
 const menuItems = [
-  { label: 'Edit Title', action: 'edit' },
-  { label: 'Fork', action: 'fork' },
-  { label: 'Export', action: 'export' },
-  { separator: true },
-  { label: 'Delete', action: 'delete', danger: true }
+    { label: 'Edit Title', action: 'edit' },
+    { label: 'Fork', action: 'fork' },
+    { label: 'Export', action: 'export' },
+    { separator: true },
+    { label: 'Delete', action: 'delete', danger: true }
 ];
 
 // Proposed menu items
 const menuItems = [
-  { label: 'Edit Title', action: 'edit' },
-  { label: 'Fork', action: 'fork', disabled: isArchived },
-  { separator: true },
-  { label: 'Move to Folder...', action: 'move-to-folder', disabled: isArchived },
-  { label: isFoldered ? 'Remove from Folder' : null, action: 'remove-from-folder' },
-  { separator: true },
-  { label: isArchived ? 'Unarchive' : 'Archive', action: isArchived ? 'unarchive' : 'archive' },
-  { label: 'Export', action: 'export' },
-  { separator: true },
-  { label: 'Delete', action: 'delete', danger: true }
+    { label: 'Edit Title', action: 'edit' },
+    { label: 'Fork', action: 'fork', disabled: isArchived },
+    { separator: true },
+    { label: 'Move to Folder...', action: 'move-to-folder', disabled: isArchived },
+    { label: isFoldered ? 'Remove from Folder' : null, action: 'remove-from-folder' },
+    { separator: true },
+    { label: isArchived ? 'Unarchive' : 'Archive', action: isArchived ? 'unarchive' : 'archive' },
+    { label: 'Export', action: 'export' },
+    { separator: true },
+    { label: 'Delete', action: 'delete', danger: true }
 ];
 ```
 

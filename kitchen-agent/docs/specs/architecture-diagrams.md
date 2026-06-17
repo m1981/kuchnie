@@ -972,14 +972,14 @@ When the architecture changes:
 
 ### Recent Changes
 
-| Date       | Change                                                      | Diagrams Updated       |
-| ---------- | ----------------------------------------------------------- | ---------------------- |
-| 2026-06-17 | Refactor v2 complete: direct imports, Dialog, SidebarLayout, ComposerActions | 1, 5, 10 (updated) |
-| 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction | 1, 5, 6 (updated) |
-| 2026-06-14 | Import chats from external JSON (POST /api/sessions/import) | 1, 6, 12 (new)         |
-| 2026-06-14 | Shared title derivation (src/title_generator.py)            | 9 (updated)            |
-| 2026-06-12 | URL-based session routing (`/chat/[id]`)                    | 1, 5, 7 (new), 8 (new) |
-| 2026-06-12 | TokenIndicator in ChatComposer                              | 5, 10 (new)            |
-| 2026-06-12 | Session title display & inline editing                      | 11 (new)               |
-| 2026-06-12 | AI title regeneration (POST /title/generate)                | 9 (new), 11 (new)      |
-| 2026-06-12 | Auto-generate title on first message                        | 9 (updated)            |
+| Date       | Change                                                                       | Diagrams Updated       |
+| ---------- | ---------------------------------------------------------------------------- | ---------------------- |
+| 2026-06-17 | Refactor v2 complete: direct imports, Dialog, SidebarLayout, ComposerActions | 1, 5, 10 (updated)     |
+| 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction         | 1, 5, 6 (updated)      |
+| 2026-06-14 | Import chats from external JSON (POST /api/sessions/import)                  | 1, 6, 12 (new)         |
+| 2026-06-14 | Shared title derivation (src/title_generator.py)                             | 9 (updated)            |
+| 2026-06-12 | URL-based session routing (`/chat/[id]`)                                     | 1, 5, 7 (new), 8 (new) |
+| 2026-06-12 | TokenIndicator in ChatComposer                                               | 5, 10 (new)            |
+| 2026-06-12 | Session title display & inline editing                                       | 11 (new)               |
+| 2026-06-12 | AI title regeneration (POST /title/generate)                                 | 9 (new), 11 (new)      |
+| 2026-06-12 | Auto-generate title on first message                                         | 9 (updated)            |
