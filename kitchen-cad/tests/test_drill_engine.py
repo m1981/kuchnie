@@ -17,12 +17,32 @@ from kitchen_cad.drill_engine import (
     apply_hinges,
     apply_system32,
     system32_y_positions,
+    _shelf_pin_offsets,
 )
 
 
 # ---------------------------------------------------------------------------
 # System 32 — Y position calculator
 # ---------------------------------------------------------------------------
+
+class TestShelfPinOffsets:
+    """Shelf pin offset algorithm from Corpus .cmk reference."""
+
+    def test_three_per_row(self):
+        """max_per_row=3 → offsets [0, +32, -32]."""
+        offsets = _shelf_pin_offsets(3)
+        assert offsets == [0.0, 32.0, -32.0]
+
+    def test_five_per_row(self):
+        """max_per_row=5 → offsets [0, +32, -32, +64, -64]."""
+        offsets = _shelf_pin_offsets(5)
+        assert offsets == [0.0, 32.0, -32.0, 64.0, -64.0]
+
+    def test_one_per_row(self):
+        """max_per_row=1 → just the anchor."""
+        offsets = _shelf_pin_offsets(1)
+        assert offsets == [0.0]
+
 
 class TestSystem32Positions:
     """System 32 holes start at 37 mm from each end, spaced 32 mm apart."""
@@ -83,7 +103,7 @@ class TestApplySystem32:
                 assert dp.diameter == 5.0
 
     def test_shelf_pins_added_for_shelf(self, base_door_spec):
-        """Each shelf adds shelf-pin holes on the side panels (front + back row)."""
+        """Each shelf adds shelf-pin holes: 2 rows × 3 holes = 6 total."""
         panels = calculate_panels(base_door_spec)
         panels = apply_system32(panels, base_door_spec)
         left = next(p for p in panels if p.role == PanelRole.LEFT_SIDE)
@@ -91,7 +111,56 @@ class TestApplySystem32:
             dp for dp in left.drill_points
             if dp.drill_type == DrillType.SHELF_PIN
         ]
-        assert len(shelf_pins) >= 2  # at least front + back row
+        assert len(shelf_pins) == 6  # 2 rows × 3 holes (max_per_row=3)
+
+    def test_shelf_pins_two_rows_at_correct_x(self, base_door_spec):
+        """Front row at 50mm from front, back row at 80mm from back."""
+        panels = calculate_panels(base_door_spec)
+        panels = apply_system32(panels, base_door_spec)
+        left = next(p for p in panels if p.role == PanelRole.LEFT_SIDE)
+        shelf_pins = [
+            dp for dp in left.drill_points
+            if dp.drill_type == DrillType.SHELF_PIN
+        ]
+        front_pins = [dp for dp in shelf_pins if "front" in dp.label]
+        back_pins = [dp for dp in shelf_pins if "back" in dp.label]
+        assert len(front_pins) == 3
+        assert len(back_pins) == 3
+        # All front pins at X=50
+        assert all(dp.x == pytest.approx(50.0) for dp in front_pins)
+        # All back pins at X = 510 - 80 = 430
+        assert all(dp.x == pytest.approx(430.0) for dp in back_pins)
+
+    def test_shelf_pins_symmetrical_offsets(self, base_door_spec):
+        """Shelf pin Y offsets are symmetrical: [0, +32, -32]."""
+        panels = calculate_panels(base_door_spec)
+        panels = apply_system32(panels, base_door_spec)
+        left = next(p for p in panels if p.role == PanelRole.LEFT_SIDE)
+        front_pins = [
+            dp for dp in left.drill_points
+            if dp.drill_type == DrillType.SHELF_PIN and "front" in dp.label
+        ]
+        ys = sorted(dp.y for dp in front_pins)
+        base_y = 18 + 352  # panel_thickness + shelf_pos
+        assert ys[0] == pytest.approx(base_y - 32)
+        assert ys[1] == pytest.approx(base_y)
+        assert ys[2] == pytest.approx(base_y + 32)
+
+    def test_shelf_pins_diameter_5mm(self, base_door_spec):
+        panels = calculate_panels(base_door_spec)
+        panels = apply_system32(panels, base_door_spec)
+        left = next(p for p in panels if p.role == PanelRole.LEFT_SIDE)
+        for dp in left.drill_points:
+            if dp.drill_type == DrillType.SHELF_PIN:
+                assert dp.diameter == 5.0
+
+    def test_shelf_pins_depth_8mm(self, base_door_spec):
+        panels = calculate_panels(base_door_spec)
+        panels = apply_system32(panels, base_door_spec)
+        left = next(p for p in panels if p.role == PanelRole.LEFT_SIDE)
+        for dp in left.drill_points:
+            if dp.drill_type == DrillType.SHELF_PIN:
+                assert dp.depth == 8.0
 
     def test_both_sides_get_same_pattern(self, base_door_spec):
         panels = calculate_panels(base_door_spec)

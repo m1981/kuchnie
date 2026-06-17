@@ -172,6 +172,13 @@ class CorpusSpec(BaseModel):
     hinges: HingeSpec | None = None
     handles: HandleSpec | None = None
 
+    # Shelf pin parameters (from Corpus .cmk reference)
+    shelf_pin_diameter: float = 5.0       # mm
+    shelf_pin_depth: float = 8.0          # mm
+    shelf_pin_front_offset: float = 50.0  # mm from front edge
+    shelf_pin_back_offset: float = 80.0   # mm from back edge
+    shelf_pin_max_per_row: int = 3        # max holes per row
+
     # Front gaps (margins between front and cabinet edges)
     front_gap: float = Field(
         default=3.0, ge=0,

@@ -43,10 +43,29 @@ def system32_y_positions(height: float) -> list[float]:
     return positions
 
 
+def _shelf_pin_offsets(max_per_row: int, raster: float = SYSTEM32_SPACING) -> list[float]:
+    """Symmetrical offsets from anchor, matching Corpus .cmk algorithm.
+
+    Returns offsets: [0, +raster, -raster, +2*raster, -2*raster, ...]
+    limited to max_per_row entries.
+    """
+    offsets = [0.0]
+    i = 1
+    while len(offsets) < max_per_row:
+        offsets.append(round(i * raster, 2))
+        if len(offsets) < max_per_row:
+            offsets.append(round(-i * raster, 2))
+        i += 1
+    return offsets
+
+
 def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
     """Add System 32 (∅5 mm) drill points to LEFT and RIGHT side panels.
 
-    Also adds shelf-pin holes at shelf positions (front + back row).
+    Also adds shelf-pin holes at shelf positions:
+    - Front row: shelf_pin_front_offset mm from front edge
+    - Back row: shelf_pin_back_offset mm from back edge
+    - Symmetrical expansion with 32mm raster (from .cmk reference)
     """
     for panel in panels:
         if panel.role not in (PanelRole.LEFT_SIDE, PanelRole.RIGHT_SIDE):
@@ -65,24 +84,40 @@ def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
             ))
 
         # --- shelf-pin holes at shelf positions ---
-        #     Two rows per shelf: front (X=37) and back (X = depth - 37)
-        back_x = spec.depth - SYSTEM32_OFFSET
+        #     Two rows per shelf: front and back
+        #     Algorithm from Corpus .cmk: symmetrical expansion
+        if not spec.shelves:
+            continue
+
+        front_x = spec.shelf_pin_front_offset          # 50mm from front
+        back_x = spec.depth - spec.shelf_pin_back_offset  # 80mm from back
+        offsets = _shelf_pin_offsets(spec.shelf_pin_max_per_row)
+
         for shelf_pos in spec.shelves:
-            # shelf_pos is measured from INSIDE bottom of the cabinet
-            # On the side panel, the inside bottom starts at Y = panel_thickness
-            # but we measure from the bottom of the panel (Y=0).
-            # Inside bottom Y = spec.panel_thickness
-            # shelf Y from panel bottom = panel_thickness + shelf_pos
             y_shelf = spec.panel_thickness + shelf_pos
-            for x in (SYSTEM32_OFFSET, back_x):
+
+            # Front row: anchor at (front_x, y_shelf), expand along Y
+            for dy in offsets:
                 panel.drill_points.append(DrillPoint(
-                    x=x,
-                    y=y_shelf,
-                    diameter=5.0,
-                    depth=12.0,
+                    x=front_x,
+                    y=round(y_shelf + dy, 2),
+                    diameter=spec.shelf_pin_diameter,
+                    depth=spec.shelf_pin_depth,
                     face=DrillFace.INSIDE,
                     drill_type=DrillType.SHELF_PIN,
-                    label=f"shelf pin y={y_shelf:.0f}",
+                    label=f"shelf front y={y_shelf + dy:.0f}",
+                ))
+
+            # Back row: anchor at (back_x, y_shelf), expand along Y
+            for dy in offsets:
+                panel.drill_points.append(DrillPoint(
+                    x=back_x,
+                    y=round(y_shelf + dy, 2),
+                    diameter=spec.shelf_pin_diameter,
+                    depth=spec.shelf_pin_depth,
+                    face=DrillFace.INSIDE,
+                    drill_type=DrillType.SHELF_PIN,
+                    label=f"shelf back y={y_shelf + dy:.0f}",
                 ))
 
     return panels
