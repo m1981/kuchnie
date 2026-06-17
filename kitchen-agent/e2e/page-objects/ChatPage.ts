@@ -93,20 +93,23 @@ export class ChatPage {
     // Wait for sidebar to load
     await this.page.waitForSelector('aside button', { timeout: 10_000 });
     
-    // Try to find and click the session - use first match to avoid strict mode
-    let sessionButton = this.page.locator(`aside button:has-text("${title}")`).first();
+    // Find the session button
+    const sessionButton = this.page.locator(`aside button:has-text("${title}")`).first();
     
-    // If not visible, refresh and wait (session might have been seeded after page load)
-    const isVisible = await sessionButton.isVisible().catch(() => false);
-    if (!isVisible) {
+    // Wait for the button to be visible with proper timeout
+    // This replaces the fragile isVisible().catch() workaround
+    try {
+      await sessionButton.waitFor({ state: 'visible', timeout: 5_000 });
+    } catch {
+      // If not visible after 5s, try refreshing the page
+      // (session might have been seeded after page load)
       await this.page.reload();
       await this.page.waitForLoadState('networkidle');
       await this.page.waitForSelector('aside button', { timeout: 10_000 });
-      sessionButton = this.page.locator(`aside button:has-text("${title}")`).first();
+      await sessionButton.waitFor({ state: 'visible', timeout: 10_000 });
     }
     
-    // Wait for the button to appear
-    await sessionButton.waitFor({ state: 'visible', timeout: 10_000 });
+    // Click the session
     await sessionButton.click();
     await this.waitForMessagesLoaded();
   }
@@ -190,8 +193,16 @@ export class ChatPage {
     // Press Enter to save
     await this.headerTitleInput.press('Enter');
     
-    // Wait for save to complete
-    await this.page.waitForTimeout(500);
+    // Wait for save to complete by checking title updated
+    // This replaces the fragile waitForTimeout(500)
+    await this.page.waitForFunction(
+      (expectedTitle) => {
+        const header = document.querySelector('header');
+        return header?.textContent?.includes(expectedTitle) || false;
+      },
+      newTitle,
+      { timeout: 5000 }
+    );
   }
 
   async cancelEditTitle() {
@@ -221,8 +232,15 @@ export class ChatPage {
     const menuButton = sessionItem.locator('button[aria-label="Session options"]');
     await menuButton.click();
     
-    // Wait for menu to appear
-    await this.page.waitForTimeout(200);
+    // Wait for menu to appear using state check instead of arbitrary delay
+    // This replaces the fragile waitForTimeout(200)
+    await this.page.waitForSelector('[role="menu"], [data-testid="context-menu"]', { 
+      state: 'visible', 
+      timeout: 2000 
+    }).catch(() => {
+      // Menu might not have a specific role/testid, just wait for button to be actionable
+      return this.page.waitForTimeout(200);
+    });
   }
 
   async clickRegenerateTitle() {

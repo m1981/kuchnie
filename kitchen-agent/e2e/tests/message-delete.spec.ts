@@ -161,8 +161,17 @@ test.describe('Message Deletion', () => {
     await chatPage.deleteButtons.first().click();
     await chatPage.confirmOkButton.click();
 
-    // Wait for error to be handled
-    await page.waitForTimeout(1000);
+    // Wait for error to be handled - check for error toast or message count stability
+    // This replaces the fragile waitForTimeout(1000)
+    await page.waitForFunction(
+      () => {
+        // Check if error toast appeared or if messages are still present
+        const errorToast = document.querySelector('[data-testid="error-toast"]');
+        const messageCount = document.querySelectorAll('[data-testid="chat-bubble"]').length;
+        return errorToast || messageCount === 2;
+      },
+      { timeout: 5000 }
+    );
 
     // Assert - messages restored (rollback)
     await chatPage.expectMessageCount(2);

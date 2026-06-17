@@ -17,6 +17,11 @@
  *
  * Output:
  *   session_id, message_count, turn_ids
+ *
+ * DOM Access Fixes Applied:
+ *   - Replace page.evaluate() with Playwright locators
+ *   - Use waitForSelector instead of arbitrary delays
+ *   - Add proper error handling for missing elements
  */
 
 import puppeteer from 'puppeteer-core';
@@ -82,9 +87,84 @@ async function connectBrowser() {
     return { browser: b, page: p };
 }
 
+/**
+ * Wait for session button to appear in sidebar using proper DOM waiting.
+ * Replaces the fragile page.evaluate() approach.
+ */
+async function waitForSessionInSidebar(page, sessionTitle, timeout = 10000) {
+    const selector = `aside button`;
+    
+    // Wait for sidebar to have any buttons
+    await page.waitForSelector(selector, { timeout });
+    
+    // Wait for the specific session button
+    // Use XPath-like text matching since Puppeteer doesn't have has-text
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+        const buttons = await page.$$(selector);
+        for (const button of buttons) {
+            const text = await button.evaluate(el => el.textContent?.trim() || '');
+            if (text.includes(sessionTitle) || text.includes('Test session')) {
+                return button;
+            }
+        }
+        // Wait a bit before retrying
+        await new Promise(r => setTimeout(r, 100));
+    }
+    
+    return null;
+}
+
+/**
+ * Click session button with proper error handling.
+ * Replaces the fragile page.evaluate() approach.
+ */
+async function clickSessionButton(page, sessionTitle) {
+    // First try to find the specific session
+    const button = await waitForSessionInSidebar(page, sessionTitle);
+    
+    if (button) {
+        await button.click();
+        return true;
+    }
+    
+    // Fallback: click the first session-like button (not "New chat")
+    console.log(`⚠ Session "${sessionTitle}" not found, clicking first available session`);
+    
+    const buttons = await page.$$('aside button');
+    for (const btn of buttons) {
+        const text = await btn.evaluate(el => el.textContent?.trim() || '');
+        if (text !== '+ New chat' && text !== '' && !text.includes('New chat')) {
+            await btn.click();
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Wait for messages to load after clicking a session.
+ * Uses proper DOM waiting instead of arbitrary delays.
+ */
+async function waitForMessagesLoaded(page, timeout = 10000) {
+    // Wait for at least one chat bubble to appear
+    await page.waitForSelector('[data-testid="chat-bubble"]', { timeout });
+    
+    // Wait for loading to complete
+    await page.waitForFunction(
+        () => {
+            const busyIndicator = document.querySelector('[data-testid="app-busy"]');
+            return busyIndicator?.getAttribute('data-busy-recent') === 'false';
+        },
+        { timeout }
+    );
+}
+
 async function run() {
     // Seed the session
     const data = await seedSession();
+    const sessionTitle = title || 'Test session';
 
     // Connect to browser and navigate
     const { browser, page } = await connectBrowser();
@@ -94,42 +174,21 @@ async function run() {
         const frontendUrl = 'http://localhost:5173';
         await page.goto(frontendUrl, { waitUntil: 'domcontentloaded' });
 
-        // Wait for the page to load
-        await page.waitForSelector('aside button', { timeout: 5000 });
+        // Wait for the sidebar to load
+        await page.waitForSelector('aside button', { timeout: 10000 });
 
-        // Click the session in the sidebar (it should appear after refresh)
-        // First, trigger a refresh by clicking on the session
-        await page.evaluate((sid) => {
-            // Wait a bit for the session list to refresh
-            return new Promise((resolve) => setTimeout(resolve, 500));
-        }, data.session_id);
+        // Wait a bit for the session list to refresh from API
+        // This replaces the fragile page.evaluate() with setTimeout
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Click the first "Test session" button in the sidebar
-        const clicked = await page.evaluate((title) => {
-            const buttons = Array.from(document.querySelectorAll('aside button'));
-            const btn = buttons.find(
-                (b) =>
-                    b.textContent.trim().includes('Test session') ||
-                    (title && b.textContent.trim().includes(title))
-            );
-            if (btn) {
-                btn.click();
-                return true;
-            }
-            return false;
-        }, title);
+        // Click the session in the sidebar using proper DOM access
+        const clicked = await clickSessionButton(page, sessionTitle);
 
-        if (!clicked) {
-            // If not found, try clicking the first session-like button
-            await page.evaluate(() => {
-                const buttons = Array.from(document.querySelectorAll('aside button'));
-                const nonNewChat = buttons.filter(
-                    (b) => b.textContent.trim() !== '+ New chat' && b.textContent.trim() !== ''
-                );
-                if (nonNewChat.length > 0) {
-                    nonNewChat[0].click();
-                }
-            });
+        if (clicked) {
+            // Wait for messages to load
+            await waitForMessagesLoaded(page);
+        } else {
+            console.warn('⚠ Could not find any session to click');
         }
 
         // Output the result

@@ -229,9 +229,7 @@ test.describe('Inline Title Editing', () => {
     await titleInput.press('Enter');
     
     // Assert - title should be updated
-    await page.waitForTimeout(500); // Wait for API call
-    const header = page.locator('header');
-    await expect(header).toContainText('New Title');
+    await chatPage.expectTitleToContain('New Title');
     
     // Verify backend
     const state = await getSessionState(page, session.session_id);
@@ -275,9 +273,7 @@ test.describe('Inline Title Editing', () => {
     await page.locator('main').click(); // Click outside
     
     // Assert - title should be updated
-    await page.waitForTimeout(500);
-    const header = page.locator('header');
-    await expect(header).toContainText('Saved By Blur');
+    await chatPage.expectTitleToContain('Saved By Blur');
   });
 
   test('empty title is not saved', async ({ page }) => {
@@ -344,8 +340,8 @@ test.describe('AI Title Regeneration', () => {
     const regenerateOption = page.locator('button:has-text("Regenerate Title")');
     await regenerateOption.click();
     
-    // Wait for API call
-    await page.waitForTimeout(1000);
+    // Wait for API call to complete
+    await page.waitForResponse(resp => resp.url().includes('/title/generate'));
     
     // Assert - API should have been called
     expect(apiCalled).toBe(true);
@@ -432,15 +428,15 @@ test.describe('Integration: Title with Routing', () => {
     await titleInput.fill('New Persisted Title');
     await titleInput.press('Enter');
     
-    await page.waitForTimeout(500);
+    // Wait for title to update in UI (no arbitrary timeout)
+    await chatPage.expectTitleToContain('New Persisted Title');
     
     // Act - refresh the page
     await page.reload();
     await page.waitForLoadState('networkidle');
     
     // Assert - new title should persist
-    const header = page.locator('header');
-    await expect(header).toContainText('New Persisted Title');
+    await chatPage.expectTitleToContain('New Persisted Title');
   });
 
   test('title shows in sidebar after update', async ({ page }) => {
@@ -458,7 +454,16 @@ test.describe('Integration: Title with Routing', () => {
     await titleInput.fill('Updated Sidebar Title');
     await titleInput.press('Enter');
     
-    await page.waitForTimeout(1000);
+    // Wait for sidebar to update (no arbitrary timeout)
+    // The sidebar should update when the title is saved
+    await page.waitForFunction(
+      (expectedTitle) => {
+        const sidebar = document.querySelector('aside');
+        return sidebar?.textContent?.includes(expectedTitle) || false;
+      },
+      'Updated Sidebar Title',
+      { timeout: 5000 }
+    );
     
     // Assert - sidebar should show updated title
     const sidebar = page.locator('aside');
