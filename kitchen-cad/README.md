@@ -1,67 +1,99 @@
-# kitchen-cad
+# Kitchen CAD - Generator szablonów DXF dla mebli kuchennych
 
-Parametric furniture corpus → CSV (cutting list + edge banding) + DXF (drill positions).
+## Opis
 
-Designed for Polish CNC centres outsourcing (e-rozkroj workflow).
+Generator parametryzowanych plików DXF dla produkcji mebli kuchennych z CNC.
+Zgodny z europejskimi standardami: System 32, Blum LEGRABOX, BLUMOTION.
 
-## Quick start
+## Struktura
+
+```
+kitchen-cad/
+├── generators/          # Skrypty Python generujące DXF
+│   └── legrabox_side_panel.py   # Bok szafki z nawiertami LEGRABOX
+├── templates/           # Szablony DXF (gotowe wzorce)
+├── output/              # Wygenerowane pliki DXF
+└── docs/                # Dokumentacja standardów
+```
+
+## Wymagania
 
 ```bash
-cd kitchen-cad
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+python3.11 -m pip install ezdxf
 ```
 
-## Architecture
+## Użycie
 
-```
-CorpusSpec (YAML / Python)
-       │
-       ▼
-┌──────────────────────┐
-│  panel_calculator    │  → list[Panel]  (dimensions, edges)
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│  drill_engine        │  → list[Panel]  (+ drill points)
-│   • System 32        │
-│   • Blum hinges      │
-│   • Handles          │
-└──────────┬───────────┘
-           │
-      ┌────┴────┐
-      ▼         ▼
-  ciecie.csv  oklejanie.csv   (Phase 1 — done)
-  *.dxf                        (Phase 2 — next)
+### Bok szafki dolnej - 3 szuflady LEGRABOX + BLUMOTION
+
+```bash
+# Domyślna konfiguracja: szafka 510x720mm, szuflady N/M/K
+python3.11 generators/legrabox_side_panel.py
+
+# Własne wymiary
+python3.11 generators/legrabox_side_panel.py --depth 510 --height 720 --drawers N M K
+
+# Szafka z szerszymi szufladami
+python3.11 generators/legrabox_side_panel.py --depth 560 --height 720 --drawers M M K
+
+# Wysoka szafka (słupek)
+python3.11 generators/legrabox_side_panel.py --depth 560 --height 2000 --drawers N K C
 ```
 
-## Models
+### Typy szuflad LEGRABOX
 
-| Model        | Purpose                                      |
-| ------------ | -------------------------------------------- |
-| `CorpusSpec` | Full cabinet spec (dims, material, hardware) |
-| `Panel`      | Single cutting panel with edges + drills     |
-| `DrillPoint` | Hole position, diameter, depth, face         |
-| `HingeSpec`  | Blum/Hettich hinge parameters                |
+| Typ   | Wysokość boku | Zastosowanie           |
+| ----- | ------------- | ---------------------- |
+| **N** | 66.5 mm       | Sztućce, drobiazgi     |
+| **M** | 90.5 mm       | Garnki, przyprawy      |
+| **K** | 128.5 mm      | Garnki, patelnie       |
+| **C** | 177.0 mm      | Duże garnki, produkty  |
+| **F** | 241.0 mm      | Specjalne zastosowania |
 
-## Phase 1 scope
+## Standardy techniczne
 
-- [x] Pydantic models with validation
-- [x] Panel calculator (base, wall, drawer cabinets)
-- [x] System 32 drill engine
-- [x] Blum hinge drill engine
-- [x] Handle drill engine
-- [x] Cutting list CSV generator
-- [x] Edge banding CSV generator
-- [x] Full test suite (pytest)
+### System 32
 
-## Phase 2 (planned)
+- Rozstaw otworów: 32 mm
+- Odległość od krawędzi przedniej: 37 mm
+- Odległość od krawędzi tylnej: 37 mm
+- Średnica otworu: ∅5 mm
 
-- [ ] DXF generation (ezdxf) with named layers
-- [ ] YAML loader for corpus definitions
-- [ ] Hettich hinge support
-- [ ] Drawer runner drill positions
-- [ ] Minifix / cam-lock drill positions
-- [ ] Streamlit visualiser
+### LEGRABOX
+
+- Profil kab. mocowany na ∅5mm
+- Pierwszy otwór: 9mm od dna otworu szuflady
+- Rozstaw: 32mm (System 32)
+- BLUMOTION: zintegrowany w prowadnicy
+
+### Warstwy DXF (dla CNC)
+
+| Warstwa               | Kolor    | Zawartość               |
+| --------------------- | -------- | ----------------------- |
+| `01_OUTLINE`          | Biały    | Kontur zewnętrzny       |
+| `02_SYSTEM32`         | Zielony  | Otwory System 32 (∅5mm) |
+| `03_LEGRABOX_PROFILE` | Czerwony | Otwory prowadnic        |
+| `04_DOWELS`           | Żółty    | Otwory pod kołki (∅8mm) |
+| `05_DIMENSIONS`       | Cyan     | Wymiary kontrolne       |
+| `06_NOTES`            | Szary    | Opisy i notatki         |
+| `07_EDGEBANDING`      | Magenta  | Krawędzie do oklejenia  |
+
+## Format pliku
+
+- Format: DXF R2000 (kompatybilny z AutoCAD, LibreCAD, QCAD)
+- Skala: 1:1
+- Jednostki: milimetry (mm)
+- Płaszczyzna: XY (Z=0)
+
+## Zlecenie CNC
+
+1. Wygeneruj plik DXF
+2. Otwórz w przeglądarce DXF (LibreCAD, AutoCAD) i zweryfikuj
+3. Wyślij do centrum CNC z informacją o:
+    - Materiale (płyta wiórowa laminowana, grubość 18mm)
+    - Okleinowaniu (krawędź przednia i górna - ABS)
+    - Typie okleinarki (jaka grubość obrzeża)
+
+## Autor
+
+Generator stworzony dla projektu kuchnie - meblarstwo europejskie
