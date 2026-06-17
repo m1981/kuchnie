@@ -6,7 +6,9 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prepare": "husky",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "verify": "prettier --check .",
+        "fix-all": "prettier --write . && cd kitchen-agent/frontend && pnpm format && pnpm lint:fix"
     },
     "keywords": [],
     "author": "",
