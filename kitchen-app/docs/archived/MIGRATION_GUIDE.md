@@ -52,11 +52,11 @@ Replace old methods with new ones in `state.py`:
 # OLD (current)
 def open_selected_cabinet_cost_trace(self):
     # Uses cabinet.calculate_cost()
-    
+
 # NEW (use this)
 def open_selected_cabinet_cost_trace_new(self):
     from kitchen_erp.bom_generator import BOMGenerator
-    
+
     generator = BOMGenerator(cabinet, defaults)
     trace_lines = generator.generate_cost_trace_lines()
     # Convert to UI format...
@@ -68,7 +68,7 @@ def open_selected_cabinet_cost_trace_new(self):
 # OLD (current)
 def open_project_cost_trace(self):
     # Loops through cabinets calling calculate_cost()
-    
+
 # NEW (use this)
 def open_project_cost_trace_new(self):
     result = project.generate_project_bom()
@@ -87,12 +87,12 @@ def open_project_cost_trace_new(self):
 Once the new system is proven stable:
 
 1. **Delete old methods:**
-   - Remove `Cabinet.calculate_cost()` from `models.py`
-   - Remove `*_old()` methods from `state.py`
+    - Remove `Cabinet.calculate_cost()` from `models.py`
+    - Remove `*_old()` methods from `state.py`
 
 2. **Update documentation:**
-   - Remove references to old system
-   - Update examples to use new BOM generator
+    - Remove references to old system
+    - Update examples to use new BOM generator
 
 3. **Celebrate!** 🎉 You now have a professional CAD/CAM-grade BOM system
 
@@ -120,6 +120,7 @@ bom_tree = generator.generate()
 ### Old Way (Don't do this anymore)
 
 Edit Python code in multiple places:
+
 - Add to `specs` dict in `state.py`
 - Add to `limits` dict in `state.py`
 - Add hardcoded logic in `calculate_cost()` in `models.py`
@@ -130,24 +131,24 @@ Just edit `recipes.json`:
 
 ```json
 {
-  "MY_NEW_CABINET": {
-    "name": "My New Cabinet Type",
-    "type": "BASE",
-    "tags": ["is_base", "has_doors"],
-    "default_dimensions": {
-      "width_mm": 600,
-      "height_mm": 802,
-      "depth_mm": 560
-    },
-    "limits": {
-      "width_min": 400,
-      "width_max": 1200
-    },
-    "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm)) / 1000000",
-      "back_m2": "(height_mm * width_mm) / 1000000"
+    "MY_NEW_CABINET": {
+        "name": "My New Cabinet Type",
+        "type": "BASE",
+        "tags": ["is_base", "has_doors"],
+        "default_dimensions": {
+            "width_mm": 600,
+            "height_mm": 802,
+            "depth_mm": 560
+        },
+        "limits": {
+            "width_min": 400,
+            "width_max": 1200
+        },
+        "formulas": {
+            "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm)) / 1000000",
+            "back_m2": "(height_mm * width_mm) / 1000000"
+        }
     }
-  }
 }
 ```
 
@@ -162,6 +163,7 @@ Make sure `recipes.json` exists in `kitchen_erp/` directory and contains the cab
 ### Costs don't match between old and new
 
 This is expected! The new system is more accurate because:
+
 - It uses purchasing strategies (full sheets, not fractional m²)
 - It includes hardware based on tags (more complete BOM)
 - It aggregates materials at project level (realistic waste calculation)
@@ -171,6 +173,7 @@ The new system should give **higher** costs that are closer to reality.
 ### Missing hardware in BOM
 
 Check that the recipe has the correct tags. For example:
+
 - `"is_base"` → adds cabinet legs
 - `"has_doors"` → adds hinges and bumpers
 - `"has_drawers"` → adds drawer slides

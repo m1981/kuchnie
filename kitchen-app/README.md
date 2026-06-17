@@ -14,6 +14,7 @@ uv run python examples/demo_bom_system.py
 ```
 
 This interactive demo shows:
+
 - Recipe-driven cabinet creation
 - Hierarchical BOM generation
 - Tag-based hardware addition
@@ -37,15 +38,19 @@ uv run pytest tests/test_end_to_end_workflow.py -v -s
 The BOM system implements 4 professional design patterns:
 
 ### 1. Recipe Pattern (Data-Driven Design)
+
 Cabinet definitions in `kitchen_erp/recipes.json` - add new types without code changes.
 
 ### 2. Composite Pattern (BOM Tree)
+
 Hierarchical structure: `BOMAssembly` contains `BOMPart` nodes.
 
 ### 3. Rules Engine (Tag-Based)
+
 Tags automatically add hardware: `is_base` → legs, `has_doors` → hinges.
 
 ### 4. Strategy Pattern (Purchasing)
+
 Realistic procurement: full sheets, rolls, standard lengths.
 
 ## 📖 Documentation
@@ -86,14 +91,14 @@ Edit `kitchen_erp/recipes.json`:
 
 ```json
 {
-  "MY_CABINET": {
-    "name": "My Cabinet Type",
-    "type": "BASE",
-    "tags": ["is_base", "has_doors"],
-    "formulas": {
-      "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm)) / 1000000"
+    "MY_CABINET": {
+        "name": "My Cabinet Type",
+        "type": "BASE",
+        "tags": ["is_base", "has_doors"],
+        "formulas": {
+            "corpus_m2": "((2 * height_mm * depth_mm) + (2 * width_mm * depth_mm)) / 1000000"
+        }
     }
-  }
 }
 ```
 

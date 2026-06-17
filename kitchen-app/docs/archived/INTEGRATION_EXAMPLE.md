@@ -26,34 +26,34 @@ def show_cabinet_bom(cabinet_id: int):
         cabinet = session.get(Cabinet, cabinet_id)
         if not cabinet:
             return None
-        
+
         # Get project defaults
         defaults = session.exec(
             select(ProjectDefaults).where(
                 ProjectDefaults.project_id == cabinet.project_id
             )
         ).first()
-        
+
         if not defaults:
             return None
-        
+
         # Generate BOM tree using new system
         generator = BOMGenerator(cabinet, defaults)
         bom_tree = generator.generate()
-        
+
         # Option A: Get hierarchical tree (for advanced UI)
         print(f"Cabinet: {bom_tree.name}")
         print(f"Total Cost: ${bom_tree.cost:.2f}")
-        
+
         for part in bom_tree.get_all_parts():
             print(f"  - {part.name}: {part.quantity_net} {part.unit} @ ${part.unit_price} = ${part.cost:.2f}")
-        
+
         # Option B: Get flat BOM (backward compatible)
         flat_bom = generator.generate_flat_bom()
-        
+
         # Option C: Get cost trace lines (for existing UI)
         trace_lines = generator.generate_cost_trace_lines()
-        
+
         return {
             "tree": bom_tree,
             "flat": flat_bom,
@@ -70,20 +70,20 @@ def show_project_bom(project_id: int):
     Shows realistic purchasing quantities (full sheets, rolls, etc.)
     """
     from kitchen_erp.purchasing import get_strategy_for_material
-    
+
     with next(get_session()) as session:
         project = session.get(Project, project_id)
         if not project or not project.defaults:
             return None
-        
+
         # Aggregate materials across all cabinets
         material_totals = {}
         hardware_totals = {}
-        
+
         for cabinet in project.cabinets:
             generator = BOMGenerator(cabinet, project.defaults)
             bom_tree = generator.generate()
-            
+
             for part in bom_tree.get_all_parts():
                 if part.material_id:
                     # Material with database ID
@@ -106,27 +106,27 @@ def show_project_bom(project_id: int):
                             "unit_price": part.unit_price
                         }
                     hardware_totals[part.name]["quantity_net"] += part.quantity_net
-        
+
         # Apply purchasing strategies
         purchase_list = []
         total_cost = 0
-        
+
         for (mat_id, unit), data in material_totals.items():
             material = session.get(Material, mat_id)
             if not material:
                 continue
-            
+
             # Get appropriate purchasing strategy
             strategy = get_strategy_for_material(material.category)
-            
+
             # Calculate what you actually need to buy
             net_qty = data["quantity_net"]
             purchase_qty = strategy.calculate_purchase_quantity(net_qty)
             waste_factor = strategy.get_waste_factor(net_qty)
             cost = purchase_qty * data["unit_price"]
-            
+
             total_cost += cost
-            
+
             purchase_list.append({
                 "material": data["name"],
                 "category": material.category,
@@ -136,12 +136,12 @@ def show_project_bom(project_id: int):
                 "unit_price": f"${data['unit_price']:.2f}",
                 "total_cost": f"${cost:.2f}"
             })
-        
+
         # Add hardware
         for name, data in hardware_totals.items():
             cost = data["quantity_net"] * data["unit_price"]
             total_cost += cost
-            
+
             purchase_list.append({
                 "material": name,
                 "category": "Hardware",
@@ -151,7 +151,7 @@ def show_project_bom(project_id: int):
                 "unit_price": f"${data['unit_price']:.2f}",
                 "total_cost": f"${cost:.2f}"
             })
-        
+
         return {
             "purchase_list": purchase_list,
             "total_cost": total_cost
@@ -170,7 +170,7 @@ def bom_display() -> rx.Component:
     """Display BOM with expandable tree structure"""
     return rx.vstack(
         rx.heading("Bill of Materials", size="lg"),
-        
+
         # Total cost at top
         rx.hstack(
             rx.text("Total Cost:", weight="bold"),
@@ -182,7 +182,7 @@ def bom_display() -> rx.Component:
             ),
             spacing="2"
         ),
-        
+
         # Material breakdown
         rx.accordion.root(
             rx.accordion.item(
@@ -200,7 +200,7 @@ def bom_display() -> rx.Component:
                     )
                 )
             ),
-            
+
             rx.accordion.item(
                 header=rx.accordion.header("Hardware"),
                 content=rx.accordion.content(
@@ -216,11 +216,11 @@ def bom_display() -> rx.Component:
                     )
                 )
             ),
-            
+
             collapsible=True,
             width="100%"
         ),
-        
+
         width="100%",
         spacing="4"
     )
@@ -290,7 +290,7 @@ all_materials = {}
 for cabinet in project.cabinets:
     generator = BOMGenerator(cabinet, project.defaults)
     bom_tree = generator.generate()
-    
+
     for part in bom_tree.get_all_parts():
         if part.material_id:
             # Add to shopping list...
@@ -300,7 +300,7 @@ for cabinet in project.cabinets:
 for material_id, data in all_materials.items():
     material = session.get(Material, material_id)
     strategy = get_strategy_for_material(material.category)
-    
+
     # This tells you how many full sheets/rolls to buy
     purchase_qty = strategy.calculate_purchase_quantity(data["net_qty"])
 ```
@@ -344,20 +344,20 @@ def test_integration():
         )
         session.add(cabinet)
         session.commit()
-        
+
         # Get defaults
         defaults = session.exec(
             select(ProjectDefaults).where(ProjectDefaults.project_id == 1)
         ).first()
-        
+
         # Generate BOM
         generator = BOMGenerator(cabinet, defaults)
         bom_tree = generator.generate()
-        
+
         # Verify
         assert bom_tree.cost > 0
         assert len(bom_tree.get_all_parts()) > 0
-        
+
         print("✅ Integration test passed!")
         print(f"   Total cost: ${bom_tree.cost:.2f}")
         print(f"   Parts count: {len(bom_tree.get_all_parts())}")
@@ -386,13 +386,14 @@ def test_integration():
 
 ```json
 {
-  "tags": ["is_base", "has_doors"]  // ← These trigger hardware addition
+    "tags": ["is_base", "has_doors"] // ← These trigger hardware addition
 }
 ```
 
 ### Issue: Costs seem too high
 
 **Expected!** New system is more accurate:
+
 - Uses purchasing strategies (full sheets)
 - Includes all hardware based on tags
 - More realistic than old system

@@ -7,26 +7,34 @@ This application implements a professional CAD/CAM-style BOM (Bill of Materials)
 ## Architecture Patterns Implemented
 
 ### 1. Recipe Pattern (Data-Driven Design)
+
 Cabinet definitions are stored in `kitchen_erp/recipes.json` rather than hardcoded in Python. This allows:
+
 - Easy addition of new cabinet types without code changes
 - Clear separation of configuration from logic
 - Version control of cabinet specifications
 
 ### 2. Composite Pattern (BOM Tree)
+
 BOMs are hierarchical trees, not flat lists:
+
 - `BOMAssembly` - composite nodes (cabinets, drawers)
 - `BOMPart` - leaf nodes (materials, hardware)
 - Enables nested cost calculation and detailed breakdowns
 
 ### 3. Rules Engine (Tag-Based Components)
+
 Tags in recipes automatically trigger hardware addition:
+
 - `is_base` → adds cabinet legs
 - `has_doors` → adds hinges and bumpers
 - `has_drawers` → adds drawer slides
 - Extensible via `HARDWARE_RULES` dictionary
 
 ### 4. Strategy Pattern (Purchasing Logic)
+
 Different materials have different purchasing strategies:
+
 - `SheetMaterialStrategy` - boards sold in full sheets
 - `LinearMaterialStrategy` - edgebanding in rolls
 - `CountertopStrategy` - countertops in standard lengths
@@ -35,23 +43,28 @@ Different materials have different purchasing strategies:
 ## Key Components
 
 ### BOM Generator (`kitchen_erp/bom_generator.py`)
+
 Main orchestrator that:
+
 1. Loads recipe for cabinet type
 2. Evaluates formulas to calculate material quantities
 3. Applies rules engine for hardware
 4. Builds hierarchical BOM tree
 
 ### Recipe Loader (`kitchen_erp/recipe_loader.py`)
+
 - Loads and caches recipes from JSON
 - Safely evaluates mathematical formulas
 - Provides recipe lookup utilities
 
 ### Rules Engine (`kitchen_erp/rules_engine.py`)
+
 - Maps tags to required hardware
 - Handles quantity multipliers (e.g., 2 doors = 4 hinges)
 - Extensible rule configuration
 
 ### Purchasing Strategies (`kitchen_erp/purchasing.py`)
+
 - Calculates actual purchase quantities
 - Accounts for standard sizes and waste
 - Provides realistic cost estimates
@@ -59,6 +72,7 @@ Main orchestrator that:
 ## Testing
 
 All components have comprehensive test coverage:
+
 - `tests/test_recipe_loader.py` - Recipe loading and formula evaluation
 - `tests/test_bom_tree.py` - Composite pattern and tree operations
 - `tests/test_rules_engine.py` - Tag-based component addition
@@ -66,6 +80,7 @@ All components have comprehensive test coverage:
 - `tests/test_bom_generator.py` - End-to-end BOM generation
 
 Run tests with:
+
 ```bash
 cd kitchen-app && uv run pytest tests/ -v
 ```
@@ -86,14 +101,14 @@ with Session(engine) as session:
     defaults = session.exec(
         select(ProjectDefaults).where(ProjectDefaults.project_id == cabinet.project_id)
     ).first()
-    
+
     # Generate hierarchical BOM tree
     generator = BOMGenerator(cabinet, defaults)
     bom_tree = generator.generate()
-    
+
     # Access total cost
     print(f"Total cost: ${bom_tree.cost:.2f}")
-    
+
     # Get flat list of all parts
     for part in bom_tree.get_all_parts():
         print(f"  {part.name}: {part.quantity_net} {part.unit} @ ${part.unit_price}")
@@ -121,11 +136,13 @@ flat_bom = generator.generate_flat_bom()
 ### Migrating from Old to New System
 
 **Phase 1: Keep both systems running** (current state)
+
 - Old `calculate_cost()` method still works
 - New `BOMGenerator` available for testing
 - UI can use either system
 
 **Phase 2: Update UI to use BOM tree** (future)
+
 ```python
 # In state.py - KitchenState
 def open_selected_cabinet_cost_trace(self):
@@ -136,23 +153,25 @@ def open_selected_cabinet_cost_trace(self):
                 ProjectDefaults.project_id == cabinet.project_id
             )
         ).first()
-        
+
         # NEW: Use BOM generator
         generator = BOMGenerator(cabinet, defaults)
         bom_tree = generator.generate()
-        
+
         # Convert to UI format
         self.cost_trace_lines = self._convert_bom_tree_to_ui(bom_tree)
         self.cost_trace_visible = True
 ```
 
 **Phase 3: Remove old calculate_cost()** (after UI migration)
+
 - Delete `Cabinet.calculate_cost()` method
 - All cost calculations go through `BOMGenerator`
 
 ## Migration Path
 
 ### Current State (v0.1)
+
 - ✅ Recipe system with JSON configuration
 - ✅ BOM tree structure (Composite pattern)
 - ✅ Rules engine for hardware
@@ -162,12 +181,14 @@ def open_selected_cabinet_cost_trace(self):
 - ⚠️ Old `Cabinet.calculate_cost()` still in use by UI
 
 ### Next Steps (v0.2)
+
 1. **Update UI to display BOM tree** - Replace flat cost trace with expandable tree
 2. **Integrate purchasing strategies** - Show "Net vs Purchase" quantities in UI
 3. **Add recipe editor** - Allow users to modify recipes.json through UI
 4. **Project-level BOM aggregation** - Combine materials across all cabinets
 
 ### Future Enhancements (v1.0+)
+
 1. **Nesting Engine** - Optimize sheet material cutting with real nesting algorithms
 2. **CNC Export** - Generate machine-ready cutting files (DXF, CNC code)
 3. **Visual BOM Tree** - Interactive 3D visualization of cabinet assembly
@@ -178,21 +199,25 @@ def open_selected_cabinet_cost_trace(self):
 ## Design Decisions & Trade-offs
 
 ### Why JSON for Recipes?
+
 **Pro:** Easy to edit, version control friendly, no code changes needed for new cabinet types
 **Con:** No type safety, must validate at runtime
 **Decision:** Benefits outweigh risks for this use case
 
 ### Why Composite Pattern for BOM?
+
 **Pro:** Natural representation of assembly hierarchy, easy to extend
 **Con:** More complex than flat list, requires tree traversal
 **Decision:** Professional CAD/CAM systems use this pattern for good reason
 
 ### Why Keep Old calculate_cost()?
+
 **Pro:** Zero breaking changes, gradual migration possible
 **Con:** Code duplication, maintenance burden
 **Decision:** Temporary - will be removed after UI migration
 
 ### Why Separate Purchasing Strategies?
+
 **Pro:** Realistic cost estimates, matches real-world procurement
 **Con:** More complex than simple waste factor
 **Decision:** Critical for accurate quotes - worth the complexity
