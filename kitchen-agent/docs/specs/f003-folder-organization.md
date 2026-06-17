@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS session_folders (
 | `src/api/folders.py`                                  | FastAPI router                       |
 | `frontend/src/lib/stores/folder.svelte.ts`            | Frontend store                       |
 | `frontend/src/lib/stores/folder.test.ts`              | Store unit tests                     |
-| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops                  |
+| `frontend/src/lib/components/FolderTree.svelte`       | Folder list + drops + activeId prop |
 | `frontend/src/lib/components/FolderItem.svelte`       | Single folder + session context menu |
 | `frontend/src/lib/components/DraggableSession.svelte` | Drag wrapper                         |
 | `frontend/src/lib/actions/dragdrop.ts`                | HTML5 DnD actions                    |
@@ -84,7 +84,33 @@ CREATE TABLE IF NOT EXISTS session_folders (
 
 ## 5. Frontend Store Architecture
 
-### 5.1 Class-Based Store
+### 5.1 Inbox Model
+
+History shows only **unfiled sessions** (sessions not assigned to any folder).
+This is the "inbox" pattern — sessions live in one place:
+
+```
+History (inbox)         Folders
+─────────────────       ─────────────────────
+Session C               Kitchen Projects
+Session D                 • Session A
+Session E                 • Session B
+Session H                 • Session F
+...                       • Session G
+(ONLY unfiled)
+```
+
+`folderStore.folderedSessionIds: SvelteSet<string>` tracks all session IDs
+that are assigned to any folder. `SessionPanel` filters the session tree to
+exclude these IDs.
+
+The set is updated on:
+- `refresh()` — fetches all folder sessions on mount
+- `assignSession()` — adds ID optimistically
+- `unassignSession()` — removes ID optimistically
+- `deleteFolder()` — removes all IDs from deleted folder
+
+### 5.2 Class-Based Store
 
 `folderStore` is class-based (not closure-based like other stores):
 
@@ -225,7 +251,18 @@ FolderItem (drop zone)              │
 
 ---
 
-## 7. Bug History
+## 7. Change History
+
+### 2026-06-17: Inbox Model
+
+History now shows only unfiled sessions (not assigned to any folder).
+Sessions appear in ONE place only — either a folder or History.
+
+**Changes:**
+- Added `folderedSessionIds: SvelteSet<string>` to track foldered sessions
+- `SessionPanel` filters `visibleRoots` and `activeCount` to exclude foldered IDs
+- `FolderItem` updated with `activeId` prop for consistent active state styling
+- Session rendering in folders matches `SessionTreeNode` styling
 
 ### 2026-06-17: SvelteMap/SvelteSet Reactivity
 
