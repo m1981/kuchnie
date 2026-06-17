@@ -969,11 +969,14 @@ When the architecture changes:
 5. **Adding a new DI dependency** → Update Diagram 6 (DI Graph)
 6. **Changing routing/navigation** → Update Diagram 7 (URL Routing) and Diagram 8 (State Machine)
 7. **Changing import/export** → Update Diagram 12 (Import/Export Data Flow) and docs/specs/f002-import-export.md
+8. **Session state changes** → Update docs/specs/session-state-machine.md and session-states-flow.md
 
 ### Recent Changes
 
 | Date       | Change                                                                       | Diagrams Updated       |
 | ---------- | ---------------------------------------------------------------------------- | ---------------------- |
+| 2026-06-17 | Session state machine: tree operations for History/Folder/Archive             | 1, 5, 10 (updated)     |
+| 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns     | - (E2E tests)          |
 | 2026-06-17 | Refactor v2 complete: direct imports, Dialog, SidebarLayout, ComposerActions | 1, 5, 10 (updated)     |
 | 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction         | 1, 5, 6 (updated)      |
 | 2026-06-14 | Import chats from external JSON (POST /api/sessions/import)                  | 1, 6, 12 (new)         |

@@ -555,6 +555,8 @@ graph LR
     subgraph UIComponents["Shared UI"]
         Dialog["Dialog<br/>━━━━━━━━━━━━━━<br/>• Escape key<br/>• Backdrop click<br/>• Scroll lock<br/>• Snippet slots"]
         ConfirmDialog["ConfirmDialog<br/>━━━━━━━━━━━━━━<br/>• Uses Dialog<br/>• Auto-confirm mode"]
+        ArchiveConfirmDialog["ArchiveConfirmDialog<br/>━━━━━━━━━━━━━━<br/>• Include children option<br/>• Remove from folder option"]
+        MoveToFolderDialog["MoveToFolderDialog<br/>━━━━━━━━━━━━━━<br/>• Multi-folder select<br/>• Include children option"]
         TokenIndicator["TokenIndicator<br/>━━━━━━━━━━━━━━<br/>• Progress bar<br/>• Session tokens<br/>• Input estimate<br/>• Context %"]
     end
 
@@ -679,6 +681,63 @@ graph TB
 
 ---
 
+## 12. Session State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active: create session
+    [*] --> Forked: fork session
+    
+    state "Active (History)" as Active
+    state "Foldered" as Foldered
+    state "Archived" as Archived
+    state "Forked" as Forked
+    
+    Active --> Foldered: assignSessionTree()
+    Active --> Archived: archiveTree()
+    Active --> Forked: forkSession()
+    
+    Foldered --> Active: unassignSessionTree()
+    Foldered --> Archived: archiveTree()
+    Foldered --> Foldered: assignSessionTree() (add to another)
+    
+    Archived --> Active: unarchiveTree()
+    Archived --> Foldered: unarchiveTree() (if still in folder)
+    
+    Forked --> Foldered: assignSessionTree()
+    Forked --> Archived: archiveTree()
+    
+    Active --> [*]: delete (if no children)
+    Foldered --> [*]: delete (if no children)
+    Archived --> [*]: delete (if no children)
+    Forked --> [*]: delete (only leaf nodes)
+```
+
+### Session State Flags
+
+```typescript
+interface SessionFlags {
+  is_archived: boolean;    // archived_at IS NOT NULL
+  is_foldered: boolean;    // in session_folders table
+  is_fork: boolean;        // parent_id IS NOT NULL
+  is_fork_parent: boolean; // has children
+  children_count: number;  // number of direct children
+  folder_ids: string[];    // folders containing this session
+}
+```
+
+### Tree Operations
+
+| Operation | Frontend | Backend |
+|-----------|----------|--------|
+| Archive tree | `sessionStore.archiveTree(id, includeChildren)` | `POST /api/sessions/{id}/archive/tree` |
+| Unarchive tree | `sessionStore.unarchiveTree(id, includeChildren)` | `DELETE /api/sessions/{id}/archive/tree` |
+| Assign tree to folder | `folderStore.assignSessionTree(folderId, id, includeChildren)` | `POST /api/folders/{id}/sessions/{sid}/tree` |
+| Unassign tree from folder | `folderStore.unassignSessionTree(folderId, id, includeChildren)` | `DELETE /api/folders/{id}/sessions/{sid}/tree` |
+| Get session flags | `sessionStore.getSessionFlags(id)` | `GET /api/sessions/{id}/flags` |
+
+---
+
 ## Diagram Maintenance
 
 | Change             | Diagrams to Update                                          |
@@ -692,11 +751,15 @@ graph TB
 | Component refactor | 1 (Hierarchy), 8 (Responsibility), 10 (Size)                |
 | Drag-drop changes  | 5 (Sidebar Architecture)                                    |
 | Chat flow changes  | 4 (Chat Data Flow)                                          |
+| Session state changes | 12 (Session State Machine), session-state-machine.md     |
 
 ### Last Updated
 
 | Date       | Change                                                                                | Diagrams      |
 | ---------- | ------------------------------------------------------------------------------------- | ------------- |
+| 2026-06-17 | Session state machine: tree operations (archiveTree, assignTree, getSessionFlags)     | 2, 3, 5, 9, 10 |
+| 2026-06-17 | New components: ArchiveConfirmDialog, MoveToFolderDialog                              | 1, 8          |
+| 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns              | - (E2E tests) |
 | 2026-06-17 | Fix: SvelteMap/SvelteSet reactivity (remove $state wrapping, defer getSessions fetch) | 2, 5, 6       |
 | 2026-06-17 | Refactor v2 complete (all 8 phases)                                                   | All (updated) |
 | 2026-06-17 | Phase 8: ComposerActions extracted                                                    | 1, 4, 8, 10   |
