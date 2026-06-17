@@ -473,6 +473,50 @@ export const api = {
 			method: 'DELETE'
 		}),
 
+	// ── Tree Operations ────────────────────────────────────────────────
+
+	/**
+	 * GET /api/sessions/{id}/flags
+	 * Get session state flags for UI decisions.
+	 */
+	getSessionFlags: (id: string) =>
+		request<{
+			is_archived: boolean;
+			is_foldered: boolean;
+			is_fork: boolean;
+			is_fork_parent: boolean;
+			children_count: number;
+			folder_ids: string[];
+		}>(`/api/sessions/${id}/flags`),
+
+	/**
+	 * POST /api/sessions/{id}/archive/tree
+	 * Archive session and optionally all children.
+	 */
+	archiveSessionTree: (id: string, includeChildren: boolean = false) =>
+		request<{
+			archived: boolean;
+			session_ids: string[];
+			count: number;
+		}>(`/api/sessions/${id}/archive/tree`, {
+			method: 'POST',
+			...jsonBody({ include_children: includeChildren })
+		}),
+
+	/**
+	 * DELETE /api/sessions/{id}/archive/tree
+	 * Unarchive session and optionally all children.
+	 */
+	unarchiveSessionTree: (id: string, includeChildren: boolean = false) =>
+		request<{
+			archived: boolean;
+			session_ids: string[];
+			count: number;
+		}>(`/api/sessions/${id}/archive/tree`, {
+			method: 'DELETE',
+			...jsonBody({ include_children: includeChildren })
+		}),
+
 	deleteSession: (id: string) =>
 		fetch(`${API_BASE}/api/sessions/${id}`, { method: 'DELETE' }).then((r) => {
 			if (!r.ok && r.status !== 204)
@@ -764,5 +808,45 @@ export const api = {
 	): Promise<{ id: string; title: string; updated_at: string }[]> =>
 		request<{ id: string; title: string; updated_at: string }[]>(
 			`/api/folders/${folderId}/sessions`
-		)
+		),
+
+	// ── Folder Tree Assignment ───────────────────────────────────────────
+
+	/**
+	 * POST /api/folders/{folderId}/sessions/{sessionId}/tree
+	 * Assign session (and optionally children) to folder.
+	 */
+	assignSessionTreeToFolder: (
+		folderId: string,
+		sessionId: string,
+		includeChildren: boolean = false
+	): Promise<{ assigned: boolean; session_ids: string[]; count: number }> =>
+		request<{ assigned: boolean; session_ids: string[]; count: number }>(
+			`/api/folders/${folderId}/sessions/${sessionId}/tree`,
+			{
+				method: 'POST',
+				...jsonBody({ include_children: includeChildren })
+			}
+		),
+
+	/**
+	 * DELETE /api/folders/{folderId}/sessions/{sessionId}/tree
+	 * Remove session (and optionally children) from folder.
+	 */
+	unassignSessionTreeFromFolder: (
+		folderId: string,
+		sessionId: string,
+		includeChildren: boolean = false
+	): Promise<void> =>
+		fetch(
+			`${API_BASE}/api/folders/${folderId}/sessions/${sessionId}/tree`,
+			{
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ include_children: includeChildren })
+			}
+		).then((r) => {
+			if (!r.ok && r.status !== 204)
+				throw new Error(`Unassign tree failed: ${r.status}`);
+		})
 };

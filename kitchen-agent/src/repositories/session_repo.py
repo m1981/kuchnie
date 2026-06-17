@@ -221,3 +221,107 @@ class SQLiteSessionRepository:
             "system_prompt":   row["system_prompt"],
             "updated_at":      row["updated_at"],
         }
+
+    # ── Tree Operations ─────────────────────────────────────────────────
+
+    def get_children(self, session_id: str) -> list[str]:
+        """
+        Get all descendant session IDs (recursive).
+        Returns list of child IDs in breadth-first order.
+        """
+        with self.db.get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT id FROM sessions WHERE parent_id = ?",
+                (session_id,)
+            )
+            direct_children = [row["id"] for row in cursor.fetchall()]
+
+        # Recursively get all descendants
+        all_children = list(direct_children)
+        for child_id in direct_children:
+            all_children.extend(self.get_children(child_id))
+
+        return all_children
+
+    def get_session_flags(self, session_id: str) -> dict:
+        """
+        Get session state flags for UI decisions.
+        Returns dict with:
+          - is_archived: bool
+          - is_foldered: bool
+          - is_fork: bool (has parent)
+          - is_fork_parent: bool (has children)
+          - children_count: int
+          - folder_ids: list[str]
+        """
+        with self.db.get_connection() as conn:
+            # Get session info
+            session = conn.execute(
+                "SELECT parent_id, archived_at FROM sessions WHERE id = ?",
+                (session_id,)
+            ).fetchone()
+
+            if session is None:
+                raise ValueError(f"Session not found: {session_id}")
+
+            # Count children
+            children_count = conn.execute(
+                "SELECT COUNT(*) FROM sessions WHERE parent_id = ?",
+                (session_id,)
+            ).fetchone()[0]
+
+            # Get folder IDs
+            folder_rows = conn.execute(
+                "SELECT folder_id FROM session_folders WHERE session_id = ?",
+                (session_id,)
+            ).fetchall()
+            folder_ids = [row["folder_id"] for row in folder_rows]
+
+        return {
+            "is_archived": session["archived_at"] is not None,
+            "is_foldered": len(folder_ids) > 0,
+            "is_fork": session["parent_id"] is not None,
+            "is_fork_parent": children_count > 0,
+            "children_count": children_count,
+            "folder_ids": folder_ids,
+        }
+
+    def archive_tree(self, session_id: str, include_children: bool = False) -> list[str]:
+        """
+        Archive session and optionally all children.
+        Returns list of archived session IDs.
+        """
+        ids_to_archive = [session_id]
+
+        if include_children:
+            ids_to_archive.extend(self.get_children(session_id))
+
+        with self.db.get_connection() as conn:
+            placeholders = ",".join("?" * len(ids_to_archive))
+            conn.execute(
+                f"UPDATE sessions SET archived_at = ? WHERE id IN ({placeholders}) AND archived_at IS NULL",
+                [datetime.now()] + ids_to_archive,
+            )
+            conn.commit()
+
+        return ids_to_archive
+
+    def unarchive_tree(self, session_id: str, include_children: bool = False) -> list[str]:
+        """
+        Unarchive session and optionally all children.
+        Returns list of unarchived session IDs.
+        """
+        ids_to_unarchive = [session_id]
+
+        if include_children:
+            ids_to_unarchive.extend(self.get_children(session_id))
+
+        with self.db.get_connection() as conn:
+            placeholders = ",".join("?" * len(ids_to_unarchive))
+            conn.execute(
+                f"UPDATE sessions SET archived_at = NULL WHERE id IN ({placeholders}) AND archived_at IS NOT NULL",
+                ids_to_unarchive,
+            )
+            conn.commit()
+
+        return ids_to_unarchive

@@ -215,3 +215,54 @@ class SQLiteFolderRepository:
                 (session_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
+
+    # ── Tree Assignment ────────────────────────────────────────────────
+
+    def assign_tree(self, folder_id: str, session_id: str, include_children: bool = False) -> list[str]:
+        """
+        Assign session (and optionally children) to folder.
+        Returns list of assigned session IDs.
+        """
+        ids_to_assign = [session_id]
+
+        if include_children:
+            # Get children from session repository
+            # We need to import here to avoid circular dependency
+            from src.repositories.session_repo import SQLiteSessionRepository
+            session_repo = SQLiteSessionRepository(self.db)
+            ids_to_assign.extend(session_repo.get_children(session_id))
+
+        with self.db.get_connection() as conn:
+            for sid in ids_to_assign:
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO session_folders (folder_id, session_id, assigned_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (folder_id, sid, datetime.now().isoformat()),
+                )
+            conn.commit()
+
+        return ids_to_assign
+
+    def unassign_tree(self, folder_id: str, session_id: str, include_children: bool = False) -> list[str]:
+        """
+        Remove session (and optionally children) from folder.
+        Returns list of unassigned session IDs.
+        """
+        ids_to_unassign = [session_id]
+
+        if include_children:
+            from src.repositories.session_repo import SQLiteSessionRepository
+            session_repo = SQLiteSessionRepository(self.db)
+            ids_to_unassign.extend(session_repo.get_children(session_id))
+
+        with self.db.get_connection() as conn:
+            for sid in ids_to_unassign:
+                conn.execute(
+                    "DELETE FROM session_folders WHERE folder_id = ? AND session_id = ?",
+                    (folder_id, sid),
+                )
+            conn.commit()
+
+        return ids_to_unassign

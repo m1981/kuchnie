@@ -27,6 +27,7 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 log = structlog.get_logger(__name__)
 
@@ -167,6 +168,68 @@ def unarchive_session(
             detail=f"Session not found or not archived: {session_id}",
         )
     return {"archived": False, "session_id": session_id}
+
+
+# ── Tree Operations ─────────────────────────────────────────────────────
+
+
+class TreeOperationRequest(BaseModel):
+    include_children: bool = False
+
+
+@router.get("/api/sessions/{session_id}/flags", status_code=200)
+def get_session_flags(
+    session_id: str,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> dict:
+    """
+    Get session state flags for UI decisions.
+    Returns is_archived, is_foldered, is_fork, is_fork_parent, children_count, folder_ids.
+    """
+    try:
+        return session_repo.get_session_flags(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/api/sessions/{session_id}/archive/tree", status_code=200)
+def archive_session_tree(
+    session_id: str,
+    request: TreeOperationRequest,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> dict:
+    """
+    Archive session and optionally all children.
+    """
+    try:
+        archived_ids = session_repo.archive_tree(session_id, request.include_children)
+        return {
+            "archived": True,
+            "session_ids": archived_ids,
+            "count": len(archived_ids),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.delete("/api/sessions/{session_id}/archive/tree", status_code=200)
+def unarchive_session_tree(
+    session_id: str,
+    request: TreeOperationRequest,
+    session_repo: SessionRepository = Depends(get_session_repo),
+) -> dict:
+    """
+    Unarchive session and optionally all children.
+    """
+    try:
+        unarchived_ids = session_repo.unarchive_tree(session_id, request.include_children)
+        return {
+            "archived": False,
+            "session_ids": unarchived_ids,
+            "count": len(unarchived_ids),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.patch("/api/sessions/{session_id}/title", response_model=TitleUpdateResponse)

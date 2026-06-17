@@ -150,6 +150,105 @@ function createSessionStore() {
 				tree = previous; // rollback
 				throw e;
 			}
+		},
+
+		// ── Tree Operations ─────────────────────────────────────────────────
+
+		/**
+		 * Get session state flags for UI decisions.
+		 */
+		async getSessionFlags(id: string) {
+			return api.getSessionFlags(id);
+		},
+
+		/**
+		 * Archive session and optionally all children.
+		 */
+		async archiveTree(id: string, includeChildren: boolean = false) {
+			// Optimistic: stamp all affected sessions
+			const idsToArchive = [id];
+			if (includeChildren) {
+				// Get children from tree
+				const node = flat.find(n => n.id === id);
+				if (node) {
+					function collectChildren(n: typeof node): string[] {
+						const ids: string[] = [];
+						for (const child of n.children) {
+							ids.push(child.id);
+							ids.push(...collectChildren(child));
+						}
+						return ids;
+					}
+					idsToArchive.push(...collectChildren(node));
+				}
+			}
+
+			// Optimistic stamp
+			const now = new Date().toISOString();
+			for (const archiveId of idsToArchive) {
+				tree = stampArchived(tree, archiveId, now);
+			}
+
+			try {
+				await api.archiveSessionTree(id, includeChildren);
+			} catch (e) {
+				// Rollback
+				for (const archiveId of idsToArchive) {
+					tree = stampArchived(tree, archiveId, null);
+				}
+				throw e;
+			}
+		},
+
+		/**
+		 * Unarchive session and optionally all children.
+		 */
+		async unarchiveTree(id: string, includeChildren: boolean = false) {
+			// Optimistic: clear stamp for all affected sessions
+			const idsToUnarchive = [id];
+			if (includeChildren) {
+				const node = flat.find(n => n.id === id);
+				if (node) {
+					function collectChildren(n: typeof node): string[] {
+						const ids: string[] = [];
+						for (const child of n.children) {
+							ids.push(child.id);
+							ids.push(...collectChildren(child));
+						}
+						return ids;
+					}
+					idsToUnarchive.push(...collectChildren(node));
+				}
+			}
+
+			// Optimistic clear
+			for (const unarchiveId of idsToUnarchive) {
+				tree = stampArchived(tree, unarchiveId, null);
+			}
+
+			try {
+				await api.unarchiveSessionTree(id, includeChildren);
+			} catch (e) {
+				// Rollback: re-fetch
+				await this.refresh();
+				throw e;
+			}
+		},
+
+		/**
+		 * Check if session has children (is fork parent).
+		 */
+		hasChildren(id: string): boolean {
+			const node = flat.find(n => n.id === id);
+			return node ? node.children.length > 0 : false;
+		},
+
+		/**
+		 * Get children count for a session.
+		 */
+		getChildrenCount(id: string): number {
+			const node = flat.find(n => n.id === id);
+			return node ? node.children.length : 0;
 		}
 	};
 }

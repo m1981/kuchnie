@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from src.dependencies import get_folder_service
 from src.folder_service import FolderService
@@ -147,3 +148,68 @@ async def get_folder_sessions(
         raise HTTPException(status_code=404, detail="Folder not found")
 
     return service.get_folder_sessions(folder_id)
+
+
+# ── Tree Assignment ─────────────────────────────────────────────────────
+
+
+class TreeAssignRequest(BaseModel):
+    include_children: bool = False
+
+
+@router.post(
+    "/api/folders/{folder_id}/sessions/{session_id}/tree",
+    status_code=201,
+)
+async def assign_session_tree(
+    folder_id: str,
+    session_id: str,
+    request: TreeAssignRequest,
+    service: FolderService = Depends(get_folder_service),
+) -> dict:
+    """Assign session (and optionally children) to folder."""
+    log.info(
+        "assign_session_tree_request",
+        folder_id=folder_id,
+        session_id=session_id,
+        include_children=request.include_children,
+    )
+
+    try:
+        assigned_ids = service.assign_tree(
+            folder_id, session_id, request.include_children
+        )
+        return {
+            "assigned": True,
+            "folder_id": folder_id,
+            "session_ids": assigned_ids,
+            "count": len(assigned_ids),
+        }
+    except Exception as e:
+        log.error("assign_session_tree_failed", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to assign session tree")
+
+
+@router.delete(
+    "/api/folders/{folder_id}/sessions/{session_id}/tree",
+    status_code=204,
+)
+async def unassign_session_tree(
+    folder_id: str,
+    session_id: str,
+    request: TreeAssignRequest,
+    service: FolderService = Depends(get_folder_service),
+) -> None:
+    """Remove session (and optionally children) from folder."""
+    log.info(
+        "unassign_session_tree_request",
+        folder_id=folder_id,
+        session_id=session_id,
+        include_children=request.include_children,
+    )
+
+    success = service.unassign_tree(
+        folder_id, session_id, request.include_children
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Session not assigned to folder")

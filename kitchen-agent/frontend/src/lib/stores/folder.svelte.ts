@@ -47,6 +47,11 @@ class FolderStore {
 	// ── Pending operations (for optimistic update UX) ─────────────────────
 	pendingOps = new SvelteMap<string, { type: string; targetId: string }>();
 
+	// ── Foldered session IDs (for filtering History to inbox-only) ──────
+	// Tracks ALL session IDs that are assigned to any folder.
+	// Updated on refresh(), assignSession(), unassignSession(), deleteFolder().
+	folderedSessionIds = new SvelteSet<string>();
+
 	// ── Dialog state ───────────────────────────────────────────────────────
 	createDialogOpen = $state(false);
 	editingFolderId = $state<string | null>(null);
@@ -67,6 +72,11 @@ class FolderStore {
 
 	get isDragging(): boolean {
 		return this.dragPayload !== null;
+	}
+
+	/** Check if a session is in any folder. */
+	isFoldered(sessionId: string): boolean {
+		return this.folderedSessionIds.has(sessionId);
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────
@@ -92,10 +102,27 @@ class FolderStore {
 			const response = await api.getFolders();
 			this.folders = response.folders;
 			this.fetchState = { status: 'success', data: this.folders };
+			// Load all foldered session IDs for History filtering
+			await this.loadAllFolderedIds();
 		} catch (e) {
 			const msg = e instanceof Error ? e.message : String(e);
 			this.fetchState = { status: 'error', message: msg };
 			this.showError(`Failed to load folders: ${msg}`);
+		}
+	}
+
+	/**
+	 * Fetch session IDs for all folders and populate folderedSessionIds.
+	 * Called on refresh() to enable History → inbox filtering.
+	 */
+	private async loadAllFolderedIds(): Promise<void> {
+		try {
+			const results = await Promise.all(this.folders.map((f) => api.getFolderSessions(f.id)));
+			this.folderedSessionIds = new SvelteSet(
+				results.flatMap((sessions) => sessions.map((s) => s.id))
+			);
+		} catch {
+			// Non-critical — History will show all sessions if this fails
 		}
 	}
 
@@ -131,10 +158,21 @@ class FolderStore {
 
 	async deleteFolder(id: string): Promise<boolean> {
 		const previous = this.folders;
+		// Get sessions from cache before deleting folder
+		const folderSessions = this.folderSessions.get(id) ?? [];
 		this.folders = this.folders.filter((f) => f.id !== id);
 
 		try {
 			await api.deleteFolder(id);
+			// Remove foldered IDs for this folder's sessions
+			for (const session of folderSessions) {
+				this.folderedSessionIds.delete(session.id);
+			}
+			// Clean up cache
+			this.folderSessions.delete(id);
+			this.sessionsLoading.delete(id);
+			this.sessionsError.delete(id);
+			this.expandedFolders.delete(id);
 			return true;
 		} catch (e) {
 			this.folders = previous;
@@ -147,11 +185,12 @@ class FolderStore {
 	// ── Session Assignment ─────────────────────────────────────────────────
 
 	async assignSession(folderId: string, sessionId: string): Promise<boolean> {
-		// Optimistic: increment count
+		// Optimistic: increment count + mark as foldered
 		const previous = this.folders;
 		this.folders = this.folders.map((f) =>
 			f.id === folderId ? { ...f, session_count: f.session_count + 1 } : f
 		);
+		this.folderedSessionIds.add(sessionId);
 		this.pendingOps.set(sessionId, { type: 'assign', targetId: folderId });
 
 		try {
@@ -162,6 +201,7 @@ class FolderStore {
 		} catch (e) {
 			// Rollback
 			this.folders = previous;
+			this.folderedSessionIds.delete(sessionId);
 			const msg = e instanceof Error ? e.message : String(e);
 			this.showError(`Failed to assign session: ${msg}`);
 			return false;
@@ -171,11 +211,12 @@ class FolderStore {
 	}
 
 	async unassignSession(folderId: string, sessionId: string): Promise<boolean> {
-		// Optimistic: decrement count
+		// Optimistic: decrement count + unmark as foldered
 		const previous = this.folders;
 		this.folders = this.folders.map((f) =>
 			f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
 		);
+		this.folderedSessionIds.delete(sessionId);
 		this.pendingOps.set(sessionId, { type: 'unassign', targetId: folderId });
 
 		try {
@@ -185,8 +226,73 @@ class FolderStore {
 		} catch (e) {
 			// Rollback
 			this.folders = previous;
+			this.folderedSessionIds.add(sessionId);
 			const msg = e instanceof Error ? e.message : String(e);
 			this.showError(`Failed to unassign session: ${msg}`);
+			return false;
+		} finally {
+			this.pendingOps.delete(sessionId);
+		}
+	}
+
+	// ── Tree Assignment ─────────────────────────────────────────────────
+
+	/**
+	 * Assign session tree (session + optionally children) to folder.
+	 */
+	async assignSessionTree(folderId: string, sessionId: string, includeChildren: boolean = false): Promise<boolean> {
+		this.pendingOps.set(sessionId, { type: 'assign-tree', targetId: folderId });
+
+		try {
+			const result = await api.assignSessionTreeToFolder(folderId, sessionId, includeChildren);
+			
+			// Update local state with all assigned IDs
+			for (const assignedId of result.session_ids) {
+				this.folderedSessionIds.add(assignedId);
+			}
+			
+			// Update folder count
+			this.folders = this.folders.map((f) =>
+				f.id === folderId ? { ...f, session_count: f.session_count + result.count } : f
+			);
+			
+			this.invalidateSessions(folderId);
+			return true;
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to assign session tree: ${msg}`);
+			return false;
+		} finally {
+			this.pendingOps.delete(sessionId);
+		}
+	}
+
+	/**
+	 * Unassign session tree (session + optionally children) from folder.
+	 */
+	async unassignSessionTree(folderId: string, sessionId: string, includeChildren: boolean = false): Promise<boolean> {
+		this.pendingOps.set(sessionId, { type: 'unassign-tree', targetId: folderId });
+
+		try {
+			await api.unassignSessionTreeFromFolder(folderId, sessionId, includeChildren);
+			
+			// Update local state
+			this.folderedSessionIds.delete(sessionId);
+			if (includeChildren) {
+				// We'd need the session store to get children, but for now just refresh
+				await this.refresh();
+			}
+			
+			// Update folder count (approximate - actual count comes from server)
+			this.folders = this.folders.map((f) =>
+				f.id === folderId ? { ...f, session_count: Math.max(0, f.session_count - 1) } : f
+			);
+			
+			this.invalidateSessions(folderId);
+			return true;
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			this.showError(`Failed to unassign session tree: ${msg}`);
 			return false;
 		} finally {
 			this.pendingOps.delete(sessionId);
@@ -304,6 +410,7 @@ class FolderStore {
 		this.sessionsLoading = new SvelteMap();
 		this.sessionsError = new SvelteMap();
 		this.expandedFolders = new SvelteSet();
+		this.folderedSessionIds = new SvelteSet();
 		this.dragPayload = null;
 		this.dropTarget = null;
 		this.createDialogOpen = false;

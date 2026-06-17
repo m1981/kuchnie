@@ -172,3 +172,50 @@ class FolderService:
             List of session dicts with id, title, updated_at.
         """
         return self._repo.get_folder_sessions(folder_id)
+
+    # ── Tree Operations ─────────────────────────────────────────────────
+
+    def assign_tree(
+        self, folder_id: str, session_id: str, include_children: bool = False
+    ) -> list[str]:
+        """
+        Assign session (and optionally children) to folder.
+
+        Args:
+            folder_id: Folder UUID.
+            session_id: Session UUID.
+            include_children: Whether to include all descendants.
+
+        Returns:
+            List of assigned session IDs.
+        """
+        logger.info(
+            "assign_tree",
+            folder_id=folder_id,
+            session_id=session_id,
+            include_children=include_children,
+        )
+        return self._repo.assign_tree(folder_id, session_id, include_children)
+
+    def unassign_tree(
+        self, folder_id: str, session_id: str, include_children: bool = False
+    ) -> bool:
+        """
+        Remove session (and optionally children) from folder.
+
+        Args:
+            folder_id: Folder UUID.
+            session_id: Session UUID.
+            include_children: Whether to include all descendants.
+
+        Returns:
+            True if removed, False if not assigned.
+        """
+        logger.info(
+            "unassign_tree",
+            folder_id=folder_id,
+            session_id=session_id,
+            include_children=include_children,
+        )
+        result = self._repo.unassign_tree(folder_id, session_id, include_children)
+        return len(result) > 0
