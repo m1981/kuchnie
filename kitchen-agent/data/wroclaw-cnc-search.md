@@ -81,7 +81,7 @@ Portale:
 
 ---
 
-### 1. **CUT-AM** ⭐ REKOMENDOWANA
+### 1. **CUT-AM** ⭐ REKOMENDOWANA 🟢 NISKIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://cut-am.pl/ |
@@ -127,7 +127,7 @@ Portale:
 
 ---
 
-### 4. **Meblostyl** ⭐ REKOMENDOWANA
+### 4. **Meblostyl** 🟡 ŚREDNIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://meblostyl.com/ |
@@ -141,9 +141,15 @@ Portale:
 
 **Opis:** Autoryzowany przedstawiciel SWISS KRONO, BLUM, SEVROLL. Profesjonalne centrum CNC. Oklejanie łuków (min. promień 60mm). Internetowa platforma e-Rozkrój do zamówień 24/7.
 
+**⚠️ Opinie negatywne:**
+- Problemy z terminami (kierownik stolarni)
+- Błędy w cięciu (formatki niezgodne o 20mm)
+- Zawyżane ceny dla klientów indywidualnych
+- Źródło: revieweuro.com, gowork.pl
+
 ---
 
-### 5. **Intar Wrocław - Strefa Płyt** ⭐ REKOMENDOWANA
+### 5. **Intar Wrocław - Strefa Płyt** 🟡 ŚREDNIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://www.intar.pl/obsluga-klienta-i-pomoc/oddzialy/wroclaw,8 |
@@ -155,6 +161,11 @@ Portale:
 | e-Rozrys | ✅ |
 
 **Opis:** Duży dystrybutor materiałów meblowych. Autoryzowany przedstawiciel Kronospan, Kaindl, Blum, Sevroll. Profesjonalna stolarnia z centrum wiercąco-frezującym BHX055. Oklejanie krzywoliniowe. Frezowanie w technologii nesting. Wsparcie projektowe.
+
+**⚠️ Opinie negatywne:**
+- Rotacja pracowników w oddziale wrocławskim
+- Nowi pracownicy nie zostają - może wpływać na jakość obsługi
+- Źródło: gowork.pl
 
 ---
 
@@ -187,7 +198,7 @@ Portale:
 
 ---
 
-### 8. **Arkadius**
+### 8. **Arkadius** 🟡 ŚREDNIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://arkadius.com.pl/ |
@@ -199,6 +210,12 @@ Portale:
 | Kontakt | tel. 71 345 82 83, arkadius.hurtownia@wp.pl |
 
 **Opis:** Hurtownia płyt meblowych i frontów. Pełen zakres usług stolarskich. Fronty: gładkie, frezowane, ryflowane. Laminaty HPL.
+
+**⚠️ Opinie negatywne:**
+- Ignorancja i arogancja działu kontaktu
+- Długi czas oczekiwania (2 miesiące)
+- Odmowa pomocy przy reklamacjach
+- Źródło: aleo.com, cylex-polska.pl, opineo.pl
 
 ---
 
@@ -232,7 +249,7 @@ Portale:
 
 ---
 
-### 11. **Multi-Cięcie**
+### 11. **Multi-Cięcie** 🟢 NISKIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://multi-ciecie.pl/ |
@@ -244,6 +261,11 @@ Portale:
 | Dystrybutor | Autoryzowany dystrybutor EGGER |
 
 **Opis:** Kompleksowe usługi dla meblarstwa. Cięcie płyt na wymiar. Docinanie i pasowanie blatów. Oklejanie krawędzi. Szeroki wachlarz usług CNC.
+
+**✅ Opinie pozytywne:**
+- "Fantastyczna obsługa klienta, cięcie formatek pod skosem i nawierty CNC wykonane fachowo"
+- Ocena 4.5+ na Google
+- Źródło: nicelocal.pl, obywatelpolski.com
 
 ---
 
@@ -261,7 +283,7 @@ Portale:
 
 ---
 
-### 13. **Desgen**
+### 13. **Desgen** 🟢 NISKIE RYZYKO
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://desgen.pl/ |
@@ -274,9 +296,14 @@ Portale:
 
 **Opis:** Duże centrum obróbcze CNC. Frezowanie 2D/3D. Nawiercanie. Obróbka drewna i materiałów drewnopochodnych. Zabezpieczanie olejami i lakierami.
 
+**✅ Opinie pozytywne:**
+- "Bardzo dobra jakość i wykonane, w krótkim terminie"
+- Brak negatywnych opinii
+- Źródło: zlotafirma.pl
+
 ---
 
-### 14. **Centrum.meble.pl**
+### 14. **Centrum.meble.pl** 🔴 WYSOKIE RYZYKO - NIE POLECANY
 | Kryterium | Status |
 |-----------|--------|
 | Adres WWW | https://centrum.meble.pl/ |
@@ -290,17 +317,30 @@ Portale:
 
 **Opis:** Płyty meblowe Egger. Konfigurator mebli na wymiar. Rozkrój online (płyty meblowe, akrylowe, budowlane, sklejki). Usługi CNC z wycinaniem kształtów. Kontakt: cnc@meble.pl
 
+**🔴 Opinie negatywne (od maja 2025):**
+- 23.05.2026 - "Meble przyszły w standardowych wymiarach, nie na wymiar!"
+- 24.03.2026 - Szuflady wyrwane z płyty w transporcie
+- 21.03.2026 - Wymiary zmienione o 1cm, obsługa przerzuca winę
+- 04.12.2025 - Brak wkrętów, frezy zawalone wiórami
+- 02.11.2025 - Dostawa przekładana 3 razy (z 10→30 dni)
+- Problemy: transport, wymiary, reklamacje, terminy
+- Źródło: centrum.meble.pl/wasze-opinie/
+
 ---
 
 ## Podsumowanie - TOP 5 rekomendacji
 
 | # | Firma | CNC pełen zakres | e-Rozrys/Online | Kontakt |
 |---|-------|:----------------:|:---------------:|---------|
-| 1 | **CUT-AM** | ✅ | ✅ | cut-am.pl |
-| 2 | **Meblostyl** | ✅ | ✅ | meblostyl.com |
-| 3 | **Intar Wrocław** | ✅ | ✅ | intar.pl |
-| 4 | **Stolmat** | ✅ | ❌ | stolmat.wroclaw.pl |
-| 5 | **Płyciarz** | ✅ | ✅ | plyciarz.pl |
+| 1 | **CUT-AM** 🟢 | ✅ | ✅ | cut-am.pl |
+| 2 | **Multi-Cięcie** 🟢 | ✅ | ❌ | multi-ciecie.pl |
+| 3 | **Desgen** 🟢 | ✅ | ❌ | desgen.pl |
+| 4 | **Płyciarz** 🟢 | ✅ | ✅ | plyciarz.pl |
+| 5 | **RBR Carpenter** 🟢 | ✅ | ✅ | rbr-carpenter.pl |
+
+**Unikać:** Centrum.meble.pl 🔴 (problemy z transportem, wymiarami, reklamacjami)
+
+**Zachować ostrożność:** Meblostyl 🟡, Intar 🟡, Arkadius 🟡
 
 ---
 
