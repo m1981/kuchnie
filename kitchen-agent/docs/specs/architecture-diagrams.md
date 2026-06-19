@@ -975,7 +975,7 @@ When the architecture changes:
 
 | Date       | Change                                                                       | Diagrams Updated       |
 | ---------- | ---------------------------------------------------------------------------- | ---------------------- |
-| 2026-06-17 | Session state machine: tree operations for History/Folder/Archive             | 1, 5, 10 (updated)     |
+| 2026-06-17 | Session state machine: tree operations for History/Folder/Archive            | 1, 5, 10 (updated)     |
 | 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns     | - (E2E tests)          |
 | 2026-06-17 | Refactor v2 complete: direct imports, Dialog, SidebarLayout, ComposerActions | 1, 5, 10 (updated)     |
 | 2026-06-16 | Class-based folderStore, drag-drop bug fix, ModelSelector extraction         | 1, 5, 6 (updated)      |
