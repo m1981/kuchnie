@@ -34,7 +34,7 @@
 		: ''}"
 >
 	<!-- Folder tree -->
-	<FolderTree {onload}>
+	<FolderTree {activeId} {onload}>
 		<!-- Unorganized sessions will render below folders -->
 	</FolderTree>
 

@@ -3,10 +3,11 @@
 
 	type Props = {
 		folderId: string;
+		activeId?: string | null;
 		onloadsession?: (sessionId: string) => void;
 	};
 
-	let { folderId, onloadsession }: Props = $props();
+	let { folderId, activeId = null, onloadsession }: Props = $props();
 
 	// Get folder from store reactively
 	const folder = $derived(folderStore.getFolderById(folderId)!);
@@ -162,37 +163,57 @@
 				<div class="space-y-0.5">
 					{#each sessions as session (session.id)}
 						{@const isPending = folderStore.pendingOps.has(session.id)}
-						<div class="group relative">
-							<button
-								type="button"
-								onclick={() => onloadsession?.(session.id)}
-								class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-ink transition hover:bg-surface {isPending
-									? 'animate-pulse opacity-50'
-									: ''}"
+						{@const isActive = session.id === activeId}
+						<button
+							type="button"
+							onclick={() => onloadsession?.(session.id)}
+							disabled={isPending}
+							class="group flex w-full cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-left
+								transition
+								{isActive ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'hover:bg-surface'}
+								{isPending ? 'animate-pulse opacity-50' : ''}"
+						>
+							<!-- Leaf connector dot (matches SessionTreeNode) -->
+							<span class="flex h-4 w-4 shrink-0 items-center justify-center" aria-hidden="true">
+								<span class="h-1 w-1 rounded-full bg-line"></span>
+							</span>
+							<span
+								class="min-w-0 flex-1 truncate text-sm
+									{isActive ? 'font-semibold text-ink' : 'font-medium text-muted group-hover:text-ink'}"
 								title={session.title}
-								disabled={isPending}
 							>
-								<span class="min-w-0 flex-1 truncate">{session.title}</span>
-							</button>
+								{session.title}
+							</span>
 							<!-- Session context menu button -->
-							<button
-								type="button"
-								onclick={(e) => toggleSessionMenu(e, session.id)}
-								class="absolute top-1/2 right-1 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
+							<span
+								role="button"
+								tabindex="0"
+								onclick={(e) => {
+									e.stopPropagation();
+									toggleSessionMenu(e, session.id);
+								}}
+								onkeydown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.stopPropagation();
+										toggleSessionMenu(e, session.id);
+									}
+								}}
+								class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted opacity-0 transition group-hover:opacity-100 hover:bg-surface hover:text-ink"
 								aria-label="Session options"
 							>
-								<svg width="12" height="12" viewBox="0 0 14 14" fill="currentColor">
+								<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
 									<circle cx="7" cy="3" r="1.5" />
 									<circle cx="7" cy="7" r="1.5" />
 									<circle cx="7" cy="11" r="1.5" />
 								</svg>
-							</button>
+							</span>
 							<!-- Session context menu dropdown -->
 							{#if sessionMenuId === session.id}
 								<div
 									bind:this={sessionMenuRef}
 									class="absolute right-0 z-50 mt-1 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
 									role="menu"
+									onclick={(e) => e.stopPropagation()}
 								>
 									<button
 										type="button"
@@ -217,7 +238,7 @@
 									</div>
 								</div>
 							{/if}
-						</div>
+						</button>
 					{/each}
 				</div>
 			{/if}

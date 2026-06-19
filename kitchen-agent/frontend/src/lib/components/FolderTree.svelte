@@ -6,11 +6,12 @@
 	import type { Snippet } from 'svelte';
 
 	type Props = {
+		activeId?: string | null;
 		children?: Snippet;
 		onload?: (sessionId: string) => void;
 	};
 
-	let { children, onload }: Props = $props();
+	let { activeId = null, children, onload }: Props = $props();
 
 	// No local expandedFolders state — it's in the store now
 </script>
@@ -88,7 +89,7 @@
 				class="folder-drop-zone"
 				class:drag-over={folderStore.dropTarget?.id === folder.id}
 			>
-				<FolderItem folderId={folder.id} onloadsession={onload} />
+				<FolderItem folderId={folder.id} {activeId} onloadsession={onload} />
 			</div>
 		{/each}
 	</div>

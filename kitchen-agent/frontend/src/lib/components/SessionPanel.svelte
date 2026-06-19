@@ -11,6 +11,7 @@
 	 */
 	import { api } from '$lib/api';
 	import { sessionStore } from '$lib/stores/sessions.svelte';
+	import { folderStore } from '$lib/stores/folder.svelte';
 	import SessionTreeNode from './SessionTreeNode.svelte';
 	import DraggableSession from './DraggableSession.svelte';
 
@@ -106,8 +107,13 @@
 	}
 
 	// ── Derived state ────────────────────────────────────────────────────────
-	const activeCount = $derived(sessionStore.flat.filter((n) => n.archived_at === null).length);
-	const visibleRoots = $derived(sessionStore.tree.filter((n) => n.archived_at === null));
+	// History shows only unfiled sessions (inbox model)
+	const activeCount = $derived(
+		sessionStore.flat.filter((n) => n.archived_at === null && !folderStore.isFoldered(n.id)).length
+	);
+	const visibleRoots = $derived(
+		sessionStore.tree.filter((n) => n.archived_at === null && !folderStore.isFoldered(n.id))
+	);
 </script>
 
 <!-- Header row -->
@@ -152,9 +158,7 @@
 
 	<!-- Session forest -->
 {:else}
-	<div
-		class="space-y-0.5 {isStreaming ? 'pointer-events-none opacity-50' : ''}"
-	>
+	<div class="space-y-0.5 {isStreaming ? 'pointer-events-none opacity-50' : ''}">
 		{#each visibleRoots as root (root.id)}
 			<DraggableSession sessionId={root.id} sessionTitle={root.title ?? root.id.slice(0, 8)}>
 				<SessionTreeNode
