@@ -21,15 +21,8 @@
 		canSend: boolean;
 	};
 
-	let {
-		providers,
-		selectedModel,
-		onproviderchange,
-		isStreaming,
-		onstop,
-		onsend,
-		canSend
-	}: Props = $props();
+	let { providers, selectedModel, onproviderchange, isStreaming, onstop, onsend, canSend }: Props =
+		$props();
 
 	// ── Placeholder handler ────────────────────────────────────────────────
 	let placeholderToast = $state('');
@@ -54,8 +47,17 @@
 			aria-label="API Key"
 			disabled
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path
+					d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+				/>
 			</svg>
 		</button>
 
@@ -66,9 +68,18 @@
 			class:tools-active={promptStore.toolsEnabled}
 			onclick={() => promptStore.toggleTools()}
 			aria-pressed={promptStore.toolsEnabled}
-			title={promptStore.toolsEnabled ? 'Tools ON — LLM can read and edit your knowledge base' : 'Tools OFF — Direct LLM reply, no file access'}
+			title={promptStore.toolsEnabled
+				? 'Tools ON — LLM can read and edit your knowledge base'
+				: 'Tools OFF — Direct LLM reply, no file access'}
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<rect x="3" y="3" width="7" height="7" rx="1" />
 				<rect x="14" y="3" width="7" height="7" rx="1" />
 				<rect x="3" y="14" width="7" height="7" rx="1" />
@@ -80,11 +91,7 @@
 
 	<!-- Center: model selector -->
 	<div class="buttons-center">
-		<ModelSelector
-			{providers}
-			{selectedModel}
-			{onproviderchange}
-		/>
+		<ModelSelector {providers} {selectedModel} {onproviderchange} />
 	</div>
 	<div class="buttons-right">
 		<!-- Speech-to-text placeholder -->
@@ -96,7 +103,14 @@
 			aria-label="Speech to text"
 			disabled
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
 				<path d="M19 10v2a7 7 0 0 1-14 0v-2" />
 				<line x1="12" y1="19" x2="12" y2="23" />
@@ -113,7 +127,14 @@
 			aria-label="Add media"
 			disabled
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<circle cx="12" cy="12" r="10" />
 				<line x1="12" y1="8" x2="12" y2="16" />
 				<line x1="8" y1="12" x2="16" y2="12" />
@@ -122,23 +143,14 @@
 
 		<!-- Send / Stop button -->
 		{#if isStreaming}
-			<button
-				onclick={() => onstop?.()}
-				data-testid="stop-btn"
-				class="stop-btn"
-			>
+			<button onclick={() => onstop?.()} data-testid="stop-btn" class="stop-btn">
 				<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 					<rect x="6" y="6" width="12" height="12" rx="2" />
 				</svg>
 				<span class="run-btn-label">Stop</span>
 			</button>
 		{:else}
-			<button
-				onclick={onsend}
-				disabled={!canSend}
-				data-testid="send-btn"
-				class="run-btn"
-			>
+			<button onclick={onsend} disabled={!canSend} data-testid="send-btn" class="run-btn">
 				<span class="run-btn-label">Run</span>
 				<span class="run-btn-shortcut">
 					<span class="key-icon">⌘</span>
@@ -252,7 +264,9 @@
 		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
-		transition: background 0.15s, box-shadow 0.15s;
+		transition:
+			background 0.15s,
+			box-shadow 0.15s;
 	}
 
 	.run-btn:hover:not(:disabled) {

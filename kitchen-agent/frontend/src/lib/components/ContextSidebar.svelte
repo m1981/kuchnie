@@ -12,6 +12,7 @@
 	 *   sessionId                – current session ID (for notes tab)
 	 */
 
+	import { SvelteSet } from 'svelte/reactivity';
 	import { api, type FileItem, type Note } from '$lib/api';
 	import FileEditor from './FileEditor.svelte';
 	import NotesPanel from './NotesPanel.svelte';
@@ -45,8 +46,12 @@
 
 	// ── Handlers ─────────────────────────────────────────────────────────────
 	function toggleFile(path: string) {
-		const next = new Set(selectedPaths);
-		next.has(path) ? next.delete(path) : next.add(path);
+		const next = new SvelteSet(selectedPaths);
+		if (next.has(path)) {
+			next.delete(path);
+		} else {
+			next.add(path);
+		}
 		oncontextchange(Array.from(next));
 	}
 
@@ -152,11 +157,11 @@
 			{/if}
 		</div>
 
-	<!-- Notes tab -->
+		<!-- Notes tab -->
 	{:else if tab === 'notes'}
 		<NotesPanel {sessionId} {oninsertnotes} />
 
-	<!-- Editor tab -->
+		<!-- Editor tab -->
 	{:else if tab === 'editor'}
 		<div class="flex flex-1 flex-col overflow-hidden">
 			{#if !editingFile}

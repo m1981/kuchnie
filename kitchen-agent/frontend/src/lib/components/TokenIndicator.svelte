@@ -33,37 +33,25 @@
 	// Prefer exact conversation_total from last token breakdown over the estimate
 	// Note: lastTokenBreakdown is in chatStore, but we'll use sessionTokenCount from tokenStore
 	const sessionTokens = $derived(
-		tokenStore.sessionTokenCount >= 0
-			? tokenStore.sessionTokenCount
-			: 0
+		tokenStore.sessionTokenCount >= 0 ? tokenStore.sessionTokenCount : 0
 	);
 
 	// inputTokens already includes history + system prompt + new message.
 	// Using it directly avoids double-counting sessionTokens.
 	const totalTokens = $derived(inputTokens);
 
-	const pct = $derived(
-		contextWindowPercent(totalTokens, providerStore.contextWindowK)
-	);
+	const pct = $derived(contextWindowPercent(totalTokens, providerStore.contextWindowK));
 
 	const color = $derived(contextWindowColor(pct));
 
 	// ── Color classes for the context bar ───────────────────────────────────
 
 	const barColorClass = $derived(
-		color === 'danger'
-			? 'bg-red-500'
-			: color === 'warn'
-				? 'bg-amber-500'
-				: 'bg-accent'
+		color === 'danger' ? 'bg-red-500' : color === 'warn' ? 'bg-amber-500' : 'bg-accent'
 	);
 
 	const textColorClass = $derived(
-		color === 'danger'
-			? 'text-red-600'
-			: color === 'warn'
-				? 'text-amber-600'
-				: 'text-muted'
+		color === 'danger' ? 'text-red-600' : color === 'warn' ? 'text-amber-600' : 'text-muted'
 	);
 </script>
 
@@ -102,6 +90,8 @@
 
 	<!-- Fallback indicator -->
 	{#if tokenStore.sessionTokenFallback && tokenStore.sessionTokenCount >= 0}
-		<span class="text-[10px] text-muted/60" title="Token count is approximate (API fallback)">≈</span>
+		<span class="text-[10px] text-muted/60" title="Token count is approximate (API fallback)"
+			>≈</span
+		>
 	{/if}
 </div>

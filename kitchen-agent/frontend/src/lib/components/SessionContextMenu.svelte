@@ -14,7 +14,13 @@
 	import { focusTrap } from '$lib/actions/focustrap';
 	import type { SessionNode } from '$lib/api';
 
-	type MenuState = 'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm' | 'generating-title';
+	type MenuState =
+		| 'closed'
+		| 'open'
+		| 'confirming-delete'
+		| 'exporting-md'
+		| 'exporting-llm'
+		| 'generating-title';
 
 	type Props = {
 		node: SessionNode;
@@ -27,13 +33,18 @@
 		ontitlegenerate?: (id: string) => Promise<void>;
 	};
 
-	let { node, onarchive, onunarchive, ondelete, onexport, onexportllm, ontitlegenerate }: Props = $props();
+	let { node, onarchive, onunarchive, ondelete, onexport, onexportllm, ontitlegenerate }: Props =
+		$props();
 
 	let menuState = $state<MenuState>('closed');
 	let errorMsg = $state('');
 
 	const isArchived = $derived(node.archived_at !== null);
-	const isBusy = $derived(menuState === 'exporting-md' || menuState === 'exporting-llm' || menuState === 'generating-title');
+	const isBusy = $derived(
+		menuState === 'exporting-md' ||
+			menuState === 'exporting-llm' ||
+			menuState === 'generating-title'
+	);
 
 	function open(e: MouseEvent) {
 		e.stopPropagation();
@@ -159,7 +170,7 @@
 	{#if menuState === 'open'}
 		<div
 			use:focusTrap
-			class="absolute right-0 top-6 z-40 min-w-[178px] rounded-lg border border-line bg-panel
+			class="absolute top-6 right-0 z-40 min-w-[178px] rounded-lg border border-line bg-panel
 			       py-1 shadow-lg"
 		>
 			<!-- Export Markdown -->
@@ -231,7 +242,7 @@
 	{#if menuState === 'confirming-delete'}
 		<div
 			use:focusTrap
-			class="absolute right-0 top-6 z-40 w-52 rounded-lg border border-red-200 bg-panel
+			class="absolute top-6 right-0 z-40 w-52 rounded-lg border border-red-200 bg-panel
 			       p-3 shadow-lg"
 		>
 			<p class="mb-2 text-xs font-semibold text-ink">Delete this session?</p>

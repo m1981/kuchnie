@@ -40,7 +40,7 @@
 
 	function handleProviderChange(e: Event) {
 		const pid = (e.target as HTMLSelectElement).value;
-		const p   = providers.find((p) => p.id === pid);
+		const p = providers.find((p) => p.id === pid);
 		// Always reset to the provider's default_model on provider switch.
 		onchange(pid, p?.default_model ?? '');
 	}
@@ -62,16 +62,15 @@
 	</span>
 {:else}
 	<div class="flex items-center gap-1.5" role="group" aria-label="LLM provider and model">
-
 		<!-- ── Provider selector ──────────────────────────────────────────── -->
 		<select
 			value={selectedProvider}
 			onchange={handleProviderChange}
 			class="
-				rounded border border-line bg-surface
-				px-2 py-1 text-xs text-ink
-				transition hover:border-accent focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent
-				cursor-pointer
+				cursor-pointer rounded border border-line
+				bg-surface px-2 py-1 text-xs
+				text-ink transition hover:border-accent focus:border-accent focus:ring-1 focus:ring-accent
+				focus:outline-none
 			"
 			aria-label="LLM provider"
 			title="Select LLM provider"
@@ -87,10 +86,10 @@
 				value={selectedModel}
 				onchange={handleModelChange}
 				class="
-					rounded border border-line bg-surface
-					px-2 py-1 text-xs text-ink
-					transition hover:border-accent focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent
-					cursor-pointer
+					cursor-pointer rounded border border-line
+					bg-surface px-2 py-1 text-xs
+					text-ink transition hover:border-accent focus:border-accent focus:ring-1 focus:ring-accent
+					focus:outline-none
 				"
 				aria-label="Model"
 				title="Select model for {activeProvider.label}"
@@ -102,6 +101,5 @@
 				{/each}
 			</select>
 		{/if}
-
 	</div>
 {/if}

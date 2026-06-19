@@ -43,14 +43,14 @@
 		<button
 			onclick={oncancel}
 			data-testid="confirm-cancel"
-			class="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-muted transition hover:bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
+			class="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-muted transition hover:bg-surface focus:ring-2 focus:ring-accent focus:outline-none"
 		>
 			Cancel
 		</button>
 		<button
 			onclick={onconfirm}
 			data-testid="confirm-ok"
-			class="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+			class="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
 		>
 			Confirm
 		</button>

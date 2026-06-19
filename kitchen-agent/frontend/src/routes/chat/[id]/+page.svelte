@@ -322,74 +322,76 @@
 			<!-- Loading skeleton -->
 			<div class="flex flex-1 items-center justify-center">
 				<div class="space-y-4 text-center">
-					<div class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+					<div
+						class="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent"
+					></div>
 					<p class="text-sm text-muted">Loading session...</p>
 				</div>
 			</div>
 		{:else}
 			<ChatHeader
-			appTitle={providerStore.appTitle}
-			modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
-			modeLabel={activeMode.label}
-			sessionId={currentSessionId}
-			title={sessionTitle}
-			showRight={sidebarResize.showRight}
-			{hasSystemPromptOverride}
-			ontoggleright={() => sidebarResize.toggleRight()}
-			onsave={handleSaveTitle}
-		/>
+				appTitle={providerStore.appTitle}
+				modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
+				modeLabel={activeMode.label}
+				sessionId={currentSessionId}
+				title={sessionTitle}
+				showRight={sidebarResize.showRight}
+				{hasSystemPromptOverride}
+				ontoggleright={() => sidebarResize.toggleRight()}
+				onsave={handleSaveTitle}
+			/>
 
-		<!-- Chat scroll area -->
-		<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-			<div class="mx-auto max-w-5xl space-y-5">
-				<!-- Fork status pill -->
-				{#if chatStore.forkStatus}
-					<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
-						{chatStore.forkStatus}
-					</p>
-				{/if}
+			<!-- Chat scroll area -->
+			<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
+				<div class="mx-auto max-w-5xl space-y-5">
+					<!-- Fork status pill -->
+					{#if chatStore.forkStatus}
+						<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">
+							{chatStore.forkStatus}
+						</p>
+					{/if}
 
-				<ChatMessageList
-					{systemPromptText}
-					systemPromptIsOverride={hasSystemPromptOverride}
-					systemPromptModeLabel={activeMode.label}
-					systemPromptSaveState={editorStore.systemPromptState}
-					systemPromptError={editorStore.systemPromptError}
-					{systemPromptTokenCount}
-					onsystemprompsave={(text) => editorStore.saveSystemPrompt(chatStore.sessionId, text)}
-					onsystempromptreset={() => editorStore.clearSystemPrompt(chatStore.sessionId)}
-					messages={chatStore.messages}
-					isLoading={chatStore.chatState.status === 'loading'}
-					isBusy={editorStore.editState.status === 'loading'}
-					editingTurnId={editorStore.editingTurnId}
-					editDraft={editorStore.editDraft}
-					isSavingEdit={isEditSaving}
-					editErrorMessage={editError ?? ''}
-					onfork={handleFork}
-					onedit={(turnId) => editorStore.startEditing(turnId, chatStore.messages)}
-					ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
-					onregenerate={() => chatStore.regenerateMessage()}
-					oncopytext={(content) => navigator.clipboard.writeText(content)}
-					oncopymarkdown={(content) => navigator.clipboard.writeText(content)}
-					onsaveedit={() => chatStore.saveEdit()}
-					oncanceledit={() => editorStore.cancelEditing()}
-					ondraftchange={(text) => editorStore.setEditDraft(text)}
-				/>
-			</div>
-		</section>
+					<ChatMessageList
+						{systemPromptText}
+						systemPromptIsOverride={hasSystemPromptOverride}
+						systemPromptModeLabel={activeMode.label}
+						systemPromptSaveState={editorStore.systemPromptState}
+						systemPromptError={editorStore.systemPromptError}
+						{systemPromptTokenCount}
+						onsystemprompsave={(text) => editorStore.saveSystemPrompt(chatStore.sessionId, text)}
+						onsystempromptreset={() => editorStore.clearSystemPrompt(chatStore.sessionId)}
+						messages={chatStore.messages}
+						isLoading={chatStore.chatState.status === 'loading'}
+						isBusy={editorStore.editState.status === 'loading'}
+						editingTurnId={editorStore.editingTurnId}
+						editDraft={editorStore.editDraft}
+						isSavingEdit={isEditSaving}
+						editErrorMessage={editError ?? ''}
+						onfork={handleFork}
+						onedit={(turnId) => editorStore.startEditing(turnId, chatStore.messages)}
+						ondelete={(turnId) => chatStore.deleteMessage(turnId, false)}
+						onregenerate={() => chatStore.regenerateMessage()}
+						oncopytext={(content) => navigator.clipboard.writeText(content)}
+						oncopymarkdown={(content) => navigator.clipboard.writeText(content)}
+						onsaveedit={() => chatStore.saveEdit()}
+						oncanceledit={() => editorStore.cancelEditing()}
+						ondraftchange={(text) => editorStore.setEditDraft(text)}
+					/>
+				</div>
+			</section>
 
-		<ChatComposer
-			providers={providerStore.providers}
-			selectedModel={providerStore.selectedModel}
-			onproviderchange={(p, m) => {
-				providerStore.setProvider(p);
-				providerStore.setModel(m);
-			}}
-			isStreaming={chatStore.isStreaming}
-			onstop={() => chatStore.stopStreaming()}
-			bind:currentMessage
-			bind:textareaEl
-		/>
+			<ChatComposer
+				providers={providerStore.providers}
+				selectedModel={providerStore.selectedModel}
+				onproviderchange={(p, m) => {
+					providerStore.setProvider(p);
+					providerStore.setModel(m);
+				}}
+				isStreaming={chatStore.isStreaming}
+				onstop={() => chatStore.stopStreaming()}
+				bind:currentMessage
+				bind:textareaEl
+			/>
 		{/if}
 	</main>
 

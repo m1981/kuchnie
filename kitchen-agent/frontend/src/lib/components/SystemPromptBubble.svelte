@@ -30,22 +30,14 @@
 		tokenCount?: number;
 	};
 
-	let {
-		text,
-		isOverride,
-		modeLabel,
-		saveState,
-		errorMessage,
-		onsave,
-		onreset,
-		tokenCount
-	}: Props = $props();
+	let { text, isOverride, modeLabel, saveState, errorMessage, onsave, onreset, tokenCount }: Props =
+		$props();
 
 	// ── Local UI state ──────────────────────────────────────────────────
-	let isEditing   = $state(false);
-	let isExpanded  = $state(false);
-	let draft       = $state('');
-	let textareaEl  = $state<HTMLTextAreaElement | null>(null);
+	let isEditing = $state(false);
+	let isExpanded = $state(false);
+	let draft = $state('');
+	let textareaEl = $state<HTMLTextAreaElement | null>(null);
 
 	// Reset editing state when text changes externally (e.g., after save).
 	$effect(() => {
@@ -92,18 +84,28 @@
 
 <article
 	class="rounded-lg border bg-panel/60 shadow-sm {isOverride
-		? 'border-l-4 border-l-accent border-line'
-		: 'border-l-4 border-l-line border-line'}"
+		? 'border-l-4 border-line border-l-accent'
+		: 'border-l-4 border-line border-l-line'}"
 	aria-label="System prompt"
 >
 	<!-- Header -->
 	<div class="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-		<div class="flex items-center gap-2 min-w-0">
+		<div class="flex min-w-0 items-center gap-2">
 			<span class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
 				<!-- Gear SVG icon -->
-				<svg class="inline-block h-3.5 w-3.5 mr-1 -mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<svg
+					class="-mt-px mr-1 inline-block h-3.5 w-3.5"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
 					<circle cx="12" cy="12" r="3" />
-					<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+					<path
+						d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+					/>
 				</svg>
 				System Prompt
 			</span>
@@ -139,7 +141,14 @@
 					aria-label="Edit system prompt"
 				>
 					<!-- Pencil SVG icon -->
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
 						<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
 					</svg>
@@ -153,7 +162,14 @@
 						aria-label="Reset to mode default"
 					>
 						<!-- Refresh/undo SVG icon -->
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
 							<path d="M3 3v5h5" />
 						</svg>
@@ -174,7 +190,7 @@
 					onkeydown={handleKeydown}
 					disabled={isBusy}
 					rows={Math.max(4, draft.split('\n').length)}
-					class="w-full resize-y rounded-md border border-accent bg-surface px-3 py-2 font-mono text-xs leading-5 text-ink focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+					class="w-full resize-y rounded-md border border-accent bg-surface px-3 py-2 font-mono text-xs leading-5 text-ink focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-60"
 					placeholder="Enter a custom system prompt for this session…"
 					spellcheck="false"
 				></textarea>
@@ -187,7 +203,7 @@
 					<button
 						onclick={handleSave}
 						disabled={isBusy || !draft.trim()}
-						class="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+						class="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{#if isBusy}
 							Saving…
@@ -198,7 +214,7 @@
 					<button
 						onclick={cancelEditing}
 						disabled={isBusy}
-						class="rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+						class="rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-50"
 					>
 						Cancel <kbd class="ml-1 font-mono opacity-70">Esc</kbd>
 					</button>
@@ -208,7 +224,8 @@
 			<!-- Read-only state -->
 			{#if text}
 				<pre
-					class="whitespace-pre-wrap break-words font-mono text-xs leading-5 text-ink {isLong && !isExpanded
+					class="font-mono text-xs leading-5 break-words whitespace-pre-wrap text-ink {isLong &&
+					!isExpanded
 						? 'max-h-[4.5rem] overflow-hidden'
 						: ''}">{displayText}</pre>
 				{#if isLong}
@@ -220,9 +237,7 @@
 					</button>
 				{/if}
 			{:else}
-				<p class="text-xs italic text-muted">
-					No system prompt set for this session.
-				</p>
+				<p class="text-xs text-muted italic">No system prompt set for this session.</p>
 			{/if}
 		{/if}
 	</div>

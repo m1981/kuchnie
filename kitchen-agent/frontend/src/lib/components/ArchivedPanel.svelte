@@ -145,10 +145,7 @@
 		{#if archivedExpanded}
 			<div class="mt-1 space-y-0.5">
 				{#each archivedRoots as root (root.id)}
-					<DraggableSession
-						sessionId={root.id}
-						sessionTitle={root.title ?? root.id.slice(0, 8)}
-					>
+					<DraggableSession sessionId={root.id} sessionTitle={root.title ?? root.id.slice(0, 8)}>
 						<SessionTreeNode
 							node={root}
 							depth={0}

@@ -61,7 +61,6 @@
 	}
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	role="dialog"
 	aria-modal="true"
@@ -81,14 +80,19 @@
 			aria-label="Close"
 		>
 			<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-				<path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				<path
+					d="M1 1l10 10M11 1L1 11"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
 			</svg>
 		</button>
 	</div>
 
 	<!-- Selected text preview -->
 	<blockquote
-		class="mb-2 line-clamp-2 rounded bg-surface px-2 py-1.5 text-xs italic leading-5 text-muted"
+		class="mb-2 line-clamp-2 rounded bg-surface px-2 py-1.5 text-xs leading-5 text-muted italic"
 		title={selectedText}
 	>
 		"{selectedText}"

@@ -82,7 +82,6 @@
 
 <footer class="composer-footer">
 	<div class="composer-container">
-
 		<!-- Pasted image previews -->
 		{#if chatStore.pastedImages.length > 0}
 			<div class="mb-2 flex flex-wrap gap-2">
@@ -121,8 +120,8 @@
 								chatStore.setContextFiles(next);
 							}}
 							aria-label="Remove {basename(path)} from context"
-							class="ml-0.5 rounded-full text-accent/60 hover:text-accent"
-						>✕</button>
+							class="ml-0.5 rounded-full text-accent/60 hover:text-accent">✕</button
+						>
 					</span>
 				{/each}
 			</div>
@@ -133,7 +132,6 @@
 
 		<!-- Main composer box -->
 		<div class="composer-box">
-
 			<!-- Textarea row -->
 			<div class="textarea-row">
 				<textarea
@@ -210,5 +208,4 @@
 	.textarea-row textarea::placeholder {
 		color: #80868b;
 	}
-
 </style>

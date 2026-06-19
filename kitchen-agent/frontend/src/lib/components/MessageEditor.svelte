@@ -63,7 +63,7 @@
 		onkeydown={handleKeydown}
 		disabled={isSaving}
 		rows={Math.max(2, draft.split('\n').length)}
-		class="w-full resize-none rounded-md border border-accent bg-surface px-3 py-2 text-sm leading-6 text-ink focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
+		class="w-full resize-none rounded-md border border-accent bg-surface px-3 py-2 text-sm leading-6 text-ink focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-60"
 		aria-label="Edit message content"
 	></textarea>
 
@@ -75,20 +75,20 @@
 		<button
 			onclick={onsave}
 			disabled={isSaving || !draft.trim()}
-			class="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-strong focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+			class="rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-strong focus:ring-2 focus:ring-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			{#if isSaving}
 				Saving…
 			{:else}
-				Save  <kbd class="ml-1 font-mono opacity-70">↵</kbd>
+				Save <kbd class="ml-1 font-mono opacity-70">↵</kbd>
 			{/if}
 		</button>
 		<button
 			onclick={oncancel}
 			disabled={isSaving}
-			class="rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+			class="rounded-md border border-line px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-ink focus:ring-2 focus:ring-accent focus:outline-none disabled:opacity-50"
 		>
-			Cancel  <kbd class="ml-1 font-mono opacity-70">Esc</kbd>
+			Cancel <kbd class="ml-1 font-mono opacity-70">Esc</kbd>
 		</button>
 	</div>
 </div>

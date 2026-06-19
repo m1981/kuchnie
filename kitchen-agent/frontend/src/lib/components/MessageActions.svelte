@@ -9,8 +9,6 @@
 	 *   - Secondary actions in dropdown: Delete, Fork, Copy
 	 */
 
-	import type { Snippet } from 'svelte';
-
 	type Props = {
 		role: 'user' | 'assistant';
 		turnId: string | null | undefined;
@@ -85,7 +83,14 @@
 				aria-label="Edit message"
 				class="action-btn {role === 'user' ? 'action-btn-user' : 'action-btn-assistant'}"
 			>
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
 					<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
 				</svg>
@@ -108,7 +113,14 @@
 						fill="url(#regenerate-gradient)"
 					/>
 					<defs>
-						<linearGradient id="regenerate-gradient" x1="10" y1="0" x2="10" y2="20" gradientUnits="userSpaceOnUse">
+						<linearGradient
+							id="regenerate-gradient"
+							x1="10"
+							y1="0"
+							x2="10"
+							y2="20"
+							gradientUnits="userSpaceOnUse"
+						>
 							<stop stop-color="#87A9FF" />
 							<stop offset="0.44" stop-color="#A7B8EE" />
 							<stop offset="0.88" stop-color="#F1DCC7" />
@@ -139,10 +151,7 @@
 
 			<!-- Dropdown menu -->
 			{#if menuOpen}
-				<div
-					class="dropdown-menu"
-					role="menu"
-				>
+				<div class="dropdown-menu" role="menu">
 					{#if oncopytext}
 						<button
 							onclick={() => handleMenuAction(oncopytext!)}
@@ -150,7 +159,15 @@
 							role="menuitem"
 							data-testid="copy-text-btn"
 						>
-							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								class="menu-icon"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
 								<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
 							</svg>
@@ -165,7 +182,15 @@
 							role="menuitem"
 							data-testid="copy-markdown-btn"
 						>
-							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								class="menu-icon"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
 								<polyline points="14 2 14 8 20 8" />
 								<line x1="16" y1="13" x2="8" y2="13" />
@@ -182,7 +207,15 @@
 							role="menuitem"
 							data-testid="fork-btn"
 						>
-							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								class="menu-icon"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<circle cx="18" cy="18" r="3" />
 								<circle cx="6" cy="6" r="3" />
 								<path d="M13 6h3a2 2 0 0 1 2 2v7" />
@@ -200,9 +233,19 @@
 							role="menuitem"
 							data-testid="delete-btn"
 						>
-							<svg class="menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<svg
+								class="menu-icon"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							>
 								<polyline points="3 6 5 6 21 6" />
-								<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+								<path
+									d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+								/>
 							</svg>
 							<span>Delete</span>
 						</button>

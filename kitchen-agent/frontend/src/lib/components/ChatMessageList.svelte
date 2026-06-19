@@ -185,12 +185,12 @@
 								role={msg.role}
 								turnId={msg.turn_id}
 								isLastAssistant={isLastAssistant(messageIndex)}
-								isBusy={isBusy}
-								isEditing={isEditing}
+								{isBusy}
+								{isEditing}
 								onedit={() => onedit(msg.turn_id!)}
 								ondelete={() => requestDelete(msg.turn_id!)}
 								onfork={() => onfork(messageIndex)}
-								onregenerate={onregenerate}
+								{onregenerate}
 								oncopytext={() => oncopytext?.(msg.content)}
 								oncopymarkdown={() => oncopymarkdown?.(msg.content)}
 							/>
@@ -233,21 +233,19 @@
 						errorMessage={editErrorMessage}
 						onsave={onsaveedit}
 						oncancel={oncanceledit}
-						ondraftchange={ondraftchange}
+						{ondraftchange}
 					/>
 				{:else}
 					<Markdown content={msg.content} variant={msg.role} />
 					{#if msg.isStreaming}
-						<span class="inline-block h-4 w-0.5 animate-pulse bg-accent ml-0.5"></span>
+						<span class="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-accent"></span>
 					{/if}
 				{/if}
 
 				<!-- Tool logs -->
 				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0 && !isEditing}
 					<div class="mt-4 space-y-2 border-t border-line pt-3">
-						<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-							Tools used
-						</p>
+						<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Tools used</p>
 
 						{#each msg.tools as tool, toolIndex (`${tool.name}-${toolIndex}`)}
 							<details class="group rounded-md border border-line bg-surface">
@@ -257,9 +255,13 @@
 									<span class="min-w-0">
 										<span class="font-semibold text-ink">{tool.name}</span>
 										<span class="ml-2 text-xs text-muted">Args and result</span>
-											{#if (tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)) > 0}
-												<span class="ml-1 text-[10px] text-muted/70">{tool.token_count !== undefined ? '' : '~'}{(tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)).toLocaleString()} tok</span>
-											{/if}
+										{#if (tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)) > 0}
+											<span class="ml-1 text-[10px] text-muted/70"
+												>{tool.token_count !== undefined ? '' : '~'}{(
+													tool.token_count ?? Math.ceil(JSON.stringify(tool.result).length / 4)
+												).toLocaleString()} tok</span
+											>
+										{/if}
 									</span>
 									<span class="text-xs font-medium text-accent group-open:hidden">View</span>
 									<span class="hidden text-xs font-medium text-accent group-open:inline">Hide</span>
@@ -268,14 +270,18 @@
 									<div>
 										<p class="mb-1 text-xs font-semibold text-muted uppercase">Args</p>
 										<pre
-											class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
-										>{JSON.stringify(tool.args, null, 2)}</pre>
+											class="overflow-x-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{JSON.stringify(
+												tool.args,
+												null,
+												2
+											)}</pre>
 									</div>
 									<div>
 										<p class="mb-1 text-xs font-semibold text-muted uppercase">Result</p>
 										<pre
-											class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink"
-										>{formatToolResult(tool)}</pre>
+											class="max-h-72 overflow-auto rounded bg-code px-3 py-2 text-xs leading-5 text-code-ink">{formatToolResult(
+												tool
+											)}</pre>
 									</div>
 								</div>
 							</details>

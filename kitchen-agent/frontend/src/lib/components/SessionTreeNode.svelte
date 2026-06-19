@@ -29,7 +29,18 @@
 		ontitlegenerate?: (id: string) => Promise<void>;
 	};
 
-	let { node, depth = 0, activeId, onload, onarchive, onunarchive, ondelete, onexport, onexportllm, ontitlegenerate }: Props = $props();
+	let {
+		node,
+		depth = 0,
+		activeId,
+		onload,
+		onarchive,
+		onunarchive,
+		ondelete,
+		onexport,
+		onexportllm,
+		ontitlegenerate
+	}: Props = $props();
 
 	let expanded = $state(false);
 
@@ -131,7 +142,15 @@
 		{/if}
 
 		<!-- Context menu -->
-		<SessionContextMenu {node} {onarchive} {onunarchive} {ondelete} {onexport} {onexportllm} {ontitlegenerate} />
+		<SessionContextMenu
+			{node}
+			{onarchive}
+			{onunarchive}
+			{ondelete}
+			{onexport}
+			{onexportllm}
+			{ontitlegenerate}
+		/>
 	</div>
 
 	<!-- ── Children ──────────────────────────────────────────────────────── -->

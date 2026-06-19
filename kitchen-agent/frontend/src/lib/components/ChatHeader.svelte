@@ -87,7 +87,6 @@
 
 <header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
-
 		<!-- ── Left cluster: mode title + badges ──────────────────────────── -->
 		<div class="min-w-0">
 			<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
@@ -133,7 +132,6 @@
 
 		<!-- ── Right cluster: action buttons ──────────────────────────────── -->
 		<div class="flex shrink-0 items-center gap-2">
-
 			<!-- Context sidebar toggle -->
 			<button
 				onclick={ontoggleright}
@@ -143,6 +141,5 @@
 				{showRight ? '▶ Hide panel' : '◀ Context'}
 			</button>
 		</div>
-
 	</div>
 </header>

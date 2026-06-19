@@ -57,7 +57,7 @@
 
 	/** Currently selected model id. Falls back to first available. */
 	const currentModelId = $derived(
-		allModels.some((m) => m.id === selectedModel) ? selectedModel : allModels[0]?.id ?? ''
+		allModels.some((m) => m.id === selectedModel) ? selectedModel : (allModels[0]?.id ?? '')
 	);
 
 	function handleChange(e: Event) {
@@ -70,12 +70,7 @@
 </script>
 
 {#if allModels.length > 0}
-	<select
-		value={currentModelId}
-		onchange={handleChange}
-		class="model-select"
-		aria-label="Model"
-	>
+	<select value={currentModelId} onchange={handleChange} class="model-select" aria-label="Model">
 		{#each modelGroups as group (group.providerId)}
 			<optgroup label={group.providerLabel}>
 				{#each group.models as m (m.id)}
