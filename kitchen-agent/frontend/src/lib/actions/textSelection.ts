@@ -53,11 +53,7 @@ export type TextSelectionParams = {
  * Clamp a floating popup so it stays inside the viewport.
  * `width` / `height` are the popup's expected dimensions (used for clamping).
  */
-function popupPosition(
-	event: MouseEvent,
-	width: number,
-	height: number
-): { x: number; y: number } {
+function popupPosition(event: MouseEvent, width: number, height: number): { x: number; y: number } {
 	const gap = 12;
 	return {
 		x: Math.min(Math.max(event.clientX, gap), window.innerWidth - width - gap),
@@ -76,16 +72,13 @@ function toElement(node: Node | null): HTMLElement | null {
  * inside a single `[data-chat-bubble]` element with a valid role attribute.
  * Returns `null` for cross-bubble, non-bubble, or too-short selections.
  */
-function readChatSelection(
-	event: MouseEvent,
-	minLength: number
-): ChatSelectionHit | null {
+function readChatSelection(event: MouseEvent, minLength: number): ChatSelectionHit | null {
 	const selection = window.getSelection();
 	const text = selection?.toString().trim() ?? '';
 	if (!selection || selection.rangeCount === 0 || text.length < minLength) return null;
 
 	const anchorBubble = toElement(selection.anchorNode)?.closest<HTMLElement>('[data-chat-bubble]');
-	const focusBubble  = toElement(selection.focusNode)?.closest<HTMLElement>('[data-chat-bubble]');
+	const focusBubble = toElement(selection.focusNode)?.closest<HTMLElement>('[data-chat-bubble]');
 
 	// Must be within a bubble, and both endpoints in the same bubble.
 	const bubble = anchorBubble ?? focusBubble;
@@ -103,10 +96,7 @@ function readChatSelection(
 // The action
 // ---------------------------------------------------------------------------
 
-export const textSelection: Action<HTMLElement, TextSelectionParams> = (
-	node,
-	params
-) => {
+export const textSelection: Action<HTMLElement, TextSelectionParams> = (node, params) => {
 	let { onchatselect, minLength = 5 } = params;
 
 	/**
@@ -145,16 +135,16 @@ export const textSelection: Action<HTMLElement, TextSelectionParams> = (
 	}
 
 	node.addEventListener('mouseup', handleMouseUp);
-	node.addEventListener('click',   handleClick);
+	node.addEventListener('click', handleClick);
 
 	return {
 		update(newParams: TextSelectionParams) {
 			onchatselect = newParams.onchatselect;
-			minLength    = newParams.minLength ?? 5;
+			minLength = newParams.minLength ?? 5;
 		},
 		destroy() {
 			node.removeEventListener('mouseup', handleMouseUp);
-			node.removeEventListener('click',   handleClick);
+			node.removeEventListener('click', handleClick);
 		}
 	};
 };

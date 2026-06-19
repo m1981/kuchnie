@@ -45,11 +45,11 @@ describe('estimateTokensForImage', () => {
 describe('estimateInputTokens', () => {
 	it('calculates sum of all components', () => {
 		const result = estimateInputTokens(
-			'hello world',    // 11 chars → 3 tokens
-			2,                // 2 images → 516 tokens
-			100,              // context files → 100 tokens
+			'hello world', // 11 chars → 3 tokens
+			2, // 2 images → 516 tokens
+			100, // context files → 100 tokens
 			'You are helpful', // 16 chars → 4 tokens
-			500               // history → 500 tokens
+			500 // history → 500 tokens
 		);
 		expect(result).toBe(3 + 516 + 100 + 4 + 500); // 1123
 	});

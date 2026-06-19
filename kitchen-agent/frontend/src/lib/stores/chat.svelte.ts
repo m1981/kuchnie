@@ -22,11 +22,11 @@
  */
 
 import { api, type Message, type Note, type TokenBreakdown } from '$lib/api';
-import { sessionStore }   from '$lib/stores/sessions.svelte';
-import { providerStore }  from '$lib/stores/provider.svelte';
-import { promptStore }    from '$lib/stores/prompt.svelte';
-import { editorStore }    from '$lib/stores/editor.svelte';
-import { tokenStore }     from '$lib/stores/token.svelte';
+import { sessionStore } from '$lib/stores/sessions.svelte';
+import { providerStore } from '$lib/stores/provider.svelte';
+import { promptStore } from '$lib/stores/prompt.svelte';
+import { editorStore } from '$lib/stores/editor.svelte';
+import { tokenStore } from '$lib/stores/token.svelte';
 import type { AsyncState, PastedImage } from '$lib/types';
 
 // Re-export sub-stores for direct access (gradual migration path)
@@ -39,7 +39,7 @@ export { providerStore, promptStore, editorStore, tokenStore };
 function createChatStore() {
 	// ── Core session state ───────────────────────────────────────────────────
 	let sessionId = $state<string>(crypto.randomUUID());
-	let messages  = $state<Message[]>([]);
+	let messages = $state<Message[]>([]);
 	let chatState = $state<AsyncState<void>>({ status: 'idle' });
 	let lastTokenBreakdown = $state<TokenBreakdown | null>(null);
 
@@ -64,16 +64,32 @@ function createChatStore() {
 		get isMutating() {
 			return editorStore.editState.status === 'loading' || chatState.status === 'loading';
 		},
-		get isStreaming() { return isStreaming; },
+		get isStreaming() {
+			return isStreaming;
+		},
 
 		// ── Core session ──────────────────────────────────────────────────────────
-		get sessionId()    { return sessionId; },
-		get messages()     { return messages; },
-		get chatState()    { return chatState; },
-		get pastedImages() { return pastedImages; },
-		get contextFiles() { return contextFiles; },
-		get forkStatus()   { return forkStatus; },
-		get lastTokenBreakdown() { return lastTokenBreakdown; },
+		get sessionId() {
+			return sessionId;
+		},
+		get messages() {
+			return messages;
+		},
+		get chatState() {
+			return chatState;
+		},
+		get pastedImages() {
+			return pastedImages;
+		},
+		get contextFiles() {
+			return contextFiles;
+		},
+		get forkStatus() {
+			return forkStatus;
+		},
+		get lastTokenBreakdown() {
+			return lastTokenBreakdown;
+		},
 
 		estimateInputTokensFor(messageText: string): number {
 			return tokenStore.estimateInputTokensFor(
@@ -85,10 +101,18 @@ function createChatStore() {
 
 		// ── Delegated methods (providerStore) ─────────────────────────────────────
 
-		async loadProviders() { return providerStore.loadProviders(); },
-		async loadAppInfo()   { return providerStore.loadAppInfo(); },
-		setProvider(id: string) { providerStore.setProvider(id); },
-		setModel(id: string)    { providerStore.setModel(id); },
+		async loadProviders() {
+			return providerStore.loadProviders();
+		},
+		async loadAppInfo() {
+			return providerStore.loadAppInfo();
+		},
+		setProvider(id: string) {
+			providerStore.setProvider(id);
+		},
+		setModel(id: string) {
+			providerStore.setModel(id);
+		},
 
 		// ── Delegated methods (promptStore) ───────────────────────────────────────
 
@@ -107,8 +131,12 @@ function createChatStore() {
 			void editorStore.loadModeDefaultPrompt(promptStore.selectedModeId);
 		},
 
-		toggleTools()               { promptStore.toggleTools(); },
-		setToolsEnabled(v: boolean) { promptStore.setToolsEnabled(v); },
+		toggleTools() {
+			promptStore.toggleTools();
+		},
+		setToolsEnabled(v: boolean) {
+			promptStore.setToolsEnabled(v);
+		},
 
 		// ── Delegated methods (editorStore) ───────────────────────────────────────
 
@@ -116,8 +144,12 @@ function createChatStore() {
 			editorStore.startEditing(turnId, messages);
 		},
 
-		cancelEditing()  { editorStore.cancelEditing(); },
-		setEditDraft(t: string) { editorStore.setEditDraft(t); },
+		cancelEditing() {
+			editorStore.cancelEditing();
+		},
+		setEditDraft(t: string) {
+			editorStore.setEditDraft(t);
+		},
 
 		async saveEdit() {
 			await editorStore.saveEdit(sessionId, messages, (idx, updated) => {
@@ -131,13 +163,21 @@ function createChatStore() {
 			});
 		},
 
-		async loadSystemPrompt()    { return editorStore.loadSystemPrompt(sessionId); },
-		async saveSystemPrompt(text: string) { return editorStore.saveSystemPrompt(sessionId, text); },
-		async clearSystemPrompt()   { return editorStore.clearSystemPrompt(sessionId); },
+		async loadSystemPrompt() {
+			return editorStore.loadSystemPrompt(sessionId);
+		},
+		async saveSystemPrompt(text: string) {
+			return editorStore.saveSystemPrompt(sessionId, text);
+		},
+		async clearSystemPrompt() {
+			return editorStore.clearSystemPrompt(sessionId);
+		},
 
 		// ── Delegated methods (tokenStore) ─────────────────────────────────────────
 
-		async refreshSessionTokens() { return tokenStore.refreshSessionTokens(sessionId); },
+		async refreshSessionTokens() {
+			return tokenStore.refreshSessionTokens(sessionId);
+		},
 
 		// ── Context files ─────────────────────────────────────────────────────────
 
@@ -159,7 +199,9 @@ function createChatStore() {
 			}
 			// Mark any streaming messages as done
 			messages = messages.map((m) =>
-				m.isStreaming ? { ...m, isStreaming: false, content: m.content + '\n\n⚠️ Stopped by user' } : m
+				m.isStreaming
+					? { ...m, isStreaming: false, content: m.content + '\n\n⚠️ Stopped by user' }
+					: m
 			);
 			chatState = { status: 'idle' };
 		},
@@ -178,9 +220,7 @@ function createChatStore() {
 
 		formatNotesForPrompt(notes: Note[]): string {
 			const lines = notes.map((note, index) => {
-				const annotation = note.note.trim()
-					? `\nComment: ${note.note.trim()}`
-					: '';
+				const annotation = note.note.trim() ? `\nComment: ${note.note.trim()}` : '';
 				return [
 					`### Note ${index + 1} (${note.source_role})`,
 					`Selected text:`,
@@ -207,11 +247,11 @@ function createChatStore() {
 		 */
 		resetForNewChat() {
 			if (isStreaming) return; // Don't allow switching during streaming
-			messages     = [];
+			messages = [];
 			pastedImages = [];
-			chatState    = { status: 'idle' };
+			chatState = { status: 'idle' };
 			contextFiles = [];
-			forkStatus   = '';
+			forkStatus = '';
 			lastTokenBreakdown = null;
 
 			editorStore.reset();
@@ -224,11 +264,11 @@ function createChatStore() {
 			if (isStreaming) return; // Don't allow switching during streaming
 			try {
 				const data = await api.getSession(id);
-				sessionId    = id;
-				messages     = data.ui_messages ?? [];
-				chatState    = { status: 'idle' };
+				sessionId = id;
+				messages = data.ui_messages ?? [];
+				chatState = { status: 'idle' };
 				contextFiles = [];
-				forkStatus   = '';
+				forkStatus = '';
 				lastTokenBreakdown = null;
 
 				editorStore.reset();
@@ -250,11 +290,11 @@ function createChatStore() {
 				// 404 or network error — treat as new chat (empty state)
 				// This handles: new UUID in URL, deleted session, or network issues
 				console.warn('Session not found or failed to load, starting fresh:', id);
-				sessionId    = id;
-				messages     = [];
-				chatState    = { status: 'idle' };
+				sessionId = id;
+				messages = [];
+				chatState = { status: 'idle' };
 				contextFiles = [];
-				forkStatus   = '';
+				forkStatus = '';
 				lastTokenBreakdown = null;
 				editorStore.reset();
 				tokenStore.reset();
@@ -279,7 +319,7 @@ function createChatStore() {
 		async sendMessage(text: string) {
 			if (!text.trim() || chatState.status === 'loading' || isStreaming) return;
 
-			const imagesToSend       = [...pastedImages];
+			const imagesToSend = [...pastedImages];
 			const contextFilesToSend = [...contextFiles];
 
 			// Create abort controller for this stream
@@ -287,7 +327,7 @@ function createChatStore() {
 
 			// Optimistic UI — push user message immediately.
 			const optimisticMsg: Message = {
-				role:   'user',
+				role: 'user',
 				content: text,
 				images: imagesToSend.map((i) => i.dataUrl),
 				...(contextFilesToSend.length > 0
@@ -304,7 +344,7 @@ function createChatStore() {
 			const assistantMsg: Message = {
 				role: 'assistant',
 				content: '',
-				isStreaming: true,
+				isStreaming: true
 			};
 			messages.push(assistantMsg);
 			const assistantIdx = messages.length - 1;
@@ -312,16 +352,16 @@ function createChatStore() {
 			chatState = { status: 'idle' };
 
 			const payload = {
-				session_id:    sessionId,
-				message:       text,
-				mode_id:       promptStore.selectedModeId,
+				session_id: sessionId,
+				message: text,
+				mode_id: promptStore.selectedModeId,
 				images:
 					imagesToSend.length > 0
 						? imagesToSend.map((i) => ({ mime_type: i.mimeType, data: i.base64 }))
 						: null,
 				context_files: contextFilesToSend.length > 0 ? contextFilesToSend : null,
 				provider: providerStore.selectedProvider || undefined,
-				model:    providerStore.selectedModel    || undefined,
+				model: providerStore.selectedModel || undefined,
 				tools_enabled: promptStore.toolsEnabled ? undefined : false
 			};
 
@@ -333,7 +373,7 @@ function createChatStore() {
 							const current = messages[assistantIdx];
 							messages[assistantIdx] = {
 								...current,
-								content: (current.content || '') + event.content,
+								content: (current.content || '') + event.content
 							};
 							break;
 						}
@@ -345,8 +385,8 @@ function createChatStore() {
 								name: event.name,
 								args: event.args,
 								id: event.id,
-								status: 'calling',
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								status: 'calling'
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							} as any);
 							messages[assistantIdx] = { ...current, tools };
 							break;
@@ -354,8 +394,10 @@ function createChatStore() {
 
 						case 'tool_result': {
 							const current = messages[assistantIdx];
-							const tools = (current.tools || []).map((t: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
-								t.id === event.id ? { ...t, result: event.result, status: 'done' } : t
+							const tools = (current.tools || []).map(
+								(
+									t: any // eslint-disable-line @typescript-eslint/no-explicit-any
+								) => (t.id === event.id ? { ...t, result: event.result, status: 'done' } : t)
 							);
 							messages[assistantIdx] = { ...current, tools };
 							break;
@@ -369,7 +411,9 @@ function createChatStore() {
 								turn_id: event.assistant_turn_id,
 								provider: event.provider,
 								model: event.model,
-								...(event.token_breakdown ? { token_count: event.token_breakdown.assistant_tokens } : {}),
+								...(event.token_breakdown
+									? { token_count: event.token_breakdown.assistant_tokens }
+									: {})
 							};
 							// Store full breakdown for the TokenIndicator
 							lastTokenBreakdown = event.token_breakdown ?? null;
@@ -377,14 +421,20 @@ function createChatStore() {
 							// Sync picker to the provider that actually responded.
 							providerStore.syncFromMessage(event.provider, event.model);
 
-								// Update user message with turn_id and token_count.
+							// Update user message with turn_id and token_count.
 							if (event.user_turn_id) {
 								const lastUserIdx = assistantIdx - 1;
-								if (lastUserIdx >= 0 && messages[lastUserIdx].role === 'user' && !messages[lastUserIdx].turn_id) {
+								if (
+									lastUserIdx >= 0 &&
+									messages[lastUserIdx].role === 'user' &&
+									!messages[lastUserIdx].turn_id
+								) {
 									messages[lastUserIdx] = {
 										...messages[lastUserIdx],
 										turn_id: event.user_turn_id,
-										...(event.token_breakdown ? { token_count: event.token_breakdown.user_message_tokens } : {}),
+										...(event.token_breakdown
+											? { token_count: event.token_breakdown.user_message_tokens }
+											: {})
 									};
 								}
 							}
@@ -403,7 +453,8 @@ function createChatStore() {
 				void tokenStore.refreshSessionTokens(sessionId);
 
 				// Auto-generate title after first message (background, non-blocking)
-				if (messages.length <= 3) { // user + assistant = 2 messages (first turn)
+				if (messages.length <= 3) {
+					// user + assistant = 2 messages (first turn)
 					void generateTitleInBackground(sessionId);
 				}
 			} catch (e) {
@@ -417,7 +468,7 @@ function createChatStore() {
 				messages[assistantIdx] = {
 					...messages[assistantIdx],
 					content: `⚠️ Error: ${msg}`,
-					isStreaming: false,
+					isStreaming: false
 				};
 				chatState = { status: 'error', message: msg };
 			}
@@ -465,14 +516,14 @@ function createChatStore() {
 					...(data.assistant_turn_id ? { turn_id: data.assistant_turn_id } : {}),
 					...(data.provider ? { provider: data.provider } : {}),
 					...(data.model ? { model: data.model } : {}),
-					...(data.token_breakdown ? { token_count: data.token_breakdown.assistant_tokens } : {}),
+					...(data.token_breakdown ? { token_count: data.token_breakdown.assistant_tokens } : {})
 				});
 				lastTokenBreakdown = data.token_breakdown ?? null;
 				// Update user message token_count from breakdown
 				if (data.token_breakdown && lastUserIdx >= 0) {
 					messages[lastUserIdx] = {
 						...messages[lastUserIdx],
-						token_count: data.token_breakdown.user_message_tokens,
+						token_count: data.token_breakdown.user_message_tokens
 					};
 				}
 

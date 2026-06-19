@@ -16,9 +16,9 @@ import type { AsyncState } from '$lib/types';
 import { persisted } from '$lib/persist.svelte';
 
 function createPromptStore() {
-	let selectedModeId = persisted<string>('ka:mode', 'general');
+	const selectedModeId = persisted<string>('ka:mode', 'general');
 	let modesState = $state<AsyncState<void>>({ status: 'idle' });
-	let toolsEnabled = persisted<boolean>('ka:tools', true);
+	const toolsEnabled = persisted<boolean>('ka:tools', true);
 
 	return {
 		get selectedModeId() {

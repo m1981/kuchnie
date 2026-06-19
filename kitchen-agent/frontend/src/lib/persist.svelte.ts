@@ -28,6 +28,6 @@ export function persisted<T>(key: string, fallback: T) {
 		set current(v: T) {
 			value = v;
 			localStorage.setItem(key, JSON.stringify(v));
-		},
+		}
 	};
 }

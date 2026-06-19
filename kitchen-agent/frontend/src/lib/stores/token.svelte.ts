@@ -20,15 +20,21 @@ import type { PastedImage } from '$lib/types';
 import { estimateTokensForText, estimateTokensForImage } from '$lib/token_estimator';
 
 function createTokenStore() {
-	let sessionTokenCount       = $state<number>(-1);
-	let sessionTokenFallback    = $state<boolean>(false);
+	let sessionTokenCount = $state<number>(-1);
+	let sessionTokenFallback = $state<boolean>(false);
 	let contextFileTokenEstimate = $state<number>(0);
-	let cachedSystemPromptText  = $state<string>('');
+	let cachedSystemPromptText = $state<string>('');
 
 	return {
-		get sessionTokenCount()       { return sessionTokenCount; },
-		get sessionTokenFallback()    { return sessionTokenFallback; },
-		get contextFileTokenEstimate() { return contextFileTokenEstimate; },
+		get sessionTokenCount() {
+			return sessionTokenCount;
+		},
+		get sessionTokenFallback() {
+			return sessionTokenFallback;
+		},
+		get contextFileTokenEstimate() {
+			return contextFileTokenEstimate;
+		},
 
 		/**
 		 * Reactive input token estimate — "what you'll pay when you click Send".
@@ -54,7 +60,7 @@ function createTokenStore() {
 		async refreshSessionTokens(sessionId: string) {
 			try {
 				const data = await api.getSessionTokens(sessionId);
-				sessionTokenCount    = data.total_tokens;
+				sessionTokenCount = data.total_tokens;
 				sessionTokenFallback = data.fallback_used;
 			} catch {
 				// Backend not available — keep previous value
@@ -97,10 +103,10 @@ function createTokenStore() {
 
 		/** Reset token state. Called on startNewChat. */
 		reset() {
-			sessionTokenCount       = -1;
-			sessionTokenFallback    = false;
+			sessionTokenCount = -1;
+			sessionTokenFallback = false;
 			contextFileTokenEstimate = 0;
-			cachedSystemPromptText  = '';
+			cachedSystemPromptText = '';
 		}
 	};
 }

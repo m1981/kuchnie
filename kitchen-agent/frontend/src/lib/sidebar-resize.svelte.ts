@@ -29,15 +29,15 @@ const URL_PARAM_BY_KEY: Record<string, string> = {
 	[STORAGE_KEY_PROMPT]: 'kaPromptHeight'
 };
 
-const LEFT_MIN  = 180;
-const LEFT_MAX  = 480;
+const LEFT_MIN = 180;
+const LEFT_MAX = 480;
 const RIGHT_MIN = 220;
 const RIGHT_MAX = 600;
 const PROMPT_MIN = 64;
 const PROMPT_MAX = 320;
 
-const DEFAULT_LEFT  = 256;   // w-64 = 16rem = 256px
-const DEFAULT_RIGHT = 288;   // w-72 = 18rem = 288px
+const DEFAULT_LEFT = 256; // w-64 = 16rem = 256px
+const DEFAULT_RIGHT = 288; // w-72 = 18rem = 288px
 const DEFAULT_PROMPT = 96;
 
 function isStorage(value: unknown): value is Storage {
@@ -167,7 +167,9 @@ export function createSidebarResize() {
 	// ── Persistent widths ────────────────────────────────────────────────────
 	let leftWidth = $state(readStorage(STORAGE_KEY_LEFT, DEFAULT_LEFT, LEFT_MIN, LEFT_MAX));
 	let rightWidth = $state(readStorage(STORAGE_KEY_RIGHT, DEFAULT_RIGHT, RIGHT_MIN, RIGHT_MAX));
-	let promptHeight = $state(readStorage(STORAGE_KEY_PROMPT, DEFAULT_PROMPT, PROMPT_MIN, PROMPT_MAX));
+	let promptHeight = $state(
+		readStorage(STORAGE_KEY_PROMPT, DEFAULT_PROMPT, PROMPT_MIN, PROMPT_MAX)
+	);
 	let showRight = $state(readBoolStorage(STORAGE_KEY_SHOW, true));
 
 	// ── Drag state (not persisted) ────────────────────────────────────────────
@@ -244,24 +246,48 @@ export function createSidebarResize() {
 
 	// ── Public API ────────────────────────────────────────────────────────────
 	return {
-		get leftWidth() { return leftWidth; },
-		get rightWidth() { return rightWidth; },
-		get promptHeight() { return promptHeight; },
-		get showRight() { return showRight; },
-		set showRight(v: boolean) { setShowRight(v); },
+		get leftWidth() {
+			return leftWidth;
+		},
+		get rightWidth() {
+			return rightWidth;
+		},
+		get promptHeight() {
+			return promptHeight;
+		},
+		get showRight() {
+			return showRight;
+		},
+		set showRight(v: boolean) {
+			setShowRight(v);
+		},
 
 		startLeftDrag: (e: MouseEvent) => startDrag('left', e),
 		startRightDrag: (e: MouseEvent) => startDrag('right', e),
 		startPromptDrag,
 
-		toggleRight() { setShowRight(!showRight); },
+		toggleRight() {
+			setShowRight(!showRight);
+		},
 
-		resizeLeftBy(delta: number) { setLeftWidth(leftWidth + delta); },
-		resizeRightBy(delta: number) { setRightWidth(rightWidth + delta); },
-		resizePromptBy(delta: number) { setPromptHeight(promptHeight + delta); },
+		resizeLeftBy(delta: number) {
+			setLeftWidth(leftWidth + delta);
+		},
+		resizeRightBy(delta: number) {
+			setRightWidth(rightWidth + delta);
+		},
+		resizePromptBy(delta: number) {
+			setPromptHeight(promptHeight + delta);
+		},
 
-		resetLeft() { setLeftWidth(DEFAULT_LEFT); },
-		resetRight() { setRightWidth(DEFAULT_RIGHT); },
-		resetPrompt() { setPromptHeight(DEFAULT_PROMPT); },
+		resetLeft() {
+			setLeftWidth(DEFAULT_LEFT);
+		},
+		resetRight() {
+			setRightWidth(DEFAULT_RIGHT);
+		},
+		resetPrompt() {
+			setPromptHeight(DEFAULT_PROMPT);
+		}
 	};
 }

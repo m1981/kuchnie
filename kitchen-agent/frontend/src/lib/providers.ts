@@ -31,7 +31,7 @@ export const PROVIDERS: ProviderInfo[] = [
 		default_model: 'gemini-3.1-pro-preview',
 		models: [
 			{ id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro', context_k: 1000 },
-			{ id: 'gemini-3.5-flash',       label: 'Gemini 3.5 Flash', context_k: 1000 }
+			{ id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash', context_k: 1000 }
 		]
 	},
 	{
@@ -39,7 +39,7 @@ export const PROVIDERS: ProviderInfo[] = [
 		label: 'Anthropic Claude',
 		default_model: 'claude-sonnet-4-6',
 		models: [
-			{ id: 'claude-opus-4-8',   label: 'Claude Opus 4.8',   context_k: 200 },
+			{ id: 'claude-opus-4-8', label: 'Claude Opus 4.8', context_k: 200 },
 			{ id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6', context_k: 200 }
 		]
 	},
@@ -49,7 +49,7 @@ export const PROVIDERS: ProviderInfo[] = [
 		default_model: 'mimo-v2.5-pro',
 		models: [
 			{ id: 'mimo-v2.5-pro', label: 'MiMo V2.5 Pro', context_k: 1000 },
-			{ id: 'mimo-v2.5',     label: 'MiMo V2.5',     context_k: 1000 }
+			{ id: 'mimo-v2.5', label: 'MiMo V2.5', context_k: 1000 }
 		]
 	}
 ];

@@ -19,27 +19,39 @@ import type { AsyncState } from '$lib/types';
 
 function createEditorStore() {
 	// ── Message editor ────────────────────────────────────────────────────
-	let editingTurnId  = $state<string | null>(null);
-	let editDraft      = $state<string>('');
-	let editState      = $state<AsyncState<void>>({ status: 'idle' });
+	let editingTurnId = $state<string | null>(null);
+	let editDraft = $state<string>('');
+	let editState = $state<AsyncState<void>>({ status: 'idle' });
 
 	// ── System prompt ─────────────────────────────────────────────────
-	let sessionSystemPrompt    = $state<string | null>(null);
-	let modeDefaultPrompt      = $state<string>('');
-	let systemPromptDraft      = $state<string>('');
-	let systemPromptState      = $state<AsyncState<void>>({ status: 'idle' });
+	let sessionSystemPrompt = $state<string | null>(null);
+	let modeDefaultPrompt = $state<string>('');
+	let systemPromptDraft = $state<string>('');
+	let systemPromptState = $state<AsyncState<void>>({ status: 'idle' });
 
 	return {
 		// Message editor
-		get editingTurnId() { return editingTurnId; },
-		get editDraft()     { return editDraft; },
-		get editState()     { return editState; },
+		get editingTurnId() {
+			return editingTurnId;
+		},
+		get editDraft() {
+			return editDraft;
+		},
+		get editState() {
+			return editState;
+		},
 
 		// System prompt
-		get sessionSystemPrompt()    { return sessionSystemPrompt; },
-		get modeDefaultPrompt()      { return modeDefaultPrompt; },
+		get sessionSystemPrompt() {
+			return sessionSystemPrompt;
+		},
+		get modeDefaultPrompt() {
+			return modeDefaultPrompt;
+		},
 		/** Resolved text: session override ?? mode default */
-		get resolvedSystemPrompt()   { return sessionSystemPrompt ?? modeDefaultPrompt; },
+		get resolvedSystemPrompt() {
+			return sessionSystemPrompt ?? modeDefaultPrompt;
+		},
 		/**
 		 * Whether the displayed text is a session-specific override.
 		 * An override is only active when the saved prompt is non-null,
@@ -49,8 +61,12 @@ function createEditorStore() {
 			if (sessionSystemPrompt === null || sessionSystemPrompt === '') return false;
 			return sessionSystemPrompt !== modeDefaultPrompt;
 		},
-		get systemPromptDraft()      { return systemPromptDraft; },
-		get systemPromptState()      { return systemPromptState; },
+		get systemPromptDraft() {
+			return systemPromptDraft;
+		},
+		get systemPromptState() {
+			return systemPromptState;
+		},
 		get systemPromptError() {
 			return systemPromptState.status === 'error' ? systemPromptState.message : '';
 		},
@@ -63,17 +79,17 @@ function createEditorStore() {
 		// ── Message editing ─────────────────────────────────────────────
 
 		startEditing(turnId: string, messages: Message[]) {
-			const msg = messages.find(m => m.turn_id === turnId);
+			const msg = messages.find((m) => m.turn_id === turnId);
 			if (!msg) return;
 			editingTurnId = turnId;
-			editDraft     = msg.content;
-			editState     = { status: 'idle' };
+			editDraft = msg.content;
+			editState = { status: 'idle' };
 		},
 
 		cancelEditing() {
 			editingTurnId = null;
-			editDraft     = '';
-			editState     = { status: 'idle' };
+			editDraft = '';
+			editState = { status: 'idle' };
 		},
 
 		setEditDraft(text: string) {
@@ -91,16 +107,16 @@ function createEditorStore() {
 			try {
 				await api.editMessage(sessionId, turnId, editDraft);
 				// Optimistic local update — find by turn_id, not by index.
-				const idx = messages.findIndex(m => m.turn_id === turnId);
+				const idx = messages.findIndex((m) => m.turn_id === turnId);
 				if (idx !== -1) {
 					onUpdate(idx, { ...messages[idx], content: editDraft });
 				}
 				editingTurnId = null;
-				editDraft     = '';
-				editState     = { status: 'success', data: undefined };
+				editDraft = '';
+				editState = { status: 'success', data: undefined };
 			} catch (e) {
 				editState = {
-					status:  'error',
+					status: 'error',
 					message: e instanceof Error ? e.message : 'Edit failed.'
 				};
 			}
@@ -121,7 +137,7 @@ function createEditorStore() {
 			}
 
 			// Auto-promote to pair-delete.
-			const idx = messages.findIndex(m => m.turn_id === turnId);
+			const idx = messages.findIndex((m) => m.turn_id === turnId);
 			if (idx !== -1 && messages[idx].role === 'user' && !deletePair) {
 				const next = messages[idx + 1];
 				if (next?.role === 'assistant') {
@@ -134,13 +150,15 @@ function createEditorStore() {
 
 			// Optimistic local removal.
 			if (deletePair) {
-				onReplace(messages.filter((m, i) => {
-					if (m.turn_id === turnId) return false;
-					if (i === idx + 1 && m.role === 'assistant') return false;
-					return true;
-				}));
+				onReplace(
+					messages.filter((m, i) => {
+						if (m.turn_id === turnId) return false;
+						if (i === idx + 1 && m.role === 'assistant') return false;
+						return true;
+					})
+				);
 			} else {
-				onReplace(messages.filter(m => m.turn_id !== turnId));
+				onReplace(messages.filter((m) => m.turn_id !== turnId));
 			}
 
 			editState = { status: 'loading' };
@@ -150,7 +168,7 @@ function createEditorStore() {
 			} catch (e) {
 				onReplace(snapshot); // rollback
 				editState = {
-					status:  'error',
+					status: 'error',
 					message: e instanceof Error ? e.message : 'Delete failed.'
 				};
 			}
@@ -180,10 +198,10 @@ function createEditorStore() {
 			try {
 				const data = await api.getSystemPrompt(sessionId);
 				sessionSystemPrompt = data.system_prompt ?? null;
-				systemPromptState   = { status: 'success', data: undefined };
+				systemPromptState = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
-					status:  'error',
+					status: 'error',
 					message: e instanceof Error ? e.message : 'Failed to load system prompt.'
 				};
 			}
@@ -195,10 +213,10 @@ function createEditorStore() {
 			try {
 				await api.updateSystemPrompt(sessionId, newPrompt);
 				sessionSystemPrompt = newPrompt;
-				systemPromptState   = { status: 'success', data: undefined };
+				systemPromptState = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
-					status:  'error',
+					status: 'error',
 					message: e instanceof Error ? e.message : 'Failed to save system prompt.'
 				};
 			}
@@ -210,10 +228,10 @@ function createEditorStore() {
 			try {
 				await api.updateSystemPrompt(sessionId, '');
 				sessionSystemPrompt = null;
-				systemPromptState   = { status: 'success', data: undefined };
+				systemPromptState = { status: 'success', data: undefined };
 			} catch (e) {
 				systemPromptState = {
-					status:  'error',
+					status: 'error',
 					message: e instanceof Error ? e.message : 'Failed to clear system prompt.'
 				};
 			}
@@ -221,13 +239,13 @@ function createEditorStore() {
 
 		/** Reset all editor state. Called on startNewChat / loadSession. */
 		reset() {
-			editingTurnId       = null;
-			editDraft           = '';
-			editState           = { status: 'idle' };
+			editingTurnId = null;
+			editDraft = '';
+			editState = { status: 'idle' };
 			sessionSystemPrompt = null;
 			// modeDefaultPrompt persists — it's mode-scoped, not session-scoped
-			systemPromptDraft   = '';
-			systemPromptState   = { status: 'idle' };
+			systemPromptDraft = '';
+			systemPromptState = { status: 'idle' };
 		}
 	};
 }

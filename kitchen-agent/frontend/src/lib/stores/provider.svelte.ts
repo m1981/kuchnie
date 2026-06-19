@@ -17,8 +17,8 @@ import { persisted } from '$lib/persist.svelte';
 
 function createProviderStore() {
 	let providers = $state<ProviderInfo[]>(PROVIDERS);
-	let selectedProvider = persisted<string>('ka:provider', '');
-	let selectedModel = persisted<string>('ka:model', '');
+	const selectedProvider = persisted<string>('ka:provider', '');
+	const selectedModel = persisted<string>('ka:model', '');
 	let appTitle = $state('Agentic Workspace');
 	let appDescription = $state('');
 
