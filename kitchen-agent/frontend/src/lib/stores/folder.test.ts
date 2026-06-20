@@ -450,3 +450,134 @@ describe('FolderStore.drag & drop', () => {
 		expect(folderStore.dropTarget).toBeNull();
 	});
 });
+
+// ---------------------------------------------------------------------------
+// isFoldered / folderedSessionIds
+// ---------------------------------------------------------------------------
+
+describe('FolderStore.isFoldered', () => {
+	it('should return false for unknown session', () => {
+		expect(folderStore.isFoldered('s999')).toBe(false);
+	});
+
+	it('should return true after assignSession succeeds', async () => {
+		folderStore.folders = [makeFolder()];
+		vi.mocked(api.assignSessionToFolder).mockResolvedValue({ assigned: true });
+
+		await folderStore.assignSession('f1', 's1');
+
+		expect(folderStore.isFoldered('s1')).toBe(true);
+	});
+
+	it('should return false after unassignSession succeeds', async () => {
+		folderStore.folders = [makeFolder()];
+		folderStore.folderedSessionIds.add('s1');
+		vi.mocked(api.unassignSessionFromFolder).mockResolvedValue(undefined);
+
+		await folderStore.unassignSession('f1', 's1');
+
+		expect(folderStore.isFoldered('s1')).toBe(false);
+	});
+
+	it('should rollback isFoldered on assign error', async () => {
+		folderStore.folders = [makeFolder({ session_count: 0 })];
+		vi.mocked(api.assignSessionToFolder).mockRejectedValue(new Error('fail'));
+
+		await folderStore.assignSession('f1', 's1');
+
+		expect(folderStore.isFoldered('s1')).toBe(false);
+	});
+
+	it('should rollback isFoldered on unassign error', async () => {
+		folderStore.folders = [makeFolder({ session_count: 1 })];
+		folderStore.folderedSessionIds.add('s1');
+		vi.mocked(api.unassignSessionFromFolder).mockRejectedValue(new Error('fail'));
+
+		await folderStore.unassignSession('f1', 's1');
+
+		expect(folderStore.isFoldered('s1')).toBe(true);
+	});
+
+	it('should track multiple sessions independently', async () => {
+		folderStore.folders = [makeFolder()];
+		vi.mocked(api.assignSessionToFolder).mockResolvedValue({ assigned: true });
+
+		await folderStore.assignSession('f1', 's1');
+		await folderStore.assignSession('f1', 's2');
+
+		expect(folderStore.isFoldered('s1')).toBe(true);
+		expect(folderStore.isFoldered('s2')).toBe(true);
+		expect(folderStore.isFoldered('s3')).toBe(false);
+	});
+
+	it('should clear folderedSessionIds on reset', () => {
+		folderStore.folderedSessionIds.add('s1');
+		folderStore.folderedSessionIds.add('s2');
+
+		folderStore.reset();
+
+		expect(folderStore.isFoldered('s1')).toBe(false);
+		expect(folderStore.isFoldered('s2')).toBe(false);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// deleteFolder should clean up folderedSessionIds
+// ---------------------------------------------------------------------------
+
+describe('FolderStore.deleteFolder — folderedSessionIds cleanup', () => {
+	it('should remove foldered IDs for deleted folder sessions', async () => {
+		const sessions = [
+			{ id: 's1', title: 'Session 1', updated_at: '' },
+			{ id: 's2', title: 'Session 2', updated_at: '' }
+		];
+		folderStore.folders = [makeFolder({ id: 'f1' })];
+		folderStore.folderSessions = new SvelteMap([['f1', sessions]]);
+		folderStore.folderedSessionIds.add('s1');
+		folderStore.folderedSessionIds.add('s2');
+		vi.mocked(api.deleteFolder).mockResolvedValue(undefined);
+
+		const result = await folderStore.deleteFolder('f1');
+
+		expect(result).toBe(true);
+		expect(folderStore.isFoldered('s1')).toBe(false);
+		expect(folderStore.isFoldered('s2')).toBe(false);
+	});
+
+	it('should NOT remove foldered IDs on delete error (rollback)', async () => {
+		const sessions = [{ id: 's1', title: 'Session 1', updated_at: '' }];
+		folderStore.folders = [makeFolder({ id: 'f1' })];
+		folderStore.folderSessions = new SvelteMap([['f1', sessions]]);
+		folderStore.folderedSessionIds.add('s1');
+		vi.mocked(api.deleteFolder).mockRejectedValue(new Error('Server error'));
+
+		const result = await folderStore.deleteFolder('f1');
+
+		expect(result).toBe(false);
+		expect(folderStore.isFoldered('s1')).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// refresh should populate folderedSessionIds
+// ---------------------------------------------------------------------------
+
+describe('FolderStore.refresh — loadAllFolderedIds', () => {
+	it('should populate folderedSessionIds from API', async () => {
+		const folders = [makeFolder({ id: 'f1' }), makeFolder({ id: 'f2' })];
+		vi.mocked(api.getFolders).mockResolvedValue({ folders });
+		vi.mocked(api.getFolderSessions)
+			.mockResolvedValueOnce([{ id: 's1', title: 'A', updated_at: '' }])
+			.mockResolvedValueOnce([
+				{ id: 's2', title: 'B', updated_at: '' },
+				{ id: 's3', title: 'C', updated_at: '' }
+			]);
+
+		await folderStore.refresh();
+
+		expect(folderStore.isFoldered('s1')).toBe(true);
+		expect(folderStore.isFoldered('s2')).toBe(true);
+		expect(folderStore.isFoldered('s3')).toBe(true);
+		expect(folderStore.isFoldered('s999')).toBe(false);
+	});
+});

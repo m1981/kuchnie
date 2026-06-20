@@ -118,9 +118,11 @@ class FolderStore {
 	private async loadAllFolderedIds(): Promise<void> {
 		try {
 			const results = await Promise.all(this.folders.map((f) => api.getFolderSessions(f.id)));
-			this.folderedSessionIds = new SvelteSet(
-				results.flatMap((sessions) => sessions.map((s) => s.id))
-			);
+			// Mutate in place — SvelteSet reassignment breaks reactivity
+			this.folderedSessionIds.clear();
+			for (const id of results.flatMap((sessions) => sessions.map((s) => s.id))) {
+				this.folderedSessionIds.add(id);
+			}
 		} catch {
 			// Non-critical — History will show all sessions if this fails
 		}

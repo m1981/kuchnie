@@ -82,3 +82,61 @@ export async function getSessionState(
     const response = await page.request.get(`${backendUrl}/api/sessions/${sessionId}/state`);
     return response.json();
 }
+
+// ── Folder helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Create a folder via the backend API.
+ */
+export async function createFolder(
+    page: Page,
+    name: string
+): Promise<{ id: string; name: string }> {
+    const backendUrl = getBackendUrl();
+    const response = await page.request.post(`${backendUrl}/api/folders`, {
+        data: { name }
+    });
+    if (!response.ok()) {
+        const body = await response.text();
+        throw new Error(`Create folder failed: ${response.status()} ${body}`);
+    }
+    return response.json();
+}
+
+/**
+ * Assign a session to a folder via the backend API.
+ */
+export async function assignSessionToFolder(
+    page: Page,
+    folderId: string,
+    sessionId: string
+): Promise<void> {
+    const backendUrl = getBackendUrl();
+    const response = await page.request.post(
+        `${backendUrl}/api/folders/${folderId}/sessions/${sessionId}`
+    );
+    if (!response.ok()) {
+        const body = await response.text();
+        throw new Error(`Assign failed: ${response.status()} ${body}`);
+    }
+}
+
+/**
+ * Unassign a session from a folder via the backend API.
+ */
+export async function unassignSessionFromFolder(
+    page: Page,
+    folderId: string,
+    sessionId: string
+): Promise<void> {
+    const backendUrl = getBackendUrl();
+    await page.request.delete(`${backendUrl}/api/folders/${folderId}/sessions/${sessionId}`);
+}
+
+/**
+ * Delete a folder via the backend API (cleanup).
+ */
+export async function deleteFolder(page: Page, folderId: string): Promise<void> {
+    const backendUrl = getBackendUrl();
+    await page.request.delete(`${backendUrl}/api/folders/${folderId}`);
+}

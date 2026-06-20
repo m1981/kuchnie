@@ -117,63 +117,65 @@
 </script>
 
 <!-- Header row -->
-<div class="mb-2 flex items-center justify-between">
-	<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
-	<div class="flex items-center gap-1.5">
-		<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
-			{activeCount}
-		</span>
-	</div>
-</div>
-
-<!-- Error toast -->
-{#if opError}
-	<div
-		class="mb-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700"
-		role="alert"
-	>
-		{opError}
-	</div>
-{/if}
-
-<!-- Loading state -->
-{#if sessionStore.fetchState.status === 'loading'}
-	<div class="space-y-1.5">
-		{#each [1, 2, 3] as i (i)}
-			<div class="h-8 animate-pulse rounded-md bg-line"></div>
-		{/each}
+<section data-testid="history-panel">
+	<div class="mb-2 flex items-center justify-between">
+		<h2 class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">History</h2>
+		<div class="flex items-center gap-1.5">
+			<span class="rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
+				{activeCount}
+			</span>
+		</div>
 	</div>
 
-	<!-- Error state -->
-{:else if sessionStore.fetchState.status === 'error'}
-	<p class="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
-		{sessionStore.fetchState.message}
-	</p>
+	<!-- Error toast -->
+	{#if opError}
+		<div
+			class="mb-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700"
+			role="alert"
+		>
+			{opError}
+		</div>
+	{/if}
 
-	<!-- Empty state -->
-{:else if visibleRoots.length === 0}
-	<p class="rounded-md border border-dashed border-line bg-surface p-3 text-sm text-muted">
-		No saved conversations yet.
-	</p>
+	<!-- Loading state -->
+	{#if sessionStore.fetchState.status === 'loading'}
+		<div class="space-y-1.5">
+			{#each [1, 2, 3] as i (i)}
+				<div class="h-8 animate-pulse rounded-md bg-line"></div>
+			{/each}
+		</div>
 
-	<!-- Session forest -->
-{:else}
-	<div class="space-y-0.5 {isStreaming ? 'pointer-events-none opacity-50' : ''}">
-		{#each visibleRoots as root (root.id)}
-			<DraggableSession sessionId={root.id} sessionTitle={root.title ?? root.id.slice(0, 8)}>
-				<SessionTreeNode
-					node={root}
-					depth={0}
-					{activeId}
-					{onload}
-					onarchive={handleArchive}
-					onunarchive={handleUnarchive}
-					ondelete={handleDelete}
-					onexport={handleExport}
-					onexportllm={handleExportLlm}
-					ontitlegenerate={handleTitleGenerate}
-				/>
-			</DraggableSession>
-		{/each}
-	</div>
-{/if}
+		<!-- Error state -->
+	{:else if sessionStore.fetchState.status === 'error'}
+		<p class="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+			{sessionStore.fetchState.message}
+		</p>
+
+		<!-- Empty state -->
+	{:else if visibleRoots.length === 0}
+		<p class="rounded-md border border-dashed border-line bg-surface p-3 text-sm text-muted">
+			No saved conversations yet.
+		</p>
+
+		<!-- Session forest -->
+	{:else}
+		<div class="space-y-0.5 {isStreaming ? 'pointer-events-none opacity-50' : ''}">
+			{#each visibleRoots as root (root.id)}
+				<DraggableSession sessionId={root.id} sessionTitle={root.title ?? root.id.slice(0, 8)}>
+					<SessionTreeNode
+						node={root}
+						depth={0}
+						{activeId}
+						{onload}
+						onarchive={handleArchive}
+						onunarchive={handleUnarchive}
+						ondelete={handleDelete}
+						onexport={handleExport}
+						onexportllm={handleExportLlm}
+						ontitlegenerate={handleTitleGenerate}
+					/>
+				</DraggableSession>
+			{/each}
+		</div>
+	{/if}
+</section>
