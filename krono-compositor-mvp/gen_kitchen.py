@@ -439,4 +439,9 @@ os.makedirs(handles_dir, exist_ok=True)
 scene.render.filepath = os.path.join(handles_dir, "edge_pull.png")
 bpy.ops.render.render(write_still=True)
 
+# Save .blend file for inspection in Blender GUI
+blend_path = os.path.join(OUTPUT_DIR, "kitchen_scene.blend")
+bpy.ops.wm.save_as_mainfile(filepath=blend_path)
+print(f"Blend file saved to: {blend_path}")
+
 print(f"Pipeline complete! 5 Assets saved to: {OUTPUT_DIR}")
