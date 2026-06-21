@@ -727,28 +727,28 @@ interface SessionFlags {
 
 ## Diagram Maintenance
 
-| Change                | Diagrams to Update                                          |
-| --------------------- | ----------------------------------------------------------- |
-| New component         | 1 (Hierarchy), 8 (Responsibility)                           |
-| New store             | 2 (Architecture), 3 (Consumer Map)                          |
-| New route             | 7 (Routes)                                                  |
-| New action (use:)     | 6 (Svelte 5 Features)                                       |
-| New type              | 10 (Shared Types)                                           |
-| Store refactor        | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots)             |
-| Component refactor    | 1 (Hierarchy), 8 (Responsibility)                           |
-| Drag-drop changes     | 5 (Sidebar Architecture)                                    |
-| Chat flow changes     | 4 (Chat Data Flow)                                          |
-| Session state changes | 11 (Session State Machine), session-state-machine.md        |
+| Change                | Diagrams to Update                                   |
+| --------------------- | ---------------------------------------------------- |
+| New component         | 1 (Hierarchy), 8 (Responsibility)                    |
+| New store             | 2 (Architecture), 3 (Consumer Map)                   |
+| New route             | 7 (Routes)                                           |
+| New action (use:)     | 6 (Svelte 5 Features)                                |
+| New type              | 10 (Shared Types)                                    |
+| Store refactor        | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots)     |
+| Component refactor    | 1 (Hierarchy), 8 (Responsibility)                    |
+| Drag-drop changes     | 5 (Sidebar Architecture)                             |
+| Chat flow changes     | 4 (Chat Data Flow)                                   |
+| Session state changes | 11 (Session State Machine), session-state-machine.md |
 
 ### Last Updated
 
-| Date       | Change                                                                                | Diagrams       |
-| ---------- | ------------------------------------------------------------------------------------- | -------------- |
+| Date       | Change                                                                                 | Diagrams      |
+| ---------- | -------------------------------------------------------------------------------------- | ------------- |
 | 2026-06-21 | Diagram↔code alignment: fix importer counts, add missing components, remove stale refs | 1, 2, 3, 6, 9 |
-| 2026-06-21 | Delete dead code: SessionTree.svelte, ProviderPicker.svelte                           | 1, 9           |
-| 2026-06-21 | Remove line counts and bar charts (stale noise)                                       | All            |
-| 2026-06-17 | Session state machine: tree operations (archiveTree, assignTree, getSessionFlags)     | 2, 3, 5, 9     |
-| 2026-06-17 | New components: ArchiveConfirmDialog, MoveToFolderDialog                              | 1, 8           |
-| 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns              | - (E2E tests)  |
-| 2026-06-17 | Fix: SvelteMap/SvelteSet reactivity (remove $state wrapping, defer getSessions fetch) | 2, 5, 6        |
-| 2026-06-17 | Refactor v2 complete (all 8 phases)                                                   | All (updated)  |
+| 2026-06-21 | Delete dead code: SessionTree.svelte, ProviderPicker.svelte                            | 1, 9          |
+| 2026-06-21 | Remove line counts and bar charts (stale noise)                                        | All           |
+| 2026-06-17 | Session state machine: tree operations (archiveTree, assignTree, getSessionFlags)      | 2, 3, 5, 9    |
+| 2026-06-17 | New components: ArchiveConfirmDialog, MoveToFolderDialog                               | 1, 8          |
+| 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns               | - (E2E tests) |
+| 2026-06-17 | Fix: SvelteMap/SvelteSet reactivity (remove $state wrapping, defer getSessions fetch)  | 2, 5, 6       |
+| 2026-06-17 | Refactor v2 complete (all 8 phases)                                                    | All (updated) |

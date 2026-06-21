@@ -80,7 +80,9 @@ export class ContextSidebarPage {
      * Check/uncheck a context file by name
      */
     async toggleFile(filename: string) {
-        const checkbox = this.page.locator(`aside label:has-text("${filename}") input[type="checkbox"]`);
+        const checkbox = this.page.locator(
+            `aside label:has-text("${filename}") input[type="checkbox"]`
+        );
         await checkbox.click();
     }
 
@@ -111,7 +113,9 @@ export class ContextSidebarPage {
      * Assert a file is checked
      */
     async expectFileChecked(filename: string) {
-        const checkbox = this.page.locator(`aside label:has-text("${filename}") input[type="checkbox"]`);
+        const checkbox = this.page.locator(
+            `aside label:has-text("${filename}") input[type="checkbox"]`
+        );
         await expect(checkbox).toBeChecked();
     }
 
@@ -119,7 +123,9 @@ export class ContextSidebarPage {
      * Assert a file is unchecked
      */
     async expectFileUnchecked(filename: string) {
-        const checkbox = this.page.locator(`aside label:has-text("${filename}") input[type="checkbox"]`);
+        const checkbox = this.page.locator(
+            `aside label:has-text("${filename}") input[type="checkbox"]`
+        );
         await expect(checkbox).not.toBeChecked();
     }
 }

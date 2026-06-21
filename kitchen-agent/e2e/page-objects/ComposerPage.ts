@@ -121,7 +121,7 @@ export class ComposerPage {
      * Check if tools are enabled
      */
     async isToolsEnabled(): Promise<boolean> {
-        return this.toolsToggle.getAttribute('aria-pressed').then(v => v === 'true');
+        return this.toolsToggle.getAttribute('aria-pressed').then((v) => v === 'true');
     }
 
     /**

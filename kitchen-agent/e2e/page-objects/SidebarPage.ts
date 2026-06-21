@@ -83,9 +83,13 @@ export class SidebarPage {
      */
     async getSessionCount(): Promise<number> {
         // Count buttons that look like session items (have 3-dot menu nearby)
-        const sessions = this.page.locator('aside').first().locator('button').filter({
-            has: this.page.locator('text=/^\\w/')
-        });
+        const sessions = this.page
+            .locator('aside')
+            .first()
+            .locator('button')
+            .filter({
+                has: this.page.locator('text=/^\\w/')
+            });
         return sessions.count();
     }
 
@@ -93,7 +97,11 @@ export class SidebarPage {
      * Click on a session by its title text
      */
     async clickSession(title: string) {
-        const session = this.page.locator('aside').first().locator(`button:has-text("${title}")`).first();
+        const session = this.page
+            .locator('aside')
+            .first()
+            .locator(`button:has-text("${title}")`)
+            .first();
         await session.click();
     }
 
