@@ -137,8 +137,8 @@
 		>
 			<div
 				class={msg.role === 'user'
-					? 'max-w-[85%] rounded-xl bg-ink/5 px-4 py-2.5 text-ink shadow-sm'
-					: 'w-full max-w-3xl rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm'}
+					? 'w-full rounded-xl bg-ink/5 px-4 py-2.5 text-ink shadow-sm'
+					: 'w-full rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm'}
 			>
 				<!-- Role label + badges + action buttons -->
 				<div class="mb-2 flex items-center justify-between gap-3">
@@ -291,7 +291,7 @@
 
 	{#if isLoading}
 		<article data-testid="loading-indicator" class="flex justify-start">
-			<div class="w-full max-w-3xl rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm">
+			<div class="w-full rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm">
 				<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Assistant</p>
 				<div class="mt-3 flex items-center gap-3 text-sm text-muted">
 					<span class="h-2 w-2 animate-pulse rounded-full bg-accent"></span>
