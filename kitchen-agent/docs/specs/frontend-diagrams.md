@@ -63,6 +63,8 @@ graph TB
     subgraph Shared["Shared / UI Components"]
         Dialog["Dialog<br/>base modal"]
         ConfirmDialog["ConfirmDialog<br/>modal confirm"]
+        ArchiveConfirmDialog["ArchiveConfirmDialog<br/>archive with children/folder options"]
+        MoveToFolderDialog["MoveToFolderDialog<br/>multi-folder select with children option"]
     end
 
     %% Route hierarchy
@@ -97,6 +99,8 @@ graph TB
     %% Shared UI
     ConfirmDialog --> Dialog
     CreateFolderDialog --> Dialog
+    ArchiveConfirmDialog --> Dialog
+    MoveToFolderDialog --> Dialog
 
     %% Session tree composition
     SessionPanel --> DraggableSession
@@ -144,7 +148,7 @@ graph TB
     end
 
     subgraph Independent["Independent Stores"]
-        FolderStore["folderStore<br/><b>class-based</b><br/>folders ($state)<br/>folderSessions, sessionsLoading, sessionsError (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)<br/><i>Note: SvelteMap/SvelteSet NOT wrapped in $state</i>"]
+        FolderStore["folderStore<br/><b>class-based</b><br/>folders ($state)<br/>folderSessions, sessionsLoading, sessionsError (SvelteMap)<br/>expandedFolders, folderedSessionIds (SvelteSet)<br/>pendingOps (SvelteMap)<br/><i>Note: SvelteMap/SvelteSet NOT wrapped in $state</i>"]
         SessionStore["sessionStore<br/>closure-based<br/>tree (SessionNode[])<br/>flat (derived), activeId"]
         NotesStore["notesStore<br/>closure-based<br/>bySession (Record&lt;string, Note[]&gt;)<br/>fetchStates"]
     end
@@ -243,6 +247,10 @@ graph LR
     NS -->|"create, delete"| NP
     NS -->|"forSession(), load()"| NPL
 
+    %% Cross-store dependencies (store-to-store)
+    PR -->|"promptStore"| TS
+    SS -->|"sessionStore"| CS
+
     style Stores fill:#e8f5e9,stroke:#4CAF50
     style Components fill:#e3f2fd,stroke:#1565C0
 ```
@@ -338,7 +346,7 @@ graph TB
 
     subgraph folderStore["folderStore (class-based)"]
         Folders["$state: folders[]"]
-        Expanded["SvelteSet: expandedFolders<br/>(no $state — built-in reactivity)"]
+        Expanded["SvelteSet: expandedFolders,<br/>folderedSessionIds<br/>(no $state — built-in reactivity)"]
         Sessions["SvelteMap: folderSessions,<br/>sessionsLoading, sessionsError<br/>(no $state — built-in reactivity)"]
         Drag["$state: dragPayload, dropTarget"]
         Pending["SvelteMap: pendingOps<br/>(no $state — built-in reactivity)"]
@@ -401,7 +409,7 @@ graph TB
 
     subgraph Reactivity["Svelte Reactivity Collections"]
         SvelteMap["SvelteMap<br/>folderSessions, sessionsLoading,<br/>sessionsError, pendingOps<br/><i>NOT wrapped in $state</i>"]
-        SvelteSet["SvelteSet<br/>expandedFolders<br/><i>NOT wrapped in $state</i>"]
+        SvelteSet["SvelteSet<br/>expandedFolders, folderedSessionIds<br/><i>NOT wrapped in $state</i>"]
     end
 
     subgraph Patterns["Svelte 5 Patterns"]
@@ -574,10 +582,10 @@ graph LR
 graph TB
     subgraph Hotspots["Most Imported Modules"]
         FS["folderStore — 5 importers<br/>DraggableSession, FolderItem,<br/>FolderTree, SessionPanel,<br/>SidebarLayout"]
-        API["api.ts — 6 importers<br/>SessionPanel, ArchivedPanel,<br/>ContextSidebar, FileEditor,<br/>+page, +error"]
+        API["api.ts — 19 importers<br/>10 components, 8 stores,<br/>+page"]
         SS["sessionStore — 4 importers<br/>+page, SessionPanel,<br/>ArchivedPanel, chatStore"]
-        PR["promptStore — 3 importers<br/>ComposerActions, +page,<br/>(indirect via ChatComposer)"]
-        PS["providerStore — 3 importers<br/>TokenIndicator, +page,<br/>(indirect via ChatComposer)"]
+        PR["promptStore — 4 importers<br/>ComposerActions, +page,<br/>chatStore, tokenStore"]
+        PS["providerStore — 3 importers<br/>TokenIndicator, +page,<br/>chatStore"]
     end
 
     subgraph Risk["Coupling Risk Assessment"]
@@ -721,31 +729,26 @@ interface SessionFlags {
 
 | Change                | Diagrams to Update                                          |
 | --------------------- | ----------------------------------------------------------- |
-| New component         | 1 (Hierarchy), 8 (Responsibility), 10 (Size)                |
-| New store             | 2 (Architecture), 3 (Consumer Map), 10 (Size)               |
+| New component         | 1 (Hierarchy), 8 (Responsibility)                           |
+| New store             | 2 (Architecture), 3 (Consumer Map)                          |
 | New route             | 7 (Routes)                                                  |
 | New action (use:)     | 6 (Svelte 5 Features)                                       |
-| New type              | 11 (Shared Types)                                           |
-| Store refactor        | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots), 10 (Size) |
-| Component refactor    | 1 (Hierarchy), 8 (Responsibility), 10 (Size)                |
+| New type              | 10 (Shared Types)                                           |
+| Store refactor        | 2 (Architecture), 3 (Consumer Map), 9 (Hotspots)             |
+| Component refactor    | 1 (Hierarchy), 8 (Responsibility)                           |
 | Drag-drop changes     | 5 (Sidebar Architecture)                                    |
 | Chat flow changes     | 4 (Chat Data Flow)                                          |
-| Session state changes | 12 (Session State Machine), session-state-machine.md        |
+| Session state changes | 11 (Session State Machine), session-state-machine.md        |
 
 ### Last Updated
 
 | Date       | Change                                                                                | Diagrams       |
 | ---------- | ------------------------------------------------------------------------------------- | -------------- |
-| 2026-06-17 | Session state machine: tree operations (archiveTree, assignTree, getSessionFlags)     | 2, 3, 5, 9, 10 |
+| 2026-06-21 | Diagram↔code alignment: fix importer counts, add missing components, remove stale refs | 1, 2, 3, 6, 9 |
+| 2026-06-21 | Delete dead code: SessionTree.svelte, ProviderPicker.svelte                           | 1, 9           |
+| 2026-06-21 | Remove line counts and bar charts (stale noise)                                       | All            |
+| 2026-06-17 | Session state machine: tree operations (archiveTree, assignTree, getSessionFlags)     | 2, 3, 5, 9     |
 | 2026-06-17 | New components: ArchiveConfirmDialog, MoveToFolderDialog                              | 1, 8           |
 | 2026-06-17 | DOM access timing fixes: waitForTimeout removal, proper waiting patterns              | - (E2E tests)  |
 | 2026-06-17 | Fix: SvelteMap/SvelteSet reactivity (remove $state wrapping, defer getSessions fetch) | 2, 5, 6        |
 | 2026-06-17 | Refactor v2 complete (all 8 phases)                                                   | All (updated)  |
-| 2026-06-17 | Phase 8: ComposerActions extracted                                                    | 1, 4, 8, 10    |
-| 2026-17    | Phase 7: pendingOps in folderStore                                                    | 2, 5           |
-| 2026-06-17 | Phase 6: +error.svelte route                                                          | 1, 7           |
-| 2026-06-17 | Phase 5: pageReady loading state                                                      | 1, 7           |
-| 2026-06-17 | Phase 4: shared Dialog component                                                      | 1, 8           |
-| 2026-06-17 | Phase 3: SidebarLayout, SessionPanel, ArchivedPanel                                   | 1, 5, 8        |
-| 2026-06-16 | Phase 2: direct store imports                                                         | 2, 3, 9        |
-| 2026-06-16 | Phase 1: merge RemoteData → AsyncState                                                | 11             |

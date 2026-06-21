@@ -364,7 +364,7 @@ graph TB
     subgraph FolderState["folderStore owns (class-based, SvelteMap/SvelteSet)"]
         FS_Folders["folders, sortedFolders (derived)"]
         FS_Sessions["folderSessions (SvelteMap)"]
-        FS_Expanded["expandedFolders (SvelteSet)"]
+        FS_Expanded["expandedFolders, folderedSessionIds (SvelteSet)"]
         FS_Drag["dragPayload, dropTarget"]
         FS_Pending["pendingOps (SvelteMap)"]
     end
