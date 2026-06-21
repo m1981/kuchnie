@@ -143,17 +143,22 @@ for i, cab in enumerate(layout_data['cabinets']):
     if cab.get('handle') == 'edge_pull':
         handle_w = min(0.2, w - 0.05)
         if cab['type'] == 'base':
+            # Edge pull: lip sits on cabinet front, 20mm below countertop
+            # Overhang is 20mm (from layout.json), handle must be in front of cabinet
+            ct_overhang_m = 0.02  # 20mm from layout.json
+            handle_y = -d - ct_overhang_m / 2  # Centered in front of cabinet face
             bpy.ops.mesh.primitive_cube_add(size=1.0)
             lip = bpy.context.active_object
-            lip.scale = (handle_w, 0.02, 0.002)
+            lip.scale = (handle_w, 0.015, 0.002)
             bpy.ops.object.transform_apply(scale=True)
-            lip.location = (current_x + w / 2, -d + 0.01, h - GAP / 2 + 0.001)
+            lip.location = (current_x + w / 2, handle_y, h - GAP / 2 - 0.02)
 
+            # Drop hangs down from lip
             bpy.ops.mesh.primitive_cube_add(size=1.0)
             drop = bpy.context.active_object
-            drop.scale = (handle_w, 0.002, 0.02)
+            drop.scale = (handle_w, 0.002, 0.018)
             bpy.ops.object.transform_apply(scale=True)
-            drop.location = (current_x + w / 2, -d - 0.001, h - GAP / 2 - 0.01)
+            drop.location = (current_x + w / 2, handle_y, h - GAP / 2 - 0.04)
         elif cab['type'] == 'tall':
             bpy.ops.mesh.primitive_cube_add(size=1.0)
             lip = bpy.context.active_object
@@ -428,7 +433,10 @@ scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
 scene.render.image_settings.color_depth = '8'
 scene.render.image_settings.color_mode = 'RGBA'
-scene.render.filepath = os.path.join(OUTPUT_DIR, "handle_pass.png")
+# Save to handles/ subfolder matching API path structure
+handles_dir = os.path.join(OUTPUT_DIR, "handles")
+os.makedirs(handles_dir, exist_ok=True)
+scene.render.filepath = os.path.join(handles_dir, "edge_pull.png")
 bpy.ops.render.render(write_still=True)
 
 print(f"Pipeline complete! 5 Assets saved to: {OUTPUT_DIR}")
