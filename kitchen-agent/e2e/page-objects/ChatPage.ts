@@ -169,7 +169,8 @@ export class ChatPage {
     }
 
     async getMessageRole(index: number): Promise<string> {
-        return this.chatBubbles.nth(index).getAttribute('data-chat-bubble') || '';
+        const role = await this.chatBubbles.nth(index).getAttribute('data-chat-bubble');
+        return role ?? '';
     }
 
     async deleteMessage(index: number) {
