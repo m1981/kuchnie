@@ -178,10 +178,25 @@
 	/* ── Composer box ─────────────────────────────────────────────────── */
 
 	.composer-box {
-		border: 1px solid #dadce0;
-		border-radius: 12px;
-		background: #fff;
-		overflow: visible;
+		border: 1px solid transparent;
+		border-radius: 20px;
+		background: var(--color-panel);
+		box-shadow:
+			0 0.25rem 1.25rem rgba(39, 35, 31, 0.08),
+			0 0 0 0.5px rgba(222, 214, 202, 0.3);
+		transition: box-shadow 0.2s;
+	}
+
+	.composer-box:hover {
+		box-shadow:
+			0 0.25rem 1.25rem rgba(39, 35, 31, 0.1),
+			0 0 0 0.5px rgba(222, 214, 202, 0.5);
+	}
+
+	.composer-box:focus-within {
+		box-shadow:
+			0 0.25rem 1.25rem rgba(39, 35, 31, 0.12),
+			0 0 0 0.5px rgba(138, 105, 57, 0.4);
 	}
 
 	/* ── Textarea row ─────────────────────────────────────────────────── */

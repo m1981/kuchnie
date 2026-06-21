@@ -13,6 +13,14 @@
 	--color-accent-soft: #eee3d0;
 	--color-code: #201d1a;
 	--color-code-ink: #f3ede4;
+
+	/* Z-index tokens */
+	--z-content: 10;
+	--z-input: 20;
+	--z-sidebar: 30;
+	--z-header: 40;
+	--z-divider: 50;
+	--z-modal: 60;
 }
 
 @layer base {

@@ -87,7 +87,9 @@
 	}
 </script>
 
-<header class="relative z-40 border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
+<header
+	class="sticky top-0 z-40 border-b border-line/50 bg-panel/80 px-4 py-3 backdrop-blur-md md:px-6"
+>
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
 		<!-- ── Left cluster: sidebar toggle + mode title ──────────────────────── -->
 		<div class="flex min-w-0 items-center gap-3">
