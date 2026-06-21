@@ -181,7 +181,7 @@
 		border: 1px solid #dadce0;
 		border-radius: 12px;
 		background: #fff;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	/* ── Textarea row ─────────────────────────────────────────────────── */
