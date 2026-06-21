@@ -2,8 +2,8 @@
 	/**
 	 * ModelSelector
 	 * =============
-	 * Custom dropdown for picking an LLM model grouped by provider.
-	 * Shows bottom sheet on mobile, popover on desktop.
+	 * Compact dropdown for picking an LLM model grouped by provider.
+	 * Inspired by Anthropic's minimal design language.
 	 *
 	 * Props:
 	 *   providers         — list of provider metadata from the API
@@ -98,7 +98,7 @@
 			aria-expanded={isOpen}
 			aria-label="Select model"
 		>
-			<span class="model-name">{currentModel?.label ?? 'Select model'}</span>
+			<span class="model-name">{currentModel?.label ?? 'Select'}</span>
 			<svg
 				class="chevron"
 				class:rotate-180={isOpen}
@@ -114,13 +114,18 @@
 		<!-- Desktop dropdown -->
 		{#if isOpen}
 			<div class="dropdown" role="listbox" aria-label="Available models">
-				{#each modelGroups as group (group.providerId)}
-					<div class="group">
-						<div class="group-header">{group.providerLabel}</div>
+				{#each modelGroups as group, groupIdx (group.providerId)}
+					{#if groupIdx > 0}
+						<div class="separator"></div>
+					{/if}
+					{#if modelGroups.length > 1}
+						<div class="group-label">{group.providerLabel}</div>
+					{/if}
+					<div class="group" role="group">
 						{#each group.models as model (model.id)}
 							<button
 								type="button"
-								class="model-option"
+								class="menu-item"
 								class:selected={model.id === currentModel?.id}
 								onclick={() =>
 									selectModel({
@@ -133,8 +138,8 @@
 								role="option"
 								aria-selected={model.id === currentModel?.id}
 							>
-								<span class="option-label">{model.label}</span>
-								<span class="option-context">{formatContext(model.context_k)}</span>
+								<span class="item-label">{model.label}</span>
+								<span class="item-meta">{formatContext(model.context_k)}</span>
 							</button>
 						{/each}
 					</div>
@@ -156,11 +161,11 @@
 		></div>
 		<div class="mobile-sheet">
 			<div class="mobile-header">
-				<span class="mobile-title">Select Model</span>
+				<span class="mobile-title">Model</span>
 				<button type="button" class="mobile-close" onclick={() => (isOpen = false)}>
 					<svg
-						width="20"
-						height="20"
+						width="18"
+						height="18"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -171,41 +176,44 @@
 				</button>
 			</div>
 			<div class="mobile-body">
-				{#each modelGroups as group (group.providerId)}
-					<div class="mobile-group">
-						<div class="mobile-group-header">{group.providerLabel}</div>
-						{#each group.models as model (model.id)}
-							<button
-								type="button"
-								class="mobile-option"
-								class:selected={model.id === currentModel?.id}
-								onclick={() =>
-									selectModel({
-										id: model.id,
-										label: model.label,
-										providerId: group.providerId,
-										providerLabel: group.providerLabel,
-										context_k: model.context_k
-									})}
-							>
-								<span class="mobile-option-label">{model.label}</span>
-								<span class="mobile-option-context">{formatContext(model.context_k)}</span>
-								{#if model.id === currentModel?.id}
-									<svg
-										class="mobile-check"
-										width="20"
-										height="20"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-									>
-										<polyline points="20 6 9 17 4 12" />
-									</svg>
-								{/if}
-							</button>
-						{/each}
-					</div>
+				{#each modelGroups as group, groupIdx (group.providerId)}
+					{#if groupIdx > 0}
+						<div class="mobile-separator"></div>
+					{/if}
+					{#if modelGroups.length > 1}
+						<div class="mobile-group-label">{group.providerLabel}</div>
+					{/if}
+					{#each group.models as model (model.id)}
+						<button
+							type="button"
+							class="mobile-item"
+							class:selected={model.id === currentModel?.id}
+							onclick={() =>
+								selectModel({
+									id: model.id,
+									label: model.label,
+									providerId: group.providerId,
+									providerLabel: group.providerLabel,
+									context_k: model.context_k
+								})}
+						>
+							<span class="mobile-item-label">{model.label}</span>
+							<span class="mobile-item-meta">{formatContext(model.context_k)}</span>
+							{#if model.id === currentModel?.id}
+								<svg
+									class="mobile-check"
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2.5"
+								>
+									<polyline points="20 6 9 17 4 12" />
+								</svg>
+							{/if}
+						</button>
+					{/each}
 				{/each}
 			</div>
 		</div>
@@ -213,10 +221,7 @@
 {/if}
 
 <style>
-	/* ── Shared font settings ────────────────────────────────────────── */
-	/* All elements inherit from body: Inter, system-ui, 15px base       */
-
-	/* ── Trigger button ──────────────────────────────────────────────── */
+	/* ── Trigger ──────────────────────────────────────────────────────── */
 
 	.model-selector {
 		position: relative;
@@ -226,23 +231,23 @@
 		display: flex;
 		align-items: center;
 		gap: 4px;
-		height: 36px;
-		padding: 0 10px;
-		border-radius: 8px;
-		border: 1px solid #dadce0;
+		height: 32px;
+		padding: 0 8px;
+		border-radius: 6px;
+		border: 1px solid #e5e7eb;
 		background: #fff;
-		color: #5f6368;
+		color: #374151;
 		font-family: inherit;
 		font-size: 13px;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.15s;
-		max-width: 180px;
+		max-width: 160px;
 	}
 
 	.model-trigger:hover {
-		background: #f8f9fa;
-		border-color: #bdc1c6;
+		background: #f9fafb;
+		border-color: #d1d5db;
 	}
 
 	.model-name {
@@ -252,86 +257,93 @@
 	}
 
 	.chevron {
-		width: 14px;
-		height: 14px;
+		width: 12px;
+		height: 12px;
 		flex-shrink: 0;
-		transition: transform 0.2s;
+		transition: transform 0.15s;
+		color: #9ca3af;
 	}
 
-	/* ── Desktop dropdown ────────────────────────────────────────────── */
+	/* ── Desktop dropdown (compact) ───────────────────────────────────── */
 
 	.dropdown {
 		position: absolute;
 		bottom: 100%;
 		left: 0;
-		min-width: 220px;
-		max-height: 320px;
+		min-width: 200px;
+		max-height: 280px;
 		overflow-y: auto;
 		background: #fff;
-		border: 1px solid #dadce0;
-		border-radius: 12px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 		z-index: 50;
 		margin-bottom: 4px;
+		padding: 4px;
+	}
+
+	.separator {
+		height: 1px;
+		background: #f3f4f6;
+		margin: 4px 0;
+	}
+
+	.group-label {
+		padding: 6px 8px 2px;
+		font-family: inherit;
+		font-size: 11px;
+		font-weight: 500;
+		color: #9ca3af;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
 	}
 
 	.group {
-		padding: 4px 0;
+		padding: 0;
 	}
 
-	.group:not(:last-child) {
-		border-bottom: 1px solid #f1f3f4;
-	}
-
-	.group-header {
-		padding: 8px 12px 4px;
-		font-family: inherit;
-		font-size: 11px;
-		font-weight: 600;
-		color: #80868b;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.model-option {
+	.menu-item {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		padding: 10px 12px;
+		padding: 6px 8px;
 		border: none;
 		background: transparent;
 		text-align: left;
 		cursor: pointer;
+		border-radius: 4px;
 		transition: background 0.1s;
 		font-family: inherit;
+		gap: 8px;
 	}
 
-	.model-option:hover {
-		background: #f1f3f4;
+	.menu-item:hover {
+		background: #f3f4f6;
 	}
 
-	.model-option.selected {
-		background: #e8f0fe;
+	.menu-item.selected {
+		background: #eff6ff;
 	}
 
-	.option-label {
+	.item-label {
 		font-size: 13px;
-		color: #202124;
+		color: #111827;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		flex: 1;
+		min-width: 0;
 	}
 
-	.option-context {
+	.item-meta {
 		font-size: 11px;
-		color: #80868b;
+		color: #9ca3af;
 		white-space: nowrap;
 		flex-shrink: 0;
-		margin-left: 8px;
 	}
 
-	/* ── Mobile bottom sheet ─────────────────────────────────────────── */
+	/* ── Mobile bottom sheet (compact) ────────────────────────────────── */
 
 	.mobile-overlay {
 		display: none;
@@ -361,8 +373,8 @@
 			left: 0;
 			right: 0;
 			background: #fff;
-			border-radius: 16px 16px 0 0;
-			max-height: 70vh;
+			border-radius: 12px 12px 0 0;
+			max-height: 60vh;
 			display: flex;
 			flex-direction: column;
 			animation: slide-up 0.2s ease-out;
@@ -381,13 +393,13 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			padding: 16px;
-			border-bottom: 1px solid #e5e7eb;
+			padding: 12px 16px;
+			border-bottom: 1px solid #f3f4f6;
 		}
 
 		.mobile-title {
 			font-family: inherit;
-			font-size: 16px;
+			font-size: 14px;
 			font-weight: 600;
 			color: #111827;
 		}
@@ -396,8 +408,8 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			width: 32px;
-			height: 32px;
+			width: 28px;
+			height: 28px;
 			border: none;
 			background: #f3f4f6;
 			border-radius: 50%;
@@ -407,52 +419,51 @@
 
 		.mobile-body {
 			overflow-y: auto;
-			padding: 8px 0;
+			padding: 4px;
 		}
 
-		.mobile-group {
-			padding: 4px 0;
+		.mobile-separator {
+			height: 1px;
+			background: #f3f4f6;
+			margin: 4px 0;
 		}
 
-		.mobile-group:not(:last-child) {
-			border-bottom: 1px solid #f3f4f6;
-		}
-
-		.mobile-group-header {
-			padding: 12px 16px 8px;
+		.mobile-group-label {
+			padding: 8px 12px 4px;
 			font-family: inherit;
 			font-size: 11px;
-			font-weight: 600;
-			color: #6b7280;
+			font-weight: 500;
+			color: #9ca3af;
 			text-transform: uppercase;
-			letter-spacing: 0.05em;
+			letter-spacing: 0.03em;
 		}
 
-		.mobile-option {
+		.mobile-item {
 			display: flex;
 			align-items: center;
 			width: 100%;
-			padding: 14px 16px;
-			min-height: 48px;
+			padding: 10px 12px;
+			min-height: 44px;
 			border: none;
 			background: transparent;
 			text-align: left;
 			cursor: pointer;
+			border-radius: 6px;
 			transition: background 0.1s;
 			font-family: inherit;
 			gap: 8px;
 		}
 
-		.mobile-option:hover {
+		.mobile-item:hover {
 			background: #f9fafb;
 		}
 
-		.mobile-option.selected {
+		.mobile-item.selected {
 			background: #eff6ff;
 		}
 
-		.mobile-option-label {
-			font-size: 15px;
+		.mobile-item-label {
+			font-size: 14px;
 			color: #111827;
 			white-space: nowrap;
 			overflow: hidden;
@@ -461,9 +472,9 @@
 			min-width: 0;
 		}
 
-		.mobile-option-context {
+		.mobile-item-meta {
 			font-size: 12px;
-			color: #6b7280;
+			color: #9ca3af;
 			white-space: nowrap;
 			flex-shrink: 0;
 		}
