@@ -316,14 +316,14 @@ flowchart LR
 ```mermaid
 graph TB
     subgraph Stores["Svelte 5 Rune Stores — 8 focused stores"]
-        ChatStore["chatStore<br/><i>chat.svelte.ts</i><br/>~430 lines — session, messaging"]
-        ProviderStore["providerStore<br/><i>provider.svelte.ts</i><br/>113 lines — provider/model, app info"]
-        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>87 lines — modes, tools"]
-        EditorStore["editorStore<br/><i>editor.svelte.ts</i><br/>235 lines — message & prompt editing"]
-        TokenStore["tokenStore<br/><i>token.svelte.ts</i><br/>108 lines — token counting"]
-        FolderStore["folderStore (class-based)<br/><i>folder.svelte.ts</i><br/>~320 lines — folders, session cache, drag-drop, pendingOps"]
-        SessionStore["sessionStore<br/><i>sessions.svelte.ts</i><br/>158 lines"]
-        NotesStore["notesStore<br/><i>notes.svelte.ts</i><br/>101 lines"]
+        ChatStore["chatStore<br/><i>chat.svelte.ts</i><br/>session, messaging"]
+        ProviderStore["providerStore<br/><i>provider.svelte.ts</i><br/>provider/model, app info"]
+        PromptStore["promptStore<br/><i>prompt.svelte.ts</i><br/>modes, tools"]
+        EditorStore["editorStore<br/><i>editor.svelte.ts</i><br/>message & prompt editing"]
+        TokenStore["tokenStore<br/><i>token.svelte.ts</i><br/>token counting"]
+        FolderStore["folderStore (class-based)<br/><i>folder.svelte.ts</i><br/>folders, session cache, drag-drop, pendingOps"]
+        SessionStore["sessionStore<br/><i>sessions.svelte.ts</i>"]
+        NotesStore["notesStore<br/><i>notes.svelte.ts</i>"]
     end
 
     subgraph ChatState["chatStore owns (core only)"]

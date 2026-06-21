@@ -75,7 +75,7 @@ except Exception as e:
 #### A. Toast notifications
 
 ```typescript
-// In SessionTree or page component
+// In SessionPanel or page component
 let titleError = $state('');
 let titleErrorTimer: ReturnType<typeof setTimeout>;
 

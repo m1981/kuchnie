@@ -12,58 +12,57 @@ graph TB
     subgraph Routes["SvelteKit Routes"]
         Layout["+layout.svelte<br/>favicon, global head"]
         RootPage["+page.svelte<br/>redirect → /chat/{uuid}"]
-        ChatPage["chat/[id]/+page.svelte<br/>437 lines — main orchestrator"]
-        ErrorPage["chat/[id]/+error.svelte<br/>33 lines — error boundary"]
+        ChatPage["chat/[id]/+page.svelte<br/>main orchestrator"]
+        ErrorPage["chat/[id]/+error.svelte<br/>error boundary"]
     end
 
     subgraph ChatArea["Chat Area (left panel)"]
-        ChatHeader["ChatHeader<br/>148 lines — title, mode badge"]
-        ChatMessageList["ChatMessageList<br/>308 lines — scrollable messages"]
-        ChatComposer["ChatComposer<br/>214 lines — input orchestrator"]
+        ChatHeader["ChatHeader<br/>title, mode badge"]
+        ChatMessageList["ChatMessageList<br/>scrollable messages"]
+        ChatComposer["ChatComposer<br/>input orchestrator"]
     end
 
     subgraph Sidebar["Sidebar (left panel)"]
-        SidebarLayout["SidebarLayout<br/>46 lines — composes panels"]
-        ContextSidebar["ContextSidebar<br/>188 lines — files + notes"]
+        SidebarLayout["SidebarLayout<br/>composes panels"]
+        ContextSidebar["ContextSidebar<br/>files + notes"]
     end
 
     subgraph SidebarPanels["Sidebar Panels"]
-        FolderTree["FolderTree<br/>127 lines — folder list + drop zones"]
-        SessionPanel["SessionPanel<br/>175 lines — session forest"]
-        ArchivedPanel["ArchivedPanel<br/>168 lines — archived sessions"]
+        FolderTree["FolderTree<br/>folder list + drop zones"]
+        SessionPanel["SessionPanel<br/>session forest"]
+        ArchivedPanel["ArchivedPanel<br/>archived sessions"]
     end
 
     subgraph ComposerSubs["Composer Sub-Components"]
-        ComposerActions["ComposerActions<br/>326 lines — buttons, tools, send/stop"]
-        ModelSelector["ModelSelector<br/>118 lines — optgroup select"]
-        TokenIndicator["TokenIndicator<br/>107 lines — token bar"]
+        ComposerActions["ComposerActions<br/>buttons, tools, send/stop"]
+        ModelSelector["ModelSelector<br/>optgroup select"]
+        TokenIndicator["TokenIndicator<br/>token bar"]
     end
 
     subgraph MessageSubs["Message Sub-Components"]
-        MessageActions["MessageActions<br/>306 lines — edit/delete/fork"]
-        MessageEditor["MessageEditor<br/>94 lines — inline edit"]
-        SystemPromptBubble["SystemPromptBubble<br/>255 lines — prompt display"]
-        Markdown["Markdown<br/>49 lines — parsed markdown"]
+        MessageActions["MessageActions<br/>edit/delete/fork"]
+        MessageEditor["MessageEditor<br/>inline edit"]
+        SystemPromptBubble["SystemPromptBubble<br/>prompt display"]
+        Markdown["Markdown<br/>parsed markdown"]
     end
 
     subgraph SessionSubs["Session Sub-Components"]
-        DraggableSession["DraggableSession<br/>54 lines — drag wrapper"]
-        FolderItem["FolderItem<br/>212 lines — single folder + sessions"]
-        SessionTreeNode["SessionTreeNode<br/>163 lines — recursive tree node"]
-        SessionContextMenu["SessionContextMenu<br/>262 lines — right-click menu"]
-        CreateFolderDialog["CreateFolderDialog<br/>145 lines — new folder modal"]
+        DraggableSession["DraggableSession<br/>drag wrapper"]
+        FolderItem["FolderItem<br/>single folder + sessions"]
+        SessionTreeNode["SessionTreeNode<br/>recursive tree node"]
+        SessionContextMenu["SessionContextMenu<br/>right-click menu"]
+        CreateFolderDialog["CreateFolderDialog<br/>new folder modal"]
     end
 
     subgraph SidebarSubs["Sidebar Sub-Components"]
-        NotesPanel["NotesPanel<br/>205 lines — notes list"]
-        NotePopup["NotePopup<br/>136 lines — create note"]
-        FileEditor["FileEditor<br/>116 lines — edit context file"]
+        NotesPanel["NotesPanel<br/>notes list"]
+        NotePopup["NotePopup<br/>create note"]
+        FileEditor["FileEditor<br/>edit context file"]
     end
 
     subgraph Shared["Shared / UI Components"]
-        Dialog["Dialog<br/>90 lines — base modal"]
-        ConfirmDialog["ConfirmDialog<br/>58 lines — modal confirm"]
-        ProviderPicker["ProviderPicker<br/>107 lines — provider select"]
+        Dialog["Dialog<br/>base modal"]
+        ConfirmDialog["ConfirmDialog<br/>modal confirm"]
     end
 
     %% Route hierarchy
@@ -133,21 +132,21 @@ graph TB
 ```mermaid
 graph TB
     subgraph ChatStore["chatStore — Session State Only"]
-        ChatCore["chat.svelte.ts<br/>~430 lines<br/>closure-based factory"]
+        ChatCore["chat.svelte.ts<br/>closure-based factory"]
         ChatOwns["Owns:<br/>sessionId, messages<br/>chatState (AsyncState)<br/>pastedImages, contextFiles<br/>isStreaming, forkStatus"]
     end
 
     subgraph DirectStores["Direct Import Stores"]
-        ProviderStore["providerStore<br/>113 lines — closure-based<br/>providers, selectedProvider/Model<br/>appTitle, appDescription"]
-        PromptStore["promptStore<br/>87 lines — closure-based<br/>selectedModeId, modesState<br/>toolsEnabled"]
-        EditorStore["editorStore<br/>235 lines — closure-based<br/>editingTurnId, editDraft<br/>sessionSystemPrompt"]
-        TokenStore["tokenStore<br/>108 lines — closure-based<br/>sessionTokenCount, fallback<br/>contextFileTokenEstimate"]
+        ProviderStore["providerStore<br/>closure-based<br/>providers, selectedProvider/Model<br/>appTitle, appDescription"]
+        PromptStore["promptStore<br/>closure-based<br/>selectedModeId, modesState<br/>toolsEnabled"]
+        EditorStore["editorStore<br/>closure-based<br/>editingTurnId, editDraft<br/>sessionSystemPrompt"]
+        TokenStore["tokenStore<br/>closure-based<br/>sessionTokenCount, fallback<br/>contextFileTokenEstimate"]
     end
 
     subgraph Independent["Independent Stores"]
-        FolderStore["folderStore<br/>~320 lines — <b>class-based</b><br/>folders ($state)<br/>folderSessions, sessionsLoading, sessionsError (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)<br/><i>Note: SvelteMap/SvelteSet NOT wrapped in $state</i>"]
-        SessionStore["sessionStore<br/>158 lines — closure-based<br/>tree (SessionNode[])<br/>flat (derived), activeId"]
-        NotesStore["notesStore<br/>101 lines — closure-based<br/>bySession (Record&lt;string, Note[]&gt;)<br/>fetchStates"]
+        FolderStore["folderStore<br/><b>class-based</b><br/>folders ($state)<br/>folderSessions, sessionsLoading, sessionsError (SvelteMap)<br/>expandedFolders (SvelteSet)<br/>pendingOps (SvelteMap)<br/><i>Note: SvelteMap/SvelteSet NOT wrapped in $state</i>"]
+        SessionStore["sessionStore<br/>closure-based<br/>tree (SessionNode[])<br/>flat (derived), activeId"]
+        NotesStore["notesStore<br/>closure-based<br/>bySession (Record&lt;string, Note[]&gt;)<br/>fetchStates"]
     end
 
     subgraph Patterns["Store Patterns"]
@@ -576,7 +575,7 @@ graph TB
     subgraph Hotspots["Most Imported Modules"]
         FS["folderStore — 5 importers<br/>DraggableSession, FolderItem,<br/>FolderTree, SessionPanel,<br/>SidebarLayout"]
         API["api.ts — 6 importers<br/>SessionPanel, ArchivedPanel,<br/>ContextSidebar, FileEditor,<br/>+page, +error"]
-        SS["sessionStore — 4 importers<br/>+page, SessionPanel,<br/>ArchivedPanel, SessionTree"]
+        SS["sessionStore — 4 importers<br/>+page, SessionPanel,<br/>ArchivedPanel, chatStore"]
         PR["promptStore — 3 importers<br/>ComposerActions, +page,<br/>(indirect via ChatComposer)"]
         PS["providerStore — 3 importers<br/>TokenIndicator, +page,<br/>(indirect via ChatComposer)"]
     end
@@ -606,27 +605,7 @@ graph TB
 
 ---
 
-## 10. File Size Distribution (Post-Refactor)
-
-```mermaid
-xychart-beta
-    title "Component Line Counts (Post-Refactor)"
-    x-axis ["Composer", "MsgList", "MsgActions", "SysPrompt", "FolderItem", "SessionCtx", "ComposerActions", "SessionPanel", "ArchivedPanel", "CtxSidebar", "NotesPanel", "FolderTree", "ChatHeader", "NotePopup", "FileEditor", "ProvPicker", "TokenInd", "ModelSel", "MsgEditor", "Confirm", "DragSess", "Markdown"]
-    y-axis "Lines" 0 --> 550
-    bar [214, 308, 306, 255, 212, 262, 326, 175, 168, 188, 205, 127, 148, 136, 116, 107, 107, 118, 94, 58, 54, 49]
-```
-
-```mermaid
-xychart-beta
-    title "Store Line Counts (Post-Refactor)"
-    x-axis ["chatStore", "folderStore", "editorStore", "sessionStore", "providerStore", "tokenStore", "notesStore", "promptStore"]
-    y-axis "Lines" 0 --> 600
-    bar [430, 320, 235, 158, 113, 108, 101, 87]
-```
-
----
-
-## 11. Shared Types Architecture
+## 10. Shared Types Architecture
 
 ```mermaid
 graph TB
@@ -681,7 +660,7 @@ graph TB
 
 ---
 
-## 12. Session State Machine
+## 11. Session State Machine
 
 ```mermaid
 stateDiagram-v2
