@@ -23,7 +23,7 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 ## Phase 1: Blender Asset Improvements
 
-### Step 1.1 — Enable Ambient Occlusion
+### Step 1.1 — Enable Ambient Occlusion ✅ DONE
 
 **What:** Add AO to the base pass render so corners, gaps, and contact areas are visibly darker.
 
@@ -44,7 +44,7 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 ---
 
-### Step 1.2 — 3-Point Lighting Setup
+### Step 1.2 — 3-Point Lighting Setup ✅ DONE
 
 **What:** Replace single softbox with a professional 3-point studio lighting setup.
 
@@ -67,7 +67,7 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 ---
 
-### Step 1.3 — Add Bevels to Cabinet Geometry
+### Step 1.3 — Add Bevels to Cabinet Geometry ✅ DONE
 
 **What:** Add small bevels (1-2mm) to all cabinet edges so they catch highlights and cast micro-shadows.
 
@@ -91,7 +91,7 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 ---
 
-### Step 1.4 — Add Floor Plane
+### Step 1.4 — Add Floor Plane ✅ DONE
 
 **What:** Add a ground plane beneath the cabinets to catch contact shadows and ground the scene.
 
@@ -139,7 +139,7 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 ---
 
-### Step 1.6 — Camera Angle Adjustment
+### Step 1.6 — Camera Angle Adjustment ✅ DONE
 
 **What:** Shift camera from dead-frontal to a slight 3/4 view for better depth perception.
 
