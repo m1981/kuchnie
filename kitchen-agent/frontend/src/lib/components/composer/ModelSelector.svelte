@@ -180,12 +180,8 @@
 										context_k: model.context_k
 									})}
 							>
-								<div class="mobile-option-content">
-									<span class="mobile-option-label">{model.label}</span>
-									<span class="mobile-option-context"
-										>{(model.context_k / 1000).toFixed(0)}K context</span
-									>
-								</div>
+								<span class="mobile-option-label">{model.label}</span>
+								<span class="mobile-option-context">{(model.context_k / 1000).toFixed(0)}K</span>
 								{#if model.id === currentModel?.id}
 									<svg
 										class="mobile-check"
@@ -209,6 +205,9 @@
 {/if}
 
 <style>
+	/* ── Shared font settings ────────────────────────────────────────── */
+	/* All elements inherit from body: Inter, system-ui, 15px base       */
+
 	/* ── Trigger button ──────────────────────────────────────────────── */
 
 	.model-selector {
@@ -225,6 +224,7 @@
 		border: 1px solid #dadce0;
 		background: #fff;
 		color: #5f6368;
+		font-family: inherit;
 		font-size: 13px;
 		font-weight: 500;
 		cursor: pointer;
@@ -256,7 +256,6 @@
 		position: absolute;
 		bottom: 100%;
 		left: 0;
-		mb-1: 4px;
 		min-width: 220px;
 		max-height: 320px;
 		overflow-y: auto;
@@ -278,6 +277,7 @@
 
 	.group-header {
 		padding: 8px 12px 4px;
+		font-family: inherit;
 		font-size: 11px;
 		font-weight: 600;
 		color: #80868b;
@@ -296,6 +296,7 @@
 		text-align: left;
 		cursor: pointer;
 		transition: background 0.1s;
+		font-family: inherit;
 	}
 
 	.model-option:hover {
@@ -309,11 +310,17 @@
 	.option-label {
 		font-size: 13px;
 		color: #202124;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.option-context {
 		font-size: 11px;
 		color: #80868b;
+		white-space: nowrap;
+		flex-shrink: 0;
+		margin-left: 8px;
 	}
 
 	/* ── Mobile bottom sheet ─────────────────────────────────────────── */
@@ -371,6 +378,7 @@
 		}
 
 		.mobile-title {
+			font-family: inherit;
 			font-size: 16px;
 			font-weight: 600;
 			color: #111827;
@@ -404,7 +412,8 @@
 
 		.mobile-group-header {
 			padding: 12px 16px 8px;
-			font-size: 12px;
+			font-family: inherit;
+			font-size: 11px;
 			font-weight: 600;
 			color: #6b7280;
 			text-transform: uppercase;
@@ -414,15 +423,16 @@
 		.mobile-option {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
 			width: 100%;
 			padding: 14px 16px;
-			min-height: 52px;
+			min-height: 48px;
 			border: none;
 			background: transparent;
 			text-align: left;
 			cursor: pointer;
 			transition: background 0.1s;
+			font-family: inherit;
+			gap: 8px;
 		}
 
 		.mobile-option:hover {
@@ -433,20 +443,21 @@
 			background: #eff6ff;
 		}
 
-		.mobile-option-content {
-			display: flex;
-			flex-direction: column;
-			gap: 2px;
-		}
-
 		.mobile-option-label {
 			font-size: 15px;
 			color: #111827;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			flex: 1;
+			min-width: 0;
 		}
 
 		.mobile-option-context {
 			font-size: 12px;
 			color: #6b7280;
+			white-space: nowrap;
+			flex-shrink: 0;
 		}
 
 		.mobile-check {
