@@ -173,7 +173,7 @@ export function createSidebarResize() {
 	let promptHeight = $state(
 		readStorage(STORAGE_KEY_PROMPT, DEFAULT_PROMPT, PROMPT_MIN, PROMPT_MAX)
 	);
-	let showLeft = $state(readBoolStorage(STORAGE_KEY_SHOW_LEFT, true));
+	let showLeft = $state(readBoolStorage(STORAGE_KEY_SHOW_LEFT, false));
 	let showRight = $state(readBoolStorage(STORAGE_KEY_SHOW, true));
 
 	// ── Drag state (not persisted) ────────────────────────────────────────────

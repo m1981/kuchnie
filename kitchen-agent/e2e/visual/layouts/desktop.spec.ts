@@ -22,8 +22,8 @@ test.describe('Desktop Layout @smoke @desktop', () => {
     });
 
     test('three-panel layout renders correctly', async ({ page }) => {
-        // Left sidebar visible
-        await sidebarPage.expectVisible();
+        // Left sidebar hidden by default (user toggles it open)
+        await sidebarPage.expectHidden();
 
         // Main chat area visible
         await expect(chatPage.chatInput).toBeVisible();
@@ -33,23 +33,10 @@ test.describe('Desktop Layout @smoke @desktop', () => {
         await expect(rightPanel).toBeVisible();
     });
 
-    test('sidebar toggle hides left panel', async () => {
-        // Initially visible
-        await sidebarPage.expectVisible();
-        await sidebarPage.expectToggleLabel('Hide sidebar');
-
-        // Toggle to hide
-        await sidebarPage.toggle();
-
-        // Sidebar hidden
+    test('sidebar toggle shows left panel', async () => {
+        // Initially hidden
         await sidebarPage.expectHidden();
         await sidebarPage.expectToggleLabel('Show sidebar');
-    });
-
-    test('sidebar toggle shows left panel', async () => {
-        // First hide
-        await sidebarPage.toggle();
-        await sidebarPage.expectHidden();
 
         // Toggle to show
         await sidebarPage.toggle();
@@ -57,6 +44,19 @@ test.describe('Desktop Layout @smoke @desktop', () => {
         // Sidebar visible
         await sidebarPage.expectVisible();
         await sidebarPage.expectToggleLabel('Hide sidebar');
+    });
+
+    test('sidebar toggle hides left panel', async () => {
+        // First show
+        await sidebarPage.toggle();
+        await sidebarPage.expectVisible();
+
+        // Toggle to hide
+        await sidebarPage.toggle();
+
+        // Sidebar hidden
+        await sidebarPage.expectHidden();
+        await sidebarPage.expectToggleLabel('Show sidebar');
     });
 
     test('system prompt collapsed by default', async () => {
