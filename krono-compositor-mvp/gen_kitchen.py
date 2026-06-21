@@ -122,7 +122,14 @@ for i, cab in enumerate(layout_data['cabinets']):
     bpy.context.scene.collection.objects.unlink(front)
     fronts_collection.objects.link(front)
 
-    # UV Map the Front
+    # Add bevel for edge highlights (1mm, 2 segments)
+    bevel = front.modifiers.new(name='Bevel', type='BEVEL')
+    bevel.width = 0.001  # 1mm
+    bevel.segments = 2
+    bpy.context.view_layer.objects.active = front
+    bpy.ops.object.modifier_apply(modifier='Bevel')
+
+    # UV Map the Front (after bevel so UVs are clean)
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.cube_project(cube_size=1.0)
@@ -195,6 +202,29 @@ if base_cabinets and 'countertop' in layout_data:
     bpy.ops.uv.cube_project(cube_size=1.0)
     bpy.ops.object.mode_set(mode='OBJECT')
     setup_front_materials(ct, ct_data['id_hex'])
+
+# ==========================================
+# 3b. FLOOR PLANE (catches contact shadows)
+# ==========================================
+floor_collection = bpy.data.collections.new("Floor")
+scene.collection.children.link(floor_collection)
+
+bpy.ops.mesh.primitive_plane_add(size=1.0)
+floor = bpy.context.active_object
+floor.scale = (current_x * 1.8, max_d * 3.0, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+floor.location = (current_x / 2, -max_d * 0.5, -0.001)  # Just below cabinet base
+
+# Neutral grey floor material
+floor_mat = bpy.data.materials.new(name="Mat_Floor")
+floor_mat.use_nodes = True
+floor_bsdf = floor_mat.node_tree.nodes["Principled BSDF"]
+floor_bsdf.inputs['Base Color'].default_value = (0.35, 0.35, 0.35, 1.0)
+floor_bsdf.inputs['Roughness'].default_value = 0.8
+floor.data.materials.append(floor_mat)
+
+bpy.context.scene.collection.objects.unlink(floor)
+floor_collection.objects.link(floor)
 
 # ==========================================
 # 4. CAMERA & LIGHTING (STUDIO SETUP)
@@ -321,6 +351,9 @@ def set_shadow_catchers(active):
     for obj in fronts_collection.objects: obj.is_shadow_catcher = active
     for obj in carcass_collection.objects: obj.is_shadow_catcher = active
 
+def set_floor_visibility(visible):
+    for obj in floor_collection.objects: obj.hide_render = not visible
+
 
 # --- PASS 1: BASE PASS ---
 print("Rendering Base Pass...")
@@ -328,6 +361,7 @@ configure_engine_for_art()
 switch_front_materials('base')
 set_handles_visibility(False)
 set_shadow_catchers(False)
+set_floor_visibility(True)  # Floor catches contact shadows
 scene.view_settings.view_transform = 'Standard'
 scene.render.film_transparent = False
 scene.render.image_settings.file_format = 'PNG'
@@ -341,6 +375,7 @@ print("Rendering UV Pass...")
 configure_engine_for_math()  # Lock out blurring
 switch_front_materials('uv')
 set_handles_visibility(False)
+set_floor_visibility(False)  # Floor not needed in UV pass
 scene.view_settings.view_transform = 'Raw'
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'OPEN_EXR'
@@ -354,6 +389,7 @@ print("Rendering ID Mask Pass...")
 configure_engine_for_math() # Lock out blurring
 switch_front_materials('id')
 set_handles_visibility(False)
+set_floor_visibility(False)  # Floor must NOT appear in ID mask
 scene.view_settings.view_transform = 'Raw'
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
@@ -367,6 +403,7 @@ print("Rendering Reflection Pass...")
 configure_engine_for_art()
 switch_front_materials('reflection')
 set_handles_visibility(False)
+set_floor_visibility(True)  # Floor catches reflections
 
 # --- THE FIX: TURN WORLD BLACK FOR REFLECTIONS ---
 bg_node = scene.world.node_tree.nodes.get("Background")
@@ -385,6 +422,7 @@ configure_engine_for_art()
 switch_front_materials('base')
 set_handles_visibility(True)
 set_shadow_catchers(True)
+set_floor_visibility(True)  # Floor catches handle shadows
 bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
 scene.render.film_transparent = True
 scene.render.image_settings.file_format = 'PNG'
