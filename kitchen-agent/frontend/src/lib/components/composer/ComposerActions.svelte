@@ -30,6 +30,7 @@
 	<div class="buttons-left">
 		<button
 			type="button"
+			data-testid="tools-toggle"
 			class="tools-btn"
 			class:tools-active={promptStore.toolsEnabled}
 			onclick={() => promptStore.toggleTools()}

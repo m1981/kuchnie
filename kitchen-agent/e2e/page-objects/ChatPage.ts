@@ -29,8 +29,15 @@ export class ChatPage {
     readonly headerTitle: Locator;
     readonly headerTitleInput: Locator;
     readonly headerModeBadge: Locator;
+    readonly sidebarToggle: Locator;
+
+    // System Prompt
+    readonly systemPrompt: Locator;
+    readonly systemPromptToggle: Locator;
 
     // Token Indicator
+    readonly tokenStrip: Locator;
+    // Backward compatibility aliases
     readonly tokenProgressBar: Locator;
     readonly tokenCount: Locator;
     readonly inputTokenEstimate: Locator;
@@ -74,9 +81,16 @@ export class ChatPage {
         this.headerTitle = page.locator('header button, header h2').first();
         this.headerTitleInput = page.locator('header input');
         this.headerModeBadge = page.locator('header span:has-text("General")');
+        this.sidebarToggle = page.getByTestId('sidebar-toggle');
+
+        // System Prompt
+        this.systemPrompt = page.getByTestId('system-prompt');
+        this.systemPromptToggle = page.getByTestId('system-prompt').locator('button').first();
 
         // Token Indicator
-        this.tokenProgressBar = page.locator('[role="progressbar"]');
+        this.tokenStrip = page.getByTestId('token-strip');
+        // Backward compatibility aliases (for existing tests)
+        this.tokenProgressBar = page.locator('[role="progressbar"]').first();
         this.tokenCount = page.locator('text=/📊/');
         this.inputTokenEstimate = page.locator('text=/→/');
     }
@@ -295,9 +309,26 @@ export class ChatPage {
         await expect(header).toContainText(text);
     }
 
+    // Backward compatibility
     async expectTokenIndicatorVisible() {
         await expect(this.tokenProgressBar).toBeVisible();
-        await expect(this.tokenCount).toBeVisible();
-        await expect(this.inputTokenEstimate).toBeVisible();
+    }
+
+    async expectTokenStripVisible() {
+        await expect(this.tokenStrip).toBeVisible();
+    }
+
+    async expectTokenStripHidden() {
+        await expect(this.tokenStrip).toBeHidden();
+    }
+
+    async expectSystemPromptVisible() {
+        await expect(this.systemPrompt).toBeVisible();
+    }
+
+    async expectSystemPromptCollapsed() {
+        // Should not have expanded body content visible
+        const body = this.systemPrompt.locator('pre, textarea');
+        await expect(body).toBeHidden();
     }
 }

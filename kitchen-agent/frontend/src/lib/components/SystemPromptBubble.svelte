@@ -67,6 +67,7 @@
 </script>
 
 <article
+	data-testid="system-prompt"
 	class="rounded-lg border bg-panel/60 shadow-sm {isOverride
 		? 'border-l-4 border-line border-l-accent'
 		: 'border-l-4 border-line border-l-line'}"

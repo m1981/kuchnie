@@ -39,6 +39,7 @@
 {#if showStrip}
 	<div class="px-3 pt-1.5">
 		<div
+			data-testid="token-strip"
 			class="h-1 w-full overflow-hidden rounded-full bg-line"
 			role="progressbar"
 			aria-valuenow={pct}

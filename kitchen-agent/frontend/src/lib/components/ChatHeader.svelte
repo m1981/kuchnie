@@ -94,6 +94,7 @@
 			<!-- Left sidebar toggle -->
 			<button
 				onclick={ontoggleleft}
+				data-testid="sidebar-toggle"
 				class="flex shrink-0 items-center justify-center rounded-md p-1.5 text-muted transition hover:bg-surface/80 hover:text-ink"
 				title={showLeft ? 'Hide sidebar' : 'Show sidebar'}
 				aria-label={showLeft ? 'Hide sidebar' : 'Show sidebar'}

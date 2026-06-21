@@ -272,6 +272,7 @@
 	{#if sidebarResize.showLeft}
 		<!-- Mobile backdrop -->
 		<div
+			data-testid="mobile-backdrop"
 			class="fixed inset-0 z-20 bg-black/30 lg:hidden"
 			onclick={() => sidebarResize.toggleLeft()}
 			role="button"

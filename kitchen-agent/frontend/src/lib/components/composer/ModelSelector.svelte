@@ -70,7 +70,13 @@
 </script>
 
 {#if allModels.length > 0}
-	<select value={currentModelId} onchange={handleChange} class="model-select" aria-label="Model">
+	<select
+		data-testid="model-selector"
+		value={currentModelId}
+		onchange={handleChange}
+		class="model-select"
+		aria-label="Model"
+	>
 		{#each modelGroups as group (group.providerId)}
 			<optgroup label={group.providerLabel}>
 				{#each group.models as m (m.id)}
