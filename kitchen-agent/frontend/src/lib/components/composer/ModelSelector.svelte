@@ -75,6 +75,14 @@
 			isOpen = false;
 		}
 	}
+
+	/** Format context window size for display */
+	function formatContext(contextK: number): string {
+		if (contextK >= 1000) {
+			return (contextK / 1000).toFixed(0) + 'M';
+		}
+		return contextK + 'K';
+	}
 </script>
 
 <svelte:window onclick={handleClickOutside} onkeydown={handleKeydown} />
@@ -126,7 +134,7 @@
 								aria-selected={model.id === currentModel?.id}
 							>
 								<span class="option-label">{model.label}</span>
-								<span class="option-context">{(model.context_k / 1000).toFixed(0)}K</span>
+								<span class="option-context">{formatContext(model.context_k)}</span>
 							</button>
 						{/each}
 					</div>
@@ -181,7 +189,7 @@
 									})}
 							>
 								<span class="mobile-option-label">{model.label}</span>
-								<span class="mobile-option-context">{(model.context_k / 1000).toFixed(0)}K</span>
+								<span class="mobile-option-context">{formatContext(model.context_k)}</span>
 								{#if model.id === currentModel?.id}
 									<svg
 										class="mobile-check"
