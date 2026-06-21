@@ -11,12 +11,15 @@ test.describe('Message Editing @regression', () => {
         composerPage = new ComposerPage(page);
 
         await page.goto('/');
+        await page.evaluate(() => localStorage.clear());
+        await page.goto('/');
         await page.waitForLoadState('networkidle');
 
         // Send a message first
         await composerPage.typeMessage('Original message for editing');
         await composerPage.send();
-        await chatPage.waitForMessagesLoaded();
+        // Wait for user message to appear (not assistant response)
+        await page.waitForSelector('[data-chat-bubble="user"]', { timeout: 10_000 });
     });
 
     test('edit button appears on user message hover', async () => {
@@ -66,12 +69,14 @@ test.describe('Message Deletion @regression', () => {
         composerPage = new ComposerPage(page);
 
         await page.goto('/');
+        await page.evaluate(() => localStorage.clear());
+        await page.goto('/');
         await page.waitForLoadState('networkidle');
 
         // Send a message
         await composerPage.typeMessage('Message to delete');
         await composerPage.send();
-        await chatPage.waitForMessagesLoaded();
+        await page.waitForSelector('[data-chat-bubble="user"]', { timeout: 10_000 });
     });
 
     test('delete button appears on message hover', async () => {

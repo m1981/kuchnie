@@ -19,7 +19,8 @@ const E2E_FRONTEND_PORT = process.env.E2E_FRONTEND_PORT || '5174';
 const E2E_DATA_DIR = process.env.E2E_DATA_DIR || 'data-e2e';
 
 export default defineConfig({
-    testDir: './e2e/tests',
+    testDir: './e2e',
+    testMatch: ['**/*.spec.ts', '**/tests/**/*.spec.ts'],
 
     /* Run tests in files in parallel */
     fullyParallel: true,

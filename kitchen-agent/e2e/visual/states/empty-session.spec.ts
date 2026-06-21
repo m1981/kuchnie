@@ -7,6 +7,10 @@ test.describe('Empty Session State @smoke', () => {
     let composerPage: ComposerPage;
 
     test.beforeEach(async ({ page }) => {
+        // Clear localStorage for consistent state
+        await page.goto('/');
+        await page.evaluate(() => localStorage.clear());
+
         chatPage = new ChatPage(page);
         composerPage = new ComposerPage(page);
 

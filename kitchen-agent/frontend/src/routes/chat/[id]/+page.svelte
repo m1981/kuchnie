@@ -267,24 +267,13 @@
 	></div>
 
 	<!-- ===================================================================== -->
-	<!-- LEFT SIDEBAR — session list                                            -->
+	<!-- LEFT SIDEBAR — session list (desktop only)                              -->
 	<!-- ===================================================================== -->
-	{#if sidebarResize.showLeft}
-		<!-- Mobile backdrop -->
-		<div
-			data-testid="mobile-backdrop"
-			class="fixed inset-0 z-20 bg-black/30 lg:hidden"
-			onclick={() => sidebarResize.toggleLeft()}
-			role="button"
-			tabindex="-1"
-			aria-label="Close sidebar"
-		></div>
-	{/if}
 
 	<aside
-		class="absolute inset-y-0 left-0 z-30 shrink-0 border-r border-line bg-panel p-4 shadow-lg transition-transform duration-200 lg:relative lg:shadow-[1px_0_0_rgba(38,35,31,0.03)] {sidebarResize.showLeft
-			? 'flex flex-col'
-			: 'hidden -translate-x-full'}"
+		class="relative shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] {sidebarResize.showLeft
+			? 'hidden lg:flex lg:flex-col'
+			: 'hidden'}"
 		style="width: {sidebarResize.leftWidth}px;"
 	>
 		<div class="mb-5">

@@ -9,6 +9,10 @@ test.describe('Desktop Layout @smoke @desktop', () => {
     let composerPage: ComposerPage;
 
     test.beforeEach(async ({ page }) => {
+        // Clear localStorage for consistent state
+        await page.goto('/');
+        await page.evaluate(() => localStorage.clear());
+
         chatPage = new ChatPage(page);
         sidebarPage = new SidebarPage(page);
         composerPage = new ComposerPage(page);

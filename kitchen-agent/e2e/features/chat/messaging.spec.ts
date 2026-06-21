@@ -29,11 +29,12 @@ test.describe('Chat Messaging @regression', () => {
         expect(newCount).toBeGreaterThanOrEqual(initialCount + 1);
     });
 
-    test('user message appears on right side', async () => {
+    test('user message appears on right side', async ({ page }) => {
         await composerPage.typeMessage('Test message');
         await composerPage.send();
 
-        await chatPage.waitForMessagesLoaded();
+        // Wait for user message to appear
+        await page.waitForSelector('[data-chat-bubble="user"]', { timeout: 10_000 });
 
         // Last message should be user role
         const lastBubble = chatPage.chatBubbles.last();
@@ -80,9 +81,12 @@ test.describe('Message Display @regression', () => {
         expect(promptText).toContain('General');
     });
 
-    test('header shows session title', async () => {
+    test('header shows session title', async ({ page }) => {
+        // Wait for header to render
+        await page.waitForSelector('header', { timeout: 5_000 });
         const titleText = await chatPage.headerTitle.textContent();
         expect(titleText).toBeTruthy();
+        expect(titleText?.length).toBeGreaterThan(0);
     });
 
     test('header shows mode badge', async () => {
