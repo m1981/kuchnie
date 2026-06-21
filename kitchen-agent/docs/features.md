@@ -32,6 +32,7 @@ specs and source files.
   - [Session Import/Export](#session-importexport)
   - [Drag & Drop](#drag--drop)
 - [Sidebar & Layout](#sidebar--layout)
+  - [Sidebar Toggle](#sidebar-toggle)
   - [Sidebar Resize](#sidebar-resize)
   - [Notes](#notes)
   - [Text Selection → Note](#text-selection--note)
@@ -146,7 +147,8 @@ LLM context. Token estimates for context files are refreshed on change.
 ### System Prompt Override
 
 **What**: User can view and edit the system prompt for the current session.
-Edits override the mode's default prompt.
+The prompt bubble is collapsed by default — a single-line header with a
+chevron. Click to expand and inspect or edit.
 
 **Scope**: Per-session
 
@@ -154,8 +156,8 @@ Edits override the mode's default prompt.
 
 **Design decision**: Each session stores its own system prompt override.
 When loading a session, the override is fetched. If empty, the mode's
-default prompt is used. The system prompt bubble shows the active prompt
-(expandable for inspection).
+default prompt is used. The bubble starts collapsed to reduce visual noise;
+only the header line (mode label + chevron) is visible by default.
 
 **Spec**: [editor.svelte.ts](../frontend/src/lib/stores/editor.svelte.ts)
 
@@ -336,6 +338,25 @@ UX feedback. Drag is disabled during streaming.
 
 ## Sidebar & Layout
 
+### Sidebar Toggle
+
+**What**: Header buttons to toggle left (session) and right (context) sidebars.
+On mobile, the left sidebar opens as an overlay drawer with a backdrop.
+
+**Scope**: Global (persists across sessions)
+
+**Persisted**: Yes — localStorage `kitchen-agent:layout:left-sidebar-visible`,
+`kitchen-agent:layout:right-sidebar-visible`
+
+**Design decision**: Both sidebars start visible. Toggling persists the
+state so the layout survives refresh. On mobile (<lg breakpoint), the
+left sidebar becomes a full-height overlay with a semi-transparent backdrop
+tap-to-close. Header z-index is above the sidebar for toggle accessibility.
+
+**Spec**: [sidebar-resize.svelte.ts](../frontend/src/lib/sidebar-resize.svelte.ts)
+
+---
+
 ### Sidebar Resize
 
 **What**: The sidebar width is adjustable by dragging or keyboard shortcuts.
@@ -343,12 +364,14 @@ The composer height is also adjustable.
 
 **Scope**: Global (persists across sessions)
 
-**Persisted**: Yes — localStorage `ka:sidebar-left`, `ka:sidebar-right`,
-`ka:composer-height`
+**Persisted**: Yes — localStorage `kitchen-agent:layout:left-sidebar-width`,
+`kitchen-agent:layout:right-sidebar-width`,
+`kitchen-agent:layout:prompt-height`
 
 **Design decision**: Sizes persist so the user's layout preference survives
 page refreshes. Keyboard shortcuts (arrow keys when focused) provide
-accessible resizing. Minimum/maximum widths are enforced.
+accessible resizing. Minimum/maximum widths are enforced. Double-click
+resets to default.
 
 **Spec**: [sidebar-resize.svelte.ts](../frontend/src/lib/sidebar-resize.svelte.ts)
 
@@ -392,16 +415,17 @@ renders at page level (portal pattern) near the selection.
 
 ### Token Indicator
 
-**What**: Progress bar showing context window usage: session tokens
-(cumulative), input tokens (estimated), and percentage of context window.
+**What**: Colored strip bar showing context window usage. Hidden when usage
+is low, then transitions yellow → orange → red as usage grows.
 
 **Scope**: Per-session (reads from `tokenStore`)
 
 **Persisted**: No — computed on the fly from API response
 
-**Design decision**: Token counts are refreshed after each message and
-on session load. The progress bar changes color: green (<70%), amber
-(70-90%), red (>90%). Input tokens are estimated locally before sending.
-Context window size comes from the selected model's `context_k` field.
+**Design decision**: The strip replaces the previous text-based indicator
+(bars, session count, input count, percentage). Color thresholds: hidden
+(<10%), yellow (10-20%), orange (20-30%), red (>30%). Input tokens are
+estimated locally before sending. Context window size comes from the
+selected model's `context_k` field.
 
 **Spec**: [TokenIndicator.svelte](../frontend/src/lib/components/TokenIndicator.svelte)
