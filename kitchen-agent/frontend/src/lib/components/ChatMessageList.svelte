@@ -113,7 +113,7 @@
 	}
 </script>
 
-<div class="space-y-5">
+<div class="space-y-3">
 	<!-- System prompt bubble — always first -->
 	<SystemPromptBubble
 		text={systemPromptText}
@@ -137,7 +137,7 @@
 		>
 			<div
 				class={msg.role === 'user'
-					? 'w-full rounded-xl bg-ink/5 px-4 py-2.5 text-ink shadow-sm'
+					? 'w-full rounded-xl border-l-4 border-l-accent bg-ink/8 px-4 py-3 text-ink shadow-sm'
 					: 'w-full rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm'}
 			>
 				<!-- Role label + badges + action buttons -->
@@ -145,7 +145,7 @@
 					<div class="flex items-center gap-2">
 						<p
 							class={msg.role === 'user'
-								? 'text-xs font-semibold tracking-[0.14em] text-white/70 uppercase'
+								? 'text-xs font-bold tracking-[0.14em] text-accent uppercase'
 								: 'text-xs font-semibold tracking-[0.14em] text-muted uppercase'}
 						>
 							{msg.role === 'user' ? 'You' : 'Assistant'}
@@ -288,6 +288,26 @@
 			</div>
 		</article>
 	{/each}
+
+	{#if messages.length === 0 && !isLoading}
+		<div class="flex flex-col items-center justify-center py-16 text-center">
+			<div class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
+				<svg
+					class="h-6 w-6 text-accent"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+				>
+					<path
+						d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+					/>
+				</svg>
+			</div>
+			<p class="text-sm font-medium text-ink">Start a conversation</p>
+			<p class="mt-1 text-xs text-muted">Type a message below to begin</p>
+		</div>
+	{/if}
 
 	{#if isLoading}
 		<article data-testid="loading-indicator" class="flex justify-start">
