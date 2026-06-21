@@ -89,11 +89,6 @@
 	// Resolved system prompt text: override ?? mode default
 	const systemPromptText = $derived(editorStore.resolvedSystemPrompt);
 
-	// Estimated system prompt token count (chars/4 heuristic)
-	const systemPromptTokenCount = $derived(
-		systemPromptText ? Math.ceil(systemPromptText.length / 4) : 0
-	);
-
 	// Derived: edit state helpers
 	const isEditSaving = $derived(editorStore.editState.status === 'loading');
 	const editError = $derived(
@@ -274,8 +269,21 @@
 	<!-- ===================================================================== -->
 	<!-- LEFT SIDEBAR — session list                                            -->
 	<!-- ===================================================================== -->
+	{#if sidebarResize.showLeft}
+		<!-- Mobile backdrop -->
+		<div
+			class="fixed inset-0 z-20 bg-black/30 lg:hidden"
+			onclick={() => sidebarResize.toggleLeft()}
+			role="button"
+			tabindex="-1"
+			aria-label="Close sidebar"
+		></div>
+	{/if}
+
 	<aside
-		class="relative hidden shrink-0 border-r border-line bg-panel/86 p-4 shadow-[1px_0_0_rgba(38,35,31,0.03)] lg:flex lg:flex-col"
+		class="absolute inset-y-0 left-0 z-30 shrink-0 border-r border-line bg-panel p-4 shadow-lg transition-transform duration-200 lg:relative lg:shadow-[1px_0_0_rgba(38,35,31,0.03)] {sidebarResize.showLeft
+			? 'flex flex-col'
+			: 'hidden -translate-x-full'}"
 		style="width: {sidebarResize.leftWidth}px;"
 	>
 		<div class="mb-5">
@@ -330,13 +338,14 @@
 			</div>
 		{:else}
 			<ChatHeader
-				appTitle={providerStore.appTitle}
 				modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
 				modeLabel={activeMode.label}
 				sessionId={currentSessionId}
 				title={sessionTitle}
+				showLeft={sidebarResize.showLeft}
 				showRight={sidebarResize.showRight}
 				{hasSystemPromptOverride}
+				ontoggleleft={() => sidebarResize.toggleLeft()}
 				ontoggleright={() => sidebarResize.toggleRight()}
 				onsave={handleSaveTitle}
 			/>
@@ -357,7 +366,6 @@
 						systemPromptModeLabel={activeMode.label}
 						systemPromptSaveState={editorStore.systemPromptState}
 						systemPromptError={editorStore.systemPromptError}
-						{systemPromptTokenCount}
 						onsystemprompsave={(text) => editorStore.saveSystemPrompt(chatStore.sessionId, text)}
 						onsystempromptreset={() => editorStore.clearSystemPrompt(chatStore.sessionId)}
 						messages={chatStore.messages}

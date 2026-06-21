@@ -36,7 +36,6 @@
 		systemPromptError: string;
 		onsystemprompsave: (newText: string) => void;
 		onsystempromptreset: () => void;
-		systemPromptTokenCount?: number;
 		// Messages
 		messages: Message[];
 		isLoading: boolean;
@@ -64,7 +63,6 @@
 		systemPromptError,
 		onsystemprompsave,
 		onsystempromptreset,
-		systemPromptTokenCount,
 		messages,
 		isLoading,
 		isBusy,
@@ -125,7 +123,6 @@
 		errorMessage={systemPromptError}
 		onsave={onsystemprompsave}
 		onreset={onsystempromptreset}
-		tokenCount={systemPromptTokenCount}
 	/>
 
 	{#each messages as msg, messageIndex (`${msg.role}-${msg.turn_id ?? messageIndex}`)}

@@ -18,9 +18,12 @@
  *   onmousedown={resize.startRightDrag}
  */
 
+import { SvelteURLSearchParams } from 'svelte/reactivity';
+
 const STORAGE_KEY_LEFT = 'kitchen-agent:layout:left-sidebar-width';
 const STORAGE_KEY_RIGHT = 'kitchen-agent:layout:right-sidebar-width';
 const STORAGE_KEY_SHOW = 'kitchen-agent:layout:right-sidebar-visible';
+const STORAGE_KEY_SHOW_LEFT = 'kitchen-agent:layout:left-sidebar-visible';
 const STORAGE_KEY_PROMPT = 'kitchen-agent:layout:prompt-height';
 const URL_PARAM_BY_KEY: Record<string, string> = {
 	[STORAGE_KEY_LEFT]: 'kaLeftSidebar',
@@ -120,7 +123,7 @@ function writeUrlSetting(key: string, value: string) {
 		url.searchParams.set(param, value);
 		window.history.replaceState(window.history.state, '', url);
 
-		const hashParams = new URLSearchParams(window.location.hash.slice(1));
+		const hashParams = new SvelteURLSearchParams(window.location.hash.slice(1));
 		hashParams.set(param, value);
 		window.location.hash = hashParams.toString();
 	} catch {
@@ -170,6 +173,7 @@ export function createSidebarResize() {
 	let promptHeight = $state(
 		readStorage(STORAGE_KEY_PROMPT, DEFAULT_PROMPT, PROMPT_MIN, PROMPT_MAX)
 	);
+	let showLeft = $state(readBoolStorage(STORAGE_KEY_SHOW_LEFT, true));
 	let showRight = $state(readBoolStorage(STORAGE_KEY_SHOW, true));
 
 	// ── Drag state (not persisted) ────────────────────────────────────────────
@@ -186,6 +190,11 @@ export function createSidebarResize() {
 	function setRightWidth(width: number) {
 		rightWidth = clamp(width, RIGHT_MIN, RIGHT_MAX);
 		writeSetting(STORAGE_KEY_RIGHT, String(rightWidth));
+	}
+
+	function setShowLeft(value: boolean) {
+		showLeft = value;
+		writeSetting(STORAGE_KEY_SHOW_LEFT, String(showLeft));
 	}
 
 	function setShowRight(value: boolean) {
@@ -255,6 +264,12 @@ export function createSidebarResize() {
 		get promptHeight() {
 			return promptHeight;
 		},
+		get showLeft() {
+			return showLeft;
+		},
+		set showLeft(v: boolean) {
+			setShowLeft(v);
+		},
 		get showRight() {
 			return showRight;
 		},
@@ -266,6 +281,9 @@ export function createSidebarResize() {
 		startRightDrag: (e: MouseEvent) => startDrag('right', e),
 		startPromptDrag,
 
+		toggleLeft() {
+			setShowLeft(!showLeft);
+		},
 		toggleRight() {
 			setShowRight(!showRight);
 		},

@@ -17,27 +17,29 @@
 	 */
 
 	type Props = {
-		appTitle: string;
 		modeIcon: string;
 		modeLabel: string;
 		sessionId: string;
 		/** Session title from the database. Falls back to session ID if null. */
 		title?: string | null;
+		showLeft: boolean;
 		showRight: boolean;
 		hasSystemPromptOverride: boolean;
+		ontoggleleft: () => void;
 		ontoggleright: () => void;
 		/** Called when user saves an edited title. */
 		onsave?: (newTitle: string) => void;
 	};
 
 	let {
-		appTitle,
 		modeIcon,
 		modeLabel,
 		sessionId,
 		title = null,
+		showLeft,
 		showRight,
 		hasSystemPromptOverride,
+		ontoggleleft,
 		ontoggleright,
 		onsave
 	}: Props = $props();
@@ -85,48 +87,73 @@
 	}
 </script>
 
-<header class="border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
+<header class="relative z-40 border-b border-line bg-panel/92 px-4 py-3 backdrop-blur md:px-6">
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-3">
-		<!-- ── Left cluster: mode title + badges ──────────────────────────── -->
-		<div class="min-w-0">
-			<p class="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
-				{appTitle}
-			</p>
-			<div class="mt-1 flex flex-wrap items-center gap-2">
-				{#if isEditing}
-					<input
-						bind:this={inputEl}
-						bind:value={draft}
-						onkeydown={handleKeydown}
-						onblur={saveEditing}
-						class="h-8 rounded-md border border-accent bg-surface px-2 text-xl font-semibold text-ink shadow-sm outline-none focus:ring-2 focus:ring-accent/50 md:text-2xl"
-						maxlength="100"
-					/>
-				{:else}
-					<button
-						type="button"
-						class="cursor-pointer rounded-md px-1 text-left text-xl font-semibold text-ink transition hover:bg-surface/80 md:text-2xl"
-						onclick={startEditing}
-						title="Click to edit title"
-					>
-						{displayTitle}
-					</button>
-				{/if}
-				<span
-					class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted"
+		<!-- ── Left cluster: sidebar toggle + mode title ──────────────────────── -->
+		<div class="flex min-w-0 items-center gap-3">
+			<!-- Left sidebar toggle -->
+			<button
+				onclick={ontoggleleft}
+				class="flex shrink-0 items-center justify-center rounded-md p-1.5 text-muted transition hover:bg-surface/80 hover:text-ink"
+				title={showLeft ? 'Hide sidebar' : 'Show sidebar'}
+				aria-label={showLeft ? 'Hide sidebar' : 'Show sidebar'}
+			>
+				<svg
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
 				>
-					{modeIcon}&nbsp;{modeLabel}
-				</span>
+					{#if showLeft}
+						<rect x="3" y="3" width="18" height="18" rx="2" />
+						<line x1="9" y1="3" x2="9" y2="21" />
+					{:else}
+						<rect x="3" y="3" width="18" height="18" rx="2" />
+						<line x1="3" y1="3" x2="3" y2="21" />
+					{/if}
+				</svg>
+			</button>
 
-				<!-- Prompt override indicator badge -->
-				{#if hasSystemPromptOverride}
+			<div class="min-w-0">
+				<div class="flex flex-wrap items-center gap-2">
+					{#if isEditing}
+						<input
+							bind:this={inputEl}
+							bind:value={draft}
+							onkeydown={handleKeydown}
+							onblur={saveEditing}
+							class="h-8 rounded-md border border-accent bg-surface px-2 text-xl font-semibold text-ink shadow-sm outline-none focus:ring-2 focus:ring-accent/50 md:text-2xl"
+							maxlength="100"
+						/>
+					{:else}
+						<button
+							type="button"
+							class="cursor-pointer rounded-md px-1 text-left text-xl font-semibold text-ink transition hover:bg-surface/80 md:text-2xl"
+							onclick={startEditing}
+							title="Click to edit title"
+						>
+							{displayTitle}
+						</button>
+					{/if}
 					<span
-						class="rounded-full border border-accent-soft bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent"
-						title="This session has a custom system prompt override active"
+						class="rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted"
 					>
-						⚡ Prompt override
+						{modeIcon}&nbsp;{modeLabel}
 					</span>
-				{/if}
+
+					{#if hasSystemPromptOverride}
+						<span
+							class="rounded-full border border-accent-soft bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent"
+							title="This session has a custom system prompt override active"
+						>
+							⚡ Prompt override
+						</span>
+					{/if}
+				</div>
 			</div>
 		</div>
 

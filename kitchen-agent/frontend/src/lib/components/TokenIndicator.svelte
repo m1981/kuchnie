@@ -2,20 +2,18 @@
 	/**
 	 * TokenIndicator
 	 * ==============
-	 * Compact token count bar showing two key numbers:
+	 * Minimal colored strip bar showing context window usage.
 	 *
-	 *   📊 Session: 4,271  │  → Input: ~127
-	 *
-	 * - **Session tokens** — all tokens consumed so far (from backend API)
-	 * - **Input tokens** — what you'll pay when you click Send (client-side estimate)
-	 * - **Context bar** — visual gauge of context window usage
-	 *
-	 * State comes from tokenStore and providerStore directly.
+	 * Color thresholds:
+	 *   < 10% → no bar (hidden)
+	 *   10-20% → yellow
+	 *   20-30% → orange
+	 *   > 30% → red
 	 */
 
 	import { tokenStore } from '$lib/stores/token.svelte';
 	import { providerStore } from '$lib/stores/provider.svelte';
-	import { formatTokenCount, contextWindowPercent, contextWindowColor } from '$lib/token_estimator';
+	import { contextWindowPercent } from '$lib/token_estimator';
 
 	type Props = {
 		/** Current message text in the composer (for input token estimation). */
@@ -24,74 +22,34 @@
 
 	let { messageText }: Props = $props();
 
-	// ── Derived values ──────────────────────────────────────────────────────
-
 	const inputTokens = $derived(
 		tokenStore.estimateInputTokensFor(messageText, 0, tokenStore.contextFileTokenEstimate)
 	);
 
-	// Prefer exact conversation_total from last token breakdown over the estimate
-	// Note: lastTokenBreakdown is in chatStore, but we'll use sessionTokenCount from tokenStore
-	const sessionTokens = $derived(
-		tokenStore.sessionTokenCount >= 0 ? tokenStore.sessionTokenCount : 0
+	const pct = $derived(contextWindowPercent(inputTokens, providerStore.contextWindowK));
+
+	// Strip color: hidden below 10%, then yellow → orange → red
+	const stripColor = $derived(
+		pct > 30 ? 'bg-red-500' : pct > 20 ? 'bg-orange-400' : pct > 10 ? 'bg-yellow-400' : ''
 	);
 
-	// inputTokens already includes history + system prompt + new message.
-	// Using it directly avoids double-counting sessionTokens.
-	const totalTokens = $derived(inputTokens);
-
-	const pct = $derived(contextWindowPercent(totalTokens, providerStore.contextWindowK));
-
-	const color = $derived(contextWindowColor(pct));
-
-	// ── Color classes for the context bar ───────────────────────────────────
-
-	const barColorClass = $derived(
-		color === 'danger' ? 'bg-red-500' : color === 'warn' ? 'bg-amber-500' : 'bg-accent'
-	);
-
-	const textColorClass = $derived(
-		color === 'danger' ? 'text-red-600' : color === 'warn' ? 'text-amber-600' : 'text-muted'
-	);
+	const showStrip = $derived(pct > 10);
 </script>
 
-<div class="flex items-center gap-3 px-3 py-1.5 text-[11px] leading-none {textColorClass}">
-	<!-- Context window gauge -->
-	<div class="flex items-center gap-1.5">
+{#if showStrip}
+	<div class="px-3 pt-1.5">
 		<div
-			class="h-1.5 w-20 overflow-hidden rounded-full bg-line"
+			class="h-1 w-full overflow-hidden rounded-full bg-line"
 			role="progressbar"
 			aria-valuenow={pct}
 			aria-valuemin={0}
 			aria-valuemax={100}
-			aria-label="Context window usage"
+			aria-label="Context window usage: {pct}%"
 		>
 			<div
-				class="h-full rounded-full transition-all duration-300 {barColorClass}"
+				class="h-full rounded-full transition-all duration-300 {stripColor}"
 				style="width: {Math.min(100, pct)}%;"
 			></div>
 		</div>
-		<span>{pct}%</span>
 	</div>
-
-	<span class="text-line">│</span>
-
-	<!-- Session tokens (already consumed) -->
-	<span title="Tokens consumed in this session so far">
-		📊 {formatTokenCount(sessionTokens)}
-	</span>
-
-	<span class="text-line">│</span>
-
-	<!-- Input tokens (what you'll pay when you click Send) -->
-	<span title="Estimated input tokens for the next message">
-		→ ~{formatTokenCount(inputTokens)}
-	</span>
-
-	<!-- Fallback indicator -->
-	{#if tokenStore.sessionTokenFallback && tokenStore.sessionTokenCount >= 0}
-		<span class="text-[10px] text-muted/60" title="Token count is approximate (API fallback)"
-			>≈</span
-		>
-	{/if}
-</div>
+{/if}
