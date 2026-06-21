@@ -7,7 +7,10 @@ import math
 # 1. CONFIGURATION & SETUP
 # ==========================================
 JSON_PATH = "layout.json"
-OUTPUT_DIR = os.path.abspath("assets")
+# Output to scenes folder matching the API path structure
+SCENE_ID = "kitchen_01"
+ANGLE_ID = "main"
+OUTPUT_DIR = os.path.abspath(f"assets/scenes/{SCENE_ID}/{ANGLE_ID}")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 with open(JSON_PATH, 'r') as f:
@@ -203,11 +206,20 @@ scene.camera = cam_obj
 
 total_width = current_x
 center_x = total_width / 2.0
-distance = (total_width / 2.0) / math.tan(cam_data.angle_x / 2.0) * 1.6
-cam_obj.location = (center_x, -distance, distance * 0.3)
+
+# Wider FOV (50 degrees) for better perspective visibility
+cam_data.angle = math.radians(50)
+distance = (total_width / 2.0) / math.tan(cam_data.angle / 2.0) * 1.4
+
+# --- 3/4 ANGLE: Shift camera right and up for depth perception ---
+cam_obj.location = (
+    center_x + total_width * 0.35,  # Shift right for 3/4 view
+    -distance * 1.15,                # Pull back slightly
+    distance * 0.5                   # Raise camera higher
+)
 
 empty_target = bpy.data.objects.new("CamTarget", None)
-empty_target.location = (center_x, 0, 0.8)
+empty_target.location = (center_x, 0, 0.85)  # Look slightly above center
 scene.collection.objects.link(empty_target)
 tt = cam_obj.constraints.new(type='TRACK_TO')
 tt.target = empty_target
@@ -218,24 +230,54 @@ world = bpy.data.worlds.new("World")
 scene.world = world
 world.use_nodes = True
 bg_node = world.node_tree.nodes.get("Background")
-bg_node.inputs[0].default_value = (1.0, 1.0, 1.0, 1.0)
-bg_node.inputs[1].default_value = 0.5
+bg_node.inputs[0].default_value = (0.8, 0.85, 0.9, 1.0)  # Slight blue tint for realism
+bg_node.inputs[1].default_value = 0.05  # Very low ambient — let the light do the work
 
-# --- THE FIX: MASSIVE AREA LIGHT (SOFTBOX) INSTEAD OF SUN ---
-area_data = bpy.data.lights.new("Softbox", 'AREA')
-area_data.energy = 2000.0 # High energy for clean reflections
-area_data.shape = 'RECTANGLE'
-area_data.size = 4.0      # 4 meters wide
-area_data.size_y = 2.0    # 2 meters tall
-area_obj = bpy.data.objects.new("Softbox", area_data)
-scene.collection.objects.link(area_obj)
+# --- 3-POINT STUDIO LIGHTING ---
 
-# Place the softbox right above and slightly behind the camera, pointing at the cabinets
-area_obj.location = (center_x, -distance + 1.0, distance * 0.8)
-tt_light = area_obj.constraints.new(type='TRACK_TO')
-tt_light.target = empty_target
-tt_light.track_axis = 'TRACK_NEGATIVE_Z'
-tt_light.up_axis = 'UP_Y'
+# KEY LIGHT: Main softbox, top-right, warm
+key_data = bpy.data.lights.new("KeyLight", 'AREA')
+key_data.energy = 800.0
+key_data.shape = 'RECTANGLE'
+key_data.size = 3.0
+key_data.size_y = 2.0
+key_data.color = (1.0, 0.95, 0.9)  # Slightly warm
+key_obj = bpy.data.objects.new("KeyLight", key_data)
+scene.collection.objects.link(key_obj)
+key_obj.location = (center_x + total_width * 0.3, -distance + 1.5, distance * 0.9)
+tt_key = key_obj.constraints.new(type='TRACK_TO')
+tt_key.target = empty_target
+tt_key.track_axis = 'TRACK_NEGATIVE_Z'
+tt_key.up_axis = 'UP_Y'
+
+# FILL LIGHT: Left side, cooler, softer
+fill_data = bpy.data.lights.new("FillLight", 'AREA')
+fill_data.energy = 250.0
+fill_data.shape = 'RECTANGLE'
+fill_data.size = 4.0
+fill_data.size_y = 3.0
+fill_data.color = (0.9, 0.95, 1.0)  # Slightly cool
+fill_obj = bpy.data.objects.new("FillLight", fill_data)
+scene.collection.objects.link(fill_obj)
+fill_obj.location = (center_x - total_width * 0.4, -distance * 0.6, distance * 0.5)
+tt_fill = fill_obj.constraints.new(type='TRACK_TO')
+tt_fill.target = empty_target
+tt_fill.track_axis = 'TRACK_NEGATIVE_Z'
+tt_fill.up_axis = 'UP_Y'
+
+# RIM LIGHT: Behind camera, edge highlight on cabinet tops
+rim_data = bpy.data.lights.new("RimLight", 'AREA')
+rim_data.energy = 400.0
+rim_data.shape = 'RECTANGLE'
+rim_data.size = total_width * 1.2
+rim_data.size_y = 0.5
+rim_obj = bpy.data.objects.new("RimLight", rim_data)
+scene.collection.objects.link(rim_obj)
+rim_obj.location = (center_x, -distance * 1.5, distance * 0.15)
+tt_rim = rim_obj.constraints.new(type='TRACK_TO')
+tt_rim.target = empty_target
+tt_rim.track_axis = 'TRACK_NEGATIVE_Z'
+tt_rim.up_axis = 'UP_Y'
 
 
 # ==========================================
@@ -244,8 +286,12 @@ tt_light.up_axis = 'UP_Y'
 
 # Switch helper functions to lock down render mathematics based on layer needs
 def configure_engine_for_art():
-    scene.cycles.samples = 64
+    scene.cycles.samples = 128
     scene.cycles.use_denoising = True
+    scene.cycles.use_fast_gi = True  # Fast AO approximation for Cycles
+    scene.cycles.fast_gi_method = 'REPLACE'  # Use Fast GI to replace bounces with AO
+    scene.cycles.ao_bounces_render = 4  # AO bounces for render quality
+    scene.cycles.max_bounces = 8  # More bounces = better indirect lighting
     scene.render.filter_size = 1.5
     scene.render.dither_intensity = 1.0 # Art wants dither gradient
 
