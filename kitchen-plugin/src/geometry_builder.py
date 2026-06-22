@@ -290,10 +290,15 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
     """Add door/drawer front(s) to a cabinet.
 
     Uses frontGap for door/drawer spacing (not cabinetGap).
+    Uses frontOffset for how far fronts protrude from cabinet face.
+    Uses clearanceOffset for geometric clearance (blind corners, etc.).
     """
     cab_type = cab["type"]
     # Use frontGap for door/drawer visual spacing
     front_gap = mm_to_m(settings.get("frontGap", 2))
+    # Tolerance offsets from settings
+    front_offset = settings.get("frontOffset", 0.001)  # meters
+    clearance_offset = settings.get("clearanceOffset", 0.001)  # meters
     front_thickness = 0.018
 
     single_door_types = {
@@ -304,14 +309,16 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
     drawer_door_types = {"base-drawer-door"}
 
     if cab_type in single_door_types:
-        _add_door_front(obj, w, h, front_thickness, cab, level)
+        _add_door_front(obj, w, h, front_thickness, cab, level,
+                        front_offset=front_offset)
 
     elif cab_type in double_door_types:
         door_w = (w - front_gap) / 2
         _add_door_front(obj, door_w, h, front_thickness, cab, level,
-                        x_offset=0)
+                        x_offset=0, front_offset=front_offset)
         _add_door_front(obj, door_w, h, front_thickness, cab, level,
-                        x_offset=door_w + front_gap, name_suffix="_R")
+                        x_offset=door_w + front_gap, name_suffix="_R",
+                        front_offset=front_offset)
 
     elif cab_type in drawer_types:
         drawer_count = cab.get("drawers", 3)
@@ -323,31 +330,40 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
 
         z = 0
         for i, dh in enumerate(heights):
-            _add_drawer_front(obj, w, dh, front_thickness, z, i)
+            _add_drawer_front(obj, w, dh, front_thickness, z, i,
+                              front_offset=front_offset)
             z += dh + front_gap
 
     elif cab_type in drawer_door_types:
         drawer_h = mm_to_m(cab.get("drawerHeight", 150))
-        _add_drawer_front(obj, w, drawer_h, front_thickness, 0, 0)
+        _add_drawer_front(obj, w, drawer_h, front_thickness, 0, 0,
+                          front_offset=front_offset)
         door_h = h - drawer_h - front_gap
         _add_door_front(obj, w, door_h, front_thickness,
-                        cab, level, z_offset=drawer_h + front_gap)
+                        cab, level, z_offset=drawer_h + front_gap,
+                        front_offset=front_offset)
 
     elif cab_type == "corner-blind":
         blind_depth = mm_to_m(cab.get("blindDepth", 300))
-        door_w = w - blind_depth - 0.001
+        door_w = w - blind_depth - clearance_offset
         _add_door_front(obj, door_w, h, front_thickness, cab, level,
-                        x_offset=blind_depth + 0.001)
+                        x_offset=blind_depth + clearance_offset,
+                        front_offset=front_offset)
 
     elif cab_type == "corner-diagonal":
-        _add_door_front(obj, w, h, front_thickness, cab, level)
+        _add_door_front(obj, w, h, front_thickness, cab, level,
+                        front_offset=front_offset)
 
 
 def _add_door_front(parent: bpy.types.Object, w: float, h: float,
                     thickness: float, cab: dict, level: str,
                     x_offset: float = 0.0, z_offset: float = 0.0,
-                    name_suffix: str = "") -> None:
-    """Add a door front to a cabinet."""
+                    name_suffix: str = "", front_offset: float = 0.001) -> None:
+    """Add a door front to a cabinet.
+
+    Args:
+        front_offset: how far front protrudes from cabinet face (meters)
+    """
     name = parent.name + "_door" + name_suffix
 
     verts = [
@@ -363,14 +379,19 @@ def _add_door_front(parent: bpy.types.Object, w: float, h: float,
     mesh.update()
 
     obj = bpy.data.objects.new(name, mesh)
-    obj.location = (0, -0.001, 0)  # slightly in front of cabinet face
+    obj.location = (0, -front_offset, 0)  # slightly in front of cabinet face
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 
 
 def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
-                      thickness: float, z: float, index: int) -> None:
-    """Add a drawer front to a cabinet."""
+                      thickness: float, z: float, index: int,
+                      front_offset: float = 0.001) -> None:
+    """Add a drawer front to a cabinet.
+
+    Args:
+        front_offset: how far front protrudes from cabinet face (meters)
+    """
     name = f"{parent.name}_drawer{index}"
 
     verts = [
@@ -386,7 +407,7 @@ def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
     mesh.update()
 
     obj = bpy.data.objects.new(name, mesh)
-    obj.location = (0, -0.001, 0)  # slightly in front of cabinet face
+    obj.location = (0, -front_offset, 0)  # slightly in front of cabinet face
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 

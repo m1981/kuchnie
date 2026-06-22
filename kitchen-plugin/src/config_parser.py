@@ -6,7 +6,11 @@ Loads JSON config, validates it, converts mm to meters for Blender.
 import json
 from pathlib import Path
 
-# Default settings (mm)
+# Schema versioning
+SUPPORTED_VERSIONS = {"1.0", "1.1"}
+CURRENT_VERSION = "1.1"
+
+# Default settings (mm, except offsets which are in meters)
 DEFAULTS = {
     "baseBodyHeight": 720,
     "baseDepth": 560,
@@ -26,7 +30,16 @@ DEFAULTS = {
     # Legacy 'gap' is treated as 'frontGap' for backward compatibility.
     "cabinetGap": 0,
     "frontGap": 2,
+    # Tolerance offsets (meters):
+    #   frontOffset     = how far door/drawer fronts protrude from cabinet face
+    #   clearanceOffset = small gap for geometric clearance (blind corners, etc.)
+    "frontOffset": 0.001,     # 1mm
+    "clearanceOffset": 0.001, # 1mm
 }
+
+# Drawer validation constants
+MIN_DRAWER_HEIGHT = 30   # mm - minimum practical drawer height
+MAX_DRAWER_COUNT = 6     # maximum number of drawers in one cabinet
 
 # Cabinet types and their level
 CABINET_LEVELS = {
@@ -81,8 +94,20 @@ def _apply_defaults(config: dict) -> None:
 
 def _validate(config: dict) -> None:
     """Validate config structure and values."""
+    # Version validation
+    version = config.get("version", "1.0")
+    if version not in SUPPORTED_VERSIONS:
+        raise ValueError(
+            f"Unsupported config version: '{version}'. "
+            f"Supported versions: {sorted(SUPPORTED_VERSIONS)}"
+        )
+
     if "runs" not in config:
         raise ValueError("Config must have 'runs' array")
+
+    # Validate materials
+    for name, mat in config.get("materials", {}).items():
+        _validate_material(name, mat)
 
     for i, run in enumerate(config["runs"]):
         if "base" not in run and "upper" not in run and "tall" not in run:
@@ -119,6 +144,133 @@ def _validate_cabinet(cab: dict, run_idx: int, section: str, cab_idx: int,
             raise ValueError(
                 f"Run {run_idx}/{section}/{cab_idx}: "
                 f"blindDepth ({bd}) must be < width ({cab['width']})"
+            )
+
+    # Validate drawers
+    if cab_type in ("base-drawers", "wall-drawers"):
+        _validate_drawers(cab, run_idx, section, cab_idx, settings)
+
+    # Validate drawer-door combo
+    if cab_type == "base-drawer-door":
+        drawer_h = cab.get("drawerHeight", 150)
+        if drawer_h < MIN_DRAWER_HEIGHT:
+            raise ValueError(
+                f"Run {run_idx}/{section}/{cab_idx}: "
+                f"drawerHeight ({drawer_h}mm) is too small (min {MIN_DRAWER_HEIGHT}mm)"
+            )
+        max_h = settings.get("baseBodyHeight", 720)
+        if drawer_h >= max_h:
+            raise ValueError(
+                f"Run {run_idx}/{section}/{cab_idx}: "
+                f"drawerHeight ({drawer_h}mm) exceeds carcass height ({max_h}mm)"
+            )
+
+
+def _validate_material(name: str, mat: dict) -> None:
+    """Validate a material definition."""
+    # Color is required
+    if "color" not in mat:
+        raise ValueError(f"Material '{name}': missing 'color'")
+
+    color = mat["color"]
+    if not isinstance(color, list) or len(color) not in (3, 4):
+        raise ValueError(
+            f"Material '{name}': color must be [R,G,B] or [R,G,B,A], "
+            f"got {len(color)} elements"
+        )
+
+    for i, v in enumerate(color):
+        if not 0 <= v <= 1:
+            channel = "RGBA"[i]
+            raise ValueError(
+                f"Material '{name}': color[{i}] ({channel}) = {v} must be 0-1"
+            )
+
+    # Optional PBR properties
+    if "roughness" in mat:
+        r = mat["roughness"]
+        if not 0 <= r <= 1:
+            raise ValueError(
+                f"Material '{name}': roughness = {r} must be 0-1"
+            )
+
+    if "metallic" in mat:
+        m = mat["metallic"]
+        if not 0 <= m <= 1:
+            raise ValueError(
+                f"Material '{name}': metallic = {m} must be 0-1"
+            )
+
+    if "alpha" in mat:
+        a = mat["alpha"]
+        if not 0 <= a <= 1:
+            raise ValueError(
+                f"Material '{name}': alpha = {a} must be 0-1"
+            )
+
+    if "emission" in mat:
+        e = mat["emission"]
+        if not 0 <= e <= 1:
+            raise ValueError(
+                f"Material '{name}': emission = {e} must be 0-1"
+            )
+
+
+def _validate_drawers(cab: dict, run_idx: int, section: str, cab_idx: int,
+                      settings: dict) -> None:
+    """Validate drawer configuration."""
+    prefix = f"Run {run_idx}/{section}/{cab_idx}"
+    drawers = cab.get("drawers", 3)
+    front_gap = settings.get("frontGap", 2)
+
+    if section == "base":
+        max_h = settings.get("baseBodyHeight", 720)
+    else:  # upper
+        max_h = settings.get("wallHeight", 720)
+
+    if isinstance(drawers, int):
+        # Count validation
+        if drawers < 1:
+            raise ValueError(f"{prefix}: drawers count must be >= 1, got {drawers}")
+        if drawers > MAX_DRAWER_COUNT:
+            raise ValueError(
+                f"{prefix}: drawers count must be <= {MAX_DRAWER_COUNT}, got {drawers}"
+            )
+        # Check if equal-height drawers fit
+        total_gap = front_gap * (drawers - 1)
+        min_drawer_h = (max_h - total_gap) / drawers
+        if min_drawer_h < MIN_DRAWER_HEIGHT:
+            raise ValueError(
+                f"{prefix}: {drawers} drawers with {front_gap}mm gaps "
+                f"would result in {min_drawer_h:.0f}mm per drawer (min {MIN_DRAWER_HEIGHT}mm)"
+            )
+    elif isinstance(drawers, list):
+        # Array validation
+        if len(drawers) < 1:
+            raise ValueError(f"{prefix}: drawers array must not be empty")
+        if len(drawers) > MAX_DRAWER_COUNT:
+            raise ValueError(
+                f"{prefix}: drawers array length must be <= {MAX_DRAWER_COUNT}"
+            )
+
+        for i, h in enumerate(drawers):
+            if h < MIN_DRAWER_HEIGHT:
+                raise ValueError(
+                    f"{prefix}: drawer[{i}] height ({h}mm) is too small "
+                    f"(min {MIN_DRAWER_HEIGHT}mm)"
+                )
+            if h >= max_h:
+                raise ValueError(
+                    f"{prefix}: drawer[{i}] height ({h}mm) exceeds "
+                    f"carcass height ({max_h}mm)"
+                )
+
+        total = sum(drawers) + front_gap * (len(drawers) - 1)
+        if total > max_h:
+            raise ValueError(
+                f"{prefix}: drawer heights ({sum(drawers)}mm) + "
+                f"gaps ({front_gap * (len(drawers) - 1)}mm) = {total}mm "
+                f"exceed carcass height ({max_h}mm)"
             )
 
 

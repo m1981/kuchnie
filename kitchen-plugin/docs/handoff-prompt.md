@@ -123,6 +123,26 @@ open output/meshes/u_shape.blend
 7. **Filler strips are at ends of runs, against walls**
 8. **`cabinetGap` for carcass spacing, `frontGap` for door/drawer spacing**
 
+### Tolerance System
+
+Named, configurable offsets replace magic numbers:
+
+| Setting           | Default | Purpose                                               |
+| ----------------- | ------- | ----------------------------------------------------- |
+| `frontOffset`     | 0.001m  | How far door/drawer fronts protrude from cabinet face |
+| `clearanceOffset` | 0.001m  | Geometric clearance for blind corners                 |
+
+These are in **meters** (not mm) because they represent small geometric offsets.
+
+### Drawer Validation
+
+Drawers are validated against physical constraints:
+
+- Count: 1–6 drawers per cabinet
+- Minimum height: 30mm per drawer
+- Maximum height: cannot exceed carcass height
+- Sum of heights + frontGaps must fit in carcass
+
 ### European Kitchen Standards
 
 - Base cabinet: 720mm body + 120mm plinth = 840mm total
@@ -130,9 +150,72 @@ open output/meshes/u_shape.blend
 - Depth: 560mm (base), 300mm (wall)
 - Cabinet gap: 0mm (flush carcasses)
 - Front gap: 2mm (visible between doors/drawers)
+- Front offset: 1mm (0.001m) - front protrusion
 - Standard widths: 300, 400, 450, 500, 600, 800, 900, 1000, 1200mm
 - Corner blind depth: 300-400mm
 - Countertop: 30mm thick, 20mm front overhang, 30mm end overhang
+
+### Room Validation
+
+Optional `room` config allows validation against physical room dimensions:
+
+```json
+"room": {
+    "walls": [
+        { "length": 3200 },
+        { "length": 2400 },
+        { "length": 3200 }
+    ]
+}
+```
+
+Validates:
+- Each run fits its corresponding wall
+- Corner blind depth reduces adjacent wall space
+- Last wall length is reused if fewer walls than runs
+
+### Schema Versioning
+
+| Version | Changes                                        |
+| ------- | ---------------------------------------------- |
+| 1.0     | Initial format                                 |
+| 1.1     | Added cabinetGap/frontGap, tolerances, drawers |
+
+Supported versions: `SUPPORTED_VERSIONS = {"1.0", "1.1"}`
+Current version: `CURRENT_VERSION = "1.1"`
+
+V1.0 configs are automatically migrated to V1.1 semantics.
+
+### Material System
+
+Extended material format with PBR properties:
+
+```json
+"materials": {
+  "quartz_counter": {
+    "color": [0.85, 0.83, 0.80],
+    "roughness": 0.2,
+    "metallic": 0.0,
+    "texture": "textures/quartz_diffuse.png",
+    "normalMap": "textures/quartz_normal.png"
+  },
+  "stainless_handle": {
+    "color": [0.7, 0.7, 0.7],
+    "roughness": 0.15,
+    "metallic": 0.95
+  }
+}
+```
+
+| Property    | Default | Description                          |
+| ----------- | ------- | ------------------------------------ |
+| `color`     | required| `[R,G,B]` or `[R,G,B,A]` (0–1)     |
+| `roughness` | 0.5     | 0=glossy, 1=matte                   |
+| `metallic`  | 0.0     | 0=dielectric, 1=metal               |
+| `alpha`     | 1.0     | 0=transparent, 1=opaque             |
+| `emission`  | 0.0     | 0=none, 1=full                      |
+| `texture`   | null    | Path to diffuse texture map          |
+| `normalMap` | null    | Path to normal/bump map              |
 
 ### Current Status
 
@@ -141,11 +224,16 @@ open output/meshes/u_shape.blend
 - Config parser with validation and backward compatibility
 - Geometry builder with direction/rotation system
 - Gap system with two distinct settings (cabinetGap, frontGap)
+- Tolerance model (frontOffset, clearanceOffset)
+- Drawer height validation
+- Room dimension validation (optional)
+- Schema versioning (1.0, 1.1)
+- Material system with PBR properties
 - Position calculation for all layout types (I, L, U)
 - Material manager for Cycles rendering
 - Exporters (OBJ, GLTF, .blend, wireframe PNG)
-- Validators for dimensions, gaps, corners
-- Comprehensive test suite (62 tests passing)
+- Validators for dimensions, gaps, corners, drawers, tolerances, room, materials
+- Comprehensive test suite (124 tests passing)
 
 **Test Coverage:**
 
@@ -155,3 +243,8 @@ open output/meshes/u_shape.blend
 - `test_u_shape.py` — U-shape layout validation
 - `test_p0_gap_semantics.py` — gap system contract tests
 - `test_p0_coordinate_system.py` — coordinate system contract tests
+- `test_p1_tolerance_model.py` — tolerance system tests
+- `test_p1_drawer_validation.py` — drawer validation tests
+- `test_p2_room_validation.py` — room dimension validation tests
+- `test_p2_schema_version.py` — schema versioning tests
+- `test_p2_materials.py` — material system tests

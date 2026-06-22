@@ -10,6 +10,7 @@ def validate_config(config: dict) -> list[str]:
     warnings.extend(_check_overlaps(config))
     warnings.extend(_check_gaps(config))
     warnings.extend(_check_corners(config))
+    warnings.extend(_check_room_fit(config))
     return warnings
 
 
@@ -82,6 +83,19 @@ def _check_gaps(config: dict) -> list[str]:
     if front_gap > 10:
         warnings.append(f"frontGap {front_gap}mm seems too large")
 
+    # Check tolerances
+    front_offset = settings.get("frontOffset", 0.001)
+    if front_offset < 0:
+        warnings.append(f"frontOffset {front_offset}m is negative")
+    if front_offset > 0.01:  # 10mm
+        warnings.append(f"frontOffset {front_offset*1000:.0f}mm seems too large")
+
+    clearance_offset = settings.get("clearanceOffset", 0.001)
+    if clearance_offset < 0:
+        warnings.append(f"clearanceOffset {clearance_offset}m is negative")
+    if clearance_offset > 0.01:  # 10mm
+        warnings.append(f"clearanceOffset {clearance_offset*1000:.0f}mm seems too large")
+
     # Check per-cabinet gap overrides
     for run_idx, run in enumerate(config["runs"]):
         for section in ("base", "upper", "tall"):
@@ -144,6 +158,58 @@ def _check_corners(config: dict) -> list[str]:
                         f"run[{run_idx + 1}]: missing 'turn' direction "
                         f"(previous run ends with corner cabinet)"
                     )
+
+    return warnings
+
+
+def _check_room_fit(config: dict) -> list[str]:
+    """Check that runs fit within room wall lengths (if specified)."""
+    warnings = []
+
+    room = config.get("room")
+    if not room:
+        return warnings
+
+    walls = room.get("walls", [])
+    if not walls:
+        return warnings
+
+    settings = config["settings"]
+    cabinet_gap = settings.get("cabinetGap", 0)
+
+    # Track corner blind depth consumed from adjacent wall
+    corner_consumed = 0
+
+    for run_idx, run in enumerate(config["runs"]):
+        # Get wall length (reuse last wall if fewer walls than runs)
+        wall_idx = min(run_idx, len(walls) - 1)
+        wall_length = walls[wall_idx].get("length", 0)
+
+        if wall_length <= 0:
+            continue
+
+        # Calculate run width (use base section as reference)
+        base_cabs = run.get("base", [])
+        if base_cabs:
+            run_width = sum(c["width"] for c in base_cabs) + cabinet_gap * (len(base_cabs) - 1)
+        else:
+            continue
+
+        # Subtract space consumed by corner from previous run
+        available_length = wall_length - corner_consumed
+
+        if run_width > available_length:
+            warnings.append(
+                f"run[{run_idx}] '{run.get('label', '')}': "
+                f"run width {run_width}mm exceeds wall length {available_length}mm"
+            )
+
+        # Track corner blind depth for next run
+        corner_consumed = 0
+        if base_cabs:
+            last_cab = base_cabs[-1]
+            if last_cab["type"] == "corner-blind":
+                corner_consumed = last_cab.get("blindDepth", 300)
 
     return warnings
 

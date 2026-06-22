@@ -12,12 +12,13 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 
 ```json
 {
-  "version": "1.0",
+  "version": "1.1",
   "units": "mm",
   "name": "Kuchnia Warsaw 3.2m",
 
   "settings": { ... },
   "materials": { ... },
+  "room": { ... },
 
   "runs": [
     {
@@ -34,6 +35,15 @@ the designer (human or AI agent) and the renderer (Blender plugin).
   ]
 }
 ```
+
+### Version History
+
+| Version | Changes                                    |
+| ------- | ------------------------------------------ |
+| 1.0     | Initial format                             |
+| 1.1     | Added `cabinetGap`/`frontGap`, tolerances, drawer validation |
+
+**Backward compatibility:** V1.0 configs are automatically migrated to V1.1 semantics.
 
 **Key concepts:**
 
@@ -66,32 +76,40 @@ the designer (human or AI agent) and the renderer (Blender plugin).
   "wallMountHeight": 1400,
 
   "cabinetGap": 0,
-  "frontGap": 2
+  "frontGap": 2,
+  "frontOffset": 0.001,
+  "clearanceOffset": 0.001
 }
 ```
 
-| Property               | Default | Description                                 |
-| ---------------------- | ------- | ------------------------------------------- |
-| `baseBodyHeight`       | 720     | Carcass height without plinth (mm)          |
-| `baseDepth`            | 560     | Carcass depth, not including countertop     |
-| `wallHeight`           | 720     | Wall cabinet height                         |
-| `wallDepth`            | 300     | Wall cabinet depth                          |
-| `tallHeight`           | 2000    | Tall cabinet height                         |
-| `tallDepth`            | 560     | Tall cabinet depth                          |
-| `plinthHeight`         | 120     | Plinth/baseboard height                     |
-| `plinthSetback`        | 60      | How far plinth is set back from front       |
-| `counterThickness`     | 30      | Countertop thickness                        |
-| `counterOverhangFront` | 20      | Countertop overhang past cabinet front      |
-| `counterOverhangEnd`   | 30      | Countertop overhang at open ends            |
-| `wallMountHeight`      | 1400    | Height from floor to bottom of wall cabinet |
-| `cabinetGap`           | 0       | Gap between carcass boxes (usually flush)   |
-| `frontGap`             | 2       | Visible gap between door/drawer fronts      |
+| Property               | Default | Description                                   |
+| ---------------------- | ------- | --------------------------------------------- |
+| `baseBodyHeight`       | 720     | Carcass height without plinth (mm)            |
+| `baseDepth`            | 560     | Carcass depth, not including countertop       |
+| `wallHeight`           | 720     | Wall cabinet height                           |
+| `wallDepth`            | 300     | Wall cabinet depth                            |
+| `tallHeight`           | 2000    | Tall cabinet height                           |
+| `tallDepth`            | 560     | Tall cabinet depth                            |
+| `plinthHeight`         | 120     | Plinth/baseboard height                       |
+| `plinthSetback`        | 60      | How far plinth is set back from front         |
+| `counterThickness`     | 30      | Countertop thickness                          |
+| `counterOverhangFront` | 20      | Countertop overhang past cabinet front        |
+| `counterOverhangEnd`   | 30      | Countertop overhang at open ends              |
+| `wallMountHeight`      | 1400    | Height from floor to bottom of wall cabinet   |
+| `cabinetGap`           | 0       | Gap between carcass boxes (usually flush)     |
+| `frontGap`             | 2       | Visible gap between door/drawer fronts        |
+| `frontOffset`          | 0.001   | How far fronts protrude from cabinet face (m) |
+| `clearanceOffset`      | 0.001   | Geometric clearance for blind corners (m)     |
 
 **Note on backward compatibility:** Old configs using `"gap": 2` will automatically migrate to `"frontGap": 2` with `"cabinetGap": 0`. The new settings take precedence if both are specified.
+
+**Note on tolerances:** `frontOffset` and `clearanceOffset` are in **meters** (not mm) because they represent small geometric offsets used in 3D calculations. Default is 1mm (0.001m).
 
 ---
 
 ## 3. Materials
+
+### Simple Format (Backward Compatible)
 
 ```json
 "materials": {
@@ -107,6 +125,52 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 ```
 
 Each color is `[R, G, B]` or `[R, G, B, A]` in 0–1 range.
+
+### PBR Format (Extended)
+
+For realistic rendering, use PBR (Physically Based Rendering) properties:
+
+```json
+"materials": {
+  "quartz_counter": {
+    "color": [0.85, 0.83, 0.80],
+    "roughness": 0.2,
+    "metallic": 0.0,
+    "texture": "textures/quartz_diffuse.png",
+    "normalMap": "textures/quartz_normal.png"
+  },
+  "stainless_handle": {
+    "color": [0.7, 0.7, 0.7],
+    "roughness": 0.15,
+    "metallic": 0.95
+  },
+  "frosted_glass": {
+    "color": [0.95, 0.95, 0.95],
+    "roughness": 0.8,
+    "alpha": 0.4
+  }
+}
+```
+
+### Material Properties
+
+| Property     | Type    | Default | Description                                    |
+| ------------ | ------- | ------- | ---------------------------------------------- |
+| `color`      | array   | required| `[R, G, B]` or `[R, G, B, A]` (0–1 range)    |
+| `roughness`  | number  | 0.5     | Surface roughness (0=glossy, 1=matte)          |
+| `metallic`   | number  | 0.0     | Metallic appearance (0=dielectric, 1=metal)    |
+| `alpha`      | number  | 1.0     | Opacity (0=transparent, 1=opaque)              |
+| `emission`   | number  | 0.0     | Self-illumination (0=none, 1=full)             |
+| `texture`    | string  | null    | Path to diffuse texture map                    |
+| `normalMap`  | string  | null    | Path to normal/bump map                        |
+
+### Validation
+
+- `color` is required for every material
+- `color` must have 3 or 4 elements, each in 0–1 range
+- `roughness`, `metallic`, `alpha`, `emission` must be in 0–1 range
+- Texture paths are optional and not validated (resolved at render time)
+
 Materials are referenced by name; the plugin creates Blender Cycles materials.
 
 ---
@@ -681,7 +745,73 @@ Filler strips and corner cabinets are counted in the total.
 
 ---
 
-## 10. Layout Examples
+## 10. Room Configuration (Optional)
+
+The `room` section defines the physical room dimensions. This allows the
+plugin to validate that cabinets fit within the available wall space.
+
+```json
+"room": {
+    "walls": [
+        { "length": 3200 },
+        { "length": 2400 },
+        { "length": 3200 }
+    ]
+}
+```
+
+| Property         | Type   | Description                           |
+| ---------------- | ------ | ------------------------------------- |
+| `walls`          | array  | List of wall definitions              |
+| `walls[].length` | number | Wall length in mm                     |
+
+### Validation Rules
+
+When `room` is specified:
+- Each run is checked against its corresponding wall length
+- If fewer walls than runs, the last wall length is reused
+- Corner blind depth reduces available space on the adjacent wall
+- Warnings are generated if runs exceed wall lengths
+
+### Example: L-Shape with Room
+
+```json
+{
+    "version": "1.1",
+    "units": "mm",
+    "room": {
+        "walls": [
+            { "length": 3200 },
+            { "length": 2400 }
+        ]
+    },
+    "runs": [
+        {
+            "label": "back wall",
+            "base": [
+                { "type": "base-door", "width": 600 },
+                { "type": "corner-blind", "width": 900, "blindDepth": 400 }
+            ]
+        },
+        {
+            "label": "left wall",
+            "turn": "left",
+            "base": [
+                { "type": "base-door", "width": 600 },
+                { "type": "base-door", "width": 600 }
+            ]
+        }
+    ]
+}
+```
+
+In this example:
+- Back wall run: 600 + 900 = 1500mm (fits in 3200mm wall)
+- Left wall run: 600 + 600 = 1200mm, but corner consumes 400mm, so effective space is 2400 - 400 = 2000mm (fits)
+
+---
+
+## 11. Layout Examples
 
 ### I-Shape (Single Row)
 
@@ -1093,16 +1223,88 @@ handle_length: FloatProperty(name='Handle length', ...)
 
 ---
 
-## 13. Validation Rules
+## 14. Validation Rules
 
-The plugin should validate the config before generating:
+The plugin validates the config before generating. Violations raise `ValueError`.
 
-| Rule                 | Description                                         |
-| -------------------- | --------------------------------------------------- |
-| Corner at end of run | Corner cabinets must be the last in a `base` array  |
-| Turn matches corner  | Next run's `turn` must be valid for the corner type |
-| Width > 0            | All widths must be positive                         |
-| blindDepth < width   | Blind depth must be less than total width           |
-| drawers in range     | Drawer count: 1–6, or array length 1–6              |
-| Sum of widths        | Total run width should be reasonable (< 10m)        |
-| glassRatio range     | 0.05–0.40                                           |
+### Version Validation
+
+| Rule                    | Description                              |
+| ----------------------- | ---------------------------------------- |
+| Version supported       | Must be in `SUPPORTED_VERSIONS` (1.0, 1.1) |
+| Version format          | Must be valid version string             |
+
+### Material Validation
+
+| Rule                   | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| Color required         | Every material must have `color`            |
+| Color length           | Must be 3 (`[R,G,B]`) or 4 (`[R,G,B,A]`)  |
+| Color range            | Each color element must be 0–1              |
+| Roughness range        | If specified, must be 0–1                   |
+| Metallic range         | If specified, must be 0–1                   |
+| Alpha range            | If specified, must be 0–1                   |
+| Emission range         | If specified, must be 0–1                   |
+
+### Structure Validation
+
+| Rule           | Description                                           |
+| -------------- | ----------------------------------------------------- |
+| Runs exist     | Config must have `runs` array                         |
+| Sections exist | Each run must have at least one of: base, upper, tall |
+| Type exists    | Each cabinet must have a `type`                       |
+| Type known     | Cabinet type must be in the known types list          |
+| Width exists   | Each cabinet must have a `width`                      |
+| Width > 0      | All widths must be positive                           |
+
+### Corner Validation
+
+| Rule               | Description                                             |
+| ------------------ | ------------------------------------------------------- |
+| Corner position    | Corner cabinets must be first or last in a `base` array |
+| Turn after corner  | Next run must specify `turn` direction                  |
+| blindDepth < width | Blind depth must be less than total width               |
+
+### Drawer Validation
+
+| Rule               | Description                                            |
+| ------------------ | ------------------------------------------------------ |
+| Count range        | Drawer count must be 1–6                               |
+| Array length       | Drawer height array length must be 1–6                 |
+| Array not empty    | Drawer height array must not be empty                  |
+| Min height         | Each drawer must be >= 30mm                            |
+| Max height         | No drawer can exceed carcass height                    |
+| Sum fits           | Sum of heights + frontGaps <= carcass height           |
+| drawerHeight range | For drawer-door: 30mm <= drawerHeight < carcass height |
+
+### Tolerance Validation
+
+| Rule                   | Description               |
+| ---------------------- | ------------------------- |
+| frontOffset > 0        | Must be positive (meters) |
+| frontOffset < 10mm     | Warns if > 0.01m (10mm)   |
+| clearanceOffset > 0    | Must be positive (meters) |
+| clearanceOffset < 10mm | Warns if > 0.01m (10mm)   |
+
+### Gap Validation
+
+| Rule              | Description          |
+| ----------------- | -------------------- |
+| cabinetGap >= 0   | Must not be negative |
+| cabinetGap < 10mm | Warns if > 10mm      |
+| frontGap >= 0     | Must not be negative |
+| frontGap < 10mm   | Warns if > 10mm      |
+
+### Room Validation (if `room` specified)
+
+| Rule                  | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| Run fits wall         | Run width must not exceed wall length             |
+| Corner blind consumes | Corner blind depth reduces adjacent wall space    |
+
+### Other
+
+| Rule             | Description                                  |
+| ---------------- | -------------------------------------------- |
+| glassRatio range | 0.05–0.40                                    |
+| Sum of widths    | Total run width should be reasonable (< 10m) |
