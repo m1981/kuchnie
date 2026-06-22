@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "units": "mm",
+  "name": "L-Shape Kitchen 3.2m + 1.8m",
+
+  "settings": {
+    "baseBodyHeight": 720,
+    "baseDepth": 560,
+    "wallHeight": 600,
+    "wallDepth": 300,
+    "tallHeight": 2000,
+    "tallDepth": 560,
+    "plinthHeight": 120,
+    "counterThickness": 30,
+    "counterOverhangFront": 20,
+    "counterOverhangEnd": 30,
+    "wallMountHeight": 1400,
+    "gap": 2
+  },
+
+  "materials": {
+    "carcass":    { "color": [0.90, 0.90, 0.88] },
+    "front":      { "color": [0.85, 0.85, 0.82] },
+    "counter":    { "color": [0.72, 0.70, 0.68] },
+    "plinth":     { "color": [0.60, 0.60, 0.60] },
+    "filler":     { "color": [0.85, 0.85, 0.82] }
+  },
+
+  "runs": [
+    {
+      "label": "back wall",
+      "base": [
+        { "type": "filler",              "width": 50 },
+        { "type": "tall-oven",           "width": 600, "ovenHeight": 600,
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "base-drawer-door",    "width": 600, "drawerHeight": 150, "door": "right",
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "base-sink",           "width": 800,
+          "handle": { "type": "rail", "length": 192 } },
+        { "type": "base-drawers",        "width": 600, "drawers": 3,
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "corner-blind",        "width": 900, "blindDepth": 400, "blindSide": "right",
+          "door": "left",
+          "handle": { "type": "rail", "length": 160 } }
+      ],
+      "upper": [
+        { "type": "filler",              "width": 50 },
+        { "type": "wall-lift-up",        "width": 600,
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "wall-door",           "width": 600, "door": "right",
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "wall-lift-up",        "width": 800,
+          "handle": { "type": "rail", "length": 192 } },
+        { "type": "wall-door-double",    "width": 600,
+          "handle": { "type": "rail", "length": 128 } },
+        { "type": "wall-glass",          "width": 600, "door": "left",
+          "handle": { "type": "rail", "length": 160 } }
+      ]
+    },
+    {
+      "label": "left wall",
+      "turn": "left",
+      "base": [
+        { "type": "base-door",           "width": 600, "door": "right",
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "base-drawers",        "width": 400, "drawers": [120, 160, 200],
+          "handle": { "type": "gola" } },
+        { "type": "base-door-double",    "width": 800,
+          "handle": { "type": "rail", "length": 192 } },
+        { "type": "filler",              "width": 50 }
+      ],
+      "upper": [
+        { "type": "wall-door",           "width": 600, "door": "right",
+          "handle": { "type": "rail", "length": 160 } },
+        { "type": "wall-door",           "width": 400, "door": "right",
+          "handle": { "type": "rail", "length": 128 } },
+        { "type": "wall-door",           "width": 800, "door": "left",
+          "handle": { "type": "rail", "length": 192 } },
+        { "type": "filler",              "width": 50 }
+      ]
+    }
+  ]
+}
