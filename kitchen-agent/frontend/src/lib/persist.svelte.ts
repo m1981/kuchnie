@@ -10,24 +10,24 @@
  */
 
 export function persisted<T>(key: string, fallback: T) {
-	function load(): T {
-		try {
-			const raw = localStorage.getItem(key);
-			return raw !== null ? (JSON.parse(raw) as T) : fallback;
-		} catch {
-			return fallback;
-		}
-	}
+  function load(): T {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw !== null ? (JSON.parse(raw) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
 
-	let value = $state<T>(load());
+  let value = $state<T>(load());
 
-	return {
-		get current(): T {
-			return value;
-		},
-		set current(v: T) {
-			value = v;
-			localStorage.setItem(key, JSON.stringify(v));
-		}
-	};
+  return {
+    get current(): T {
+      return value;
+    },
+    set current(v: T) {
+      value = v;
+      localStorage.setItem(key, JSON.stringify(v));
+    },
+  };
 }

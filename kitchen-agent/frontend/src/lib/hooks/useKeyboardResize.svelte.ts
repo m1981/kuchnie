@@ -20,61 +20,61 @@
  */
 
 type SidebarResizeStore = {
-	resizeLeftBy(delta: number): void;
-	resizeRightBy(delta: number): void;
-	resizePromptBy(delta: number): void;
-	resetLeft(): void;
-	resetRight(): void;
-	resetPrompt(): void;
+  resizeLeftBy(delta: number): void;
+  resizeRightBy(delta: number): void;
+  resizePromptBy(delta: number): void;
+  resetLeft(): void;
+  resetRight(): void;
+  resetPrompt(): void;
 };
 
 export function createKeyboardResize(store: SidebarResizeStore) {
-	/**
-	 * Handle ArrowLeft / ArrowRight / Home on a sidebar drag-handle button.
-	 * Shift multiplies the step by 2.5× for coarse adjustment.
-	 *
-	 * @param event  — the keydown event from the button element
-	 * @param side   — which sidebar is being resized
-	 */
-	function sidebar(event: KeyboardEvent, side: 'left' | 'right'): void {
-		if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return;
-		event.preventDefault();
+  /**
+   * Handle ArrowLeft / ArrowRight / Home on a sidebar drag-handle button.
+   * Shift multiplies the step by 2.5× for coarse adjustment.
+   *
+   * @param event  — the keydown event from the button element
+   * @param side   — which sidebar is being resized
+   */
+  function sidebar(event: KeyboardEvent, side: "left" | "right"): void {
+    if (!["ArrowLeft", "ArrowRight", "Home"].includes(event.key)) return;
+    event.preventDefault();
 
-		const step = event.shiftKey ? 40 : 16;
+    const step = event.shiftKey ? 40 : 16;
 
-		if (event.key === 'Home') {
-			side === 'left' ? store.resetLeft() : store.resetRight();
-			return;
-		}
+    if (event.key === "Home") {
+      side === "left" ? store.resetLeft() : store.resetRight();
+      return;
+    }
 
-		const direction = event.key === 'ArrowRight' ? 1 : -1;
-		if (side === 'left') {
-			store.resizeLeftBy(direction * step);
-		} else {
-			// Right sidebar grows leftward, so the delta is inverted.
-			store.resizeRightBy(direction * -step);
-		}
-	}
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    if (side === "left") {
+      store.resizeLeftBy(direction * step);
+    } else {
+      // Right sidebar grows leftward, so the delta is inverted.
+      store.resizeRightBy(direction * -step);
+    }
+  }
 
-	/**
-	 * Handle ArrowUp / ArrowDown / Home on the prompt composer resize handle.
-	 * Shift multiplies the step by 2.5× for coarse adjustment.
-	 *
-	 * @param event — the keydown event from the handle button element
-	 */
-	function prompt(event: KeyboardEvent): void {
-		if (!['ArrowUp', 'ArrowDown', 'Home'].includes(event.key)) return;
-		event.preventDefault();
+  /**
+   * Handle ArrowUp / ArrowDown / Home on the prompt composer resize handle.
+   * Shift multiplies the step by 2.5× for coarse adjustment.
+   *
+   * @param event — the keydown event from the handle button element
+   */
+  function prompt(event: KeyboardEvent): void {
+    if (!["ArrowUp", "ArrowDown", "Home"].includes(event.key)) return;
+    event.preventDefault();
 
-		const step = event.shiftKey ? 40 : 16;
+    const step = event.shiftKey ? 40 : 16;
 
-		if (event.key === 'Home') {
-			store.resetPrompt();
-			return;
-		}
+    if (event.key === "Home") {
+      store.resetPrompt();
+      return;
+    }
 
-		store.resizePromptBy(event.key === 'ArrowUp' ? step : -step);
-	}
+    store.resizePromptBy(event.key === "ArrowUp" ? step : -step);
+  }
 
-	return { sidebar, prompt } as const;
+  return { sidebar, prompt } as const;
 }

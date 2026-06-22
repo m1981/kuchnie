@@ -20,8 +20,8 @@
  * Mirrors backend: math.ceil(len(text) / 4)
  */
 export function estimateTokensForText(text: string): number {
-	if (!text) return 0;
-	return Math.ceil(text.length / 4);
+  if (!text) return 0;
+  return Math.ceil(text.length / 4);
 }
 
 /**
@@ -29,7 +29,7 @@ export function estimateTokensForText(text: string): number {
  * Conservative: 258 tokens (1 Gemini vision tile).
  */
 export function estimateTokensForImage(): number {
-	return 258;
+  return 258;
 }
 
 /**
@@ -45,17 +45,17 @@ export function estimateTokensForImage(): number {
  * @returns Total estimated input tokens
  */
 export function estimateInputTokens(
-	userMessage: string,
-	imageCount: number,
-	contextFileTokens: number,
-	systemPromptText: string,
-	historyTokenCount: number
+  userMessage: string,
+  imageCount: number,
+  contextFileTokens: number,
+  systemPromptText: string,
+  historyTokenCount: number,
 ): number {
-	const textTokens = estimateTokensForText(userMessage);
-	const imageTokens = imageCount * estimateTokensForImage();
-	const systemPromptTokens = estimateTokensForText(systemPromptText);
+  const textTokens = estimateTokensForText(userMessage);
+  const imageTokens = imageCount * estimateTokensForImage();
+  const systemPromptTokens = estimateTokensForText(systemPromptText);
 
-	return textTokens + imageTokens + contextFileTokens + systemPromptTokens + historyTokenCount;
+  return textTokens + imageTokens + contextFileTokens + systemPromptTokens + historyTokenCount;
 }
 
 /**
@@ -63,13 +63,13 @@ export function estimateInputTokens(
  * Uses K suffix for thousands (e.g. 4,271 → "4.3K", 890 → "890").
  */
 export function formatTokenCount(count: number): string {
-	if (count >= 10_000) {
-		return `${(count / 1000).toFixed(1)}K`;
-	}
-	if (count >= 1000) {
-		return `${(count / 1000).toFixed(1)}K`;
-	}
-	return String(count);
+  if (count >= 10_000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  return String(count);
 }
 
 /**
@@ -77,9 +77,9 @@ export function formatTokenCount(count: number): string {
  * Returns 0 when contextWindowK is 0 or unknown.
  */
 export function contextWindowPercent(usedTokens: number, contextWindowK: number): number {
-	if (!contextWindowK) return 0;
-	const maxTokens = contextWindowK * 1000;
-	return Math.min(100, Math.round((usedTokens / maxTokens) * 100));
+  if (!contextWindowK) return 0;
+  const maxTokens = contextWindowK * 1000;
+  return Math.min(100, Math.round((usedTokens / maxTokens) * 100));
 }
 
 /**
@@ -88,8 +88,8 @@ export function contextWindowPercent(usedTokens: number, contextWindowK: number)
  *  80-95% → yellow (warning)
  *  > 95%  → red (danger)
  */
-export function contextWindowColor(pct: number): 'safe' | 'warn' | 'danger' {
-	if (pct >= 95) return 'danger';
-	if (pct >= 80) return 'warn';
-	return 'safe';
+export function contextWindowColor(pct: number): "safe" | "warn" | "danger" {
+  if (pct >= 95) return "danger";
+  if (pct >= 80) return "warn";
+  return "safe";
 }

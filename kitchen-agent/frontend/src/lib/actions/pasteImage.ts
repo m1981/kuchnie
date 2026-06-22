@@ -15,44 +15,44 @@
  *   <textarea use:pasteImage={chatStore.addPastedImage}></textarea>
  */
 
-import type { Action } from 'svelte/action';
-import type { PastedImage } from '$lib/types';
+import type { Action } from "svelte/action";
+import type { PastedImage } from "$lib/types";
 
 export const pasteImage: Action<HTMLElement, (img: PastedImage) => void> = (
-	node,
-	onImagePasted
+  node,
+  onImagePasted,
 ) => {
-	function handlePaste(event: ClipboardEvent) {
-		const items = event.clipboardData?.items;
-		if (!items) return;
+  function handlePaste(event: ClipboardEvent) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
 
-		for (const item of Array.from(items)) {
-			if (!item.type.startsWith('image/')) continue;
-			event.preventDefault();
+    for (const item of Array.from(items)) {
+      if (!item.type.startsWith("image/")) continue;
+      event.preventDefault();
 
-			const file = item.getAsFile();
-			if (!file) continue;
+      const file = item.getAsFile();
+      if (!file) continue;
 
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				const dataUrl = e.target?.result as string;
-				const [header, base64] = dataUrl.split(',');
-				const mimeType = header.split(':')[1].split(';')[0];
-				onImagePasted({ dataUrl, mimeType, base64 });
-			};
-			reader.readAsDataURL(file);
-		}
-	}
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        const [header, base64] = dataUrl.split(",");
+        const mimeType = header.split(":")[1].split(";")[0];
+        onImagePasted({ dataUrl, mimeType, base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
-	node.addEventListener('paste', handlePaste);
+  node.addEventListener("paste", handlePaste);
 
-	return {
-		// Called when the parameter changes (e.g. the callback reference changes).
-		update(newCallback: (img: PastedImage) => void) {
-			onImagePasted = newCallback;
-		},
-		destroy() {
-			node.removeEventListener('paste', handlePaste);
-		}
-	};
+  return {
+    // Called when the parameter changes (e.g. the callback reference changes).
+    update(newCallback: (img: PastedImage) => void) {
+      onImagePasted = newCallback;
+    },
+    destroy() {
+      node.removeEventListener("paste", handlePaste);
+    },
+  };
 };

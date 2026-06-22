@@ -14,68 +14,68 @@
  *   - Actions communicate via callbacks, not store coupling
  */
 
-import type { Action } from 'svelte/action';
-import type { DragPayload, DropTarget } from '$lib/types';
+import type { Action } from "svelte/action";
+import type { DragPayload, DropTarget } from "$lib/types";
 
 // ---------------------------------------------------------------------------
 // Draggable action
 // ---------------------------------------------------------------------------
 
 export interface DraggableOptions {
-	payload: DragPayload;
-	ondragstart?: (payload: DragPayload) => void;
-	ondragend?: () => void;
+  payload: DragPayload;
+  ondragstart?: (payload: DragPayload) => void;
+  ondragend?: () => void;
 }
 
 export const draggable: Action<HTMLElement, DraggableOptions> = (node, options) => {
-	let currentOptions = options;
+  let currentOptions = options;
 
-	function handleDragStart(e: DragEvent) {
-		if (!e.dataTransfer || !currentOptions) return;
+  function handleDragStart(e: DragEvent) {
+    if (!e.dataTransfer || !currentOptions) return;
 
-		// Set drag data
-		e.dataTransfer.setData('application/json', JSON.stringify(currentOptions.payload));
-		e.dataTransfer.effectAllowed = 'move';
+    // Set drag data
+    e.dataTransfer.setData("application/json", JSON.stringify(currentOptions.payload));
+    e.dataTransfer.effectAllowed = "move";
 
-		// Visual feedback
-		node.classList.add('dragging');
+    // Visual feedback
+    node.classList.add("dragging");
 
-		// Custom drag image (optional)
-		const dragImage = document.createElement('div');
-		dragImage.textContent = currentOptions.payload.title;
-		dragImage.className = 'drag-ghost';
-		dragImage.style.cssText =
-			'position: absolute; top: -1000px; padding: 4px 8px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 4px; font-size: 12px;';
-		document.body.appendChild(dragImage);
-		e.dataTransfer.setDragImage(dragImage, 0, 0);
+    // Custom drag image (optional)
+    const dragImage = document.createElement("div");
+    dragImage.textContent = currentOptions.payload.title;
+    dragImage.className = "drag-ghost";
+    dragImage.style.cssText =
+      "position: absolute; top: -1000px; padding: 4px 8px; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 4px; font-size: 12px;";
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
 
-		// Cleanup ghost after drag starts
-		requestAnimationFrame(() => {
-			document.body.removeChild(dragImage);
-		});
+    // Cleanup ghost after drag starts
+    requestAnimationFrame(() => {
+      document.body.removeChild(dragImage);
+    });
 
-		currentOptions.ondragstart?.(currentOptions.payload);
-	}
+    currentOptions.ondragstart?.(currentOptions.payload);
+  }
 
-	function handleDragEnd() {
-		node.classList.remove('dragging');
-		currentOptions.ondragend?.();
-	}
+  function handleDragEnd() {
+    node.classList.remove("dragging");
+    currentOptions.ondragend?.();
+  }
 
-	node.setAttribute('draggable', 'true');
-	node.addEventListener('dragstart', handleDragStart);
-	node.addEventListener('dragend', handleDragEnd);
+  node.setAttribute("draggable", "true");
+  node.addEventListener("dragstart", handleDragStart);
+  node.addEventListener("dragend", handleDragEnd);
 
-	return {
-		update(newOptions) {
-			currentOptions = newOptions;
-		},
-		destroy() {
-			node.removeAttribute('draggable');
-			node.removeEventListener('dragstart', handleDragStart);
-			node.removeEventListener('dragend', handleDragEnd);
-		}
-	};
+  return {
+    update(newOptions) {
+      currentOptions = newOptions;
+    },
+    destroy() {
+      node.removeAttribute("draggable");
+      node.removeEventListener("dragstart", handleDragStart);
+      node.removeEventListener("dragend", handleDragEnd);
+    },
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -83,78 +83,78 @@ export const draggable: Action<HTMLElement, DraggableOptions> = (node, options) 
 // ---------------------------------------------------------------------------
 
 export interface DroppableOptions {
-	target: DropTarget;
-	ondragenter?: (target: DropTarget) => void;
-	ondragleave?: () => void;
-	ondrop?: (payload: DragPayload, target: DropTarget) => void;
-	acceptTypes?: ('session' | 'folder')[];
+  target: DropTarget;
+  ondragenter?: (target: DropTarget) => void;
+  ondragleave?: () => void;
+  ondrop?: (payload: DragPayload, target: DropTarget) => void;
+  acceptTypes?: ("session" | "folder")[];
 }
 
 export const droppable: Action<HTMLElement, DroppableOptions> = (node, options) => {
-	let currentOptions = options;
-	let dragCounter = 0; // Track enter/leave for nested elements
+  let currentOptions = options;
+  let dragCounter = 0; // Track enter/leave for nested elements
 
-	function isValidDrop(payload: DragPayload): boolean {
-		if (!currentOptions?.acceptTypes) return true;
-		return currentOptions.acceptTypes.includes(payload.type);
-	}
+  function isValidDrop(payload: DragPayload): boolean {
+    if (!currentOptions?.acceptTypes) return true;
+    return currentOptions.acceptTypes.includes(payload.type);
+  }
 
-	function handleDragEnter(e: DragEvent) {
-		e.preventDefault();
-		dragCounter++;
+  function handleDragEnter(e: DragEvent) {
+    e.preventDefault();
+    dragCounter++;
 
-		if (dragCounter === 1) {
-			node.classList.add('drag-over');
-			currentOptions?.ondragenter?.(currentOptions.target);
-		}
-	}
+    if (dragCounter === 1) {
+      node.classList.add("drag-over");
+      currentOptions?.ondragenter?.(currentOptions.target);
+    }
+  }
 
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
-		if (e.dataTransfer) {
-			e.dataTransfer.dropEffect = 'move';
-		}
-	}
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+  }
 
-	function handleDragLeave() {
-		dragCounter--;
-		if (dragCounter === 0) {
-			node.classList.remove('drag-over');
-			currentOptions?.ondragleave?.();
-		}
-	}
+  function handleDragLeave() {
+    dragCounter--;
+    if (dragCounter === 0) {
+      node.classList.remove("drag-over");
+      currentOptions?.ondragleave?.();
+    }
+  }
 
-	async function handleDrop(e: DragEvent) {
-		e.preventDefault();
-		dragCounter = 0;
-		node.classList.remove('drag-over');
+  async function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    dragCounter = 0;
+    node.classList.remove("drag-over");
 
-		if (!e.dataTransfer) return;
+    if (!e.dataTransfer) return;
 
-		try {
-			const data = JSON.parse(e.dataTransfer.getData('application/json')) as DragPayload;
-			if (isValidDrop(data)) {
-				currentOptions?.ondrop?.(data, currentOptions.target);
-			}
-		} catch {
-			// Invalid drag data, ignore
-		}
-	}
+    try {
+      const data = JSON.parse(e.dataTransfer.getData("application/json")) as DragPayload;
+      if (isValidDrop(data)) {
+        currentOptions?.ondrop?.(data, currentOptions.target);
+      }
+    } catch {
+      // Invalid drag data, ignore
+    }
+  }
 
-	node.addEventListener('dragenter', handleDragEnter);
-	node.addEventListener('dragover', handleDragOver);
-	node.addEventListener('dragleave', handleDragLeave);
-	node.addEventListener('drop', handleDrop);
+  node.addEventListener("dragenter", handleDragEnter);
+  node.addEventListener("dragover", handleDragOver);
+  node.addEventListener("dragleave", handleDragLeave);
+  node.addEventListener("drop", handleDrop);
 
-	return {
-		update(newOptions) {
-			currentOptions = newOptions;
-		},
-		destroy() {
-			node.removeEventListener('dragenter', handleDragEnter);
-			node.removeEventListener('dragover', handleDragOver);
-			node.removeEventListener('dragleave', handleDragLeave);
-			node.removeEventListener('drop', handleDrop);
-		}
-	};
+  return {
+    update(newOptions) {
+      currentOptions = newOptions;
+    },
+    destroy() {
+      node.removeEventListener("dragenter", handleDragEnter);
+      node.removeEventListener("dragover", handleDragOver);
+      node.removeEventListener("dragleave", handleDragLeave);
+      node.removeEventListener("drop", handleDrop);
+    },
+  };
 };

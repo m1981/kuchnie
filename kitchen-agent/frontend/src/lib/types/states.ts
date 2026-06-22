@@ -22,7 +22,7 @@
  *   }
  */
 export type AsyncState<T> =
-	| { status: 'idle' }
-	| { status: 'loading' }
-	| { status: 'error'; message: string }
-	| { status: 'success'; data: T };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "success"; data: T };
