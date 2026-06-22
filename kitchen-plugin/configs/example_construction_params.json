@@ -1,0 +1,55 @@
+{
+    "version": "1.1",
+    "units": "mm",
+    "name": "Example: Custom Construction Parameters",
+
+    "settings": {
+        "baseBodyHeight": 720,
+        "baseDepth": 560,
+        "wallHeight": 720,
+        "wallDepth": 300,
+        "tallHeight": 2000,
+        "tallDepth": 560,
+        "plinthHeight": 120,
+        "counterThickness": 30,
+        "counterOverhangFront": 20,
+        "counterOverhangEnd": 30,
+        "wallMountHeight": 1400,
+        "cabinetGap": 0,
+        "frontGap": 2,
+        "frontOffset": 0.001,
+        "clearanceOffset": 0.001,
+
+        "_comment_construction": "NEW: Construction parameters (all in mm)",
+        "corpusThickness": 18,
+        "frontThickness": 19,
+        "backThickness": 3,
+        "grooveOffset": 10,
+        "frontOverlay": 2
+    },
+
+    "_comment": "Try changing corpusThickness to 16 for thinner boards, or frontOverlay to 5 for larger door overlap",
+
+    "materials": {
+        "carcass": { "color": [0.9, 0.9, 0.88] },
+        "front": { "color": [0.85, 0.85, 0.82] },
+        "counter": { "color": [0.72, 0.7, 0.68] },
+        "plinth": { "color": [0.6, 0.6, 0.6] }
+    },
+
+    "runs": [
+        {
+            "label": "back wall",
+            "base": [
+                { "type": "base-door", "width": 600, "door": "right" },
+                { "type": "base-drawers", "width": 600, "drawers": 3 },
+                { "type": "base-sink", "width": 800 }
+            ],
+            "upper": [
+                { "type": "wall-door", "width": 600, "door": "right" },
+                { "type": "wall-door-double", "width": 600 },
+                { "type": "wall-door", "width": 800, "door": "left" }
+            ]
+        }
+    ]
+}

@@ -8,6 +8,7 @@ Args after '--' are passed to this script:
     --export-obj            Export OBJ to output/meshes/
     --export-gltf           Export GLTF to output/meshes/
     --export-blend          Save .blend to output/meshes/
+    --export-manifest       Export geometry manifest JSON for validation
     --render-wireframe      Render wireframe to output/renders/
     --no-materials          Skip material creation
 """
@@ -25,6 +26,8 @@ import bpy
 from src.config_parser import load_config
 from src.geometry_builder import clear_scene, build_kitchen, apply_materials
 from src.exporters import export_obj, export_gltf, export_blend, render_wireframe
+from src.geometry_validator import validate_and_export_manifest, print_manifest_summary
+from src.geometry_inspector import export_geometry_inspection, print_inspection_summary, analyze_geometry
 from src.validators import validate_config, compute_total_width
 
 
@@ -47,6 +50,8 @@ def parse_args() -> dict:
         "export_obj": "--export-obj" in args,
         "export_gltf": "--export-gltf" in args,
         "export_blend": "--export-blend" in args,
+        "export_manifest": "--export-manifest" in args,
+        "export_inspect": "--export-inspect" in args,
         "render_wireframe": "--render-wireframe" in args,
         "no_materials": "--no-materials" in args,
     }
@@ -101,6 +106,31 @@ def main() -> None:
 
     # Determine output path stem
     stem = Path(config_path).stem
+
+    # Export geometry inspection (detailed vertex data)
+    if args["export_inspect"]:
+        inspect_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}_inspect.json")
+        print(f"Exporting geometry inspection: {inspect_path}")
+        inspection = export_geometry_inspection(
+            objects, inspect_path, settings=config.get("settings")
+        )
+        print_inspection_summary(inspection)
+        issues = analyze_geometry(inspection)
+        if issues:
+            print(f"\n⚠️  Found {len(issues)} issues:")
+            for issue in issues:
+                print(f"  - {issue}")
+        else:
+            print("\n✓ No geometry issues found")
+
+    # Export geometry manifest (for validation)
+    if args["export_manifest"]:
+        manifest_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}_manifest.json")
+        print(f"Exporting geometry manifest: {manifest_path}")
+        manifest = validate_and_export_manifest(
+            objects, manifest_path, settings=config.get("settings")
+        )
+        print_manifest_summary(manifest)
 
     # Export OBJ
     if args["export_obj"]:

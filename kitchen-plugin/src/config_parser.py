@@ -35,6 +35,17 @@ DEFAULTS = {
     #   clearanceOffset = small gap for geometric clearance (blind corners, etc.)
     "frontOffset": 0.001,     # 1mm
     "clearanceOffset": 0.001, # 1mm
+    # Construction parameters (mm):
+    #   corpusThickness = thickness of carcass board (chipboard)
+    #   frontThickness  = thickness of front panel (MDF/chipboard)
+    #   backThickness   = thickness of back panel (HDF)
+    #   grooveOffset    = distance from rear edge to back panel groove
+    #   frontOverlay    = how much front overlaps carcass edges
+    "corpusThickness": 18,
+    "frontThickness": 19,
+    "backThickness": 3,
+    "grooveOffset": 10,
+    "frontOverlay": 2,
 }
 
 # Drawer validation constants
@@ -105,6 +116,9 @@ def _validate(config: dict) -> None:
     if "runs" not in config:
         raise ValueError("Config must have 'runs' array")
 
+    # Validate settings
+    _validate_settings(config.get("settings", {}))
+
     # Validate materials
     for name, mat in config.get("materials", {}).items():
         _validate_material(name, mat)
@@ -116,6 +130,31 @@ def _validate(config: dict) -> None:
         for section in ("base", "upper", "tall"):
             for j, cab in enumerate(run.get(section, [])):
                 _validate_cabinet(cab, i, section, j, config["settings"])
+
+
+def _validate_settings(settings: dict) -> None:
+    """Validate construction and other settings."""
+    # Construction parameter validation
+    construction_params = {
+        "corpusThickness": (10, 30),   # 10-30mm is reasonable
+        "frontThickness": (10, 30),    # 10-30mm is reasonable
+        "backThickness": (2, 10),      # 2-10mm is reasonable
+        "grooveOffset": (5, 20),       # 5-20mm is reasonable
+        "frontOverlay": (0, 10),       # 0-10mm is reasonable
+    }
+
+    for param, (min_val, max_val) in construction_params.items():
+        if param in settings:
+            value = settings[param]
+            if value <= 0:
+                raise ValueError(
+                    f"Setting '{param}' must be > 0, got {value}"
+                )
+            if value < min_val or value > max_val:
+                raise ValueError(
+                    f"Setting '{param}' must be between {min_val} and {max_val}mm, "
+                    f"got {value}"
+                )
 
 
 def _validate_cabinet(cab: dict, run_idx: int, section: str, cab_idx: int,

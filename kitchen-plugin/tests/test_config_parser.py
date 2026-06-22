@@ -94,3 +94,100 @@ def test_load_config_types():
     assert "base-sink" in base_types
     assert "base-drawers" in base_types
     assert "base-door" in base_types
+
+
+# ─── Construction Parameter Tests ────────────────────────────────────────────
+
+def test_construction_defaults():
+    """Default construction parameters should be set."""
+    config = {"runs": []}
+    _apply_defaults(config)
+    assert config["settings"]["corpusThickness"] == 18
+    assert config["settings"]["frontThickness"] == 19
+    assert config["settings"]["backThickness"] == 3
+    assert config["settings"]["grooveOffset"] == 10
+    assert config["settings"]["frontOverlay"] == 2
+
+
+def test_construction_custom_values():
+    """Custom construction parameters should override defaults."""
+    config = {
+        "runs": [],
+        "settings": {
+            "corpusThickness": 16,
+            "frontThickness": 18,
+            "backThickness": 5,
+            "grooveOffset": 8,
+            "frontOverlay": 3,
+        }
+    }
+    _apply_defaults(config)
+    assert config["settings"]["corpusThickness"] == 16
+    assert config["settings"]["frontThickness"] == 18
+    assert config["settings"]["backThickness"] == 5
+    assert config["settings"]["grooveOffset"] == 8
+    assert config["settings"]["frontOverlay"] == 3
+
+
+def test_construction_partial_override():
+    """Partial override should keep defaults for unspecified."""
+    config = {
+        "runs": [],
+        "settings": {
+            "corpusThickness": 16,
+        }
+    }
+    _apply_defaults(config)
+    assert config["settings"]["corpusThickness"] == 16
+    assert config["settings"]["frontThickness"] == 19  # default
+    assert config["settings"]["backThickness"] == 3    # default
+
+
+def test_construction_validation_positive():
+    """Construction parameters must be positive."""
+    from src.config_parser import _validate_settings
+    with pytest.raises(ValueError, match="corpusThickness.*must be > 0"):
+        _validate_settings({"corpusThickness": 0})
+    with pytest.raises(ValueError, match="frontThickness.*must be > 0"):
+        _validate_settings({"frontThickness": -1})
+    with pytest.raises(ValueError, match="backThickness.*must be > 0"):
+        _validate_settings({"backThickness": 0})
+
+
+def test_construction_validation_reasonable():
+    """Construction parameters should have reasonable limits."""
+    from src.config_parser import _validate_settings
+    # Corpus thickness 10-30mm is reasonable
+    with pytest.raises(ValueError, match="corpusThickness"):
+        _validate_settings({"corpusThickness": 5})   # too thin
+    with pytest.raises(ValueError, match="corpusThickness"):
+        _validate_settings({"corpusThickness": 50})  # too thick
+    # Front thickness 10-30mm is reasonable
+    with pytest.raises(ValueError, match="frontThickness"):
+        _validate_settings({"frontThickness": 5})
+    # Back thickness 2-10mm is reasonable
+    with pytest.raises(ValueError, match="backThickness"):
+        _validate_settings({"backThickness": 1})
+    with pytest.raises(ValueError, match="backThickness"):
+        _validate_settings({"backThickness": 20})
+
+
+def test_construction_in_config_file():
+    """Loading config with construction params should work."""
+    import json
+    import tempfile
+    config = {
+        "version": "1.1",
+        "settings": {
+            "corpusThickness": 16,
+            "frontThickness": 18,
+        },
+        "runs": [{"base": [{"type": "base-door", "width": 600}]}]
+    }
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(config, f)
+        f.flush()
+        loaded = load_config(f.name)
+    assert loaded["settings"]["corpusThickness"] == 16
+    assert loaded["settings"]["frontThickness"] == 18
+    assert loaded["settings"]["backThickness"] == 3  # default

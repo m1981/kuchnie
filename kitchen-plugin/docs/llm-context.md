@@ -168,6 +168,36 @@ Named, configurable offsets replace magic numbers:
 
 These are in **meters** (not mm) because they represent small geometric offsets.
 
+### Construction Parameters
+
+Configurable cabinet construction details (all in mm):
+
+| Setting            | Default | Range   | Purpose                                        |
+| ------------------ | ------- | ------- | ---------------------------------------------- |
+| `corpusThickness`  | 18mm    | 10-30mm | Carcass board thickness (chipboard)            |
+| `frontThickness`   | 19mm    | 10-30mm | Front panel thickness (MDF/chipboard)          |
+| `backThickness`    | 3mm     | 2-10mm  | Back panel thickness (HDF)                     |
+| `grooveOffset`     | 10mm    | 5-20mm  | Distance from rear edge to back panel groove   |
+| `frontOverlay`     | 2mm     | 0-10mm  | How much front overlaps carcass edges          |
+
+**Visual impact:**
+- Thicker corpus (18mm vs 16mm) → more substantial look
+- Larger frontOverlay (5mm vs 2mm) → more visible door overlap
+- Thicker front (19mm vs 18mm) → slightly deeper doors
+
+**Example config:**
+```json
+{
+    "settings": {
+        "corpusThickness": 18,
+        "frontThickness": 19,
+        "backThickness": 3,
+        "grooveOffset": 10,
+        "frontOverlay": 2
+    }
+}
+```
+
 ### European Kitchen Standards
 
 - Base cabinet: 720mm body + 120mm plinth = 840mm total

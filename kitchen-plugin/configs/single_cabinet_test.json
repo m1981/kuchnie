@@ -1,0 +1,35 @@
+{
+    "version": "1.1",
+    "units": "mm",
+    "name": "Single Cabinet Test",
+
+    "settings": {
+        "baseBodyHeight": 720,
+        "baseDepth": 560,
+        "plinthHeight": 120,
+        "cabinetGap": 0,
+        "frontGap": 2,
+        "frontOffset": 0.001,
+        "clearanceOffset": 0.001,
+
+        "corpusThickness": 18,
+        "frontThickness": 19,
+        "backThickness": 3,
+        "grooveOffset": 10,
+        "frontOverlay": 2
+    },
+
+    "materials": {
+        "carcass": { "color": [0.9, 0.9, 0.88] },
+        "front": { "color": [0.85, 0.85, 0.82] }
+    },
+
+    "runs": [
+        {
+            "label": "test",
+            "base": [
+                { "type": "base-door", "width": 600, "door": "right" }
+            ]
+        }
+    ]
+}
