@@ -100,13 +100,14 @@ def _check_corners(config: dict) -> list[str]:
         if not base:
             continue
 
-        # Check that corner cabinets are last in a run
-        for cab_idx, cab in enumerate(base[:-1]):
+        # Check that corner cabinets are first or last in a run
+        for cab_idx, cab in enumerate(base):
             if cab["type"].startswith("corner-"):
-                prefix = f"run[{run_idx}].base[{cab_idx}]"
-                warnings.append(
-                    f"{prefix}: corner cabinet should be last in run"
-                )
+                if cab_idx != 0 and cab_idx != len(base) - 1:
+                    prefix = f"run[{run_idx}].base[{cab_idx}]"
+                    warnings.append(
+                        f"{prefix}: corner cabinet should be first or last in run"
+                    )
 
         # Check turn direction on next run
         if run_idx + 1 < len(config["runs"]):

@@ -43,6 +43,15 @@ def export_gltf(objects: list[bpy.types.Object], path: str) -> None:
     print(f"Exported GLTF: {out}")
 
 
+def export_blend(path: str) -> None:
+    """Save scene as .blend file."""
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    bpy.ops.wm.save_as_mainfile(filepath=str(out))
+    print(f"Saved .blend: {out}")
+
+
 def render_wireframe(objects: list[bpy.types.Object], path: str,
                      resolution: tuple[int, int] = (1920, 1080)) -> None:
     """Render a wireframe screenshot of the scene."""

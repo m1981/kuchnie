@@ -7,6 +7,7 @@ Args after '--' are passed to this script:
     <config.json>           Kitchen config file (required)
     --export-obj            Export OBJ to output/meshes/
     --export-gltf           Export GLTF to output/meshes/
+    --export-blend          Save .blend to output/meshes/
     --render-wireframe      Render wireframe to output/renders/
     --no-materials          Skip material creation
 """
@@ -23,7 +24,7 @@ import bpy
 
 from src.config_parser import load_config
 from src.geometry_builder import clear_scene, build_kitchen, apply_materials
-from src.exporters import export_obj, export_gltf, render_wireframe
+from src.exporters import export_obj, export_gltf, export_blend, render_wireframe
 from src.validators import validate_config, compute_total_width
 
 
@@ -45,6 +46,7 @@ def parse_args() -> dict:
         "config_path": config_path,
         "export_obj": "--export-obj" in args,
         "export_gltf": "--export-gltf" in args,
+        "export_blend": "--export-blend" in args,
         "render_wireframe": "--render-wireframe" in args,
         "no_materials": "--no-materials" in args,
     }
@@ -111,6 +113,12 @@ def main() -> None:
         gltf_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}.gltf")
         print(f"Exporting GLTF: {gltf_path}")
         export_gltf(objects, gltf_path)
+
+    # Export .blend
+    if args["export_blend"]:
+        blend_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}.blend")
+        print(f"Saving .blend: {blend_path}")
+        export_blend(blend_path)
 
     # Render wireframe
     if args["render_wireframe"]:
