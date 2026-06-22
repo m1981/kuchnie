@@ -33,6 +33,8 @@ export const draggable: Action<HTMLElement, DraggableOptions> = (node, options) 
   function handleDragStart(e: DragEvent) {
     if (!e.dataTransfer || !currentOptions) return;
 
+    console.debug("[DnD] dragstart", currentOptions.payload);
+
     // Set drag data
     e.dataTransfer.setData("application/json", JSON.stringify(currentOptions.payload));
     e.dataTransfer.effectAllowed = "move";
@@ -58,6 +60,7 @@ export const draggable: Action<HTMLElement, DraggableOptions> = (node, options) 
   }
 
   function handleDragEnd() {
+    console.debug("[DnD] dragend", currentOptions?.payload?.id);
     node.classList.remove("dragging");
     currentOptions.ondragend?.();
   }
@@ -104,6 +107,12 @@ export const droppable: Action<HTMLElement, DroppableOptions> = (node, options) 
     dragCounter++;
 
     if (dragCounter === 1) {
+      console.debug(
+        "[DnD] dragenter →",
+        currentOptions?.target,
+        "payload:",
+        e.dataTransfer ? "present" : "none",
+      );
       node.classList.add("drag-over");
       currentOptions?.ondragenter?.(currentOptions.target);
     }
@@ -119,6 +128,7 @@ export const droppable: Action<HTMLElement, DroppableOptions> = (node, options) 
   function handleDragLeave() {
     dragCounter--;
     if (dragCounter === 0) {
+      console.debug("[DnD] dragleave ←", currentOptions?.target);
       node.classList.remove("drag-over");
       currentOptions?.ondragleave?.();
     }
@@ -129,15 +139,23 @@ export const droppable: Action<HTMLElement, DroppableOptions> = (node, options) 
     dragCounter = 0;
     node.classList.remove("drag-over");
 
-    if (!e.dataTransfer) return;
+    if (!e.dataTransfer) {
+      console.debug("[DnD] drop (no dataTransfer) on", currentOptions?.target);
+      return;
+    }
 
     try {
       const data = JSON.parse(e.dataTransfer.getData("application/json")) as DragPayload;
+      console.debug("[DnD] drop", {
+        payload: data,
+        target: currentOptions?.target,
+        valid: isValidDrop(data),
+      });
       if (isValidDrop(data)) {
         currentOptions?.ondrop?.(data, currentOptions.target);
       }
-    } catch {
-      // Invalid drag data, ignore
+    } catch (err) {
+      console.debug("[DnD] drop (invalid JSON)", err);
     }
   }
 

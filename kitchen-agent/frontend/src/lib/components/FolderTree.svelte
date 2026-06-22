@@ -78,10 +78,33 @@
           target: { type: "folder", id: folder.id },
           acceptTypes: ["session"],
           ondragenter: (target) => folderStore.setDropTarget(target),
-          ondragleave: () => folderStore.setDropTarget(null),
+          ondragleave: () => {
+            // Only clear if THIS zone is still the active target.
+            // Prevents race condition: moving from A→B fires dragenter(B) then
+            // dragleave(A). Without the guard, dragleave(A) would wipe out B.
+            if (folderStore.dropTarget?.id === folder.id) {
+              folderStore.setDropTarget(null);
+            }
+          },
           ondrop: async (payload, target) => {
+            console.debug("[DnD] FolderTree.ondrop", {
+              sessionId: payload.id,
+              from: payload.sourceFolderId ?? "history",
+              to: target.id,
+            });
             if (payload.type === "session" && target.type === "folder") {
-              await folderStore.assignSession(target.id, payload.id);
+              // Cross-folder move: unassign from source folder first
+              if (payload.sourceFolderId && payload.sourceFolderId !== target.id) {
+                console.debug("[DnD] cross-folder: unassign from", payload.sourceFolderId);
+                await folderStore.unassignSession(payload.sourceFolderId, payload.id);
+              }
+              // Assign to target folder (skip if already in this folder)
+              if (payload.sourceFolderId !== target.id) {
+                console.debug("[DnD] assigning to", target.id);
+                await folderStore.assignSession(target.id, payload.id);
+              } else {
+                console.debug("[DnD] same folder, skipped");
+              }
             }
             folderStore.endDrag();
           },

@@ -371,15 +371,23 @@ class FolderStore {
   // ── Drag & Drop ────────────────────────────────────────────────────────
 
   startDrag(payload: DragPayload): void {
+    console.debug("[DnD] store.startDrag", {
+      id: payload.id,
+      type: payload.type,
+      sourceFolderId: payload.sourceFolderId,
+    });
     this.dragPayload = payload;
   }
 
   endDrag(): void {
+    console.debug("[DnD] store.endDrag", { wasDragging: this.dragPayload?.id });
     this.dragPayload = null;
     this.dropTarget = null;
   }
 
   setDropTarget(target: DropTarget | null): void {
+    const prev = this.dropTarget?.id;
+    console.debug("[DnD] store.setDropTarget", { prev, next: target?.id ?? null });
     this.dropTarget = target;
   }
 

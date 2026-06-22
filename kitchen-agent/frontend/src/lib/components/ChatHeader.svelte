@@ -108,16 +108,5 @@
         {displayTitle}
       </button>
     {/if}
-
-    <!-- Chevron (visual indicator) -->
-    <svg
-      class="h-4 w-4 shrink-0 text-muted"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
   </div>
 </header>

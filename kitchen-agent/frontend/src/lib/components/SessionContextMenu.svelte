@@ -4,6 +4,7 @@
    * ==================
    * A ⋯ button that opens a small popover with per-session actions:
    *   Export Markdown / Export LLM JSON / Archive / Restore / Delete
+   *   + optional: Regenerate Title / Remove from folder
    *
    * State machine:
    *   'closed' | 'open' | 'confirming-delete' | 'exporting-md' | 'exporting-llm'
@@ -32,10 +33,20 @@
     onexportllm: (id: string) => Promise<void>;
     /** Called when user clicks "Regenerate Title". */
     ontitlegenerate?: (id: string) => Promise<void>;
+    /** Called when user clicks "Remove from folder". Only shown when provided. */
+    onremovefromfolder?: (id: string) => void;
   };
 
-  let { node, onarchive, onunarchive, ondelete, onexport, onexportllm, ontitlegenerate }: Props =
-    $props();
+  let {
+    node,
+    onarchive,
+    onunarchive,
+    ondelete,
+    onexport,
+    onexportllm,
+    ontitlegenerate,
+    onremovefromfolder,
+  }: Props = $props();
 
   let menuState = $state<MenuState>("closed");
   let errorMsg = $state("");
@@ -220,6 +231,23 @@
 					       hover:bg-surface"
         >
           <span aria-hidden="true">✨</span> Regenerate Title
+        </button>
+      {/if}
+
+      {#if onremovefromfolder}
+        <div class="my-1 border-t border-line"></div>
+
+        <!-- Remove from folder -->
+        <button
+          onclick={(e) => {
+            e.stopPropagation();
+            close();
+            onremovefromfolder(node.id);
+          }}
+          class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-muted
+					       hover:bg-surface hover:text-ink"
+        >
+          <span aria-hidden="true">↩</span> Remove from folder
         </button>
       {/if}
 

@@ -19,6 +19,8 @@ export type DragPayload = {
   type: "session" | "folder";
   id: string;
   title: string;
+  /** When dragging from inside a folder, the source folder ID. */
+  sourceFolderId?: string;
 };
 
 /** Info about a drop target. */

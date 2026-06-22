@@ -6,21 +6,29 @@
   type Props = {
     sessionId: string;
     sessionTitle: string;
+    /** When dragging from inside a folder, pass the source folder ID. */
+    sourceFolderId?: string;
     children: Snippet;
   };
 
-  let { sessionId, sessionTitle, children }: Props = $props();
+  let { sessionId, sessionTitle, sourceFolderId, children }: Props = $props();
 
   const dragOptions: DraggableOptions = $derived({
     payload: {
       type: "session",
       id: sessionId,
       title: sessionTitle,
+      sourceFolderId,
     },
     ondragstart: (payload) => {
+      console.debug("[DnD] DraggableSession.ondragstart", {
+        id: payload.id,
+        source: payload.sourceFolderId ?? "history",
+      });
       folderStore.startDrag(payload);
     },
     ondragend: () => {
+      console.debug("[DnD] DraggableSession.ondragend", { id: sessionId });
       folderStore.endDrag();
     },
   });

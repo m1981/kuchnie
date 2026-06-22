@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { api } from "$lib/api";
+  import type { SessionNode } from "$lib/api";
   import { folderStore } from "$lib/stores/folder.svelte";
+  import { sessionStore } from "$lib/stores/sessions.svelte";
   import { smartPosition } from "$lib/actions/smartPosition";
-  import { focusTrap } from "$lib/actions/focustrap";
+  import SessionContextMenu from "./SessionContextMenu.svelte";
+  import DraggableSession from "./DraggableSession.svelte";
 
   type Props = {
     folderId: string;
@@ -21,7 +25,45 @@
   let showMenu = $state(false);
   let menuRef = $state<HTMLElement | null>(null);
   let menuTriggerEl = $state<HTMLButtonElement | null>(null);
-  let sessionMenuId = $state<string | null>(null);
+
+  // ── Inline rename state ───────────────────────────────────────────────
+  const isEditing = $derived(folderStore.editingFolderId === folderId);
+  let draft = $state("");
+  let renameInputEl = $state<HTMLInputElement | null>(null);
+
+  // Focus input when editing starts
+  $effect(() => {
+    if (isEditing) {
+      draft = folder.name;
+      requestAnimationFrame(() => {
+        renameInputEl?.focus();
+        renameInputEl?.select();
+      });
+    }
+  });
+
+  function saveRename() {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== folder.name) {
+      folderStore.updateFolder(folder.id, { name: trimmed });
+    }
+    folderStore.stopEditing();
+  }
+
+  function cancelRename() {
+    folderStore.stopEditing();
+    draft = "";
+  }
+
+  function handleRenameKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      saveRename();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      cancelRename();
+    }
+  }
 
   // Close menu on outside click
   function handleClickOutside(e: MouseEvent) {
@@ -30,30 +72,130 @@
     }
   }
 
-  function closeSessionMenu() {
-    sessionMenuId = null;
-  }
-
   $effect(() => {
-    if (showMenu || sessionMenuId !== null) {
+    if (showMenu) {
       document.addEventListener("click", handleClickOutside);
       return () => document.removeEventListener("click", handleClickOutside);
     }
   });
 
-  // Session menu actions
-  async function handleUnassign(sessionId: string) {
-    closeSessionMenu();
-    await folderStore.unassignSession(folderId, sessionId);
+  // ── Session node lookup ───────────────────────────────────────────────
+  /**
+   * Look up the full SessionNode from the session store for a folder session.
+   * SessionContextMenu needs the full node (with archived_at, children, etc.).
+   * Falls back to a minimal stub if the session tree hasn't loaded yet.
+   */
+  function getNodeForSession(sessionId: string): SessionNode {
+    const node = sessionStore.flat.find((n) => n.id === sessionId);
+    if (node) return node;
+    // Fallback: construct a minimal SessionNode-compatible object
+    const session = sessions.find((s) => s.id === sessionId);
+    return {
+      id: sessionId,
+      title: session?.title ?? null,
+      updated_at: session?.updated_at ?? null,
+      parent_id: null,
+      fork_turn_index: null,
+      root_id: null,
+      archived_at: null,
+      children: [],
+    };
   }
 
-  // Menu actions
+  // ── Error toast ────────────────────────────────────────────────────────
+  let opError = $state("");
+  let opErrorTimer: ReturnType<typeof setTimeout>;
+
+  function showError(msg: string) {
+    clearTimeout(opErrorTimer);
+    opError = msg;
+    opErrorTimer = setTimeout(() => (opError = ""), 4000);
+  }
+
+  // ── Shared filename helper ─────────────────────────────────────────────
+  function safeFilename(id: string): string {
+    const node = sessionStore.flat.find((n) => n.id === id);
+    const rawTitle = node?.title ?? id.slice(0, 8);
+    return rawTitle
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 64)
+      .toLowerCase();
+  }
+
+  function triggerDownload(content: string, filename: string, mimeType: string): void {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Session actions (same as SessionPanel / ArchivedPanel) ─────────────
+  async function handleArchive(id: string) {
+    try {
+      await sessionStore.archive(id);
+    } catch (e) {
+      showError(`Archive failed: ${e}`);
+    }
+  }
+
+  async function handleUnarchive(id: string) {
+    try {
+      await sessionStore.unarchive(id);
+    } catch (e) {
+      showError(`Restore failed: ${e}`);
+    }
+  }
+
+  async function handleDeleteSession(id: string) {
+    try {
+      await sessionStore.delete(id);
+      // Also unassign from this folder (optimistic — session is gone anyway)
+      await folderStore.unassignSession(folderId, id);
+    } catch (e) {
+      const msg = String(e).includes("child")
+        ? "Delete children first before deleting this session."
+        : `Delete failed: ${e}`;
+      showError(msg);
+    }
+  }
+
+  async function handleExport(id: string): Promise<void> {
+    const markdown = await api.exportSession(id);
+    triggerDownload(markdown, `${safeFilename(id)}.md`, "text/markdown;charset=utf-8");
+  }
+
+  async function handleExportLlm(id: string): Promise<void> {
+    const data = await api.exportSessionLlm(id);
+    const json = JSON.stringify(data, null, 2);
+    triggerDownload(json, `${safeFilename(id)}.llm.json`, "application/json;charset=utf-8");
+  }
+
+  async function handleTitleGenerate(id: string): Promise<void> {
+    try {
+      await api.generateSessionTitle(id);
+      await sessionStore.refresh();
+      // Also refresh folder sessions cache so the updated title shows
+      folderStore.invalidateSessions(folderId);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      showError(`Title generation failed: ${msg}`);
+      throw e;
+    }
+  }
+
+  // ── Folder menu actions ────────────────────────────────────────────────
   function handleRename() {
     showMenu = false;
     folderStore.startEditing(folder.id);
   }
 
-  async function handleDelete() {
+  async function handleDeleteFolder() {
     showMenu = false;
     if (confirm(`Delete folder "${folder.name}"? Sessions will be unassigned but not deleted.`)) {
       await folderStore.deleteFolder(folder.id);
@@ -79,6 +221,16 @@
 </script>
 
 <div class="rounded-md transition hover:bg-surface">
+  <!-- Error toast -->
+  {#if opError}
+    <div
+      class="mx-1.5 mb-1 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-700"
+      role="alert"
+    >
+      {opError}
+    </div>
+  {/if}
+
   <!-- Folder header row -->
   <div class="group flex items-center gap-1 px-1.5 py-1">
     <!-- Expand/collapse toggle -->
@@ -107,15 +259,27 @@
       aria-hidden="true"
     ></span>
 
-    <!-- Folder name -->
-    <button
-      type="button"
-      onclick={() => folderStore.toggleExpand(folderId)}
-      class="min-w-0 flex-1 truncate text-left text-sm text-ink"
-    >
-      {folder.icon}
-      {folder.name}
-    </button>
+    <!-- Folder name (editable) -->
+    {#if isEditing}
+      <input
+        bind:this={renameInputEl}
+        bind:value={draft}
+        onkeydown={handleRenameKeydown}
+        onblur={saveRename}
+        onclick={(e) => e.stopPropagation()}
+        class="h-6 min-w-0 flex-1 rounded border border-accent bg-surface px-1.5 text-sm text-ink outline-none focus:ring-1 focus:ring-accent/50"
+        maxlength="50"
+      />
+    {:else}
+      <button
+        type="button"
+        onclick={() => folderStore.toggleExpand(folderId)}
+        class="min-w-0 flex-1 truncate text-left text-sm text-ink"
+      >
+        {folder.icon}
+        {folder.name}
+      </button>
+    {/if}
 
     <!-- Session count badge -->
     {#if folder.session_count > 0}
@@ -126,7 +290,7 @@
       </span>
     {/if}
 
-    <!-- Context menu button -->
+    <!-- Folder context menu button -->
     <button
       type="button"
       bind:this={menuTriggerEl}
@@ -163,94 +327,43 @@
           {#each sessions as session (session.id)}
             {@const isPending = folderStore.pendingOps.has(session.id)}
             {@const isActive = session.id === activeId}
-            <button
-              type="button"
-              onclick={() => onloadsession?.(session.id)}
-              disabled={isPending}
-              class="group flex w-full cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-left
-								transition
-								{isActive ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'hover:bg-surface'}
-								{isPending ? 'animate-pulse opacity-50' : ''}"
+            {@const node = getNodeForSession(session.id)}
+            <DraggableSession
+              sessionId={session.id}
+              sessionTitle={session.title ?? session.id.slice(0, 8)}
+              sourceFolderId={folderId}
             >
-              <!-- Spacer -->
-              <span class="w-1 shrink-0" aria-hidden="true"></span>
-              <span
-                class="min-w-0 flex-1 truncate text-sm
-									{isActive ? 'font-semibold text-ink' : 'font-medium text-muted group-hover:text-ink'}"
-                title={session.title}
+              <div
+                class="group flex w-full items-center gap-1 rounded-md px-1.5 py-1
+									transition
+									{isActive ? 'bg-accent-soft shadow-[inset_3px_0_0_var(--color-accent)]' : 'hover:bg-surface'}
+									{isPending ? 'animate-pulse opacity-50' : ''}"
               >
-                {session.title}
-              </span>
-              <!-- Session context menu -->
-              <div class="relative">
-                <span
-                  role="button"
-                  tabindex="0"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    sessionMenuId = sessionMenuId === session.id ? null : session.id;
-                  }}
-                  onkeydown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.stopPropagation();
-                      sessionMenuId = sessionMenuId === session.id ? null : session.id;
-                    }
-                  }}
-                  title="Session options"
-                  aria-label="Session options"
-                  aria-expanded={sessionMenuId === session.id}
-                  class="flex h-5 w-5 items-center justify-center rounded text-muted transition
-									       group-hover:opacity-100 hover:bg-line hover:text-ink focus:opacity-100 focus:outline-none
-									       {sessionMenuId === session.id ? 'opacity-100' : 'opacity-45'}"
+                <!-- Session title (clickable) -->
+                <button
+                  type="button"
+                  onclick={() => onloadsession?.(session.id)}
+                  disabled={isPending}
+                  class="min-w-0 flex-1 truncate text-left text-sm
+										{isActive ? 'font-semibold text-ink' : 'font-medium text-muted group-hover:text-ink'}"
+                  title={session.title}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <circle cx="8" cy="3" r="1.4" />
-                    <circle cx="8" cy="8" r="1.4" />
-                    <circle cx="8" cy="13" r="1.4" />
-                  </svg>
-                </span>
+                  {session.title}
+                </button>
 
-                {#if sessionMenuId === session.id}
-                  <div
-                    use:focusTrap
-                    class="absolute top-full right-0 z-40 min-w-[160px] rounded-lg border border-line bg-panel
-										       py-1 shadow-lg"
-                  >
-                    <button
-                      type="button"
-                      onclick={() => {
-                        closeSessionMenu();
-                        onloadsession?.(session.id);
-                      }}
-                      class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-ink
-											       hover:bg-surface"
-                    >
-                      <span aria-hidden="true">📂</span> Open
-                    </button>
-
-                    <div class="my-1 border-t border-line"></div>
-
-                    <button
-                      type="button"
-                      onclick={() => {
-                        closeSessionMenu();
-                        handleUnassign(session.id);
-                      }}
-                      class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-muted
-											       hover:bg-surface hover:text-ink"
-                    >
-                      <span aria-hidden="true">↩</span> Remove from folder
-                    </button>
-                  </div>
-                {/if}
+                <!-- Full context menu with all session actions -->
+                <SessionContextMenu
+                  {node}
+                  onarchive={handleArchive}
+                  onunarchive={handleUnarchive}
+                  ondelete={handleDeleteSession}
+                  onexport={handleExport}
+                  onexportllm={handleExportLlm}
+                  ontitlegenerate={handleTitleGenerate}
+                  onremovefromfolder={(id) => folderStore.unassignSession(folderId, id)}
+                />
               </div>
-            </button>
+            </DraggableSession>
           {/each}
         </div>
       {/if}
@@ -258,7 +371,7 @@
   {/if}
 </div>
 
-<!-- Context menu dropdown -->
+<!-- Folder context menu dropdown -->
 {#if showMenu}
   <div
     bind:this={menuRef}
@@ -298,7 +411,7 @@
     <div class="border-t border-line">
       <button
         type="button"
-        onclick={handleDelete}
+        onclick={handleDeleteFolder}
         class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50"
         role="menuitem"
       >
