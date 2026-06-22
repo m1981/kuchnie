@@ -78,31 +78,35 @@
 {:else}
   <div class="flex flex-col">
     {#each folderStore.sortedFolders as folder (folder.id)}
-      <!-- Insertion zone BEFORE this folder (only visible during folder reorder) -->
-      {#if isReordering}
-        <div
-          use:droppable={{
-            target: { type: "reorder", id: folder.id, position: "before" },
-            acceptTypes: ["folder"],
-            ondragenter: (target) => folderStore.setDropTarget(target),
-            ondragleave: () => {
-              const dt = folderStore.dropTarget;
-              if (dt?.id === folder.id && dt?.position === "before") {
-                folderStore.setDropTarget(null);
-              }
-            },
-            ondrop: async (payload, target) => {
-              if (payload.type === "folder" && payload.id !== target.id) {
-                await folderStore.reorder(payload.id, target.id, "before");
-              }
-              folderStore.endDrag();
-            },
-          }}
-          class="reorder-zone"
-          class:active={folderStore.dropTarget?.id === folder.id &&
-            folderStore.dropTarget?.position === "before"}
-        ></div>
-      {/if}
+      <!--
+        Insertion zone BEFORE this folder.
+        Always in DOM (no {#if}) to avoid DOM mutation during active drag.
+        Hidden via CSS when not reordering.
+      -->
+      <div
+        use:droppable={{
+          target: { type: "reorder", id: folder.id, position: "before" },
+          acceptTypes: ["folder"],
+          ondragenter: (target) => folderStore.setDropTarget(target),
+          ondragleave: () => {
+            const dt = folderStore.dropTarget;
+            if (dt?.id === folder.id && dt?.position === "before") {
+              folderStore.setDropTarget(null);
+            }
+          },
+          ondrop: async (payload, target) => {
+            if (payload.type === "folder" && payload.id !== target.id) {
+              await folderStore.reorder(payload.id, target.id, "before");
+            }
+            folderStore.endDrag();
+          },
+        }}
+        class="reorder-zone"
+        class:visible={isReordering}
+        class:active={isReordering &&
+          folderStore.dropTarget?.id === folder.id &&
+          folderStore.dropTarget?.position === "before"}
+      ></div>
 
       <!-- Folder with session drop zone -->
       <div
@@ -140,8 +144,11 @@
       </div>
     {/each}
 
-    <!-- Final insertion zone AFTER last folder (only visible during reorder) -->
-    {#if isReordering}
+    <!--
+      Final insertion zone AFTER last folder.
+      Always in DOM, hidden via CSS when not reordering.
+    -->
+    {#if folderStore.sortedFolders.length > 0}
       {@const lastFolder = folderStore.sortedFolders[folderStore.sortedFolders.length - 1]}
       <div
         use:droppable={{
@@ -162,7 +169,9 @@
           },
         }}
         class="reorder-zone"
-        class:active={folderStore.dropTarget?.id === lastFolder.id &&
+        class:visible={isReordering}
+        class:active={isReordering &&
+          folderStore.dropTarget?.id === lastFolder.id &&
           folderStore.dropTarget?.position === "after"}
       ></div>
     {/if}
@@ -201,17 +210,24 @@
   }
 
   /* ── Reorder insertion zones ──────────────────────────────────── */
+  /* Always in DOM but collapsed by default (no hit area, no visual). */
   .reorder-zone {
-    /* Invisible hit area: 4px visual bar centered in 16px padding */
-    height: 4px;
-    padding: 6px 0;
+    height: 0;
+    padding: 0;
+    pointer-events: none;
     border-radius: 2px;
     transition: all 120ms ease;
   }
 
-  .reorder-zone.active {
+  /* Visible state: 4px bar with 6px invisible hit padding. */
+  .reorder-zone.visible {
     height: 4px;
     padding: 6px 0;
+    pointer-events: auto;
+  }
+
+  /* Active state: accent-colored bar with glow. */
+  .reorder-zone.active {
     background-color: var(--color-accent);
     background-clip: content-box;
     box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
