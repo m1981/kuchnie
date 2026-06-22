@@ -38,9 +38,9 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 
 ### Version History
 
-| Version | Changes                                    |
-| ------- | ------------------------------------------ |
-| 1.0     | Initial format                             |
+| Version | Changes                                                      |
+| ------- | ------------------------------------------------------------ |
+| 1.0     | Initial format                                               |
 | 1.1     | Added `cabinetGap`/`frontGap`, tolerances, drawer validation |
 
 **Backward compatibility:** V1.0 configs are automatically migrated to V1.1 semantics.
@@ -154,15 +154,15 @@ For realistic rendering, use PBR (Physically Based Rendering) properties:
 
 ### Material Properties
 
-| Property     | Type    | Default | Description                                    |
-| ------------ | ------- | ------- | ---------------------------------------------- |
-| `color`      | array   | required| `[R, G, B]` or `[R, G, B, A]` (0–1 range)    |
-| `roughness`  | number  | 0.5     | Surface roughness (0=glossy, 1=matte)          |
-| `metallic`   | number  | 0.0     | Metallic appearance (0=dielectric, 1=metal)    |
-| `alpha`      | number  | 1.0     | Opacity (0=transparent, 1=opaque)              |
-| `emission`   | number  | 0.0     | Self-illumination (0=none, 1=full)             |
-| `texture`    | string  | null    | Path to diffuse texture map                    |
-| `normalMap`  | string  | null    | Path to normal/bump map                        |
+| Property    | Type   | Default  | Description                                 |
+| ----------- | ------ | -------- | ------------------------------------------- |
+| `color`     | array  | required | `[R, G, B]` or `[R, G, B, A]` (0–1 range)   |
+| `roughness` | number | 0.5      | Surface roughness (0=glossy, 1=matte)       |
+| `metallic`  | number | 0.0      | Metallic appearance (0=dielectric, 1=metal) |
+| `alpha`     | number | 1.0      | Opacity (0=transparent, 1=opaque)           |
+| `emission`  | number | 0.0      | Self-illumination (0=none, 1=full)          |
+| `texture`   | string | null     | Path to diffuse texture map                 |
+| `normalMap` | string | null     | Path to normal/bump map                     |
 
 ### Validation
 
@@ -760,14 +760,15 @@ plugin to validate that cabinets fit within the available wall space.
 }
 ```
 
-| Property         | Type   | Description                           |
-| ---------------- | ------ | ------------------------------------- |
-| `walls`          | array  | List of wall definitions              |
-| `walls[].length` | number | Wall length in mm                     |
+| Property         | Type   | Description              |
+| ---------------- | ------ | ------------------------ |
+| `walls`          | array  | List of wall definitions |
+| `walls[].length` | number | Wall length in mm        |
 
 ### Validation Rules
 
 When `room` is specified:
+
 - Each run is checked against its corresponding wall length
 - If fewer walls than runs, the last wall length is reused
 - Corner blind depth reduces available space on the adjacent wall
@@ -780,10 +781,7 @@ When `room` is specified:
     "version": "1.1",
     "units": "mm",
     "room": {
-        "walls": [
-            { "length": 3200 },
-            { "length": 2400 }
-        ]
+        "walls": [{ "length": 3200 }, { "length": 2400 }]
     },
     "runs": [
         {
@@ -806,6 +804,7 @@ When `room` is specified:
 ```
 
 In this example:
+
 - Back wall run: 600 + 900 = 1500mm (fits in 3200mm wall)
 - Left wall run: 600 + 600 = 1200mm, but corner consumes 400mm, so effective space is 2400 - 400 = 2000mm (fits)
 
@@ -1182,69 +1181,28 @@ The plugin calculates positions automatically:
 
 ---
 
-## 12. Plugin Mapping
-
-How config properties map to existing `CabinetProperties`:
-
-| Config Property         | CabinetProperty         | Notes                              |
-| ----------------------- | ----------------------- | ---------------------------------- |
-| `width`                 | `sX`                    | Direct mapping (mm → m conversion) |
-| `depthOffset`           | `wY`                    |                                    |
-| `heightOffset`          | `wZ`                    |                                    |
-| `xShift`                | `pX`                    |                                    |
-| `yShift`                | `pY`                    |                                    |
-| `zShift`                | `pZ`                    |                                    |
-| `door: "left"`          | `dType: "2"`            | Single L                           |
-| `door: "right"`         | `dType: "1"`            | Single R                           |
-| `door: "double"`        | `dType: "8"`            | Double                             |
-| `drawers: N`            | `dType: "7"`, `dNum: N` |                                    |
-| `shelves`               | `sNum`                  |                                    |
-| `glassRatio`            | `gF`                    |                                    |
-| `handle.type != "none"` | `hand: true`            |                                    |
-| `handle.type == "none"` | `hand: false`           |                                    |
-| `blindDepth`            | new property            | Not yet in plugin                  |
-| `handle.type`           | new property            | Not yet in plugin                  |
-
-### New Properties Needed in Plugin
-
-```python
-# Add to CabinetProperties:
-blind_depth: FloatProperty(name='Blind depth', ...)
-handle_type: EnumProperty(items=(
-    ('1', "Rail", ""),
-    ('2', "Gola", ""),
-    ('3', "Recessed", ""),
-    ('4', "Knob", ""),
-    ('5', "Push", ""),
-    ('9', "None", ""),
-))
-handle_length: FloatProperty(name='Handle length', ...)
-```
-
----
-
-## 14. Validation Rules
+## 12. Validation Rules
 
 The plugin validates the config before generating. Violations raise `ValueError`.
 
 ### Version Validation
 
-| Rule                    | Description                              |
-| ----------------------- | ---------------------------------------- |
-| Version supported       | Must be in `SUPPORTED_VERSIONS` (1.0, 1.1) |
-| Version format          | Must be valid version string             |
+| Rule              | Description                                |
+| ----------------- | ------------------------------------------ |
+| Version supported | Must be in `SUPPORTED_VERSIONS` (1.0, 1.1) |
+| Version format    | Must be valid version string               |
 
 ### Material Validation
 
-| Rule                   | Description                                 |
-| ---------------------- | ------------------------------------------- |
-| Color required         | Every material must have `color`            |
-| Color length           | Must be 3 (`[R,G,B]`) or 4 (`[R,G,B,A]`)  |
-| Color range            | Each color element must be 0–1              |
-| Roughness range        | If specified, must be 0–1                   |
-| Metallic range         | If specified, must be 0–1                   |
-| Alpha range            | If specified, must be 0–1                   |
-| Emission range         | If specified, must be 0–1                   |
+| Rule            | Description                              |
+| --------------- | ---------------------------------------- |
+| Color required  | Every material must have `color`         |
+| Color length    | Must be 3 (`[R,G,B]`) or 4 (`[R,G,B,A]`) |
+| Color range     | Each color element must be 0–1           |
+| Roughness range | If specified, must be 0–1                |
+| Metallic range  | If specified, must be 0–1                |
+| Alpha range     | If specified, must be 0–1                |
+| Emission range  | If specified, must be 0–1                |
 
 ### Structure Validation
 
@@ -1297,10 +1255,10 @@ The plugin validates the config before generating. Violations raise `ValueError`
 
 ### Room Validation (if `room` specified)
 
-| Rule                  | Description                                       |
-| --------------------- | ------------------------------------------------- |
-| Run fits wall         | Run width must not exceed wall length             |
-| Corner blind consumes | Corner blind depth reduces adjacent wall space    |
+| Rule                  | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| Run fits wall         | Run width must not exceed wall length          |
+| Corner blind consumes | Corner blind depth reduces adjacent wall space |
 
 ### Other
 

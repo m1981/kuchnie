@@ -182,10 +182,10 @@ These are in **meters** (not mm) because they represent small geometric offsets.
 
 ### Schema Versioning
 
-| Version | Changes                                                    |
-| ------- | ---------------------------------------------------------- |
-| 1.0     | Initial format                                             |
-| 1.1     | Added cabinetGap/frontGap, tolerances, drawers, materials  |
+| Version | Changes                                                   |
+| ------- | --------------------------------------------------------- |
+| 1.0     | Initial format                                            |
+| 1.1     | Added cabinetGap/frontGap, tolerances, drawers, materials |
 
 Supported versions: `SUPPORTED_VERSIONS = {"1.0", "1.1"}`
 Current version: `CURRENT_VERSION = "1.1"`

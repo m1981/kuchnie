@@ -79,13 +79,13 @@ graph LR
 
 **Rule:** Dependencies point DOWN only. Never reverse.
 
-| Layer | Dependencies | External |
-|---|---|---|
-| core/ | None | None |
-| kitchen/ | core/ | None |
-| builder/ | core/, kitchen/ | JSON |
-| adapters/ | core/, kitchen/ | bpy |
-| main.py | all | bpy, sys |
+| Layer     | Dependencies    | External |
+| --------- | --------------- | -------- |
+| core/     | None            | None     |
+| kitchen/  | core/           | None     |
+| builder/  | core/, kitchen/ | JSON     |
+| adapters/ | core/, kitchen/ | bpy      |
+| main.py   | all             | bpy, sys |
 
 ---
 
@@ -150,6 +150,7 @@ classDiagram
 ```
 
 **Files:**
+
 - `src/core/geometry.py` — Vector2D, Vector3D, BoundingBox, Transform2D
 - `src/core/tolerances.py` — Tolerances (position, dimension, gap, etc.)
 - `src/core/types.py` — Direction, CabinetType, CabinetLevel, Dimensions
@@ -214,6 +215,7 @@ classDiagram
 ```
 
 **Files:**
+
 - `src/kitchen/wall.py` — Wall, Room, CornerReference
 - `src/kitchen/cabinet.py` — Cabinet, CabinetPlacement, Countertop
 - `src/kitchen/layout.py` — Run, LayoutEngine, Layout
@@ -233,6 +235,7 @@ flowchart LR
 ```
 
 **Files:**
+
 - `src/config_parser.py` — JSON loading, defaults, validation
 - `src/validators.py` — Semantic validation (dimensions, gaps, room fit)
 - `src/wall_builder.py` — Config → Wall/Cabinet conversion
@@ -252,6 +255,7 @@ flowchart LR
 ```
 
 **Files:**
+
 - `src/geometry_builder.py` — bpy mesh creation
 - `src/material_manager.py` — Cycles materials
 - `src/exporters.py` — OBJ, GLTF, .blend export
@@ -320,6 +324,7 @@ graph TB
 ```
 
 **Convention:**
+
 - Z-up (architectural/BIM standard)
 - Right-hand rule
 - Wall normal points into room
@@ -423,24 +428,24 @@ kitchen-plugin/
 
 ## Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| **Frozen dataclasses** | Immutable = thread-safe, no accidental mutation |
-| **Z-up coordinates** | Industry standard for architecture/BIM |
-| **Wall-centric positioning** | Same as IKEA, professional CAD software |
-| **Back-face origin** | Natural for wall attachment |
-| **Separate core/ layer** | No bpy dependency = testable without Blender |
-| **Named tolerances** | Self-documenting, configurable |
+| Decision                     | Rationale                                       |
+| ---------------------------- | ----------------------------------------------- |
+| **Frozen dataclasses**       | Immutable = thread-safe, no accidental mutation |
+| **Z-up coordinates**         | Industry standard for architecture/BIM          |
+| **Wall-centric positioning** | Same as IKEA, professional CAD software         |
+| **Back-face origin**         | Natural for wall attachment                     |
+| **Separate core/ layer**     | No bpy dependency = testable without Blender    |
+| **Named tolerances**         | Self-documenting, configurable                  |
 
 ---
 
 ## Future Work
 
-| Priority | Task | Effort |
-|---|---|---|
-| High | Integrate kitchen/ with geometry_builder | Medium |
-| High | Switch to back-face origin in mesh creation | Medium |
-| Medium | Add countertop generation to LayoutEngine | Small |
-| Medium | Add wall gap validation | Small |
-| Low | Add 3D preview without Blender | Large |
-| Low | Add interactive GUI | Very Large |
+| Priority | Task                                        | Effort     |
+| -------- | ------------------------------------------- | ---------- |
+| High     | Integrate kitchen/ with geometry_builder    | Medium     |
+| High     | Switch to back-face origin in mesh creation | Medium     |
+| Medium   | Add countertop generation to LayoutEngine   | Small      |
+| Medium   | Add wall gap validation                     | Small      |
+| Low      | Add 3D preview without Blender              | Large      |
+| Low      | Add interactive GUI                         | Very Large |

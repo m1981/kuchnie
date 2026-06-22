@@ -7,11 +7,13 @@ Industry standard approach for kitchen cabinet positioning.
 ## Overview
 
 Instead of absolute coordinates, cabinets are positioned **relative to walls**:
+
 - Each wall defines a local coordinate system
 - Cabinets reference a wall and an offset along that wall
 - Corner cabinets reference two walls (primary + secondary)
 
 This approach is used by professional kitchen design software:
+
 - IKEA Home Planner
 - 2020 Design
 - Chief Architect
@@ -188,24 +190,26 @@ right_cabinets = [
 
 ## Advantages Over Absolute Positioning
 
-| Aspect | Absolute Positioning | Wall-Centric |
-|---|---|---|
-| **Wall alignment** | Manual calculation | Automatic (wall reference) |
-| **Corner handling** | Complex rotation math | Simple wall-pair reference |
-| **Wall changes** | Reposition all cabinets | Just update wall definition |
-| **Validation** | Check absolute bounds | Check wall offset bounds |
-| **Industry standard** | ❌ | ✅ |
+| Aspect                | Absolute Positioning    | Wall-Centric                |
+| --------------------- | ----------------------- | --------------------------- |
+| **Wall alignment**    | Manual calculation      | Automatic (wall reference)  |
+| **Corner handling**   | Complex rotation math   | Simple wall-pair reference  |
+| **Wall changes**      | Reposition all cabinets | Just update wall definition |
+| **Validation**        | Check absolute bounds   | Check wall offset bounds    |
+| **Industry standard** | ❌                      | ✅                          |
 
 ---
 
 ## Migration from Current Implementation
 
 The current implementation uses:
+
 - Run-based positioning (similar but not identical)
 - Direction vectors (east, north, west, south)
 - Front-face origin (Y=0 at front)
 
 The new model:
+
 - Wall-based positioning (more general)
 - Wall normal (always points into room)
 - Back-face origin (Y=0 at wall face)
