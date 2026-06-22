@@ -9,6 +9,8 @@
 	 *   - Secondary actions in dropdown: Delete, Fork, Copy
 	 */
 
+	import { smartPosition } from '$lib/actions/smartPosition';
+
 	type Props = {
 		role: 'user' | 'assistant';
 		turnId: string | null | undefined;
@@ -53,6 +55,7 @@
 
 	let menuOpen = $state(false);
 	let menuRef = $state<HTMLDivElement | null>(null);
+	let triggerEl = $state<HTMLButtonElement | null>(null);
 
 	function toggleMenu() {
 		menuOpen = !menuOpen;
@@ -184,6 +187,7 @@
 		<!-- More options button (secondary actions dropdown) -->
 		<div class="relative" bind:this={menuRef}>
 			<button
+				bind:this={triggerEl}
 				onclick={toggleMenu}
 				disabled={isBusy}
 				data-testid="more-options-btn"
@@ -202,7 +206,12 @@
 
 			<!-- Dropdown menu -->
 			{#if menuOpen}
-				<div class="dropdown-menu" role="menu">
+				<div
+					bind:this={menuRef}
+					use:smartPosition={{ trigger: triggerEl!, placement: 'bottom-end' }}
+					class="dropdown-menu"
+					role="menu"
+				>
 					{#if oncopytext}
 						<button
 							onclick={() => handleMenuAction(oncopytext!)}
@@ -344,8 +353,7 @@
 	/* ── Dropdown menu: always dark text on white bg ── */
 
 	.dropdown-menu {
-		position: absolute;
-		right: 0;
+		position: fixed;
 		z-index: 50;
 		margin-top: 4px;
 		min-width: 180px;

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { folderStore } from '$lib/stores/folder.svelte';
+	import { smartPosition } from '$lib/actions/smartPosition';
 
 	type Props = {
 		folderId: string;
@@ -18,8 +19,10 @@
 
 	let showMenu = $state(false);
 	let menuRef = $state<HTMLElement | null>(null);
+	let menuTriggerEl = $state<HTMLButtonElement | null>(null);
 	let sessionMenuId = $state<string | null>(null);
 	let sessionMenuRef = $state<HTMLElement | null>(null);
+	let sessionTriggerEl = $state<HTMLElement | null>(null);
 
 	// Close menu on outside click
 	function handleClickOutside(e: MouseEvent) {
@@ -131,6 +134,7 @@
 		<!-- Context menu button -->
 		<button
 			type="button"
+			bind:this={menuTriggerEl}
 			onclick={(e) => {
 				e.stopPropagation();
 				showMenu = !showMenu;
@@ -188,6 +192,7 @@
 							<span
 								role="button"
 								tabindex="0"
+								bind:this={sessionTriggerEl}
 								onclick={(e) => {
 									e.stopPropagation();
 									toggleSessionMenu(e, session.id);
@@ -211,7 +216,8 @@
 							{#if sessionMenuId === session.id}
 								<div
 									bind:this={sessionMenuRef}
-									class="absolute right-0 z-50 mt-1 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
+									use:smartPosition={{ trigger: sessionTriggerEl!, placement: 'bottom-end' }}
+									class="fixed z-50 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
 									role="menu"
 									onclick={(e) => e.stopPropagation()}
 								>
@@ -250,7 +256,8 @@
 {#if showMenu}
 	<div
 		bind:this={menuRef}
-		class="absolute right-2 z-50 mt-1 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
+		use:smartPosition={{ trigger: menuTriggerEl!, placement: 'bottom-end' }}
+		class="fixed z-50 min-w-[160px] rounded-md border border-line bg-surface py-1 shadow-lg"
 		role="menu"
 	>
 		<button

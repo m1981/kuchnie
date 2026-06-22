@@ -12,6 +12,7 @@
 	 * Both export states share the same spinner UI; label differs by type.
 	 */
 	import { focusTrap } from '$lib/actions/focustrap';
+	import { smartPosition } from '$lib/actions/smartPosition';
 	import type { SessionNode } from '$lib/api';
 
 	type MenuState =
@@ -38,6 +39,7 @@
 
 	let menuState = $state<MenuState>('closed');
 	let errorMsg = $state('');
+	let triggerEl = $state<HTMLButtonElement | null>(null);
 
 	const isArchived = $derived(node.archived_at !== null);
 	const isBusy = $derived(
@@ -135,6 +137,7 @@
 	<!-- ⋯ trigger button — shows spinner while either export is in flight -->
 	<button
 		onclick={open}
+		bind:this={triggerEl}
 		title="Session options"
 		aria-label="Session options"
 		aria-expanded={menuState !== 'closed'}
@@ -170,7 +173,8 @@
 	{#if menuState === 'open'}
 		<div
 			use:focusTrap
-			class="absolute top-6 right-0 z-40 min-w-[178px] rounded-lg border border-line bg-panel
+			use:smartPosition={{ trigger: triggerEl!, placement: 'bottom-end' }}
+			class="fixed z-40 min-w-[178px] rounded-lg border border-line bg-panel
 			       py-1 shadow-lg"
 		>
 			<!-- Export Markdown -->
@@ -242,7 +246,8 @@
 	{#if menuState === 'confirming-delete'}
 		<div
 			use:focusTrap
-			class="absolute top-6 right-0 z-40 w-52 rounded-lg border border-red-200 bg-panel
+			use:smartPosition={{ trigger: triggerEl!, placement: 'bottom-end' }}
+			class="fixed z-40 w-52 rounded-lg border border-red-200 bg-panel
 			       p-3 shadow-lg"
 		>
 			<p class="mb-2 text-xs font-semibold text-ink">Delete this session?</p>
