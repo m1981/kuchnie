@@ -142,14 +142,16 @@ def setup_3dview_navigation(kc):
     remove_conflicting_items(km, conflicts_z)
     
     # -----------------------------------------------------------------
-    # O → Temp Orbit (hold to orbit, release to return to previous tool)
+    # O → Toggle NDOF orbit mode / use view3d.rotate for temp orbit
     # -----------------------------------------------------------------
+    # Blender 5.x view3d.view_orbit expects: ORBITLEFT/RIGHT/UP/DOWN
+    # For SketchUp-style temp orbit, use view3d.rotate (free orbit)
+    # User holds O then LMB+drag to orbit
     add_key(km,
-        idname='view3d.view_orbit',
+        idname='view3d.rotate',
         key='O',
         value='PRESS',
-        properties={'type': 'ORBIT'},
-        head=True,  # Higher priority
+        head=True,
     )
     
     # -----------------------------------------------------------------
@@ -220,7 +222,7 @@ def setup_3dview_navigation(kc):
 def setup_object_mode(kc):
     """Object mode tweaks to avoid conflicts with H = Pan."""
     
-    km = kc.keymaps.new(name='Object Mode', space_type='EMPTY', region_type='WINDOW')
+    km = kc.keymaps.new(name='Object Mode', space_type='EMPTY')
     
     # H → default is "Hide Selected" in Object mode — remove it
     conflicts = [
@@ -265,7 +267,7 @@ def setup_object_mode(kc):
 def setup_mesh_edit(kc):
     """Mesh edit mode tweaks to avoid conflicts with O = Orbit."""
     
-    km = kc.keymaps.new(name='Mesh', space_type='EMPTY', region_type='WINDOW')
+    km = kc.keymaps.new(name='Mesh', space_type='EMPTY')
     
     # O → default is "Proportional Editing" toggle
     # Rebind to Alt+O instead
@@ -292,7 +294,7 @@ def setup_mesh_edit(kc):
 def setup_window(kc):
     """Global shortcuts that work everywhere."""
     
-    km = kc.keymaps.new(name='Window', space_type='WINDOW', region_type='WINDOW')
+    km = kc.keymaps.new(name='Window', space_type='EMPTY')
     
     # F6 → Quick render (viewport)
     add_key(km,
@@ -316,11 +318,16 @@ def register():
     """Create the SketchUp keyconfig."""
     wm = bpy.context.window_manager
     
-    # Create new keyconfig
-    kc = wm.keyconfigs.new(name=KEYCONFIG_NAME)
+    # Remove existing if re-registering
+    if KEYCONFIG_NAME in wm.keyconfigs:
+        kc_old = wm.keyconfigs[KEYCONFIG_NAME]
+        # Can't easily remove keyconfigs, just clear and recreate
+        for km in kc_old.keymaps:
+            for kmi in km.keymap_items:
+                km.keymap_items.remove(kmi)
     
-    # Set as active
-    wm.keyconfigs.active = kc
+    # Create new keyconfig (don't set as active — crashes during startup)
+    kc = wm.keyconfigs.new(name=KEYCONFIG_NAME)
     
     # Setup each keymap area
     setup_3dview_navigation(kc)
@@ -328,8 +335,8 @@ def register():
     setup_mesh_edit(kc)
     setup_window(kc)
     
-    print(f"[{KEYCONFIG_NAME}] Keyconfig registered successfully.")
-    print(f"[{KEYCONFIG_NAME}] Activate via: Edit → Preferences → Keymap → '{KEYCONFIG_NAME}'")
+    print(f"[{KEYCONFIG_NAME}] Keyconfig registered.")
+    print(f"[{KEYCONFIG_NAME}] Activate: Edit → Preferences → Keymap → '{KEYCONFIG_NAME}'")
 
 
 def unregister():
@@ -340,11 +347,6 @@ def unregister():
         except Exception:
             pass
     addon_keymaps.clear()
-    
-    # Reset to Blender default
-    wm = bpy.context.window_manager
-    if 'Blender' in wm.keyconfigs:
-        wm.keyconfigs.active = wm.keyconfigs['Blender']
     
     print(f"[{KEYCONFIG_NAME}] Keyconfig unregistered.")
 
