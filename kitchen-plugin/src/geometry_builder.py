@@ -17,15 +17,27 @@ DIRECTIONS = {
 }
 
 # Turn mapping: current direction + turn → new direction
+# Based on ROOM perspective:
+# - "left" = wall to the LEFT when facing the back wall
+# - "right" = wall to the RIGHT when facing the back wall
+#
+# When standing in room facing the back wall (facing -Y):
+# - Left is +X direction
+# - Right is -X direction
+# - Both side walls go TOWARD the viewer (-Y direction)
+#
+# The turn determines which CORNER to turn at:
+# - "left" = turn at the LEFT end of current wall
+# - "right" = turn at the RIGHT end of current wall
 TURNS = {
-    ("east", "left"):   "north",
-    ("east", "right"):  "south",
-    ("north", "left"):  "west",
-    ("north", "right"): "east",
-    ("west", "left"):   "south",
-    ("west", "right"):  "north",
-    ("south", "left"):  "east",
-    ("south", "right"): "west",
+    ("east", "left"):   "south",   # back wall → left wall (toward viewer)
+    ("east", "right"):  "south",   # back wall → right wall (toward viewer)
+    ("north", "left"):  "west",    # left wall → back wall
+    ("north", "right"): "west",    # right wall → back wall
+    ("west", "left"):   "north",   # back wall → right wall (toward viewer)
+    ("west", "right"):  "north",   # back wall → left wall (toward viewer)
+    ("south", "left"):  "east",    # left wall → back wall
+    ("south", "right"): "east",    # right wall → back wall
 }
 
 # Wall location and depth direction for each travel direction
@@ -56,6 +68,11 @@ def build_kitchen(config: dict) -> list[bpy.types.Object]:
     """Build all kitchen geometry from config.
 
     Returns list of created top-level objects.
+
+    Turn logic:
+    - "left" = turn at the LEFT end of current wall (when facing the wall)
+    - "right" = turn at the RIGHT end of current wall (when facing the wall)
+    - Both turns go TOWARD the viewer (into the room)
     """
     settings = config["settings"]
     all_objects = []
@@ -99,6 +116,7 @@ def build_kitchen(config: dict) -> list[bpy.types.Object]:
         print(f"  End pos:   ({end_x:.0f}, {end_y:.0f})")
 
         # Update position for next run
+        # The next run starts at the end of the current run
         pos_x = end_x
         pos_y = end_y
 

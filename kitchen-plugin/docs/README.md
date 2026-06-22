@@ -14,69 +14,69 @@ The plugin reads JSON config files and generates kitchen cabinet models in Blend
 Read in this order:
 
 1. **[architecture.md](architecture.md)** — Start here!
-   - Layer architecture with mermaid diagrams
-   - Dependency rules
-   - Module overview
-   - File structure
+    - Layer architecture with mermaid diagrams
+    - Dependency rules
+    - Module overview
+    - File structure
 
 2. **[config-syntax.md](config-syntax.md)** — JSON config reference
-   - Schema overview
-   - Settings (dimensions, gaps, tolerances)
-   - Cabinet types and properties
-   - Layout examples (I, L, U shape)
+    - Schema overview
+    - Settings (dimensions, gaps, tolerances)
+    - Cabinet types and properties
+    - Layout examples (I, L, U shape)
 
 3. **[wall-centric-model.md](wall-centric-model.md)** — Positioning model
-   - How cabinets are positioned relative to walls
-   - Wall-local vs world coordinates
-   - Corner handling
+    - How cabinets are positioned relative to walls
+    - Wall-local vs world coordinates
+    - Corner handling
 
 ### For LLM Agents / AI Assistants
 
 Read:
 
 1. **[llm-context.md](llm-context.md)** — Project context for AI
-   - Current architecture
-   - Coordinate system
-   - Key rules and conventions
-   - Test validation pipeline
+    - Current architecture
+    - Coordinate system
+    - Key rules and conventions
+    - Test validation pipeline
 
 ### For CAD/Kitchen Domain Reference
 
 Read:
 
 1. **[european-kitchen-standards.md](european-kitchen-standards.md)** — Kitchen standards
-   - 32mm system
-   - Standard dimensions
-   - Cabinet types
-   - Handle types
-   - Material system
+    - 32mm system
+    - Standard dimensions
+    - Cabinet types
+    - Handle types
+    - Material system
 
 2. **[cad-principles-part1.md](cad-principles-part1.md)** — CAD principles (part 1)
-   - Coordinate system discipline
-   - Separation of concerns
-   - Units and precision
-   - Constraint-based layout
+    - Coordinate system discipline
+    - Separation of concerns
+    - Units and precision
+    - Constraint-based layout
 
 3. **[cad-principles-part2.md](cad-principles-part2.md)** — CAD principles (part 2)
-   - B-rep topology
-   - Parametric modeling
-   - Performance patterns
-   - Export/interop
+    - B-rep topology
+    - Parametric modeling
+    - Performance patterns
+    - Export/interop
 
 ---
 
 ## File Index
 
-| File | Purpose | Audience |
-|---|---|---|
-| `README.md` | This file — reading guide | Everyone |
-| `architecture.md` | SOLID architecture overview | Developers |
-| `config-syntax.md` | JSON config syntax reference | Developers, Users |
-| `wall-centric-model.md` | Wall-centric positioning model | Developers |
-| `llm-context.md` | LLM persona and project context | AI Assistants |
-| `european-kitchen-standards.md` | European kitchen standards | Domain Experts |
-| `cad-principles-part1.md` | CAD principles (reference) | Developers |
-| `cad-principles-part2.md` | CAD principles (reference) | Developers |
+| File                            | Purpose                         | Audience          |
+| ------------------------------- | ------------------------------- | ----------------- |
+| `README.md`                     | This file — reading guide       | Everyone          |
+| `architecture.md`               | SOLID architecture overview     | Developers        |
+| `config-syntax.md`              | JSON config syntax reference    | Developers, Users |
+| `wall-centric-model.md`         | Wall-centric positioning model  | Developers        |
+| `llm-context.md`                | LLM persona and project context | AI Assistants     |
+| `european-kitchen-standards.md` | European kitchen standards      | Domain Experts    |
+| `cad-principles-part1.md`       | CAD principles (reference)      | Developers        |
+| `cad-principles-part2.md`       | CAD principles (reference)      | Developers        |
 
 ---
 
