@@ -164,9 +164,7 @@
 	/* ── Footer container ─────────────────────────────────────────────── */
 
 	.composer-footer {
-		border-top: 1px solid #e5e7eb;
-		background: rgba(255, 255, 255, 0.95);
-		backdrop-filter: blur(8px);
+		background: transparent;
 		padding: 8px 16px 12px;
 	}
 
