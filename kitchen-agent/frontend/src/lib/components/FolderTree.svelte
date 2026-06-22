@@ -13,6 +13,11 @@
 
   let { activeId = null, children, onload }: Props = $props();
 
+  /** True when dragging a folder (not a session) — shows insertion zones. */
+  const isReordering = $derived(
+    folderStore.isDragging && folderStore.dragPayload?.type === "folder",
+  );
+
   // No local expandedFolders state — it's in the store now
 </script>
 
@@ -71,50 +76,91 @@
 
   <!-- Folder list -->
 {:else}
-  <div class="flex flex-col gap-0.5">
+  <div class="flex flex-col">
     {#each folderStore.sortedFolders as folder (folder.id)}
+      <!-- Insertion zone BEFORE this folder (only visible during folder reorder) -->
+      {#if isReordering}
+        <div
+          use:droppable={{
+            target: { type: "reorder", id: folder.id, position: "before" },
+            acceptTypes: ["folder"],
+            ondragenter: (target) => folderStore.setDropTarget(target),
+            ondragleave: () => {
+              const dt = folderStore.dropTarget;
+              if (dt?.id === folder.id && dt?.position === "before") {
+                folderStore.setDropTarget(null);
+              }
+            },
+            ondrop: async (payload, target) => {
+              if (payload.type === "folder" && payload.id !== target.id) {
+                await folderStore.reorder(payload.id, target.id, "before");
+              }
+              folderStore.endDrag();
+            },
+          }}
+          class="reorder-zone"
+          class:active={folderStore.dropTarget?.id === folder.id &&
+            folderStore.dropTarget?.position === "before"}
+        ></div>
+      {/if}
+
+      <!-- Folder with session drop zone -->
       <div
         use:droppable={{
           target: { type: "folder", id: folder.id },
           acceptTypes: ["session"],
           ondragenter: (target) => folderStore.setDropTarget(target),
           ondragleave: () => {
-            // Only clear if THIS zone is still the active target.
-            // Prevents race condition: moving from A→B fires dragenter(B) then
-            // dragleave(A). Without the guard, dragleave(A) would wipe out B.
-            if (folderStore.dropTarget?.id === folder.id) {
+            if (folderStore.dropTarget?.id === folder.id && !folderStore.dropTarget?.position) {
               folderStore.setDropTarget(null);
             }
           },
           ondrop: async (payload, target) => {
-            console.debug("[DnD] FolderTree.ondrop", {
-              sessionId: payload.id,
-              from: payload.sourceFolderId ?? "history",
-              to: target.id,
-            });
             if (payload.type === "session" && target.type === "folder") {
-              // Cross-folder move: unassign from source folder first
               if (payload.sourceFolderId && payload.sourceFolderId !== target.id) {
-                console.debug("[DnD] cross-folder: unassign from", payload.sourceFolderId);
                 await folderStore.unassignSession(payload.sourceFolderId, payload.id);
               }
-              // Assign to target folder (skip if already in this folder)
               if (payload.sourceFolderId !== target.id) {
-                console.debug("[DnD] assigning to", target.id);
                 await folderStore.assignSession(target.id, payload.id);
-              } else {
-                console.debug("[DnD] same folder, skipped");
               }
             }
             folderStore.endDrag();
           },
         }}
         class="folder-drop-zone"
-        class:drag-over={folderStore.dropTarget?.id === folder.id}
+        class:drag-over={folderStore.dropTarget?.id === folder.id &&
+          !folderStore.dropTarget?.position}
       >
         <FolderItem folderId={folder.id} {activeId} onloadsession={onload} />
       </div>
     {/each}
+
+    <!-- Final insertion zone AFTER last folder (only visible during reorder) -->
+    {#if isReordering}
+      {@const lastFolder = folderStore.sortedFolders[folderStore.sortedFolders.length - 1]}
+      <div
+        use:droppable={{
+          target: { type: "reorder", id: lastFolder.id, position: "after" },
+          acceptTypes: ["folder"],
+          ondragenter: (target) => folderStore.setDropTarget(target),
+          ondragleave: () => {
+            const dt = folderStore.dropTarget;
+            if (dt?.id === lastFolder.id && dt?.position === "after") {
+              folderStore.setDropTarget(null);
+            }
+          },
+          ondrop: async (payload, target) => {
+            if (payload.type === "folder" && payload.id !== target.id) {
+              await folderStore.reorder(payload.id, target.id, "after");
+            }
+            folderStore.endDrag();
+          },
+        }}
+        class="reorder-zone"
+        class:active={folderStore.dropTarget?.id === lastFolder.id &&
+          folderStore.dropTarget?.position === "after"}
+      ></div>
+    {/if}
   </div>
 {/if}
 
@@ -147,5 +193,20 @@
     background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
     outline: 2px dashed var(--color-accent);
     outline-offset: -2px;
+  }
+
+  /* ── Reorder insertion zones ──────────────────────────────────── */
+  .reorder-zone {
+    height: 4px;
+    border-radius: 2px;
+    transition: all 120ms ease;
+  }
+
+  .reorder-zone.active {
+    height: 6px;
+    margin: 2px 0;
+    background-color: var(--color-accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
+    border-radius: 3px;
   }
 </style>

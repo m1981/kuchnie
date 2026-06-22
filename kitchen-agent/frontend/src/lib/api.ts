@@ -845,4 +845,15 @@ export const api = {
     }).then((r) => {
       if (!r.ok && r.status !== 204) throw new Error(`Unassign tree failed: ${r.status}`);
     }),
+
+  /**
+   * PATCH /api/folders/reorder
+   * Reorder folders by assigning order_index 0, 1, 2, … atomically.
+   */
+  reorderFolders: (folderIds: string[]): Promise<{ reordered: boolean; count: number }> =>
+    request<{ reordered: boolean; count: number }>("/api/folders/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder_ids: folderIds }),
+    }),
 };

@@ -184,6 +184,45 @@ class FolderStore {
     }
   }
 
+  // ── Reorder ───────────────────────────────────────────────────────────
+
+  /**
+   * Reorder folders: move draggedId so it lands at targetId's position.
+   * Optimistic — updates order_index locally, rolls back on API failure.
+   */
+  async reorder(draggedId: string, targetId: string, position: "before" | "after"): Promise<void> {
+    const sorted = this.sortedFolders;
+    const ids = sorted.map((f) => f.id);
+
+    // Remove dragged from current position
+    const filtered = ids.filter((id) => id !== draggedId);
+    const targetIndex = filtered.indexOf(targetId);
+    if (targetIndex === -1) return;
+
+    const insertAt = position === "after" ? targetIndex + 1 : targetIndex;
+    const newIds = [...filtered.slice(0, insertAt), draggedId, ...filtered.slice(insertAt)];
+
+    // No-op if position didn't change
+    if (JSON.stringify(newIds) === JSON.stringify(ids)) return;
+
+    // Optimistic: update order_index locally
+    const previous = this.folders;
+    this.folders = this.folders.map((f) => ({
+      ...f,
+      order_index: newIds.indexOf(f.id),
+    }));
+
+    console.debug("[DnD] store.reorder", { draggedId, targetId, position, newIds });
+
+    try {
+      await api.reorderFolders(newIds);
+    } catch (e) {
+      this.folders = previous; // rollback
+      const msg = e instanceof Error ? e.message : String(e);
+      this.showError(`Reorder failed: ${msg}`);
+    }
+  }
+
   // ── Session Assignment ─────────────────────────────────────────────────
 
   async assignSession(folderId: string, sessionId: string): Promise<boolean> {

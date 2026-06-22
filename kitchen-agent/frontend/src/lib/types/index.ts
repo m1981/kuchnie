@@ -25,8 +25,10 @@ export type DragPayload = {
 
 /** Info about a drop target. */
 export type DropTarget = {
-  type: "folder";
+  type: "folder" | "reorder";
   id: string;
+  /** Only set for reorder targets — which side of the folder to insert. */
+  position?: "before" | "after";
 };
 
 /** Lightweight session type for folder views. */

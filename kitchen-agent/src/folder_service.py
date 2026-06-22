@@ -133,6 +133,19 @@ class FolderService:
         logger.info("delete_folder", folder_id=folder_id)
         return self._repo.delete_folder(folder_id)
 
+    def reorder_folders(self, folder_ids: list[str]) -> int:
+        """
+        Reorder all folders by assigning order_index 0, 1, 2, … atomically.
+
+        Args:
+            folder_ids: Ordered list of folder UUIDs (new order).
+
+        Returns:
+            Number of folders reordered.
+        """
+        logger.info("reorder_folders", count=len(folder_ids))
+        return self._repo.reorder_folders(folder_ids)
+
     def assign_session(self, folder_id: str, session_id: str) -> bool:
         """
         Assign a session to a folder.

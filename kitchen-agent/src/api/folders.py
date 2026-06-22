@@ -26,6 +26,7 @@ from src.schemas import (
     FolderAssignRequest,
     FolderCreateRequest,
     FolderListResponse,
+    FolderReorderRequest,
     FolderResponse,
     FolderUpdateRequest,
 )
@@ -58,6 +59,18 @@ async def list_folders(
 ) -> FolderListResponse:
     """List all folders with session counts."""
     return service.list_folders()
+
+
+@router.patch("/api/folders/reorder")
+async def reorder_folders(
+    request: FolderReorderRequest,
+    service: FolderService = Depends(get_folder_service),
+) -> dict:
+    """Reorder folders. Assigns order_index 0, 1, 2, … atomically."""
+    log.info("reorder_folders_request", count=len(request.folder_ids))
+
+    count = service.reorder_folders(request.folder_ids)
+    return {"reordered": True, "count": count}
 
 
 @router.get("/api/folders/{folder_id}", response_model=FolderResponse)

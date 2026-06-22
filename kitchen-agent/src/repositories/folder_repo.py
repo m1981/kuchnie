@@ -157,6 +157,21 @@ class SQLiteFolderRepository:
 
         return True
 
+    def reorder_folders(self, folder_ids: list[str]) -> int:
+        """Assign order_index 0, 1, 2, … to the given folder IDs atomically.
+
+        Returns the number of folders reordered.
+        """
+        now = datetime.now().isoformat()
+        with self.db.get_connection() as conn:
+            for index, folder_id in enumerate(folder_ids):
+                conn.execute(
+                    "UPDATE folders SET order_index = ?, updated_at = ? WHERE id = ?",
+                    (index, now, folder_id),
+                )
+            conn.commit()
+        return len(folder_ids)
+
     # ── Session Assignment ───────────────────────────────────────────
 
     def assign_session(self, folder_id: str, session_id: str) -> bool:

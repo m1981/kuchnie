@@ -550,3 +550,8 @@ class FolderListResponse(BaseModel):
 class FolderAssignRequest(BaseModel):
     """Request body for POST /api/folders/{id}/sessions/{session_id}."""
     session_id: str
+
+
+class FolderReorderRequest(BaseModel):
+    """Request body for PATCH /api/folders/reorder."""
+    folder_ids: list[str] = Field(min_length=1)

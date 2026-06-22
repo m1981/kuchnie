@@ -4,6 +4,7 @@
   import { folderStore } from "$lib/stores/folder.svelte";
   import { sessionStore } from "$lib/stores/sessions.svelte";
   import { smartPosition } from "$lib/actions/smartPosition";
+  import { draggable } from "$lib/actions/dragdrop";
   import SessionContextMenu from "./SessionContextMenu.svelte";
   import DraggableSession from "./DraggableSession.svelte";
 
@@ -232,7 +233,23 @@
   {/if}
 
   <!-- Folder header row -->
-  <div class="group flex items-center gap-1 px-1.5 py-1">
+  <div
+    use:draggable={{
+      payload: { type: "folder", id: folderId, title: folder.name },
+      ondragstart: (p) => folderStore.startDrag(p),
+      ondragend: () => folderStore.endDrag(),
+    }}
+    class="group flex items-center gap-1 px-1.5 py-1"
+  >
+    <!-- Drag handle -->
+    <span
+      class="flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-[10px] leading-none text-muted opacity-0 transition group-hover:opacity-60 hover:!opacity-100"
+      aria-label="Drag to reorder {folder.name}"
+      title="Drag to reorder"
+    >
+      ⋮⋮
+    </span>
+
     <!-- Expand/collapse toggle -->
     <button
       type="button"
