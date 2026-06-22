@@ -81,12 +81,12 @@
 		aria-expanded={isExpanded}
 	>
 		<div class="flex min-w-0 items-center gap-2">
-			<span class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">
-				System Prompt
-			</span>
+			<span class="text-xs font-semibold tracking-[0.14em] text-muted uppercase"> Prompt </span>
 			{#if !isEditing && !isExpanded}
 				<span class="truncate text-xs text-muted/60">
-					{text ? text.slice(0, 80) + (text.length > 80 ? '…' : '') : 'Not set'}
+					{text
+						? text.split('\n')[0].slice(0, 50) + (text.split('\n')[0].length > 50 ? '…' : '')
+						: 'Not set'}
 				</span>
 			{/if}
 			{#if isOverride}

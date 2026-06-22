@@ -69,12 +69,6 @@
 	// Derived — active mode label / icon resolved from the live modes list
 	// ---------------------------------------------------------------------------
 
-	const MODE_ICONS: Record<string, string> = {
-		general: '🔧',
-		design: '📐',
-		assembly: '🔨'
-	};
-
 	const activeMode = $derived(
 		modes.find((m) => m.id === promptStore.selectedModeId) ?? {
 			id: promptStore.selectedModeId,
@@ -340,15 +334,10 @@
 			</div>
 		{:else}
 			<ChatHeader
-				modeIcon={MODE_ICONS[activeMode.id] ?? '💬'}
-				modeLabel={activeMode.label}
 				sessionId={currentSessionId}
 				title={sessionTitle}
 				showLeft={sidebarResize.showLeft}
-				showRight={sidebarResize.showRight}
-				{hasSystemPromptOverride}
 				ontoggleleft={() => sidebarResize.toggleLeft()}
-				ontoggleright={() => sidebarResize.toggleRight()}
 				onsave={handleSaveTitle}
 			/>
 

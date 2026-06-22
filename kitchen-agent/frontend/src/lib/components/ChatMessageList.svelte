@@ -137,7 +137,7 @@
 		>
 			<div
 				class={msg.role === 'user'
-					? 'w-full rounded-xl border-l-4 border-l-accent bg-ink/8 px-4 py-3 text-ink shadow-sm'
+					? 'w-full rounded-xl bg-ink/5 px-4 py-3 text-ink shadow-sm'
 					: 'w-full rounded-xl border border-line/50 bg-panel/80 p-4 shadow-sm'}
 			>
 				<!-- Role label + badges + action buttons -->
@@ -153,7 +153,7 @@
 						{#if msg.token_count !== undefined && msg.token_count > 0}
 							<span
 								title="Tokens used for this message"
-								class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+								class="hidden rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted md:inline-block"
 							>
 								{msg.token_count.toLocaleString()} tok
 							</span>
@@ -161,7 +161,7 @@
 						{#if msg.role === 'assistant' && msg.model}
 							<span
 								title="{msg.provider || 'unknown'}/{msg.model}"
-								class="rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted"
+								class="hidden rounded-full border border-line bg-surface px-2 py-0.5 text-[10px] font-medium text-muted md:inline-block"
 							>
 								{msg.model}
 							</span>
@@ -171,7 +171,7 @@
 					<div class="flex items-center gap-1">
 						{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0}
 							<span
-								class="rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted"
+								class="hidden rounded-full border border-line bg-surface px-2 py-0.5 text-xs font-medium text-muted md:inline-flex"
 							>
 								{msg.tools.length} tools
 							</span>
