@@ -17,14 +17,38 @@ kitchen cabinet 3D models from JSON config files. The project is at:
 /Users/michal/PycharmProjects/kuchnie/kitchen-plugin/
 ```
 
-### Architecture
+### Architecture (SOLID Principles)
+
+The project follows a layered architecture with strict dependency rules:
 
 ```
-JSON config → config_parser.py → geometry_builder.py → Blender scene
-                                    ↓
-                            exporters.py → OBJ / .blend / wireframe PNG
-                                    ↓
-                            validators.py → dimension/position checks
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 1: core/          Pure math, NO external dependencies    │
+│  ├── geometry.py         Vector2D, Vector3D, BoundingBox        │
+│  ├── tolerances.py       Named, configurable tolerances         │
+│  └── types.py            Direction, CabinetType, Dimensions     │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 2: kitchen/       Domain logic, depends only on core     │
+│  ├── wall.py             Wall, Room, CornerReference            │
+│  ├── cabinet.py          Cabinet, CabinetPlacement              │
+│  ├── layout.py           Run, LayoutEngine                      │
+│  └── standards.py        KitchenStandards, EUROPEAN_STANDARDS   │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 3: builder/       Config parsing, depends on core+kitchen│
+│  ├── config_parser.py    JSON loading, validation               │
+│  ├── validators.py       Semantic validation                    │
+│  └── wall_builder.py     Config → Wall conversion               │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 4: adapters/      External integrations (Blender)        │
+│  ├── geometry_builder.py bpy mesh creation                      │
+│  ├── material_manager.py Cycles materials                       │
+│  └── exporters.py        OBJ, GLTF, .blend export               │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 5: main.py        CLI entry point                        │
+└─────────────────────────────────────────────────────────────────┘
+
+Dependency Rule: core/ ← kitchen/ ← builder/ ← adapters/ ← main.py
+                 (Never reverse arrows)
 ```
 
 **Key principle:** Config describes WHAT, not HOW. The script handles geometry.
@@ -32,34 +56,44 @@ JSON config → config_parser.py → geometry_builder.py → Blender scene
 ### Coordinate System
 
 ```
-Blender:     X=right, Y=into screen, Z=up
-OBJ export:  X=right, Y=up, Z=into screen  (Y and Z swapped!)
+Z-up, right-hand rule (architectural/BIM standard)
 
-Box geometry (local space):
-  - Origin at front-left-bottom corner
-  - Width:  along +X (0 to w)
-  - Depth:  along +Y (0 to d) — extends INTO room from wall
-  - Height: along +Z (0 to h)
-  - Front face at Y=0 faces +Y (into room)
-  - Back face at Y=d faces -Y (toward wall)
+World coordinates:
+  X = east (+X)
+  Y = north (+Y)
+  Z = up (+Z)
+
+Wall-local coordinates:
+  X = along wall (from start to end)
+  Y = into room (wall normal)
+  Origin = wall start point
+
+Cabinet-local coordinates (back-face origin):
+  X = along wall (+X)
+  Y = into room (+Y) — 0 at wall face, depth at front
+  Z = up (+Z)
+  Origin = back-left-bottom (at wall face)
 ```
 
-### Direction System
+### Wall-Centric Positioning
 
-Cabinets are placed along a wall. Each run has a **direction** (travel direction)
-and a **wall side** (where the wall is):
+Cabinets are positioned relative to walls, not absolute coordinates:
 
+```python
+# Wall definition
+wall = Wall(id="back", start=Vector2D(0, 0), end=Vector2D(3000, 0))
+
+# Cabinet position
+cabinet = Cabinet(
+    wall_id="back",
+    offset=600,      # 600mm from wall start
+    dimensions=Dimensions(600, 560, 720)
+)
+
+# World position calculated by LayoutEngine
+world_pos = wall.point_at_depth(offset=600, depth=560)
+# Returns: Vector2D(600, 560) — 600 along wall, 560 into room
 ```
-Direction  | Wall Side | Depth Into Room | Rotation
------------|-----------|-----------------|----------
-east (+X)  | south     | +Y (north)      | 0°
-south (-Y) | east      | -X (west)       | -90° CW
-west (-X)  | north     | -Y (south)      | 180°
-north (+Y) | west      | +X (east)       | +90° CCW
-```
-
-**Critical:** The rotation makes the front face (at Y=0) point INTO the room.
-The depth (+Y) then extends away from the wall into the room.
 
 ### Gap System
 
@@ -90,13 +124,13 @@ The next run's `turn` direction determines which way the layout turns.
 
 ### Files to Read First
 
-1. `src/config_parser.py` — JSON loading, validation, mm→m conversion
-2. `src/geometry_builder.py` — mesh creation, rotation, positioning
-3. `src/validators.py` — dimension, position, gap checks
-4. `configs/u_shape.json` — U-shape layout config (most complex)
-5. `docs/f02-kitchen-config-syntax.md` — config format specification
-6. `tests/test_p0_gap_semantics.py` — gap system contract tests
-7. `tests/test_p0_coordinate_system.py` — coordinate system contract tests
+1. `docs/architecture.md` — Architecture overview with diagrams
+2. `src/core/geometry.py` — Vector2D, Vector3D, BoundingBox, Transform2D
+3. `src/kitchen/wall.py` — Wall, Room, CornerReference
+4. `src/kitchen/layout.py` — Run, LayoutEngine
+5. `src/config_parser.py` — JSON loading, validation
+6. `configs/ref_u_shape.json` — U-shape layout config (most complex)
+7. `docs/f02-kitchen-config-syntax.md` — config format specification
 
 ### Validation Pipeline
 
@@ -117,7 +151,7 @@ open output/meshes/u_shape.blend
 1. **Cabinets have backs against the wall, fronts face into the room**
 2. **Depth extends from wall into room (away from wall)**
 3. **Adjacent runs share a corner point — no gap, no overlap**
-4. **Rotation is around the object's origin (front-left-bottom corner)**
+4. **Rotation is around the object's origin (back-left-bottom corner)**
 5. **OBJ export swaps Y↔Z — always verify in Blender coordinates**
 6. **Countertops span the full run width + overhangs at ends**
 7. **Filler strips are at ends of runs, against walls**
@@ -134,15 +168,6 @@ Named, configurable offsets replace magic numbers:
 
 These are in **meters** (not mm) because they represent small geometric offsets.
 
-### Drawer Validation
-
-Drawers are validated against physical constraints:
-
-- Count: 1–6 drawers per cabinet
-- Minimum height: 30mm per drawer
-- Maximum height: cannot exceed carcass height
-- Sum of heights + frontGaps must fit in carcass
-
 ### European Kitchen Standards
 
 - Base cabinet: 720mm body + 120mm plinth = 840mm total
@@ -155,74 +180,27 @@ Drawers are validated against physical constraints:
 - Corner blind depth: 300-400mm
 - Countertop: 30mm thick, 20mm front overhang, 30mm end overhang
 
-### Room Validation
-
-Optional `room` config allows validation against physical room dimensions:
-
-```json
-"room": {
-    "walls": [
-        { "length": 3200 },
-        { "length": 2400 },
-        { "length": 3200 }
-    ]
-}
-```
-
-Validates:
-- Each run fits its corresponding wall
-- Corner blind depth reduces adjacent wall space
-- Last wall length is reused if fewer walls than runs
-
 ### Schema Versioning
 
-| Version | Changes                                        |
-| ------- | ---------------------------------------------- |
-| 1.0     | Initial format                                 |
-| 1.1     | Added cabinetGap/frontGap, tolerances, drawers |
+| Version | Changes                                                    |
+| ------- | ---------------------------------------------------------- |
+| 1.0     | Initial format                                             |
+| 1.1     | Added cabinetGap/frontGap, tolerances, drawers, materials  |
 
 Supported versions: `SUPPORTED_VERSIONS = {"1.0", "1.1"}`
 Current version: `CURRENT_VERSION = "1.1"`
 
 V1.0 configs are automatically migrated to V1.1 semantics.
 
-### Material System
-
-Extended material format with PBR properties:
-
-```json
-"materials": {
-  "quartz_counter": {
-    "color": [0.85, 0.83, 0.80],
-    "roughness": 0.2,
-    "metallic": 0.0,
-    "texture": "textures/quartz_diffuse.png",
-    "normalMap": "textures/quartz_normal.png"
-  },
-  "stainless_handle": {
-    "color": [0.7, 0.7, 0.7],
-    "roughness": 0.15,
-    "metallic": 0.95
-  }
-}
-```
-
-| Property    | Default | Description                          |
-| ----------- | ------- | ------------------------------------ |
-| `color`     | required| `[R,G,B]` or `[R,G,B,A]` (0–1)     |
-| `roughness` | 0.5     | 0=glossy, 1=matte                   |
-| `metallic`  | 0.0     | 0=dielectric, 1=metal               |
-| `alpha`     | 1.0     | 0=transparent, 1=opaque             |
-| `emission`  | 0.0     | 0=none, 1=full                      |
-| `texture`   | null    | Path to diffuse texture map          |
-| `normalMap` | null    | Path to normal/bump map              |
-
 ### Current Status
 
 **Implemented:**
 
+- SOLID architecture with layered design (core → kitchen → builder → adapters)
+- Core geometry types (Vector2D, Vector3D, BoundingBox, Transform2D)
+- Kitchen domain logic (Wall, Room, Cabinet, LayoutEngine)
 - Config parser with validation and backward compatibility
-- Geometry builder with direction/rotation system
+- Wall-centric positioning model
 - Gap system with two distinct settings (cabinetGap, frontGap)
 - Tolerance model (frontOffset, clearanceOffset)
 - Drawer height validation
@@ -233,18 +211,22 @@ Extended material format with PBR properties:
 - Material manager for Cycles rendering
 - Exporters (OBJ, GLTF, .blend, wireframe PNG)
 - Validators for dimensions, gaps, corners, drawers, tolerances, room, materials
-- Comprehensive test suite (124 tests passing)
+- Comprehensive test suite (218 tests passing)
 
 **Test Coverage:**
 
-- `test_config_parser.py` — parser and defaults
-- `test_positions.py` — position calculations and validation
-- `test_l_shape.py` — L-shape layout validation
-- `test_u_shape.py` — U-shape layout validation
-- `test_p0_gap_semantics.py` — gap system contract tests
-- `test_p0_coordinate_system.py` — coordinate system contract tests
-- `test_p1_tolerance_model.py` — tolerance system tests
-- `test_p1_drawer_validation.py` — drawer validation tests
-- `test_p2_room_validation.py` — room dimension validation tests
-- `test_p2_schema_version.py` — schema versioning tests
-- `test_p2_materials.py` — material system tests
+- `test_core_geometry.py` — 36 tests (Vector2D, Vector3D, BoundingBox, Transform2D)
+- `test_kitchen.py` — 22 tests (Wall, Cabinet, LayoutEngine, Standards)
+- `test_wall_centric_model.py` — 21 tests (Wall, Room, WallCabinet, CornerCabinet)
+- `test_wall_builder.py` — 15 tests (Config → Wall conversion)
+- `test_config_parser.py` — 11 tests (parser and defaults)
+- `test_positions.py` — 6 tests (position calculations and validation)
+- `test_l_shape.py` — 11 tests (L-shape layout validation)
+- `test_u_shape.py` — 11 tests (U-shape layout validation)
+- `test_p0_gap_semantics.py` — 18 tests (gap system contract tests)
+- `test_p0_coordinate_system.py` — 19 tests (coordinate system contract tests)
+- `test_p1_tolerance_model.py` — 11 tests (tolerance system tests)
+- `test_p1_drawer_validation.py` — 15 tests (drawer validation tests)
+- `test_p2_room_validation.py` — 10 tests (room dimension validation tests)
+- `test_p2_schema_version.py` — 14 tests (schema versioning tests)
+- `test_p2_materials.py` — 15 tests (material system tests)
