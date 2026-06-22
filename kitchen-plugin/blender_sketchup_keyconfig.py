@@ -1,6 +1,6 @@
 """
-SketchUp-Style Keyconfig for Blender 4+ (macOS)
-===============================================
+SketchUp-Style Keyconfig for Blender 5.1+ (macOS)
+==================================================
 Mimics SketchUp navigation in Blender's 3D Viewport.
 
 macOS US keyboard layout assumed.
@@ -8,22 +8,30 @@ User physical remaps:
   - CapsLock  → acts as Left Shift (system-level)
   - RCmd      → acts as Right Option/Alt (system-level)
 
-Install:
-  1. Run in Blender's Scripting workspace, or
-  2. Copy to: ~/Library/Application Support/Blender/4.x/scripts/startup/
+INSTALL (choose one):
 
-Activate:
-  Edit → Preferences → Keymap → "SketchUp" dropdown
+  Option A — Addon (recommended):
+    1. Edit → Preferences → Add-ons → Install...
+    2. Select this .py file
+    3. Enable "SketchUp Navigation" in add-on list
+    4. Keyconfig appears in: Edit → Preferences → Keymap dropdown
+
+  Option B — Startup script:
+    Copy to: ~/Library/Application Support/Blender/5.1/scripts/startup/
+    Keyconfig auto-creates on Blender start.
+
+ACTIVATE:
+  Edit → Preferences → Keymap → dropdown → select "SketchUp"
 """
 
 bl_info = {
     "name": "SketchUp Navigation",
     "author": "Interior Designer",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (5, 1, 0),
     "location": "Edit > Preferences > Keymap",
     "description": "SketchUp-style viewport navigation for Blender",
-    "category": "User Interface",
+    "category": "Keyconfig",
 }
 
 import bpy
@@ -316,27 +324,38 @@ def setup_window(kc):
 
 def register():
     """Create the SketchUp keyconfig."""
-    wm = bpy.context.window_manager
-    
-    # Remove existing if re-registering
-    if KEYCONFIG_NAME in wm.keyconfigs:
-        kc_old = wm.keyconfigs[KEYCONFIG_NAME]
-        # Can't easily remove keyconfigs, just clear and recreate
-        for km in kc_old.keymaps:
-            for kmi in km.keymap_items:
-                km.keymap_items.remove(kmi)
-    
-    # Create new keyconfig (don't set as active — crashes during startup)
-    kc = wm.keyconfigs.new(name=KEYCONFIG_NAME)
-    
-    # Setup each keymap area
-    setup_3dview_navigation(kc)
-    setup_object_mode(kc)
-    setup_mesh_edit(kc)
-    setup_window(kc)
-    
-    print(f"[{KEYCONFIG_NAME}] Keyconfig registered.")
-    print(f"[{KEYCONFIG_NAME}] Activate: Edit → Preferences → Keymap → '{KEYCONFIG_NAME}'")
+    import traceback
+    try:
+        wm = bpy.context.window_manager
+        
+        # Log which file is being loaded
+        import os
+        print(f"[{KEYCONFIG_NAME}] Loading from: {__file__}")
+        
+        # Remove existing if re-registering
+        if KEYCONFIG_NAME in wm.keyconfigs:
+            kc_old = wm.keyconfigs[KEYCONFIG_NAME]
+            for km in kc_old.keymaps:
+                for kmi in km.keymap_items:
+                    km.keymap_items.remove(kmi)
+        
+        # Create new keyconfig (don't set as active — crashes during startup)
+        kc = wm.keyconfigs.new(name=KEYCONFIG_NAME)
+        
+        # Setup each keymap area
+        setup_3dview_navigation(kc)
+        setup_object_mode(kc)
+        setup_mesh_edit(kc)
+        setup_window(kc)
+        
+        # Verify
+        total_items = sum(len(km.keymap_items) for km in kc.keymaps)
+        print(f"[{KEYCONFIG_NAME}] Registered: {len(kc.keymaps)} keymaps, {total_items} items")
+        print(f"[{KEYCONFIG_NAME}] All keyconfigs: {list(wm.keyconfigs.keys())}")
+        print(f"[{KEYCONFIG_NAME}] Activate: Edit → Preferences → Keymap → '{KEYCONFIG_NAME}'")
+    except Exception as e:
+        print(f"[{KEYCONFIG_NAME}] REGISTRATION FAILED: {e}")
+        traceback.print_exc()
 
 
 def unregister():
@@ -348,7 +367,7 @@ def unregister():
             pass
     addon_keymaps.clear()
     
-    print(f"[{KEYCONFIG_NAME}] Keyconfig unregistered.")
+    print(f"[{KEYCONFIG_NAME}] Unregistered.")
 
 
 # =============================================================================
