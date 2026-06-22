@@ -2,17 +2,17 @@
 @import 'highlight.js/styles/github-dark.css';
 
 @theme {
-	--color-surface: #f6f3ee;
-	--color-panel: #fffdfa;
-	--color-ink: #27231f;
-	--color-ink-soft: #3a332d;
-	--color-muted: #736b61;
-	--color-line: #ded6ca;
-	--color-accent: #8a6939;
-	--color-accent-strong: #6f522b;
-	--color-accent-soft: #eee3d0;
-	--color-code: #201d1a;
-	--color-code-ink: #f3ede4;
+	--color-surface: #1d1d1c;
+	--color-panel: #272726;
+	--color-ink: #c3c3c2;
+	--color-ink-soft: #b0b0af;
+	--color-muted: #8a8a88;
+	--color-line: #363635;
+	--color-accent: #be5637;
+	--color-accent-strong: #a44a2f;
+	--color-accent-soft: #2d1a17;
+	--color-code: #191919;
+	--color-code-ink: #c3c3c2;
 
 	/* Z-index tokens */
 	--z-content: 10;
@@ -56,7 +56,7 @@
 @layer components {
 	.markdown-body {
 		color: var(--color-ink);
-		font-size: 15px;
+		font-size: 16px;
 		line-height: 1.7;
 	}
 
@@ -79,15 +79,15 @@
 	}
 
 	.markdown-body h1 {
-		font-size: 1.75rem;
+		font-size: 1.25rem;
 	}
 
 	.markdown-body h2 {
-		font-size: 1.35rem;
+		font-size: 1.1rem;
 	}
 
 	.markdown-body h3 {
-		font-size: 1.1rem;
+		font-size: 1rem;
 	}
 
 	.markdown-body p,
@@ -131,6 +131,8 @@
 		color: var(--color-ink);
 		font-family: 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 		font-size: 0.9em;
+		overflow-wrap: anywhere;
+		min-width: 0;
 	}
 
 	.markdown-body pre {
@@ -154,9 +156,9 @@
 		border-collapse: collapse;
 		border-radius: 8px;
 		font-size: 0.92em;
-		display: block;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
+		table-layout: fixed;
+		word-break: break-word;
+		overflow-wrap: anywhere;
 	}
 
 	.markdown-body th,
@@ -205,8 +207,8 @@
 	}
 
 	.markdown-body-user {
-		color: white;
-		font-size: 0.875rem;
+		color: #c3c3c2;
+		font-size: 14px;
 		line-height: 1.6;
 	}
 
@@ -214,7 +216,7 @@
 	.markdown-body-user h2,
 	.markdown-body-user h3,
 	.markdown-body-user h4 {
-		color: white;
+		color: #e0e0df;
 	}
 
 	.markdown-body-user h1 {
@@ -226,7 +228,7 @@
 	}
 
 	.markdown-body-user h3 {
-		font-size: 0.98rem;
+		font-size: 1rem;
 	}
 
 	.markdown-body-user a {
@@ -234,28 +236,38 @@
 	}
 
 	.markdown-body-user :not(pre) > code {
-		border-color: rgb(255 255 255 / 0.24);
-		background: rgb(255 255 255 / 0.12);
-		color: white;
+		border-color: #363635;
+		background: #1f1f1f;
+		color: #c3c3c2;
 	}
 
 	.markdown-body-user pre {
-		border: 1px solid rgb(255 255 255 / 0.16);
-		background: #11100f;
+		border: 1px solid #363635;
+		background: #111111;
 	}
 
 	.markdown-body-user th,
 	.markdown-body-user td {
-		border-color: rgb(255 255 255 / 0.2);
+		border-color: #363635;
 	}
 
 	.markdown-body-user th,
 	.markdown-body-user tr:nth-child(even) td {
-		background: rgb(255 255 255 / 0.08);
+		background: #1a1a1a;
 	}
 
 	.markdown-body-user blockquote {
-		border-left-color: var(--color-accent-soft);
-		color: rgb(255 255 255 / 0.74);
+		border-left-color: var(--color-accent);
+		color: #8a8a88;
 	}
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hidden {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE/Edge */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
 }

@@ -11,7 +11,7 @@
 <div class="flex min-h-screen items-center justify-center bg-surface">
 	<div class="mx-auto max-w-md px-4 text-center">
 		<div class="mb-6 text-6xl">⚠️</div>
-		<h1 class="mb-2 text-2xl font-bold text-ink">Something went wrong</h1>
+		<h1 class="mb-2 text-xl font-bold text-ink">Something went wrong</h1>
 		<p class="mb-6 text-muted">
 			{$page.error?.message ?? 'An unexpected error occurred'}
 		</p>

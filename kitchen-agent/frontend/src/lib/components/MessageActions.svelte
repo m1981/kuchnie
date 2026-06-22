@@ -12,6 +12,7 @@
 	type Props = {
 		role: 'user' | 'assistant';
 		turnId: string | null | undefined;
+		content?: string;
 		isLastAssistant?: boolean;
 		isBusy?: boolean;
 		isEditing?: boolean;
@@ -26,6 +27,7 @@
 	let {
 		role,
 		turnId,
+		content = '',
 		isLastAssistant = false,
 		isBusy = false,
 		isEditing = false,
@@ -36,6 +38,18 @@
 		oncopytext,
 		oncopymarkdown
 	}: Props = $props();
+
+	let copied = $state(false);
+
+	async function copyToClipboard() {
+		try {
+			await navigator.clipboard.writeText(content);
+			copied = true;
+			setTimeout(() => (copied = false), 1500);
+		} catch (e) {
+			console.error('Copy failed:', e);
+		}
+	}
 
 	let menuOpen = $state(false);
 	let menuRef = $state<HTMLDivElement | null>(null);
@@ -70,9 +84,46 @@
 
 {#if turnId}
 	<div
-		class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100"
+		class="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/msg:opacity-100 focus-within:opacity-100 {role ===
+		'assistant'
+			? 'justify-end'
+			: ''}"
 		aria-label="Message actions"
 	>
+		<!-- Copy button (primary) -->
+		<button
+			onclick={copyToClipboard}
+			data-testid="copy-btn"
+			title={copied ? 'Copied!' : 'Copy message'}
+			aria-label="Copy message"
+			class="action-btn {role === 'user' ? 'action-btn-user' : 'action-btn-assistant'}"
+		>
+			{#if copied}
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<polyline points="20 6 9 17 4 12" />
+				</svg>
+			{:else}
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
+					<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+				</svg>
+			{/if}
+		</button>
+
 		<!-- Edit button (primary) -->
 		{#if !isEditing && onedit}
 			<button
@@ -299,11 +350,11 @@
 		margin-top: 4px;
 		min-width: 180px;
 		border-radius: 8px;
-		border: 1px solid #e5e7eb;
-		background: #ffffff;
+		border: 1px solid #363635;
+		background: #272726;
 		padding: 4px 0;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-		color: #111827;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		color: #c3c3c2;
 	}
 
 	.menu-divider {
@@ -317,9 +368,9 @@
 		gap: 10px;
 		width: 100%;
 		padding: 8px 12px;
-		font-size: 13px;
+		font-size: 12px;
 		text-align: left;
-		color: #111827;
+		color: #c3c3c2;
 		background: transparent;
 		border: none;
 		cursor: pointer;
@@ -332,11 +383,11 @@
 	}
 
 	.menu-item:hover {
-		background: #f3f4f6;
+		background: #363635;
 	}
 
 	.menu-item-danger {
-		color: #dc2626;
+		color: #ef4444;
 	}
 
 	.menu-item-danger :global(.menu-icon) {
@@ -344,6 +395,6 @@
 	}
 
 	.menu-item-danger:hover {
-		background: #fef2f2;
+		background: #2d1a1a;
 	}
 </style>

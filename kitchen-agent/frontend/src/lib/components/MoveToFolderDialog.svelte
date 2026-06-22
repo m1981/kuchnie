@@ -82,7 +82,7 @@
 			class="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
 			onclick={(e) => e.stopPropagation()}
 		>
-			<h2 class="mb-4 text-lg font-semibold text-ink">Move to Folder</h2>
+			<h2 class="mb-4 text-xl font-semibold text-ink">Move to Folder</h2>
 
 			<p class="mb-4 text-sm text-muted">
 				Select folders for <strong>"{sessionTitle}"</strong>:

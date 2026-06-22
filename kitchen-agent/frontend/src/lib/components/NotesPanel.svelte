@@ -176,7 +176,7 @@
 
 					<!-- Selected text -->
 					<blockquote
-						class="mb-1.5 line-clamp-2 border-l-2 border-accent pl-2 text-[11px] leading-4
+						class="mb-1.5 line-clamp-2 border-l-2 border-accent pl-2 text-xs leading-4
 						       text-muted italic"
 						title={note.selected_text}
 					>

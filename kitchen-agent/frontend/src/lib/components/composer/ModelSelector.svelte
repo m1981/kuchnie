@@ -234,11 +234,11 @@
 		height: 32px;
 		padding: 0 8px;
 		border-radius: 6px;
-		border: 1px solid #e5e7eb;
-		background: #fff;
-		color: #374151;
+		border: 1px solid #363635;
+		background: #131313;
+		color: #c3c3c2;
 		font-family: inherit;
-		font-size: 13px;
+		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.15s;
@@ -246,8 +246,8 @@
 	}
 
 	.model-trigger:hover {
-		background: #f9fafb;
-		border-color: #d1d5db;
+		background: #1f1f1f;
+		border-color: #4a4a49;
 	}
 
 	.model-name {
@@ -261,7 +261,7 @@
 		height: 12px;
 		flex-shrink: 0;
 		transition: transform 0.15s;
-		color: #9ca3af;
+		color: #8a8a88;
 	}
 
 	/* ── Desktop dropdown (compact) ───────────────────────────────────── */
@@ -271,12 +271,12 @@
 		bottom: 100%;
 		left: 0;
 		min-width: 200px;
-		max-height: 280px;
+		max-height: 320px;
 		overflow-y: auto;
-		background: #fff;
-		border: 1px solid #e5e7eb;
+		background: #272726;
+		border: 1px solid #363635;
 		border-radius: 8px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 		z-index: 50;
 		margin-bottom: 4px;
 		padding: 4px;
@@ -284,16 +284,16 @@
 
 	.separator {
 		height: 1px;
-		background: #f3f4f6;
+		background: #363635;
 		margin: 4px 0;
 	}
 
 	.group-label {
 		padding: 6px 8px 2px;
 		font-family: inherit;
-		font-size: 11px;
+		font-size: 12px;
 		font-weight: 500;
-		color: #9ca3af;
+		color: #8a8a88;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
 	}
@@ -316,18 +316,19 @@
 		transition: background 0.1s;
 		font-family: inherit;
 		gap: 8px;
+		color: #c3c3c2;
 	}
 
 	.menu-item:hover {
-		background: #f3f4f6;
+		background: #363635;
 	}
 
 	.menu-item.selected {
-		background: #eff6ff;
+		background: #2d1a17;
 	}
 
 	.item-label {
-		font-size: 13px;
+		font-size: 14px;
 		color: #111827;
 		white-space: nowrap;
 		overflow: hidden;
@@ -337,8 +338,8 @@
 	}
 
 	.item-meta {
-		font-size: 11px;
-		color: #9ca3af;
+		font-size: 12px;
+		color: #8a8a88;
 		white-space: nowrap;
 		flex-shrink: 0;
 	}
@@ -372,7 +373,7 @@
 			bottom: 0;
 			left: 0;
 			right: 0;
-			background: #fff;
+			background: #272726;
 			border-radius: 12px 12px 0 0;
 			max-height: 60vh;
 			display: flex;
@@ -394,14 +395,14 @@
 			align-items: center;
 			justify-content: space-between;
 			padding: 12px 16px;
-			border-bottom: 1px solid #f3f4f6;
+			border-bottom: 1px solid #363635;
 		}
 
 		.mobile-title {
 			font-family: inherit;
 			font-size: 14px;
 			font-weight: 600;
-			color: #111827;
+			color: #c3c3c2;
 		}
 
 		.mobile-close {
@@ -411,9 +412,9 @@
 			width: 28px;
 			height: 28px;
 			border: none;
-			background: #f3f4f6;
+			background: #363635;
 			border-radius: 50%;
-			color: #6b7280;
+			color: #8a8a88;
 			cursor: pointer;
 		}
 
@@ -424,16 +425,16 @@
 
 		.mobile-separator {
 			height: 1px;
-			background: #f3f4f6;
+			background: #363635;
 			margin: 4px 0;
 		}
 
 		.mobile-group-label {
 			padding: 8px 12px 4px;
 			font-family: inherit;
-			font-size: 11px;
+			font-size: 12px;
 			font-weight: 500;
-			color: #9ca3af;
+			color: #8a8a88;
 			text-transform: uppercase;
 			letter-spacing: 0.03em;
 		}
@@ -452,19 +453,20 @@
 			transition: background 0.1s;
 			font-family: inherit;
 			gap: 8px;
+			color: #c3c3c2;
 		}
 
 		.mobile-item:hover {
-			background: #f9fafb;
+			background: #363635;
 		}
 
 		.mobile-item.selected {
-			background: #eff6ff;
+			background: #2d1a17;
 		}
 
 		.mobile-item-label {
 			font-size: 14px;
-			color: #111827;
+			color: #c3c3c2;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -474,13 +476,13 @@
 
 		.mobile-item-meta {
 			font-size: 12px;
-			color: #9ca3af;
+			color: #8a8a88;
 			white-space: nowrap;
 			flex-shrink: 0;
 		}
 
 		.mobile-check {
-			color: #3b82f6;
+			color: #be5637;
 			flex-shrink: 0;
 		}
 	}

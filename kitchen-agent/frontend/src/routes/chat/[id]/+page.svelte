@@ -292,7 +292,7 @@
 		<button
 			onclick={navigateToNewChat}
 			disabled={chatStore.isStreaming}
-			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-ink px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-soft focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+			class="mb-5 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-line bg-[#131313] px-3 text-sm font-semibold text-ink shadow-sm transition hover:bg-ink focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			<span aria-hidden="true">+</span>
 			New chat
@@ -342,7 +342,9 @@
 			/>
 
 			<!-- Chat scroll area -->
-			<section class="mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto px-4 py-5 md:px-6">
+			<section
+				class="scrollbar-hidden mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto px-4 py-5 md:px-6"
+			>
 				<div class="flex flex-col gap-6">
 					<!-- Fork status pill -->
 					{#if chatStore.forkStatus}

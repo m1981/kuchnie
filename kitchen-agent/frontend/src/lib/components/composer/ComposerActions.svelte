@@ -133,28 +133,28 @@
 		height: 32px;
 		padding: 0 12px;
 		border-radius: 8px;
-		border: 1px solid #dadce0;
-		background: #fff;
-		color: #5f6368;
-		font-size: 13px;
+		border: 1px solid #363635;
+		background: #131313;
+		color: #c3c3c2;
+		font-size: 14px;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.15s;
 	}
 
 	.tools-btn:hover {
-		background: #f8f9fa;
-		border-color: #bdc1c6;
+		background: #1f1f1f;
+		border-color: #4a4a49;
 	}
 
 	.tools-btn.tools-active {
-		background: #e8f0fe;
-		border-color: #4285f4;
-		color: #1a73e8;
+		background: #2d1a17;
+		border-color: #be5637;
+		color: #be5637;
 	}
 
 	.tools-btn.tools-active:hover {
-		background: #d2e3fc;
+		background: #3d241f;
 	}
 
 	/* ── Send / Stop button (icon only, circular) ─────────────────────── */
@@ -169,7 +169,7 @@
 		padding: 0;
 		border-radius: 50%;
 		border: none;
-		background: #1a73e8;
+		background: #be5637;
 		color: #fff;
 		cursor: pointer;
 		transition:
@@ -179,8 +179,8 @@
 	}
 
 	.send-btn:hover:not(:disabled) {
-		background: #1557b0;
-		box-shadow: 0 1px 3px rgba(26, 115, 232, 0.4);
+		background: #a44a2f;
+		box-shadow: 0 1px 3px rgba(190, 86, 55, 0.4);
 	}
 
 	.send-btn:disabled {

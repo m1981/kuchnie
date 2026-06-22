@@ -75,7 +75,7 @@
 			onkeydown={(e) => e.stopPropagation()}
 		>
 			{#if title}
-				<h2 class="mb-4 text-lg font-semibold text-ink">{title}</h2>
+				<h2 class="mb-4 text-xl font-semibold text-ink">{title}</h2>
 			{/if}
 
 			{@render children()}
