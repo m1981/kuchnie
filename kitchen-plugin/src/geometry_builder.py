@@ -211,11 +211,11 @@ def _rotate_for_direction(obj: bpy.types.Object, direction: str) -> None:
     if direction == "east":
         obj.rotation_euler = (0, 0, 0)
     elif direction == "south":
-        obj.rotation_euler = (0, 0, pi / 2)    # 90° CCW
+        obj.rotation_euler = (0, 0, -pi / 2)   # 90° CW: front → -X (west)
     elif direction == "west":
-        obj.rotation_euler = (0, 0, pi)         # 180°
+        obj.rotation_euler = (0, 0, pi)         # 180°: front → -Y (south)
     elif direction == "north":
-        obj.rotation_euler = (0, 0, -pi / 2)   # 90° CW
+        obj.rotation_euler = (0, 0, pi / 2)    # 90° CCW: front → +X (east)
 
 
 def _build_cabinet(cab: dict, settings: dict, level: str,
@@ -249,17 +249,26 @@ def _build_cabinet(cab: dict, settings: dict, level: str,
 
 
 def _create_box(name: str, w: float, d: float, h: float) -> bpy.types.Object:
-    """Create a box mesh (external shell only)."""
+    """Create a box mesh (external shell only).
+
+    Geometry: origin at front-left-bottom corner.
+    - Width:  along +X (0 to w)
+    - Depth:  along +Y (0 to d) — extends INTO room from wall
+    - Height: along +Z (0 to h)
+
+    Front face at Y=0 faces +Y (into room).
+    Back face at Y=d faces -Y (toward wall).
+    """
     verts = [
-        (0, 0, 0),    (w, 0, 0),    (w, -d, 0),    (0, -d, 0),
-        (0, 0, h),    (w, 0, h),    (w, -d, h),    (0, -d, h),
+        (0, 0, 0),    (w, 0, 0),    (w, d, 0),    (0, d, 0),
+        (0, 0, h),    (w, 0, h),    (w, d, h),    (0, d, h),
     ]
     faces = [
         (0, 1, 2, 3),  # bottom
         (4, 5, 6, 7),  # top
-        (0, 1, 5, 4),  # front
+        (0, 1, 5, 4),  # front (Y=0)
         (1, 2, 6, 5),  # right
-        (2, 3, 7, 6),  # back
+        (2, 3, 7, 6),  # back (Y=d)
         (3, 0, 4, 7),  # left
     ]
 
@@ -346,7 +355,7 @@ def _add_door_front(parent: bpy.types.Object, w: float, h: float,
     mesh.update()
 
     obj = bpy.data.objects.new(name, mesh)
-    obj.location = (0, -parent.dimensions.y - 0.001, 0)
+    obj.location = (0, -0.001, 0)  # slightly in front of cabinet face
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 
@@ -369,7 +378,7 @@ def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
     mesh.update()
 
     obj = bpy.data.objects.new(name, mesh)
-    obj.location = (0, -parent.dimensions.y - 0.001, 0)
+    obj.location = (0, -0.001, 0)  # slightly in front of cabinet face
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 
@@ -401,6 +410,7 @@ def _build_countertop(total_width: int, settings: dict,
     d = mm_to_m(settings["baseDepth"] + ct.get("counterOverhangFront", 20))
     h = mm_to_m(ct.get("counterThickness", 30))
 
+    # Countertop: width along X, depth along +Y (into room)
     return _create_box("countertop", w, d, h)
 
 

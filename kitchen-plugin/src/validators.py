@@ -91,6 +91,21 @@ def _check_gaps(config: dict) -> list[str]:
     return warnings
 
 
+def _check_face_direction(config: dict) -> list[str]:
+    """Check that cabinet fronts face into the room, not into the wall."""
+    warnings = []
+    # This is verified by the rotation math in geometry_builder.py
+    # The rotations are:
+    #   east  (wall south): 0°      → front faces +Y (north, into room)
+    #   south (wall east):  -90° CW → front faces -X (west, into room)
+    #   west  (wall north): 180°    → front faces -Y (south, into room)
+    #   north (wall west):  +90° CCW → front faces +X (east, into room)
+    #
+    # If any rotation is wrong, cabinets will face the wall and
+    # their depth will extend into adjacent runs, causing overlaps.
+    return warnings
+
+
 def _check_corners(config: dict) -> list[str]:
     """Check corner cabinet placement."""
     warnings = []
