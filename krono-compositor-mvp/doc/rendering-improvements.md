@@ -50,10 +50,10 @@ The current 2.5D compositing output looks flat and unrealistic. The root cause i
 
 **Changes in `gen_kitchen.py`:**
 
-- **Key light:** Area lamp at 45° top-right, energy 3000W, warm tone (5500K), size 3×2m
-- **Fill light:** Area lamp at left side, energy 800W, cool tone (7500K), size 4×3m
-- **Rim light:** Small area lamp behind camera, energy 1200W, focused on cabinet tops
-- Remove or reduce world background contribution to 0.2 (let lights do the work)
+- **Key light:** Area lamp at 45° top-right, energy 800W, warm tone (1.0, 0.95, 0.9), size 3×2m
+- **Fill light:** Area lamp at left side, energy 250W, cool tone (0.9, 0.95, 1.0), size 4×3m
+- **Rim light:** Area lamp behind camera, energy 400W, neutral tone, size width×0.5m
+- World background: blue tint (0.8, 0.85, 0.9) at strength 0.05
 
 **Acceptance criteria:**
 
