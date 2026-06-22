@@ -21,6 +21,7 @@
 		"test": "npm run test:unit -- --run"
 	},
 	"dependencies": {
+		"@floating-ui/dom": "^1.7.6",
 		"highlight.js": "^11.11.1",
 		"marked": "^18.0.4",
 		"marked-highlight": "^2.2.4",
