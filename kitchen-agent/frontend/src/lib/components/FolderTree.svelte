@@ -109,7 +109,12 @@
         use:droppable={{
           target: { type: "folder", id: folder.id },
           acceptTypes: ["session"],
-          ondragenter: (target) => folderStore.setDropTarget(target),
+          ondragenter: (target) => {
+            // Only react to session drags — ignore folder reorder drags
+            if (folderStore.dragPayload?.type === "session") {
+              folderStore.setDropTarget(target);
+            }
+          },
           ondragleave: () => {
             if (folderStore.dropTarget?.id === folder.id && !folderStore.dropTarget?.position) {
               folderStore.setDropTarget(null);
@@ -197,15 +202,18 @@
 
   /* ── Reorder insertion zones ──────────────────────────────────── */
   .reorder-zone {
+    /* Invisible hit area: 4px visual bar centered in 16px padding */
     height: 4px;
+    padding: 6px 0;
     border-radius: 2px;
     transition: all 120ms ease;
   }
 
   .reorder-zone.active {
-    height: 6px;
-    margin: 2px 0;
+    height: 4px;
+    padding: 6px 0;
     background-color: var(--color-accent);
+    background-clip: content-box;
     box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 40%, transparent);
     border-radius: 3px;
   }
