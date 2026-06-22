@@ -62,11 +62,11 @@ def test_l_shape_run_widths():
     config = load_config(str(Path(__file__).resolve().parent.parent / "configs" / "l_shape.json"))
     widths = compute_total_width(config)
 
-    # Run 0 base: 50+600+600+800+600+900 + 5 gaps = 3560mm
-    assert widths["run[0].base"] == 3560
+    # Run 0 base: 50+600+600+800+600+900 + 5*0 (cabinetGap) = 3550mm
+    assert widths["run[0].base"] == 3550
 
-    # Run 1 base: 600+400+800+50 + 3 gaps = 1856mm
-    assert widths["run[1].base"] == 1856
+    # Run 1 base: 600+400+800+50 + 3*0 (cabinetGap) = 1850mm
+    assert widths["run[1].base"] == 1850
 
 
 def test_l_shape_has_tall_cabinet():

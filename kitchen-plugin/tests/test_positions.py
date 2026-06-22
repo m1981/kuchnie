@@ -24,6 +24,7 @@ def test_validate_corner_not_last():
         "runs": [
             {
                 "base": [
+                    {"type": "base-door", "width": 600},
                     {"type": "corner-blind", "width": 900},
                     {"type": "base-door", "width": 600},
                 ]
@@ -31,7 +32,7 @@ def test_validate_corner_not_last():
         ]
     }
     warnings = validate_config(config)
-    assert any("corner cabinet should be last" in w for w in warnings)
+    assert any("corner cabinet should be first or last" in w for w in warnings)
 
 
 def test_validate_missing_turn_after_corner():
@@ -80,7 +81,7 @@ def test_validate_turn_present_after_corner():
 def test_compute_total_width():
     config = {
         "version": "1.0",
-        "settings": {"gap": 2},
+        "settings": {"cabinetGap": 0, "frontGap": 2},
         "runs": [
             {
                 "base": [
@@ -91,11 +92,12 @@ def test_compute_total_width():
         ]
     }
     widths = compute_total_width(config)
-    assert widths["run[0].base"] == 600 + 2 + 600  # 1202mm
+    # With cabinetGap=0: 600 + 0 + 600 = 1200mm
+    assert widths["run[0].base"] == 1200
 
 
 def test_compute_total_width_i_shape():
     config = load_config(str(Path(__file__).resolve().parent.parent / "configs" / "i_shape.json"))
     widths = compute_total_width(config)
-    # 50 + 600 + 800 + 600 + 600 + 50 = 2700 + 5 gaps of 2 = 2710
-    assert widths["run[0].base"] == 2710
+    # 50 + 600 + 800 + 600 + 600 + 50 = 2700 + 5 * 0 (cabinetGap) = 2700
+    assert widths["run[0].base"] == 2700

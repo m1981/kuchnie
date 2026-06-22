@@ -45,6 +45,7 @@ def _check_overlaps(config: dict) -> list[str]:
     """Check that cabinets don't overlap."""
     warnings = []
     settings = config["settings"]
+    cabinet_gap = settings.get("cabinetGap", 0)
 
     for run_idx, run in enumerate(config["runs"]):
         for section in ("base", "upper", "tall"):
@@ -57,35 +58,44 @@ def _check_overlaps(config: dict) -> list[str]:
                         f"{prefix}: starts at {x}mm (overlaps previous)"
                     )
 
-                x += cab["width"] + settings.get("gap", 2)
+                x += cab["width"] + cabinet_gap
 
     return warnings
 
 
 def _check_gaps(config: dict) -> list[str]:
-    """Check that gaps between fronts are reasonable."""
+    """Check that gaps between cabinets and fronts are reasonable."""
     warnings = []
     settings = config["settings"]
-    gap = settings.get("gap", 2)
 
-    if gap < 0:
-        warnings.append(f"Global gap {gap}mm is negative")
-    if gap > 10:
-        warnings.append(f"Global gap {gap}mm seems too large")
+    # Check cabinetGap (carcass-to-carcass)
+    cabinet_gap = settings.get("cabinetGap", 0)
+    if cabinet_gap < 0:
+        warnings.append(f"cabinetGap {cabinet_gap}mm is negative")
+    if cabinet_gap > 10:
+        warnings.append(f"cabinetGap {cabinet_gap}mm seems too large")
 
+    # Check frontGap (front-to-front)
+    front_gap = settings.get("frontGap", 2)
+    if front_gap < 0:
+        warnings.append(f"frontGap {front_gap}mm is negative")
+    if front_gap > 10:
+        warnings.append(f"frontGap {front_gap}mm seems too large")
+
+    # Check per-cabinet gap overrides
     for run_idx, run in enumerate(config["runs"]):
         for section in ("base", "upper", "tall"):
             for cab_idx, cab in enumerate(run.get(section, [])):
                 prefix = f"run[{run_idx}].{section}[{cab_idx}]"
 
-                cab_gap = cab.get("gap", gap)
+                cab_gap = cab.get("frontGap", front_gap)
                 if cab_gap < 0:
                     warnings.append(
-                        f"{prefix}: cabinet gap {cab_gap}mm is negative"
+                        f"{prefix}: frontGap {cab_gap}mm is negative"
                     )
                 if cab_gap > 10:
                     warnings.append(
-                        f"{prefix}: cabinet gap {cab_gap}mm seems too large"
+                        f"{prefix}: frontGap {cab_gap}mm seems too large"
                     )
 
     return warnings
@@ -139,15 +149,19 @@ def _check_corners(config: dict) -> list[str]:
 
 
 def compute_total_width(config: dict) -> dict[str, float]:
-    """Compute total width of each run (mm)."""
+    """Compute total width of each run (mm).
+
+    Uses cabinetGap for carcass-to-carcass spacing.
+    """
     result = {}
     settings = config["settings"]
+    cabinet_gap = settings.get("cabinetGap", 0)
 
     for run_idx, run in enumerate(config["runs"]):
         for section in ("base", "upper", "tall"):
             cabs = run.get(section, [])
             if cabs:
-                total = sum(c["width"] for c in cabs) + settings["gap"] * (len(cabs) - 1)
+                total = sum(c["width"] for c in cabs) + cabinet_gap * (len(cabs) - 1)
                 result[f"run[{run_idx}].{section}"] = total
 
     return result

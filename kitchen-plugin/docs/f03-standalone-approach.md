@@ -22,14 +22,15 @@ JSON config → config_parser.py → geometry_builder.py → Blender scene
 
 ## Module Responsibilities
 
-| Module | bpy dependency | Purpose |
-|---|---|---|
-| `main.py` | yes | CLI entry point, orchestration |
-| `config_parser.py` | no | JSON loading, validation, mm→m conversion |
-| `geometry_builder.py` | yes | Mesh creation (external shell only) |
-| `material_manager.py` | yes | Cycles materials |
-| `exporters.py` | yes | OBJ, GLTF, wireframe export |
-| `validators.py` | no | Dimension, position, gap checks |
+| Module                | bpy dependency | Purpose                                     |
+| --------------------- | -------------- | ------------------------------------------- |
+| `main.py`             | yes            | CLI entry point, orchestration              |
+| `config_parser.py`    | no             | JSON loading, validation, mm→m conversion   |
+| `geometry_builder.py` | yes            | Mesh creation (external shell only)         |
+| `material_manager.py` | yes            | Cycles materials                            |
+| `exporters.py`        | yes            | OBJ, GLTF, wireframe export                 |
+| `validators.py`       | no             | Dimension, position, gap checks             |
+| `validate_obj.py`     | no             | OBJ file parsing and dimension verification |
 
 ## CLI Usage
 
@@ -38,11 +39,12 @@ JSON config → config_parser.py → geometry_builder.py → Blender scene
 blender --background --python src/main.py -- \
   configs/l_shape.json --export-obj --render-wireframe
 
-# Unit tests (no Blender)
-python -m pytest tests/test_config_parser.py tests/test_positions.py
+# Unit tests (no Blender required)
+.venv/bin/python -m pytest tests/ -v
 
-# Integration tests (Blender)
-blender --background --python tests/test_integration.py
+# Run specific test suites
+.venv/bin/python -m pytest tests/test_p0_gap_semantics.py -v
+.venv/bin/python -m pytest tests/test_p0_coordinate_system.py -v
 ```
 
 ## Design Principles
@@ -70,20 +72,28 @@ No plugin reload. No Blender restart. Seconds per iteration.
 ```
 kitchen-plugin/
 ├── src/
+│   ├── __init__.py
 │   ├── main.py
 │   ├── config_parser.py
 │   ├── geometry_builder.py
 │   ├── material_manager.py
 │   ├── exporters.py
-│   └── validators.py
+│   ├── validators.py
+│   └── validate_obj.py
 ├── tests/
+│   ├── __init__.py
 │   ├── test_config_parser.py
 │   ├── test_positions.py
-│   └── test_integration.py
+│   ├── test_l_shape.py
+│   ├── test_u_shape.py
+│   ├── test_p0_gap_semantics.py
+│   └── test_p0_coordinate_system.py
 ├── configs/
 │   ├── i_shape.json
 │   ├── l_shape.json
 │   └── u_shape.json
+├── scripts/
+│   └── debug_positions.py
 ├── output/
 │   ├── meshes/
 │   └── renders/

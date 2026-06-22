@@ -21,7 +21,8 @@ def test_apply_defaults():
     config = {"runs": []}
     _apply_defaults(config)
     assert config["settings"]["baseBodyHeight"] == 720
-    assert config["settings"]["gap"] == 2
+    assert config["settings"]["cabinetGap"] == 0
+    assert config["settings"]["frontGap"] == 2
     assert config["settings"]["wallDepth"] == 300
 
 

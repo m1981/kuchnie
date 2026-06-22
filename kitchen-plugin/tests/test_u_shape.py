@@ -67,14 +67,14 @@ def test_u_shape_run_widths():
     config = load_config(str(Path(__file__).resolve().parent.parent / "configs" / "u_shape.json"))
     widths = compute_total_width(config)
 
-    # Run 0: 50+600+600+900 + 3 gaps = 2156mm
-    assert widths["run[0].base"] == 2156
+    # Run 0: 50+600+600+900 + 3*0 (cabinetGap) = 2150mm
+    assert widths["run[0].base"] == 2150
 
-    # Run 1: 800+600+900 + 2 gaps = 2304mm
-    assert widths["run[1].base"] == 2304
+    # Run 1: 800+600+900 + 2*0 (cabinetGap) = 2300mm
+    assert widths["run[1].base"] == 2300
 
-    # Run 2: 900+600+600+600+50 + 4 gaps = 2758mm
-    assert widths["run[2].base"] == 2758
+    # Run 2: 900+600+600+600+50 + 4*0 (cabinetGap) = 2750mm
+    assert widths["run[2].base"] == 2750
 
 
 def test_u_shape_has_tall_and_special():

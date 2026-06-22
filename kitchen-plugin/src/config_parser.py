@@ -20,7 +20,12 @@ DEFAULTS = {
     "counterOverhangFront": 20,
     "counterOverhangEnd": 30,
     "wallMountHeight": 1400,
-    "gap": 2,
+    # Gap semantics:
+    #   cabinetGap  = space between carcass boxes (usually 0mm, flush)
+    #   frontGap    = visible gap between door/drawer fronts (usually 2-3mm)
+    # Legacy 'gap' is treated as 'frontGap' for backward compatibility.
+    "cabinetGap": 0,
+    "frontGap": 2,
 }
 
 # Cabinet types and their level
@@ -55,8 +60,21 @@ def load_config(path: str) -> dict:
 
 
 def _apply_defaults(config: dict) -> None:
-    """Fill in missing settings with defaults."""
+    """Fill in missing settings with defaults.
+
+    Handles backward compatibility:
+    - Old 'gap' setting is mapped to 'frontGap'
+    - New 'cabinetGap' and 'frontGap' take precedence over old 'gap'
+    """
     settings = config.setdefault("settings", {})
+
+    # Backward compatibility: migrate old 'gap' to new semantics
+    if "gap" in settings and "frontGap" not in settings:
+        settings["frontGap"] = settings["gap"]
+    if "gap" in settings and "cabinetGap" not in settings:
+        settings["cabinetGap"] = 0  # Old configs assumed carcass gap = 0
+
+    # Apply defaults for any remaining missing keys
     for key, value in DEFAULTS.items():
         settings.setdefault(key, value)
 
@@ -107,11 +125,15 @@ def _validate_cabinet(cab: dict, run_idx: int, section: str, cab_idx: int,
 def calculate_run_positions(run: dict, settings: dict) -> list[dict]:
     """Calculate x positions for each cabinet in a run (in mm).
 
+    Uses cabinetGap (carcass-to-carcass spacing) for positioning.
+    frontGap is used only for door/drawer front geometry (in geometry_builder).
+
     Returns list of dicts with cabinet config + computed x position.
     """
     positions = []
     x = 0
-    gap = settings.get("gap", 2)
+    # Use cabinetGap for carcass positioning (not frontGap)
+    gap = settings.get("cabinetGap", 0)
 
     for cab in run.get("base", []):
         positions.append({**cab, "x_mm": x, "level": "base"})
@@ -121,10 +143,14 @@ def calculate_run_positions(run: dict, settings: dict) -> list[dict]:
 
 
 def calculate_upper_positions(run: dict, settings: dict) -> list[dict]:
-    """Calculate x positions for upper cabinets in a run (in mm)."""
+    """Calculate x positions for upper cabinets in a run (in mm).
+
+    Uses cabinetGap (carcass-to-carcass spacing) for positioning.
+    """
     positions = []
     x = 0
-    gap = settings.get("gap", 2)
+    # Use cabinetGap for carcass positioning (not frontGap)
+    gap = settings.get("cabinetGap", 0)
 
     for cab in run.get("upper", []):
         positions.append({**cab, "x_mm": x, "level": "upper"})

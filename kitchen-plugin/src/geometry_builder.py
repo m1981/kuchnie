@@ -115,9 +115,13 @@ def _build_run(run: dict, settings: dict, run_idx: int,
     """Build a single run (wall segment).
 
     Returns (objects, end_x, end_y) where end position is in mm.
+
+    Uses cabinetGap for carcass positioning (not frontGap).
+    frontGap is used in _add_front for door/drawer spacing.
     """
     objects = []
-    gap = settings["gap"]
+    # Use cabinetGap for carcass positioning
+    cabinet_gap = settings.get("cabinetGap", 0)
     dx, dy = DIRECTIONS[direction]
     info = WALL_INFO[direction]
     ddx, ddy = info["depth"]
@@ -139,8 +143,8 @@ def _build_run(run: dict, settings: dict, run_idx: int,
             objects.append(obj)
             print(f"    base[{cab_idx}] {cab['type']}: "
                   f"pos=({x:.0f}, {y:.0f}) w={cab['width']}")
-        x += (cab["width"] + gap) * dx
-        y += (cab["width"] + gap) * dy
+        x += (cab["width"] + cabinet_gap) * dx
+        y += (cab["width"] + cabinet_gap) * dy
 
     # Upper cabinets
     ux, uy = start_x, start_y
@@ -154,8 +158,8 @@ def _build_run(run: dict, settings: dict, run_idx: int,
             )
             _rotate_for_direction(obj, direction)
             objects.append(obj)
-        ux += (cab["width"] + gap) * dx
-        uy += (cab["width"] + gap) * dy
+        ux += (cab["width"] + cabinet_gap) * dx
+        uy += (cab["width"] + cabinet_gap) * dy
 
     # Tall cabinets
     tx, ty = start_x, start_y
@@ -169,12 +173,12 @@ def _build_run(run: dict, settings: dict, run_idx: int,
             )
             _rotate_for_direction(obj, direction)
             objects.append(obj)
-        tx += (cab["width"] + gap) * dx
-        ty += (cab["width"] + gap) * dy
+        tx += (cab["width"] + cabinet_gap) * dx
+        ty += (cab["width"] + cabinet_gap) * dy
 
     # Countertop for base section
     if run.get("base"):
-        total_width = sum(c["width"] for c in run["base"]) + gap * (len(run["base"]) - 1)
+        total_width = sum(c["width"] for c in run["base"]) + cabinet_gap * (len(run["base"]) - 1)
         ct = _build_countertop(total_width, settings, run.get("countertop"))
         if ct:
             ct.location = (
@@ -188,7 +192,7 @@ def _build_run(run: dict, settings: dict, run_idx: int,
     # Calculate end position
     base_cabs = run.get("base", [])
     if base_cabs:
-        total = sum(c["width"] for c in base_cabs) + gap * (len(base_cabs) - 1)
+        total = sum(c["width"] for c in base_cabs) + cabinet_gap * (len(base_cabs) - 1)
         end_x = start_x + total * dx
         end_y = start_y + total * dy
     else:
@@ -283,9 +287,13 @@ def _create_box(name: str, w: float, d: float, h: float) -> bpy.types.Object:
 
 def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
                level: str, w: float, d: float, h: float) -> None:
-    """Add door/drawer front(s) to a cabinet."""
+    """Add door/drawer front(s) to a cabinet.
+
+    Uses frontGap for door/drawer spacing (not cabinetGap).
+    """
     cab_type = cab["type"]
-    gap = mm_to_m(settings.get("gap", 2))
+    # Use frontGap for door/drawer visual spacing
+    front_gap = mm_to_m(settings.get("frontGap", 2))
     front_thickness = 0.018
 
     single_door_types = {
@@ -299,16 +307,16 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
         _add_door_front(obj, w, h, front_thickness, cab, level)
 
     elif cab_type in double_door_types:
-        door_w = (w - gap) / 2
+        door_w = (w - front_gap) / 2
         _add_door_front(obj, door_w, h, front_thickness, cab, level,
                         x_offset=0)
         _add_door_front(obj, door_w, h, front_thickness, cab, level,
-                        x_offset=door_w + gap, name_suffix="_R")
+                        x_offset=door_w + front_gap, name_suffix="_R")
 
     elif cab_type in drawer_types:
         drawer_count = cab.get("drawers", 3)
         if isinstance(drawer_count, int):
-            drawer_h = (h - gap * (drawer_count - 1)) / drawer_count
+            drawer_h = (h - front_gap * (drawer_count - 1)) / drawer_count
             heights = [drawer_h] * drawer_count
         else:
             heights = [mm_to_m(hh) for hh in drawer_count]
@@ -316,14 +324,14 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
         z = 0
         for i, dh in enumerate(heights):
             _add_drawer_front(obj, w, dh, front_thickness, z, i)
-            z += dh + gap
+            z += dh + front_gap
 
     elif cab_type in drawer_door_types:
         drawer_h = mm_to_m(cab.get("drawerHeight", 150))
         _add_drawer_front(obj, w, drawer_h, front_thickness, 0, 0)
-        door_h = h - drawer_h - gap
+        door_h = h - drawer_h - front_gap
         _add_door_front(obj, w, door_h, front_thickness,
-                        cab, level, z_offset=drawer_h + gap)
+                        cab, level, z_offset=drawer_h + front_gap)
 
     elif cab_type == "corner-blind":
         blind_depth = mm_to_m(cab.get("blindDepth", 300))

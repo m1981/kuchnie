@@ -61,6 +61,24 @@ north (+Y) | west      | +X (east)       | +90° CCW
 **Critical:** The rotation makes the front face (at Y=0) point INTO the room.
 The depth (+Y) then extends away from the wall into the room.
 
+### Gap System
+
+European frameless kitchens have two distinct gap concepts:
+
+| Setting      | Purpose                     | Default | Usage                                     |
+| ------------ | --------------------------- | ------- | ----------------------------------------- |
+| `cabinetGap` | Space between carcass boxes | 0mm     | Carcass positioning, countertops, plinths |
+| `frontGap`   | Visible gap between fronts  | 2mm     | Door-to-door, drawer-to-drawer spacing    |
+
+**Why two settings?**
+
+- Carcasses are installed flush (0mm gap) for maximum storage
+- The visible 2–3mm gap is ONLY between door/drawer fronts for aesthetics
+- Countertops sit directly on carcasses (use `cabinetGap`)
+- Plinths are flush with carcass fronts
+
+**Backward compatibility:** Old configs using `"gap": 2` are automatically migrated to `"frontGap": 2` with `"cabinetGap": 0`.
+
 ### Layout Types
 
 - **I-shape:** 1 run, no corners
@@ -70,43 +88,25 @@ The depth (+Y) then extends away from the wall into the room.
 Corner cabinets are at the END of a run (or START for the connecting run).
 The next run's `turn` direction determines which way the layout turns.
 
-### Current Bug (Partially Fixed)
-
-The U-shape layout has **cabinets extending toward the wall instead of into
-the room**. The rotation and/or depth direction is still wrong for some runs.
-
-**What we've tried:**
-1. Changed box geometry from `(w, -d, h)` to `(w, d, h)` — depth now +Y
-2. Swapped north/south rotations — front should face correct direction
-3. OBJ export still shows negative Z for depth (OBJ axis convention?)
-
-**What to check:**
-1. Run the debug script: `blender --background --python scripts/debug_positions.py`
-2. Look at `obj.location` for each cabinet — verify positions match config
-3. Check `obj.rotation_euler` — verify rotations match direction table
-4. Open `output/meshes/u_shape.blend` in Blender and inspect visually
-5. Check if the `matrix_world` transforms are being applied correctly
-
 ### Files to Read First
 
-1. `src/geometry_builder.py` — mesh creation, rotation, positioning
-2. `src/validate_obj.py` — OBJ parsing and dimension checks
-3. `configs/u_shape.json` — U-shape layout config
-4. `docs/f02-kitchen-config-syntax.md` — config format specification
-5. `docs/thinking-european-kitchen-cabinets.md` — cabinet maker knowledge
+1. `src/config_parser.py` — JSON loading, validation, mm→m conversion
+2. `src/geometry_builder.py` — mesh creation, rotation, positioning
+3. `src/validators.py` — dimension, position, gap checks
+4. `configs/u_shape.json` — U-shape layout config (most complex)
+5. `docs/f02-kitchen-config-syntax.md` — config format specification
+6. `tests/test_p0_gap_semantics.py` — gap system contract tests
+7. `tests/test_p0_coordinate_system.py` — coordinate system contract tests
 
 ### Validation Pipeline
 
 ```bash
-# Unit tests (no Blender)
+# Unit tests (no Blender required)
 .venv/bin/python -m pytest tests/ -v
 
-# Generate + export
+# Generate + export (requires Blender)
 blender --background --python src/main.py -- configs/u_shape.json \
   --export-obj --export-blend --render-wireframe
-
-# Validate OBJ dimensions
-.venv/bin/python src/validate_obj.py output/meshes/u_shape.obj configs/u_shape.json
 
 # Open in Blender for visual check
 open output/meshes/u_shape.blend
@@ -121,13 +121,37 @@ open output/meshes/u_shape.blend
 5. **OBJ export swaps Y↔Z — always verify in Blender coordinates**
 6. **Countertops span the full run width + overhangs at ends**
 7. **Filler strips are at ends of runs, against walls**
+8. **`cabinetGap` for carcass spacing, `frontGap` for door/drawer spacing**
 
 ### European Kitchen Standards
 
 - Base cabinet: 720mm body + 120mm plinth = 840mm total
-- Wall cabinet: 600mm height, mounted at 1400mm from floor
+- Wall cabinet: 600-720mm height, mounted at 1400mm from floor
 - Depth: 560mm (base), 300mm (wall)
-- Gap between fronts: 2mm
+- Cabinet gap: 0mm (flush carcasses)
+- Front gap: 2mm (visible between doors/drawers)
 - Standard widths: 300, 400, 450, 500, 600, 800, 900, 1000, 1200mm
 - Corner blind depth: 300-400mm
 - Countertop: 30mm thick, 20mm front overhang, 30mm end overhang
+
+### Current Status
+
+**Implemented:**
+
+- Config parser with validation and backward compatibility
+- Geometry builder with direction/rotation system
+- Gap system with two distinct settings (cabinetGap, frontGap)
+- Position calculation for all layout types (I, L, U)
+- Material manager for Cycles rendering
+- Exporters (OBJ, GLTF, .blend, wireframe PNG)
+- Validators for dimensions, gaps, corners
+- Comprehensive test suite (62 tests passing)
+
+**Test Coverage:**
+
+- `test_config_parser.py` — parser and defaults
+- `test_positions.py` — position calculations and validation
+- `test_l_shape.py` — L-shape layout validation
+- `test_u_shape.py` — U-shape layout validation
+- `test_p0_gap_semantics.py` — gap system contract tests
+- `test_p0_coordinate_system.py` — coordinate system contract tests

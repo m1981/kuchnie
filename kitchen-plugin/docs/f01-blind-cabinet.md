@@ -1,13 +1,12 @@
 # F01 — Blind Corner Cabinet
 
-Status: **Design** · Target: `achm_kitchen_maker.py`
+Status: **Implemented** · Part of standalone kitchen generator
 
 ---
 
 ## Problem
 
-The kitchen maker supports diagonal corner cabinets (`Corner L` type 9,
-`Corner R` type 10) but lacks a **blind corner** — a rectangular cabinet
+The kitchen maker needed a **blind corner** cabinet — a rectangular cabinet
 where a portion extends behind the adjacent cabinet run, with the door
 only on the visible section.
 
@@ -19,161 +18,140 @@ and are essential for realistic kitchen layouts.
 ## Geometry
 
 ```
-        ┌─────────────────────── sx (width) ──────────────────────┐
-        │                                                          │
-        │  ┌── blind zone ──┐     ┌── visible zone ──┐            │
-        │  │                │     │                   │            │
-        │  │  (hidden behind│     │  Door here        │            │
-  blind │  │  adjacent cab) │     │                   │            │
-  depth │  │                │     │                   │            │
-        │  └────────────────┘     └───────────────────┘            │
-        │                                                          │
-        └──────────────────────────────────────────────────────────┘
-                                    sy (depth)
+        ┌─────────────────────── width ──────────────────────┐
+        │                                                     │
+        │  ┌── blind zone ──┐     ┌── visible zone ──┐       │
+        │  │                │     │                   │       │
+        │  │  (hidden behind│     │  Door here        │       │
+  blind │  │  adjacent cab) │     │                   │       │
+  depth │  │                │     │                   │       │
+        │  └────────────────┘     └───────────────────┘       │
+        │                                                     │
+        └─────────────────────────────────────────────────────┘
 ```
 
 **Key dimensions:**
 
-- `sx` — full cabinet width (including blind zone)
-- `sy` — cabinet depth (same as adjacent cabinets)
-- `blind_depth` — how far the hidden section extends
+- `width` — full cabinet width (including blind zone)
+- `blindDepth` — how far the hidden section extends
+- `blindSide` — which side the blind section is on (`"left"` or `"right"`)
 
-**Door width** = `sx - blind_depth - thickness - gap`
-
-Two orientations:
-
-- **Blind R** — door on the right, blind zone on the left
-- **Blind L** — door on the left, blind zone on the right
+**Door width** = `width - blindDepth - 0.001` (small offset for clearance)
 
 ---
 
-## Comparison with Existing Corner Types
+## Implementation
 
-| Aspect      | Corner L/R (9/10)         | Blind Corner (12/13)                |
-| ----------- | ------------------------- | ----------------------------------- |
-| Box shape   | Rectangular               | Rectangular                         |
-| Door style  | Diagonal, narrower        | Straight, offset                    |
-| Door width  | `sx - depth - thickness`  | `sx - blind_depth - thickness`      |
-| Hidden area | Door angled across corner | Box extends behind adjacent cabinet |
-| New param   | —                         | `blind_depth`                       |
+### Config Format
 
----
-
-## Changes
-
-### 1. `CabinetProperties` — New enum values + property
-
-```python
-# dType EnumProperty — add two new items:
-('12', "Blind Corner R", "Blind corner, door on right"),
-('13', "Blind Corner L", "Blind corner, door on left"),
-
-# New property:
-blind_depth: FloatProperty(
-    name='Blind depth',
-    min=0.001, max=10, default=0.30, precision=3,
-    description='Depth of the hidden section behind adjacent cabinet',
-)
+```json
+{
+    "type": "corner-blind",
+    "width": 900,
+    "blindDepth": 400,
+    "blindSide": "right",
+    "door": "left",
+    "shelves": 1,
+    "handle": { "type": "rail", "length": 160 }
+}
 ```
 
-### 2. `create_box()` — Door section
+| Property     | Type   | Default   | Description                        |
+| ------------ | ------ | --------- | ---------------------------------- |
+| `width`      | number | required  | Full cabinet width (mm)            |
+| `blindDepth` | number | 300       | Depth of hidden section (mm)       |
+| `blindSide`  | string | `"left"`  | Which side the blind section is on |
+| `door`       | string | `"right"` | Door opening direction             |
+| `shelves`    | number | 1         | Shelf count                        |
 
-Add a new branch for `doortype == "12"` / `"13"` in the Doors section
-(~line 960). Reuses existing `create_door()` with offset positioning:
+### Config Parser (`config_parser.py`)
 
 ```python
-if doortype == "12" or doortype == "13":
-    visible_width = sx - blind_depth - thickness - 0.001
+# Cabinet type registration
+CABINET_LEVELS = {
+    ...
+    "corner-blind": "base",
+    ...
+}
 
-    if doortype == "12":  # Blind R
-        mydoor = create_door(type_cabinet, objname + "_Door", thickness,
-                             visible_width, sz, "1", gf, mat, handle,
-                             handle_model, handle_x, handle_z, 0.001)
-        mydoor.location[0] = blind_depth + thickness
-    else:  # Blind L
-        mydoor = create_door(type_cabinet, objname + "_Door", thickness,
-                             visible_width, sz, "2", gf, mat, handle,
-                             handle_model, handle_x, handle_z, 0.001)
-        mydoor.location[0] = 0
-
-    mydoor.location[1] = -sy - 0.001
-    mydoor.parent = myobject
-    remove_doubles(mydoor)
-    set_normals(mydoor)
+# Validation
+if cab_type == "corner-blind":
+    bd = cab.get("blindDepth", 300)
+    if bd >= cab["width"]:
+        raise ValueError(
+            f"blindDepth ({bd}) must be < width ({cab['width']})"
+        )
 ```
 
-### 3. `generate_cabinets()` — Pass `blind_depth`
-
-Update the `create_box()` call (~line 660) to forward `blind_depth`:
+### Geometry Builder (`geometry_builder.py`)
 
 ```python
-self.cabinets[i].blind_depth  # new argument
-```
-
-### 4. `create_baseboard()` — Handle blind corner
-
-Add baseboard handling for types 12/13, extending the baseboard
-into the blind zone when `bL` or `bR` flags are set.
-
-### 5. `createunitsku()` — SKU generation
-
-```python
-# Front type:
-elif cabinet.dType == "12" or cabinet.dType == "13":
-    p2 = "B"  # blind corner
-
-# Door number:
-elif cabinet.dType == "12" or cabinet.dType == "13":
-    p3 = "01"
-
-# Door size:
-elif cabinet.dType == "12" or cabinet.dType == "13":
-    dwidth = cabinet.sX - cabinet.blind_depth - self.thickness - 0.001
-    p7 = "%06.3f" % dwidth
-```
-
-### 6. `add_cabinet()` — UI panel
-
-Show `blind_depth` only for blind corner types:
-
-```python
-if doortype == "12" or doortype == "13":
-    row.prop(cabinet, 'blind_depth')
+elif cab_type == "corner-blind":
+    blind_depth = mm_to_m(cab.get("blindDepth", 300))
+    door_w = w - blind_depth - 0.001
+    _add_door_front(obj, door_w, h, front_thickness, cab, level,
+                    x_offset=blind_depth + 0.001)
 ```
 
 ---
 
-## Scope
+## Placement Rules
 
-| Metric           | Value                                        |
-| ---------------- | -------------------------------------------- |
-| Files modified   | 1 (`achm_kitchen_maker.py`)                  |
-| New lines (est.) | 40–60                                        |
-| New dependencies | None (reuses `create_door`, `create_handle`) |
-| Blender version  | 3.x / 4.x                                    |
+1. Corner cabinets must be **first or last** in a `base` array
+2. The next run must specify a `turn` direction
+3. The `blindSide` determines which end is hidden:
+    - `"left"` — blind zone on left, door on right
+    - `"right"` — blind zone on right, door on left
+
+### Example: L-Shape with Blind Corner
+
+```json
+{
+    "runs": [
+        {
+            "label": "back wall",
+            "base": [
+                { "type": "base-door", "width": 600 },
+                {
+                    "type": "corner-blind",
+                    "width": 900,
+                    "blindDepth": 400,
+                    "blindSide": "right",
+                    "door": "left"
+                }
+            ]
+        },
+        {
+            "label": "left wall",
+            "turn": "left",
+            "base": [{ "type": "base-door", "width": 600 }]
+        }
+    ]
+}
+```
+
+---
+
+## Validation
+
+The validator checks:
+
+1. `blindDepth < width` — blind zone must be smaller than total width
+2. Corner cabinet is first or last in run
+3. Next run has `turn` direction specified
 
 ---
 
 ## Testing
 
-- [ ] `Blind Corner R`: door on right, blind zone left, full box width
-- [ ] `Blind Corner L`: door on left, blind zone right
-- [ ] Rotate 90° CW → position chains correctly with next cabinet
-- [ ] Rotate 180° → layout mirrored correctly
-- [ ] Baseboard extends into blind zone
-- [ ] Countertop covers full width including blind zone
-- [ ] SKU format: `FB1211...` (F=floor, B=blind, 12=type, 1=door, 1=handle)
-- [ ] Wall cabinet variant (`type_cabinet="2"`) works
-- [ ] Handle appears on correct side
-- [ ] Shelf count renders inside the full box
+```bash
+# Run corner-related tests
+.venv/bin/python -m pytest tests/test_l_shape.py tests/test_u_shape.py -v
+```
 
----
+Tests verify:
 
-## Design Decisions
-
-### Why new types 12/13 instead of a boolean on existing 9/10?
-
-- Keeps `dType` enum self-documenting — each value is a distinct geometry
-- Avoids adding conditional branches inside already-complex corner logic
-- Existing corner types (9/10) are diagonal and serve a different purpose
-- New types are easier to test in isolation
+- Corner cabinet is last in run (L-shape)
+- Corner cabinet is first in run (U-shape connecting run)
+- Turn direction is present after corner
+- blindDepth validation works correctly

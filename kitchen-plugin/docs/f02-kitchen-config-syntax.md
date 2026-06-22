@@ -65,7 +65,8 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 
   "wallMountHeight": 1400,
 
-  "gap": 2
+  "cabinetGap": 0,
+  "frontGap": 2
 }
 ```
 
@@ -83,7 +84,10 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 | `counterOverhangFront` | 20      | Countertop overhang past cabinet front      |
 | `counterOverhangEnd`   | 30      | Countertop overhang at open ends            |
 | `wallMountHeight`      | 1400    | Height from floor to bottom of wall cabinet |
-| `gap`                  | 2       | Gap between adjacent door/drawer fronts     |
+| `cabinetGap`           | 0       | Gap between carcass boxes (usually flush)   |
+| `frontGap`             | 2       | Visible gap between door/drawer fronts      |
+
+**Note on backward compatibility:** Old configs using `"gap": 2` will automatically migrate to `"frontGap": 2` with `"cabinetGap": 0`. The new settings take precedence if both are specified.
 
 ---
 
@@ -585,35 +589,59 @@ When `handle.type = "push"`:
 
 ## 8. Gap System
 
-### Default Gap
+### Two Types of Gap
 
-The global `gap` setting (default 2mm) applies between:
+European frameless kitchens have two distinct gap concepts:
 
-- Adjacent drawer fronts (in same cabinet)
-- Door and drawer front (in same cabinet)
-- Two doors (in double-door cabinet)
+| Setting      | Purpose                     | Typical Value | Example                        |
+| ------------ | --------------------------- | ------------- | ------------------------------ |
+| `cabinetGap` | Space between carcass boxes | 0mm (flush)   | Carcass-to-carcass spacing     |
+| `frontGap`   | Visible gap between fronts  | 2–3mm         | Door-to-door, drawer-to-drawer |
 
-### Per-Cabinet Gap Override
+**Why two settings?**
+
+- Carcasses are typically installed flush (0mm gap) for maximum storage
+- The visible 2–3mm gap is ONLY between door/drawer fronts for aesthetics
+- Countertops sit directly on carcasses (use cabinetGap)
+- Plinths are flush with carcass fronts
+
+### Default Settings
+
+```json
+"settings": {
+    "cabinetGap": 0,
+    "frontGap": 2
+}
+```
+
+### Per-Cabinet Front Gap Override
 
 ```json
 {
     "type": "base-drawers",
     "width": 600,
     "drawers": 3,
-    "gap": 3
+    "frontGap": 3
 }
 ```
 
-### What Has a Gap
+### What Uses Which Gap
 
-| Spacing                       | Gap? | Size  |
-| ----------------------------- | ---- | ----- |
-| Drawer front to drawer front  | yes  | 2–3mm |
-| Door to door (double cabinet) | yes  | 2–3mm |
-| Door to drawer (same cabinet) | yes  | 2–3mm |
-| Cabinet to cabinet (adjacent) | no   | 0mm   |
-| Countertop to countertop      | no   | 0mm   |
-| Plinth to plinth              | no   | 0mm   |
+| Spacing                       | Setting      | Typical |
+| ----------------------------- | ------------ | ------- |
+| Carcass to carcass            | `cabinetGap` | 0mm     |
+| Drawer front to drawer front  | `frontGap`   | 2–3mm   |
+| Door to door (double cabinet) | `frontGap`   | 2–3mm   |
+| Door to drawer (same cabinet) | `frontGap`   | 2–3mm   |
+| Countertop to countertop      | `cabinetGap` | 0mm     |
+| Plinth to plinth              | `cabinetGap` | 0mm     |
+
+### Backward Compatibility
+
+Old configs using `"gap": 2` are automatically migrated:
+
+- `"gap"` → `"frontGap": 2`
+- `"cabinetGap"` defaults to `0`
 
 ### Front Flush Alignment
 
@@ -678,7 +706,8 @@ Filler strips and corner cabinets are counted in the total.
         "plinthHeight": 120,
         "counterThickness": 30,
         "counterOverhangFront": 20,
-        "gap": 2
+        "cabinetGap": 0,
+        "frontGap": 2
     },
 
     "runs": [
@@ -772,7 +801,8 @@ Filler strips and corner cabinets are counted in the total.
         "plinthHeight": 120,
         "counterThickness": 30,
         "counterOverhangFront": 20,
-        "gap": 2
+        "cabinetGap": 0,
+        "frontGap": 2
     },
 
     "runs": [
@@ -890,7 +920,8 @@ Filler strips and corner cabinets are counted in the total.
         "plinthHeight": 120,
         "counterThickness": 30,
         "counterOverhangFront": 20,
-        "gap": 2
+        "cabinetGap": 0,
+        "frontGap": 2
     },
 
     "runs": [
