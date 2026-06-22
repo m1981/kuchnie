@@ -555,3 +555,10 @@ class FolderAssignRequest(BaseModel):
 class FolderReorderRequest(BaseModel):
     """Request body for PATCH /api/folders/reorder."""
     folder_ids: list[str] = Field(min_length=1)
+
+
+class FolderMoveSessionRequest(BaseModel):
+    """Request body for PATCH /api/folders/move-session."""
+    session_id: str
+    from_folder: str
+    to_folder: str

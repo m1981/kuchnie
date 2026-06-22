@@ -26,6 +26,7 @@ from src.schemas import (
     FolderAssignRequest,
     FolderCreateRequest,
     FolderListResponse,
+    FolderMoveSessionRequest,
     FolderReorderRequest,
     FolderResponse,
     FolderUpdateRequest,
@@ -71,6 +72,36 @@ async def reorder_folders(
 
     count = service.reorder_folders(request.folder_ids)
     return {"reordered": True, "count": count}
+
+
+@router.patch("/api/folders/move-session")
+async def move_session(
+    request: FolderMoveSessionRequest,
+    service: FolderService = Depends(get_folder_service),
+) -> dict:
+    """Atomically move a session from one folder to another."""
+    log.info(
+        "move_session_request",
+        session_id=request.session_id,
+        from_folder=request.from_folder,
+        to_folder=request.to_folder,
+    )
+
+    success = service.move_session(
+        request.from_folder, request.to_folder, request.session_id
+    )
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found in source folder",
+        )
+
+    return {
+        "moved": True,
+        "session_id": request.session_id,
+        "from_folder": request.from_folder,
+        "to_folder": request.to_folder,
+    }
 
 
 @router.get("/api/folders/{folder_id}", response_model=FolderResponse)

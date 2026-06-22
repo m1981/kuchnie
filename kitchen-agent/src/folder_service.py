@@ -146,6 +146,31 @@ class FolderService:
         logger.info("reorder_folders", count=len(folder_ids))
         return self._repo.reorder_folders(folder_ids)
 
+    def move_session(
+        self, from_folder: str, to_folder: str, session_id: str
+    ) -> bool:
+        """
+        Atomically move a session from one folder to another.
+
+        Single transaction — no intermediate state where the session
+        is in neither folder.
+
+        Args:
+            from_folder: Source folder UUID.
+            to_folder: Target folder UUID.
+            session_id: Session UUID.
+
+        Returns:
+            True on success, False if session not in source folder.
+        """
+        logger.info(
+            "move_session",
+            session_id=session_id,
+            from_folder=from_folder,
+            to_folder=to_folder,
+        )
+        return self._repo.move_session(from_folder, to_folder, session_id)
+
     def assign_session(self, folder_id: str, session_id: str) -> bool:
         """
         Assign a session to a folder.

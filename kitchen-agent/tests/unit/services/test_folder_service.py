@@ -334,6 +334,38 @@ class TestSessionAssignment:
 
         mock_repo.unassign_session.assert_called_once_with("folder-id", "session-id")
 
+    def test_move_session_calls_repo(
+        self, service: FolderService, mock_repo: MagicMock
+    ) -> None:
+        """Service delegates to repository."""
+        mock_repo.move_session.return_value = True
+
+        result = service.move_session("src-folder", "dst-folder", "session-id")
+
+        mock_repo.move_session.assert_called_once_with(
+            "src-folder", "dst-folder", "session-id"
+        )
+
+    def test_move_session_returns_true(
+        self, service: FolderService, mock_repo: MagicMock
+    ) -> None:
+        """Returns True on successful move."""
+        mock_repo.move_session.return_value = True
+
+        result = service.move_session("src", "dst", "s1")
+
+        assert result is True
+
+    def test_move_session_returns_false_when_not_in_source(
+        self, service: FolderService, mock_repo: MagicMock
+    ) -> None:
+        """Returns False when session not in source folder."""
+        mock_repo.move_session.return_value = False
+
+        result = service.move_session("src", "dst", "s1")
+
+        assert result is False
+
 
 # ---------------------------------------------------------------------------
 # get_folder_sessions

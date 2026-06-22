@@ -500,3 +500,163 @@ class TestGetSessionFolders:
         folder_ids = [f["id"] for f in result]
         assert folder1["id"] in folder_ids
         assert folder2["id"] in folder_ids
+
+
+# ---------------------------------------------------------------------------
+# Reorder
+# ---------------------------------------------------------------------------
+
+
+class TestReorderFolders:
+    """Test folder reordering."""
+
+    def test_reorder_folders_assigns_order_index(
+        self, folder_repo: SQLiteFolderRepository
+    ) -> None:
+        """Reorder assigns 0, 1, 2, … to given IDs."""
+        f1 = folder_repo.create_folder(name="A")
+        f2 = folder_repo.create_folder(name="B")
+        f3 = folder_repo.create_folder(name="C")
+
+        count = folder_repo.reorder_folders([f3["id"], f1["id"], f2["id"]])
+
+        assert count == 3
+        result = folder_repo.list_folders()
+        assert result[0]["name"] == "C"
+        assert result[0]["order_index"] == 0
+        assert result[1]["name"] == "A"
+        assert result[1]["order_index"] == 1
+        assert result[2]["name"] == "B"
+        assert result[2]["order_index"] == 2
+
+    def test_reorder_folders_returns_count(
+        self, folder_repo: SQLiteFolderRepository
+    ) -> None:
+        """Returns the number of folders reordered."""
+        f1 = folder_repo.create_folder(name="A")
+        f2 = folder_repo.create_folder(name="B")
+
+        count = folder_repo.reorder_folders([f2["id"], f1["id"]])
+
+        assert count == 2
+
+
+class TestMoveSession:
+    """Test atomic session move between folders."""
+
+    def test_move_session_removes_from_source(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Session is removed from source folder after move."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(src["id"], "s1")
+
+        folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        src_sessions = folder_repo.get_folder_sessions(src["id"])
+        assert len(src_sessions) == 0
+
+    def test_move_session_adds_to_target(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Session appears in target folder after move."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(src["id"], "s1")
+
+        folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        dst_sessions = folder_repo.get_folder_sessions(dst["id"])
+        assert len(dst_sessions) == 1
+        assert dst_sessions[0]["id"] == "s1"
+
+    def test_move_session_updates_counts(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Source count decrements, target count increments."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(src["id"], "s1")
+
+        folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        folders = folder_repo.list_folders()
+        counts = {f["name"]: f["session_count"] for f in folders}
+        assert counts["Source"] == 0
+        assert counts["Dest"] == 1
+
+    def test_move_session_not_in_source(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Returns False when session is not in source folder."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+
+        result = folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        assert result is False
+
+    def test_move_session_to_same_folder(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Moving to same folder is a no-op, returns False."""
+        folder = folder_repo.create_folder(name="Same")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(folder["id"], "s1")
+
+        result = folder_repo.move_session(folder["id"], folder["id"], "s1")
+
+        assert result is False
+        sessions = folder_repo.get_folder_sessions(folder["id"])
+        assert len(sessions) == 1
+
+    def test_move_session_already_in_target(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Moving to a folder that already has the session: removes from source,
+        duplicate in target is handled by INSERT OR IGNORE."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(src["id"], "s1")
+        folder_repo.assign_session(dst["id"], "s1")
+
+        result = folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        assert result is True
+        assert len(folder_repo.get_folder_sessions(src["id"])) == 0
+        assert len(folder_repo.get_folder_sessions(dst["id"])) == 1
+
+    def test_move_session_is_atomic(
+        self,
+        folder_repo: SQLiteFolderRepository,
+        session_repo: SQLiteSessionRepository,
+    ) -> None:
+        """Both operations happen in a single transaction."""
+        src = folder_repo.create_folder(name="Source")
+        dst = folder_repo.create_folder(name="Dest")
+        _seed_session(session_repo, "s1", "Session")
+        folder_repo.assign_session(src["id"], "s1")
+
+        # Move and verify both sides updated
+        folder_repo.move_session(src["id"], dst["id"], "s1")
+
+        assert len(folder_repo.get_folder_sessions(src["id"])) == 0
+        assert len(folder_repo.get_folder_sessions(dst["id"])) == 1

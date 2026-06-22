@@ -364,3 +364,76 @@ class TestGetFolderSessions:
         response = client.get("/api/folders/nonexistent/sessions")
 
         assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# PATCH /api/folders/move-session
+# ---------------------------------------------------------------------------
+
+
+class TestMoveSession:
+    """Test atomic session move between folders."""
+
+    def test_returns_200_on_success(
+        self, client: TestClient, mock_service: MagicMock
+    ) -> None:
+        """Returns 200 on successful move."""
+        mock_service.move_session.return_value = True
+
+        response = client.patch(
+            "/api/folders/move-session",
+            json={
+                "session_id": "s1",
+                "from_folder": "src-id",
+                "to_folder": "dst-id",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["moved"] is True
+        assert data["from_folder"] == "src-id"
+        assert data["to_folder"] == "dst-id"
+
+    def test_returns_404_when_not_in_source(
+        self, client: TestClient, mock_service: MagicMock
+    ) -> None:
+        """Returns 404 when session is not in source folder."""
+        mock_service.move_session.return_value = False
+
+        response = client.patch(
+            "/api/folders/move-session",
+            json={
+                "session_id": "s1",
+                "from_folder": "src-id",
+                "to_folder": "dst-id",
+            },
+        )
+
+        assert response.status_code == 404
+
+    def test_missing_fields_returns_422(self, client: TestClient) -> None:
+        """Missing required fields returns 422."""
+        response = client.patch(
+            "/api/folders/move-session",
+            json={"session_id": "s1"},
+        )
+
+        assert response.status_code == 422
+
+    def test_delegates_to_service(
+        self, client: TestClient, mock_service: MagicMock
+    ) -> None:
+        """Endpoint delegates to service with correct args."""
+        mock_service.move_session.return_value = True
+
+        client.patch(
+            "/api/folders/move-session",
+            json={
+                "session_id": "s1",
+                "from_folder": "src",
+                "to_folder": "dst",
+            },
+        )
+
+        mock_service.move_session.assert_called_once_with("src", "dst", "s1")

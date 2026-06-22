@@ -172,6 +172,45 @@ class SQLiteFolderRepository:
             conn.commit()
         return len(folder_ids)
 
+    def move_session(
+        self, from_folder: str, to_folder: str, session_id: str
+    ) -> bool:
+        """Atomically move a session from one folder to another.
+
+        Both the DELETE (from source) and INSERT (into target) happen in a
+        single transaction — there is no intermediate state where the session
+        is in neither folder.
+
+        Returns True on success, False if the session is not in the source
+        folder or if source == target.
+        """
+        if from_folder == to_folder:
+            return False
+
+        with self.db.get_connection() as conn:
+            # Check the session is actually in the source folder
+            cursor = conn.execute(
+                "SELECT 1 FROM session_folders WHERE folder_id = ? AND session_id = ?",
+                (from_folder, session_id),
+            )
+            if cursor.fetchone() is None:
+                return False
+
+            # Atomic: delete from source + insert into target
+            now = datetime.now().isoformat()
+            conn.execute(
+                "DELETE FROM session_folders WHERE folder_id = ? AND session_id = ?",
+                (from_folder, session_id),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO session_folders (folder_id, session_id, assigned_at) "
+                "VALUES (?, ?, ?)",
+                (to_folder, session_id, now),
+            )
+            conn.commit()
+
+        return True
+
     # ── Session Assignment ───────────────────────────────────────────
 
     def assign_session(self, folder_id: str, session_id: str) -> bool:

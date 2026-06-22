@@ -127,9 +127,10 @@
           ondrop: async (payload, target) => {
             if (payload.type === "session" && target.type === "folder") {
               if (payload.sourceFolderId && payload.sourceFolderId !== target.id) {
-                await folderStore.unassignSession(payload.sourceFolderId, payload.id);
-              }
-              if (payload.sourceFolderId !== target.id) {
+                // Atomic move: single transaction, no intermediate orphan state
+                await folderStore.moveSession(payload.sourceFolderId, target.id, payload.id);
+              } else if (!payload.sourceFolderId) {
+                // From history (not in any folder): just assign
                 await folderStore.assignSession(target.id, payload.id);
               }
             }

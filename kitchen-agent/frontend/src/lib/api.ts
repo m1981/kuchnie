@@ -856,4 +856,24 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ folder_ids: folderIds }),
     }),
+
+  /**
+   * PATCH /api/folders/move-session
+   * Atomically move a session from one folder to another.
+   * Single transaction — no intermediate state where session is in neither folder.
+   */
+  moveSessionBetweenFolders: (
+    fromFolder: string,
+    toFolder: string,
+    sessionId: string,
+  ): Promise<{ moved: boolean; session_id: string; from_folder: string; to_folder: string }> =>
+    request("/api/folders/move-session", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: sessionId,
+        from_folder: fromFolder,
+        to_folder: toFolder,
+      }),
+    }),
 };

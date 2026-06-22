@@ -223,6 +223,42 @@ class FolderStore {
     }
   }
 
+  // ── Atomic Move ───────────────────────────────────────────────────────
+
+  /**
+   * Atomically move a session from one folder to another.
+   * Uses a single backend transaction — no intermediate state where
+   * the session is in neither folder.
+   *
+   * Optimistic: updates both folder counts locally, rolls back on failure.
+   */
+  async moveSession(fromFolder: string, toFolder: string, sessionId: string): Promise<boolean> {
+    const previous = this.folders;
+
+    // Optimistic: decrement source, increment target
+    this.folders = this.folders.map((f) => {
+      if (f.id === fromFolder) return { ...f, session_count: Math.max(0, f.session_count - 1) };
+      if (f.id === toFolder) return { ...f, session_count: f.session_count + 1 };
+      return f;
+    });
+    this.pendingOps.set(sessionId, { type: "move", targetId: toFolder });
+
+    try {
+      await api.moveSessionBetweenFolders(fromFolder, toFolder, sessionId);
+      // Invalidate both caches
+      this.invalidateSessions(fromFolder);
+      this.invalidateSessions(toFolder);
+      return true;
+    } catch (e) {
+      this.folders = previous; // rollback
+      const msg = e instanceof Error ? e.message : String(e);
+      this.showError(`Move failed: ${msg}`);
+      return false;
+    } finally {
+      this.pendingOps.delete(sessionId);
+    }
+  }
+
   // ── Session Assignment ─────────────────────────────────────────────────
 
   async assignSession(folderId: string, sessionId: string): Promise<boolean> {
