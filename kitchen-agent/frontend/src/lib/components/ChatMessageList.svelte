@@ -136,12 +136,10 @@
 			aria-label={msg.role === 'user' ? 'User message' : 'Assistant message'}
 		>
 			<div
-				class={msg.role === 'user'
-					? 'w-full rounded-xl bg-ink/5 px-4 py-3 text-ink shadow-sm'
-					: 'w-full rounded-xl p-4'}
+				class="flex w-full flex-col gap-2 rounded-xl p-4 {msg.role === 'user' ? 'bg-ink/5' : ''}"
 			>
 				<!-- Role label + badges + action buttons -->
-				<div class="mb-2 flex items-center justify-between gap-3">
+				<div class="flex items-center justify-between gap-3">
 					<div class="flex items-center gap-2">
 						<p
 							class={msg.role === 'user'
@@ -197,7 +195,7 @@
 
 				<!-- User image previews -->
 				{#if msg.role === 'user' && msg.images && msg.images.length > 0}
-					<div class="mb-2 flex flex-wrap gap-2">
+					<div class="flex flex-wrap gap-2">
 						{#each msg.images as imgUrl, i (i)}
 							<img
 								src={imgUrl}
@@ -210,7 +208,7 @@
 
 				<!-- Context file badges — shown on user messages that had files injected -->
 				{#if msg.role === 'user' && msg.context_files && msg.context_files.length > 0}
-					<div class="mb-2 flex flex-wrap gap-1.5">
+					<div class="flex flex-wrap gap-1.5">
 						{#each msg.context_files as filename (filename)}
 							<span
 								title="Context file injected: {filename}"
@@ -241,7 +239,7 @@
 
 				<!-- Tool logs -->
 				{#if msg.role === 'assistant' && msg.tools && msg.tools.length > 0 && !isEditing}
-					<div class="mt-4 space-y-2 border-t border-line pt-3">
+					<div class="space-y-2 border-t border-line pt-3">
 						<p class="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Tools used</p>
 
 						{#each msg.tools as tool, toolIndex (`${tool.name}-${toolIndex}`)}

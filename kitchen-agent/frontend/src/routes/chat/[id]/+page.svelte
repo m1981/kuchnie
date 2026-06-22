@@ -342,8 +342,8 @@
 			/>
 
 			<!-- Chat scroll area -->
-			<section class="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-				<div class="mx-auto max-w-5xl space-y-5">
+			<section class="mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto px-4 py-5 md:px-6">
+				<div class="flex flex-col gap-6">
 					<!-- Fork status pill -->
 					{#if chatStore.forkStatus}
 						<p class="rounded-md border border-line bg-panel px-3 py-2 text-xs text-muted">

@@ -80,8 +80,8 @@
 	}
 </script>
 
-<footer class="composer-footer">
-	<div class="composer-container">
+<footer class="px-4 pb-3">
+	<div class="mx-auto max-w-3xl">
 		<!-- Pasted image previews -->
 		{#if chatStore.pastedImages.length > 0}
 			<div class="mb-2 flex flex-wrap gap-2">
@@ -106,7 +106,7 @@
 
 		<!-- Context files strip -->
 		{#if chatStore.contextFiles.length > 0}
-			<div class="flex flex-wrap items-center gap-1.5 px-3 pt-3 pb-2">
+			<div class="flex flex-wrap items-center gap-1.5 px-4 pt-3 pb-2">
 				<span class="text-xs text-muted">📎 Will inject:</span>
 				{#each chatStore.contextFiles as path (path)}
 					<span
@@ -131,9 +131,11 @@
 		<TokenIndicator messageText={currentMessage} />
 
 		<!-- Main composer box -->
-		<div class="composer-box">
+		<div
+			class="rounded-[20px] bg-panel shadow-[0_0.25rem_1.25rem_rgba(39,35,31,0.08),0_0_0_0.5px_rgba(222,214,202,0.3)] transition-shadow focus-within:shadow-[0_0.25rem_1.25rem_rgba(39,35,31,0.12),0_0_0_0.5px_rgba(138,105,57,0.4)] hover:shadow-[0_0.25rem_1.25rem_rgba(39,35,31,0.1),0_0_0_0.5px_rgba(222,214,202,0.5)]"
+		>
 			<!-- Textarea row -->
-			<div class="textarea-row">
+			<div class="px-4 pt-3">
 				<textarea
 					bind:this={textareaEl}
 					bind:value={currentMessage}
@@ -143,6 +145,8 @@
 					data-testid="chat-input"
 					placeholder="Ask about layouts, materials, fittings, assembly… or paste an image"
 					rows="1"
+					class="w-full resize-none border-none bg-transparent text-sm leading-6 text-ink outline-none placeholder:text-muted"
+					style="min-height: 21px; max-height: 210px;"
 				></textarea>
 			</div>
 
@@ -159,66 +163,3 @@
 		</div>
 	</div>
 </footer>
-
-<style>
-	/* ── Footer container ─────────────────────────────────────────────── */
-
-	.composer-footer {
-		background: transparent;
-		padding: 8px 16px 12px;
-	}
-
-	.composer-container {
-		max-width: 768px;
-		margin: 0 auto;
-	}
-
-	/* ── Composer box ─────────────────────────────────────────────────── */
-
-	.composer-box {
-		border: 1px solid transparent;
-		border-radius: 20px;
-		background: var(--color-panel);
-		box-shadow:
-			0 0.25rem 1.25rem rgba(39, 35, 31, 0.08),
-			0 0 0 0.5px rgba(222, 214, 202, 0.3);
-		transition: box-shadow 0.2s;
-	}
-
-	.composer-box:hover {
-		box-shadow:
-			0 0.25rem 1.25rem rgba(39, 35, 31, 0.1),
-			0 0 0 0.5px rgba(222, 214, 202, 0.5);
-	}
-
-	.composer-box:focus-within {
-		box-shadow:
-			0 0.25rem 1.25rem rgba(39, 35, 31, 0.12),
-			0 0 0 0.5px rgba(138, 105, 57, 0.4);
-	}
-
-	/* ── Textarea row ─────────────────────────────────────────────────── */
-
-	.textarea-row {
-		padding: 12px 16px 0;
-	}
-
-	.textarea-row textarea {
-		width: 100%;
-		min-height: 21px;
-		max-height: 210px;
-		resize: none;
-		border: none;
-		outline: none;
-		background: transparent;
-		font-size: 14px;
-		line-height: 24px;
-		color: #1f1f1f;
-		padding: 0;
-		font-family: inherit;
-	}
-
-	.textarea-row textarea::placeholder {
-		color: #80868b;
-	}
-</style>
