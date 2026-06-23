@@ -42,8 +42,9 @@ Read in this order:
 
 Read:
 
-1. **[architecture.md](architecture.md)** — Manifest schema and validation
-2. **[3d-format-strategy.md](3d-format-strategy.md)** — Why manifest is primary output
+1. **[architecture.md](architecture.md)** — Architecture, manifest schema, validation pipeline
+2. **[../ROADMAP.md](../ROADMAP.md)** — Current status and what's next
+3. **[3d-format-strategy.md](3d-format-strategy.md)** — Why manifest is primary output
 
 ### For CAD/Kitchen Domain Reference
 
@@ -58,16 +59,16 @@ Read:
 
 ## File Index
 
-| File                            | Purpose                         | Audience          |
-| ------------------------------- | ------------------------------- | ----------------- |
-| `README.md`                     | This file — reading guide       | Everyone          |
-| `architecture.md`               | SOLID architecture overview     | Developers        |
-| `config-syntax.md`              | JSON config syntax reference    | Developers, Users |
-| `wall-centric-model.md`         | Wall-centric positioning model  | Developers        |
-| `llm-context.md`                | LLM persona and project context | AI Assistants     |
-| `european-kitchen-standards.md` | European kitchen standards      | Domain Experts    |
-| `cad-principles-part1.md`       | CAD principles (reference)      | Developers        |
-| `cad-principles-part2.md`       | CAD principles (reference)      | Developers        |
+| File                    | Purpose                        | Audience          |
+| ----------------------- | ------------------------------ | ----------------- |
+| `README.md`             | This file — reading guide      | Everyone          |
+| `architecture.md`       | SOLID architecture overview    | Developers        |
+| `config-syntax.md`      | JSON config syntax reference   | Developers, Users |
+| `wall-centric-model.md` | Wall-centric positioning model | Developers        |
+
+| `european-kitchen-standards.md` | European kitchen standards | Domain Experts |
+| `cad-principles-part1.md` | CAD principles (reference) | Developers |
+| `cad-principles-part2.md` | CAD principles (reference) | Developers |
 
 ---
 
@@ -161,7 +162,11 @@ When adding new documentation:
 
 ## Current Status
 
-- **Tests:** 332+ passing, 17 skipped (bpy required)
+Run `make test` to verify all tests pass.
+
+See [ROADMAP.md](../ROADMAP.md) for what's done and what's next.
+See [CHANGELOG.md](../CHANGELOG.md) for recent changes.
+
 - **Architecture:** Manifest-first with SOLID layered design
 - **Config Version:** 1.1 (with backward compatibility for 1.0)
 - **Manifest Version:** 2.0 (primary validation output)
