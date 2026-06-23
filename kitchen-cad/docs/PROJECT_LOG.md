@@ -187,18 +187,16 @@ Oficjalna dokumentacja Blum jest rozproszona po katalogach PDF. To jest **kompil
 
 ## 📊 Metryki projektu
 
-| Wartość                         | Liczba        |
-| ------------------------------- | ------------- |
-| Pliki DXF wygenerowane          | 4             |
-| Otwory System 32 w jednym pliku | 44            |
-| Otwory LEGRABOX w jednym pliku  | 23            |
-| Otwory pod kołki                | 6             |
-| Warstwy DXF                     | 7             |
-| Typy szuflad LEGRABOX           | 5 (N/M/K/C/F) |
-| Linie kodu generatora           | ~350          |
+| Wartość                | Status          |
+| ---------------------- | --------------- |
+| Pliki DXF wygenerowane | 4 (example)     |
+| Typy szuflad LEGRABOX  | 5 (N/M/K/C/F)   |
+| Test suite             | Run `make test` |
 
 ---
 
-**Ostatnia aktualizacja:** 2026-06-17
+**Ostatnia aktualizacja:** 2026-06-23
 **Autor:** Kitchen CAD Project
-**Status:** W trakcie rozwoju
+**Status:** Phase 2 features completed
+
+_See [ROADMAP.md](../ROADMAP.md) and [CHANGELOG.md](../CHANGELOG.md) for current status._

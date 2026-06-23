@@ -1,8 +1,12 @@
 # kitchen-cad — dokumentacja projektowa
 
-> **Wersja:** 1.0 (Faza 1 — completed)
-> **Data:** 2026-06-17
-> **Status:** 75 testów, 96% coverage, CSV generowanie działa
+> **Wersja:** 2.0
+> **Data:** 2026-06-23
+> **Status:** Phase 1 + Phase 2 features completed
+
+---
+
+> **Note:** Run `make test` to verify all tests pass. Run `make coverage` for current coverage report.
 
 ---
 
@@ -59,42 +63,37 @@ Walidacja z reference files   Wysyłka do CNC
 
 ## 2. Architektura
 
+> **For detailed architecture diagrams and component descriptions, see [architecture.md](architecture.md).**
+
+### Quick Overview
+
 ```
 kitchen-cad/
-├── pyproject.toml
-├── example_generate.py               # przykład użycia end-to-end
+├── src/kitchen_cad/          # Core library
+│   ├── models.py             # Pydantic models
+│   ├── panel_calculator.py   # Panel dimensions
+│   ├── drill_engine.py       # Drill positions
+│   └── csv_generator.py      # CSV output
 │
-├── src/kitchen_cad/
-│   ├── models.py                     # modele Pydantic (91 linii)
-│   ├── panel_calculator.py           # wymiary formatek (58 linii)
-│   ├── drill_engine.py               # pozycje otworów (72 linii)
-│   └── csv_generator.py              # CSV output (29 linii)
+├── tests/                    # Test suite
+│   ├── unit/                 # Unit tests
+│   ├── integration/          # Integration tests
+│   └── e2e/                  # End-to-end tests
 │
-├── tests/                            # 75 testów, 96% coverage
-│   ├── conftest.py                   # fixtures (base_door, base_drawer, wall)
-│   ├── test_models.py                # walidacja Pydantic
-│   ├── test_panel_calculator.py      # wymiary formatek
-│   ├── test_drill_engine.py          # System 32, Blum, uchwyty
-│   ├── test_csv_generator.py         # struktura CSV
-│   └── test_compare.py              # narzędzia porównawcze
-│
-└── output/
-    ├── demo_kitchen/                 # przykładowe wygenerowane pliki
-    │   ├── ciecie.csv
-    │   └── oklejanie.csv
-    └── reference/                    # pliki referencyjne z Corpus (TBD)
+└── output/                   # Generated files
 ```
 
-### Pipeline przetwarzania
+### Pipeline Overview
 
 ```python
-spec = CorpusSpec(...)                 # 1. Definicja korpusu
-panels = calculate_panels(spec)        # 2. Oblicz formatki
-panels = apply_all_drilling(panels, spec)  # 3. Dodaj nawiercy
-generate_cutting_csv(panels, path)     # 4. CSV cięcie
-generate_edging_csv(panels, path)      # 5. CSV oklejanie
-# generate_dxf(panels, path)           # 6. DXF (Faza 2)
+spec = CorpusSpec(...)                      # 1. Define corpus
+panels = calculate_panels(spec)             # 2. Calculate panels
+panels = apply_all_drilling(panels, spec)   # 3. Add drill points
+generate_cutting_csv(panels, path)          # 4. CSV cutting list
+generate_edging_csv(panels, path)           # 5. CSV edge banding
 ```
+
+> Run `make test` to verify all tests pass.
 
 ---
 
@@ -621,27 +620,9 @@ TOTAL                              250    11    96%
 - [x] Generator CSV cięcie
 - [x] Generator CSV oklejanie
 - [x] Narzędzia porównawcze (CSV + DXF)
-- [x] 75 testów, 96% coverage
+- [x] Test suite (run `make test` for current count)
 
-### Faza 2 (planowana)
-
-- [ ] Generator DXF z warstwami (ezdxf)
-    - Warstwa `CIECIE` (czerwona) — kontury formatek
-    - Warstwa `WIERCENIE` (zielona) — otwory jako okręgi
-    - Warstwa `OPIS` (szara) — wymiary, nazwy
-- [ ] YAML loader (definicje korpusów w plikach)
-- [ ] Hettich Sensys (screw_spacing=52mm)
-- [ ] Minifix / cam-lock (∅15mm)
-- [ ] Kołki łączące (∅8mm)
-- [ ] Prowadnice szufladowe (Blum METABOX, TANDEM, LEGRABOX)
-
-### Faza 3 (przyszłość)
-
-- [ ] Streamlit UI (wizualizacja korpusu w przeglądarce)
-- [ ] Import z Corpus LTR (CSV)
-- [ ] Optymalizacja rozkroju (minimalizacja odpadów)
-- [ ] Etykiety z kodami kreskowymi
-- [ ] Integracja z e-rozkroj (FastCut API)
+> **For current roadmap and planned features, see [ROADMAP.md](../ROADMAP.md).**
 
 ---
 
@@ -722,4 +703,5 @@ for p in panels:
 ---
 
 _Dokument wygenerowany automatycznie na podstawie kodu źródłowego._
-_Ostatnia aktualizacja: 2026-06-17_
+_Ostatnia aktualizacja: 2026-06-23_
+_Dla aktualnego roadmapy patrz [ROADMAP.md](../ROADMAP.md)_

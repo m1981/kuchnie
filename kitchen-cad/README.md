@@ -5,6 +5,17 @@
 Generator parametryzowanych plików DXF dla produkcji mebli kuchennych z CNC.
 Zgodny z europejskimi standardami: System 32, Blum LEGRABOX, BLUMOTION.
 
+## Dokumentacja
+
+| Dokument                                                     | Opis                           |
+| ------------------------------------------------------------ | ------------------------------ |
+| [ROADMAP.md](ROADMAP.md)                                     | Plan rozwoju projektu          |
+| [CHANGELOG.md](CHANGELOG.md)                                 | Historia zmian                 |
+| [docs/architecture.md](docs/architecture.md)                 | Architektura systemu           |
+| [docs/DESIGN.md](docs/DESIGN.md)                             | Dokumentacja projektowa        |
+| [docs/LEGRABOX_SPEC.md](docs/LEGRABOX_SPEC.md)               | Specyfikacja LEGRABOX          |
+| [docs/poradnik-kompleksowy.md](docs/poradnik-kompleksowy.md) | Kompleksowy poradnik meblarski |
+
 ## Struktura
 
 ```
