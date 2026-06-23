@@ -26,6 +26,7 @@ blender --background --python src/main.py -- configs/l_shape.json --validate
 ```
 
 This produces:
+
 - `output/meshes/l_shape_manifest.json` — Primary manifest (always)
 - `output/meshes/l_shape.blend` — Visual inspection (if `--export-blend`)
 
@@ -36,6 +37,7 @@ python scripts/validate_manifest.py output/meshes/l_shape_manifest.json
 ```
 
 Output:
+
 ```
 MANIFEST VALIDATION REPORT
 ================================================================================
@@ -62,6 +64,7 @@ python scripts/summarize_manifest.py output/meshes/l_shape_manifest.json
 ```
 
 Output:
+
 ```
 Kitchen: L-shape
 Layout: 2 runs, 12 cabinets
@@ -96,31 +99,31 @@ The manifest follows the schema defined in `schemas/manifest_v2.schema.json`.
 
 ### Key Fields
 
-| Field | Type | Description |
-|---|---|---|
-| `format` | string | Always `"kitchen-geometry-manifest"` |
-| `version` | string | Always `"2.0"` |
-| `units` | string | Always `"meters"` |
-| `coordinate_system` | object | Z-up, right-hand |
-| `settings` | object | Kitchen settings (mm values) |
-| `layout` | object | Run metadata, directions, turns |
-| `objects` | array | All geometry objects |
-| `validation_summary` | object | Pass/fail counts and issues |
+| Field                | Type   | Description                          |
+| -------------------- | ------ | ------------------------------------ |
+| `format`             | string | Always `"kitchen-geometry-manifest"` |
+| `version`            | string | Always `"2.0"`                       |
+| `units`              | string | Always `"meters"`                    |
+| `coordinate_system`  | object | Z-up, right-hand                     |
+| `settings`           | object | Kitchen settings (mm values)         |
+| `layout`             | object | Run metadata, directions, turns      |
+| `objects`            | array  | All geometry objects                 |
+| `validation_summary` | object | Pass/fail counts and issues          |
 
 ### Object Fields
 
-| Field | Type | Description |
-|---|---|---|
-| `name` | string | Unique object name |
-| `classification` | string | carcass, door_front, back_panel, etc. |
-| `level` | string | base, upper, tall |
-| `parent` | string/null | Parent object name |
-| `transform.location_m` | [x,y,z] | Position in meters |
-| `local_dimensions_mm` | [w,d,h] | Object dimensions in mm |
-| `world_bounds` | object | World-space bounding box |
-| `vertex_count` | int | Number of vertices |
-| `face_count` | int | Number of faces |
-| `validation` | object | Inline pass/fail checks |
+| Field                  | Type        | Description                           |
+| ---------------------- | ----------- | ------------------------------------- |
+| `name`                 | string      | Unique object name                    |
+| `classification`       | string      | carcass, door_front, back_panel, etc. |
+| `level`                | string      | base, upper, tall                     |
+| `parent`               | string/null | Parent object name                    |
+| `transform.location_m` | [x,y,z]     | Position in meters                    |
+| `local_dimensions_mm`  | [w,d,h]     | Object dimensions in mm               |
+| `world_bounds`         | object      | World-space bounding box              |
+| `vertex_count`         | int         | Number of vertices                    |
+| `face_count`           | int         | Number of faces                       |
+| `validation`           | object      | Inline pass/fail checks               |
 
 ---
 
@@ -128,18 +131,18 @@ The manifest follows the schema defined in `schemas/manifest_v2.schema.json`.
 
 The manifest validator checks:
 
-| Check | Severity | Description |
-|---|---|---|
-| **Dimension mismatch** | error | Actual ≠ expected (within 2mm tolerance) |
-| **Object overlap** | error | World bounds intersect |
-| **Zero dimensions** | error | Width/depth/height is ~0mm |
-| **Vertex count** | warning | Wrong count for construction type |
-| **Face count** | warning | Wrong count for construction type |
-| **Standard widths** | warning | Not a European standard width |
-| **Run continuity** | error | End of one run ≠ start of next |
-| **Direction mismatch** | error | Turn doesn't produce expected direction |
-| **Back thickness** | warning | Back panel too thick |
-| **Front thickness** | warning | Front panel too thin |
+| Check                  | Severity | Description                              |
+| ---------------------- | -------- | ---------------------------------------- |
+| **Dimension mismatch** | error    | Actual ≠ expected (within 2mm tolerance) |
+| **Object overlap**     | error    | World bounds intersect                   |
+| **Zero dimensions**    | error    | Width/depth/height is ~0mm               |
+| **Vertex count**       | warning  | Wrong count for construction type        |
+| **Face count**         | warning  | Wrong count for construction type        |
+| **Standard widths**    | warning  | Not a European standard width            |
+| **Run continuity**     | error    | End of one run ≠ start of next           |
+| **Direction mismatch** | error    | Turn doesn't produce expected direction  |
+| **Back thickness**     | warning  | Back panel too thick                     |
+| **Front thickness**    | warning  | Front panel too thin                     |
 
 ---
 
@@ -154,6 +157,7 @@ config → Blender → OBJ/glTF → parse scripts → guess units → compare �
 ```
 
 Problems:
+
 - OBJ has no units (hardcoded `*1000`)
 - Coordinate system detection is fragile guesswork
 - Multi-object index remapping bug
@@ -168,6 +172,7 @@ config → Blender → JSON manifest → validator → report
 ```
 
 Benefits:
+
 - Units explicit: `"units": "meters"`
 - Coordinate system documented once
 - Local + world coordinates, exact transforms
@@ -182,15 +187,15 @@ Benefits:
 
 The following scripts were removed as part of the manifest-first migration:
 
-| Script | Replaced By |
-|---|---|
-| `analyze_reference_obj.py` | `scripts/validate_manifest.py` |
-| `convert_obj_to_gltf.py` | Not needed (manifest is direct) |
-| `analyze_gltf_v2.py` | `scripts/validate_manifest.py` |
-| `compare_with_reference.py` | Inline validation in manifest |
-| `validate_obj.py` | `scripts/validate_manifest.py` |
-| `src/geometry_inspector.py` | `src/geometry_manifest.py` |
-| `src/geometry_validator.py` | `src/manifest_validator.py` |
+| Script                      | Replaced By                     |
+| --------------------------- | ------------------------------- |
+| `analyze_reference_obj.py`  | `scripts/validate_manifest.py`  |
+| `convert_obj_to_gltf.py`    | Not needed (manifest is direct) |
+| `analyze_gltf_v2.py`        | `scripts/validate_manifest.py`  |
+| `compare_with_reference.py` | Inline validation in manifest   |
+| `validate_obj.py`           | `scripts/validate_manifest.py`  |
+| `src/geometry_inspector.py` | `src/geometry_manifest.py`      |
+| `src/geometry_validator.py` | `src/manifest_validator.py`     |
 
 ---
 

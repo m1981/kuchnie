@@ -69,6 +69,7 @@ Target:
 ```
 
 **What to implement:**
+
 - Material catalog JSON schema (`schemas/material_catalog.schema.json`)
 - PBR texture loading (color, roughness, normal/bump maps)
 - Material assignment by component type (carcass, front, back, counter)
@@ -92,6 +93,7 @@ Scene components:
 ```
 
 **What to implement:**
+
 - Room template system (L-shaped room, U-shaped room, galley)
 - Camera presets (front elevation, 3/4 view, top-down)
 - HDRI environment lighting (Blender Cycles world shader)
@@ -112,6 +114,7 @@ Scene components:
 ```
 
 **What to implement:**
+
 - Multi-view render script (batch all views in one Blender run)
 - Resolution presets (preview: 800×600, customer: 1920×1080, print: 4K)
 - Denoising for faster renders
@@ -133,13 +136,14 @@ Customers want to compare options: "What does it look like in white vs grey?"
 ```
 
 **What to implement:**
+
 - Variant definition in config:
-  ```json
-  "variants": [
-    { "name": "White", "front": "white-melamine", "counter": "white-quartz" },
-    { "name": "Grey", "front": "grey-mdf", "counter": "grey-granite" }
-  ]
-  ```
+    ```json
+    "variants": [
+      { "name": "White", "front": "white-melamine", "counter": "white-quartz" },
+      { "name": "Grey", "front": "grey-mdf", "counter": "grey-granite" }
+    ]
+    ```
 - Batch render per variant
 - Comparison grid generator (ImageMagick or Python PIL)
 
@@ -157,62 +161,63 @@ IMOS/CET/Winner generate a BOM that purchasing and production use directly.
 
 ```json
 {
-  "format": "kitchen-bom",
-  "version": "1.0",
-  "project": "L-Shape Kitchen 3.2m + 1.8m",
-  "generated_at": "2025-01-15T10:30:00Z",
-  "summary": {
-    "total_panels": 28,
-    "total_board_area_m2": 12.4,
-    "total_edge_length_m": 45.2,
-    "total_hinges": 16,
-    "total_drawer_slides": 8,
-    "total_handles": 10
-  },
-  "panels": [
-    {
-      "part_id": "P001",
-      "name": "run0_base_0_left_side",
-      "cabinet": "run0_base_0_base-door",
-      "material": "white-melamine-18",
-      "width_mm": 560,
-      "height_mm": 720,
-      "thickness_mm": 18,
-      "quantity": 1,
-      "grain_direction": "vertical",
-      "edge_banding": [
-        { "side": "front", "material": "white-abs-1mm", "thickness_mm": 1 },
-        { "side": "top", "material": "white-abs-1mm", "thickness_mm": 1 }
-      ],
-      "drilling": [
-        { "type": "shelf_pin", "x_mm": 280, "y_mm": 350, "diameter_mm": 5, "depth_mm": 12 },
-        { "type": "shelf_pin", "x_mm": 280, "y_mm": 450, "diameter_mm": 5, "depth_mm": 12 }
-      ],
-      "cutout": [
-        { "type": "back_groove", "offset_from_rear_mm": 10, "width_mm": 3.2, "depth_mm": 9 }
-      ]
-    }
-  ],
-  "hardware": [
-    {
-      "type": "hinge",
-      "product_code": "BLM-71B3550",
-      "description": "Blum CLIP top 110° hinge",
-      "quantity": 4,
-      "cabinets": ["run0_base_0_base-door"]
+    "format": "kitchen-bom",
+    "version": "1.0",
+    "project": "L-Shape Kitchen 3.2m + 1.8m",
+    "generated_at": "2025-01-15T10:30:00Z",
+    "summary": {
+        "total_panels": 28,
+        "total_board_area_m2": 12.4,
+        "total_edge_length_m": 45.2,
+        "total_hinges": 16,
+        "total_drawer_slides": 8,
+        "total_handles": 10
     },
-    {
-      "type": "drawer_slide",
-      "product_code": "BLM-550H5330B",
-      "description": "Blum TANDEMBOX 500mm",
-      "quantity": 3,
-      "cabinets": ["run0_base_1_base-drawers"]
-    }
-  ]
+    "panels": [
+        {
+            "part_id": "P001",
+            "name": "run0_base_0_left_side",
+            "cabinet": "run0_base_0_base-door",
+            "material": "white-melamine-18",
+            "width_mm": 560,
+            "height_mm": 720,
+            "thickness_mm": 18,
+            "quantity": 1,
+            "grain_direction": "vertical",
+            "edge_banding": [
+                { "side": "front", "material": "white-abs-1mm", "thickness_mm": 1 },
+                { "side": "top", "material": "white-abs-1mm", "thickness_mm": 1 }
+            ],
+            "drilling": [
+                { "type": "shelf_pin", "x_mm": 280, "y_mm": 350, "diameter_mm": 5, "depth_mm": 12 },
+                { "type": "shelf_pin", "x_mm": 280, "y_mm": 450, "diameter_mm": 5, "depth_mm": 12 }
+            ],
+            "cutout": [
+                { "type": "back_groove", "offset_from_rear_mm": 10, "width_mm": 3.2, "depth_mm": 9 }
+            ]
+        }
+    ],
+    "hardware": [
+        {
+            "type": "hinge",
+            "product_code": "BLM-71B3550",
+            "description": "Blum CLIP top 110° hinge",
+            "quantity": 4,
+            "cabinets": ["run0_base_0_base-door"]
+        },
+        {
+            "type": "drawer_slide",
+            "product_code": "BLM-550H5330B",
+            "description": "Blum TANDEMBOX 500mm",
+            "quantity": 3,
+            "cabinets": ["run0_base_1_base-drawers"]
+        }
+    ]
 }
 ```
 
 **What to implement:**
+
 - Panel extraction from geometry (each cabinet → 6 panels: top, bottom, left, right, back, front)
 - Edge banding metadata per panel edge
 - Hardware catalog (hinges, slides, handles, shelf pins)
@@ -244,6 +249,7 @@ Optimized approach: nest panels on sheets to minimize waste
 ```
 
 **What to implement:**
+
 - Panel nesting algorithm (2D bin packing)
 - Sheet stock definition (sizes, materials)
 - Kerf width (saw blade thickness)
@@ -273,6 +279,7 @@ Output formats:
 ```
 
 **What to implement:**
+
 - DXF export per panel (outline + drilling points)
 - G-code generation for basic operations (drilling, grooving)
 - Tool library (drill bits, saw blades, router bits)
@@ -306,6 +313,7 @@ Shelf pin rules:
 ```
 
 **What to implement:**
+
 - Hardware rule engine (configurable per manufacturer)
 - Hinge placement calculator
 - Drawer slide placement calculator
@@ -342,6 +350,7 @@ Target (constrained):
 ```
 
 **What to implement:**
+
 - Constraint types: fixed, auto, remaining, fill
 - Dependency solver (resolve constraints in order)
 - Standard width matching (auto → nearest standard width)
@@ -398,6 +407,7 @@ Corner types in professional software:
 ```
 
 **What to implement:**
+
 - Corner detection: identify where two runs meet at 90°
 - Corner space calculation: how much space is available at the junction
 - Last-cabinet-before-corner: reduce width or replace with corner cabinet
@@ -444,6 +454,7 @@ Integration:
 ```
 
 **What to implement:**
+
 - Appliance catalog JSON schema
 - Standard appliance dimensions (European standards)
 - Appliance placeholder geometry (simple box with label)
@@ -482,6 +493,7 @@ DESIGN_RULES = {
 ```
 
 **What to implement:**
+
 - Rule definition schema
 - Rule engine (evaluate rules against layout)
 - Warning vs error severity
@@ -770,13 +782,13 @@ Lesson for us:
 
 ## Key References
 
-| Resource | What it teaches |
-|---|---|
-| IMOS documentation | CAD → CAM pipeline for furniture |
-| Configura CET SDK | Component-based parametric design |
-| Blum product catalog | Hardware specifications and mounting rules |
-| HOMAG WoodWOP | CNC program format for wood routers |
-| European 32mm system standard | Shelf pin, hinge, and slide positioning |
-| DIN 68871 | German standard for kitchen dimensions |
-| EN 14749 | European standard for domestic kitchen furniture |
-| NestPy / RectBinPack | 2D bin packing algorithms for cut optimization |
+| Resource                      | What it teaches                                  |
+| ----------------------------- | ------------------------------------------------ |
+| IMOS documentation            | CAD → CAM pipeline for furniture                 |
+| Configura CET SDK             | Component-based parametric design                |
+| Blum product catalog          | Hardware specifications and mounting rules       |
+| HOMAG WoodWOP                 | CNC program format for wood routers              |
+| European 32mm system standard | Shelf pin, hinge, and slide positioning          |
+| DIN 68871                     | German standard for kitchen dimensions           |
+| EN 14749                      | European standard for domestic kitchen furniture |
+| NestPy / RectBinPack          | 2D bin packing algorithms for cut optimization   |

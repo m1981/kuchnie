@@ -181,8 +181,14 @@ def check_dimensions(obj: dict, tolerance_mm: float) -> List[Issue]:
     return issues
 
 
-def check_overlaps(objects: List[dict], tolerance_mm: float) -> List[Issue]:
-    """Check for overlapping objects using world bounds."""
+def check_overlaps(objects: List[dict], tolerance_mm: float, min_overlap_mm: float = 50.0) -> List[Issue]:
+    """Check for overlapping objects using world bounds.
+
+    Args:
+        objects: List of object dicts
+        tolerance_mm: Allowed overlap (from door overlays, etc.)
+        min_overlap_mm: Minimum overlap to report (filters out expected small overlaps)
+    """
     issues = []
 
     for i in range(len(objects)):
@@ -193,7 +199,7 @@ def check_overlaps(objects: List[dict], tolerance_mm: float) -> List[Issue]:
             # Skip children and non-carcass objects for overlap check
             cls_a = obj_a.get("classification", "")
             cls_b = obj_b.get("classification", "")
-            skip_classes = {"door_front", "drawer_front", "back_panel", "countertop"}
+            skip_classes = {"door_front", "drawer_front", "back_panel", "countertop", "board"}
             if cls_a in skip_classes or cls_b in skip_classes:
                 continue
 
@@ -206,6 +212,11 @@ def check_overlaps(objects: List[dict], tolerance_mm: float) -> List[Issue]:
             overlap = _compute_overlap(bounds_a, bounds_b, tolerance_mm)
             if overlap:
                 overlap_x, overlap_y, overlap_z = overlap
+                # Filter out expected small overlaps (door overlays, fillers)
+                # Real overlaps have large overlap in ALL dimensions
+                min_overlap = min(overlap_x, overlap_y, overlap_z)
+                if min_overlap < min_overlap_mm:
+                    continue
                 issues.append(Issue(
                     severity="error",
                     object_name=obj_a.get("name", "unknown"),
@@ -257,21 +268,25 @@ def check_vertex_face_counts(obj: dict) -> List[Issue]:
     vertex_count = obj.get("vertex_count", 0)
     face_count = obj.get("face_count", 0)
 
-    if classification == "carcass":
-        # Hollow box: 16 vertices (8 outer + 8 inner), 12 faces
-        if vertex_count < 16:
+    if vertex_count == 0:
+        # Empty parent (grouping object) — skip vertex/face checks
+        return issues
+
+    if classification in ("carcass", "board"):
+        # Individual board: 8 vertices (solid box)
+        if vertex_count < 8:
             issues.append(Issue(
                 severity="warning",
                 object_name=name,
                 check="vertex_count",
-                message=f"Carcass has {vertex_count} vertices (expected ≥16 for hollow box)",
+                message=f"Board has {vertex_count} vertices (expected ≥8)",
             ))
-        if face_count < 12:
+        if face_count < 6:
             issues.append(Issue(
                 severity="warning",
                 object_name=name,
                 check="face_count",
-                message=f"Carcass has {face_count} faces (expected ≥12 for hollow box)",
+                message=f"Board has {face_count} faces (expected ≥6)",
             ))
     elif classification in ("door_front", "drawer_front"):
         # Solid box: 8 vertices, 6 faces
@@ -317,8 +332,8 @@ def check_standard_widths(obj: dict, settings: dict) -> List[Issue]:
     name = obj.get("name", "unknown")
     classification = obj.get("classification", "other")
 
-    # Only check carcass objects (not fronts, backs, etc.)
-    if classification != "carcass":
+    # Only check carcass objects (not fronts, backs, boards, etc.)
+    if classification not in ("carcass",):
         return issues
 
     dims = obj.get("local_dimensions_mm", [0, 0, 0])

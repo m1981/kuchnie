@@ -13,14 +13,14 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
 
 ## Design Principles
 
-| Principle | Rule |
-|---|---|
-| **Manifest-first** | Every build produces a JSON manifest with exact geometry. Visual formats are optional. |
-| **Inspect where it's generated** | Validate geometry at the source (bpy output), not after lossy format export. |
-| **No unit guessing** | All data carries explicit units. Never multiply by 1000 and hope. |
-| **Dependencies point down** | `core/ ← kitchen/ ← builder/ ← adapters/`. Never reverse. |
-| **Immutable by default** | Frozen dataclasses. No accidental mutation. |
-| **Z-up, right-hand** | Architectural/BIM standard. Documented once, enforced everywhere. |
+| Principle                        | Rule                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------- |
+| **Manifest-first**               | Every build produces a JSON manifest with exact geometry. Visual formats are optional. |
+| **Inspect where it's generated** | Validate geometry at the source (bpy output), not after lossy format export.           |
+| **No unit guessing**             | All data carries explicit units. Never multiply by 1000 and hope.                      |
+| **Dependencies point down**      | `core/ ← kitchen/ ← builder/ ← adapters/`. Never reverse.                              |
+| **Immutable by default**         | Frozen dataclasses. No accidental mutation.                                            |
+| **Z-up, right-hand**             | Architectural/BIM standard. Documented once, enforced everywhere.                      |
 
 ---
 
@@ -90,13 +90,13 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
         Never reverse arrows
 ```
 
-| Layer | Depends on | External deps |
-|---|---|---|
-| `core/` | — | None |
-| `kitchen/` | `core/` | None |
-| `builder/` | `core/`, `kitchen/` | JSON |
+| Layer       | Depends on          | External deps                             |
+| ----------- | ------------------- | ----------------------------------------- |
+| `core/`     | —                   | None                                      |
+| `kitchen/`  | `core/`             | None                                      |
+| `builder/`  | `core/`, `kitchen/` | JSON                                      |
 | `adapters/` | `core/`, `kitchen/` | bpy (geometry_builder), stdlib (manifest) |
-| `main.py` | all | bpy, sys |
+| `main.py`   | all                 | bpy, sys                                  |
 
 ---
 
@@ -178,15 +178,15 @@ metadata. glTF is Y-up with abstract units.
 
 The manifest captures geometry **directly from bpy** with full fidelity:
 
-| What | OBJ | glTF | Manifest |
-|---|---|---|---|
-| Units | ❌ undefined | ⚠️ abstract | ✅ `"units": "meters"` |
-| Coordinate system | ❌ unspecified | ✅ Y-up | ✅ Z-up (our convention) |
-| Object hierarchy | ❌ flat | ✅ scene graph | ✅ parent + layout metadata |
-| Local coordinates | ❌ world only | ✅ local | ✅ both local AND world |
-| Rotation | ❌ lost | ✅ Euler | ✅ exact Euler |
-| Expected dimensions | ❌ | ❌ | ✅ inline pass/fail |
-| LLM readability | ⚠️ needs parser | ⚠️ needs parser | ✅ plain JSON |
+| What                | OBJ             | glTF            | Manifest                    |
+| ------------------- | --------------- | --------------- | --------------------------- |
+| Units               | ❌ undefined    | ⚠️ abstract     | ✅ `"units": "meters"`      |
+| Coordinate system   | ❌ unspecified  | ✅ Y-up         | ✅ Z-up (our convention)    |
+| Object hierarchy    | ❌ flat         | ✅ scene graph  | ✅ parent + layout metadata |
+| Local coordinates   | ❌ world only   | ✅ local        | ✅ both local AND world     |
+| Rotation            | ❌ lost         | ✅ Euler        | ✅ exact Euler              |
+| Expected dimensions | ❌              | ❌              | ✅ inline pass/fail         |
+| LLM readability     | ⚠️ needs parser | ⚠️ needs parser | ✅ plain JSON               |
 
 **Rule: Validation reads the manifest. Visual inspection opens .blend. OBJ/glTF
 are for interoperability with external tools only.**
@@ -204,11 +204,11 @@ are for interoperability with external tools only.**
   └───────── X (width, left to right)
 ```
 
-| Axis | Direction | Typical range |
-|---|---|---|
-| **X** | Width (left to right) | 300–3000 mm |
-| **Y** | Depth (into room) | 300–600 mm |
-| **Z** | Height (up) | 0–2500 mm |
+| Axis  | Direction             | Typical range |
+| ----- | --------------------- | ------------- |
+| **X** | Width (left to right) | 300–3000 mm   |
+| **Y** | Depth (into room)     | 300–600 mm    |
+| **Z** | Height (up)           | 0–2500 mm     |
 
 **Convention:** Z-up, right-hand rule. Documented once, enforced everywhere.
 Wall normal points into room. Cabinet origin at back face (wall face).
@@ -233,141 +233,141 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 
 ```json
 {
-  "format": "kitchen-geometry-manifest",
-  "version": "2.0",
-  "units": "meters",
-  "coordinate_system": {
-    "type": "Z-up",
-    "handedness": "right",
-    "x": "width (left to right)",
-    "y": "depth (into room)",
-    "z": "height (up)"
-  },
-  "source_config": "configs/l_shape.json",
-  "settings": {
-    "baseBodyHeight": 720,
-    "baseDepth": 560,
-    "plinthHeight": 120,
-    "wallMountHeight": 1400,
-    "cabinetGap": 0,
-    "frontGap": 2,
-    "corpusThickness": 18,
-    "frontThickness": 19,
-    "backThickness": 3
-  },
-  "layout": {
-    "type": "L-shape",
-    "run_count": 2,
-    "total_cabinets": 12,
-    "runs": [
-      {
-        "label": "back wall",
-        "index": 0,
-        "direction": "east",
-        "turn": null,
-        "start_position_mm": [0, 0],
-        "end_position_mm": [3550, 0],
-        "total_width_mm": 3550,
-        "cabinets": ["run0_base_0_filler", "run0_base_1_tall-oven", "..."]
-      },
-      {
-        "label": "left wall",
-        "index": 1,
-        "direction": "south",
-        "turn": "left",
-        "start_position_mm": [3550, 0],
-        "end_position_mm": [3550, -1850],
-        "total_width_mm": 1850,
-        "cabinets": ["run1_base_0_base-door", "..."]
-      }
-    ]
-  },
-  "objects": [
-    {
-      "name": "run0_base_1_tall-oven",
-      "type": "carcass",
-      "classification": "tall-oven",
-      "level": "tall",
-      "run_label": "back wall",
-      "run_index": 0,
-      "cabinet_index": 1,
-      "parent": null,
-      "transform": {
-        "location_m": [0.65, 0.0, 0.0],
-        "rotation_euler_rad": [0, 0, 0],
-        "scale": [1, 1, 1]
-      },
-      "local_bounds": {
-        "min_m": [0, 0, 0],
-        "max_m": [0.6, 0.56, 2.0]
-      },
-      "local_dimensions_mm": [600, 560, 2000],
-      "world_bounds": {
-        "min_m": [0.65, 0.0, 0.0],
-        "max_m": [1.25, 0.56, 2.0]
-      },
-      "world_dimensions_mm": [600, 560, 2000],
-      "vertex_count": 16,
-      "face_count": 12,
-      "construction": {
-        "corpus_thickness_mm": 18,
-        "back_thickness_mm": 3,
-        "front_thickness_mm": 19,
-        "internal_width_mm": 564,
-        "internal_depth_mm": 547,
-        "internal_height_mm": 2000
-      },
-      "children": [
+    "format": "kitchen-geometry-manifest",
+    "version": "2.0",
+    "units": "meters",
+    "coordinate_system": {
+        "type": "Z-up",
+        "handedness": "right",
+        "x": "width (left to right)",
+        "y": "depth (into room)",
+        "z": "height (up)"
+    },
+    "source_config": "configs/l_shape.json",
+    "settings": {
+        "baseBodyHeight": 720,
+        "baseDepth": 560,
+        "plinthHeight": 120,
+        "wallMountHeight": 1400,
+        "cabinetGap": 0,
+        "frontGap": 2,
+        "corpusThickness": 18,
+        "frontThickness": 19,
+        "backThickness": 3
+    },
+    "layout": {
+        "type": "L-shape",
+        "run_count": 2,
+        "total_cabinets": 12,
+        "runs": [
+            {
+                "label": "back wall",
+                "index": 0,
+                "direction": "east",
+                "turn": null,
+                "start_position_mm": [0, 0],
+                "end_position_mm": [3550, 0],
+                "total_width_mm": 3550,
+                "cabinets": ["run0_base_0_filler", "run0_base_1_tall-oven", "..."]
+            },
+            {
+                "label": "left wall",
+                "index": 1,
+                "direction": "south",
+                "turn": "left",
+                "start_position_mm": [3550, 0],
+                "end_position_mm": [3550, -1850],
+                "total_width_mm": 1850,
+                "cabinets": ["run1_base_0_base-door", "..."]
+            }
+        ]
+    },
+    "objects": [
         {
-          "name": "run0_base_1_tall-oven_back",
-          "type": "back_panel",
-          "local_dimensions_mm": [564, 3, 1997]
-        },
-        {
-          "name": "run0_base_1_tall-oven_door",
-          "type": "door_front",
-          "local_dimensions_mm": [604, 19, 2004]
+            "name": "run0_base_1_tall-oven",
+            "type": "carcass",
+            "classification": "tall-oven",
+            "level": "tall",
+            "run_label": "back wall",
+            "run_index": 0,
+            "cabinet_index": 1,
+            "parent": null,
+            "transform": {
+                "location_m": [0.65, 0.0, 0.0],
+                "rotation_euler_rad": [0, 0, 0],
+                "scale": [1, 1, 1]
+            },
+            "local_bounds": {
+                "min_m": [0, 0, 0],
+                "max_m": [0.6, 0.56, 2.0]
+            },
+            "local_dimensions_mm": [600, 560, 2000],
+            "world_bounds": {
+                "min_m": [0.65, 0.0, 0.0],
+                "max_m": [1.25, 0.56, 2.0]
+            },
+            "world_dimensions_mm": [600, 560, 2000],
+            "vertex_count": 16,
+            "face_count": 12,
+            "construction": {
+                "corpus_thickness_mm": 18,
+                "back_thickness_mm": 3,
+                "front_thickness_mm": 19,
+                "internal_width_mm": 564,
+                "internal_depth_mm": 547,
+                "internal_height_mm": 2000
+            },
+            "children": [
+                {
+                    "name": "run0_base_1_tall-oven_back",
+                    "type": "back_panel",
+                    "local_dimensions_mm": [564, 3, 1997]
+                },
+                {
+                    "name": "run0_base_1_tall-oven_door",
+                    "type": "door_front",
+                    "local_dimensions_mm": [604, 19, 2004]
+                }
+            ],
+            "validation": {
+                "width_ok": true,
+                "depth_ok": true,
+                "height_ok": true,
+                "vertex_count_ok": true,
+                "face_count_ok": true,
+                "issues": []
+            }
         }
-      ],
-      "validation": {
-        "width_ok": true,
-        "depth_ok": true,
-        "height_ok": true,
-        "vertex_count_ok": true,
-        "face_count_ok": true,
-        "issues": []
-      }
+    ],
+    "validation_summary": {
+        "total_objects": 48,
+        "passed": 46,
+        "failed": 2,
+        "warnings": 1,
+        "issues": [
+            {
+                "severity": "error",
+                "object": "run1_countertop",
+                "check": "width",
+                "message": "Countertop width 1790mm does not match expected 1850mm",
+                "expected_mm": 1850,
+                "actual_mm": 1790
+            },
+            {
+                "severity": "error",
+                "object": "run1_base_3_filler",
+                "check": "position",
+                "message": "Filler overlaps with run1_base_2_base-door",
+                "overlap_mm": 18
+            },
+            {
+                "severity": "warning",
+                "object": "run0_base_0_filler",
+                "check": "vertex_count",
+                "message": "Filler has 4 vertices (expected 8 for solid box)"
+            }
+        ]
     }
-  ],
-  "validation_summary": {
-    "total_objects": 48,
-    "passed": 46,
-    "failed": 2,
-    "warnings": 1,
-    "issues": [
-      {
-        "severity": "error",
-        "object": "run1_countertop",
-        "check": "width",
-        "message": "Countertop width 1790mm does not match expected 1850mm",
-        "expected_mm": 1850,
-        "actual_mm": 1790
-      },
-      {
-        "severity": "error",
-        "object": "run1_base_3_filler",
-        "check": "position",
-        "message": "Filler overlaps with run1_base_2_base-door",
-        "overlap_mm": 18
-      },
-      {
-        "severity": "warning",
-        "object": "run0_base_0_filler",
-        "check": "vertex_count",
-        "message": "Filler has 4 vertices (expected 8 for solid box)"
-      }
-    ]
-  }
 }
 ```
 
@@ -398,6 +398,7 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ```
 
 **Files:**
+
 - `src/core/geometry.py`
 - `src/core/tolerances.py`
 - `src/core/types.py`
@@ -421,6 +422,7 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ```
 
 **Files:**
+
 - `src/kitchen/wall.py`
 - `src/kitchen/cabinet.py`
 - `src/kitchen/layout.py`
@@ -440,6 +442,7 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ```
 
 **Files:**
+
 - `src/config_parser.py`
 - `src/validators.py`
 - `src/wall_builder.py`
@@ -459,6 +462,7 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ```
 
 **Files:**
+
 - `src/geometry_builder.py`
 - `src/material_manager.py`
 - `src/exporters.py`
@@ -478,6 +482,7 @@ but outputs stdlib JSON (no bpy dependency in output format).
 ```
 
 **CLI flags:**
+
 ```
   blender --background --python src/main.py -- configs/kitchen.json \
       --export-manifest          # Always recommended (primary output)
@@ -521,18 +526,18 @@ but outputs stdlib JSON (no bpy dependency in output format).
 
 ### Validation Checks
 
-| Check | Level | What it catches |
-|---|---|---|
-| Dimension within tolerance | Geometric | Cabinet built wrong size |
-| No object overlaps | Semantic | Cabinets placed on top of each other |
-| Walkway clearance ≥ 900mm | Semantic | Kitchen not walkable |
-| Standard widths only | Semantic | Non-standard cabinet width |
-| Vertex count matches construction | Geometric | Missing faces, degenerate mesh |
-| Face count correct | Geometric | Open box, missing wall |
-| World bounds within room | Geometric | Cabinet outside room boundary |
-| Countertop overhang correct | Geometric | Wrong overhang amount |
-| Front overlay matches settings | Geometric | Door too small/large |
-| Run direction continuity | Semantic | Broken turn logic |
+| Check                             | Level     | What it catches                      |
+| --------------------------------- | --------- | ------------------------------------ |
+| Dimension within tolerance        | Geometric | Cabinet built wrong size             |
+| No object overlaps                | Semantic  | Cabinets placed on top of each other |
+| Walkway clearance ≥ 900mm         | Semantic  | Kitchen not walkable                 |
+| Standard widths only              | Semantic  | Non-standard cabinet width           |
+| Vertex count matches construction | Geometric | Missing faces, degenerate mesh       |
+| Face count correct                | Geometric | Open box, missing wall               |
+| World bounds within room          | Geometric | Cabinet outside room boundary        |
+| Countertop overhang correct       | Geometric | Wrong overhang amount                |
+| Front overlay matches settings    | Geometric | Door too small/large                 |
+| Run direction continuity          | Semantic  | Broken turn logic                    |
 
 ### Tolerances
 
@@ -550,26 +555,26 @@ TOLERANCES = {
 
 ## European Kitchen Standards
 
-| Standard | Base Cabinet | Wall Cabinet | Tall Cabinet |
-|---|---|---|---|
-| Body height | 720 mm | 600 mm | 2100–2400 mm |
-| Plinth height | 120 mm | — | 120 mm |
-| Total height | 840 mm | — | 2220–2520 mm |
-| Depth | 560 mm | 300–350 mm | 560–600 mm |
-| Mount height | — | 1400 mm AFF | — |
+| Standard      | Base Cabinet | Wall Cabinet | Tall Cabinet |
+| ------------- | ------------ | ------------ | ------------ |
+| Body height   | 720 mm       | 600 mm       | 2100–2400 mm |
+| Plinth height | 120 mm       | —            | 120 mm       |
+| Total height  | 840 mm       | —            | 2220–2520 mm |
+| Depth         | 560 mm       | 300–350 mm   | 560–600 mm   |
+| Mount height  | —            | 1400 mm AFF  | —            |
 
-| Construction | Value |
-|---|---|
-| Corpus board | 18 mm chipboard |
-| Front panel | 19 mm MDF/chipboard |
-| Back panel | 3 mm HDF in groove |
-| Groove offset | 10 mm from rear |
-| Front overlay | 2 mm per side |
-| Door gap | 2 mm |
+| Construction        | Value                   |
+| ------------------- | ----------------------- |
+| Corpus board        | 18 mm chipboard         |
+| Front panel         | 19 mm MDF/chipboard     |
+| Back panel          | 3 mm HDF in groove      |
+| Groove offset       | 10 mm from rear         |
+| Front overlay       | 2 mm per side           |
+| Door gap            | 2 mm                    |
 | Countertop overhang | 20 mm front, 30 mm ends |
 
 | Standard widths | 300, 400, 450, 500, 600, 800, 900, 1000, 1200 mm |
-|---|---|
+| --------------- | ------------------------------------------------ |
 
 ---
 
@@ -587,21 +592,21 @@ TOLERANCES = {
 
 ### Test Suites
 
-| Suite | Tests | Requires bpy | What it covers |
-|---|---|---|---|
-| `test_core_geometry.py` | 36 | No | Vector, BoundingBox, Transform math |
-| `test_kitchen.py` | 22 | No | Wall, Cabinet, Layout domain logic |
-| `test_wall_centric_model.py` | 21 | No | Wall-local positioning |
-| `test_wall_builder.py` | 15 | No | Config → domain object conversion |
-| `test_config_parser.py` | 11 | No | JSON loading, defaults |
-| `test_positions.py` | 6 | No | World position calculation |
-| `test_l_shape.py` | 11 | No | L-layout correctness |
-| `test_u_shape.py` | 11 | No | U-layout correctness |
-| `test_p0_*.py` | 37 | No | Gap semantics, coordinate system |
-| `test_p1_*.py` | 26 | No | Construction geometry |
-| `test_p2_*.py` | 39 | No | Layout integration |
-| `test_manifest_*.py` | NEW | No | Manifest schema, validation |
-| `test_blender_*.py` | NEW | Yes | bpy mesh creation (skipped in CI) |
+| Suite                        | Tests | Requires bpy | What it covers                      |
+| ---------------------------- | ----- | ------------ | ----------------------------------- |
+| `test_core_geometry.py`      | 36    | No           | Vector, BoundingBox, Transform math |
+| `test_kitchen.py`            | 22    | No           | Wall, Cabinet, Layout domain logic  |
+| `test_wall_centric_model.py` | 21    | No           | Wall-local positioning              |
+| `test_wall_builder.py`       | 15    | No           | Config → domain object conversion   |
+| `test_config_parser.py`      | 11    | No           | JSON loading, defaults              |
+| `test_positions.py`          | 6     | No           | World position calculation          |
+| `test_l_shape.py`            | 11    | No           | L-layout correctness                |
+| `test_u_shape.py`            | 11    | No           | U-layout correctness                |
+| `test_p0_*.py`               | 37    | No           | Gap semantics, coordinate system    |
+| `test_p1_*.py`               | 26    | No           | Construction geometry               |
+| `test_p2_*.py`               | 39    | No           | Layout integration                  |
+| `test_manifest_*.py`         | NEW   | No           | Manifest schema, validation         |
+| `test_blender_*.py`          | NEW   | Yes          | bpy mesh creation (skipped in CI)   |
 
 **Total: 218+ passing (no Blender required for most)**
 
@@ -711,18 +716,18 @@ kitchen-plugin/
 
 ## Design Decisions
 
-| Decision | Rationale |
-|---|---|
-| **Manifest is primary output** | Exact data from bpy, no lossy format conversion, LLM-readable |
-| **OBJ/glTF are optional** | For visual interop only, never for validation |
-| **.blend for visual inspection** | Full fidelity, no format conversion, open in Blender |
-| **Validation on manifest** | Structured, self-documenting, no unit guessing |
-| **Z-up coordinates** | Architectural/BIM industry standard |
-| **Wall-centric positioning** | Same model as IKEA, professional kitchen CAD |
-| **Frozen dataclasses** | Immutable = thread-safe, no accidental mutation |
-| **Named tolerances** | Self-documenting, configurable per check |
-| **Units in meters internally** | Blender's native unit; manifest declares explicitly |
-| **Expected dims in manifest** | Self-validating — manifest tells you what's wrong |
+| Decision                         | Rationale                                                     |
+| -------------------------------- | ------------------------------------------------------------- |
+| **Manifest is primary output**   | Exact data from bpy, no lossy format conversion, LLM-readable |
+| **OBJ/glTF are optional**        | For visual interop only, never for validation                 |
+| **.blend for visual inspection** | Full fidelity, no format conversion, open in Blender          |
+| **Validation on manifest**       | Structured, self-documenting, no unit guessing                |
+| **Z-up coordinates**             | Architectural/BIM industry standard                           |
+| **Wall-centric positioning**     | Same model as IKEA, professional kitchen CAD                  |
+| **Frozen dataclasses**           | Immutable = thread-safe, no accidental mutation               |
+| **Named tolerances**             | Self-documenting, configurable per check                      |
+| **Units in meters internally**   | Blender's native unit; manifest declares explicitly           |
+| **Expected dims in manifest**    | Self-validating — manifest tells you what's wrong             |
 
 ---
 
@@ -730,13 +735,13 @@ kitchen-plugin/
 
 The following scripts are replaced by the manifest pipeline:
 
-| Old script | Replacement | Status |
-|---|---|---|
-| `scripts/analyze_reference_obj.py` | Manifest + `validate_manifest.py` | Remove |
-| `scripts/convert_obj_to_gltf.py` | Not needed (manifest is direct) | Remove |
-| `scripts/analyze_gltf_v2.py` | Manifest + `validate_manifest.py` | Remove |
-| `scripts/compare_with_reference.py` | Manifest validation (inline) | Remove |
-| `scripts/validate_obj.py` | Manifest validation (inline) | Remove |
+| Old script                          | Replacement                       | Status |
+| ----------------------------------- | --------------------------------- | ------ |
+| `scripts/analyze_reference_obj.py`  | Manifest + `validate_manifest.py` | Remove |
+| `scripts/convert_obj_to_gltf.py`    | Not needed (manifest is direct)   | Remove |
+| `scripts/analyze_gltf_v2.py`        | Manifest + `validate_manifest.py` | Remove |
+| `scripts/compare_with_reference.py` | Manifest validation (inline)      | Remove |
+| `scripts/validate_obj.py`           | Manifest validation (inline)      | Remove |
 
 These scripts existed to work around OBJ/glTF limitations (no units, no
 hierarchy, no metadata). The manifest carries all that information natively.
@@ -745,15 +750,15 @@ hierarchy, no metadata). The manifest carries all that information natively.
 
 ## Future Work
 
-| Priority | Task | Effort |
-|---|---|---|
-| **High** | Implement `geometry_manifest.py` (Layer 4) | 2–3 days |
-| **High** | Implement `manifest_validator.py` | 1–2 days |
-| **High** | Add manifest schema (`manifest_v2.schema.json`) | 1 day |
-| **High** | Add `test_manifest_*.py` test suites | 1–2 days |
-| **Medium** | Enhance manifest with `construction` metadata | 1 day |
-| **Medium** | Add overlap detection to validator | 1 day |
-| **Medium** | Standalone `validate_manifest.py` (no bpy needed) | 1 day |
-| **Low** | Add 3MF export for manufacturing interop | 2–3 days |
-| **Low** | Add STEP export for B-Rep topology validation | 1 week |
-| **Low** | Blender-free 3D preview (three.js from manifest) | 1–2 weeks |
+| Priority   | Task                                              | Effort    |
+| ---------- | ------------------------------------------------- | --------- |
+| **High**   | Implement `geometry_manifest.py` (Layer 4)        | 2–3 days  |
+| **High**   | Implement `manifest_validator.py`                 | 1–2 days  |
+| **High**   | Add manifest schema (`manifest_v2.schema.json`)   | 1 day     |
+| **High**   | Add `test_manifest_*.py` test suites              | 1–2 days  |
+| **Medium** | Enhance manifest with `construction` metadata     | 1 day     |
+| **Medium** | Add overlap detection to validator                | 1 day     |
+| **Medium** | Standalone `validate_manifest.py` (no bpy needed) | 1 day     |
+| **Low**    | Add 3MF export for manufacturing interop          | 2–3 days  |
+| **Low**    | Add STEP export for B-Rep topology validation     | 1 week    |
+| **Low**    | Blender-free 3D preview (three.js from manifest)  | 1–2 weeks |

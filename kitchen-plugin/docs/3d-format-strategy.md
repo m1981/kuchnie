@@ -11,31 +11,31 @@ This document explains the trade-offs and recommends a concrete strategy.
 
 ## 1. What a Validation / LLM-Inspection Pipeline Actually Needs
 
-| Capability                  | Why it matters                                            |
-| --------------------------- | --------------------------------------------------------- |
-| **Explicit units**          | No guessing whether values are meters or millimeters      |
-| **Coordinate system spec**  | No heuristic detection of Y-up vs Z-up                   |
-| **Topology data**           | Manifoldness, edge sharing, Euler characteristic checks   |
-| **Semantic naming**         | Agent needs to know "this mesh is a door, not a shelf"    |
-| **Hierarchical structure**  | Cabinets → components → panels, with transforms           |
-| **Material / metadata**     | Material type, thickness, production parameters           |
-| **Python-parseable**        | No proprietary SDKs, no Blender dependency                |
-| **Per-object vertex pools** | No global-index remapping bugs                            |
+| Capability                  | Why it matters                                          |
+| --------------------------- | ------------------------------------------------------- |
+| **Explicit units**          | No guessing whether values are meters or millimeters    |
+| **Coordinate system spec**  | No heuristic detection of Y-up vs Z-up                  |
+| **Topology data**           | Manifoldness, edge sharing, Euler characteristic checks |
+| **Semantic naming**         | Agent needs to know "this mesh is a door, not a shelf"  |
+| **Hierarchical structure**  | Cabinets → components → panels, with transforms         |
+| **Material / metadata**     | Material type, thickness, production parameters         |
+| **Python-parseable**        | No proprietary SDKs, no Blender dependency              |
+| **Per-object vertex pools** | No global-index remapping bugs                          |
 
 ---
 
 ## 2. Format-by-Format Comparison
 
-| Capability              | OBJ        | glTF       | **STEP**      | **IFC**       | **3MF**       |
-| ----------------------- | ---------- | ---------- | ------------- | ------------- | ------------- |
-| Units in file           | ❌ undefined | ⚠️ no spec  | ✅ explicit    | ✅ explicit    | ✅ explicit    |
-| Topology (manifold)     | ❌ none     | ❌ none     | ✅ full B-Rep  | ✅ full B-Rep  | ✅ meshes      |
-| Semantic naming         | ⚠️ `o` lines | ✅ node names | ✅ product tree | ✅ rich IFC types | ✅ components   |
-| Material / metadata     | ❌ .mtl sidecar | ✅ embedded  | ✅ embedded    | ✅ embedded    | ✅ embedded    |
-| Python parsing ease     | ✅ trivial  | ✅ JSON     | ⚠️ pythonocc  | ⚠️ IfcOpenShell | ✅ XML / ZIP   |
-| Coordinate system       | ❌ unspecified | ✅ Y-up spec | ✅ right-hand  | ✅ explicit    | ✅ Z-up spec   |
-| Hierarchical structure  | ❌ flat     | ✅ scene graph | ✅ assembly tree | ✅ spatial tree | ✅ build items  |
-| CNC / manufacturing     | ⚠️ mesh only | ❌ no       | ✅ native      | ⚠️ via export  | ✅ print-ready  |
+| Capability             | OBJ             | glTF           | **STEP**         | **IFC**           | **3MF**        |
+| ---------------------- | --------------- | -------------- | ---------------- | ----------------- | -------------- |
+| Units in file          | ❌ undefined    | ⚠️ no spec     | ✅ explicit      | ✅ explicit       | ✅ explicit    |
+| Topology (manifold)    | ❌ none         | ❌ none        | ✅ full B-Rep    | ✅ full B-Rep     | ✅ meshes      |
+| Semantic naming        | ⚠️ `o` lines    | ✅ node names  | ✅ product tree  | ✅ rich IFC types | ✅ components  |
+| Material / metadata    | ❌ .mtl sidecar | ✅ embedded    | ✅ embedded      | ✅ embedded       | ✅ embedded    |
+| Python parsing ease    | ✅ trivial      | ✅ JSON        | ⚠️ pythonocc     | ⚠️ IfcOpenShell   | ✅ XML / ZIP   |
+| Coordinate system      | ❌ unspecified  | ✅ Y-up spec   | ✅ right-hand    | ✅ explicit       | ✅ Z-up spec   |
+| Hierarchical structure | ❌ flat         | ✅ scene graph | ✅ assembly tree | ✅ spatial tree   | ✅ build items |
+| CNC / manufacturing    | ⚠️ mesh only    | ❌ no          | ✅ native        | ⚠️ via export     | ✅ print-ready |
 
 ### Rating Summary
 
@@ -59,27 +59,27 @@ v 0.600 0.560 0.720    // Is this 600mm or 0.6mm?
 v 0.000 0.000 0.000
 ```
 
-| Problem                        | Impact                                            |
-| ------------------------------ | ------------------------------------------------- |
-| No unit declaration            | Every parser must guess or hardcode `*1000`        |
-| No coordinate system spec      | Heuristic detection (Z-range > Y-range → Z-up?)   |
-| Global vertex index space      | Multi-object files require index remapping         |
-| No topology data               | Cannot check manifoldness                          |
-| No transform hierarchy         | Objects are flat — no parent/child relationships   |
-| Material in sidecar `.mtl` file | Easy to lose, hard to keep in sync                 |
+| Problem                         | Impact                                           |
+| ------------------------------- | ------------------------------------------------ |
+| No unit declaration             | Every parser must guess or hardcode `*1000`      |
+| No coordinate system spec       | Heuristic detection (Z-range > Y-range → Z-up?)  |
+| Global vertex index space       | Multi-object files require index remapping       |
+| No topology data                | Cannot check manifoldness                        |
+| No transform hierarchy          | Objects are flat — no parent/child relationships |
+| Material in sidecar `.mtl` file | Easy to lose, hard to keep in sync               |
 
 ### 3.2 glTF — Better, But Still Wrong Tool
 
 glTF is excellent for **rendering** — it carries PBR materials, animation,
 scene graph, and GPU-ready buffers. But for inspection:
 
-| Problem                          | Impact                                          |
-| -------------------------------- | ----------------------------------------------- |
-| No unit declaration              | Spec says "units are abstract" — still guessing |
-| Y-up only (spec) but exporters vary | Many tools output Z-up glTF anyway            |
-| No topology metadata             | It's triangles — no B-Rep, no edge data         |
-| Binary buffer parsing            | Must unpack base64 + struct offsets manually     |
-| Scene graph is rendering-focused | Node transforms encode camera/light logic, not engineering semantics |
+| Problem                             | Impact                                                               |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| No unit declaration                 | Spec says "units are abstract" — still guessing                      |
+| Y-up only (spec) but exporters vary | Many tools output Z-up glTF anyway                                   |
+| No topology metadata                | It's triangles — no B-Rep, no edge data                              |
+| Binary buffer parsing               | Must unpack base64 + struct offsets manually                         |
+| Scene graph is rendering-focused    | Node transforms encode camera/light logic, not engineering semantics |
 
 ### 3.3 The Core Issue
 
@@ -123,15 +123,15 @@ is it a valid solid, and does it meet manufacturing tolerances?"**
 
 **What 3MF gives you for free:**
 
-| Problem with OBJ/glTF               | 3MF solution                                       |
-| ------------------------------------ | -------------------------------------------------- |
-| Unit guessing (`*1000` heuristic)    | `<model unit="millimeter">` — explicit, declarative |
-| Coordinate system detection heuristic | Spec-defined coordinate system                     |
-| Multi-object index remapping bug     | Each `<object>` has its own vertex pool             |
-| No manifold validation               | Spec requires watertight meshes                    |
-| Hardcoded expected dims in scripts   | Metadata extensions: `<metadata name="width">600</metadata>` |
-| No material info                     | Embedded materials + textures                      |
-| No production metadata               | Production extensions (slice, print, ticket)       |
+| Problem with OBJ/glTF                 | 3MF solution                                                 |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Unit guessing (`*1000` heuristic)     | `<model unit="millimeter">` — explicit, declarative          |
+| Coordinate system detection heuristic | Spec-defined coordinate system                               |
+| Multi-object index remapping bug      | Each `<object>` has its own vertex pool                      |
+| No manifold validation                | Spec requires watertight meshes                              |
+| Hardcoded expected dims in scripts    | Metadata extensions: `<metadata name="width">600</metadata>` |
+| No material info                      | Embedded materials + textures                                |
+| No production metadata                | Production extensions (slice, print, ticket)                 |
 
 **Python parsing** — 3MF is a ZIP containing XML. No exotic libraries:
 
@@ -254,13 +254,13 @@ This is the single most common source of silent bugs in CAD pipelines:
 
 **Format responses to this problem:**
 
-| Format | What happens                        | Can you detect the mistake? |
-| ------ | ----------------------------------- | --------------------------- |
-| OBJ    | No unit info. You guess.            | ❌ No                       |
-| glTF   | "Units are abstract." You guess.    | ❌ No                       |
-| STEP   | `LENGTH_MEASURE(600.0)` with unit   | ✅ Yes                      |
-| IFC    | `IfcSIUnit(MILLI.., METRE)`         | ✅ Yes                      |
-| 3MF    | `<model unit="millimeter">`         | ✅ Yes                      |
+| Format | What happens                      | Can you detect the mistake? |
+| ------ | --------------------------------- | --------------------------- |
+| OBJ    | No unit info. You guess.          | ❌ No                       |
+| glTF   | "Units are abstract." You guess.  | ❌ No                       |
+| STEP   | `LENGTH_MEASURE(600.0)` with unit | ✅ Yes                      |
+| IFC    | `IfcSIUnit(MILLI.., METRE)`       | ✅ Yes                      |
+| 3MF    | `<model unit="millimeter">`       | ✅ Yes                      |
 
 **Recommendation:** Never trust a format that doesn't declare units.
 At minimum, validate against expected bounding box (e.g., "a cabinet should
@@ -317,13 +317,13 @@ be between 300mm and 2000mm on any axis — if I get 0.6 or 600000, units are wr
 
 ## 7. Migration Effort Estimate
 
-| Step                                      | Effort  | Impact                                             |
-| ----------------------------------------- | ------- | -------------------------------------------------- |
-| Write `parse_3mf.py`                      | 1–2 days | Replaces `analyze_gltf_v2.py` + `convert_obj_to_gltf.py` |
-| Request 3MF export from other app         | Varies  | Eliminates unit guessing + index bugs              |
-| Keep OBJ parser as fallback               | 0 days  | Backwards compatibility                            |
-| Write `parse_step.py` (optional)          | 1 week  | Real topology validation                           |
-| Add unit-sanity check to validate.py      | 1 hour  | Catches 90% of unit mistakes                       |
+| Step                                 | Effort   | Impact                                                   |
+| ------------------------------------ | -------- | -------------------------------------------------------- |
+| Write `parse_3mf.py`                 | 1–2 days | Replaces `analyze_gltf_v2.py` + `convert_obj_to_gltf.py` |
+| Request 3MF export from other app    | Varies   | Eliminates unit guessing + index bugs                    |
+| Keep OBJ parser as fallback          | 0 days   | Backwards compatibility                                  |
+| Write `parse_step.py` (optional)     | 1 week   | Real topology validation                                 |
+| Add unit-sanity check to validate.py | 1 hour   | Catches 90% of unit mistakes                             |
 
 ---
 
@@ -391,15 +391,15 @@ be between 300mm and 2000mm on any axis — if I get 0.6 or 600000, units are wr
 
 ## 10. References
 
-| Resource                                           | What it covers                     |
-| -------------------------------------------------- | ---------------------------------- |
-| [3MF Core Specification](https://3mf.io/specs/)    | File format, units, mesh structure |
-| [ISO 10303 (STEP)](https://www.iso.org/standard/74878.html) | B-Rep exchange standard    |
-| [IFC Standard](https://technical.buildingsmart.org/standards/ifc/) | BIM data model         |
-| [pythonocc-core](https://github.com/tpaviot/pythonocc-core) | OpenCASCADE Python bindings |
-| [IfcOpenShell](https://ifcopenshell.org/)          | IFC parsing library                |
-| [lib3mf](https://github.com/3MFConsortium/lib3mf)  | Official 3MF C++ / Python library |
-| [OpenCASCADE (OCCT)](https://dev.opencascade.org/) | Reference B-Rep kernel             |
+| Resource                                                           | What it covers                     |
+| ------------------------------------------------------------------ | ---------------------------------- |
+| [3MF Core Specification](https://3mf.io/specs/)                    | File format, units, mesh structure |
+| [ISO 10303 (STEP)](https://www.iso.org/standard/74878.html)        | B-Rep exchange standard            |
+| [IFC Standard](https://technical.buildingsmart.org/standards/ifc/) | BIM data model                     |
+| [pythonocc-core](https://github.com/tpaviot/pythonocc-core)        | OpenCASCADE Python bindings        |
+| [IfcOpenShell](https://ifcopenshell.org/)                          | IFC parsing library                |
+| [lib3mf](https://github.com/3MFConsortium/lib3mf)                  | Official 3MF C++ / Python library  |
+| [OpenCASCADE (OCCT)](https://dev.opencascade.org/)                 | Reference B-Rep kernel             |
 
 ---
 
@@ -408,13 +408,13 @@ be between 300mm and 2000mm on any axis — if I get 0.6 or 600000, units are wr
 For reference, here are the specific bugs in the existing OBJ/glTF pipeline
 that this strategy eliminates:
 
-| # | Bug                                      | Root cause                  | 3MF/STEP fix                    |
-| - | ---------------------------------------- | --------------------------- | ------------------------------- |
-| 1 | `*1000` assumes meters                   | OBJ has no unit declaration | `<model unit="millimeter">`    |
-| 2 | Z-up detection fails for wide cabinets   | Heuristic on axis ranges    | Format declares coordinate system |
-| 3 | Multi-object index mismatch              | OBJ global vertex indices   | Per-object vertex pools         |
-| 4 | No manifold / Euler check                | glTF has no topology data   | STEP B-Rep + 3MF spec requirement |
-| 5 | Normals silently dropped in OBJ→glTF     | Converter skips `vn` lines  | 3MF carries normals; STEP has surface defs |
-| 6 | Fan triangulation breaks concave faces   | Single algorithm for all polygons | 3MF triangulation spec    |
-| 7 | glTF `matrix`/`rotation` not handled     | Only `translation` parsed   | 3MF uses explicit 4×4 transforms |
-| 8 | Expected dims hardcoded in Python        | Not data-driven             | `<metadata>` in 3MF or config JSON |
+| #   | Bug                                    | Root cause                        | 3MF/STEP fix                               |
+| --- | -------------------------------------- | --------------------------------- | ------------------------------------------ |
+| 1   | `*1000` assumes meters                 | OBJ has no unit declaration       | `<model unit="millimeter">`                |
+| 2   | Z-up detection fails for wide cabinets | Heuristic on axis ranges          | Format declares coordinate system          |
+| 3   | Multi-object index mismatch            | OBJ global vertex indices         | Per-object vertex pools                    |
+| 4   | No manifold / Euler check              | glTF has no topology data         | STEP B-Rep + 3MF spec requirement          |
+| 5   | Normals silently dropped in OBJ→glTF   | Converter skips `vn` lines        | 3MF carries normals; STEP has surface defs |
+| 6   | Fan triangulation breaks concave faces | Single algorithm for all polygons | 3MF triangulation spec                     |
+| 7   | glTF `matrix`/`rotation` not handled   | Only `translation` parsed         | 3MF uses explicit 4×4 transforms           |
+| 8   | Expected dims hardcoded in Python      | Not data-driven                   | `<metadata>` in 3MF or config JSON         |

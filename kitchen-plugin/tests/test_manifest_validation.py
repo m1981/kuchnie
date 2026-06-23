@@ -280,9 +280,14 @@ class TestVertexFaceChecks:
         assert not any(i.severity == "warning" for i in issues)
 
     def test_carcass_with_too_few_vertices_warn(self):
-        obj = {"name": "test", "classification": "carcass", "vertex_count": 8, "face_count": 12}
+        obj = {"name": "test", "classification": "carcass", "vertex_count": 4, "face_count": 6}
         issues = check_vertex_face_counts(obj)
         assert any(i.severity == "warning" and i.check == "vertex_count" for i in issues)
+
+    def test_board_with_8_vertices_pass(self):
+        obj = {"name": "test_left", "classification": "board", "vertex_count": 8, "face_count": 6}
+        issues = check_vertex_face_counts(obj)
+        assert not any(i.severity == "warning" for i in issues)
 
     def test_door_with_8_vertices_pass(self):
         obj = {"name": "test", "classification": "door_front", "vertex_count": 8, "face_count": 6}
@@ -294,10 +299,11 @@ class TestVertexFaceChecks:
         issues = check_vertex_face_counts(obj)
         assert any(i.severity == "warning" and i.check == "vertex_count" for i in issues)
 
-    def test_zero_vertices_error(self):
+    def test_zero_vertices_skipped_for_empty_parent(self):
         obj = {"name": "test", "classification": "carcass", "vertex_count": 0, "face_count": 0}
         issues = check_vertex_face_counts(obj)
-        assert any(i.severity == "error" and i.check == "vertex_count" for i in issues)
+        # Empty parent (0 vertices) — skip checks, no error
+        assert len(issues) == 0
 
     def test_vertices_but_no_faces_error(self):
         obj = {"name": "test", "classification": "carcass", "vertex_count": 16, "face_count": 0}

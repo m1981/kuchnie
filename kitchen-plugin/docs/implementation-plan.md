@@ -23,6 +23,7 @@ actual validation, and is readable by both LLM agents and humans.
 ```
 
 **Problems:**
+
 - OBJ has no units (hardcoded `*1000` heuristic)
 - Coordinate system detection is fragile guesswork
 - Multi-object index remapping bug in OBJ parsing
@@ -43,6 +44,7 @@ actual validation, and is readable by both LLM agents and humans.
 ```
 
 **Benefits:**
+
 - Units explicit in manifest (`"units": "meters"`)
 - Coordinate system documented once
 - Local + world coordinates, exact transforms
@@ -77,6 +79,7 @@ Output: manifest JSON (v2.0 schema)
 ```
 
 **Key improvements over existing `geometry_inspector.py`:**
+
 - Add `world_bounds` (not just local)
 - Add `expected_dimensions_mm` per object
 - Add `validation` dict per object (inline pass/fail)
@@ -106,6 +109,7 @@ standalone or as part of the build pipeline.
 #### Step 1.3: Create `schemas/manifest_v2.schema.json`
 
 JSON Schema for the manifest format. Enables:
+
 - Schema validation in tests
 - Auto-documentation for LLM agents
 - CI checks: reject malformed manifests
@@ -137,6 +141,7 @@ if args["validate"]:
 ```
 
 **File changes:**
+
 - `src/main.py` — add manifest export, make it default behavior
 - Remove `--export-inspect` and `--export-manifest` flags (manifest always exports)
 - Add `--validate` flag
@@ -242,15 +247,15 @@ Human/LLM-friendly summary of a manifest.
 
 #### Step 4.1: Remove deprecated scripts
 
-| File | Action | Reason |
-|---|---|---|
-| `scripts/analyze_reference_obj.py` | Delete | Replaced by manifest validation |
-| `scripts/convert_obj_to_gltf.py` | Delete | Not needed (manifest is direct) |
-| `scripts/analyze_gltf_v2.py` | Delete | Replaced by manifest validation |
-| `scripts/compare_with_reference.py` | Delete | Replaced by inline validation |
-| `scripts/validate_obj.py` | Delete | Replaced by manifest validation |
-| `src/geometry_inspector.py` | Delete | Replaced by `geometry_manifest.py` |
-| `src/geometry_validator.py` | Delete | Replaced by `manifest_validator.py` |
+| File                                | Action | Reason                              |
+| ----------------------------------- | ------ | ----------------------------------- |
+| `scripts/analyze_reference_obj.py`  | Delete | Replaced by manifest validation     |
+| `scripts/convert_obj_to_gltf.py`    | Delete | Not needed (manifest is direct)     |
+| `scripts/analyze_gltf_v2.py`        | Delete | Replaced by manifest validation     |
+| `scripts/compare_with_reference.py` | Delete | Replaced by inline validation       |
+| `scripts/validate_obj.py`           | Delete | Replaced by manifest validation     |
+| `src/geometry_inspector.py`         | Delete | Replaced by `geometry_manifest.py`  |
+| `src/geometry_validator.py`         | Delete | Replaced by `manifest_validator.py` |
 
 #### Step 4.2: Update main.py references
 
@@ -260,11 +265,11 @@ Human/LLM-friendly summary of a manifest.
 
 #### Step 4.3: Update docs
 
-| File | Change |
-|---|---|
-| `docs/README.md` | Update reading guide, add manifest docs |
-| `docs/geometry-inspection-tools.md` | Rewrite: manifest-based workflow |
-| `docs/3d-format-strategy.md` | Add note: manifest supersedes format inspection |
+| File                                | Change                                          |
+| ----------------------------------- | ----------------------------------------------- |
+| `docs/README.md`                    | Update reading guide, add manifest docs         |
+| `docs/geometry-inspection-tools.md` | Rewrite: manifest-based workflow                |
+| `docs/3d-format-strategy.md`        | Add note: manifest supersedes format inspection |
 
 ---
 
@@ -281,6 +286,7 @@ done
 ```
 
 Collect all validation failures. Categorize:
+
 - **Dimension mismatches** → fix `geometry_builder.py` or `cabinet_geometry.py`
 - **Position errors** → fix `geometry_builder.py` turn/rotation logic
 - **Overlap issues** → fix `layout.py` gap handling or `geometry_builder.py` positioning
@@ -289,6 +295,7 @@ Collect all validation failures. Categorize:
 #### Step 5.2: Add expected-vs-actual tolerance tests
 
 For each config, add a test that:
+
 1. Runs the build
 2. Reads the manifest
 3. Asserts all dimensions within 2mm tolerance
@@ -358,13 +365,13 @@ what the expected values are. Fix in `geometry_builder.py` or
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| Manifest misses data that OBJ/glTF had | Keep OBJ/glTF export as optional; compare outputs during transition |
-| Schema gets out of sync with code | JSON Schema + schema validation in tests catches drift |
-| bpy changes break manifest export | bpy-dependent tests skipped in CI, run manually before release |
-| Validation is too strict / too loose | Tolerance values configurable in manifest; adjust based on real data |
-| LLM agent can't parse manifest | Manifest is plain JSON; add `summarize_manifest.py` for text output |
+| Risk                                   | Mitigation                                                           |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| Manifest misses data that OBJ/glTF had | Keep OBJ/glTF export as optional; compare outputs during transition  |
+| Schema gets out of sync with code      | JSON Schema + schema validation in tests catches drift               |
+| bpy changes break manifest export      | bpy-dependent tests skipped in CI, run manually before release       |
+| Validation is too strict / too loose   | Tolerance values configurable in manifest; adjust based on real data |
+| LLM agent can't parse manifest         | Manifest is plain JSON; add `summarize_manifest.py` for text output  |
 
 ---
 
@@ -385,34 +392,34 @@ what the expected values are. Fix in `geometry_builder.py` or
 
 ### New Files
 
-| File | Layer | Purpose |
-|---|---|---|
-| `src/geometry_manifest.py` | 4 | Manifest export (primary output) |
-| `src/manifest_validator.py` | 4 | Manifest validation checks |
-| `schemas/manifest_v2.schema.json` | — | JSON Schema for manifest format |
-| `scripts/validate_manifest.py` | — | Standalone validation (no bpy) |
-| `scripts/summarize_manifest.py` | — | Human/LLM summary of manifest |
-| `tests/test_manifest_schema.py` | — | Schema compliance tests |
-| `tests/test_manifest_objects.py` | — | Object detail tests |
-| `tests/test_manifest_validation.py` | — | Validation logic tests |
-| `tests/test_manifest_layout.py` | — | Layout metadata tests |
+| File                                | Layer | Purpose                          |
+| ----------------------------------- | ----- | -------------------------------- |
+| `src/geometry_manifest.py`          | 4     | Manifest export (primary output) |
+| `src/manifest_validator.py`         | 4     | Manifest validation checks       |
+| `schemas/manifest_v2.schema.json`   | —     | JSON Schema for manifest format  |
+| `scripts/validate_manifest.py`      | —     | Standalone validation (no bpy)   |
+| `scripts/summarize_manifest.py`     | —     | Human/LLM summary of manifest    |
+| `tests/test_manifest_schema.py`     | —     | Schema compliance tests          |
+| `tests/test_manifest_objects.py`    | —     | Object detail tests              |
+| `tests/test_manifest_validation.py` | —     | Validation logic tests           |
+| `tests/test_manifest_layout.py`     | —     | Layout metadata tests            |
 
 ### Modified Files
 
-| File | Change |
-|---|---|
-| `src/main.py` | Add manifest export (default), add `--validate`, remove old flags |
-| `docs/README.md` | Update reading guide |
-| `docs/geometry-inspection-tools.md` | Rewrite for manifest workflow |
+| File                                | Change                                                            |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `src/main.py`                       | Add manifest export (default), add `--validate`, remove old flags |
+| `docs/README.md`                    | Update reading guide                                              |
+| `docs/geometry-inspection-tools.md` | Rewrite for manifest workflow                                     |
 
 ### Deleted Files
 
-| File | Reason |
-|---|---|
-| `scripts/analyze_reference_obj.py` | Replaced by manifest validation |
-| `scripts/convert_obj_to_gltf.py` | Not needed |
-| `scripts/analyze_gltf_v2.py` | Replaced by manifest validation |
-| `scripts/compare_with_reference.py` | Replaced by inline validation |
-| `scripts/validate_obj.py` | Replaced by manifest validation |
-| `src/geometry_inspector.py` | Replaced by `geometry_manifest.py` |
-| `src/geometry_validator.py` | Replaced by `manifest_validator.py` |
+| File                                | Reason                              |
+| ----------------------------------- | ----------------------------------- |
+| `scripts/analyze_reference_obj.py`  | Replaced by manifest validation     |
+| `scripts/convert_obj_to_gltf.py`    | Not needed                          |
+| `scripts/analyze_gltf_v2.py`        | Replaced by manifest validation     |
+| `scripts/compare_with_reference.py` | Replaced by inline validation       |
+| `scripts/validate_obj.py`           | Replaced by manifest validation     |
+| `src/geometry_inspector.py`         | Replaced by `geometry_manifest.py`  |
+| `src/geometry_validator.py`         | Replaced by `manifest_validator.py` |

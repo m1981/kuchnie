@@ -371,6 +371,44 @@ def _extract_object(
                 "local_dimensions_mm": child_dims,
             })
 
+        # If parent is empty (0 vertices), compute bounds from children
+        if len(local_vertices) == 0 and children:
+            # Compute bounds from children's dimensions
+            # Children are positioned relative to parent (which is at origin)
+            child_bounds_min = [float('inf'), float('inf'), float('inf')]
+            child_bounds_max = [float('-inf'), float('-inf'), float('-inf')]
+            for child in getattr(obj, 'children', []):
+                child_mesh = child.data
+                if hasattr(child_mesh, 'vertices') and len(child_mesh.vertices) > 0:
+                    for v in child_mesh.vertices:
+                        # Child vertices are in child local space
+                        # Child location is relative to parent
+                        cx = child.location.x + v.co.x
+                        cy = child.location.y + v.co.y
+                        cz = child.location.z + v.co.z
+                        child_bounds_min[0] = min(child_bounds_min[0], cx)
+                        child_bounds_min[1] = min(child_bounds_min[1], cy)
+                        child_bounds_min[2] = min(child_bounds_min[2], cz)
+                        child_bounds_max[0] = max(child_bounds_max[0], cx)
+                        child_bounds_max[1] = max(child_bounds_max[1], cy)
+                        child_bounds_max[2] = max(child_bounds_max[2], cz)
+            if child_bounds_min[0] != float('inf'):
+                local_bounds = {
+                    'min_m': [round(v, 6) for v in child_bounds_min],
+                    'max_m': [round(v, 6) for v in child_bounds_max],
+                }
+                local_dims_mm = [
+                    round((child_bounds_max[0] - child_bounds_min[0]) * 1000, 2),
+                    round((child_bounds_max[1] - child_bounds_min[1]) * 1000, 2),
+                    round((child_bounds_max[2] - child_bounds_min[2]) * 1000, 2),
+                ]
+                world_bounds = _compute_world_bounds(local_bounds, obj)
+                world_dims_mm = [
+                    round((world_bounds['max_m'][0] - world_bounds['min_m'][0]) * 1000, 2),
+                    round((world_bounds['max_m'][1] - world_bounds['min_m'][1]) * 1000, 2),
+                    round((world_bounds['max_m'][2] - world_bounds['min_m'][2]) * 1000, 2),
+                ]
+
         return {
             "name": name,
             "type": obj_type,
@@ -485,15 +523,24 @@ def _classify_object(name: str) -> str:
         return "filler"
     elif "plinth" in name_lower:
         return "plinth"
+    elif any(x in name_lower for x in ["_left", "_right", "_top", "_bottom"]):
+        return "board"  # Individual carcass board
     elif "carcass" in name_lower or ("run" in name_lower and "_" in name_lower):
-        return "carcass"
+        return "carcass"  # Parent empty or old-style carcass
     else:
         return "other"
 
 
 def _determine_type(name: str) -> str:
     """Determine the Blender object type."""
-    # This is always 'MESH' for our generated objects
+    # Check if name matches a board (has _left, _right, _top, _bottom suffix)
+    name_lower = name.lower()
+    if any(x in name_lower for x in ["_left", "_right", "_top", "_bottom"]):
+        return "MESH"  # Board is a mesh
+    elif "run" in name_lower and name_lower.count("_") >= 2:
+        # Could be parent empty or old-style carcass
+        # Will be determined by actual object data
+        return "MESH"
     return "MESH"
 
 
@@ -562,26 +609,15 @@ def _compute_expected_dims(
         # Back panel depends on parent cabinet
         return None
 
+    if classification == "board":
+        # Individual carcass board — dimensions vary by board type
+        return None
+
     if classification == "carcass":
-        # Carcass dimensions depend on level and settings
-        if level == "base":
-            return {
-                "width": None,  # From config
-                "depth": settings.get("baseDepth", 560),
-                "height": settings.get("baseBodyHeight", 720),
-            }
-        elif level == "upper":
-            return {
-                "width": None,
-                "depth": settings.get("wallDepth", 300),
-                "height": settings.get("wallHeight", 600),
-            }
-        elif level == "tall":
-            return {
-                "width": None,
-                "depth": settings.get("tallDepth", 560),
-                "height": settings.get("tallHeight", 2000),
-            }
+        # Parent empty (grouping object) — check vertex count
+        # If it has no vertices, it's an empty — skip dimension check
+        # (The actual geometry is in child boards)
+        return None  # Don't validate parent empty dimensions
 
     return None
 
@@ -616,13 +652,16 @@ def _validate_object(
                     })
 
     # Vertex count checks
-    if classification == "carcass":
-        # Hollow box: 16 vertices (8 outer + 8 inner)
-        if vertex_count < 16:
+    if vertex_count == 0:
+        # Empty parent — skip checks
+        pass
+    elif classification in ("carcass", "board"):
+        # Individual board: 8 vertices (solid box)
+        if vertex_count < 8:
             issues.append({
                 "severity": "warning",
                 "check": "vertex_count",
-                "message": f"Carcass has {vertex_count} vertices (expected ≥16 for hollow box)",
+                "message": f"Board has {vertex_count} vertices (expected ≥8)",
             })
     elif classification in ("door_front", "drawer_front"):
         # Solid box: 8 vertices

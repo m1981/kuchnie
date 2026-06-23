@@ -1,381 +1,427 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://kitchen-plugin/schemas/manifest_v2.schema.json",
-  "title": "Kitchen Geometry Manifest v2.0",
-  "description": "Structured geometry manifest for kitchen cabinet validation. Primary output of the kitchen plugin build pipeline.",
-  "type": "object",
-  "required": [
-    "format",
-    "version",
-    "units",
-    "coordinate_system",
-    "settings",
-    "layout",
-    "objects",
-    "validation_summary"
-  ],
-  "properties": {
-    "format": {
-      "type": "string",
-      "const": "kitchen-geometry-manifest"
-    },
-    "version": {
-      "type": "string",
-      "const": "2.0"
-    },
-    "units": {
-      "type": "string",
-      "const": "meters",
-      "description": "All length values in the manifest are in meters. Display tools should convert to mm for presentation."
-    },
-    "generated_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "ISO 8601 timestamp of manifest generation"
-    },
-    "source_config": {
-      "type": "string",
-      "description": "Path to the source JSON config file"
-    },
-    "coordinate_system": {
-      "type": "object",
-      "required": ["type", "handedness", "x", "y", "z"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "const": "Z-up"
-        },
-        "handedness": {
-          "type": "string",
-          "const": "right"
-        },
-        "x": {
-          "type": "string",
-          "description": "X axis direction"
-        },
-        "y": {
-          "type": "string",
-          "description": "Y axis direction"
-        },
-        "z": {
-          "type": "string",
-          "description": "Z axis direction"
-        }
-      }
-    },
-    "settings": {
-      "type": "object",
-      "description": "Kitchen settings from config (mm values)",
-      "properties": {
-        "baseBodyHeight": { "type": "number", "description": "Base cabinet body height (mm)" },
-        "baseDepth": { "type": "number", "description": "Base cabinet depth (mm)" },
-        "wallHeight": { "type": "number", "description": "Wall cabinet height (mm)" },
-        "wallDepth": { "type": "number", "description": "Wall cabinet depth (mm)" },
-        "tallHeight": { "type": "number", "description": "Tall cabinet height (mm)" },
-        "tallDepth": { "type": "number", "description": "Tall cabinet depth (mm)" },
-        "plinthHeight": { "type": "number", "description": "Plinth height (mm)" },
-        "counterThickness": { "type": "number", "description": "Countertop thickness (mm)" },
-        "counterOverhangFront": { "type": "number", "description": "Countertop front overhang (mm)" },
-        "counterOverhangEnd": { "type": "number", "description": "Countertop end overhang (mm)" },
-        "wallMountHeight": { "type": "number", "description": "Wall cabinet mounting height (mm)" },
-        "cabinetGap": { "type": "number", "description": "Gap between carcass boxes (mm)" },
-        "frontGap": { "type": "number", "description": "Gap between door/drawer fronts (mm)" },
-        "corpusThickness": { "type": "number", "description": "Carcass board thickness (mm)" },
-        "frontThickness": { "type": "number", "description": "Front panel thickness (mm)" },
-        "backThickness": { "type": "number", "description": "Back panel thickness (mm)" },
-        "grooveOffset": { "type": "number", "description": "Distance from rear to back groove (mm)" },
-        "frontOverlay": { "type": "number", "description": "Front overlay amount (mm)" }
-      }
-    },
-    "layout": {
-      "type": "object",
-      "required": ["type", "run_count", "total_cabinets", "runs"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["I-shape", "L-shape", "U-shape"],
-          "description": "Kitchen layout type"
-        },
-        "run_count": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "total_cabinets": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "runs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["label", "index", "direction", "total_width_mm", "cabinet_count", "cabinets"],
-            "properties": {
-              "label": { "type": "string" },
-              "index": { "type": "integer", "minimum": 0 },
-              "direction": {
-                "type": "string",
-                "enum": ["east", "north", "west", "south"]
-              },
-              "turn": {
-                "type": ["string", "null"],
-                "enum": ["left", "right", null]
-              },
-              "start_position_mm": {
-                "type": "array",
-                "items": { "type": "number" },
-                "minItems": 2,
-                "maxItems": 2
-              },
-              "end_position_mm": {
-                "type": "array",
-                "items": { "type": "number" },
-                "minItems": 2,
-                "maxItems": 2
-              },
-              "total_width_mm": { "type": "number", "minimum": 0 },
-              "cabinet_count": { "type": "integer", "minimum": 0 },
-              "cabinets": {
-                "type": "array",
-                "items": { "type": "string" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "objects": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "name",
-          "type",
-          "classification",
-          "transform",
-          "local_bounds",
-          "local_dimensions_mm",
-          "world_bounds",
-          "world_dimensions_mm",
-          "vertex_count",
-          "face_count",
-          "validation"
-        ],
-        "properties": {
-          "name": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://kitchen-plugin/schemas/manifest_v2.schema.json",
+    "title": "Kitchen Geometry Manifest v2.0",
+    "description": "Structured geometry manifest for kitchen cabinet validation. Primary output of the kitchen plugin build pipeline.",
+    "type": "object",
+    "required": [
+        "format",
+        "version",
+        "units",
+        "coordinate_system",
+        "settings",
+        "layout",
+        "objects",
+        "validation_summary"
+    ],
+    "properties": {
+        "format": {
             "type": "string",
-            "description": "Unique object name"
-          },
-          "type": {
+            "const": "kitchen-geometry-manifest"
+        },
+        "version": {
             "type": "string",
-            "const": "MESH"
-          },
-          "classification": {
+            "const": "2.0"
+        },
+        "units": {
             "type": "string",
-            "enum": [
-              "carcass",
-              "door_front",
-              "drawer_front",
-              "back_panel",
-              "countertop",
-              "filler",
-              "plinth",
-              "other"
-            ]
-          },
-          "level": {
-            "type": ["string", "null"],
-            "enum": ["base", "upper", "tall", null]
-          },
-          "run_label": {
-            "type": ["string", "null"]
-          },
-          "run_index": {
-            "type": ["integer", "null"]
-          },
-          "cabinet_index": {
-            "type": ["integer", "null"]
-          },
-          "parent": {
-            "type": ["string", "null"],
-            "description": "Name of parent object, null for root objects"
-          },
-          "transform": {
+            "const": "meters",
+            "description": "All length values in the manifest are in meters. Display tools should convert to mm for presentation."
+        },
+        "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of manifest generation"
+        },
+        "source_config": {
+            "type": "string",
+            "description": "Path to the source JSON config file"
+        },
+        "coordinate_system": {
             "type": "object",
-            "required": ["location_m", "rotation_euler_rad", "scale"],
+            "required": ["type", "handedness", "x", "y", "z"],
             "properties": {
-              "location_m": {
-                "type": "array",
-                "items": { "type": "number" },
-                "minItems": 3,
-                "maxItems": 3
-              },
-              "rotation_euler_rad": {
-                "type": "array",
-                "items": { "type": "number" },
-                "minItems": 3,
-                "maxItems": 3
-              },
-              "scale": {
-                "type": "array",
-                "items": { "type": "number" },
-                "minItems": 3,
-                "maxItems": 3
-              }
+                "type": {
+                    "type": "string",
+                    "const": "Z-up"
+                },
+                "handedness": {
+                    "type": "string",
+                    "const": "right"
+                },
+                "x": {
+                    "type": "string",
+                    "description": "X axis direction"
+                },
+                "y": {
+                    "type": "string",
+                    "description": "Y axis direction"
+                },
+                "z": {
+                    "type": "string",
+                    "description": "Z axis direction"
+                }
             }
-          },
-          "local_bounds": {
-            "$ref": "#/$defs/bounds"
-          },
-          "local_dimensions_mm": {
-            "type": "array",
-            "items": { "type": "number" },
-            "minItems": 3,
-            "maxItems": 3,
-            "description": "[width, depth, height] in mm"
-          },
-          "world_bounds": {
-            "$ref": "#/$defs/bounds"
-          },
-          "world_dimensions_mm": {
-            "type": "array",
-            "items": { "type": "number" },
-            "minItems": 3,
-            "maxItems": 3
-          },
-          "vertex_count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "face_count": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "expected_dimensions_mm": {
-            "type": ["object", "null"],
-            "properties": {
-              "width": { "type": ["number", "null"] },
-              "depth": { "type": ["number", "null"] },
-              "height": { "type": ["number", "null"] }
-            }
-          },
-          "construction": {
+        },
+        "settings": {
             "type": "object",
+            "description": "Kitchen settings from config (mm values)",
             "properties": {
-              "corpus_thickness_mm": { "type": "number" },
-              "back_thickness_mm": { "type": "number" },
-              "front_thickness_mm": { "type": "number" },
-              "groove_offset_mm": { "type": "number" },
-              "front_overlay_mm": { "type": "number" }
+                "baseBodyHeight": {
+                    "type": "number",
+                    "description": "Base cabinet body height (mm)"
+                },
+                "baseDepth": { "type": "number", "description": "Base cabinet depth (mm)" },
+                "wallHeight": { "type": "number", "description": "Wall cabinet height (mm)" },
+                "wallDepth": { "type": "number", "description": "Wall cabinet depth (mm)" },
+                "tallHeight": { "type": "number", "description": "Tall cabinet height (mm)" },
+                "tallDepth": { "type": "number", "description": "Tall cabinet depth (mm)" },
+                "plinthHeight": { "type": "number", "description": "Plinth height (mm)" },
+                "counterThickness": {
+                    "type": "number",
+                    "description": "Countertop thickness (mm)"
+                },
+                "counterOverhangFront": {
+                    "type": "number",
+                    "description": "Countertop front overhang (mm)"
+                },
+                "counterOverhangEnd": {
+                    "type": "number",
+                    "description": "Countertop end overhang (mm)"
+                },
+                "wallMountHeight": {
+                    "type": "number",
+                    "description": "Wall cabinet mounting height (mm)"
+                },
+                "cabinetGap": { "type": "number", "description": "Gap between carcass boxes (mm)" },
+                "frontGap": {
+                    "type": "number",
+                    "description": "Gap between door/drawer fronts (mm)"
+                },
+                "corpusThickness": {
+                    "type": "number",
+                    "description": "Carcass board thickness (mm)"
+                },
+                "frontThickness": { "type": "number", "description": "Front panel thickness (mm)" },
+                "backThickness": { "type": "number", "description": "Back panel thickness (mm)" },
+                "grooveOffset": {
+                    "type": "number",
+                    "description": "Distance from rear to back groove (mm)"
+                },
+                "frontOverlay": { "type": "number", "description": "Front overlay amount (mm)" }
             }
-          },
-          "children": {
+        },
+        "layout": {
+            "type": "object",
+            "required": ["type", "run_count", "total_cabinets", "runs"],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["I-shape", "L-shape", "U-shape"],
+                    "description": "Kitchen layout type"
+                },
+                "run_count": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "total_cabinets": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "runs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "label",
+                            "index",
+                            "direction",
+                            "total_width_mm",
+                            "cabinet_count",
+                            "cabinets"
+                        ],
+                        "properties": {
+                            "label": { "type": "string" },
+                            "index": { "type": "integer", "minimum": 0 },
+                            "direction": {
+                                "type": "string",
+                                "enum": ["east", "north", "west", "south"]
+                            },
+                            "turn": {
+                                "type": ["string", "null"],
+                                "enum": ["left", "right", null]
+                            },
+                            "start_position_mm": {
+                                "type": "array",
+                                "items": { "type": "number" },
+                                "minItems": 2,
+                                "maxItems": 2
+                            },
+                            "end_position_mm": {
+                                "type": "array",
+                                "items": { "type": "number" },
+                                "minItems": 2,
+                                "maxItems": 2
+                            },
+                            "total_width_mm": { "type": "number", "minimum": 0 },
+                            "cabinet_count": { "type": "integer", "minimum": 0 },
+                            "cabinets": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "objects": {
             "type": "array",
             "items": {
-              "type": "object",
-              "required": ["name", "type", "local_dimensions_mm"],
-              "properties": {
-                "name": { "type": "string" },
-                "type": { "type": "string" },
-                "local_dimensions_mm": {
-                  "type": "array",
-                  "items": { "type": "number" },
-                  "minItems": 3,
-                  "maxItems": 3
+                "type": "object",
+                "required": [
+                    "name",
+                    "type",
+                    "classification",
+                    "transform",
+                    "local_bounds",
+                    "local_dimensions_mm",
+                    "world_bounds",
+                    "world_dimensions_mm",
+                    "vertex_count",
+                    "face_count",
+                    "validation"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Unique object name"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "MESH"
+                    },
+                    "classification": {
+                        "type": "string",
+                        "enum": [
+                            "carcass",
+                            "door_front",
+                            "drawer_front",
+                            "back_panel",
+                            "countertop",
+                            "filler",
+                            "plinth",
+                            "other"
+                        ]
+                    },
+                    "level": {
+                        "type": ["string", "null"],
+                        "enum": ["base", "upper", "tall", null]
+                    },
+                    "run_label": {
+                        "type": ["string", "null"]
+                    },
+                    "run_index": {
+                        "type": ["integer", "null"]
+                    },
+                    "cabinet_index": {
+                        "type": ["integer", "null"]
+                    },
+                    "parent": {
+                        "type": ["string", "null"],
+                        "description": "Name of parent object, null for root objects"
+                    },
+                    "transform": {
+                        "type": "object",
+                        "required": ["location_m", "rotation_euler_rad", "scale"],
+                        "properties": {
+                            "location_m": {
+                                "type": "array",
+                                "items": { "type": "number" },
+                                "minItems": 3,
+                                "maxItems": 3
+                            },
+                            "rotation_euler_rad": {
+                                "type": "array",
+                                "items": { "type": "number" },
+                                "minItems": 3,
+                                "maxItems": 3
+                            },
+                            "scale": {
+                                "type": "array",
+                                "items": { "type": "number" },
+                                "minItems": 3,
+                                "maxItems": 3
+                            }
+                        }
+                    },
+                    "local_bounds": {
+                        "$ref": "#/$defs/bounds"
+                    },
+                    "local_dimensions_mm": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "minItems": 3,
+                        "maxItems": 3,
+                        "description": "[width, depth, height] in mm"
+                    },
+                    "world_bounds": {
+                        "$ref": "#/$defs/bounds"
+                    },
+                    "world_dimensions_mm": {
+                        "type": "array",
+                        "items": { "type": "number" },
+                        "minItems": 3,
+                        "maxItems": 3
+                    },
+                    "vertex_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "face_count": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "expected_dimensions_mm": {
+                        "type": ["object", "null"],
+                        "properties": {
+                            "width": { "type": ["number", "null"] },
+                            "depth": { "type": ["number", "null"] },
+                            "height": { "type": ["number", "null"] }
+                        }
+                    },
+                    "construction": {
+                        "type": "object",
+                        "properties": {
+                            "corpus_thickness_mm": { "type": "number" },
+                            "back_thickness_mm": { "type": "number" },
+                            "front_thickness_mm": { "type": "number" },
+                            "groove_offset_mm": { "type": "number" },
+                            "front_overlay_mm": { "type": "number" }
+                        }
+                    },
+                    "children": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["name", "type", "local_dimensions_mm"],
+                            "properties": {
+                                "name": { "type": "string" },
+                                "type": { "type": "string" },
+                                "local_dimensions_mm": {
+                                    "type": "array",
+                                    "items": { "type": "number" },
+                                    "minItems": 3,
+                                    "maxItems": 3
+                                }
+                            }
+                        }
+                    },
+                    "validation": {
+                        "$ref": "#/$defs/validation"
+                    },
+                    "error": {
+                        "type": "string",
+                        "description": "Error message if extraction failed"
+                    }
                 }
-              }
             }
-          },
-          "validation": {
-            "$ref": "#/$defs/validation"
-          },
-          "error": {
-            "type": "string",
-            "description": "Error message if extraction failed"
-          }
+        },
+        "validation_summary": {
+            "type": "object",
+            "required": [
+                "total_objects",
+                "total_vertices",
+                "total_faces",
+                "passed",
+                "failed",
+                "warnings",
+                "issues"
+            ],
+            "properties": {
+                "total_objects": { "type": "integer", "minimum": 0 },
+                "total_vertices": { "type": "integer", "minimum": 0 },
+                "total_faces": { "type": "integer", "minimum": 0 },
+                "passed": { "type": "integer", "minimum": 0 },
+                "failed": { "type": "integer", "minimum": 0 },
+                "warnings": { "type": "integer", "minimum": 0 },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/issue"
+                    }
+                }
+            }
         }
-      }
     },
-    "validation_summary": {
-      "type": "object",
-      "required": ["total_objects", "total_vertices", "total_faces", "passed", "failed", "warnings", "issues"],
-      "properties": {
-        "total_objects": { "type": "integer", "minimum": 0 },
-        "total_vertices": { "type": "integer", "minimum": 0 },
-        "total_faces": { "type": "integer", "minimum": 0 },
-        "passed": { "type": "integer", "minimum": 0 },
-        "failed": { "type": "integer", "minimum": 0 },
-        "warnings": { "type": "integer", "minimum": 0 },
-        "issues": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/issue"
-          }
+    "$defs": {
+        "bounds": {
+            "type": "object",
+            "required": ["min_m", "max_m"],
+            "properties": {
+                "min_m": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "description": "[x, y, z] minimum coordinates in meters"
+                },
+                "max_m": {
+                    "type": "array",
+                    "items": { "type": "number" },
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "description": "[x, y, z] maximum coordinates in meters"
+                }
+            }
+        },
+        "validation": {
+            "type": "object",
+            "required": [
+                "width_ok",
+                "depth_ok",
+                "height_ok",
+                "vertex_count_ok",
+                "face_count_ok",
+                "issues"
+            ],
+            "properties": {
+                "width_ok": { "type": "boolean" },
+                "depth_ok": { "type": "boolean" },
+                "height_ok": { "type": "boolean" },
+                "vertex_count_ok": { "type": "boolean" },
+                "face_count_ok": { "type": "boolean" },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/issue"
+                    }
+                }
+            }
+        },
+        "issue": {
+            "type": "object",
+            "required": ["severity", "object", "check", "message"],
+            "properties": {
+                "severity": {
+                    "type": "string",
+                    "enum": ["error", "warning"]
+                },
+                "object": {
+                    "type": "string"
+                },
+                "check": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "expected_mm": {
+                    "type": ["number", "null"]
+                },
+                "actual_mm": {
+                    "type": ["number", "null"]
+                }
+            }
         }
-      }
     }
-  },
-  "$defs": {
-    "bounds": {
-      "type": "object",
-      "required": ["min_m", "max_m"],
-      "properties": {
-        "min_m": {
-          "type": "array",
-          "items": { "type": "number" },
-          "minItems": 3,
-          "maxItems": 3,
-          "description": "[x, y, z] minimum coordinates in meters"
-        },
-        "max_m": {
-          "type": "array",
-          "items": { "type": "number" },
-          "minItems": 3,
-          "maxItems": 3,
-          "description": "[x, y, z] maximum coordinates in meters"
-        }
-      }
-    },
-    "validation": {
-      "type": "object",
-      "required": ["width_ok", "depth_ok", "height_ok", "vertex_count_ok", "face_count_ok", "issues"],
-      "properties": {
-        "width_ok": { "type": "boolean" },
-        "depth_ok": { "type": "boolean" },
-        "height_ok": { "type": "boolean" },
-        "vertex_count_ok": { "type": "boolean" },
-        "face_count_ok": { "type": "boolean" },
-        "issues": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/issue"
-          }
-        }
-      }
-    },
-    "issue": {
-      "type": "object",
-      "required": ["severity", "object", "check", "message"],
-      "properties": {
-        "severity": {
-          "type": "string",
-          "enum": ["error", "warning"]
-        },
-        "object": {
-          "type": "string"
-        },
-        "check": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "expected_mm": {
-          "type": ["number", "null"]
-        },
-        "actual_mm": {
-          "type": ["number", "null"]
-        }
-      }
-    }
-  }
 }

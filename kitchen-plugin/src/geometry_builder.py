@@ -298,20 +298,21 @@ def _build_cabinet(cab: dict, settings: dict, level: str,
     # Track all objects created for this cabinet
     all_objs = []
 
-    # Create carcass (hollow box with walls, open front)
-    obj = _create_carcass(name, geom)
-    all_objs.append(obj)
+    # Create carcass as 4 separate boards with technical gaps
+    parent, boards = _create_carcass(name, geom)
+    all_objs.append(parent)
+    all_objs.extend(boards)
 
-    # Add back panel (HDF in groove)
-    back_obj = _add_back_panel(obj, geom)
+    # Add back panel (HDF in groove) — parented to the carcass parent
+    back_obj = _add_back_panel(parent, geom)
     if back_obj:
         all_objs.append(back_obj)
 
-    # Add front panels (doors/drawers with overlay)
-    front_objs = _add_front(obj, cab, settings, level, geom)
+    # Add front panels (doors/drawers with overlay) — parented to carcass parent
+    front_objs = _add_front(parent, cab, settings, level, geom)
     all_objs.extend(front_objs)
 
-    return obj, all_objs
+    return parent, all_objs
 
 
 def _create_box(name: str, w: float, d: float, h: float) -> bpy.types.Object:
@@ -346,80 +347,105 @@ def _create_box(name: str, w: float, d: float, h: float) -> bpy.types.Object:
     return obj
 
 
-def _create_carcass(name: str, geom: CabinetGeometry) -> bpy.types.Object:
-    """Create a hollow carcass mesh with 18mm walls.
+def _create_carcass(name: str, geom: CabinetGeometry) -> tuple:
+    """Create carcass as 4 separate solid boards with technical gaps.
 
-    Creates a box with proper wall thickness for European frameless construction.
-    Front face is open (will be covered by door/drawer fronts).
+    European frameless construction:
+    - Left side panel:   full height × full depth × T
+    - Right side panel:  full height × full depth × T
+    - Top panel:         between sides × between front/back × T
+    - Bottom panel:      between sides × between front/back × T
 
-    Args:
-        name: Object name
-        geom: CabinetGeometry with calculated dimensions
+    Each board is a separate solid box (8 vertices, 6 faces).
+    Technical gaps between all boards — no shared surfaces.
+
+    Returns:
+        (parent_empty, [left, right, top, bottom])
     """
     # External dimensions in meters
     w = geom.external_width / 1000
     d = geom.external_depth / 1000
     h = geom.external_height / 1000
-
-    # Wall thickness in meters
     t = geom.corpus_thickness / 1000
+    gap = 0.001  # 1mm technical gap
 
-    # Create vertices for hollow box (24 vertices for 6 faces with thickness)
-    # Outer shell
+    # Board dimensions
+    # Side panels: full height × full depth × thickness
+    side_w = t
+    side_d = d
+    side_h = h
+
+    # Top/bottom: fit BETWEEN sides, full depth minus back panel offset
+    tb_w = w - 2 * t
+    tb_d = d - t
+    tb_h = t
+
+    # Create parent empty to group boards
+    parent = bpy.data.objects.new(name, None)
+    parent.empty_display_type = 'PLAIN_AXES'
+    parent.empty_display_size = 0.05
+    bpy.context.collection.objects.link(parent)
+
+    boards = []
+
+    # Left side panel: at X=0
+    left = _make_solid_box(
+        f"{name}_left", 0, 0, 0, side_w, side_d, side_h
+    )
+    left.parent = parent
+    boards.append(left)
+
+    # Right side panel: at X = width - thickness
+    right = _make_solid_box(
+        f"{name}_right", w - t, 0, 0, side_w, side_d, side_h
+    )
+    right.parent = parent
+    boards.append(right)
+
+    # Bottom panel: between sides, at Z=0
+    bottom = _make_solid_box(
+        f"{name}_bottom",
+        t + gap, 0, 0,
+        tb_w - 2 * gap, tb_d, tb_h
+    )
+    bottom.parent = parent
+    boards.append(bottom)
+
+    # Top panel: between sides, at Z = height - thickness
+    top = _make_solid_box(
+        f"{name}_top",
+        t + gap, 0, h - t,
+        tb_w - 2 * gap, tb_d, tb_h
+    )
+    top.parent = parent
+    boards.append(top)
+
+    return parent, boards
+
+
+def _make_solid_box(name: str, x: float, y: float, z: float,
+                    w: float, d: float, h: float) -> bpy.types.Object:
+    """Create a solid box mesh at position (x,y,z) with size (w,d,h).
+
+    8 vertices, 6 faces. Simple closed box.
+    """
     verts = [
-        # Outer bottom (z=0)
-        (0, 0, 0),       # 0
-        (w, 0, 0),       # 1
-        (w, d, 0),       # 2
-        (0, d, 0),       # 3
-        # Outer top (z=h)
-        (0, 0, h),       # 4
-        (w, 0, h),       # 5
-        (w, d, h),       # 6
-        (0, d, h),       # 7
-        # Inner bottom (z=t)
-        (t, t, t),       # 8
-        (w-t, t, t),     # 9
-        (w-t, d-t, t),   # 10
-        (t, d-t, t),     # 11
-        # Inner top (z=h-t)
-        (t, t, h-t),     # 12
-        (w-t, t, h-t),   # 13
-        (w-t, d-t, h-t), # 14
-        (t, d-t, h-t),   # 15
+        (x,     y,     z),     (x+w, y,   z),
+        (x+w,   y+d,   z),     (x,   y+d, z),
+        (x,     y,     z+h),   (x+w, y,   z+h),
+        (x+w,   y+d,   z+h),   (x,   y+d, z+h),
     ]
-
-    # Faces for hollow box (12 faces, open front)
-    # Bottom rim: connects outer bottom (z=0) to inner bottom (z=t)
-    # Top rim: connects outer top (z=h) to inner top (z=h-t)
-    # Sides: left and right walls
-    # Back: outer back face and inner back face
     faces = [
-        # Bottom floor (1 face) — closes the bottom
-        (0, 1, 2, 3),    # floor (outer bottom: z=0)
-        # Bottom rim (4 faces around the bottom edge)
-        (0, 1, 9, 8),    # front-bottom rim
-        (1, 2, 10, 9),   # right-bottom rim
-        (2, 3, 11, 10),  # back-bottom rim
-        (3, 0, 8, 11),   # left-bottom rim
-        # Top rim (4 faces around the top edge)
-        (4, 5, 13, 12),  # front-top rim
-        (5, 6, 14, 13),  # right-top rim
-        (6, 7, 15, 14),  # back-top rim
-        (7, 4, 12, 15),  # left-top rim
-        # Left wall (1 face)
-        (0, 4, 7, 3),    # left side outer
-        # Right wall (1 face)
-        (1, 2, 6, 5),    # right side outer
-        # Back wall (2 faces)
-        (2, 3, 7, 6),    # back outer
-        (10, 11, 15, 14), # back inner
+        [0, 1, 2, 3],  # bottom
+        [4, 5, 6, 7],  # top
+        [0, 1, 5, 4],  # front (Y=min)
+        [1, 2, 6, 5],  # right (X=max)
+        [2, 3, 7, 6],  # back (Y=max)
+        [3, 0, 4, 7],  # left (X=min)
     ]
-
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
-
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     return obj
