@@ -35,6 +35,7 @@ def export_manifest(
     settings: dict | None = None,
     config: dict | None = None,
     tolerance_mm: float = DEFAULT_DIMENSION_TOLERANCE_MM,
+    layout=None,
 ) -> dict:
     """Export geometry manifest from Blender objects.
 
@@ -47,6 +48,7 @@ def export_manifest(
         settings: Settings dict from config (mm values)
         config: Full config dict (for layout metadata)
         tolerance_mm: Dimension comparison tolerance
+        layout: kitchen.layout.Layout (domain model, preferred over config)
 
     Returns:
         Manifest dict
@@ -75,7 +77,7 @@ def export_manifest(
             "z": "height (up)",
         },
         "settings": _extract_settings(settings),
-        "layout": _build_layout_metadata(config),
+        "layout": _build_layout_metadata_from_domain(layout) if layout else _build_layout_metadata(config),
         "objects": [],
         "validation_summary": {
             "total_objects": 0,
@@ -251,6 +253,54 @@ def _build_layout_metadata(config: dict) -> dict:
         # Update position for next run
         pos_x = end_x
         pos_y = end_y
+
+    return {
+        "type": layout_type,
+        "run_count": run_count,
+        "total_cabinets": total_cabinets,
+        "runs": run_metas,
+    }
+
+
+def _build_layout_metadata_from_domain(layout) -> dict:
+    """Build layout metadata from domain Layout object.
+
+    Reads pre-computed positions from LayoutEngine instead of
+    recomputing from raw config. Eliminates duplicated direction/turn logic.
+    """
+    run_count = len(layout.runs)
+    has_turns = any(r.direction != layout.runs[0].direction for r in layout.runs[1:])
+
+    if run_count == 1:
+        layout_type = "I-shape"
+    elif run_count == 2 and has_turns:
+        layout_type = "L-shape"
+    elif run_count == 3 and has_turns:
+        layout_type = "U-shape"
+    else:
+        layout_type = f"{run_count}-runs"
+
+    total_cabinets = 0
+    run_metas = []
+
+    for i, run in enumerate(layout.runs):
+        wall = layout.room.get_wall(run.label)
+        cab_names = []
+        for cab in run.cabinets:
+            cab_names.append(cab.id)
+            total_cabinets += 1
+
+        run_metas.append({
+            "label": run.label,
+            "index": i,
+            "direction": run.direction.value,
+            "turn": None,  # turn info is baked into direction
+            "start_position_mm": [round(wall.start.x, 1), round(wall.start.y, 1)] if wall else [0, 0],
+            "end_position_mm": [round(wall.end.x, 1), round(wall.end.y, 1)] if wall else [0, 0],
+            "total_width_mm": run.total_width,
+            "cabinet_count": len(run.cabinets),
+            "cabinets": cab_names,
+        })
 
     return {
         "type": layout_type,

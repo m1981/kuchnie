@@ -1,12 +1,14 @@
 """Validators — dimension, position, and gap checks. Pure Python, no bpy."""
 
-from .config_parser import mm_to_m, CABINET_LEVELS
+from .kitchen.standards import KitchenStandards
 
 
-def validate_config(config: dict) -> list[str]:
+def validate_config(config: dict, standards: KitchenStandards | None = None) -> list[str]:
     """Run all validation checks. Returns list of warnings (empty = ok)."""
+    if standards is None:
+        standards = KitchenStandards()
     warnings = []
-    warnings.extend(_check_dimensions(config))
+    warnings.extend(_check_dimensions(config, standards))
     warnings.extend(_check_overlaps(config))
     warnings.extend(_check_gaps(config))
     warnings.extend(_check_corners(config))
@@ -14,7 +16,7 @@ def validate_config(config: dict) -> list[str]:
     return warnings
 
 
-def _check_dimensions(config: dict) -> list[str]:
+def _check_dimensions(config: dict, standards: KitchenStandards) -> list[str]:
     """Check that all dimensions are reasonable."""
     warnings = []
     settings = config["settings"]
@@ -29,9 +31,9 @@ def _check_dimensions(config: dict) -> list[str]:
                     continue
 
                 w = cab["width"]
-                if w < 100:
+                if w < standards.min_cabinet_width:
                     warnings.append(f"{prefix}: width {w}mm seems too small")
-                if w > 1200:
+                if w > standards.max_cabinet_width:
                     warnings.append(f"{prefix}: width {w}mm seems too large")
 
                 if cab.get("depthOffset", 0) > 200:

@@ -124,14 +124,12 @@ validation. Visual export (.blend) is optional.
   ┌──────────────────────────────────────────────────────┐
   │ geometry_builder.py (bpy)                             │
   │                                                       │
-  │  Builds Blender meshes:                               │
-  │  • Carcass (4 separate boards with 1mm gaps)          │
-  │    - Left side panel (full height × depth × T)        │
-  │    - Right side panel (full height × depth × T)       │
-  │    - Top panel (between sides, at top)                │
-  │    - Bottom panel (between sides, at bottom)          │
-  │  • Back panel (3mm HDF in groove)                     │
-  │  • Front panels (doors/drawers, 19mm thick)           │
+  │  Builds Blender meshes per frameless construction:    │
+  │  • Carcass (4 separate boards with technical gaps)    │
+  │    - Side panels (full height × depth × thickness)   │
+  │    - Top/bottom panels (between sides)               │
+  │  • Back panel (in groove at rear)                     │
+  │  • Front panels (doors/drawers)                       │
   │  • Countertop (with overhangs)                        │
   │  • Fillers, plinths                                   │
   │                                                       │
@@ -165,7 +163,7 @@ validation. Visual export (.blend) is optional.
   │ Reads manifest, checks:    │
   │ • Dimension tolerance      │
   │ • No overlaps              │
-  │ • Clearances (≥900mm)      │
+  │ • Walkway clearances       │
   │ • Standard widths          │
   │ • Topology (vertex count)  │
   └────────┬───────────────────┘
@@ -198,6 +196,39 @@ OBJ and glTF exports have been removed. The manifest captures geometry
 
 **Rule: Validation reads the manifest. Visual inspection opens .blend.**
 
+### Data Flow Diagram (Mermaid)
+
+```mermaid
+flowchart LR
+    subgraph config["Configuration Context"]
+        JSON["JSON config"] --> CP["config_parser\nload_config()"]
+        CP --> VAL["validators\nvalidate_config()"]
+    end
+
+    subgraph adapter["Adapter"]
+        CP --> WB["wall_builder\nbuild_domain_layout()"]
+    end
+
+    subgraph domain["Kitchen Design Context"]
+        WB --> LAYOUT["Layout\nRoom + Runs +\nCabinets + Placements"]
+        LAYOUT --> LE["LayoutEngine\ncompute positions"]
+    end
+
+    subgraph build["Build Context"]
+        LAYOUT --> GB["geometry_builder\nbuild_kitchen_from_layout()"]
+        GB --> BPY["Blender bpy\nmeshes"]
+    end
+
+    subgraph inspection["Inspection Context"]
+        BPY --> GM["geometry_manifest\nexport_manifest(layout)"]
+        GM --> MANIFEST["JSON manifest"]
+        MANIFEST --> MV["manifest_validator\nvalidate_manifest()"]
+        MV --> RESULT["ValidationResult"]
+    end
+
+    JSON --> CP
+```
+
 ---
 
 ## Coordinate System
@@ -211,11 +242,11 @@ OBJ and glTF exports have been removed. The manifest captures geometry
   └───────── X (width, left to right)
 ```
 
-| Axis  | Direction             | Typical range |
-| ----- | --------------------- | ------------- |
-| **X** | Width (left to right) | 300–3000 mm   |
-| **Y** | Depth (into room)     | 300–600 mm    |
-| **Z** | Height (up)           | 0–2500 mm     |
+| Axis  | Direction             |
+| ----- | --------------------- |
+| **X** | Width (left to right) |
+| **Y** | Depth (into room)     |
+| **Z** | Height (up)           |
 
 **Convention:** Z-up, right-hand rule. Documented once, enforced everywhere.
 Wall normal points into room. Cabinet origin at back face (wall face).
@@ -238,6 +269,9 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 
 ## Manifest Schema (v2.0)
 
+The manifest schema defines the structure of the primary output. See
+`schemas/manifest_v2.schema.json` for the JSON Schema definition.
+
 ```json
 {
     "format": "kitchen-geometry-manifest",
@@ -250,110 +284,92 @@ Wall normal points into room. Cabinet origin at back face (wall face).
         "y": "depth (into room)",
         "z": "height (up)"
     },
-    "source_config": "configs/l_shape.json",
+    "source_config": "configs/<name>.json",
     "settings": {
-        "baseBodyHeight": 720,
-        "baseDepth": 560,
-        "plinthHeight": 120,
-        "wallMountHeight": 1400,
-        "cabinetGap": 0,
-        "frontGap": 2,
-        "corpusThickness": 18,
-        "frontThickness": 19,
-        "backThickness": 3
+        "...": "mirrors KitchenStandards fields — see european-kitchen-standards.md"
     },
     "layout": {
-        "type": "L-shape",
-        "run_count": 2,
-        "total_cabinets": 12,
+        "type": "I-shape | L-shape | U-shape",
+        "run_count": "<int>",
+        "total_cabinets": "<int>",
         "runs": [
             {
-                "label": "back wall",
+                "label": "<wall_label>",
                 "index": 0,
-                "direction": "east",
-                "turn": null,
-                "start_position_mm": [0, 0],
-                "end_position_mm": [3550, 0],
-                "total_width_mm": 3550,
-                "cabinets": ["run0_base_0_filler", "run0_base_1_tall-oven", "..."]
-            },
-            {
-                "label": "left wall",
-                "index": 1,
-                "direction": "south",
-                "turn": "left",
-                "start_position_mm": [3550, 0],
-                "end_position_mm": [3550, -1850],
-                "total_width_mm": 1850,
-                "cabinets": ["run1_base_0_base-door", "..."]
+                "direction": "<direction>",
+                "turn": "left | right | null",
+                "start_position_mm": ["<x>", "<y>"],
+                "end_position_mm": ["<x>", "<y>"],
+                "total_width_mm": "<int>",
+                "cabinets": ["<cabinet_name>", "..."]
             }
         ]
     },
     "objects": [
         {
-            "name": "run0_base_1_tall-oven",
+            "name": "<run>_<level>_<index>_<type>",
             "type": "MESH",
-            "classification": "carcass",
-            "level": "tall",
-            "run_label": "back wall",
-            "run_index": 0,
-            "cabinet_index": 1,
+            "classification": "carcass | door_front | drawer_front | back_panel | ...",
+            "level": "base | upper | tall",
+            "run_label": "<wall_label>",
+            "run_index": "<int>",
+            "cabinet_index": "<int>",
             "parent": null,
             "transform": {
-                "location_m": [0.65, 0.0, 0.0],
-                "rotation_euler_rad": [0, 0, 0],
+                "location_m": ["<x>", "<y>", "<z>"],
+                "rotation_euler_rad": ["<rx>", "<ry>", "<rz>"],
                 "scale": [1, 1, 1]
             },
             "local_bounds": {
                 "min_m": [0, 0, 0],
-                "max_m": [0.6, 0.56, 2.0]
+                "max_m": ["<width_m>", "<depth_m>", "<height_m>"]
             },
-            "local_dimensions_mm": [600, 560, 2000],
+            "local_dimensions_mm": ["<width>", "<depth>", "<height>"],
             "world_bounds": {
-                "min_m": [0.65, 0.0, 0.0],
-                "max_m": [1.25, 0.56, 2.0]
+                "min_m": ["..."],
+                "max_m": ["..."]
             },
-            "world_dimensions_mm": [600, 560, 2000],
-            "vertex_count": 0,
-            "face_count": 0,
+            "world_dimensions_mm": ["<width>", "<depth>", "<height>"],
+            "vertex_count": "<int>",
+            "face_count": "<int>",
             "construction": {
-                "corpus_thickness_mm": 18,
-                "back_thickness_mm": 3,
-                "front_thickness_mm": 19,
-                "internal_width_mm": 564,
-                "internal_depth_mm": 547,
-                "internal_height_mm": 2000
+                "corpus_thickness_mm": "<from settings>",
+                "back_thickness_mm": "<from settings>",
+                "front_thickness_mm": "<from settings>",
+                "internal_width_mm": "<computed: W - 2T>",
+                "internal_depth_mm": "<computed: D - T - back>",
+                "internal_height_mm": "<computed: H - 2T>"
             },
             "children": [
                 {
-                    "name": "run0_base_1_tall-oven_left",
+                    "name": "<parent>_left",
                     "type": "board",
-                    "local_dimensions_mm": [18, 560, 2000]
+                    "local_dimensions_mm": ["<T>", "<D>", "<H>"]
                 },
                 {
-                    "name": "run0_base_1_tall-oven_right",
+                    "name": "<parent>_right",
                     "type": "board",
-                    "local_dimensions_mm": [18, 560, 2000]
+                    "local_dimensions_mm": ["<T>", "<D>", "<H>"]
                 },
                 {
-                    "name": "run0_base_1_tall-oven_top",
+                    "name": "<parent>_top",
                     "type": "board",
-                    "local_dimensions_mm": [564, 542, 18]
+                    "local_dimensions_mm": ["<W-2T>", "<D-T>", "<T>"]
                 },
                 {
-                    "name": "run0_base_1_tall-oven_bottom",
+                    "name": "<parent>_bottom",
                     "type": "board",
-                    "local_dimensions_mm": [564, 542, 18]
+                    "local_dimensions_mm": ["<W-2T>", "<D-T>", "<T>"]
                 },
                 {
-                    "name": "run0_base_1_tall-oven_back",
+                    "name": "<parent>_back",
                     "type": "back_panel",
-                    "local_dimensions_mm": [564, 3, 1997]
+                    "local_dimensions_mm": ["<W-2T>", "<back_T>", "<H-2T>"]
                 },
                 {
-                    "name": "run0_base_1_tall-oven_door",
-                    "type": "door_front",
-                    "local_dimensions_mm": [604, 19, 2004]
+                    "name": "<parent>_<front_type>",
+                    "type": "door_front | drawer_front",
+                    "local_dimensions_mm": ["<W + overlay>", "<front_T>", "<H + overlay>"]
                 }
             ],
             "validation": {
@@ -367,31 +383,18 @@ Wall normal points into room. Cabinet origin at back face (wall face).
         }
     ],
     "validation_summary": {
-        "total_objects": 48,
-        "passed": 46,
-        "failed": 2,
-        "warnings": 1,
+        "total_objects": "<int>",
+        "passed": "<int>",
+        "failed": "<int>",
+        "warnings": "<int>",
         "issues": [
             {
-                "severity": "error",
-                "object": "run1_countertop",
-                "check": "width",
-                "message": "Countertop width 1790mm does not match expected 1850mm",
-                "expected_mm": 1850,
-                "actual_mm": 1790
-            },
-            {
-                "severity": "error",
-                "object": "run1_base_3_filler",
-                "check": "position",
-                "message": "Filler overlaps with run1_base_2_base-door",
-                "overlap_mm": 18
-            },
-            {
-                "severity": "warning",
-                "object": "run0_base_0_filler",
-                "check": "vertex_count",
-                "message": "Filler has 4 vertices (expected 8 for solid box)"
+                "severity": "error | warning",
+                "object": "<object_name>",
+                "check": "width | position | vertex_count | ...",
+                "message": "<human-readable description>",
+                "expected_mm": "<number or null>",
+                "actual_mm": "<number or null>"
             }
         ]
     }
@@ -534,7 +537,7 @@ but outputs stdlib JSON (no bpy dependency in output format).
   manifest_validator.py        manifest_validator.py       manifest_validator.py
 
   "Is this valid JSON          "Do cabinets overlap?"      "Are dimensions within
-   with required fields?"      "Is clearance ≥ 900mm?"     2mm of expected?"
+   with required fields?"      "Is clearance sufficient?"   tolerance?"
                                 "Do widths match            "Is vertex count correct
                                  standard sizes?"           for construction type?"
 ```
@@ -557,7 +560,7 @@ but outputs stdlib JSON (no bpy dependency in output format).
 | --------------------------------- | --------- | ------------------------------------ |
 | Dimension within tolerance        | Geometric | Cabinet built wrong size             |
 | No object overlaps                | Semantic  | Cabinets placed on top of each other |
-| Walkway clearance ≥ 900mm         | Semantic  | Kitchen not walkable                 |
+| Walkway clearance sufficient      | Semantic  | Kitchen not walkable                 |
 | Standard widths only              | Semantic  | Non-standard cabinet width           |
 | Vertex count matches construction | Geometric | Missing faces, degenerate mesh       |
 | Face count correct                | Geometric | Open box, missing wall               |
@@ -568,47 +571,27 @@ but outputs stdlib JSON (no bpy dependency in output format).
 
 ### Tolerances
 
-```python
-TOLERANCES = {
-    "position_mm": 0.1,      # Placement accuracy
-    "dimension_mm": 2.0,     # Size accuracy (board cut tolerance)
-    "angle_rad": 0.01,       # Rotation accuracy
-    "gap_mm": 2.0,           # Standard cabinet gap
-    "overlap_mm": 0.0,       # Zero tolerance for overlaps
-}
-```
+All tolerance values are defined in `src/core/tolerances.py` (`Tolerances`
+dataclass) and documented in [cad-principles.md](cad-principles.md).
+Validation code reads these values — never hardcodes tolerances.
 
 ---
 
 ## European Kitchen Standards
 
-| Standard      | Base Cabinet | Wall Cabinet | Tall Cabinet |
-| ------------- | ------------ | ------------ | ------------ |
-| Body height   | 720 mm       | 600 mm       | 2100–2400 mm |
-| Plinth height | 120 mm       | —            | 120 mm       |
-| Total height  | 840 mm       | —            | 2220–2520 mm |
-| Depth         | 560 mm       | 300–350 mm   | 560–600 mm   |
-| Mount height  | —            | 1400 mm AFF  | —            |
+All standard dimensions, tolerances, and construction details are defined in
+[european-kitchen-standards.md](european-kitchen-standards.md) and implemented
+in `src/kitchen/standards.py` (`KitchenStandards` dataclass).
 
-| Construction        | Value                   |
-| ------------------- | ----------------------- |
-| Corpus board        | 18 mm chipboard         |
-| Front panel         | 19 mm MDF/chipboard     |
-| Back panel          | 3 mm HDF in groove      |
-| Groove offset       | 10 mm from rear         |
-| Front overlay       | 2 mm per side           |
-| Door gap            | 2 mm                    |
-| Countertop overhang | 20 mm front, 30 mm ends |
-
-| Standard widths | 300, 400, 450, 500, 600, 800, 900, 1000, 1200 mm |
-| --------------- | ------------------------------------------------ |
+The architecture defers to those sources as the single source of truth for
+numerical values. This document covers **structure**, not measurements.
 
 ---
 
 ## Carcass Construction
 
 Each cabinet carcass is built as **4 separate solid boards** with technical
-gaps between them. This matches European frameless construction standards.
+gaps between them, matching European frameless construction.
 
 ```
   ┌──┐                     ┌──┐
@@ -623,18 +606,16 @@ gaps between them. This matches European frameless construction standards.
   └──┘                     └──┘
 ```
 
-| Board        | Width    | Depth      | Height      |
-| ------------ | -------- | ---------- | ----------- |
-| Left side    | T (18mm) | full depth | full height |
-| Right side   | T (18mm) | full depth | full height |
-| Top panel    | W − 2T   | D − T      | T (18mm)    |
-| Bottom panel | W − 2T   | D − T      | T (18mm)    |
+Board dimensions are computed in `src/kitchen/cabinet_geometry.py`
+(`CabinetGeometry` dataclass) from the cabinet's external dimensions and
+board thickness. See [european-kitchen-standards.md](european-kitchen-standards.md)
+for standard thicknesses.
 
 **Construction rules:**
 
 - Each board is a separate Blender object (8 vertices, 6 faces)
 - Top/bottom panels sit **between** side panels (butt joint)
-- **1mm technical gap** between all boards — no shared surfaces
+- Technical gap between all boards — no shared surfaces
 - Back panel sits in groove at rear (separate object)
 - Front is open (door/drawer covers it)
 - Parent empty groups all boards for a cabinet
@@ -793,6 +774,7 @@ kitchen-plugin/
     ├── wall-centric-model.md        # Positioning model
     ├── european-kitchen-standards.md # Kitchen domain reference
     ├── cad-principles.md            # CAD principles and conventions
+    ├── ddd-strategic-design.md      # DDD subdomains, contexts, language
     ├── geometry-inspection-tools.md # Manifest validation workflow
     ├── roadmap-production-cad.md    # Production CAD roadmap
     ├── reference/                   # Cheatsheets and reference material
@@ -836,6 +818,154 @@ The following scripts have been removed and replaced by the manifest pipeline:
 
 These scripts existed to work around OBJ/glTF limitations (no units, no
 hierarchy, no metadata). The manifest carries all that information natively.
+
+---
+
+## Class Diagram
+
+Auto-generated by `py-diagram`. Shows all 28 classes and their relationships.
+
+```mermaid
+classDiagram
+    %% ── Core (Shared Kernel) ──────────────────────────────────────
+    class Vector2D {
+        +float x
+        +float y
+        +length() float
+        +normalized() Vector2D
+    }
+    class Vector3D {
+        +float x
+        +float y
+        +float z
+        +length() float
+        +to_mm() Vector3D
+        +to_m() Vector3D
+    }
+    class BoundingBox {
+        +Vector3D min_point
+        +Vector3D max_point
+        +width() float
+        +depth() float
+        +height() float
+    }
+    class Transform2D {
+        +float cos, sin, tx, ty
+        +apply_to_point(Vector2D) Vector2D
+    }
+    class Tolerances {
+        +float position, dimension, angle
+        +float vertex_merge, normal_tolerance
+    }
+    class Direction {
+        <<enum>>
+        EAST, NORTH, WEST, SOUTH
+        +dx() float
+        +dy() float
+        +turn(str) Direction
+    }
+    class CabinetType {
+        <<enum>>
+        16 variants
+        +level() CabinetLevel
+        +is_corner() bool
+    }
+    class CabinetLevel {
+        <<enum>>
+        BASE, UPPER, TALL
+    }
+    class Dimensions {
+        +float width, depth, height
+    }
+
+    %% ── Kitchen (Domain) ─────────────────────────────────────────
+    class Wall {
+        +str id
+        +Vector2D start, end
+        +direction() Vector2D
+        +angle_rad() float
+        +point_at_offset(float) Vector2D
+    }
+    class Room {
+        +List~Wall~ walls
+        +get_wall(str) Wall
+    }
+    class Cabinet {
+        +str id, wall_id
+        +CabinetType cabinet_type
+        +float offset
+        +Dimensions dimensions
+        +is_corner() bool
+        +bounding_box_local() BoundingBox
+    }
+    class CabinetPlacement {
+        +Cabinet cabinet
+        +Vector3D world_position
+        +float rotation_rad
+    }
+    class Countertop {
+        +str wall_id
+        +float start_offset, end_offset
+        +float thickness, overhang_front, overhang_end
+    }
+    class Run {
+        +str label
+        +Direction direction
+        +List~Cabinet~ cabinets
+        +Countertop countertop
+        +total_width() float
+    }
+    class Layout {
+        +Room room
+        +List~Run~ runs
+        +List~CabinetPlacement~ placed_cabinets
+    }
+    class LayoutEngine {
+        +calculate_layout(runs, ...) Layout
+    }
+    class KitchenStandards {
+        +22 standard values
+        +is_standard_width(float) bool
+        +get_dimensions(str) Dimensions
+    }
+    class CornerReference {
+        +str primary_wall_id, secondary_wall_id
+        +float blind_depth, width
+    }
+
+    %% ── Adapter (wall_builder) ───────────────────────────────────
+    class ResolvedCabinet {
+        +str wall_id, level, cabinet_type
+        +float offset, width, depth, height
+        +float world_x, world_y, world_z, rotation
+    }
+    class WallBuilderResult {
+        +Room room
+        +List~ResolvedCabinet~ cabinets
+        +List~CornerReference~ corners
+    }
+
+    %% ── Relationships ────────────────────────────────────────────
+    BoundingBox *-- Vector3D
+    Transform2D --> Vector2D
+    Wall *-- Vector2D : start, end
+    Room *-- Wall
+    Cabinet *-- CabinetType
+    Cabinet *-- Dimensions
+    CabinetPlacement *-- Cabinet
+    CabinetPlacement *-- Vector3D
+    Run *-- Direction
+    Run *-- Cabinet
+    Run *-- Countertop
+    Layout *-- Room
+    Layout *-- Run
+    Layout *-- CabinetPlacement
+    Layout *-- CornerReference
+    LayoutEngine --> Run : produces Layout
+    WallBuilderResult *-- Room
+    WallBuilderResult *-- ResolvedCabinet
+    WallBuilderResult *-- CornerReference
+```
 
 ---
 

@@ -14,7 +14,7 @@ from typing import List, Optional
 
 from ..core.geometry import Vector2D, Vector3D, BoundingBox
 from ..core.types import (
-    CabinetType, CabinetLevel, HandleType, DoorSide, Dimensions, Position
+    CabinetType, CabinetLevel, HandleType, DoorSide, Dimensions
 )
 
 

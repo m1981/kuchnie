@@ -113,44 +113,6 @@ class CornerReference:
         return self.blind_depth
 
 
-# Alias for backward compatibility with wall_builder / tests
-CornerCabinet = CornerReference
-
-
-@dataclass(frozen=True)
-class WallCabinet:
-    """A cabinet positioned relative to a wall.
-
-    Position is defined by:
-    - wall_id: which wall the cabinet is on
-    - offset: distance from wall start along wall direction
-    - width, depth, height: cabinet dimensions in mm
-
-    Origin convention: back-left-bottom (at wall face)
-    - Back face at Y=0 (wall face)
-    - Front face at Y=depth (into room)
-    """
-    wall_id: str
-    offset: float
-    width: float
-    depth: float
-    height: float
-
-    def world_position(self, wall: Wall) -> Vector2D:
-        """Get world position of cabinet back-left corner (at wall face)."""
-        return wall.point_at_offset(self.offset)
-
-    def front_position(self, wall: Wall) -> Vector2D:
-        """Get world position of cabinet front-left corner (into room)."""
-        return wall.point_at_depth(self.offset, self.depth)
-
-    def center_position(self, wall: Wall) -> Vector2D:
-        """Get world position of cabinet center."""
-        return wall.point_at_depth(
-            self.offset + self.width / 2,
-            self.depth / 2,
-        )
-
 
 @dataclass
 class BoxVertices:

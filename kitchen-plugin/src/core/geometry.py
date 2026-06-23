@@ -14,6 +14,13 @@ from typing import Tuple
 import math
 
 
+# ── Unit conversion ──────────────────────────────────────────────────
+
+def mm_to_m(mm: float) -> float:
+    """Convert millimeters to meters."""
+    return mm / 1000.0
+
+
 @dataclass(frozen=True)
 class Vector2D:
     """Immutable 2D vector.

@@ -126,19 +126,14 @@ class LayoutEngine:
     def _create_walls(self, runs: List[Run]) -> List[Wall]:
         """Create wall objects from runs.
 
-        First run starts at origin, going east.
-        Subsequent runs turn from previous direction.
+        Each run's direction determines the wall orientation.
+        First run starts at origin, subsequent runs start where previous ended.
         """
         walls = []
         current_x, current_y = 0.0, 0.0
-        direction = Direction.EAST
 
-        for i, run in enumerate(runs):
-            # Update direction from run
-            if i > 0:
-                # Direction is already set from previous run's turn
-                pass
-
+        for run in runs:
+            direction = run.direction
             dx, dy = direction.dx, direction.dy
             wall_length = run.total_width
 
@@ -151,13 +146,9 @@ class LayoutEngine:
             wall = Wall(id=run.label, start=start, end=end)
             walls.append(wall)
 
-            # Move to end of wall
+            # Move to end of wall for next run
             current_x = end.x
             current_y = end.y
-
-            # Update direction for next run
-            # (In a real implementation, this would use the turn from the next run)
-            direction = run.direction
 
         return walls
 

@@ -18,7 +18,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
-from src.config_parser import load_config, mm_to_m, CABINET_LEVELS
+from src.config_parser import load_config
+from src.core.geometry import mm_to_m
 
 
 # ─── Canonical coordinate constants ───────────────────────────────────────────

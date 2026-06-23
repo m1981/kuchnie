@@ -7,7 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
-from src.config_parser import load_config, _apply_defaults, _validate, mm_to_m
+from src.config_parser import load_config, _apply_defaults, _validate
+from src.core.geometry import mm_to_m
 
 
 def test_mm_to_m():

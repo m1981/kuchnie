@@ -331,14 +331,16 @@ class TestCornerCabinetDetection:
 # ─── Integration: Full Pipeline Tests ─────────────────────────────────────────
 
 class TestFullPipeline:
-    """Test the complete config → walls → positions pipeline."""
+    """Test the complete config → domain layout pipeline."""
 
     def test_i_shape_all_cabinets_positioned(self):
         """I-shape: all cabinets get world positions."""
-        from src.wall_builder import build_layout
+        from src.wall_builder import build_domain_layout
 
         config = {
-            "settings": {"baseDepth": 560, "wallDepth": 300, "cabinetGap": 0},
+            "settings": {"baseDepth": 560, "wallDepth": 300, "cabinetGap": 0,
+                         "baseBodyHeight": 720, "plinthHeight": 120,
+                         "wallHeight": 720, "wallMountHeight": 1400},
             "runs": [
                 {
                     "label": "back",
@@ -350,18 +352,20 @@ class TestFullPipeline:
             ],
         }
 
-        layout = build_layout(config)
-        assert len(layout.cabinets) == 2
-        for cab in layout.cabinets:
-            assert cab.world_x is not None
-            assert cab.world_y is not None
+        layout = build_domain_layout(config)
+        assert len(layout.placed_cabinets) == 2
+        for p in layout.placed_cabinets:
+            assert p.world_position.x is not None
+            assert p.world_position.y is not None
 
     def test_l_shape_cabinets_on_different_walls(self):
         """L-shape: cabinets distributed across two walls."""
-        from src.wall_builder import build_layout
+        from src.wall_builder import build_domain_layout
 
         config = {
-            "settings": {"baseDepth": 560, "cabinetGap": 0},
+            "settings": {"baseDepth": 560, "cabinetGap": 0,
+                         "baseBodyHeight": 720, "plinthHeight": 120,
+                         "wallHeight": 720, "wallMountHeight": 1400},
             "runs": [
                 {
                     "label": "back",
@@ -378,9 +382,9 @@ class TestFullPipeline:
             ],
         }
 
-        layout = build_layout(config)
-        back_cabs = [c for c in layout.cabinets if c.wall_id == "back"]
-        left_cabs = [c for c in layout.cabinets if c.wall_id == "left"]
+        layout = build_domain_layout(config)
+        back_cabs = [p for p in layout.placed_cabinets if p.cabinet.wall_id == "back"]
+        left_cabs = [p for p in layout.placed_cabinets if p.cabinet.wall_id == "left"]
 
         assert len(back_cabs) == 2
         assert len(left_cabs) == 1

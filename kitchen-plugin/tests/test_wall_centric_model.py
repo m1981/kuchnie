@@ -140,7 +140,7 @@ class TestWallRelativeCabinet:
 
     def test_cabinet_has_wall_reference(self):
         """Cabinet must reference a wall."""
-        from src.kitchen.wall import WallCabinet
+        from src.wall_builder import WallCabinet
         cab = WallCabinet(
             wall_id="back_wall",
             offset=0,
@@ -152,7 +152,7 @@ class TestWallRelativeCabinet:
 
     def test_cabinet_has_offset_along_wall(self):
         """Cabinet position = offset from wall start."""
-        from src.kitchen.wall import WallCabinet
+        from src.wall_builder import WallCabinet
         cab = WallCabinet(
             wall_id="back_wall",
             offset=600,
@@ -164,7 +164,8 @@ class TestWallRelativeCabinet:
 
     def test_cabinet_to_world_coords(self):
         """Cabinet can convert local position to world coordinates."""
-        from src.kitchen.wall import Wall, WallCabinet
+        from src.kitchen.wall import Wall
+        from src.wall_builder import WallCabinet
         from src.core.geometry import Vector2D
 
         wall = Wall(id="back", start=Vector2D(0, 0), end=Vector2D(3000, 0))
@@ -183,7 +184,8 @@ class TestWallRelativeCabinet:
 
     def test_cabinet_world_depth(self):
         """Cabinet depth extends into room (along wall normal)."""
-        from src.kitchen.wall import Wall, WallCabinet
+        from src.kitchen.wall import Wall
+        from src.wall_builder import WallCabinet
         from src.core.geometry import Vector2D
 
         wall = Wall(id="back", start=Vector2D(0, 0), end=Vector2D(3000, 0))

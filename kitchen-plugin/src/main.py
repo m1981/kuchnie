@@ -25,11 +25,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import bpy
 
 from src.config_parser import load_config
-from src.geometry_builder import clear_scene, build_kitchen, apply_materials
+from src.geometry_builder import clear_scene, build_kitchen_from_layout, apply_materials
 from src.exporters import export_blend, render_wireframe
 from src.geometry_manifest import export_manifest, print_manifest_summary
 from src.manifest_validator import validate_manifest, print_validation_report
 from src.validators import validate_config, compute_total_width
+from src.wall_builder import build_domain_layout
 
 
 def parse_args() -> dict:
@@ -89,13 +90,27 @@ def main() -> None:
     for key, w in widths.items():
         print(f"  {key}: {w}mm")
 
+    # Build domain model (Kitchen Design context)
+    print("\nBuilding domain layout...")
+    domain_layout = build_domain_layout(config)
+    print(f"  Walls: {len(domain_layout.room.walls)}")
+    for wall in domain_layout.room.walls:
+        print(f"    {wall.id}: {wall.length:.0f}mm")
+    print(f"  Runs: {len(domain_layout.runs)}")
+    for run in domain_layout.runs:
+        print(f"    {run.label}: {run.direction.value}, "
+              f"{len(run.cabinets)} cabinets")
+    print(f"  Placements: {len(domain_layout.placed_cabinets)}")
+    if domain_layout.corners:
+        print(f"  Corners: {len(domain_layout.corners)}")
+
     # Clear scene
     print("Clearing scene...")
     clear_scene()
 
-    # Build geometry
+    # Build geometry from domain Layout
     print("Building kitchen...")
-    objects = build_kitchen(config)
+    objects = build_kitchen_from_layout(domain_layout, config["settings"])
     print(f"  Created {len(objects)} objects")
 
     # Apply materials
@@ -114,6 +129,7 @@ def main() -> None:
             objects, manifest_path,
             settings=config.get("settings"),
             config={**config, "_source_path": config_path},
+            layout=domain_layout,
         )
         print_manifest_summary(manifest)
 

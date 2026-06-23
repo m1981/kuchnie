@@ -166,14 +166,3 @@ class Dimensions:
             height=self.height + height_offset,
         )
 
-
-@dataclass(frozen=True)
-class Position:
-    """Immutable 3D position in millimeters."""
-    x: float = 0.0
-    y: float = 0.0
-    z: float = 0.0
-
-    def to_meters(self) -> 'Position':
-        """Convert to meters."""
-        return Position(self.x / 1000, self.y / 1000, self.z / 1000)

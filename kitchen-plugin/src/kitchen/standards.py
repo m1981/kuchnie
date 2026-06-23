@@ -50,9 +50,19 @@ class KitchenStandards:
     cabinet_gap: float = 0.0             # Between carcass boxes
     front_gap: float = 2.0               # Between door/drawer fronts
 
+    # Offset standards
+    front_offset: float = 1.0            # mm — how far fronts protrude from carcass
+    clearance_offset: float = 1.0        # mm — geometric clearance for blind corners etc.
+
     # Tolerance standards
     position_tolerance: float = 0.1      # mm
     dimension_tolerance: float = 0.5     # mm
+
+    # Validation thresholds
+    min_cabinet_width: float = 100.0     # mm
+    max_cabinet_width: float = 1200.0    # mm
+    min_drawer_height: float = 30.0      # mm
+    max_drawer_count: int = 6
 
     @property
     def base_total_height(self) -> float:

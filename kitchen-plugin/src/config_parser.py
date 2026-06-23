@@ -48,29 +48,18 @@ DEFAULTS = {
     "frontOverlay": 2,
 }
 
-# Drawer validation constants
-MIN_DRAWER_HEIGHT = 30   # mm - minimum practical drawer height
-MAX_DRAWER_COUNT = 6     # maximum number of drawers in one cabinet
+# Drawer validation constants — use KitchenStandards for authoritative values
+from .kitchen.standards import KitchenStandards
 
-# Cabinet types and their level
-CABINET_LEVELS = {
-    "base-door": "base",
-    "base-door-double": "base",
-    "base-drawers": "base",
-    "base-drawer-door": "base",
-    "base-sink": "base",
-    "corner-blind": "base",
-    "corner-diagonal": "base",
-    "wall-door": "upper",
-    "wall-door-double": "upper",
-    "wall-drawers": "upper",
-    "wall-glass": "upper",
-    "wall-lift-up": "upper",
-    "tall-oven": "tall",
-    "tall-fridge": "tall",
-    "tall-pantry": "tall",
-    "filler": "base",
-}
+_DEFAULT_STANDARDS = KitchenStandards()
+
+# Cabinet types and their level — maps config string to level string
+_CABINET_LEVEL_MAP = {v.value: v.level.value for v in __import__('src.core.types', fromlist=['CabinetType']).CabinetType}
+
+# Backward compatibility aliases
+CABINET_LEVELS = _CABINET_LEVEL_MAP
+MIN_DRAWER_HEIGHT = _DEFAULT_STANDARDS.min_drawer_height
+MAX_DRAWER_COUNT = _DEFAULT_STANDARDS.max_drawer_count
 
 
 def load_config(path: str) -> dict:
@@ -350,6 +339,3 @@ def calculate_upper_positions(run: dict, settings: dict) -> list[dict]:
     return positions
 
 
-def mm_to_m(mm: float) -> float:
-    """Convert millimeters to meters."""
-    return mm / 1000.0

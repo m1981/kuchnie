@@ -11,12 +11,44 @@ Functions:
 - build_layout: Full pipeline (config → positioned cabinets)
 """
 
-from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
-import math
+from typing import List
+from dataclasses import dataclass
 
-from .kitchen.wall import Wall, Room, WallCabinet, CornerReference
+from .kitchen.wall import Wall, Room, CornerReference
 from .core.geometry import Vector2D
+from .core.types import CabinetType, Direction, Dimensions
+from .kitchen.cabinet import Cabinet, Countertop
+from .kitchen.layout import Run, Layout, LayoutEngine
+
+
+@dataclass(frozen=True)
+class WallCabinet:
+    """A cabinet positioned relative to a wall.
+
+    Adapter concern — used by config_to_cabinets() to bridge
+    raw config to wall-based positioning. Not a domain entity.
+    The domain model uses Cabinet + CabinetPlacement instead.
+    """
+    wall_id: str
+    offset: float
+    width: float
+    depth: float
+    height: float
+
+    def world_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet back-left corner (at wall face)."""
+        return wall.point_at_offset(self.offset)
+
+    def front_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet front-left corner (into room)."""
+        return wall.point_at_depth(self.offset, self.depth)
+
+    def center_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet center."""
+        return wall.point_at_depth(
+            self.offset + self.width / 2,
+            self.depth / 2,
+        )
 
 
 # Direction vectors
@@ -38,30 +70,6 @@ TURNS = {
     ("south", "left"): "east",
     ("south", "right"): "west",
 }
-
-
-@dataclass
-class PositionedCabinet:
-    """A cabinet with calculated world position."""
-    wall_id: str
-    offset: float
-    width: float
-    depth: float
-    height: float
-    level: str  # "base", "upper", "tall"
-    cabinet_type: str
-    world_x: float = 0.0
-    world_y: float = 0.0
-    world_z: float = 0.0
-    rotation: float = 0.0  # radians
-
-
-@dataclass
-class Layout:
-    """Complete layout with walls, cabinets, and corners."""
-    room: Room
-    cabinets: List[PositionedCabinet]
-    corners: List[CornerReference]
 
 
 def _get_run_width(run: dict, settings: dict) -> float:
@@ -220,62 +228,155 @@ def config_to_corners(config: dict) -> List[CornerReference]:
     return corners
 
 
-def build_layout(config: dict) -> Layout:
-    """Full pipeline: config → positioned cabinets.
+# ── Domain Conversion ────────────────────────────────────────────────
+# Converts raw config dict → domain objects (Cabinet, Run, Layout)
+# This is the adapter between Configuration context and Kitchen Design context.
 
-    Steps:
-    1. Convert config to walls
-    2. Convert config to cabinets
-    3. Calculate world positions for each cabinet
-    4. Detect corner cabinets
+# Map config string types to domain CabinetType enum
+_CABINET_TYPE_MAP = {v.value: v for v in CabinetType}
+
+
+def _config_to_cabinet(cab_dict: dict, wall_id: str, offset: float,
+                       settings: dict) -> Cabinet:
+    """Convert a single raw cabinet dict to a domain Cabinet object."""
+    cab_type_str = cab_dict["type"]
+    cab_type = _CABINET_TYPE_MAP.get(cab_type_str)
+    if cab_type is None:
+        raise ValueError(f"Unknown cabinet type: '{cab_type_str}'")
+
+    # Resolve dimensions from settings based on level
+    level = cab_type.level
+    if level.value == "base":
+        depth = settings.get("baseDepth", 560)
+        height = settings.get("baseBodyHeight", 720)
+        # Plinth adds to total height for positioning, but carcass height is body only
+    elif level.value == "upper":
+        depth = settings.get("wallDepth", 300)
+        height = settings.get("wallHeight", 720)
+    else:  # tall
+        depth = settings.get("tallDepth", 560)
+        height = settings.get("tallHeight", 2000)
+
+    depth += cab_dict.get("depthOffset", 0)
+    height += cab_dict.get("heightOffset", 0)
+
+    dimensions = Dimensions(
+        width=cab_dict["width"],
+        depth=depth,
+        height=height,
+    )
+
+    # Generate cabinet ID
+    cab_id = f"{wall_id}_{level.value}_{cab_type_str}"
+
+    return Cabinet(
+        id=cab_id,
+        cabinet_type=cab_type,
+        wall_id=wall_id,
+        offset=offset,
+        dimensions=dimensions,
+        drawer_count=cab_dict.get("drawers"),
+        drawer_heights=cab_dict.get("drawerHeights"),
+        blind_depth=cab_dict.get("blindDepth"),
+        blind_side=cab_dict.get("blindSide"),
+    )
+
+
+def _config_to_direction(dir_str: str) -> Direction:
+    """Convert direction string to domain Direction enum."""
+    return {
+        "east": Direction.EAST,
+        "north": Direction.NORTH,
+        "west": Direction.WEST,
+        "south": Direction.SOUTH,
+    }[dir_str]
+
+
+def build_domain_layout(config: dict) -> Layout:
+    """Convert raw config to domain Layout via LayoutEngine.
+
+    This is the adapter between Configuration context and Kitchen Design context.
+    It produces a proper domain Layout with:
+    - Room (walls)
+    - Runs (with typed Cabinet objects)
+    - CornerReferences
+    - CabinetPlacements (world positions computed by LayoutEngine)
+
+    The returned Layout is independent of config format — it uses
+    domain types only (Cabinet, Run, Direction, etc.).
     """
     settings = config.get("settings", {})
+    runs_config = config.get("runs", [])
 
-    # Step 1: Create walls
+    # Create Room (walls)
     room = config_to_walls(config)
 
-    # Step 2: Create cabinets with wall references
-    wall_cabinets = config_to_cabinets(config)
-
-    # Step 3: Calculate world positions
-    positioned = []
-    for wc in wall_cabinets:
-        wall = room.get_wall(wc.wall_id)
-        if wall is None:
-            continue
-
-        # Get position along wall
-        wall_point = wall.point_at_offset(wc.offset)
-
-        # Add depth (into room)
-        normal = wall.normal
-        world_x = wall_point.x + wc.depth * normal.x
-        world_y = wall_point.y + wc.depth * normal.y
-
-        # Calculate rotation from wall direction
-        direction = wall.direction
-        rotation = math.atan2(direction.y, direction.x)
-
-        # Determine Z based on level
-        # (simplified - would need more logic for upper/tall)
-        world_z = 0.0
-
-        cab = PositionedCabinet(
-            wall_id=wc.wall_id,
-            offset=wc.offset,
-            width=wc.width,
-            depth=wc.depth,
-            height=wc.height,
-            level="base",  # simplified
-            cabinet_type="base-door",
-            world_x=world_x,
-            world_y=world_y,
-            world_z=world_z,
-            rotation=rotation,
-        )
-        positioned.append(cab)
-
-    # Step 4: Detect corners
+    # Detect corners
     corners = config_to_corners(config)
 
-    return Layout(room=room, cabinets=positioned, corners=corners)
+    # Build domain Runs with Cabinet objects
+    cabinet_gap = settings.get("cabinetGap", 0)
+    domain_runs: List[Run] = []
+
+    for run_dict in runs_config:
+        label = run_dict.get("label", "unnamed")
+        direction_str = run_dict.get("direction", "east")
+
+        # Resolve direction from turn if not explicitly set
+        turn = run_dict.get("turn")
+        if turn and domain_runs:
+            prev_dir = domain_runs[-1].direction
+            direction = prev_dir.turn(turn)
+        else:
+            direction = _config_to_direction(direction_str)
+
+        # Build Cabinet objects for each section
+        cabinets: List[Cabinet] = []
+
+        for section in ("base", "upper", "tall"):
+            offset = 0.0
+            for cab_dict in run_dict.get(section, []):
+                cab = _config_to_cabinet(cab_dict, label, offset, settings)
+                cabinets.append(cab)
+                offset += cab.width + cabinet_gap
+
+        # Build Countertop if base cabinets exist
+        countertop = None
+        base_cabs = run_dict.get("base", [])
+        if base_cabs:
+            total_width = sum(c["width"] for c in base_cabs) + cabinet_gap * (len(base_cabs) - 1)
+            ct_override = run_dict.get("countertop", {})
+            countertop = Countertop(
+                wall_id=label,
+                start_offset=0.0,
+                end_offset=total_width,
+                thickness=ct_override.get("thickness",
+                                          settings.get("counterThickness", 30)),
+                overhang_front=ct_override.get("overhangFront",
+                                              settings.get("counterOverhangFront", 20)),
+                overhang_end=ct_override.get("overhangEnd",
+                                            settings.get("counterOverhangEnd", 30)),
+            )
+
+        domain_runs.append(Run(
+            label=label,
+            direction=direction,
+            cabinets=cabinets,
+            countertop=countertop,
+        ))
+
+    # Run LayoutEngine to compute world positions
+    engine = LayoutEngine(
+        cabinet_gap=cabinet_gap,
+        front_gap=settings.get("frontGap", 2),
+    )
+
+    return engine.calculate_layout(
+        runs=domain_runs,
+        base_depth=settings.get("baseDepth", 560),
+        wall_depth=settings.get("wallDepth", 300),
+        base_height=settings.get("baseBodyHeight", 720),
+        wall_height=settings.get("wallHeight", 720),
+        plinth_height=settings.get("plinthHeight", 120),
+        wall_mount_height=settings.get("wallMountHeight", 1400),
+    )

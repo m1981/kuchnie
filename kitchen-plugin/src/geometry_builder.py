@@ -8,52 +8,9 @@ Uses CabinetGeometry for accurate European construction:
 """
 
 import bpy
-from math import pi
 
-from .config_parser import mm_to_m, CABINET_LEVELS
+from .core.geometry import mm_to_m
 from .kitchen.cabinet_geometry import CabinetGeometry
-
-# Direction vectors: which way cabinets are placed along the wall
-DIRECTIONS = {
-    "east":  (1, 0),   # +X
-    "north": (0, 1),   # +Y
-    "west":  (-1, 0),  # -X
-    "south": (0, -1),  # -Y
-}
-
-# Turn mapping: current direction + turn → new direction
-# Based on ROOM perspective:
-# - "left" = wall to the LEFT when facing the back wall
-# - "right" = wall to the RIGHT when facing the back wall
-#
-# When standing in room facing the back wall (facing -Y):
-# - Left is +X direction
-# - Right is -X direction
-# - Both side walls go TOWARD the viewer (-Y direction)
-#
-# The turn determines which CORNER to turn at:
-# - "left" = turn at the LEFT end of current wall
-# - "right" = turn at the RIGHT end of current wall
-TURNS = {
-    ("east", "left"):   "south",   # back wall → left wall (toward viewer)
-    ("east", "right"):  "south",   # back wall → right wall (toward viewer)
-    ("north", "left"):  "west",    # left wall → back wall
-    ("north", "right"): "west",    # right wall → back wall
-    ("west", "left"):   "north",   # back wall → right wall (toward viewer)
-    ("west", "right"):  "north",   # back wall → left wall (toward viewer)
-    ("south", "left"):  "east",    # left wall → back wall
-    ("south", "right"): "east",    # right wall → back wall
-}
-
-# Wall location and depth direction for each travel direction
-# WALL_SIDE: which side the wall is on
-# DEPTH_DIR: which direction cabinet depth extends (INTO the room)
-WALL_INFO = {
-    "east":  {"wall": "south", "depth": (0, 1)},    # wall at -Y, depth goes +Y
-    "south": {"wall": "east",  "depth": (-1, 0)},    # wall at +X, depth goes -X
-    "west":  {"wall": "north", "depth": (0, -1)},    # wall at +Y, depth goes -Y
-    "north": {"wall": "west",  "depth": (1, 0)},     # wall at -X, depth goes +X
-}
 
 
 def clear_scene() -> None:
@@ -69,61 +26,89 @@ def clear_scene() -> None:
             bpy.data.materials.remove(mat)
 
 
-def build_kitchen(config: dict) -> list[bpy.types.Object]:
-    """Build all kitchen geometry from config.
+def build_kitchen_from_layout(layout, settings: dict) -> list[bpy.types.Object]:
+    """Build kitchen geometry from a domain Layout object.
 
-    Returns list of created top-level objects.
+    Uses pre-computed world positions and rotations from LayoutEngine
+    instead of recomputing them from raw config.
 
-    Turn logic:
-    - "left" = turn at the LEFT end of current wall (when facing the wall)
-    - "right" = turn at the RIGHT end of current wall (when facing the wall)
-    - Both turns go TOWARD the viewer (into the room)
+    Args:
+        layout: kitchen.layout.Layout with placed_cabinets
+        settings: construction settings dict (corpusThickness, etc.)
+
+    Returns:
+        List of created top-level bpy objects.
     """
-    settings = config["settings"]
+    from .kitchen.layout import Layout
+    from .kitchen.cabinet import CabinetPlacement
+
     all_objects = []
 
-    # Track position and direction across runs
-    pos_x = 0.0  # mm
-    pos_y = 0.0  # mm
-    direction = "east"
-
     print("\n" + "=" * 60)
-    print("KITCHEN LAYOUT BUILDER")
+    print("KITCHEN LAYOUT BUILDER (domain model)")
     print("=" * 60)
+    print(f"  Walls: {len(layout.room.walls)}")
+    print(f"  Runs: {len(layout.runs)}")
+    print(f"  Placements: {len(layout.placed_cabinets)}")
 
-    for run_idx, run in enumerate(config["runs"]):
-        turn = run.get("turn")
-        info = WALL_INFO[direction]
+    for run_idx, run in enumerate(layout.runs):
+        run_label = run.label
+        print(f"\n--- Run {run_idx}: {run_label} ({run.direction.value}) ---")
 
-        print(f"\n--- Run {run_idx}: {run.get('label', 'unnamed')} ---")
+        # Get placements for this run's cabinets
+        run_cab_ids = {c.id for c in run.cabinets}
+        run_placements = [
+            p for p in layout.placed_cabinets
+            if p.cabinet.id in run_cab_ids
+        ]
 
-        # Apply turn BEFORE building this run (not after previous)
-        if turn and run_idx > 0:
-            old_dir = direction
-            new_dir = TURNS.get((direction, turn))
-            if new_dir:
-                direction = new_dir
-                info = WALL_INFO[direction]
-                print(f"  Turn: {old_dir} → {direction} ({turn})")
-            else:
-                print(f"  WARNING: invalid turn '{turn}' from direction '{direction}'")
+        for cab_idx, placement in enumerate(run_placements):
+            cab = placement.cabinet
+            level = cab.level.value
 
-        print(f"  Direction: {direction}")
-        print(f"  Wall side: {info['wall']}")
-        print(f"  Depth dir: {info['depth']}")
-        print(f"  Start pos: ({pos_x:.0f}, {pos_y:.0f})")
+            # Build mesh using domain Cabinet directly
+            obj, cab_objs = _build_cabinet(
+                cab, settings, level, run_idx, cab_idx
+            )
+            if obj:
+                # Position from domain Layout (pre-computed)
+                obj.location = (
+                    mm_to_m(placement.world_position.x),
+                    mm_to_m(placement.world_position.y),
+                    mm_to_m(placement.world_position.z),
+                )
+                obj.rotation_euler = (0, 0, placement.rotation_rad)
+                all_objects.extend(cab_objs)
+                print(f"    {level}[{cab_idx}] {cab.cabinet_type.value}: "
+                      f"pos=({placement.world_position.x:.0f}, "
+                      f"{placement.world_position.y:.0f}, "
+                      f"{placement.world_position.z:.0f})"
+                      f" ({len(cab_objs)} objects)")
 
-        run_objects, end_x, end_y = _build_run(
-            run, settings, run_idx, pos_x, pos_y, direction
-        )
-        all_objects.extend(run_objects)
-
-        print(f"  End pos:   ({end_x:.0f}, {end_y:.0f})")
-
-        # Update position for next run
-        # The next run starts at the end of the current run
-        pos_x = end_x
-        pos_y = end_y
+        # Countertop
+        if run.countertop:
+            ct = run.countertop
+            ct_dict = {
+                "counterOverhangFront": ct.overhang_front,
+                "counterOverhangEnd": ct.overhang_end,
+                "counterThickness": ct.thickness,
+            }
+            total_width = ct.length
+            ct_obj = _build_countertop(total_width, settings, ct_dict)
+            if ct_obj:
+                # Position at wall start, accounting for end overhang
+                wall = layout.room.get_wall(run_label)
+                if wall:
+                    dx, dy = wall.direction.x, wall.direction.y
+                    base_height = settings.get("baseBodyHeight", 720)
+                    plinth_height = settings.get("plinthHeight", 120)
+                    ct_obj.location = (
+                        mm_to_m(wall.start.x - ct.overhang_end * dx),
+                        mm_to_m(wall.start.y - ct.overhang_end * dy),
+                        mm_to_m(base_height + plinth_height),
+                    )
+                    ct_obj.rotation_euler = (0, 0, wall.angle_rad)
+                    all_objects.append(ct_obj)
 
     print("\n" + "=" * 60)
     print(f"Total objects: {len(all_objects)}")
@@ -132,155 +117,27 @@ def build_kitchen(config: dict) -> list[bpy.types.Object]:
     return all_objects
 
 
-def _build_run(run: dict, settings: dict, run_idx: int,
-               start_x: float, start_y: float, direction: str
-               ) -> tuple[list[bpy.types.Object], float, float]:
-    """Build a single run (wall segment).
 
-    Returns (objects, end_x, end_y) where end position is in mm.
-
-    Uses cabinetGap for carcass positioning (not frontGap).
-    frontGap is used in _add_front for door/drawer spacing.
-    """
-    objects = []
-    # Use cabinetGap for carcass positioning
-    cabinet_gap = settings.get("cabinetGap", 0)
-    dx, dy = DIRECTIONS[direction]
-    info = WALL_INFO[direction]
-    ddx, ddy = info["depth"]
-
-    print(f"  Along wall: dx={dx}, dy={dy}")
-    print(f"  Into room:  ddx={ddx}, ddy={ddy}")
-
-    # Base cabinets
-    x, y = start_x, start_y
-    for cab_idx, cab in enumerate(run.get("base", [])):
-        obj, cab_objs = _build_cabinet(cab, settings, "base", run_idx, cab_idx)
-        if obj:
-            obj.location = (
-                mm_to_m(x),
-                mm_to_m(y),
-                mm_to_m(settings["plinthHeight"]),
-            )
-            _rotate_for_direction(obj, direction)
-            objects.extend(cab_objs)
-            print(f"    base[{cab_idx}] {cab['type']}: "
-                  f"pos=({x:.0f}, {y:.0f}) w={cab['width']} "
-                  f"({len(cab_objs)} objects)")
-        x += (cab["width"] + cabinet_gap) * dx
-        y += (cab["width"] + cabinet_gap) * dy
-
-    # Upper cabinets
-    ux, uy = start_x, start_y
-    for cab_idx, cab in enumerate(run.get("upper", [])):
-        obj, cab_objs = _build_cabinet(cab, settings, "upper", run_idx, cab_idx)
-        if obj:
-            obj.location = (
-                mm_to_m(ux),
-                mm_to_m(uy),
-                mm_to_m(settings["wallMountHeight"]),
-            )
-            _rotate_for_direction(obj, direction)
-            objects.extend(cab_objs)
-        ux += (cab["width"] + cabinet_gap) * dx
-        uy += (cab["width"] + cabinet_gap) * dy
-
-    # Tall cabinets
-    tx, ty = start_x, start_y
-    for cab_idx, cab in enumerate(run.get("tall", [])):
-        obj, cab_objs = _build_cabinet(cab, settings, "tall", run_idx, cab_idx)
-        if obj:
-            obj.location = (
-                mm_to_m(tx),
-                mm_to_m(ty),
-                0.0,
-            )
-            _rotate_for_direction(obj, direction)
-            objects.extend(cab_objs)
-        tx += (cab["width"] + cabinet_gap) * dx
-        ty += (cab["width"] + cabinet_gap) * dy
-
-    # Countertop for base section
-    if run.get("base"):
-        total_width = sum(c["width"] for c in run["base"]) + cabinet_gap * (len(run["base"]) - 1)
-        ct = _build_countertop(total_width, settings, run.get("countertop"))
-        if ct:
-            ct.location = (
-                mm_to_m(start_x - settings.get("counterOverhangEnd", 30) * dx),
-                mm_to_m(start_y - settings.get("counterOverhangEnd", 30) * dy),
-                mm_to_m(settings["baseBodyHeight"] + settings["plinthHeight"]),
-            )
-            _rotate_for_direction(ct, direction)
-            objects.append(ct)
-
-    # Calculate end position
-    base_cabs = run.get("base", [])
-    if base_cabs:
-        total = sum(c["width"] for c in base_cabs) + cabinet_gap * (len(base_cabs) - 1)
-        end_x = start_x + total * dx
-        end_y = start_y + total * dy
-    else:
-        end_x, end_y = start_x, start_y
-
-    return objects, end_x, end_y
-
-
-def _rotate_for_direction(obj: bpy.types.Object, direction: str) -> None:
-    """Rotate object so front faces INTO the room (away from wall).
-
-    Box geometry: front at Y=0 faces +Y (north).
-    Rotation makes front face the depth direction for each wall.
-
-    east  (wall south): front → +Y (north) → 0°
-    south (wall east):  front → -X (west)  → +90° CCW
-    west  (wall north): front → -Y (south) → 180°
-    north (wall west):  front → +X (east)  → -90° CW
-    """
-    if direction == "east":
-        obj.rotation_euler = (0, 0, 0)
-    elif direction == "south":
-        obj.rotation_euler = (0, 0, -pi / 2)   # 90° CW: front → -X (west)
-    elif direction == "west":
-        obj.rotation_euler = (0, 0, pi)         # 180°: front → -Y (south)
-    elif direction == "north":
-        obj.rotation_euler = (0, 0, pi / 2)    # 90° CCW: front → +X (east)
-
-
-def _build_cabinet(cab: dict, settings: dict, level: str,
+def _build_cabinet(cab, settings: dict, level: str,
                    run_idx: int, cab_idx: int) -> tuple[bpy.types.Object | None, list]:
     """Build a single cabinet with proper European construction.
 
-    Uses CabinetGeometry for accurate dimensions:
-    - corpusThickness (default 18mm) corpus board (carcass walls)
-    - frontThickness (default 19mm) front panels (doors/drawers)
-    - backThickness (default 3mm) HDF back panel in grooves
-
-    Construction parameters are read from settings.
+    Accepts a domain Cabinet object. Uses CabinetGeometry for accurate
+    dimensions and construction params from settings.
 
     Returns:
         Tuple of (main_object, all_objects_list)
     """
-    cab_type = cab["type"]
+    cab_type = cab.cabinet_type.value
 
     if cab_type == "filler":
         obj = _build_filler(cab, settings, level)
         return obj, [obj] if obj else []
 
-    # Get external dimensions in mm
-    width_mm = cab["width"]
-
-    if level == "base":
-        depth_mm = settings["baseDepth"]
-        height_mm = settings["baseBodyHeight"]
-    elif level == "upper":
-        depth_mm = settings["wallDepth"]
-        height_mm = settings["wallHeight"]
-    else:  # tall
-        depth_mm = settings["tallDepth"]
-        height_mm = settings["tallHeight"]
-
-    depth_mm += cab.get("depthOffset", 0)
-    height_mm += cab.get("heightOffset", 0)
+    # Dimensions from domain Cabinet (offsets already baked in)
+    width_mm = cab.width
+    depth_mm = cab.depth
+    height_mm = cab.height
 
     # Create geometry calculator with construction params from settings
     geom = CabinetGeometry(
@@ -519,7 +376,7 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
     Returns:
         List of created front panel objects.
     """
-    cab_type = cab["type"]
+    cab_type = cab.cabinet_type.value
     front_objs = []
 
     # Get overlay from settings (default 2mm)
@@ -562,7 +419,7 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
         front_objs.extend([door_obj_l, door_obj_r])
 
     elif cab_type in drawer_types:
-        drawer_count = cab.get("drawers", 3)
+        drawer_count = cab.drawer_count or 3
         if isinstance(drawer_count, int):
             drawer_h = (front_h - front_gap * (drawer_count - 1)) / drawer_count
             heights = [drawer_h] * drawer_count
@@ -577,7 +434,7 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
             z += dh + front_gap
 
     elif cab_type in drawer_door_types:
-        drawer_h = mm_to_m(cab.get("drawerHeight", 150))
+        drawer_h = mm_to_m(cab.drawer_heights[0] if cab.drawer_heights else 150)
         drawer_obj = _add_drawer_front(obj, front_w, drawer_h, geom, overlay, 0, 0,
                           front_offset=front_offset)
         front_objs.append(drawer_obj)
@@ -588,7 +445,7 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
         front_objs.append(door_obj)
 
     elif cab_type == "corner-blind":
-        blind_depth = mm_to_m(cab.get("blindDepth", 300))
+        blind_depth = mm_to_m(cab.blind_depth or 300)
         door_w = front_w - blind_depth - clearance_offset
         door_obj = _add_door_front(obj, door_w, front_h, geom, overlay, cab, level,
                         x_offset=blind_depth + clearance_offset,
@@ -605,7 +462,7 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
 
 def _add_door_front(parent: bpy.types.Object, w: float, h: float,
                     geom: CabinetGeometry, overlay: float,
-                    cab: dict, level: str,
+                    cab, level: str,
                     x_offset: float = 0.0, z_offset: float = 0.0,
                     name_suffix: str = "", front_offset: float = 0.001) -> bpy.types.Object:
     """Add a door front to a cabinet.
@@ -745,9 +602,9 @@ def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
     return obj
 
 
-def _build_filler(cab: dict, settings: dict, level: str) -> bpy.types.Object:
+def _build_filler(cab, settings: dict, level: str) -> bpy.types.Object:
     """Build a filler strip."""
-    w = mm_to_m(cab["width"])
+    w = mm_to_m(cab.width)
     if level == "base":
         d = mm_to_m(settings["baseDepth"])
         h = mm_to_m(settings["baseBodyHeight"])
