@@ -292,8 +292,8 @@ Wall normal points into room. Cabinet origin at back face (wall face).
     "objects": [
         {
             "name": "run0_base_1_tall-oven",
-            "type": "carcass",
-            "classification": "tall-oven",
+            "type": "MESH",
+            "classification": "carcass",
             "level": "tall",
             "run_label": "back wall",
             "run_index": 0,
@@ -314,8 +314,8 @@ Wall normal points into room. Cabinet origin at back face (wall face).
                 "max_m": [1.25, 0.56, 2.0]
             },
             "world_dimensions_mm": [600, 560, 2000],
-            "vertex_count": 16,
-            "face_count": 12,
+            "vertex_count": 0,
+            "face_count": 0,
             "construction": {
                 "corpus_thickness_mm": 18,
                 "back_thickness_mm": 3,
@@ -325,6 +325,26 @@ Wall normal points into room. Cabinet origin at back face (wall face).
                 "internal_height_mm": 2000
             },
             "children": [
+                {
+                    "name": "run0_base_1_tall-oven_left",
+                    "type": "board",
+                    "local_dimensions_mm": [18, 560, 2000]
+                },
+                {
+                    "name": "run0_base_1_tall-oven_right",
+                    "type": "board",
+                    "local_dimensions_mm": [18, 560, 2000]
+                },
+                {
+                    "name": "run0_base_1_tall-oven_top",
+                    "type": "board",
+                    "local_dimensions_mm": [564, 542, 18]
+                },
+                {
+                    "name": "run0_base_1_tall-oven_bottom",
+                    "type": "board",
+                    "local_dimensions_mm": [564, 542, 18]
+                },
                 {
                     "name": "run0_base_1_tall-oven_back",
                     "type": "back_panel",
@@ -492,11 +512,8 @@ but outputs stdlib JSON (no bpy dependency in output format).
 
 ```
   blender --background --python src/main.py -- configs/kitchen.json \
-      --export-manifest          # Always recommended (primary output)
-      --export-blend             # Visual inspection
-      --export-obj               # Legacy interop
-      --export-gltf              # Web/viewer interop
       --validate                 # Run manifest validation after export
+      --no-manifest              # Skip manifest export (not recommended)
       --no-materials             # Skip Cycles materials (faster)
       --render-wireframe         # PNG wireframe render
 ```
@@ -659,7 +676,7 @@ gaps between them. This matches European frameless construction standards.
 | `test_manifest_*.py`         | NEW   | No           | Manifest schema, validation         |
 | `test_blender_*.py`          | NEW   | Yes          | bpy mesh creation (skipped in CI)   |
 
-**Total: 218+ passing (no Blender required for most)**
+**Total: 384 passing, 17 skipped (no Blender required for most)**
 
 ### Manifest Round-Trip Test
 
@@ -803,12 +820,7 @@ hierarchy, no metadata). The manifest carries all that information natively.
 
 | Priority   | Task                                              | Effort    |
 | ---------- | ------------------------------------------------- | --------- |
-| **High**   | Implement `geometry_manifest.py` (Layer 4)        | 2–3 days  |
-| **High**   | Implement `manifest_validator.py`                 | 1–2 days  |
-| **High**   | Add manifest schema (`manifest_v2.schema.json`)   | 1 day     |
-| **High**   | Add `test_manifest_*.py` test suites              | 1–2 days  |
 | **Medium** | Enhance manifest with `construction` metadata     | 1 day     |
-| **Medium** | Add overlap detection to validator                | 1 day     |
 | **Medium** | Standalone `validate_manifest.py` (no bpy needed) | 1 day     |
 | **Low**    | Add 3MF export for manufacturing interop          | 2–3 days  |
 | **Low**    | Add STEP export for B-Rep topology validation     | 1 week    |

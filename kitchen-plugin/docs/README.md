@@ -59,16 +59,19 @@ Read:
 
 ## File Index
 
-| File                    | Purpose                        | Audience          |
-| ----------------------- | ------------------------------ | ----------------- |
-| `README.md`             | This file — reading guide      | Everyone          |
-| `architecture.md`       | SOLID architecture overview    | Developers        |
-| `config-syntax.md`      | JSON config syntax reference   | Developers, Users |
-| `wall-centric-model.md` | Wall-centric positioning model | Developers        |
-
-| `european-kitchen-standards.md` | European kitchen standards | Domain Experts |
-| `cad-principles-part1.md` | CAD principles (reference) | Developers |
-| `cad-principles-part2.md` | CAD principles (reference) | Developers |
+| File                            | Purpose                        | Audience          |
+| ------------------------------- | ------------------------------ | ----------------- |
+| `README.md`                     | This file — reading guide      | Everyone          |
+| `architecture.md`               | SOLID architecture overview    | Developers        |
+| `config-syntax.md`              | JSON config syntax reference   | Developers, Users |
+| `wall-centric-model.md`         | Wall-centric positioning model | Developers        |
+| `geometry-inspection-tools.md`  | Manifest validation workflow   | Developers, LLM   |
+| `implementation-plan.md`        | Migration plan                 | Developers        |
+| `3d-format-strategy.md`         | Format comparison & rationale  | Developers        |
+| `roadmap-production-cad.md`     | Production CAD roadmap         | Developers        |
+| `european-kitchen-standards.md` | European kitchen standards     | Domain Experts    |
+| `cad-principles-part1.md`       | CAD principles (reference)     | Developers        |
+| `cad-principles-part2.md`       | CAD principles (reference)     | Developers        |
 
 ---
 
