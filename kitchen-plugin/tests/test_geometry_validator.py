@@ -1,6 +1,6 @@
-"""Geometry Validator Tests.
+"""Geometry Manifest Tests.
 
-Tests for the geometry validation and manifest export.
+Tests for the geometry manifest export.
 """
 
 import sys
@@ -12,10 +12,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 from unittest.mock import MagicMock
-from src.geometry_validator import (
-    validate_and_export_manifest,
+from src.geometry_manifest import (
+    export_manifest,
     _classify_object,
-    _extract_object_data,
+    _extract_object,
 )
 
 
@@ -33,7 +33,10 @@ class MockMatrix:
     """Mock Blender matrix that acts as identity."""
     def __matmul__(self, other):
         # Identity matrix: returns the vector as-is
-        return other
+        if hasattr(other, 'x'):
+            return other
+        # Handle tuple input
+        return MockVector(other[0], other[1], other[2])
 
 
 def create_mock_object(name: str, vertices: list, faces: list,
@@ -45,6 +48,8 @@ def create_mock_object(name: str, vertices: list, faces: list,
     obj.rotation_euler = MockVector(0, 0, 0)
     obj.scale = MockVector(1, 1, 1)
     obj.matrix_world = MockMatrix()
+    obj.children = []
+    obj.parent = None
 
     # Mock mesh data
     mesh = MagicMock()
@@ -74,10 +79,10 @@ class TestClassifyObject:
     """Test object classification."""
 
     def test_classify_door(self):
-        assert _classify_object("run0_base_0_base-door_door") == "door"
+        assert _classify_object("run0_base_0_base-door_door") == "door_front"
 
     def test_classify_drawer(self):
-        assert _classify_object("run0_base_1_base-drawers_drawer0") == "drawer"
+        assert _classify_object("run0_base_1_base-drawers_drawer0") == "drawer_front"
 
     def test_classify_back_panel(self):
         assert _classify_object("run0_base_0_base-door_back") == "back_panel"
@@ -92,7 +97,7 @@ class TestClassifyObject:
         assert _classify_object("filler") == "filler"
 
 
-class TestExtractObjectData:
+class TestExtractObject:
     """Test object data extraction."""
 
     def test_extract_carcass_box(self):
@@ -112,12 +117,12 @@ class TestExtractObjectData:
         ]
 
         obj = create_mock_object("test_box", verts, faces)
-        data = _extract_object_data(obj)
+        data = _extract_object(obj, {}, {}, 2.0)
 
         assert data is not None
         assert data['vertex_count'] == 8
         assert data['face_count'] == 6
-        assert data['dimensions_mm'][0] == pytest.approx(1000.0)  # 1m = 1000mm
+        assert data['local_dimensions_mm'][0] == pytest.approx(1000.0)  # 1m = 1000mm
 
     def test_extract_flat_quad(self):
         """Extract data from a flat quad (4 vertices, 1 face)."""
@@ -125,15 +130,15 @@ class TestExtractObjectData:
         faces = [[0, 1, 2, 3]]
 
         obj = create_mock_object("test_quad", verts, faces)
-        data = _extract_object_data(obj)
+        data = _extract_object(obj, {}, {}, 2.0)
 
         assert data is not None
         assert data['vertex_count'] == 4
         assert data['face_count'] == 1
-        assert data['dimensions_mm'][2] == pytest.approx(0.0)  # Z = 0 (flat)
+        assert data['local_dimensions_mm'][2] == pytest.approx(0.0)  # Z = 0 (flat)
 
 
-class TestValidateAndExport:
+class TestExportManifest:
     """Test manifest export."""
 
     def test_export_manifest(self):
@@ -156,18 +161,28 @@ class TestValidateAndExport:
         with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
             manifest_path = f.name
 
-        manifest = validate_and_export_manifest(objects, manifest_path)
+        manifest = export_manifest(objects, manifest_path, settings={"baseDepth": 560})
 
-        # Verify manifest
-        assert manifest['summary']['total_objects'] == 1
-        assert manifest['summary']['total_vertices'] == 8
-        assert manifest['summary']['total_faces'] == 6
-        assert 'carcass' in manifest['summary']['objects_by_type']
+        # Verify manifest structure
+        assert manifest['format'] == 'kitchen-geometry-manifest'
+        assert manifest['version'] == '2.0'
+        assert manifest['units'] == 'meters'
+        assert manifest['validation_summary']['total_objects'] == 1
+        assert manifest['validation_summary']['total_vertices'] == 8
+        assert manifest['validation_summary']['total_faces'] == 6
+
+        # Verify object data
+        obj_data = manifest['objects'][0]
+        assert obj_data['name'] == 'run0_base_0_base-door'
+        assert obj_data['classification'] == 'carcass'
+        assert obj_data['vertex_count'] == 8
+        assert obj_data['face_count'] == 6
 
         # Verify file was written
         with open(manifest_path) as f:
             loaded = json.load(f)
         assert loaded['format'] == 'kitchen-geometry-manifest'
+        assert loaded['version'] == '2.0'
 
     def test_validation_catches_flat_quad(self):
         """Validator should warn about flat quads."""
@@ -179,9 +194,9 @@ class TestValidateAndExport:
         with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
             manifest_path = f.name
 
-        manifest = validate_and_export_manifest([obj], manifest_path)
+        manifest = export_manifest([obj], manifest_path)
 
         # Should have warning about front having wrong vertex count
-        warnings = manifest['validation']['warnings']
-        assert any("4 vertices" in w.lower() or "expected 8" in w.lower()
-                    for w in warnings)
+        issues = manifest['validation_summary']['issues']
+        assert any("vertex" in i.get('check', '').lower()
+                    for i in issues)

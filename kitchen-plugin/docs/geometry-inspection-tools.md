@@ -1,348 +1,212 @@
 # Geometry Inspection Tools
 
-Tools for analyzing and validating 3D cabinet geometry in OBJ and glTF formats.
+Tools for analyzing and validating 3D cabinet geometry.
 
-## Coordinate System
+## Primary Output: JSON Manifest
 
-Our system uses **Z-up** coordinates:
+The primary output of every build is a **structured JSON manifest** that contains:
 
-```
-Z (height)
-│
-│   Y (depth, into room)
-│  /
-│ /
-└───────── X (width, left to right)
-```
+- All vertex coordinates (local + world)
+- Object hierarchy (parent-child)
+- Expected vs actual dimensions (inline validation)
+- Layout metadata (runs, turns, directions)
+- Construction parameters (board thicknesses)
+- Units and coordinate system (explicit)
 
-| Axis | Direction | Typical Range |
-|------|-----------|---------------|
-| **X** | Width (left to right) | 300-1200mm |
-| **Y** | Depth (into room) | 300-600mm |
-| **Z** | Height (up) | 0-2000mm |
-
-### glTF Coordinate System
-
-glTF uses **Y-up** coordinates. Our tools automatically convert:
-
-| Our (Z-up) | glTF (Y-up) |
-|------------|-------------|
-| X | X |
-| Y | -Z |
-| Z | Y |
+**The manifest is the single source of truth for validation.** OBJ/glTF are optional visual exports.
 
 ---
 
-## Tools Overview
+## Workflow
 
-| Tool | Purpose | Input | Output |
-|------|---------|-------|--------|
-| `analyze_reference_obj.py` | Analyze OBJ files | `.obj` | Console report |
-| `convert_obj_to_gltf.py` | Convert OBJ to glTF | `.obj` | `.gltf` |
-| `analyze_gltf_v2.py` | Analyze glTF with Z-up conversion | `.gltf` | Console report |
-| `compare_with_reference.py` | Compare against reference dimensions | `.json` + `.gltf` | Comparison report |
-
----
-
-## Tool 1: analyze_reference_obj.py
-
-Analyzes OBJ files and provides detailed geometry information.
-
-### Usage
+### 1. Generate Kitchen with Manifest
 
 ```bash
-python3 scripts/analyze_reference_obj.py output/meshes/myster-box.obj
+blender --background --python src/main.py -- configs/l_shape.json --validate
 ```
 
-### Output
+This produces:
+- `output/meshes/l_shape_manifest.json` — Primary manifest (always)
+- `output/meshes/l_shape.blend` — Visual inspection (if `--export-blend`)
 
-```
-================================================================================
-REFERENCE OBJECT ANALYSIS
-================================================================================
-
-File: output/meshes/myster-box.obj
-Total vertices: 2152
-Total faces: 2080
-Objects: 4
-
-Coordinate System Detection:
-  System: Z-up
-  Confidence: 80%
-
-Overall Bounds:
-  X: -600.0 to 0.0 mm (600.0mm)
-  Y: 0.0 to 638.6 mm (638.6mm)
-  Z: 0.0 to 860.0 mm (860.0mm)
-
-OBJECT DETAILS
-================================================================================
-
-Cabinet1:
-  Vertices: 24
-  Faces: 20
-  Dimensions:
-    Width:  600.0 mm
-    Depth:  590.0 mm
-    Height: 700.0 mm
-```
-
-### What It Shows
-
-- **Coordinate System Detection**: Automatically detects if model uses Y-up or Z-up
-- **Object Details**: Name, vertex count, face count
-- **Dimensions**: Width × Depth × Height in mm
-- **Bounds**: Min/max coordinates for each axis
-- **Visualization**: ASCII top-view of objects
-
----
-
-## Tool 2: convert_obj_to_gltf.py
-
-Converts OBJ files to glTF 2.0 format for analysis.
-
-### Usage
+### 2. Validate Manifest (No Blender Required)
 
 ```bash
-python3 scripts/convert_obj_to_gltf.py output/meshes/myster-box.obj
+python scripts/validate_manifest.py output/meshes/l_shape_manifest.json
 ```
 
-### Output
-
-- Creates `.gltf` file in same directory
-- Shows conversion summary with mesh names and bounds
-
-### When to Use
-
-- When you have an OBJ file and want to analyze it with `analyze_gltf_v2.py`
-- When you need to inspect vertex-by-vertex coordinates
-
----
-
-## Tool 3: analyze_gltf_v2.py
-
-Analyzes glTF files with automatic Y-up to Z-up coordinate conversion.
-
-### Usage
-
-```bash
-python3 scripts/analyze_gltf_v2.py output/meshes/single_cabinet_test.gltf
+Output:
 ```
-
-### Output
-
-```
-==========================================================================================
-GLTF GEOMETRY ANALYSIS (Z-up coordinates)
-==========================================================================================
-
-──────────────────────────────────────────────────────────────────────────────────────────
-  cabinet_corpus
-    World Position: (0.0, 0.0, 120.0) mm
-    Mesh: 16 vertices, 24 faces
-    Local Dims: 600.0 × 560.0 × 720.0 mm
-    Vertices (local):
-      [ 0] (    0.00,    -0.00,     0.00) mm
-      [ 1] (  600.00,    -0.00,     0.00) mm
-      ...
-    World Bounds:
-      X: 0.0 to 600.0 mm
-      Y: 0.0 to 560.0 mm
-      Z: 120.0 to 840.0 mm
-
-==========================================================================================
-VALIDATION
-==========================================================================================
-
-✓ No issues found
-```
-
-### What It Shows
-
-- **World Position**: Object position in Z-up coordinates
-- **Local Dims**: Object dimensions (width × depth × height)
-- **Vertices**: All vertex coordinates (converted to Z-up)
-- **World Bounds**: Min/max coordinates in world space
-- **Validation**: Checks for geometry issues
-
-### Key Features
-
-- Automatic Y-up → Z-up conversion
-- Shows vertex-by-vertex coordinates
-- Validates geometry for common issues
-
----
-
-## Tool 4: compare_with_reference.py
-
-Compares generated cabinet geometry against reference dimensions.
-
-### Usage
-
-```bash
-# First generate the glTF file
-/Applications/Blender.app/Contents/MacOS/Blender --background --python src/main.py -- configs/single_cabinet_test.json --export-gltf --no-materials
-
-# Then compare
-python3 scripts/compare_with_reference.py configs/single_cabinet_test.json
-```
-
-### Output
-
-```
-================================================================================
-COMPARISON: Generated vs Expected
+MANIFEST VALIDATION REPORT
 ================================================================================
 
-Summary: 4 OK, 0 Mismatch, 0 Missing
+Total objects: 48
+Passed: 46
+Failed: 2
+Warnings: 1
+Status: ❌ INVALID
 
-✓ run0_base_0_base-door
-    Carcass (18mm walls)
-    Dims: 600.0 × 560.0 × 720.0 mm
+❌ Errors (2):
+  [width] run1_countertop: width mismatch: expected 1850.0mm, got 1790.0mm (diff: 60.0mm)
+  [overlap] run1_base_3_filler: Overlaps with run1_base_2_base-door: X=18.0mm
 
-✓ run0_base_0_base-door_back
-    Back panel (3mm HDF)
-    Dims: 564.0 × 3.0 × 717.0 mm
-
-✓ run0_base_0_base-door_door
-    Door with 2mm overlay
-    Dims: 604.0 × 19.0 × 724.0 mm
-
-✓ countertop
-    Countertop with overhangs
-    Dims: 660.0 × 580.0 × 30.0 mm
-
+⚠️  Warnings (1):
+  [vertex_count] run0_base_0_filler: Filler has 4 vertices (expected 8 for solid box)
 ================================================================================
-REFERENCE OBJECT ANALYSIS
-================================================================================
-
-Reference: myster-box.obj
-Coordinate System: Z-up
-
-Reference Dimensions:
-  Cabinet1: 600 × 590 × 700 mm
-  Cabinet1_Door: 599 × 18 × 698 mm
-
-================================================================================
-CABINET COMPARISON
-================================================================================
-
-Reference Cabinet1: 600 × 590 × 700 mm
-Our Corpus:         600 × 560 × 720 mm
-
-Differences:
-  Width:  0.0mm ✓
-  Depth:  30.0mm ❌
-  Height: 20.0mm ❌
 ```
 
-### What It Shows
-
-- **Generated vs Expected**: Compares each component against expected dimensions
-- **Reference Analysis**: Shows reference object dimensions
-- **Cabinet Comparison**: Highlights differences between our cabinet and reference
-
----
-
-## Reference Object: myster-box.obj
-
-The reference object (`output/meshes/myster-box.obj`) serves as ground truth.
-
-### Components
-
-| Component | Width | Depth | Height | Description |
-|-----------|-------|-------|--------|-------------|
-| Cabinet1 | 600mm | 590mm | 700mm | Main cabinet body |
-| Cabinet1_Door | 599mm | 18mm | 698mm | Door panel |
-| Handle | 8mm | 30mm | 144mm | Handle |
-| Baseboard1 | 600mm | 18mm | 160mm | Base panel |
-
-### Key Measurements
-
-- **Door gap**: 1mm (door at Y=591-609, cabinet at Y=0-590)
-- **Door thickness**: 18mm
-- **Baseboard**: 160mm tall, 18mm thick
-
----
-
-## Typical Workflow
-
-### 1. Generate Cabinet Geometry
+### 3. Summarize Manifest (LLM-Friendly)
 
 ```bash
-/Applications/Blender.app/Contents/MacOS/Blender --background --python src/main.py -- configs/single_cabinet_test.json --export-gltf --export-obj --no-materials
+python scripts/summarize_manifest.py output/meshes/l_shape_manifest.json
 ```
 
-### 2. Analyze Generated Geometry
-
-```bash
-python3 scripts/analyze_gltf_v2.py output/meshes/single_cabinet_test.gltf
+Output:
 ```
+Kitchen: L-shape
+Layout: 2 runs, 12 cabinets
 
-### 3. Compare with Reference
+Runs:
+  0. back wall: east — 3550mm, 6 cabinets
+  1. left wall: south (turn: left) — 1850mm, 6 cabinets
 
-```bash
-python3 scripts/compare_with_reference.py configs/single_cabinet_test.json
-```
+Objects: 48 total (24 primary, 24 children)
 
-### 4. Inspect Reference Object
+By type:
+  back_panel: 12
+  carcass: 24
+  door_front: 8
+  drawer_front: 4
 
-```bash
-python3 scripts/analyze_reference_obj.py output/meshes/myster-box.obj
+Primary objects:
+  Name                                     W×D×H (mm)             Status
+  ──────────────────────────────────────── ─────────────────────── ──────────
+  run0_base_0_filler                       50×560×720              ⚠️
+  run0_base_1_tall-oven                    600×560×2000            ✓
+  ...
+
+Validation: 22 passed, 2 failed, 1 warnings
 ```
 
 ---
 
-## Expected Dimensions
+## Manifest Schema
 
-### Our Cabinet (European Standard)
+The manifest follows the schema defined in `schemas/manifest_v2.schema.json`.
 
-| Component | Width | Depth | Height | Notes |
-|-----------|-------|-------|--------|-------|
-| Carcass | 600mm | 560mm | 720mm | 18mm walls |
-| Back Panel | 564mm | 3mm | 717mm | Internal width, HDF |
-| Door | 604mm | 19mm | 724mm | 2mm overlay |
-| Countertop | 660mm | 580mm | 30mm | 30mm overhang ends |
+### Key Fields
 
-### Reference Cabinet (myster-box.obj)
+| Field | Type | Description |
+|---|---|---|
+| `format` | string | Always `"kitchen-geometry-manifest"` |
+| `version` | string | Always `"2.0"` |
+| `units` | string | Always `"meters"` |
+| `coordinate_system` | object | Z-up, right-hand |
+| `settings` | object | Kitchen settings (mm values) |
+| `layout` | object | Run metadata, directions, turns |
+| `objects` | array | All geometry objects |
+| `validation_summary` | object | Pass/fail counts and issues |
 
-| Component | Width | Depth | Height | Notes |
-|-----------|-------|-------|--------|-------|
-| Cabinet1 | 600mm | 590mm | 700mm | Different depth/height |
-| Door | 599mm | 18mm | 698mm | Slightly smaller |
-| Baseboard | 600mm | 18mm | 160mm | Base panel |
+### Object Fields
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | Unique object name |
+| `classification` | string | carcass, door_front, back_panel, etc. |
+| `level` | string | base, upper, tall |
+| `parent` | string/null | Parent object name |
+| `transform.location_m` | [x,y,z] | Position in meters |
+| `local_dimensions_mm` | [w,d,h] | Object dimensions in mm |
+| `world_bounds` | object | World-space bounding box |
+| `vertex_count` | int | Number of vertices |
+| `face_count` | int | Number of faces |
+| `validation` | object | Inline pass/fail checks |
 
 ---
 
-## Troubleshooting
+## Validation Checks
 
-### "Object not found" in comparison
+The manifest validator checks:
 
-The object names in glTF depend on the config file. Check actual names with:
+| Check | Severity | Description |
+|---|---|---|
+| **Dimension mismatch** | error | Actual ≠ expected (within 2mm tolerance) |
+| **Object overlap** | error | World bounds intersect |
+| **Zero dimensions** | error | Width/depth/height is ~0mm |
+| **Vertex count** | warning | Wrong count for construction type |
+| **Face count** | warning | Wrong count for construction type |
+| **Standard widths** | warning | Not a European standard width |
+| **Run continuity** | error | End of one run ≠ start of next |
+| **Direction mismatch** | error | Turn doesn't produce expected direction |
+| **Back thickness** | warning | Back panel too thick |
+| **Front thickness** | warning | Front panel too thin |
+
+---
+
+## Comparison: Old vs New Pipeline
+
+### Old Pipeline (Deprecated)
+
+```
+config → Blender → OBJ/glTF → parse scripts → guess units → compare → report
+                      ↑
+               6 lossy steps before validation
+```
+
+Problems:
+- OBJ has no units (hardcoded `*1000`)
+- Coordinate system detection is fragile guesswork
+- Multi-object index remapping bug
+- glTF Y-up → Z-up conversion failure point
+- Can't trace back to which build step broke
+
+### New Pipeline (Current)
+
+```
+config → Blender → JSON manifest → validator → report
+                   (exact data)    (structured)
+```
+
+Benefits:
+- Units explicit: `"units": "meters"`
+- Coordinate system documented once
+- Local + world coordinates, exact transforms
+- Expected-vs-actual validation inline
+- Layout metadata preserved
+- LLM agent reads plain JSON
+- Validation at the source, not after export
+
+---
+
+## Deprecated Scripts (Removed)
+
+The following scripts were removed as part of the manifest-first migration:
+
+| Script | Replaced By |
+|---|---|
+| `analyze_reference_obj.py` | `scripts/validate_manifest.py` |
+| `convert_obj_to_gltf.py` | Not needed (manifest is direct) |
+| `analyze_gltf_v2.py` | `scripts/validate_manifest.py` |
+| `compare_with_reference.py` | Inline validation in manifest |
+| `validate_obj.py` | `scripts/validate_manifest.py` |
+| `src/geometry_inspector.py` | `src/geometry_manifest.py` |
+| `src/geometry_validator.py` | `src/manifest_validator.py` |
+
+---
+
+## Optional Visual Exports
+
+For visual inspection, you can still export to 3D formats:
 
 ```bash
-python3 -c "import json; gltf = json.load(open('output/meshes/file.gltf')); print([n['name'] for n in gltf['nodes']])"
+# Blender file (full fidelity)
+blender --background --python src/main.py -- configs/l_shape.json --export-blend
+
+# OBJ (for legacy tools)
+blender --background --python src/main.py -- configs/l_shape.json --export-obj
+
+# glTF (for web viewers)
+blender --background --python src/main.py -- configs/l_shape.json --export-gltf
 ```
 
-### Wrong coordinate system detected
-
-The coordinate system detection uses heuristics. If wrong, you can manually specify:
-
-```python
-# In your analysis script
-analysis = analyze_gltf(path, force_z_up=True)
-```
-
-### Dimensions don't match
-
-Check if you're comparing against the correct reference:
-- **European standard**: 600×560×720mm
-- **Reference object**: 600×590×700mm
-
----
-
-## File Locations
-
-All tools are in: `/Users/michal/PycharmProjects/kuchnie/kitchen-plugin/scripts/`
-
-Generated files are in: `/Users/michal/PycharmProjects/kuchnie/kitchen-plugin/output/meshes/`
+**Note:** These formats are for visual inspection only. Validation should always use the manifest.

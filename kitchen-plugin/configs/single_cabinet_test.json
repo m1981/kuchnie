@@ -27,9 +27,7 @@
     "runs": [
         {
             "label": "test",
-            "base": [
-                { "type": "base-door", "width": 600, "door": "right" }
-            ]
+            "base": [{ "type": "base-door", "width": 600, "door": "right" }]
         }
     ]
 }

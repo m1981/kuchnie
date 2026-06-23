@@ -5,6 +5,9 @@
 This directory contains documentation for the kitchen cabinet 3D generator.
 The plugin reads JSON config files and generates kitchen cabinet models in Blender.
 
+**Primary output:** Structured JSON geometry manifest for validation.
+Visual exports (OBJ, glTF, .blend) are optional.
+
 ---
 
 ## Reading Guide
@@ -14,18 +17,23 @@ The plugin reads JSON config files and generates kitchen cabinet models in Blend
 Read in this order:
 
 1. **[architecture.md](architecture.md)** — Start here!
-    - Layer architecture with mermaid diagrams
+    - Layer architecture
+    - Manifest-first pipeline
     - Dependency rules
     - Module overview
-    - File structure
 
-2. **[config-syntax.md](config-syntax.md)** — JSON config reference
+2. **[implementation-plan.md](implementation-plan.md)** — Migration plan
+    - Phased implementation
+    - New modules (geometry_manifest, manifest_validator)
+    - Test strategy
+
+3. **[config-syntax.md](config-syntax.md)** — JSON config reference
     - Schema overview
     - Settings (dimensions, gaps, tolerances)
     - Cabinet types and properties
     - Layout examples (I, L, U shape)
 
-3. **[wall-centric-model.md](wall-centric-model.md)** — Positioning model
+4. **[wall-centric-model.md](wall-centric-model.md)** — Positioning model
     - How cabinets are positioned relative to walls
     - Wall-local vs world coordinates
     - Corner handling
@@ -34,34 +42,17 @@ Read in this order:
 
 Read:
 
-1. **[llm-context.md](llm-context.md)** — Project context for AI
-    - Current architecture
-    - Coordinate system
-    - Key rules and conventions
-    - Test validation pipeline
+1. **[architecture.md](architecture.md)** — Manifest schema and validation
+2. **[3d-format-strategy.md](3d-format-strategy.md)** — Why manifest is primary output
 
 ### For CAD/Kitchen Domain Reference
 
 Read:
 
 1. **[european-kitchen-standards.md](european-kitchen-standards.md)** — Kitchen standards
-    - 32mm system
-    - Standard dimensions
-    - Cabinet types
-    - Handle types
-    - Material system
-
 2. **[cad-principles-part1.md](cad-principles-part1.md)** — CAD principles (part 1)
-    - Coordinate system discipline
-    - Separation of concerns
-    - Units and precision
-    - Constraint-based layout
-
 3. **[cad-principles-part2.md](cad-principles-part2.md)** — CAD principles (part 2)
-    - B-rep topology
-    - Parametric modeling
-    - Performance patterns
-    - Export/interop
+4. **[3d-format-strategy.md](3d-format-strategy.md)** — Format comparison & rationale
 
 ---
 
@@ -88,18 +79,34 @@ Read:
 # All tests (no Blender required)
 .venv/bin/python -m pytest tests/ -v
 
-# Specific test suite
-.venv/bin/python -m pytest tests/test_kitchen.py -v
+# Manifest tests only
+.venv/bin/python -m pytest tests/test_manifest_*.py -v
 ```
 
 ### Generating 3D Models
 
 ```bash
-# Generate .blend file
-blender --background --python src/main.py -- configs/ref_u_shape.json --export-blend
+# Generate with manifest (primary output)
+blender --background --python src/main.py -- configs/ref_u_shape.json
+
+# Generate with manifest + validation
+blender --background --python src/main.py -- configs/ref_u_shape.json --validate
+
+# Generate with visual exports
+blender --background --python src/main.py -- configs/ref_u_shape.json --export-blend --export-obj
 
 # Open in Blender
 open output/meshes/ref_u_shape.blend
+```
+
+### Validating Manifests (No Blender Required)
+
+```bash
+# Validate a manifest
+python scripts/validate_manifest.py output/meshes/ref_u_shape_manifest.json
+
+# Summarize a manifest (LLM-friendly)
+python scripts/summarize_manifest.py output/meshes/ref_u_shape_manifest.json
 ```
 
 ### Key Directories
@@ -107,14 +114,19 @@ open output/meshes/ref_u_shape.blend
 ```
 kitchen-plugin/
 ├── src/
-│   ├── core/        # Pure math (Vector, BoundingBox, Transform)
-│   ├── kitchen/     # Domain logic (Wall, Cabinet, Layout)
-│   ├── adapters/    # Blender integration
+│   ├── core/              # Pure math (Vector, BoundingBox, Transform)
+│   ├── kitchen/           # Domain logic (Wall, Cabinet, Layout)
+│   ├── geometry_manifest.py  # Manifest export (PRIMARY output)
+│   ├── manifest_validator.py # Manifest validation
+│   ├── geometry_builder.py   # Blender mesh creation
+│   ├── exporters.py          # OBJ, glTF, .blend (optional)
 │   └── ...
-├── tests/           # Test suite (218 tests)
-├── configs/         # Example JSON configs
-├── output/          # Generated .blend and .obj files
-└── docs/            # This directory
+├── schemas/               # JSON Schema for manifest format
+├── scripts/               # Standalone tools (no bpy needed)
+├── tests/                 # Test suite (332+ tests)
+├── configs/               # Example JSON configs
+├── output/                # Generated manifests, .blend, .obj
+└── docs/                  # This directory
 ```
 
 ---
@@ -149,6 +161,7 @@ When adding new documentation:
 
 ## Current Status
 
-- **Tests:** 218 passing, 17 skipped (bpy required)
-- **Architecture:** SOLID with layered design
+- **Tests:** 332+ passing, 17 skipped (bpy required)
+- **Architecture:** Manifest-first with SOLID layered design
 - **Config Version:** 1.1 (with backward compatibility for 1.0)
+- **Manifest Version:** 2.0 (primary validation output)

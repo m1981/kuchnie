@@ -395,6 +395,8 @@ def _create_carcass(name: str, geom: CabinetGeometry) -> bpy.types.Object:
     # Sides: left and right walls
     # Back: outer back face and inner back face
     faces = [
+        # Bottom floor (1 face) — closes the bottom
+        (0, 1, 2, 3),    # floor (outer bottom: z=0)
         # Bottom rim (4 faces around the bottom edge)
         (0, 1, 9, 8),    # front-bottom rim
         (1, 2, 10, 9),   # right-bottom rim
@@ -636,9 +638,10 @@ def _add_door_front(parent: bpy.types.Object, w: float, h: float,
 
     obj = bpy.data.objects.new(name, mesh)
     # Door local Y goes from -thickness to 0
-    # We want back face (local Y=-thickness) to be at carcass front (Y=depth) + front_offset
-    # So position Y = depth + front_offset + thickness
-    obj.location = (0, geom.external_depth / 1000 + front_offset + thickness, 0)
+    # Front face (local Y=0) should be at carcass front (Y=0) - front_offset
+    # So position Y = -front_offset
+    # Back face (local Y=-thickness) will be at Y = -front_offset - thickness
+    obj.location = (0, -front_offset, 0)
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 
@@ -706,9 +709,10 @@ def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
 
     obj = bpy.data.objects.new(name, mesh)
     # Drawer local Y goes from -thickness to 0
-    # We want back face (local Y=-thickness) to be at carcass front (Y=depth) + front_offset
-    # So position Y = depth + front_offset + thickness
-    obj.location = (0, geom.external_depth / 1000 + front_offset + thickness, 0)
+    # Front face (local Y=0) should be at carcass front (Y=0) - front_offset
+    # So position Y = -front_offset
+    # Back face (local Y=-thickness) will be at Y = -front_offset - thickness
+    obj.location = (0, -front_offset, 0)
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
 
