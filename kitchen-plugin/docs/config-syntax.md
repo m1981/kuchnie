@@ -82,24 +82,24 @@ the designer (human or AI agent) and the renderer (Blender plugin).
 }
 ```
 
-| Property               | Default | Description                                   |
-| ---------------------- | ------- | --------------------------------------------- |
-| `baseBodyHeight`       | 720     | Carcass height without plinth (mm)            |
-| `baseDepth`            | 560     | Carcass depth, not including countertop       |
-| `wallHeight`           | 720     | Wall cabinet height                           |
-| `wallDepth`            | 300     | Wall cabinet depth                            |
-| `tallHeight`           | 2000    | Tall cabinet height                           |
-| `tallDepth`            | 560     | Tall cabinet depth                            |
-| `plinthHeight`         | 120     | Plinth/baseboard height                       |
-| `plinthSetback`        | 60      | How far plinth is set back from front         |
-| `counterThickness`     | 30      | Countertop thickness                          |
-| `counterOverhangFront` | 20      | Countertop overhang past cabinet front        |
-| `counterOverhangEnd`   | 30      | Countertop overhang at open ends              |
-| `wallMountHeight`      | 1400    | Height from floor to bottom of wall cabinet   |
-| `cabinetGap`           | 0       | Gap between carcass boxes (usually flush)     |
-| `frontGap`             | 2       | Visible gap between door/drawer fronts        |
-| `frontOffset`          | 0.001   | How far fronts protrude from cabinet face (m) |
-| `clearanceOffset`      | 0.001   | Geometric clearance for blind corners (m)     |
+| Property               | Default | Description                                                 |
+| ---------------------- | ------- | ----------------------------------------------------------- |
+| `baseBodyHeight`       | 720     | Carcass height without plinth (mm)                          |
+| `baseDepth`            | 560     | Carcass depth, not including countertop                     |
+| `wallHeight`           | 720     | Wall cabinet height                                         |
+| `wallDepth`            | 300     | Wall cabinet depth                                          |
+| `tallHeight`           | 2000    | Tall cabinet height                                         |
+| `tallDepth`            | 560     | Tall cabinet depth                                          |
+| `plinthHeight`         | 120     | Plinth/baseboard height                                     |
+| `plinthSetback`        | 60      | How far plinth is set back from front                       |
+| `counterThickness`     | 30      | Countertop thickness                                        |
+| `counterOverhangFront` | 20      | Countertop overhang past cabinet front                      |
+| `counterOverhangEnd`   | 30      | Countertop overhang at open ends                            |
+| `wallMountHeight`      | 1400    | Height from floor to bottom of wall cabinet                 |
+| `cabinetGap`           | 0       | Gap between carcass boxes (usually flush)                   |
+| `frontGap`             | 2       | Visible gap between door/drawer fronts                      |
+| `frontOffset`          | 0.001   | Distance between front back-face and carcass front face (m) |
+| `clearanceOffset`      | 0.001   | Geometric clearance for blind corners (m)                   |
 
 **Note on backward compatibility:** Old configs using `"gap": 2` will automatically migrate to `"frontGap": 2` with `"cabinetGap": 0`. The new settings take precedence if both are specified.
 
@@ -653,19 +653,41 @@ When `handle.type = "push"`:
 
 ## 8. Gap System
 
+### European Frameless Front Sizing
+
+In European frameless construction, fronts are **smaller** than the carcass
+opening. The `frontGap` defines the gap between the front edge and the
+carcass sides:
+
+```
+Front width  = carcass_width  - 2 × frontGap
+Front height = carcass_height - 2 × frontGap
+```
+
+Example with `frontGap: 2`:
+
+```
+Carcass: 600mm wide
+Door:    596mm wide  (600 - 2×2)
+Gap:     2mm on each side
+```
+
+When two cabinets are adjacent, the gap between fronts is `2 × frontGap`
+(2mm from each front = 4mm total).
+
 ### Two Types of Gap
 
 European frameless kitchens have two distinct gap concepts:
 
-| Setting      | Purpose                     | Typical Value | Example                        |
-| ------------ | --------------------------- | ------------- | ------------------------------ |
-| `cabinetGap` | Space between carcass boxes | 0mm (flush)   | Carcass-to-carcass spacing     |
-| `frontGap`   | Visible gap between fronts  | 2–3mm         | Door-to-door, drawer-to-drawer |
+| Setting      | Purpose                            | Typical Value | Example                        |
+| ------------ | ---------------------------------- | ------------- | ------------------------------ |
+| `cabinetGap` | Space between carcass boxes        | 0mm (flush)   | Carcass-to-carcass spacing     |
+| `frontGap`   | Gap between front and carcass edge | 2–3mm         | Door-to-door, drawer-to-drawer |
 
 **Why two settings?**
 
 - Carcasses are typically installed flush (0mm gap) for maximum storage
-- The visible 2–3mm gap is ONLY between door/drawer fronts for aesthetics
+- The `frontGap` creates a uniform gap around each front panel
 - Countertops sit directly on carcasses (use cabinetGap)
 - Plinths are flush with carcass fronts
 
@@ -694,6 +716,7 @@ European frameless kitchens have two distinct gap concepts:
 | Spacing                       | Setting      | Typical |
 | ----------------------------- | ------------ | ------- |
 | Carcass to carcass            | `cabinetGap` | 0mm     |
+| Front edge to carcass edge    | `frontGap`   | 2–3mm   |
 | Drawer front to drawer front  | `frontGap`   | 2–3mm   |
 | Door to door (double cabinet) | `frontGap`   | 2–3mm   |
 | Door to drawer (same cabinet) | `frontGap`   | 2–3mm   |
@@ -707,10 +730,14 @@ Old configs using `"gap": 2` are automatically migrated:
 - `"gap"` → `"frontGap": 2`
 - `"cabinetGap"` defaults to `0`
 
-### Front Flush Alignment
+### Deprecated: frontOverlay
 
-All cabinet fronts are on the same plane (European frameless).
-The plugin handles this automatically — no config needed.
+The `frontOverlay` setting is no longer used by the geometry builder.
+European frameless construction uses `frontGap` (gap between front and
+carcass) instead of overlay (front extending beyond carcass).
+
+The setting remains in config defaults for backward compatibility but
+has no effect on generated geometry.
 
 ---
 

@@ -143,16 +143,16 @@ blender --background --python src/main.py -- configs/kitchen.json
 │   wall_builder.py           Config → Wall/Cabinet objects       │
 ├─────────────────────────────────────────────────────────────────┤
 │ Layer 2: kitchen/           Domain logic                        │
-│   wall.py                   Wall, Room, WallCabinet             │
+│   wall.py                   Wall, Room, CornerReference             │
 │   cabinet.py                Cabinet, CabinetPlacement           │
 │   layout.py                 Run, LayoutEngine                   │
 │   cabinet_geometry.py       Board-level construction math       │
-│   standards.py              European kitchen standards          │
+│   standards.py              KitchenStandards (dims + tolerances)          │
 ├─────────────────────────────────────────────────────────────────┤
 │ Layer 1: core/              Pure math, no dependencies          │
 │   geometry.py               Vector2D, Vector3D, BoundingBox     │
 │   types.py                  Direction, CabinetType, Dimensions  │
-│   tolerances.py             Named tolerances                    │
+│   tolerances.py             Geometric tolerance utilities                    │
 └─────────────────────────────────────────────────────────────────┘
 
 Dependency rule: core/ ← kitchen/ ← builder/ ← adapters/ ← main.py
@@ -168,6 +168,7 @@ Dependency rule: core/ ← kitchen/ ← builder/ ← adapters/ ← main.py
 | `wall-centric-model.md`          | Wall positioning model         | Developers        |
 | `geometry-inspection-tools.md`   | Manifest validation workflow   | Developers, LLM   |
 | `archive/implementation-plan.md` | Migration plan (completed)     | Developers        |
+| `ddd-strategic-design.md`        | DDD subdomains & boundaries    | Developers        |
 | `3d-format-strategy.md`          | Format comparison & rationale  | Developers        |
 | `roadmap-production-cad.md`      | Production CAD roadmap         | Developers        |
 | `european-kitchen-standards.md`  | Kitchen standards              | Domain Experts    |

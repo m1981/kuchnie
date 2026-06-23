@@ -46,6 +46,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **`LayoutEngine._create_walls()` direction bug** — L-shape and U-shape walls were all going east
     - Now uses `run.direction` directly instead of previous iteration's direction
 
+- **European frameless front sizing** — fronts were larger than carcass (overlay model), now correctly smaller (gap model)
+    - Front width = carcass_width - 2 × frontGap (was: + 2 × overlay)
+    - Front height = carcass_height - 2 × frontGap (was: + 2 × overlay)
+    - Gap is uniform on all sides (2mm default)
+
+- **Manifest carcass parent bounds** — was including front panels in bounding box
+    - Now excludes door_front and drawer_front when computing parent dimensions
+    - Carcass shows actual box dimensions (600×560×720) not inflated door bounds
+
+### Added
+
+- **Countertop validation** (`_check_countertops()` in `validators.py`)
+    - counterThickness: 20-40mm
+    - counterOverhangFront: 20-30mm
+    - counterOverhangEnd: 0-30mm
+
 ### Docs
 
 - **`docs/architecture.md` updated to match refactored code**
