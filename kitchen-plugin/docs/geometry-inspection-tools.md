@@ -112,18 +112,18 @@ The manifest follows the schema defined in `schemas/manifest_v2.schema.json`.
 
 ### Object Fields
 
-| Field                  | Type        | Description                           |
-| ---------------------- | ----------- | ------------------------------------- |
-| `name`                 | string      | Unique object name                    |
-| `classification`       | string      | carcass, door_front, back_panel, etc. |
-| `level`                | string      | base, upper, tall                     |
-| `parent`               | string/null | Parent object name                    |
-| `transform.location_m` | [x,y,z]     | Position in meters                    |
-| `local_dimensions_mm`  | [w,d,h]     | Object dimensions in mm               |
-| `world_bounds`         | object      | World-space bounding box              |
-| `vertex_count`         | int         | Number of vertices                    |
-| `face_count`           | int         | Number of faces                       |
-| `validation`           | object      | Inline pass/fail checks               |
+| Field                  | Type        | Description                                  |
+| ---------------------- | ----------- | -------------------------------------------- |
+| `name`                 | string      | Unique object name                           |
+| `classification`       | string      | carcass, board, door_front, back_panel, etc. |
+| `level`                | string      | base, upper, tall                            |
+| `parent`               | string/null | Parent object name                           |
+| `transform.location_m` | [x,y,z]     | Position in meters                           |
+| `local_dimensions_mm`  | [w,d,h]     | Object dimensions in mm                      |
+| `world_bounds`         | object      | World-space bounding box                     |
+| `vertex_count`         | int         | Number of vertices                           |
+| `face_count`           | int         | Number of faces                              |
+| `validation`           | object      | Inline pass/fail checks                      |
 
 ---
 
@@ -131,18 +131,24 @@ The manifest follows the schema defined in `schemas/manifest_v2.schema.json`.
 
 The manifest validator checks:
 
-| Check                  | Severity | Description                              |
-| ---------------------- | -------- | ---------------------------------------- |
-| **Dimension mismatch** | error    | Actual ≠ expected (within 2mm tolerance) |
-| **Object overlap**     | error    | World bounds intersect                   |
-| **Zero dimensions**    | error    | Width/depth/height is ~0mm               |
-| **Vertex count**       | warning  | Wrong count for construction type        |
-| **Face count**         | warning  | Wrong count for construction type        |
-| **Standard widths**    | warning  | Not a European standard width            |
-| **Run continuity**     | error    | End of one run ≠ start of next           |
-| **Direction mismatch** | error    | Turn doesn't produce expected direction  |
-| **Back thickness**     | warning  | Back panel too thick                     |
-| **Front thickness**    | warning  | Front panel too thin                     |
+| Check                  | Severity | Description                                   |
+| ---------------------- | -------- | --------------------------------------------- |
+| **Dimension mismatch** | error    | Actual ≠ expected (within 2mm tolerance)      |
+| **Object overlap**     | error    | World bounds intersect (min dimension ≥ 50mm) |
+| **Zero dimensions**    | error    | Width/depth/height is ~0mm                    |
+| **Vertex count**       | warning  | Board < 8 vertices, front < 8 vertices        |
+| **Face count**         | warning  | Board < 6 faces, front < 6 faces              |
+| **Standard widths**    | warning  | Not a European standard width                 |
+| **Run continuity**     | error    | End of one run ≠ start of next                |
+| **Direction mismatch** | error    | Turn doesn't produce expected direction       |
+| **Back thickness**     | warning  | Back panel too thick                          |
+| **Front thickness**    | warning  | Front panel too thin                          |
+
+**Overlap detection:**
+
+- Filters out expected small overlaps (door overlays, 2-4mm)
+- Only reports overlaps where minimum dimension ≥ 50mm
+- Skips boards, fronts, backs, and countertops in overlap checks
 
 ---
 

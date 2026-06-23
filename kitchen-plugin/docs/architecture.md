@@ -125,11 +125,18 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
   │ geometry_builder.py (bpy)                             │
   │                                                       │
   │  Builds Blender meshes:                               │
-  │  • Carcass (hollow box, 18mm walls)                   │
+  │  • Carcass (4 separate boards with 1mm gaps)          │
+  │    - Left side panel (full height × depth × T)        │
+  │    - Right side panel (full height × depth × T)       │
+  │    - Top panel (between sides, at top)                │
+  │    - Bottom panel (between sides, at bottom)          │
   │  • Back panel (3mm HDF in groove)                     │
   │  • Front panels (doors/drawers, 19mm thick)           │
   │  • Countertop (with overhangs)                        │
   │  • Fillers, plinths                                   │
+  │                                                       │
+  │  Each board is a separate solid box (8 verts, 6 faces)│
+  │  Technical gaps between all boards — no shared surfaces│
   │                                                       │
   │  Applies transforms:                                  │
   │  • Position along wall (accumulated offset)           │
@@ -575,6 +582,50 @@ TOLERANCES = {
 
 | Standard widths | 300, 400, 450, 500, 600, 800, 900, 1000, 1200 mm |
 | --------------- | ------------------------------------------------ |
+
+---
+
+## Carcass Construction
+
+Each cabinet carcass is built as **4 separate solid boards** with technical
+gaps between them. This matches European frameless construction standards.
+
+```
+  ┌──┐                     ┌──┐
+  │  │                     │  │
+  │  │  ┌───────────────┐  │  │
+  │L │  │  top panel     │  │R │
+  │  │  └───────────────┘  │  │
+  │  │                     │  │
+  │  │  ┌───────────────┐  │  │
+  │  │  │ bottom panel   │  │  │
+  │  │  └───────────────┘  │  │
+  └──┘                     └──┘
+```
+
+| Board        | Width    | Depth      | Height      |
+| ------------ | -------- | ---------- | ----------- |
+| Left side    | T (18mm) | full depth | full height |
+| Right side   | T (18mm) | full depth | full height |
+| Top panel    | W − 2T   | D − T      | T (18mm)    |
+| Bottom panel | W − 2T   | D − T      | T (18mm)    |
+
+**Construction rules:**
+
+- Each board is a separate Blender object (8 vertices, 6 faces)
+- Top/bottom panels sit **between** side panels (butt joint)
+- **1mm technical gap** between all boards — no shared surfaces
+- Back panel sits in groove at rear (separate object)
+- Front is open (door/drawer covers it)
+- Parent empty groups all boards for a cabinet
+
+**Why separate boards:**
+
+- Matches real-world construction (each board is cut separately)
+- Enables BOM extraction (count boards, not faces)
+- Allows material assignment per board
+- Validates against cut list (board dimensions = cut dimensions)
+- No shared surfaces = no z-fighting in renders
 
 ---
 
