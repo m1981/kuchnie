@@ -119,7 +119,8 @@ def build_kitchen_from_layout(layout, settings: dict) -> list[bpy.types.Object]:
 
 
 def _build_cabinet(cab, settings: dict, level: str,
-                   run_idx: int, cab_idx: int) -> tuple[bpy.types.Object | None, list]:
+                   run_idx: int, cab_idx: int,
+                   ) -> tuple[bpy.types.Object | None, list]:
     """Build a single cabinet with proper European construction.
 
     Accepts a domain Cabinet object. Uses CabinetGeometry for accurate
@@ -165,7 +166,7 @@ def _build_cabinet(cab, settings: dict, level: str,
     if back_obj:
         all_objs.append(back_obj)
 
-    # Add front panels (doors/drawers with overlay) — parented to carcass parent
+    # Add front panels (doors/drawers with gap) — parented to carcass parent
     front_objs = _add_front(parent, cab, settings, level, geom)
     all_objs.extend(front_objs)
 
@@ -361,17 +362,17 @@ def _add_back_panel(parent: bpy.types.Object, geom: CabinetGeometry) -> bpy.type
     return obj
 
 
-def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
+def _add_front(obj: bpy.types.Object, cab, settings: dict,
                level: str, geom: CabinetGeometry) -> list:
     """Add door/drawer front(s) to a cabinet.
 
-    Uses CabinetGeometry for proper dimensions and overlay.
-    Fronts are thick boxes (not flat quads).
-
-    Uses frontGap for door/drawer spacing (not cabinetGap).
-    Uses frontOffset for how far fronts protrude from cabinet face.
-    Uses clearanceOffset for geometric clearance (blind corners, etc.).
-    Uses frontOverlay from settings for overlay amount.
+    European frameless construction (32mm system):
+    - Front is SMALLER than carcass opening
+    - Gap between front edge and carcass sides (typically 2-3mm per side)
+    - Front width = carcass_width - 2 × frontGap
+    - Front height = carcass_height - 2 × frontGap
+    - Drawer fronts: additional vertical gap between each drawer
+    - Pull handles: extra 4mm clearance on top (layout concern, not front sizing)
 
     Returns:
         List of created front panel objects.
@@ -379,20 +380,28 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
     cab_type = cab.cabinet_type.value
     front_objs = []
 
-    # Get overlay from settings (default 2mm)
-    overlay = settings.get("frontOverlay", 2)
+    # Gap between front edge and carcass side (mm)
+    front_gap = settings.get("frontGap", 2)  # 2-3mm per side
 
-    # Get front dimensions with overlay
-    front_w_mm, front_h_mm = geom.front_dimensions(
-        overlay_side=overlay,
-        overlay_top=overlay,
-        overlay_bottom=overlay,
-    )
-    front_w = front_w_mm / 1000
-    front_h = front_h_mm / 1000
+    # Handle clearance: extra space above cabinet for pull handles
+    # This is a layout concern, not a front sizing concern
+    handle_clearance = 0
+    if cab.handle_type.value in ("rail", "knob"):
+        handle_clearance = settings.get("handleClearance", 4)  # mm
 
-    # Use frontGap for door/drawer visual spacing
-    front_gap = mm_to_m(settings.get("frontGap", 2))
+    # European frameless: front is SMALLER than carcass
+    # Front width = carcass_width - 2 × frontGap (gap on each side)
+    # Front height = carcass_height - 2 × frontGap (gap top + bottom)
+    front_w_mm = geom.external_width - 2 * front_gap
+    front_h_mm = geom.external_height - 2 * front_gap
+
+    front_w = mm_to_m(front_w_mm)
+    front_h = mm_to_m(front_h_mm)
+
+    # Front is centered on carcass: offset by front_gap from each edge
+    front_offset_x = mm_to_m(front_gap)  # offset from left edge
+    front_offset_z = mm_to_m(front_gap)  # offset from bottom edge
+
     # Tolerance offsets from settings
     front_offset = settings.get("frontOffset", 0.001)  # meters
     clearance_offset = settings.get("clearanceOffset", 0.001)  # meters
@@ -405,55 +414,66 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
     drawer_door_types = {"base-drawer-door"}
 
     if cab_type in single_door_types:
-        door_obj = _add_door_front(obj, front_w, front_h, geom, overlay, cab, level,
+        door_obj = _add_door_front(obj, front_w, front_h, geom, front_gap, cab, level,
+                        x_offset=front_offset_x, z_offset=front_offset_z,
                         front_offset=front_offset)
         front_objs.append(door_obj)
 
     elif cab_type in double_door_types:
-        door_w = (front_w - front_gap) / 2
-        door_obj_l = _add_door_front(obj, door_w, front_h, geom, overlay, cab, level,
-                        x_offset=0, front_offset=front_offset)
-        door_obj_r = _add_door_front(obj, door_w, front_h, geom, overlay, cab, level,
-                        x_offset=door_w + front_gap, name_suffix="_R",
+        # Double doors: split width, gap between them
+        door_gap = mm_to_m(front_gap)
+        door_w = (front_w - door_gap) / 2
+        door_obj_l = _add_door_front(obj, door_w, front_h, geom, front_gap, cab, level,
+                        x_offset=front_offset_x, z_offset=front_offset_z,
                         front_offset=front_offset)
+        door_obj_r = _add_door_front(obj, door_w, front_h, geom, front_gap, cab, level,
+                        x_offset=front_offset_x + door_w + door_gap,
+                        z_offset=front_offset_z,
+                        name_suffix="_R", front_offset=front_offset)
         front_objs.extend([door_obj_l, door_obj_r])
 
     elif cab_type in drawer_types:
         drawer_count = cab.drawer_count or 3
+        drawer_gap = mm_to_m(front_gap)
         if isinstance(drawer_count, int):
-            drawer_h = (front_h - front_gap * (drawer_count - 1)) / drawer_count
+            drawer_h = (front_h - drawer_gap * (drawer_count - 1)) / drawer_count
             heights = [drawer_h] * drawer_count
         else:
-            heights = [hh / 1000 for hh in drawer_count]
+            heights = [mm_to_m(hh) for hh in drawer_count]
 
-        z = 0
+        z = front_offset_z
         for i, dh in enumerate(heights):
-            drawer_obj = _add_drawer_front(obj, front_w, dh, geom, overlay, z, i,
+            drawer_obj = _add_drawer_front(obj, front_w, dh, geom, front_gap, z, i,
                               front_offset=front_offset)
             front_objs.append(drawer_obj)
-            z += dh + front_gap
+            z += dh + drawer_gap
 
     elif cab_type in drawer_door_types:
+        drawer_gap = mm_to_m(front_gap)
         drawer_h = mm_to_m(cab.drawer_heights[0] if cab.drawer_heights else 150)
-        drawer_obj = _add_drawer_front(obj, front_w, drawer_h, geom, overlay, 0, 0,
-                          front_offset=front_offset)
+        drawer_obj = _add_drawer_front(obj, front_w, drawer_h, geom, front_gap,
+                          front_offset_z, 0, front_offset=front_offset)
         front_objs.append(drawer_obj)
-        door_h = front_h - drawer_h - front_gap
-        door_obj = _add_door_front(obj, front_w, door_h, geom, overlay,
-                        cab, level, z_offset=drawer_h + front_gap,
+        door_h = front_h - drawer_h - drawer_gap
+        door_obj = _add_door_front(obj, front_w, door_h, geom, front_gap,
+                        cab, level,
+                        x_offset=front_offset_x,
+                        z_offset=front_offset_z + drawer_h + drawer_gap,
                         front_offset=front_offset)
         front_objs.append(door_obj)
 
     elif cab_type == "corner-blind":
         blind_depth = mm_to_m(cab.blind_depth or 300)
         door_w = front_w - blind_depth - clearance_offset
-        door_obj = _add_door_front(obj, door_w, front_h, geom, overlay, cab, level,
-                        x_offset=blind_depth + clearance_offset,
+        door_obj = _add_door_front(obj, door_w, front_h, geom, front_gap, cab, level,
+                        x_offset=front_offset_x + blind_depth + clearance_offset,
+                        z_offset=front_offset_z,
                         front_offset=front_offset)
         front_objs.append(door_obj)
 
     elif cab_type == "corner-diagonal":
-        door_obj = _add_door_front(obj, front_w, front_h, geom, overlay, cab, level,
+        door_obj = _add_door_front(obj, front_w, front_h, geom, front_gap, cab, level,
+                        x_offset=front_offset_x, z_offset=front_offset_z,
                         front_offset=front_offset)
         front_objs.append(door_obj)
 
@@ -461,19 +481,22 @@ def _add_front(obj: bpy.types.Object, cab: dict, settings: dict,
 
 
 def _add_door_front(parent: bpy.types.Object, w: float, h: float,
-                    geom: CabinetGeometry, overlay: float,
+                    geom: CabinetGeometry, front_gap: float,
                     cab, level: str,
                     x_offset: float = 0.0, z_offset: float = 0.0,
                     name_suffix: str = "", front_offset: float = 0.001) -> bpy.types.Object:
     """Add a door front to a cabinet.
 
     Creates a thick box instead of a flat quad.
+    Front is positioned with gap from carcass edges (European frameless).
 
     Args:
-        w: Front width (meters, with overlay)
-        h: Front height (meters, with overlay)
+        w: Front width (meters, already reduced by gap)
+        h: Front height (meters, already reduced by gap)
         geom: CabinetGeometry for thickness calculation
-        overlay: overlay amount in mm (from settings)
+        front_gap: gap between front and carcass edge (mm)
+        x_offset: X position offset (meters, includes gap offset)
+        z_offset: Z position offset (meters, includes gap offset)
         front_offset: how far front protrudes from cabinet face (meters)
 
     Returns:
@@ -482,27 +505,19 @@ def _add_door_front(parent: bpy.types.Object, w: float, h: float,
     name = parent.name + "_door" + name_suffix
     thickness = geom.front_thickness / 1000  # Convert mm to meters
 
-    # Get overlay offsets from geometry
-    overlay_x, overlay_y, overlay_z = geom.front_position(
-        overlay_side=overlay,
-        overlay_top=overlay,
-        overlay_bottom=overlay,
-    )
-    overlay_x_m = overlay_x / 1000
-    overlay_z_m = overlay_z / 1000
-
     # Create front as a thick box (8 vertices)
+    # Position is already offset by front_gap from _add_front()
     verts = [
         # Front face (facing into room)
-        (x_offset + overlay_x_m, 0, z_offset + overlay_z_m),
-        (x_offset + overlay_x_m + w, 0, z_offset + overlay_z_m),
-        (x_offset + overlay_x_m + w, 0, z_offset + overlay_z_m + h),
-        (x_offset + overlay_x_m, 0, z_offset + overlay_z_m + h),
+        (x_offset, 0, z_offset),
+        (x_offset + w, 0, z_offset),
+        (x_offset + w, 0, z_offset + h),
+        (x_offset, 0, z_offset + h),
         # Back face (facing towards cabinet)
-        (x_offset + overlay_x_m, -thickness, z_offset + overlay_z_m),
-        (x_offset + overlay_x_m + w, -thickness, z_offset + overlay_z_m),
-        (x_offset + overlay_x_m + w, -thickness, z_offset + overlay_z_m + h),
-        (x_offset + overlay_x_m, -thickness, z_offset + overlay_z_m + h),
+        (x_offset, -thickness, z_offset),
+        (x_offset + w, -thickness, z_offset),
+        (x_offset + w, -thickness, z_offset + h),
+        (x_offset, -thickness, z_offset + h),
     ]
 
     # 6 faces for closed box
@@ -532,19 +547,20 @@ def _add_door_front(parent: bpy.types.Object, w: float, h: float,
 
 
 def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
-                      geom: CabinetGeometry, overlay: float,
+                      geom: CabinetGeometry, front_gap: float,
                       z: float, index: int,
                       front_offset: float = 0.001) -> bpy.types.Object:
     """Add a drawer front to a cabinet.
 
     Creates a thick box instead of a flat quad.
+    Front is positioned with gap from carcass edges (European frameless).
 
     Args:
-        w: Front width (meters, with overlay)
-        h: Front height (meters, with overlay)
+        w: Front width (meters, already reduced by gap)
+        h: Front height (meters, already reduced by gap)
         geom: CabinetGeometry for thickness calculation
-        overlay: overlay amount in mm (from settings)
-        z: Vertical position offset (meters)
+        front_gap: gap between front and carcass edge (mm)
+        z: Vertical position offset (meters, includes gap offset)
         front_offset: how far front protrudes from cabinet face (meters)
 
     Returns:
@@ -553,27 +569,22 @@ def _add_drawer_front(parent: bpy.types.Object, w: float, h: float,
     name = f"{parent.name}_drawer{index}"
     thickness = geom.front_thickness / 1000  # Convert mm to meters
 
-    # Get overlay offsets from geometry
-    overlay_x, overlay_y, overlay_z = geom.front_position(
-        overlay_side=overlay,
-        overlay_top=overlay,
-        overlay_bottom=overlay,
-    )
-    overlay_x_m = overlay_x / 1000
-    overlay_z_m = overlay_z / 1000
+    # X offset: gap from left edge of carcass
+    x_offset = mm_to_m(front_gap)
 
     # Create drawer front as a thick box (8 vertices)
+    # Position is already offset by front_gap from _add_front()
     verts = [
         # Front face (facing into room)
-        (overlay_x_m, 0, z + overlay_z_m),
-        (overlay_x_m + w, 0, z + overlay_z_m),
-        (overlay_x_m + w, 0, z + overlay_z_m + h),
-        (overlay_x_m, 0, z + overlay_z_m + h),
+        (x_offset, 0, z),
+        (x_offset + w, 0, z),
+        (x_offset + w, 0, z + h),
+        (x_offset, 0, z + h),
         # Back face (facing towards cabinet)
-        (overlay_x_m, -thickness, z + overlay_z_m),
-        (overlay_x_m + w, -thickness, z + overlay_z_m),
-        (overlay_x_m + w, -thickness, z + overlay_z_m + h),
-        (overlay_x_m, -thickness, z + overlay_z_m + h),
+        (x_offset, -thickness, z),
+        (x_offset + w, -thickness, z),
+        (x_offset + w, -thickness, z + h),
+        (x_offset, -thickness, z + h),
     ]
 
     # 6 faces for closed box

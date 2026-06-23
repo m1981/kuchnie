@@ -422,17 +422,18 @@ def _extract_object(
             })
 
         # If parent is empty (0 vertices), compute bounds from children
+        # Exclude front panels (doors/drawers) — they have overlay and are
+        # larger than the carcass. Carcass bounds should reflect the box only.
         if len(local_vertices) == 0 and children:
-            # Compute bounds from children's dimensions
-            # Children are positioned relative to parent (which is at origin)
             child_bounds_min = [float('inf'), float('inf'), float('inf')]
             child_bounds_max = [float('-inf'), float('-inf'), float('-inf')]
             for child in getattr(obj, 'children', []):
+                child_type = _classify_object(child.name)
+                if child_type in ('door_front', 'drawer_front'):
+                    continue  # Skip fronts — they have overlay
                 child_mesh = child.data
                 if hasattr(child_mesh, 'vertices') and len(child_mesh.vertices) > 0:
                     for v in child_mesh.vertices:
-                        # Child vertices are in child local space
-                        # Child location is relative to parent
                         cx = child.location.x + v.co.x
                         cy = child.location.y + v.co.y
                         cz = child.location.z + v.co.z

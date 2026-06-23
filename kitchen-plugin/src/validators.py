@@ -13,6 +13,7 @@ def validate_config(config: dict, standards: KitchenStandards | None = None) -> 
     warnings.extend(_check_gaps(config))
     warnings.extend(_check_corners(config))
     warnings.extend(_check_room_fit(config))
+    warnings.extend(_check_countertops(config))
     return warnings
 
 
@@ -233,3 +234,44 @@ def compute_total_width(config: dict) -> dict[str, float]:
                 result[f"run[{run_idx}].{section}"] = total
 
     return result
+
+
+def _check_countertops(config: dict) -> list[str]:
+    """Check countertop dimensions are within standard ranges."""
+    warnings = []
+    settings = config["settings"]
+
+    # Counter thickness: 20-40mm (European kitchen standards)
+    counter_thickness = settings.get("counterThickness", 30)
+    if counter_thickness < 20:
+        warnings.append(
+            f"counterThickness {counter_thickness}mm is below minimum (20mm)"
+        )
+    elif counter_thickness > 40:
+        warnings.append(
+            f"counterThickness {counter_thickness}mm exceeds maximum (40mm)"
+        )
+
+    # Counter overhang front: 20-30mm (European kitchen standards)
+    overhang_front = settings.get("counterOverhangFront", 20)
+    if overhang_front < 20:
+        warnings.append(
+            f"counterOverhangFront {overhang_front}mm is below minimum (20mm)"
+        )
+    elif overhang_front > 30:
+        warnings.append(
+            f"counterOverhangFront {overhang_front}mm exceeds maximum (30mm)"
+        )
+
+    # Counter overhang end: 0-30mm (European kitchen standards)
+    overhang_end = settings.get("counterOverhangEnd", 30)
+    if overhang_end < 0:
+        warnings.append(
+            f"counterOverhangEnd {overhang_end}mm is negative"
+        )
+    elif overhang_end > 30:
+        warnings.append(
+            f"counterOverhangEnd {overhang_end}mm exceeds maximum (30mm)"
+        )
+
+    return warnings
