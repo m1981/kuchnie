@@ -204,6 +204,7 @@
                         "type": "string",
                         "enum": [
                             "carcass",
+                            "board",
                             "door_front",
                             "drawer_front",
                             "back_panel",
