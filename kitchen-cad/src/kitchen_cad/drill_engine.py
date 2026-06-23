@@ -17,14 +17,18 @@ from kitchen_cad.models import (
     SYSTEM32_SPACING,
     BaseDoorConfig,
     BaseDrawerConfig,
+    CargoConfig,
     CornerBlindConfig,
+    CornerInternalConfig,
     CorpusSpec,
     DrillFace,
     DrillPoint,
     DrillType,
     HingeSpec,
+    OvenConfig,
     Panel,
     PanelRole,
+    SinkConfig,
 )
 
 
@@ -57,7 +61,7 @@ def _shelf_pin_offsets(max_per_row: int, raster: float = SYSTEM32_SPACING) -> li
 def _get_shelf_positions(spec: CorpusSpec) -> list[float]:
     """Extract shelf positions from config, if available."""
     config = spec.config
-    if isinstance(config, (BaseDoorConfig, CornerBlindConfig)):
+    if isinstance(config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig)):
         return config.shelves
     return []
 
@@ -65,7 +69,7 @@ def _get_shelf_positions(spec: CorpusSpec) -> list[float]:
 def _get_door_hinge_counts(spec: CorpusSpec) -> list[int]:
     """Extract door hinge counts from config, if available."""
     config = spec.config
-    if isinstance(config, (BaseDoorConfig, CornerBlindConfig)):
+    if isinstance(config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig, SinkConfig, CargoConfig)):
         return config.doors
     return []
 

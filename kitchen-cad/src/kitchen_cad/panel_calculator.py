@@ -12,12 +12,16 @@ from kitchen_cad.models import (
     BaseDoorConfig,
     BaseDrawerConfig,
     CabinetConfig,
+    CargoConfig,
     CornerBlindConfig,
+    CornerInternalConfig,
     CorpusSpec,
     EdgeBand,
     EdgeSide,
+    OvenConfig,
     Panel,
     PanelRole,
+    SinkConfig,
 )
 
 
@@ -316,6 +320,97 @@ def _calculate_corner_blind(spec: CorpusSpec, config: CornerBlindConfig) -> list
     return panels
 
 
+def _calculate_corner_internal(spec: CorpusSpec, config: CornerInternalConfig) -> list[Panel]:
+    """Corner internal cabinet with diagonal back and carousel.
+
+    Similar to standard cabinet but with:
+    - Diagonal back panel (wider than standard)
+    - Carousel replaces shelves (configurable type)
+    - Optional additional shelves above carousel
+    """
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+
+    # Carousel shelf (fixed, at middle height)
+    # Corner Optima: 2 rotating shelves
+    # The carousel occupies most of the cabinet height
+    # Additional shelves can be added above
+    panels.extend(_shelf_panels(spec, config.shelves))
+
+    # Diagonal back panel — wider than standard to cover the corner
+    # Width = sqrt(W² + D²) - approximation for diagonal
+    import math
+    diagonal_w = math.sqrt(spec.width**2 + spec.depth**2) - 2 * spec.panel_thickness
+    panels.append(Panel(
+        id=f"{spec.id}-PLECY",
+        role=PanelRole.BACK,
+        width=diagonal_w,
+        height=spec.height,
+        thickness=spec.back_thickness,
+        material=spec.material_back,
+        edges=[],
+    ))
+
+    panels.extend(_door_fronts(spec, config.doors))
+    return panels
+
+
+def _calculate_sink(spec: CorpusSpec, config: SinkConfig) -> list[Panel]:
+    """Sink base cabinet.
+
+    Typically has no shelves (sink occupies space). Optional sorting
+    drawer at the top for waste separation.
+    """
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+    panels.append(_back_panel(spec))
+
+    # Optional sorting drawer
+    if config.has_sorting_drawer and config.sorting_drawer:
+        panels.extend(_drawer_fronts(spec, 1))
+
+    # Door fronts
+    panels.extend(_door_fronts(spec, config.doors))
+    return panels
+
+
+def _calculate_cargo(spec: CorpusSpec, config: CargoConfig) -> list[Panel]:
+    """Base cabinet with pull-out cargo basket.
+
+    Cargo basket replaces shelves/drawers. Rail mounting holes
+    are added by the drill engine.
+    """
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+    panels.append(_back_panel(spec))
+    panels.extend(_door_fronts(spec, config.doors))
+    return panels
+
+
+def _calculate_oven(spec: CorpusSpec, config: OvenConfig) -> list[Panel]:
+    """Oven housing cabinet (tall).
+
+    Has a reinforced fixed shelf at oven cavity height. Ventilation
+    holes are added by the drill engine.
+    """
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+
+    # Reinforced shelf at cavity height (fixed, not adjustable)
+    if config.reinforced_shelf:
+        # Shelf position = cavity height from bottom
+        # This creates the "floor" for the oven cavity
+        panels.extend(_shelf_panels(spec, [config.cavity_height]))
+
+    panels.append(_back_panel(spec))
+    # No doors — oven door is the front
+    return panels
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -333,5 +428,13 @@ def calculate_panels(spec: CorpusSpec) -> list[Panel]:
         return _calculate_base_drawer(spec, config)
     elif isinstance(config, CornerBlindConfig):
         return _calculate_corner_blind(spec, config)
+    elif isinstance(config, CornerInternalConfig):
+        return _calculate_corner_internal(spec, config)
+    elif isinstance(config, SinkConfig):
+        return _calculate_sink(spec, config)
+    elif isinstance(config, CargoConfig):
+        return _calculate_cargo(spec, config)
+    elif isinstance(config, OvenConfig):
+        return _calculate_oven(spec, config)
     else:
         raise ValueError(f"Unknown cabinet config type: {type(config).__name__}")

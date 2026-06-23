@@ -29,6 +29,10 @@ class CorpusType(str, Enum):
     BASE_DOOR = "base_door"
     BASE_DRAWER = "base_drawer"
     CORNER_BLIND = "corner_blind"
+    CORNER_INTERNAL = "corner_internal"
+    SINK = "sink"
+    CARGO = "cargo"
+    OVEN = "oven"
 
 
 class PanelRole(str, Enum):
@@ -72,6 +76,17 @@ class CornerSide(str, Enum):
     """Which side the corner cabinet opens from."""
     LEFT = "left"
     RIGHT = "right"
+
+
+class CarouselType(str, Enum):
+    """Corner carousel hardware type."""
+    OPTIMA_800 = "optima_800"  # 800×450mm shelves
+    OPTIMA_900 = "optima_900"  # 900×500mm shelves
+
+
+class CargoType(str, Enum):
+    """Cargo basket hardware type."""
+    MINI_40 = "mini_40"  # VARIANT MULTI 40cm
 
 
 # ---------------------------------------------------------------------------
@@ -171,8 +186,79 @@ class CornerBlindConfig(BaseModel):
     )
 
 
+class CornerInternalConfig(BaseModel):
+    """Corner internal cabinet with diagonal back and carousel.
+
+    The cabinet has a diagonal back panel and a rotating carousel
+    (Corner Optima) with 2 shelves.
+    """
+    type: Literal["corner_internal"] = "corner_internal"
+    carousel: CarouselType = CarouselType.OPTIMA_800
+    shelves: list[float] = Field(
+        default_factory=list,
+        description="Additional shelf positions (beyond carousel)",
+    )
+    doors: list[int] = Field(
+        default_factory=list,
+        description="Hinge count per door, one entry per door",
+    )
+
+
+class SinkConfig(BaseModel):
+    """Sink base cabinet.
+
+    Typically has no shelves (sink occupies space), optional sorting
+    drawer at the top for waste separation.
+    """
+    type: Literal["sink"] = "sink"
+    has_sorting_drawer: bool = False
+    sorting_drawer: DrawerSpec | None = None
+    doors: list[int] = Field(
+        default_factory=list,
+        description="Hinge count per door, one entry per door",
+    )
+
+
+class CargoConfig(BaseModel):
+    """Base cabinet with pull-out cargo basket.
+
+    Replaces shelves/drawers with a cargo rail system.
+    """
+    type: Literal["cargo"] = "cargo"
+    cargo_type: CargoType = CargoType.MINI_40
+    cargo_color: str = "ocynk"  # ocynk | bialy | grafit
+    doors: list[int] = Field(
+        default_factory=list,
+        description="Hinge count per door, one entry per door",
+    )
+
+
+class OvenConfig(BaseModel):
+    """Oven housing cabinet (tall).
+
+    Has a reinforced fixed shelf at oven cavity height,
+    optional ventilation holes, and typically no front doors
+    (oven door is the front).
+    """
+    type: Literal["oven"] = "oven"
+    cavity_height: float = Field(
+        gt=0,
+        description="mm — height of the oven cavity",
+    )
+    has_ventilation: bool = True
+    reinforced_shelf: bool = True
+
+
 CabinetConfig = Annotated[
-    Union[BaseDoorConfig, BaseDrawerConfig, CornerBlindConfig],
+    Union[
+        BaseDoorConfig,
+        BaseDrawerConfig,
+        CornerBlindConfig,
+        CornerInternalConfig,
+        SinkConfig,
+        CargoConfig,
+        OvenConfig,
+    ],
     Field(discriminator="type"),
 ]
 
@@ -292,6 +378,23 @@ class CorpusSpec(BaseModel):
                 shelves=self.shelves,
                 doors=self.doors,
             )
+        elif ct == "corner_internal":
+            self.config = CornerInternalConfig(
+                shelves=self.shelves,
+                doors=self.doors,
+            )
+        elif ct == "sink":
+            self.config = SinkConfig(
+                doors=self.doors,
+            )
+        elif ct == "cargo":
+            self.config = CargoConfig(
+                doors=self.doors,
+            )
+        elif ct == "oven":
+            self.config = OvenConfig(
+                cavity_height=self.height * 0.6,
+            )
         else:
             self.config = BaseDoorConfig(
                 shelves=self.shelves,
@@ -308,7 +411,7 @@ class CorpusSpec(BaseModel):
     @property
     def shelves_resolved(self) -> list[float]:
         """Shelf positions from config (backward-compatible accessor)."""
-        if isinstance(self.config, (BaseDoorConfig, CornerBlindConfig)):
+        if isinstance(self.config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig)):
             return self.config.shelves
         return []
 
@@ -317,11 +420,13 @@ class CorpusSpec(BaseModel):
         """Drawer specs from config (backward-compatible accessor)."""
         if isinstance(self.config, BaseDrawerConfig):
             return self.config.drawers
+        if isinstance(self.config, SinkConfig) and self.config.sorting_drawer:
+            return [self.config.sorting_drawer]
         return []
 
     @property
     def doors_resolved(self) -> list[int]:
         """Door hinge counts from config (backward-compatible accessor)."""
-        if isinstance(self.config, (BaseDoorConfig, CornerBlindConfig)):
+        if isinstance(self.config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig, SinkConfig, CargoConfig)):
             return self.config.doors
         return []
