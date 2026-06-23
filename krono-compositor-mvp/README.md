@@ -2,7 +2,7 @@
 
 A **2.5D image compositing engine** for real-time kitchen interior visualization. Users interactively swap materials (wood, marble, stone) on pre-rendered 3D kitchen scenes and see photorealistic results in ~500ms.
 
-![Frontend Screenshot](doc/images/frontend-screenshot.png)
+![Frontend Screenshot](docs/images/frontend-screenshot.png)
 
 ## How It Works
 
@@ -131,19 +131,20 @@ assets/              # Textures and rendered scene passes
 
 ## Documentation
 
-| Document                                              | Description                                                                           |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [Architecture](doc/architecture.md)                   | Architectural decisions, layered design, and key implementation choices               |
-| [Pipeline Rules](doc/PIPELINE_RULES.md)               | Strict rules for separating Art passes from Math passes in the 3D→2D pipeline         |
-| [Conflicting Paradigms](doc/conflicting_paradigms.md) | Why Blender's visual approximation and OpenCV's exact math require careful separation |
-| [Production Roadmap](doc/what_next.md)                | Next steps for scaling to production (caching, database, cloud storage)               |
+| Document                                                   | Description                                                                           |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [Architecture](docs/architecture.md)                       | Architectural decisions, layered design, and key implementation choices               |
+| [Blender Scene Reference](docs/blender-scene-reference.md) | Camera, lighting, geometry, and render pass settings for `gen_kitchen.py`             |
+| [Pipeline Rules](docs/PIPELINE_RULES.md)                   | Strict rules for separating Art passes from Math passes in the 3D→2D pipeline         |
+| [Conflicting Paradigms](docs/conflicting_paradigms.md)     | Why Blender's visual approximation and OpenCV's exact math require careful separation |
+| [Rendering Improvements](docs/rendering-improvements.md)   | Phased plan and status for improving render quality                                   |
 
 ### Reference Materials
 
-| Document                                       | Description                                                                       |
-| ---------------------------------------------- | --------------------------------------------------------------------------------- |
-| [Blender Script Prompt](doc/prompt_blender.md) | Prompt used to generate `gen_kitchen.py` — useful for understanding design intent |
-| [Frontend UX Spec](doc/prompt_web.md)          | UX requirements and layout that drove the Alpine.js frontend                      |
+| Document                                        | Description                                                                       |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| [Blender Script Prompt](docs/prompt_blender.md) | Prompt used to generate `gen_kitchen.py` — useful for understanding design intent |
+| [Frontend UX Spec](docs/prompt_web.md)          | UX requirements and layout that drove the Alpine.js frontend                      |
 
 ## Tech Stack
 
