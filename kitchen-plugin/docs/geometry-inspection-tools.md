@@ -13,7 +13,7 @@ The primary output of every build is a **structured JSON manifest** that contain
 - Construction parameters (board thicknesses)
 - Units and coordinate system (explicit)
 
-**The manifest is the single source of truth for validation.** OBJ/glTF are optional visual exports.
+**The manifest is the single source of truth for validation.** .blend is an optional visual export.
 
 ---
 
@@ -205,19 +205,14 @@ The following scripts were removed as part of the manifest-first migration:
 
 ---
 
-## Optional Visual Exports
+## Optional Visual Export
 
-For visual inspection, you can still export to 3D formats:
+For visual inspection, you can save a .blend file:
 
 ```bash
 # Blender file (full fidelity)
 blender --background --python src/main.py -- configs/l_shape.json --export-blend
-
-# OBJ (for legacy tools)
-blender --background --python src/main.py -- configs/l_shape.json --export-obj
-
-# glTF (for web viewers)
-blender --background --python src/main.py -- configs/l_shape.json --export-gltf
 ```
 
-**Note:** These formats are for visual inspection only. Validation should always use the manifest.
+**Note:** OBJ and glTF exports were removed. The manifest replaced them for all
+validation and inspection purposes. .blend is for opening in Blender only.

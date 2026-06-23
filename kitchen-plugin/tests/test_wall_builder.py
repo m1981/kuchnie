@@ -77,9 +77,9 @@ class TestConfigToWalls:
 
         room = config_to_walls(config)
         wall = room.walls[0]
-        dx, dy = wall.direction
-        assert abs(dx - 1.0) < 1e-6  # east
-        assert abs(dy) < 1e-6
+        d = wall.direction
+        assert abs(d.x - 1.0) < 1e-6  # east
+        assert abs(d.y) < 1e-6
 
     def test_two_runs_creates_two_walls(self):
         """L-shape creates two walls."""
@@ -126,10 +126,10 @@ class TestConfigToWalls:
 
         room = config_to_walls(config)
         wall = room.walls[1]
-        dx, dy = wall.direction
+        d = wall.direction
         # Left turn from east = north
-        assert abs(dx) < 1e-6
-        assert abs(dy - 1.0) < 1e-6  # north
+        assert abs(d.x) < 1e-6
+        assert abs(d.y - 1.0) < 1e-6  # north
 
     def test_l_shape_second_wall_starts_at_corner(self):
         """L-shape: second wall starts where first wall ends."""
@@ -154,8 +154,8 @@ class TestConfigToWalls:
         back_end = room.walls[0].end
         left_start = room.walls[1].start
 
-        assert abs(back_end[0] - left_start[0]) < 1e-6
-        assert abs(back_end[1] - left_start[1]) < 1e-6
+        assert abs(back_end.x - left_start.x) < 1e-6
+        assert abs(back_end.y - left_start.y) < 1e-6
 
     def test_u_shape_three_walls(self):
         """U-shape creates three walls."""
@@ -292,8 +292,8 @@ class TestCornerCabinetDetection:
 
         corners = config_to_corners(config)
         assert len(corners) == 1
-        assert corners[0].primary_wall == "back wall"
-        assert corners[0].secondary_wall == "left wall"
+        assert corners[0].primary_wall_id == "back wall"
+        assert corners[0].secondary_wall_id == "left wall"
         assert corners[0].blind_depth == 400
 
     def test_u_shape_two_corners(self):

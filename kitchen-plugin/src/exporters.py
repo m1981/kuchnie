@@ -1,46 +1,10 @@
-"""Exporters — OBJ, GLTF, and wireframe render."""
+"""Exporters — .blend save and wireframe render.
+
+OBJ and glTF exports were removed (manifest-first pipeline replaced them).
+"""
 
 import bpy
 from pathlib import Path
-
-
-def export_obj(objects: list[bpy.types.Object], path: str) -> None:
-    """Export objects to Wavefront OBJ."""
-    out = Path(path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-
-    # Select only our objects
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in objects:
-        if obj.type == 'MESH':
-            obj.select_set(True)
-
-    bpy.ops.wm.obj_export(
-        filepath=str(out),
-        export_selected_objects=True,
-        export_materials=False,
-        export_uv=False,
-        export_normals=False,
-    )
-    print(f"Exported OBJ: {out}")
-
-
-def export_gltf(objects: list[bpy.types.Object], path: str) -> None:
-    """Export objects to GLTF/GLB."""
-    out = Path(path)
-    out.parent.mkdir(parents=True, exist_ok=True)
-
-    bpy.ops.object.select_all(action='DESELECT')
-    for obj in objects:
-        if obj.type == 'MESH':
-            obj.select_set(True)
-
-    bpy.ops.export_scene.gltf(
-        filepath=str(out),
-        use_selection=True,
-        export_format='GLTF_SEPARATE',
-    )
-    print(f"Exported GLTF: {out}")
 
 
 def export_blend(path: str) -> None:

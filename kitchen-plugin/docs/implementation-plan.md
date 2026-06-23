@@ -131,7 +131,7 @@ Each object requires:
 ```python
 # Change: --export-inspect becomes --export-manifest (default: ON)
 # Add: --validate flag (runs manifest_validator after export)
-# Keep: --export-obj, --export-gltf, --export-blend as optional
+# Keep: --export-blend as optional (OBJ/glTF removed)
 
 # New flow in main():
 manifest = export_manifest(objects, manifest_path, settings, config)
@@ -145,7 +145,7 @@ if args["validate"]:
 - `src/main.py` — add manifest export, make it default behavior
 - Remove `--export-inspect` and `--export-manifest` flags (manifest always exports)
 - Add `--validate` flag
-- Keep `--export-obj`, `--export-gltf`, `--export-blend` as optional
+- Keep `--export-blend` as optional (OBJ/glTF removed)
 
 ---
 
@@ -241,9 +241,12 @@ Human/LLM-friendly summary of a manifest.
 
 ---
 
-### Phase 4: Clean Up Old Pipeline
+### Phase 4: Clean Up Old Pipeline ✅ COMPLETED
 
 **Goal:** Remove deprecated inspection scripts, update docs.
+
+> **Status:** All steps completed. Deprecated scripts removed, main.py updated,
+> docs updated for manifest-first workflow.
 
 #### Step 4.1: Remove deprecated scripts
 
@@ -273,9 +276,12 @@ Human/LLM-friendly summary of a manifest.
 
 ---
 
-### Phase 5: Harden the Generator
+### Phase 5: Harden the Generator 🔨 IN PROGRESS
 
 **Goal:** Use the manifest to find and fix the actual cabinet bugs.
+
+> **Status:** Manifest tests created (Steps 2.1–2.4 done). Board-based carcass
+> rewrite completed. Corner handling still in progress — see ROADMAP.md.
 
 #### Step 5.1: Run manifest on all configs
 
@@ -367,7 +373,7 @@ what the expected values are. Fix in `geometry_builder.py` or
 
 | Risk                                   | Mitigation                                                           |
 | -------------------------------------- | -------------------------------------------------------------------- |
-| Manifest misses data that OBJ/glTF had | Keep OBJ/glTF export as optional; compare outputs during transition  |
+| Manifest misses data that OBJ/glTF had | ✅ Resolved — manifest carries all data OBJ/glTF had, and more       |
 | Schema gets out of sync with code      | JSON Schema + schema validation in tests catches drift               |
 | bpy changes break manifest export      | bpy-dependent tests skipped in CI, run manually before release       |
 | Validation is too strict / too loose   | Tolerance values configurable in manifest; adjust based on real data |

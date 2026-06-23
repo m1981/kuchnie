@@ -8,6 +8,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Removed — BREAKING
+
+- **OBJ and glTF export removed from `src/exporters.py`**
+    - `export_obj()` and `export_gltf()` functions deleted
+    - `--export-obj` and `--export-gltf` CLI flags removed from `main.py`
+    - Old `.obj`, `.gltf`, `.mtl`, `.bin` files cleaned from `output/meshes/`
+    - Manifest-first pipeline replaced these for validation; `.blend` kept for visual inspection
+
+### Changed — BREAKING
+
+- **Consolidated wall model: removed `src/wall_model.py`**
+    - All Wall/Room/Cabinet types now live in `src/kitchen/wall.py` (single source of truth)
+    - `wall_builder.py` updated to import from `kitchen/wall.py` with `Vector2D` (was: raw tuples)
+    - `CornerReference` now has `width` field and `CornerCabinet` alias for backward compat
+    - `WallCabinet`, `BoxVertices`, `create_box_vertices` moved from `wall_model.py` to `kitchen/wall.py`
+    - Eliminates duplicate Wall/Room implementations (tuple-based vs Vector2D-based)
+
+### Docs
+
+- **Fixed 12 documentation staleness issues**
+    - `architecture.md`: rebuilt test suite table from actual files (was: stale counts + non-existent files)
+    - `architecture.md`: added missing CLI flags (`--export-obj`, `--export-gltf`, `--export-blend`)
+    - `architecture.md`: updated file structure to match actual codebase
+    - `architecture.md`: removed stale `← NEW` markers
+    - `architecture.md`: marked completed items in Deprecated/Future Work sections
+    - `config-syntax.md`: fixed coordinate origin contradiction (was: front-face, now: back-face to match code)
+    - `README.md`: updated test count (was: 332+, now: 401)
+    - `implementation-plan.md`: marked Phase 4 as completed, Phase 5 as in progress
+
 ### Changed — BREAKING
 
 - **Carcass construction: hollow box → 4 separate boards**

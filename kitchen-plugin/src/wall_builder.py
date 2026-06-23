@@ -15,7 +15,8 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional
 import math
 
-from .wall_model import Wall, Room, WallCabinet, CornerCabinet
+from .kitchen.wall import Wall, Room, WallCabinet, CornerReference
+from .core.geometry import Vector2D
 
 
 # Direction vectors
@@ -60,7 +61,7 @@ class Layout:
     """Complete layout with walls, cabinets, and corners."""
     room: Room
     cabinets: List[PositionedCabinet]
-    corners: List[CornerCabinet]
+    corners: List[CornerReference]
 
 
 def _get_run_width(run: dict, settings: dict) -> float:
@@ -105,15 +106,15 @@ def config_to_walls(config: dict) -> Room:
         wall_length = _get_run_width(run, settings)
 
         # Create wall
-        start = (current_x, current_y)
-        end = (current_x + wall_length * dx, current_y + wall_length * dy)
+        start = Vector2D(current_x, current_y)
+        end = Vector2D(current_x + wall_length * dx, current_y + wall_length * dy)
 
         wall = Wall(id=label, start=start, end=end)
         walls.append(wall)
 
         # Move to end of wall for next run
-        current_x = end[0]
-        current_y = end[1]
+        current_x = end.x
+        current_y = end.y
 
     return Room(walls=walls)
 
@@ -173,7 +174,7 @@ def config_to_cabinets(config: dict) -> List[WallCabinet]:
     return cabinets
 
 
-def config_to_corners(config: dict) -> List[CornerCabinet]:
+def config_to_corners(config: dict) -> List[CornerReference]:
     """Detect corner cabinets in config.
 
     Corner cabinets are at the end of a run (or start of connecting run).
@@ -193,9 +194,9 @@ def config_to_corners(config: dict) -> List[CornerCabinet]:
         if base_cabs:
             last_cab = base_cabs[-1]
             if last_cab.get("type", "").startswith("corner-"):
-                corner = CornerCabinet(
-                    primary_wall=current_label,
-                    secondary_wall=next_label,
+                corner = CornerReference(
+                    primary_wall_id=current_label,
+                    secondary_wall_id=next_label,
                     width=last_cab["width"],
                     blind_depth=last_cab.get("blindDepth", 300),
                     blind_side=last_cab.get("blindSide", "left"),
@@ -207,9 +208,9 @@ def config_to_corners(config: dict) -> List[CornerCabinet]:
         if next_base:
             first_cab = next_base[0]
             if first_cab.get("type", "").startswith("corner-"):
-                corner = CornerCabinet(
-                    primary_wall=next_label,
-                    secondary_wall=current_label,
+                corner = CornerReference(
+                    primary_wall_id=next_label,
+                    secondary_wall_id=current_label,
                     width=first_cab["width"],
                     blind_depth=first_cab.get("blindDepth", 300),
                     blind_side=first_cab.get("blindSide", "left"),
@@ -244,16 +245,16 @@ def build_layout(config: dict) -> Layout:
             continue
 
         # Get position along wall
-        wall_x, wall_y = wall.point_at_offset(wc.offset)
+        wall_point = wall.point_at_offset(wc.offset)
 
         # Add depth (into room)
-        nx, ny = wall.normal
-        world_x = wall_x + wc.depth * nx
-        world_y = wall_y + wc.depth * ny
+        normal = wall.normal
+        world_x = wall_point.x + wc.depth * normal.x
+        world_y = wall_point.y + wc.depth * normal.y
 
         # Calculate rotation from wall direction
-        dx, dy = wall.direction
-        rotation = math.atan2(dy, dx)
+        direction = wall.direction
+        rotation = math.atan2(direction.y, direction.x)
 
         # Determine Z based on level
         # (simplified - would need more logic for upper/tall)

@@ -6,7 +6,7 @@ This directory contains documentation for the kitchen cabinet 3D generator.
 The plugin reads JSON config files and generates kitchen cabinet models in Blender.
 
 **Primary output:** Structured JSON geometry manifest for validation.
-Visual exports (OBJ, glTF, .blend) are optional.
+Visual export (.blend) is optional.
 
 ---
 
@@ -97,7 +97,7 @@ blender --background --python src/main.py -- configs/ref_u_shape.json
 blender --background --python src/main.py -- configs/ref_u_shape.json --validate
 
 # Generate with visual exports
-blender --background --python src/main.py -- configs/ref_u_shape.json --export-blend --export-obj
+blender --background --python src/main.py -- configs/ref_u_shape.json --export-blend
 
 # Open in Blender
 open output/meshes/ref_u_shape.blend
@@ -123,11 +123,11 @@ kitchen-plugin/
 │   ├── geometry_manifest.py  # Manifest export (PRIMARY output)
 │   ├── manifest_validator.py # Manifest validation
 │   ├── geometry_builder.py   # Blender mesh creation
-│   ├── exporters.py          # OBJ, glTF, .blend (optional)
+│   ├── exporters.py          # .blend save, wireframe render (optional)
 │   └── ...
 ├── schemas/               # JSON Schema for manifest format
 ├── scripts/               # Standalone tools (no bpy needed)
-├── tests/                 # Test suite (332+ tests)
+├── tests/                 # Test suite (401 tests)
 ├── configs/               # Example JSON configs
 ├── output/                # Generated manifests, .blend, .obj
 └── docs/                  # This directory

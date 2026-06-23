@@ -1181,11 +1181,12 @@ The plugin calculates positions automatically:
 
 ### Origin Convention
 
-Cabinet-local coordinates use **front-face origin**:
+Cabinet-local coordinates use **back-face origin**:
 
-- Y=0 at the front face (where the door is)
-- Depth extends in -Y direction (away from viewer, toward wall)
-- This simplifies door/drawer positioning
+- Y=0 at the back face (wall face)
+- Depth extends in +Y direction (into room, toward viewer)
+- Origin at back-left-bottom corner
+- This matches wall-relative positioning and real-world construction
 
 Wall-local coordinates use **back-face origin**:
 

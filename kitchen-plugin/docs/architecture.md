@@ -7,7 +7,7 @@ files. It supports I, L, and U kitchen layouts with European frameless
 construction standards.
 
 **Primary output:** A structured JSON geometry manifest for inspection and
-validation. Visual exports (OBJ, glTF, .blend) are optional extras.
+validation. Visual export (.blend) is optional.
 
 ---
 
@@ -38,7 +38,7 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
 │  │ Layer 4: Adapters (External)                                         │   │
 │  │ ┌────────────────────┐ ┌──────────────┐ ┌─────────────────────────┐  │   │
 │  │ │ geometry_builder.py│ │ exporters.py │ │ geometry_manifest.py    │  │   │
-│  │ │ Blender mesh       │ │ OBJ/glTF     │ │ JSON manifest export    │  │   │
+│  │ │ Blender mesh       │ │ .blend       │ │ JSON manifest export    │  │   │
 │  │ │ creation (bpy)     │ │ (optional)   │ │ (PRIMARY output)        │  │   │
 │  │ └────────────────────┘ └──────────────┘ └─────────────────────────┘  │   │
 │  │ ┌────────────────────┐ ┌──────────────────────────────────────────┐  │   │
@@ -149,10 +149,10 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
   ┌────────────────────────────┐                       ┌──────────────────────┐
   │ geometry_manifest.py       │  ← PRIMARY OUTPUT     │ exporters.py         │
   │                            │                       │                      │
-  │ Exports JSON with:         │                       │ OBJ (optional)       │
-  │ • Local + world vertices   │                       │ glTF (optional)      │
-  │ • Object hierarchy         │                       │ .blend (for visual   │
-  │ • Expected vs actual dims  │                       │   inspection)        │
+  │ Exports JSON with:         │                       │                      │
+  │ • Local + world vertices   │                       │ .blend (for visual   │
+  │ • Object hierarchy         │                       │   inspection)        │
+  │ • Expected vs actual dims  │                       │                      │
   │ • Layout metadata          │                       │                      │
   │ • Inline validation        │                       │                      │
   │ • Units, coord system      │                       │                      │
@@ -180,23 +180,23 @@ validation. Visual exports (OBJ, glTF, .blend) are optional extras.
 ### Why Manifest-First
 
 The old pipeline exported geometry to OBJ/glTF, then re-parsed those formats
-to check correctness. This is lossy — OBJ carries no units, no hierarchy, no
+to check correctness. This was lossy — OBJ carries no units, no hierarchy, no
 metadata. glTF is Y-up with abstract units.
 
-The manifest captures geometry **directly from bpy** with full fidelity:
+OBJ and glTF exports have been removed. The manifest captures geometry
+**directly from bpy** with full fidelity:
 
-| What                | OBJ             | glTF            | Manifest                    |
-| ------------------- | --------------- | --------------- | --------------------------- |
-| Units               | ❌ undefined    | ⚠️ abstract     | ✅ `"units": "meters"`      |
-| Coordinate system   | ❌ unspecified  | ✅ Y-up         | ✅ Z-up (our convention)    |
-| Object hierarchy    | ❌ flat         | ✅ scene graph  | ✅ parent + layout metadata |
-| Local coordinates   | ❌ world only   | ✅ local        | ✅ both local AND world     |
-| Rotation            | ❌ lost         | ✅ Euler        | ✅ exact Euler              |
-| Expected dimensions | ❌              | ❌              | ✅ inline pass/fail         |
-| LLM readability     | ⚠️ needs parser | ⚠️ needs parser | ✅ plain JSON               |
+| What                | Manifest                    |
+| ------------------- | --------------------------- |
+| Units               | ✅ `"units": "meters"`      |
+| Coordinate system   | ✅ Z-up (our convention)    |
+| Object hierarchy    | ✅ parent + layout metadata |
+| Local coordinates   | ✅ both local AND world     |
+| Rotation            | ✅ exact Euler              |
+| Expected dimensions | ✅ inline pass/fail         |
+| LLM readability     | ✅ plain JSON               |
 
-**Rule: Validation reads the manifest. Visual inspection opens .blend. OBJ/glTF
-are for interoperability with external tools only.**
+**Rule: Validation reads the manifest. Visual inspection opens .blend.**
 
 ---
 
@@ -437,9 +437,11 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ### Layer 2: Kitchen (Domain Logic)
 
 ```
-  Wall              — Line segment with start/end, direction, normal
+  Wall              — Line segment with start/end (Vector2D), direction, normal
   Room              — Collection of walls
-  CornerReference   — Links two walls at a corner
+  CornerReference   — Links two walls at a corner (aliased as CornerCabinet)
+  WallCabinet       — Cabinet positioned by wall_id + offset + dimensions
+  BoxVertices       — Box vertex generator for back-face origin convention
   Cabinet           — Parametric cabinet definition (type, width, wall_id)
   CabinetPlacement  — Cabinet + world position + rotation
   Countertop        — Countertop with overhangs
@@ -483,7 +485,7 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 ```
   geometry_builder     — bpy mesh creation (carcasses, panels, fronts)
   material_manager     — Cycles materials
-  exporters            — OBJ, glTF, .blend (optional visual exports)
+  exporters            — .blend save, wireframe render (optional visual)
   geometry_manifest    — JSON manifest export (PRIMARY output)
   manifest_validator   — Read manifest, run validation checks
 ```
@@ -493,8 +495,8 @@ Wall normal points into room. Cabinet origin at back face (wall face).
 - `src/geometry_builder.py`
 - `src/material_manager.py`
 - `src/exporters.py`
-- `src/geometry_manifest.py` ← NEW
-- `src/manifest_validator.py` ← NEW
+- `src/geometry_manifest.py`
+- `src/manifest_validator.py`
 
 **Rule:** Only layer allowed to import `bpy`. Manifest export reads bpy data
 but outputs stdlib JSON (no bpy dependency in output format).
@@ -516,6 +518,7 @@ but outputs stdlib JSON (no bpy dependency in output format).
       --no-manifest              # Skip manifest export (not recommended)
       --no-materials             # Skip Cycles materials (faster)
       --render-wireframe         # PNG wireframe render
+      --export-blend             # Save .blend to output/meshes/
 ```
 
 ---
@@ -540,7 +543,7 @@ but outputs stdlib JSON (no bpy dependency in output format).
 
 ```
   BEFORE (lossy, indirect):
-    bpy → OBJ → parse OBJ → guess units → compare dims → report
+    bpy → OBJ/glTF → parse → guess units → compare dims → report
 
   AFTER (direct, lossless):
     bpy → manifest JSON → read manifest → check dims → report
@@ -660,23 +663,32 @@ gaps between them. This matches European frameless construction standards.
 
 ### Test Suites
 
-| Suite                        | Tests | Requires bpy | What it covers                      |
-| ---------------------------- | ----- | ------------ | ----------------------------------- |
-| `test_core_geometry.py`      | 36    | No           | Vector, BoundingBox, Transform math |
-| `test_kitchen.py`            | 22    | No           | Wall, Cabinet, Layout domain logic  |
-| `test_wall_centric_model.py` | 21    | No           | Wall-local positioning              |
-| `test_wall_builder.py`       | 15    | No           | Config → domain object conversion   |
-| `test_config_parser.py`      | 11    | No           | JSON loading, defaults              |
-| `test_positions.py`          | 6     | No           | World position calculation          |
-| `test_l_shape.py`            | 11    | No           | L-layout correctness                |
-| `test_u_shape.py`            | 11    | No           | U-layout correctness                |
-| `test_p0_*.py`               | 37    | No           | Gap semantics, coordinate system    |
-| `test_p1_*.py`               | 26    | No           | Construction geometry               |
-| `test_p2_*.py`               | 39    | No           | Layout integration                  |
-| `test_manifest_*.py`         | NEW   | No           | Manifest schema, validation         |
-| `test_blender_*.py`          | NEW   | Yes          | bpy mesh creation (skipped in CI)   |
+| Suite                              | Tests | Requires bpy | What it covers                      |
+| ---------------------------------- | ----- | ------------ | ----------------------------------- |
+| `test_core_geometry.py`            | 36    | No           | Vector, BoundingBox, Transform math |
+| `test_kitchen.py`                  | 22    | No           | Wall, Cabinet, Layout domain logic  |
+| `test_wall_centric_model.py`       | 21    | No           | Wall-local positioning              |
+| `test_wall_builder.py`             | 15    | No           | Config → domain object conversion   |
+| `test_config_parser.py`            | 17    | No           | JSON loading, defaults              |
+| `test_positions.py`                | 6     | No           | World position calculation          |
+| `test_l_shape.py`                  | 11    | No           | L-layout correctness                |
+| `test_u_shape.py`                  | 11    | No           | U-layout correctness                |
+| `test_p0_gap_semantics.py`         | 18    | No           | Gap semantics                       |
+| `test_p0_coordinate_system.py`     | 19    | No           | Coordinate system conventions       |
+| `test_p1_tolerance_model.py`       | 11    | No           | Tolerance model                     |
+| `test_p1_drawer_validation.py`     | 15    | No           | Drawer validation                   |
+| `test_p2_room_validation.py`       | 10    | No           | Room validation                     |
+| `test_p2_schema_version.py`        | 14    | No           | Schema versioning                   |
+| `test_p2_materials.py`             | 15    | No           | Material validation                 |
+| `test_cabinet_construction.py`     | 22    | No           | Board-level construction            |
+| `test_manifest_schema.py`          | 20    | No           | Manifest schema compliance          |
+| `test_manifest_objects.py`         | 32    | No           | Manifest object details             |
+| `test_manifest_validation.py`      | 30    | No           | Manifest validation logic           |
+| `test_manifest_layout.py`          | 33    | No           | Manifest layout metadata            |
+| `test_geometry_builder_cabinet.py` | 13    | Yes          | bpy mesh creation (skipped in CI)   |
+| `test_geometry_validator.py`       | 10    | Yes          | Geometry validation with bpy        |
 
-**Total: 384 passing, 17 skipped (no Blender required for most)**
+**Total: 401 collected, 384 passing, 17 skipped (bpy-dependent tests skipped without Blender)**
 
 ### Manifest Round-Trip Test
 
@@ -720,7 +732,7 @@ kitchen-plugin/
 │   │
 │   ├── kitchen/                     # Layer 2: Domain logic
 │   │   ├── __init__.py
-│   │   ├── wall.py                 # Wall, Room, CornerReference
+│   │   ├── wall.py                 # Wall, Room, WallCabinet, CornerReference, BoxVertices
 │   │   ├── cabinet.py              # Cabinet, CabinetPlacement, Countertop
 │   │   ├── cabinet_geometry.py     # Board-level construction math
 │   │   ├── layout.py               # Run, LayoutEngine, Layout
@@ -728,18 +740,19 @@ kitchen-plugin/
 │   │
 │   ├── config_parser.py             # Layer 3: JSON loading, defaults
 │   ├── validators.py                # Layer 3: Semantic validation
-│   ├── wall_builder.py              # Layer 3: Config → domain objects
+│   ├── wall_builder.py              # Layer 3: Config → domain objects (uses kitchen/wall)
 │   │
 │   ├── geometry_builder.py          # Layer 4: Blender mesh creation
 │   ├── material_manager.py          # Layer 4: Cycles materials
-│   ├── exporters.py                 # Layer 4: OBJ, glTF, .blend (optional)
-│   ├── geometry_manifest.py         # Layer 4: JSON manifest export (PRIMARY) ← NEW
-│   ├── manifest_validator.py        # Layer 4: Manifest validation checks ← NEW
+│   ├── exporters.py                 # Layer 4: .blend save, wireframe render (optional)
+│   ├── geometry_manifest.py         # Layer 4: JSON manifest export (PRIMARY)
+│   ├── manifest_validator.py        # Layer 4: Manifest validation checks
 │   │
 │   └── main.py                      # Layer 5: CLI entry point
 │
 ├── scripts/
-│   └── validate_manifest.py         # Standalone manifest validation (no bpy) ← NEW
+│   ├── validate_manifest.py         # Standalone manifest validation (no bpy)
+│   └── summarize_manifest.py        # Human/LLM-friendly manifest summary
 │
 ├── tests/
 │   ├── test_core_geometry.py
@@ -753,9 +766,13 @@ kitchen-plugin/
 │   ├── test_p0_*.py
 │   ├── test_p1_*.py
 │   ├── test_p2_*.py
-│   ├── test_manifest_schema.py      # ← NEW
-│   ├── test_manifest_validation.py  # ← NEW
-│   └── test_blender_geometry.py     # ← NEW (requires bpy)
+│   ├── test_cabinet_construction.py
+│   ├── test_manifest_schema.py
+│   ├── test_manifest_objects.py
+│   ├── test_manifest_validation.py
+│   ├── test_manifest_layout.py
+│   ├── test_geometry_builder_cabinet.py  # Requires bpy
+│   └── test_geometry_validator.py        # Requires bpy
 │
 ├── configs/
 │   ├── ref_i_shape.json
@@ -763,11 +780,11 @@ kitchen-plugin/
 │   └── ref_u_shape.json
 │
 ├── output/
-│   ├── meshes/                      # .obj, .gltf, .blend, _manifest.json
+│   ├── meshes/                      # .blend, _manifest.json
 │   └── renders/
 │
 ├── schemas/
-│   └── manifest_v2.schema.json      # JSON Schema for manifest ← NEW
+│   └── manifest_v2.schema.json      # JSON Schema for manifest
 │
 └── docs/
     ├── architecture.md              # This file
@@ -777,7 +794,7 @@ kitchen-plugin/
     ├── european-kitchen-standards.md
     ├── cad-principles-part1.md
     ├── cad-principles-part2.md
-    └── implementation-plan.md       # Migration plan ← NEW
+    └── implementation-plan.md       # Migration plan (mostly completed)
 ```
 
 ---
@@ -787,7 +804,7 @@ kitchen-plugin/
 | Decision                         | Rationale                                                     |
 | -------------------------------- | ------------------------------------------------------------- |
 | **Manifest is primary output**   | Exact data from bpy, no lossy format conversion, LLM-readable |
-| **OBJ/glTF are optional**        | For visual interop only, never for validation                 |
+| **OBJ/glTF removed**             | Manifest replaced them; .blend for visual inspection only     |
 | **.blend for visual inspection** | Full fidelity, no format conversion, open in Blender          |
 | **Validation on manifest**       | Structured, self-documenting, no unit guessing                |
 | **Z-up coordinates**             | Architectural/BIM industry standard                           |
@@ -801,15 +818,17 @@ kitchen-plugin/
 
 ## Deprecated / Removed
 
-The following scripts are replaced by the manifest pipeline:
+The following scripts have been removed and replaced by the manifest pipeline:
 
-| Old script                          | Replacement                       | Status |
-| ----------------------------------- | --------------------------------- | ------ |
-| `scripts/analyze_reference_obj.py`  | Manifest + `validate_manifest.py` | Remove |
-| `scripts/convert_obj_to_gltf.py`    | Not needed (manifest is direct)   | Remove |
-| `scripts/analyze_gltf_v2.py`        | Manifest + `validate_manifest.py` | Remove |
-| `scripts/compare_with_reference.py` | Manifest validation (inline)      | Remove |
-| `scripts/validate_obj.py`           | Manifest validation (inline)      | Remove |
+| Old script                          | Replacement                       | Status  |
+| ----------------------------------- | --------------------------------- | ------- |
+| `scripts/analyze_reference_obj.py`  | Manifest + `validate_manifest.py` | Removed |
+| `scripts/convert_obj_to_gltf.py`    | Not needed (manifest is direct)   | Removed |
+| `scripts/analyze_gltf_v2.py`        | Manifest + `validate_manifest.py` | Removed |
+| `scripts/compare_with_reference.py` | Manifest validation (inline)      | Removed |
+| `scripts/validate_obj.py`           | Manifest validation (inline)      | Removed |
+| `src/geometry_inspector.py`         | `src/geometry_manifest.py`        | Removed |
+| `src/geometry_validator.py`         | `src/manifest_validator.py`       | Removed |
 
 These scripts existed to work around OBJ/glTF limitations (no units, no
 hierarchy, no metadata). The manifest carries all that information natively.
@@ -818,10 +837,11 @@ hierarchy, no metadata). The manifest carries all that information natively.
 
 ## Future Work
 
-| Priority   | Task                                              | Effort    |
-| ---------- | ------------------------------------------------- | --------- |
-| **Medium** | Enhance manifest with `construction` metadata     | 1 day     |
-| **Medium** | Standalone `validate_manifest.py` (no bpy needed) | 1 day     |
-| **Low**    | Add 3MF export for manufacturing interop          | 2–3 days  |
-| **Low**    | Add STEP export for B-Rep topology validation     | 1 week    |
-| **Low**    | Blender-free 3D preview (three.js from manifest)  | 1–2 weeks |
+| Priority   | Task                                               | Effort    |
+| ---------- | -------------------------------------------------- | --------- |
+| **Medium** | Enhance manifest with `construction` metadata      | 1 day     |
+| ✅ Done    | Standalone `validate_manifest.py` (no bpy needed)  | —         |
+| ✅ Done    | Standalone `summarize_manifest.py` (no bpy needed) | —         |
+| **Low**    | Add 3MF export for manufacturing interop           | 2–3 days  |
+| **Low**    | Add STEP export for B-Rep topology validation      | 1 week    |
+| **Low**    | Blender-free 3D preview (three.js from manifest)   | 1–2 weeks |

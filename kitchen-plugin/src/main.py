@@ -1,12 +1,10 @@
 """Kitchen generator — CLI entry point.
 
 Usage (from project root):
-    blender --background --python src/main.py -- configs/test.json --export-obj --render-wireframe
+    blender --background --python src/main.py -- configs/test.json --render-wireframe
 
 Args after '--' are passed to this script:
     <config.json>           Kitchen config file (required)
-    --export-obj            Export OBJ to output/meshes/
-    --export-gltf           Export GLTF to output/meshes/
     --export-blend          Save .blend to output/meshes/
     --validate              Run manifest validation after export
     --render-wireframe      Render wireframe to output/renders/
@@ -28,7 +26,7 @@ import bpy
 
 from src.config_parser import load_config
 from src.geometry_builder import clear_scene, build_kitchen, apply_materials
-from src.exporters import export_obj, export_gltf, export_blend, render_wireframe
+from src.exporters import export_blend, render_wireframe
 from src.geometry_manifest import export_manifest, print_manifest_summary
 from src.manifest_validator import validate_manifest, print_validation_report
 from src.validators import validate_config, compute_total_width
@@ -39,7 +37,7 @@ def parse_args() -> dict:
     argv = sys.argv
     if "--" not in argv:
         print("Usage: blender --background --python src/main.py -- <config.json> [options]")
-        print("Options: --export-obj --export-gltf --render-wireframe --no-materials")
+        print("Options: --export-blend --render-wireframe --no-materials --validate")
         sys.exit(1)
 
     args = argv[argv.index("--") + 1:]
@@ -50,8 +48,6 @@ def parse_args() -> dict:
     config_path = args[0]
     return {
         "config_path": config_path,
-        "export_obj": "--export-obj" in args,
-        "export_gltf": "--export-gltf" in args,
         "export_blend": "--export-blend" in args,
         "validate": "--validate" in args,
         "render_wireframe": "--render-wireframe" in args,
@@ -130,18 +126,6 @@ def main() -> None:
                 print(f"\n❌ Validation failed with {result.failed} errors")
             else:
                 print("\n✓ Validation passed")
-
-    # Export OBJ
-    if args["export_obj"]:
-        obj_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}.obj")
-        print(f"Exporting OBJ: {obj_path}")
-        export_obj(objects, obj_path)
-
-    # Export GLTF
-    if args["export_gltf"]:
-        gltf_path = str(PROJECT_ROOT / "output" / "meshes" / f"{stem}.gltf")
-        print(f"Exporting GLTF: {gltf_path}")
-        export_gltf(objects, gltf_path)
 
     # Export .blend
     if args["export_blend"]:

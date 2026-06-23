@@ -105,11 +105,103 @@ class CornerReference:
     secondary_wall_id: str
     blind_depth: float  # mm
     blind_side: str     # "left" or "right"
+    width: float = 0.0  # mm — total cabinet width (including blind section)
 
     @property
     def space_consumed_on_secondary(self) -> float:
         """Space consumed on secondary wall by blind section."""
         return self.blind_depth
+
+
+# Alias for backward compatibility with wall_builder / tests
+CornerCabinet = CornerReference
+
+
+@dataclass(frozen=True)
+class WallCabinet:
+    """A cabinet positioned relative to a wall.
+
+    Position is defined by:
+    - wall_id: which wall the cabinet is on
+    - offset: distance from wall start along wall direction
+    - width, depth, height: cabinet dimensions in mm
+
+    Origin convention: back-left-bottom (at wall face)
+    - Back face at Y=0 (wall face)
+    - Front face at Y=depth (into room)
+    """
+    wall_id: str
+    offset: float
+    width: float
+    depth: float
+    height: float
+
+    def world_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet back-left corner (at wall face)."""
+        return wall.point_at_offset(self.offset)
+
+    def front_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet front-left corner (into room)."""
+        return wall.point_at_depth(self.offset, self.depth)
+
+    def center_position(self, wall: Wall) -> Vector2D:
+        """Get world position of cabinet center."""
+        return wall.point_at_depth(
+            self.offset + self.width / 2,
+            self.depth / 2,
+        )
+
+
+@dataclass
+class BoxVertices:
+    """Vertices for a box with back-face origin (at wall face).
+
+    Coordinate system:
+    - Origin at back-left-bottom (wall face)
+    - Width along +X (0 to width)
+    - Depth along +Y (0=wall face to depth=into room)
+    - Height along +Z (0 to height)
+    """
+    vertices: List[Tuple[float, float, float]]
+
+    @property
+    def back_face_y(self) -> float:
+        """Y coordinate of back face (wall face)."""
+        return 0.0
+
+    @property
+    def front_face_y(self) -> float:
+        """Y coordinate of front face (into room)."""
+        return max(v[1] for v in self.vertices)
+
+
+def create_box_vertices(width: float, depth: float, height: float) -> List[Tuple[float, float, float]]:
+    """Create box vertices with back-face origin (at wall face).
+
+    Args:
+        width: along +X
+        depth: along +Y (0=wall face, depth=into room)
+        height: along +Z
+
+    Returns:
+        List of 8 vertices for a box.
+
+    Vertex order:
+    0-3: back face (Y=0, wall face)
+    4-7: front face (Y=depth, into room)
+    """
+    return [
+        # Back face (Y=0, wall face)
+        (0, 0, 0),          # 0: back-left-bottom
+        (width, 0, 0),      # 1: back-right-bottom
+        (width, 0, height), # 2: back-right-top
+        (0, 0, height),     # 3: back-left-top
+        # Front face (Y=depth, into room)
+        (0, depth, 0),          # 4: front-left-bottom
+        (width, depth, 0),      # 5: front-right-bottom
+        (width, depth, height), # 6: front-right-top
+        (0, depth, height),     # 7: front-left-top
+    ]
 
 
 @dataclass
