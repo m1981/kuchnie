@@ -101,29 +101,27 @@ blender --background --python src/main.py -- configs/kitchen.json
 
 ### For New Developers (Start Here)
 
-1. **[architecture.md](architecture.md)** — Layer architecture, manifest
+1. **[architecture.md](docs/architecture.md)** — Layer architecture, manifest
    schema, validation pipeline, module overview
-2. **[config-syntax.md](config-syntax.md)** — JSON config reference: settings,
+2. **[config-syntax.md](docs/config-syntax.md)** — JSON config reference: settings,
    cabinet types, layout examples (I, L, U shape)
-3. **[wall-centric-model.md](wall-centric-model.md)** — How cabinets are
+3. **[wall-centric-model.md](docs/wall-centric-model.md)** — How cabinets are
    positioned relative to walls, corner handling
 
 ### For LLM Agents / AI Assistants
 
-1. **[architecture.md](architecture.md)** — Architecture, manifest schema,
+1. **[architecture.md](docs/architecture.md)** — Architecture, manifest schema,
    validation pipeline
-2. **[../ROADMAP.md](../ROADMAP.md)** — Current status and what's next
-3. **[3d-format-strategy.md](3d-format-strategy.md)** — Why manifest is
+2. **[ROADMAP.md](ROADMAP.md)** — Current status and what's next
+3. **[3d-format-strategy.md](docs/3d-format-strategy.md)** — Why manifest is
    primary output
 
 ### For CAD/Kitchen Domain Reference
 
-1. **[european-kitchen-standards.md](european-kitchen-standards.md)** — Kitchen
+1. **[european-kitchen-standards.md](docs/european-kitchen-standards.md)** — Kitchen
    standards (dimensions, 32mm system)
-2. **[cad-principles-part1.md](cad-principles-part1.md)** — CAD principles
-3. **[cad-principles-part2.md](cad-principles-part2.md)** — CAD principles
-   (continued)
-4. **[roadmap-production-cad.md](roadmap-production-cad.md)** — Production CAD
+2. **[cad-principles.md](docs/cad-principles.md)** — CAD principles and conventions
+3. **[roadmap-production-cad.md](docs/roadmap-production-cad.md)** — Production CAD
    roadmap (renders, BOM, CNC)
 
 ## Architecture
@@ -163,18 +161,17 @@ Dependency rule: core/ ← kitchen/ ← builder/ ← adapters/ ← main.py
 
 ## File Index
 
-| File                            | Purpose                       | Audience          |
-| ------------------------------- | ----------------------------- | ----------------- |
-| `architecture.md`               | Layer architecture, manifest  | Developers        |
-| `config-syntax.md`              | JSON config reference         | Developers, Users |
-| `wall-centric-model.md`         | Wall positioning model        | Developers        |
-| `geometry-inspection-tools.md`  | Manifest validation workflow  | Developers, LLM   |
-| `implementation-plan.md`        | Migration plan (mostly done)  | Developers        |
-| `3d-format-strategy.md`         | Format comparison & rationale | Developers        |
-| `roadmap-production-cad.md`     | Production CAD roadmap        | Developers        |
-| `european-kitchen-standards.md` | Kitchen standards             | Domain Experts    |
-| `cad-principles-part1.md`       | CAD principles (reference)    | Developers        |
-| `cad-principles-part2.md`       | CAD principles (reference)    | Developers        |
+| File                             | Purpose                        | Audience          |
+| -------------------------------- | ------------------------------ | ----------------- |
+| `architecture.md`                | Layer architecture, manifest   | Developers        |
+| `config-syntax.md`               | JSON config reference          | Developers, Users |
+| `wall-centric-model.md`          | Wall positioning model         | Developers        |
+| `geometry-inspection-tools.md`   | Manifest validation workflow   | Developers, LLM   |
+| `archive/implementation-plan.md` | Migration plan (completed)     | Developers        |
+| `3d-format-strategy.md`          | Format comparison & rationale  | Developers        |
+| `roadmap-production-cad.md`      | Production CAD roadmap         | Developers        |
+| `european-kitchen-standards.md`  | Kitchen standards              | Domain Experts    |
+| `cad-principles.md`              | CAD principles and conventions | Developers        |
 
 ## Project Structure
 
@@ -202,7 +199,17 @@ kitchen-plugin/
 │   ├── ref_l_shape.json        # L-shape reference kitchen
 │   └── ref_u_shape.json        # U-shape reference kitchen
 ├── output/                     # Generated manifests and .blend files
-└── docs/                       # This directory
+└── docs/
+    ├── architecture.md         # Layer architecture, manifest schema
+    ├── config-syntax.md        # JSON config reference
+    ├── wall-centric-model.md   # Wall positioning model
+    ├── cad-principles.md       # CAD principles and conventions
+    ├── geometry-inspection-tools.md  # Validation workflow
+    ├── 3d-format-strategy.md   # Format comparison & rationale
+    ├── european-kitchen-standards.md # Kitchen domain reference
+    ├── roadmap-production-cad.md     # Production CAD roadmap
+    ├── reference/              # Cheatsheets
+    └── archive/                # Completed migration plans
 ```
 
 ## Current Status
@@ -212,8 +219,8 @@ kitchen-plugin/
 - **Manifest Version:** 2.0 (primary validation output)
 - **Tests:** 401 collected, 384 passing, 17 skipped
 
-See [ROADMAP.md](../ROADMAP.md) for what's done and what's next.
-See [CHANGELOG.md](../CHANGELOG.md) for recent changes.
+See [ROADMAP.md](ROADMAP.md) for what's done and what's next.
+See [CHANGELOG.md](CHANGELOG.md) for recent changes.
 
 ## Contributing
 

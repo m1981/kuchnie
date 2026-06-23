@@ -791,10 +791,14 @@ kitchen-plugin/
     ├── 3d-format-strategy.md        # Format comparison & rationale
     ├── config-syntax.md             # JSON config reference
     ├── wall-centric-model.md        # Positioning model
-    ├── european-kitchen-standards.md
-    ├── cad-principles-part1.md
-    ├── cad-principles-part2.md
-    └── implementation-plan.md       # Migration plan (mostly completed)
+    ├── european-kitchen-standards.md # Kitchen domain reference
+    ├── cad-principles.md            # CAD principles and conventions
+    ├── geometry-inspection-tools.md # Manifest validation workflow
+    ├── roadmap-production-cad.md    # Production CAD roadmap
+    ├── reference/                   # Cheatsheets and reference material
+    │   └── sketchup-shortcuts.md
+    └── archive/                     # Completed plans and historical docs
+        └── implementation-plan.md   # Manifest-first migration (completed)
 ```
 
 ---
