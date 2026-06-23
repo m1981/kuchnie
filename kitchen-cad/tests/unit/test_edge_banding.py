@@ -182,7 +182,7 @@ class TestEdgeBandingInCalculator:
         from kitchen_cad.panel_calculator import _door_fronts
 
         spec.doors = [2]
-        fronts = _door_fronts(spec)
+        fronts = _door_fronts(spec, spec.config.doors)
         for front in fronts:
             edge_sides = {e.side for e in front.edges}
             assert len(edge_sides) == 4, f"{front.id} should have 4 edges"

@@ -313,7 +313,7 @@ class TestGrooveInCalculator:
         )
         from kitchen_cad.panel_calculator import _shelf_panels
 
-        panels = _shelf_panels(spec)
+        panels = _shelf_panels(spec, spec.config.shelves)
         # Height = depth - back_groove_depth - 37 = 510 - 8 - 37 = 465
         for panel in panels:
             assert panel.height == pytest.approx(465.0, abs=0.1)

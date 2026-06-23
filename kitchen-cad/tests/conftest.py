@@ -5,6 +5,8 @@ from __future__ import annotations
 import pytest
 
 from kitchen_cad.models import (
+    BaseDoorConfig,
+    BaseDrawerConfig,
     CorpusSpec,
     DrawerSpec,
     HandleSpec,
@@ -18,7 +20,6 @@ def base_door_spec() -> CorpusSpec:
     return CorpusSpec(
         id="K01",
         name="Szafka dolna drzwiowa 800",
-        corpus_type="base_door",
         width=800,
         height=720,
         depth=510,
@@ -29,10 +30,12 @@ def base_door_spec() -> CorpusSpec:
         material_back="HDF_3mm_bialy",
         material_front="U119_EM",
         edge_material="ABS_0.8",
-        shelves=[352],
-        doors=[2],
         hinges=HingeSpec(count=2),
         handles=HandleSpec(),
+        config=BaseDoorConfig(
+            shelves=[352],
+            doors=[2],
+        ),
     )
 
 
@@ -42,7 +45,6 @@ def base_drawer_spec() -> CorpusSpec:
     return CorpusSpec(
         id="K02",
         name="Szafka dolna szufladowa 800",
-        corpus_type="base_drawer",
         width=800,
         height=720,
         depth=510,
@@ -53,11 +55,13 @@ def base_drawer_spec() -> CorpusSpec:
         material_back="HDF_3mm_bialy",
         material_front="U119_EM",
         edge_material="ABS_0.8",
-        drawers=[
-            DrawerSpec(internal_height=150, runner_type="blum_metabox"),
-            DrawerSpec(internal_height=270, runner_type="blum_metabox"),
-        ],
         handles=HandleSpec(),
+        config=BaseDrawerConfig(
+            drawers=[
+                DrawerSpec(internal_height=150, runner_type="blum_metabox"),
+                DrawerSpec(internal_height=270, runner_type="blum_metabox"),
+            ],
+        ),
     )
 
 
@@ -67,7 +71,6 @@ def wall_door_spec() -> CorpusSpec:
     return CorpusSpec(
         id="G01",
         name="Szafka wisząca drzwiowa 800",
-        corpus_type="wall_door",
         width=800,
         height=720,
         depth=300,
@@ -78,7 +81,9 @@ def wall_door_spec() -> CorpusSpec:
         material_back="HDF_3mm_bialy",
         material_front="U119_EM",
         edge_material="ABS_0.8",
-        shelves=[352],
-        doors=[2],
         hinges=HingeSpec(count=2),
+        config=BaseDoorConfig(
+            shelves=[352],
+            doors=[2],
+        ),
     )

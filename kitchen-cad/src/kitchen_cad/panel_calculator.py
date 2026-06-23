@@ -8,6 +8,11 @@ Naming convention — all dimensions in mm:
 from __future__ import annotations
 
 from kitchen_cad.models import (
+    SYSTEM32_OFFSET,
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CabinetConfig,
+    CornerBlindConfig,
     CorpusSpec,
     EdgeBand,
     EdgeSide,
@@ -21,11 +26,7 @@ def _edge_material(spec: CorpusSpec) -> str:
 
 
 def _side_panels(spec: CorpusSpec) -> list[Panel]:
-    """Left and right side panels: D × H × T.
-
-    Banded edges: top (visible above base / below wall) and
-    front (visible from the front of the cabinet).
-    """
+    """Left and right side panels: D × H × T."""
     edges = [
         EdgeBand(side=EdgeSide.TOP, material=_edge_material(spec)),
         EdgeBand(side=EdgeSide.LEFT, material=_edge_material(spec)),
@@ -52,10 +53,7 @@ def _side_panels(spec: CorpusSpec) -> list[Panel]:
 
 
 def _horizontal_panels(spec: CorpusSpec) -> list[Panel]:
-    """Top and bottom panels: (W-2T) × (D-G) × T.
-
-    Banded edge: front only.
-    """
+    """Top and bottom panels: (W-2T) × (D-G) × T."""
     inner_w = spec.width - 2 * spec.panel_thickness
     inner_d = spec.depth - spec.back_groove_depth
     edges = [
@@ -82,18 +80,15 @@ def _horizontal_panels(spec: CorpusSpec) -> list[Panel]:
     return [top, bottom]
 
 
-def _shelf_panels(spec: CorpusSpec) -> list[Panel]:
-    """Shelves: (W-2T) × (D-G-37) × T.
-
-    37 mm deducted for System 32 front offset on side panels.
-    """
+def _shelf_panels(spec: CorpusSpec, shelf_positions: list[float]) -> list[Panel]:
+    """Shelves: (W-2T) × (D-G-SYSTEM32_OFFSET) × T."""
     inner_w = spec.width - 2 * spec.panel_thickness
-    shelf_d = spec.depth - spec.back_groove_depth - 37
+    shelf_d = spec.depth - spec.back_groove_depth - SYSTEM32_OFFSET
     edges = [
         EdgeBand(side=EdgeSide.LEFT, material=_edge_material(spec)),
     ]
     shelves = []
-    for i, pos in enumerate(spec.shelves):
+    for i, pos in enumerate(shelf_positions):
         shelves.append(Panel(
             id=f"{spec.id}-POL{i+1}",
             role=PanelRole.SHELF,
@@ -120,17 +115,12 @@ def _back_panel(spec: CorpusSpec) -> Panel:
     )
 
 
-def _door_fronts(spec: CorpusSpec) -> list[Panel]:
-    """Door front(s): full-width or split.
-
-    Single door:  (W - 2*gap) × (H - 2*gap)
-    Two doors:    each (W - 3*gap) / 2 × (H - 2*gap)
-    All four edges banded.
-    """
-    if not spec.doors:
+def _door_fronts(spec: CorpusSpec, door_hinge_counts: list[int]) -> list[Panel]:
+    """Door front(s) with gap calculation."""
+    if not door_hinge_counts:
         return []
 
-    n = len(spec.doors)
+    n = len(door_hinge_counts)
     g = spec.front_gap
     h = spec.height - 2 * g
 
@@ -151,7 +141,6 @@ def _door_fronts(spec: CorpusSpec) -> list[Panel]:
             edges=list(all_edges),
         )]
     else:
-        # n doors side by side: (W - (n+1)*gap) / n
         w = (spec.width - (n + 1) * g) / n
         return [
             Panel(
@@ -167,19 +156,14 @@ def _door_fronts(spec: CorpusSpec) -> list[Panel]:
         ]
 
 
-def _drawer_fronts(spec: CorpusSpec) -> list[Panel]:
-    """Drawer front(s): equally sized, filling available height.
-
-    Available height = H - 2*gap - (n-1)*gap
-    Each front height = available / n
-    """
-    if not spec.drawers:
+def _drawer_fronts(spec: CorpusSpec, drawer_count: int) -> list[Panel]:
+    """Drawer front(s): equally sized, filling available height."""
+    if drawer_count == 0:
         return []
 
-    n = len(spec.drawers)
     g = spec.front_gap
-    total_gap = 2 * g + (n - 1) * g  # top + bottom + between
-    h_each = (spec.height - total_gap) / n
+    total_gap = 2 * g + (drawer_count - 1) * g
+    h_each = (spec.height - total_gap) / drawer_count
     w = spec.width - 2 * g
 
     all_edges = [
@@ -197,8 +181,139 @@ def _drawer_fronts(spec: CorpusSpec) -> list[Panel]:
             material=spec.material_front,
             edges=list(all_edges),
         )
-        for i in range(n)
+        for i in range(drawer_count)
     ]
+
+
+# ---------------------------------------------------------------------------
+# Variant-specific calculators
+# ---------------------------------------------------------------------------
+
+def _calculate_base_door(spec: CorpusSpec, config: BaseDoorConfig) -> list[Panel]:
+    """Standard base cabinet with doors and shelves."""
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+    panels.extend(_shelf_panels(spec, config.shelves))
+    panels.append(_back_panel(spec))
+    panels.extend(_door_fronts(spec, config.doors))
+    return panels
+
+
+def _calculate_base_drawer(spec: CorpusSpec, config: BaseDrawerConfig) -> list[Panel]:
+    """Base cabinet with drawers only."""
+    panels: list[Panel] = []
+    panels.extend(_side_panels(spec))
+    panels.extend(_horizontal_panels(spec))
+    panels.append(_back_panel(spec))
+    panels.extend(_drawer_fronts(spec, len(config.drawers)))
+    return panels
+
+
+def _calculate_corner_blind(spec: CorpusSpec, config: CornerBlindConfig) -> list[Panel]:
+    """Corner blind cabinet — L-shaped body with one visible front.
+
+    The cabinet has:
+    - Standard left side panel (full depth)
+    - Shortened right side panel (depth = second_width)
+    - Extended bottom/top panels (width = W + second_width - T)
+    - Blind panel (filler) on the open side
+    - One door on the visible side
+    """
+    panels: list[Panel] = []
+
+    # --- Side panels ---
+    # The "main" side (opposite the corner extension) is full depth
+    # The "corner" side is shortened to second_width
+    edges_full = [
+        EdgeBand(side=EdgeSide.TOP, material=_edge_material(spec)),
+        EdgeBand(side=EdgeSide.LEFT, material=_edge_material(spec)),
+    ]
+    edges_short = [
+        EdgeBand(side=EdgeSide.TOP, material=_edge_material(spec)),
+        EdgeBand(side=EdgeSide.LEFT, material=_edge_material(spec)),
+    ]
+
+    if config.corner_side.value == "left":
+        # Front is on the RIGHT side of the cabinet
+        # Left side panel = full depth, Right side panel = shortened
+        main_side = Panel(
+            id=f"{spec.id}-BOK-L",
+            role=PanelRole.LEFT_SIDE,
+            width=spec.depth,
+            height=spec.height,
+            thickness=spec.panel_thickness,
+            material=spec.material_corpus,
+            edges=list(edges_full),
+        )
+        corner_side = Panel(
+            id=f"{spec.id}-BOK-P",
+            role=PanelRole.RIGHT_SIDE,
+            width=config.second_width,
+            height=spec.height,
+            thickness=spec.panel_thickness,
+            material=spec.material_corpus,
+            edges=list(edges_short),
+        )
+    else:
+        # Front is on the LEFT side
+        # Right side panel = full depth, Left side panel = shortened
+        main_side = Panel(
+            id=f"{spec.id}-BOK-P",
+            role=PanelRole.RIGHT_SIDE,
+            width=spec.depth,
+            height=spec.height,
+            thickness=spec.panel_thickness,
+            material=spec.material_corpus,
+            edges=list(edges_full),
+        )
+        corner_side = Panel(
+            id=f"{spec.id}-BOK-L",
+            role=PanelRole.LEFT_SIDE,
+            width=config.second_width,
+            height=spec.height,
+            thickness=spec.panel_thickness,
+            material=spec.material_corpus,
+            edges=list(edges_short),
+        )
+    panels.extend([main_side, corner_side])
+
+    # --- Horizontal panels (extended width) ---
+    # Width = main width + second_width - one panel thickness (they share a corner)
+    extended_w = spec.width + config.second_width - spec.panel_thickness
+    inner_d = spec.depth - spec.back_groove_depth
+    edges_horiz = [
+        EdgeBand(side=EdgeSide.LEFT, material=_edge_material(spec)),
+    ]
+    panels.append(Panel(
+        id=f"{spec.id}-GORA",
+        role=PanelRole.TOP,
+        width=extended_w - 2 * spec.panel_thickness,
+        height=inner_d,
+        thickness=spec.panel_thickness,
+        material=spec.material_corpus,
+        edges=list(edges_horiz),
+    ))
+    panels.append(Panel(
+        id=f"{spec.id}-DNO",
+        role=PanelRole.BOTTOM,
+        width=extended_w - 2 * spec.panel_thickness,
+        height=inner_d,
+        thickness=spec.panel_thickness,
+        material=spec.material_corpus,
+        edges=list(edges_horiz),
+    ))
+
+    # --- Shelves ---
+    panels.extend(_shelf_panels(spec, config.shelves))
+
+    # --- Back panel ---
+    panels.append(_back_panel(spec))
+
+    # --- Door front (single door on visible side) ---
+    panels.extend(_door_fronts(spec, config.doors))
+
+    return panels
 
 
 # ---------------------------------------------------------------------------
@@ -208,13 +323,15 @@ def _drawer_fronts(spec: CorpusSpec) -> list[Panel]:
 def calculate_panels(spec: CorpusSpec) -> list[Panel]:
     """Calculate all cutting panels for a given corpus specification.
 
-    Returns a flat list of Panel objects ready for CSV / DXF generation.
+    Dispatches to the appropriate variant calculator based on spec.config.type.
     """
-    panels: list[Panel] = []
-    panels.extend(_side_panels(spec))
-    panels.extend(_horizontal_panels(spec))
-    panels.extend(_shelf_panels(spec))
-    panels.append(_back_panel(spec))
-    panels.extend(_door_fronts(spec))
-    panels.extend(_drawer_fronts(spec))
-    return panels
+    config = spec.config
+
+    if isinstance(config, BaseDoorConfig):
+        return _calculate_base_door(spec, config)
+    elif isinstance(config, BaseDrawerConfig):
+        return _calculate_base_drawer(spec, config)
+    elif isinstance(config, CornerBlindConfig):
+        return _calculate_corner_blind(spec, config)
+    else:
+        raise ValueError(f"Unknown cabinet config type: {type(config).__name__}")

@@ -10,7 +10,14 @@ Convention for side panels:
 
 from __future__ import annotations
 
+import copy
+
 from kitchen_cad.models import (
+    SYSTEM32_OFFSET,
+    SYSTEM32_SPACING,
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CornerBlindConfig,
     CorpusSpec,
     DrillFace,
     DrillPoint,
@@ -25,16 +32,8 @@ from kitchen_cad.models import (
 # System 32
 # ---------------------------------------------------------------------------
 
-SYSTEM32_OFFSET = 37.0   # mm from front/bottom edge
-SYSTEM32_SPACING = 32.0  # mm between holes
-
-
 def system32_y_positions(height: float) -> list[float]:
-    """Return Y positions for System 32 holes on a vertical panel.
-
-    Holes start at 37 mm from the bottom and repeat every 32 mm,
-    stopping before (height - 37) from the bottom.
-    """
+    """Return Y positions for System 32 holes on a vertical panel."""
     positions: list[float] = []
     y = SYSTEM32_OFFSET
     while y <= height - SYSTEM32_OFFSET:
@@ -44,11 +43,7 @@ def system32_y_positions(height: float) -> list[float]:
 
 
 def _shelf_pin_offsets(max_per_row: int, raster: float = SYSTEM32_SPACING) -> list[float]:
-    """Symmetrical offsets from anchor, matching Corpus .cmk algorithm.
-
-    Returns offsets: [0, +raster, -raster, +2*raster, -2*raster, ...]
-    limited to max_per_row entries.
-    """
+    """Symmetrical offsets from anchor: [0, +raster, -raster, ...]."""
     offsets = [0.0]
     i = 1
     while len(offsets) < max_per_row:
@@ -59,14 +54,30 @@ def _shelf_pin_offsets(max_per_row: int, raster: float = SYSTEM32_SPACING) -> li
     return offsets
 
 
+def _get_shelf_positions(spec: CorpusSpec) -> list[float]:
+    """Extract shelf positions from config, if available."""
+    config = spec.config
+    if isinstance(config, (BaseDoorConfig, CornerBlindConfig)):
+        return config.shelves
+    return []
+
+
+def _get_door_hinge_counts(spec: CorpusSpec) -> list[int]:
+    """Extract door hinge counts from config, if available."""
+    config = spec.config
+    if isinstance(config, (BaseDoorConfig, CornerBlindConfig)):
+        return config.doors
+    return []
+
+
 def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
     """Add System 32 (∅5 mm) drill points to LEFT and RIGHT side panels.
 
-    Also adds shelf-pin holes at shelf positions:
-    - Front row: shelf_pin_front_offset mm from front edge
-    - Back row: shelf_pin_back_offset mm from back edge
-    - Symmetrical expansion with 32mm raster (from .cmk reference)
+    Returns a new list with copied panels — the originals are not modified.
     """
+    panels = [copy.deepcopy(p) for p in panels]
+    shelves = _get_shelf_positions(spec)
+
     for panel in panels:
         if panel.role not in (PanelRole.LEFT_SIDE, PanelRole.RIGHT_SIDE):
             continue
@@ -84,19 +95,16 @@ def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
             ))
 
         # --- shelf-pin holes at shelf positions ---
-        #     Two rows per shelf: front and back
-        #     Algorithm from Corpus .cmk: symmetrical expansion
-        if not spec.shelves:
+        if not shelves:
             continue
 
-        front_x = spec.shelf_pin_front_offset          # 50mm from front
-        back_x = spec.depth - spec.shelf_pin_back_offset  # 80mm from back
+        front_x = spec.shelf_pin_front_offset
+        back_x = spec.depth - spec.shelf_pin_back_offset
         offsets = _shelf_pin_offsets(spec.shelf_pin_max_per_row)
 
-        for shelf_pos in spec.shelves:
+        for shelf_pos in shelves:
             y_shelf = spec.panel_thickness + shelf_pos
 
-            # Front row: anchor at (front_x, y_shelf), expand along Y
             for dy in offsets:
                 panel.drill_points.append(DrillPoint(
                     x=front_x,
@@ -108,7 +116,6 @@ def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
                     label=f"shelf front y={y_shelf + dy:.0f}",
                 ))
 
-            # Back row: anchor at (back_x, y_shelf), expand along Y
             for dy in offsets:
                 panel.drill_points.append(DrillPoint(
                     x=back_x,
@@ -127,20 +134,12 @@ def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
 # Hinges (Blum CLIP top 35mm default)
 # ---------------------------------------------------------------------------
 
-def _default_hinge() -> HingeSpec:
-    return HingeSpec()
-
-
 def _hinge_positions(front_height: float, count: int, first_pos: float) -> list[float]:
-    """Return Y positions for hinge cup centres on a door front.
-
-    Positions measured from the BOTTOM of the front panel.
-    """
+    """Return Y positions for hinge cup centres on a door front."""
     if count == 1:
         return [front_height / 2]
     if count == 2:
         return [first_pos, front_height - first_pos]
-    # 3+ hinges: evenly spaced between first and last
     bottom = first_pos
     top = front_height - first_pos
     step = (top - bottom) / (count - 1)
@@ -150,24 +149,20 @@ def _hinge_positions(front_height: float, count: int, first_pos: float) -> list[
 def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
     """Add hinge drill points to FRONT_DOOR panels.
 
-    For each hinge:
-      - 1× cup hole  (∅35 mm, depth 13 mm)   at X = edge_to_cup_centre
-      - 2× screw holes (∅3 mm, depth 2 mm)   at X = edge_to_cup_centre
-        spaced screw_spacing/2 above and below cup centre Y
+    Returns a new list with copied panels — the originals are not modified.
     """
-    hinge = spec.hinges or _default_hinge()
+    panels = [copy.deepcopy(p) for p in panels]
+    hinge = spec.hinges
+    door_hinge_counts = _get_door_hinge_counts(spec)
 
     for panel in panels:
         if panel.role != PanelRole.FRONT_DOOR:
             continue
 
-        # Determine how many hinges for this front
-        # spec.doors list has one entry per front with hinge count
-        # Find the matching front index
         door_fronts = [p for p in panels if p.role == PanelRole.FRONT_DOOR]
         idx = door_fronts.index(panel)
-        if idx < len(spec.doors):
-            count = spec.doors[idx]
+        if idx < len(door_hinge_counts):
+            count = door_hinge_counts[idx]
         else:
             count = 0
 
@@ -179,7 +174,6 @@ def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
         half_spacing = hinge.screw_spacing / 2
 
         for y_cup in positions:
-            # Cup hole
             panel.drill_points.append(DrillPoint(
                 x=x_cup,
                 y=y_cup,
@@ -189,7 +183,6 @@ def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
                 drill_type=DrillType.HINGE_CUP,
                 label=f"cup y={y_cup:.0f}",
             ))
-            # Screw holes (above and below cup)
             for dy, suffix in ((-half_spacing, "top"), (half_spacing, "bot")):
                 panel.drill_points.append(DrillPoint(
                     x=x_cup,
@@ -211,8 +204,10 @@ def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
 def apply_handles(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
     """Add handle drill holes to drawer fronts.
 
-    Bar handle: two ∅5 mm through-holes, centred horizontally and vertically.
+    Returns a new list with copied panels — the originals are not modified.
     """
+    panels = [copy.deepcopy(p) for p in panels]
+
     if not spec.handles:
         return panels
 
@@ -223,15 +218,15 @@ def apply_handles(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
         if panel.role != PanelRole.FRONT_DRAWER:
             continue
 
-        cx = panel.width / 2   # horizontal centre
-        cy = panel.height / 2  # vertical centre
+        cx = panel.width / 2
+        cy = panel.height / 2
 
         for dx in (-half_spacing, half_spacing):
             panel.drill_points.append(DrillPoint(
                 x=round(cx + dx, 2),
                 y=cy,
                 diameter=handles.hole_diameter,
-                depth=0,  # through hole
+                depth=0,
                 face=DrillFace.INSIDE,
                 drill_type=DrillType.HANDLE,
                 label=f"handle x={cx + dx:.0f}",
@@ -245,7 +240,10 @@ def apply_handles(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
 # ---------------------------------------------------------------------------
 
 def apply_all_drilling(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
-    """Run all drill macros in the standard order."""
+    """Run all drill macros in the standard order.
+
+    Returns a new list with copied panels — the originals are not modified.
+    """
     panels = apply_system32(panels, spec)
     panels = apply_hinges(panels, spec)
     panels = apply_handles(panels, spec)

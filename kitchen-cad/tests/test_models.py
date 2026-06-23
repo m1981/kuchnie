@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from kitchen_cad.models import (
+    BaseDrawerConfig,
     CorpusSpec,
     DrillPoint,
     DrillType,
@@ -98,8 +99,9 @@ class TestCorpusSpec:
         assert base_door_spec.panel_thickness == 18
 
     def test_create_base_drawer_spec(self, base_drawer_spec: CorpusSpec):
-        assert len(base_drawer_spec.drawers) == 2
-        assert base_drawer_spec.drawers[0].internal_height == 150
+        assert isinstance(base_drawer_spec.config, BaseDrawerConfig)
+        assert len(base_drawer_spec.config.drawers) == 2
+        assert base_drawer_spec.config.drawers[0].internal_height == 150
 
     def test_create_wall_spec(self, wall_door_spec: CorpusSpec):
         assert wall_door_spec.depth == 300

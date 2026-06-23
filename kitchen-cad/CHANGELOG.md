@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Consolidated architecture documentation
     - Removed stale test counts from docs
 
+### Changed
+
+- `corpus_type` field changed from `str` to `CorpusType` enum (backward-compatible — Pydantic coerces strings)
+- `drill_engine.apply_*` functions are now **pure** — return new panel lists, originals are never mutated
+- Shared `SYSTEM32_OFFSET` / `SYSTEM32_SPACING` constants extracted to `models.py`
+
+### Fixed
+
+- Magic number `37` in `panel_calculator._shelf_panels()` replaced with shared `SYSTEM32_OFFSET` constant
+- Mutation/return ambiguity in `drill_engine` — functions now deep-copy before modifying
+
 ---
 
 ## [0.2.0] — 2026-06-23

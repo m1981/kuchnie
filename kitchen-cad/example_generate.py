@@ -9,6 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from kitchen_cad.models import (
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CornerBlindConfig,
+    CornerSide,
     CorpusSpec,
     DrawerSpec,
     HandleSpec,
@@ -28,63 +32,70 @@ kitchen = [
     CorpusSpec(
         id="K01",
         name="Szafka dolna pod zlew 800",
-        corpus_type="base_door",
         width=800, height=720, depth=510,
         material_corpus="D3821_SW",   # Dąb Sztokholm (Swiss Krono)
         material_front="U164_EM",     # Antracyt Velvet
-        shelves=[],
-        doors=[2],
         hinges=HingeSpec(count=2),
         handles=HandleSpec(spacing=256),
+        config=BaseDoorConfig(
+            shelves=[],
+            doors=[2],
+        ),
     ),
     CorpusSpec(
         id="K02",
         name="Szafka dolna szufladowa 600",
-        corpus_type="base_drawer",
         width=600, height=720, depth=510,
         material_corpus="D3821_SW",
         material_front="U164_EM",
-        drawers=[
-            DrawerSpec(internal_height=150),
-            DrawerSpec(internal_height=270),
-        ],
         handles=HandleSpec(spacing=160),
+        config=BaseDrawerConfig(
+            drawers=[
+                DrawerSpec(internal_height=150),
+                DrawerSpec(internal_height=270),
+            ],
+        ),
     ),
     CorpusSpec(
         id="K03",
         name="Szafka dolna narożna 900",
-        corpus_type="base_door",
         width=900, height=720, depth=510,
         material_corpus="D3821_SW",
         material_front="U164_EM",
-        shelves=[352],
-        doors=[2],
         hinges=HingeSpec(count=3),  # 3 hinges for wide door
         handles=HandleSpec(spacing=320),
+        config=CornerBlindConfig(
+            corner_side=CornerSide.LEFT,
+            second_width=510,
+            shelves=[352],
+            doors=[2],
+        ),
     ),
 
     # ── Wall cabinets (górne) ──
     CorpusSpec(
         id="G01",
         name="Szafka wisząca nad zlewem 800",
-        corpus_type="wall_door",
         width=800, height=720, depth=300,
         material_corpus="D3821_SW",
         material_front="U164_EM",
-        shelves=[352],
-        doors=[2],
         hinges=HingeSpec(count=2),
+        config=BaseDoorConfig(
+            shelves=[352],
+            doors=[2],
+        ),
     ),
     CorpusSpec(
         id="G02",
         name="Szafka wisząca 600",
-        corpus_type="wall_door",
         width=600, height=720, depth=300,
         material_corpus="D3821_SW",
         material_front="U164_EM",
-        shelves=[352],
-        doors=[2],
         hinges=HingeSpec(count=2),
+        config=BaseDoorConfig(
+            shelves=[352],
+            doors=[2],
+        ),
     ),
 ]
 

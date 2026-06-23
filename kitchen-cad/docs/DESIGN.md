@@ -252,7 +252,7 @@ Front panel (widok od strony wewnętrznej):
 class CorpusSpec(BaseModel):
     id: str                    # np. "K01"
     name: str                  # np. "Szafka dolna pod zlew 800"
-    corpus_type: str           # base_door | base_drawer | wall_door | tall
+    corpus_type: CorpusType   # base_door | base_drawer | wall_door | wall_lifter | tall
 
     # Wymiary zewnętrzne
     width: float               # mm (szerokość)
@@ -332,12 +332,22 @@ class HingeSpec(BaseModel):
 ### 4.5 Enumy
 
 ```python
+CorpusType:  base_door | base_drawer | wall_door | wall_lifter | tall
 PanelRole:   bok_lewy | bok_prawy | dno | gora | polka | plecy | front_drzwi | front_szuflada
 EdgeSide:    gora | dol | lewo | prawo
 DrillFace:   inside | outside | front | back
 DrillType:   system32 | puszka_zawiasu | znacznik_wkret | kolek_zawiasu |
              kolek_laczacy | minifix | uchwyt | podporka_polki
 ```
+
+### 4.6 Shared Constants
+
+```python
+SYSTEM32_OFFSET: float = 37.0   # mm from front/bottom edge
+SYSTEM32_SPACING: float = 32.0  # mm between holes
+```
+
+These constants are defined in `models.py` and used by both `panel_calculator` and `drill_engine`.
 
 ---
 
@@ -354,7 +364,7 @@ głębokości rowka G, grubości pleców BT:
 | Bok prawy       | D               | H                                       | T       | 1     |
 | Góra            | W - 2T          | D - G                                   | T       | 1     |
 | Dno             | W - 2T          | D - G                                   | T       | 1     |
-| Półka           | W - 2T          | D - G - 37                              | T       | N     |
+| Półka           | W - 2T          | D - G - SYSTEM32_OFFSET                 | T       | N     |
 | Plecy           | W - 2T          | H                                       | BT      | 1     |
 | Front (1 drzwi) | W - 2×gap       | H - 2×gap                               | T       | 1     |
 | Front (2 drzwi) | (W - 3×gap) / 2 | H - 2×gap                               | T       | 2     |
@@ -456,6 +466,9 @@ def apply_all_drilling(panels, spec):
     panels = apply_handles(panels, spec)    # 3. Uchwyty na szufladach
     return panels
 ```
+
+> **Note:** All `apply_*` functions are **pure** — they return a new list with
+> copied panels. The original `panels` list is never modified.
 
 ---
 
@@ -650,7 +663,7 @@ TOTAL                              250    11    96%
 ## Załącznik B: Przykład użycia
 
 ```python
-from kitchen_cad.models import CorpusSpec, HingeSpec, HandleSpec
+from kitchen_cad.models import CorpusSpec, CorpusType, HingeSpec, HandleSpec
 from kitchen_cad.panel_calculator import calculate_panels
 from kitchen_cad.drill_engine import apply_all_drilling
 from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
@@ -659,7 +672,7 @@ from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
 spec = CorpusSpec(
     id="K01",
     name="Szafka dolna pod zlew 800",
-    corpus_type="base_door",
+    corpus_type=CorpusType.BASE_DOOR,
     width=800, height=720, depth=510,
     material_corpus="D3821_SW",
     material_front="U164_EM",

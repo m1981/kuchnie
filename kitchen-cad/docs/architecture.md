@@ -315,7 +315,7 @@ classDiagram
         <<aggregate root>>
         +str id
         +str name
-        +str corpus_type
+        +CorpusType corpus_type
         +float width
         +float height
         +float depth
@@ -515,7 +515,7 @@ classDiagram
 
     class base_door_800 {
         <<preset>>
-        corpus_type = "base_door"
+        corpus_type = CorpusType.BASE_DOOR
         width = 800
         height = 720
         depth = 510
@@ -523,7 +523,7 @@ classDiagram
 
     class base_drawer_600 {
         <<preset>>
-        corpus_type = "base_drawer"
+        corpus_type = CorpusType.BASE_DRAWER
         width = 600
         height = 720
         depth = 510
@@ -532,7 +532,7 @@ classDiagram
 
     class wall_door_800 {
         <<preset>>
-        corpus_type = "wall_door"
+        corpus_type = CorpusType.WALL_DOOR
         width = 800
         height = 720
         depth = 300
@@ -540,7 +540,7 @@ classDiagram
 
     class corner_900 {
         <<preset>>
-        corpus_type = "base_door"
+        corpus_type = CorpusType.BASE_DOOR
         width = 900
         height = 720
         depth = 510
@@ -548,7 +548,7 @@ classDiagram
 
     class tall_cabinet_600 {
         <<preset>>
-        corpus_type = "tall"
+        corpus_type = CorpusType.TALL
         width = 600
         height = 2000
         depth = 560
