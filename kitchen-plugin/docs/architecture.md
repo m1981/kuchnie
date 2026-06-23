@@ -112,17 +112,20 @@ validation. Visual export (.blend) is optional.
            │
            ▼
   ┌──────────────────┐
-  │ wall_builder.py   │  Config → Wall + Cabinet objects
+  │ wall_builder.py   │  build_domain_layout(): config → domain objects
+  │                   │  (Room, Run, Cabinet, Layout via LayoutEngine)
   └────────┬─────────┘
            │
            ▼
   ┌──────────────────┐
-  │ LayoutEngine      │  Calculate positions, detect corners
+  │ Layout (domain)   │  Room + Runs + Cabinets + Placements
   └────────┬─────────┘
            │
            ▼
   ┌──────────────────────────────────────────────────────┐
   │ geometry_builder.py (bpy)                             │
+  │                                                       │
+  │  build_kitchen_from_layout(layout, settings)          │
   │                                                       │
   │  Builds Blender meshes per frameless construction:    │
   │  • Carcass (4 separate boards with technical gaps)    │
@@ -136,10 +139,7 @@ validation. Visual export (.blend) is optional.
   │  Each board is a separate solid box (8 verts, 6 faces)│
   │  Technical gaps between all boards — no shared surfaces│
   │                                                       │
-  │  Applies transforms:                                  │
-  │  • Position along wall (accumulated offset)           │
-  │  • Rotation for wall direction (0°/90°/180°/270°)    │
-  │  • Z placement (plinth, wall-mount, floor)            │
+  │  Position + rotation from Layout.placed_cabinets      │
   └────────┬─────────────────────────────────────────────┘
            │
            ├──────────────────────────────────────────────────────────┐
@@ -147,9 +147,9 @@ validation. Visual export (.blend) is optional.
   ┌────────────────────────────┐                       ┌──────────────────────┐
   │ geometry_manifest.py       │  ← PRIMARY OUTPUT     │ exporters.py         │
   │                            │                       │                      │
-  │ Exports JSON with:         │                       │                      │
-  │ • Local + world vertices   │                       │ .blend (for visual   │
-  │ • Object hierarchy         │                       │   inspection)        │
+  │ Exports JSON with:         │                       │ .blend (for visual   │
+  │ • Local + world vertices   │                       │   inspection)        │
+  │ • Object hierarchy         │                       │                      │
   │ • Expected vs actual dims  │                       │                      │
   │ • Layout metadata          │                       │                      │
   │ • Inline validation        │                       │                      │
@@ -425,15 +425,17 @@ The manifest schema defines the structure of the primary output. See
   CabinetType       — Enum: base-door, wall-drawers, corner-blind, ...
   CabinetLevel      — Enum: BASE, UPPER, TALL
   Dimensions        — Named tuple: width, depth, height
+  mm_to_m()         — Unit conversion (mm → meters)
 ```
 
 **Files:**
 
-- `src/core/geometry.py`
-- `src/core/tolerances.py`
-- `src/core/types.py`
+- `src/core/geometry.py` — Vectors, BoundingBox, Transform2D, mm_to_m
+- `src/core/tolerances.py` — Reserved for geometric tolerance utilities
+- `src/core/types.py` — Direction, CabinetType, CabinetLevel, Dimensions
 
 **Rule:** No imports from `kitchen/`, `adapters/`, or `bpy`. Pure math only.
+Kitchen-specific tolerances live in `kitchen/standards.py` (`KitchenStandards`).
 
 ---
 
@@ -442,15 +444,14 @@ The manifest schema defines the structure of the primary output. See
 ```
   Wall              — Line segment with start/end (Vector2D), direction, normal
   Room              — Collection of walls
-  CornerReference   — Links two walls at a corner (aliased as CornerCabinet)
-  WallCabinet       — Cabinet positioned by wall_id + offset + dimensions
-  BoxVertices       — Box vertex generator for back-face origin convention
+  CornerReference   — Links two walls at a corner
   Cabinet           — Parametric cabinet definition (type, width, wall_id)
   CabinetPlacement  — Cabinet + world position + rotation
   Countertop        — Countertop with overhangs
   Run               — Sequence of cabinets along one wall
   LayoutEngine      — Calculates positions from runs
   Layout            — Complete result: room + runs + corners + placements
+  KitchenStandards  — European kitchen standard dimensions + tolerances
 ```
 
 **Files:**
@@ -469,8 +470,8 @@ The manifest schema defines the structure of the primary output. See
 
 ```
   config_parser     — Load JSON, apply defaults, return config dict
-  validators        — Check semantic rules (dimension ranges, gaps, room fit)
-  wall_builder      — Convert config dict → Wall + Cabinet objects
+  validators        — Check semantic rules (uses KitchenStandards)
+  wall_builder      — build_domain_layout(): config → Layout domain objects
 ```
 
 **Files:**
@@ -707,21 +708,21 @@ kitchen-plugin/
 ├── src/
 │   ├── core/                        # Layer 1: Pure math
 │   │   ├── __init__.py
-│   │   ├── geometry.py             # Vector2D, Vector3D, BoundingBox, Transform2D
-│   │   ├── tolerances.py           # Named tolerances
+│   │   ├── geometry.py             # Vector2D, Vector3D, BoundingBox, Transform2D, mm_to_m
+│   │   ├── tolerances.py           # Geometric tolerance utilities (reserved)
 │   │   └── types.py                # Direction, CabinetType, CabinetLevel, Dimensions
 │   │
 │   ├── kitchen/                     # Layer 2: Domain logic
 │   │   ├── __init__.py
-│   │   ├── wall.py                 # Wall, Room, WallCabinet, CornerReference, BoxVertices
+│   │   ├── wall.py                 # Wall, Room, CornerReference, BoxVertices
 │   │   ├── cabinet.py              # Cabinet, CabinetPlacement, Countertop
 │   │   ├── cabinet_geometry.py     # Board-level construction math
 │   │   ├── layout.py               # Run, LayoutEngine, Layout
-│   │   └── standards.py            # KitchenStandards, EUROPEAN_STANDARDS
+│   │   └── standards.py            # KitchenStandards (dimensions + tolerances)
 │   │
 │   ├── config_parser.py             # Layer 3: JSON loading, defaults
-│   ├── validators.py                # Layer 3: Semantic validation
-│   ├── wall_builder.py              # Layer 3: Config → domain objects (uses kitchen/wall)
+│   ├── validators.py                # Layer 3: Semantic validation (uses KitchenStandards)
+│   ├── wall_builder.py              # Layer 3: Config → domain Layout (WallCabinet lives here)
 │   │
 │   ├── geometry_builder.py          # Layer 4: Blender mesh creation
 │   ├── material_manager.py          # Layer 4: Cycles materials

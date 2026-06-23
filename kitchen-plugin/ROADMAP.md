@@ -24,7 +24,7 @@
 ### Generator Bug Fixes
 
 - ✅ Board-based carcass rewrite (4 separate boards with technical gaps)
-- 🔨 Corner handling — U-shape corner overlaps need resolution
+- ✅ Corner handling — direction bug fixed (L/U shapes compute correct wall positions)
 - 📋 Countertop overhang accuracy
 - 📋 Filler positioning at run ends
 

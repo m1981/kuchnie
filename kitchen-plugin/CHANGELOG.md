@@ -8,6 +8,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed — BREAKING
+
+- **DDD strategic design: clean boundaries, domain model in production pipeline**
+    - `build_kitchen(config)` removed from `geometry_builder.py` — replaced by `build_kitchen_from_layout(layout, settings)`
+    - `build_layout(config)`, `ResolvedCabinet`, `WallBuilderResult` removed from `wall_builder.py`
+    - `WallCabinet` moved from `kitchen/wall.py` to `wall_builder.py` (adapter concern, not domain)
+    - `Position` class removed from `core/types.py` (unused)
+    - `Tolerances` class gutted in `core/tolerances.py` (kitchen fields moved to `KitchenStandards`)
+    - `CornerCabinet` alias removed from `kitchen/wall.py`
+    - `mm_to_m()` removed from `config_parser.py` — now in `core/geometry.py`
+    - `MIN_DRAWER_HEIGHT`, `MAX_DRAWER_COUNT` in `config_parser.py` now derive from `KitchenStandards`
+    - `_build_cabinet()`, `_add_front()`, `_build_filler()` accept domain `Cabinet` objects (not dicts)
+    - `_domain_cabinet_to_dict()` bridge removed
+
+### Added
+
+- **`build_domain_layout(config)` in `wall_builder.py`** — converts raw config to domain Layout
+    - Returns `Layout` with `Room`, `Run`, `Cabinet`, `CabinetPlacement` objects
+    - Uses `LayoutEngine` for position computation
+    - Replaces duplicated direction/turn logic
+
+- **`build_kitchen_from_layout(layout, settings)` in `geometry_builder.py`**
+    - Reads positions from domain `Layout.placed_cabinets`
+    - Domain `Cabinet` objects passed directly to mesh creation (no dict bridge)
+
+- **`export_manifest()` accepts optional `layout` parameter**
+    - `_build_layout_metadata_from_domain(layout)` reads from domain model
+    - Old `_build_layout_metadata(config)` kept as fallback for test compatibility
+
+- **Mermaid diagrams in `docs/architecture.md`**
+    - Data flow diagram showing 5 bounded contexts
+    - Class diagram showing all 28 domain classes
+
+### Fixed
+
+- **`LayoutEngine._create_walls()` direction bug** — L-shape and U-shape walls were all going east
+    - Now uses `run.direction` directly instead of previous iteration's direction
+
+### Docs
+
+- **`docs/architecture.md` updated to match refactored code**
+    - Data flow ASCII diagram shows domain model in production pipeline
+    - Module details updated (Tolerances removed, WallCabinet moved, KitchenStandards added)
+    - File structure comments updated
+    - Numerical values removed (deferred to `european-kitchen-standards.md`)
+    - `validators` now shown using `KitchenStandards`
+
 ### Removed — BREAKING
 
 - **OBJ and glTF export removed from `src/exporters.py`**
