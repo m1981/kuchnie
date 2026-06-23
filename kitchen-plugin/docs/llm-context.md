@@ -130,7 +130,7 @@ The next run's `turn` direction determines which way the layout turns.
 4. `src/kitchen/layout.py` — Run, LayoutEngine
 5. `src/config_parser.py` — JSON loading, validation
 6. `configs/ref_u_shape.json` — U-shape layout config (most complex)
-7. `docs/f02-kitchen-config-syntax.md` — config format specification
+7. `docs/config-syntax.md` — config format specification
 
 ### Validation Pipeline
 
@@ -243,13 +243,13 @@ V1.0 configs are automatically migrated to V1.1 semantics.
 - Material manager for Cycles rendering
 - Exporters (OBJ, GLTF, .blend, wireframe PNG)
 - Validators for dimensions, gaps, corners, drawers, tolerances, room, materials
-- Comprehensive test suite (218 tests passing)
+- Comprehensive test suite (384 tests passing)
 
 **Test Coverage:**
 
 - `test_core_geometry.py` — 36 tests (Vector2D, Vector3D, BoundingBox, Transform2D)
 - `test_kitchen.py` — 22 tests (Wall, Cabinet, LayoutEngine, Standards)
-- `test_wall_centric_model.py` — 21 tests (Wall, Room, WallCabinet, CornerCabinet)
+- `test_wall_centric_model.py` — 21 tests (Wall, Room, Cabinet, CornerCabinet)
 - `test_wall_builder.py` — 15 tests (Config → Wall conversion)
 - `test_config_parser.py` — 11 tests (parser and defaults)
 - `test_positions.py` — 6 tests (position calculations and validation)

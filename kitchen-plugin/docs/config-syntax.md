@@ -1179,6 +1179,20 @@ The plugin calculates positions automatically:
 4. Wall cabinets: same X positions, at `Z = wallMountHeight`
 5. Tall cabinets: same X positions, at `Z = 0`
 
+### Origin Convention
+
+Cabinet-local coordinates use **front-face origin**:
+
+- Y=0 at the front face (where the door is)
+- Depth extends in -Y direction (away from viewer, toward wall)
+- This simplifies door/drawer positioning
+
+Wall-local coordinates use **back-face origin**:
+
+- Y=0 at the wall face
+- Depth extends in +Y direction (into room)
+- This simplifies wall-relative positioning
+
 ---
 
 ## 12. Validation Rules

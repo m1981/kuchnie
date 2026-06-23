@@ -100,20 +100,25 @@ class Room:
     def corners(self) -> List[Tuple[float, float]]
 ```
 
-### WallCabinet
+### Cabinet
 
 ```python
 @dataclass
-class WallCabinet:
+class Cabinet:
+    id: str
+    cabinet_type: CabinetType
     wall_id: str      # Reference to wall
     offset: float     # Distance from wall start
-    width: float      # Cabinet width (along wall)
-    depth: float      # Cabinet depth (into room)
-    height: float     # Cabinet height (up)
+    dimensions: Dimensions
 
-    def world_position(self, wall: Wall) -> Tuple[float, float]
-    def front_position(self, wall: Wall) -> Tuple[float, float]
-    def center_position(self, wall: Wall) -> Tuple[float, float]
+    @property
+    def width(self) -> float
+    @property
+    def depth(self) -> float
+    @property
+    def height(self) -> float
+    @property
+    def is_corner(self) -> bool
 ```
 
 ### CornerCabinet
@@ -156,33 +161,37 @@ This ensures wall normals always point **into the room**.
 ## Example: U-Shape Kitchen
 
 ```python
-from src.wall_model import Wall, Room, WallCabinet, CornerCabinet
+from src.kitchen.wall import Wall, Room, CornerReference
+from src.kitchen.cabinet import Cabinet
+from src.core.types import CabinetType, Dimensions
 
 # Define room walls (counterclockwise)
 room = Room(walls=[
-    Wall(id="left",  start=(0, 0),    end=(0, 2400)),
-    Wall(id="back",  start=(0, 2400), end=(3000, 2400)),
-    Wall(id="right", start=(3000, 2400), end=(3000, 0)),
+    Wall(id="left",  start=Vector2D(0, 0),    end=Vector2D(0, 2400)),
+    Wall(id="back",  start=Vector2D(0, 2400), end=Vector2D(3000, 2400)),
+    Wall(id="right", start=Vector2D(3000, 2400), end=Vector2D(3000, 0)),
 ])
 
 # Cabinets on back wall
 back_cabinets = [
-    WallCabinet(wall_id="back", offset=0, width=600, depth=560, height=720),
-    WallCabinet(wall_id="back", offset=600, width=800, depth=560, height=720),
+    Cabinet(id="cab1", cabinet_type=CabinetType.BASE_DOOR,
+            wall_id="back", offset=0, dimensions=Dimensions(600, 560, 720)),
+    Cabinet(id="cab2", cabinet_type=CabinetType.BASE_SINK,
+            wall_id="back", offset=600, dimensions=Dimensions(800, 560, 720)),
 ]
 
 # Corner at back-right junction
-corner = CornerCabinet(
-    primary_wall="back",
-    secondary_wall="right",
-    width=900,
+corner = CornerReference(
+    primary_wall_id="back",
+    secondary_wall_id="right",
     blind_depth=400,
     blind_side="right",
 )
 
 # Right wall starts after corner blind depth
 right_cabinets = [
-    WallCabinet(wall_id="right", offset=400, width=600, depth=560, height=720),
+    Cabinet(id="cab3", cabinet_type=CabinetType.BASE_DOOR,
+            wall_id="right", offset=400, dimensions=Dimensions(600, 560, 720)),
 ]
 ```
 
@@ -200,18 +209,18 @@ right_cabinets = [
 
 ---
 
-## Migration from Current Implementation
+## Current Implementation
 
 The current implementation uses:
 
-- Run-based positioning (similar but not identical)
+- Run-based positioning (sequence of cabinets along a wall)
 - Direction vectors (east, north, west, south)
 - Front-face origin (Y=0 at front)
+- Cabinet object with wall_id and offset
+- LayoutEngine calculates world positions
 
-The new model:
+The wall-centric model is the foundation for:
 
-- Wall-based positioning (more general)
-- Wall normal (always points into room)
-- Back-face origin (Y=0 at wall face)
-
-Both can coexist during migration.
+- Position calculation (wall.point_at_offset, wall.point_at_depth)
+- Corner detection (CornerReference)
+- Cabinet placement (CabinetPlacement with world_position + rotation_rad)
