@@ -246,13 +246,12 @@ Front panel (widok od strony wewnętrznej):
 
 ## 4. Modele danych (Pydantic)
 
-### 4.1 CorpusSpec — pełna specyfikacja korpusu
+### 4.1 CorpusSpec — specyfikacja korpusu (z dyskryminowaną unią)
 
 ```python
 class CorpusSpec(BaseModel):
     id: str                    # np. "K01"
     name: str                  # np. "Szafka dolna pod zlew 800"
-    corpus_type: CorpusType   # base_door | base_drawer | wall_door | wall_lifter | tall
 
     # Wymiary zewnętrzne
     width: float               # mm (szerokość)
@@ -272,17 +271,66 @@ class CorpusSpec(BaseModel):
     # Oklejanie
     edge_material: str = "ABS_0.8"
 
-    # Struktura wewnętrzna
-    shelves: list[float] = []          # pozycje półek od dna wewnątrz (mm)
-    drawers: list[DrawerSpec] = []     # specyfikacja szuflad
-    doors: list[int] = []              # ilość zawiasów na drzwi
-
     # Okucia
     hinges: HingeSpec | None = None
     handles: HandleSpec | None = None
 
     # Luki frontów
-    front_gap: float = 3.0             # mm luka z każdej strony
+    front_gap: float = 3.0     # mm luka z każdej strony
+
+    # Konfiguracja specyficzna dla typu (dyskryminowana unia)
+    config: CabinetConfig      # BaseDoorConfig | BaseDrawerConfig | ...
+```
+
+#### Warianty konfiguracji (CabinetConfig)
+
+```python
+# Szafka drzwiowa z półkami
+class BaseDoorConfig(BaseModel):
+    type: Literal["base_door"] = "base_door"
+    shelves: list[float] = []      # pozycje półek od dna wewnątrz (mm)
+    doors: list[int] = []          # ilość zawiasów na drzwi
+
+# Szafka z szufladami
+class BaseDrawerConfig(BaseModel):
+    type: Literal["base_drawer"] = "base_drawer"
+    drawers: list[DrawerSpec] = [] # specyfikacja szuflad (góra → dół)
+
+# Szafka narożna ślepa (L-kształtna)
+class CornerBlindConfig(BaseModel):
+    type: Literal["corner_blind"] = "corner_blind"
+    corner_side: CornerSide        # LEFT | RIGHT
+    second_width: float            # mm — szerokość prostopadła
+    shelves: list[float] = []
+    doors: list[int] = []
+
+# Szafka narożna wewnętrzna (z karuzelą)
+class CornerInternalConfig(BaseModel):
+    type: Literal["corner_internal"] = "corner_internal"
+    carousel: CarouselType = "optima_800"  # OPTIMA_800 | OPTIMA_900
+    shelves: list[float] = []
+    doors: list[int] = []
+
+# Szafka zlewowa
+class SinkConfig(BaseModel):
+    type: Literal["sink"] = "sink"
+    has_sorting_drawer: bool = False
+    sorting_drawer: DrawerSpec | None = None
+    doors: list[int] = []
+
+# Szafka z koszem cargo
+class CargoConfig(BaseModel):
+    type: Literal["cargo"] = "cargo"
+    cargo_type: CargoType = "mini_40"
+    cargo_color: str = "ocynk"
+    doors: list[int] = []
+
+# Szafka do zabudowy piekarnika
+class OvenConfig(BaseModel):
+    type: Literal["oven"] = "oven"
+    cavity_height: float           # mm — wysokość komory piekarnika
+    has_ventilation: bool = True
+    reinforced_shelf: bool = True
 ```
 
 ### 4.2 Panel — pojedyncza formatka
@@ -332,12 +380,15 @@ class HingeSpec(BaseModel):
 ### 4.5 Enumy
 
 ```python
-CorpusType:  base_door | base_drawer | wall_door | wall_lifter | tall
+CorpusType:  base_door | base_drawer | corner_blind | corner_internal | sink | cargo | oven
 PanelRole:   bok_lewy | bok_prawy | dno | gora | polka | plecy | front_drzwi | front_szuflada
 EdgeSide:    gora | dol | lewo | prawo
 DrillFace:   inside | outside | front | back
 DrillType:   system32 | puszka_zawiasu | znacznik_wkret | kolek_zawiasu |
              kolek_laczacy | minifix | uchwyt | podporka_polki
+CornerSide:  left | right
+CarouselType: optima_800 | optima_900
+CargoType:   mini_40
 ```
 
 ### 4.6 Shared Constants
@@ -663,7 +714,7 @@ TOTAL                              250    11    96%
 ## Załącznik B: Przykład użycia
 
 ```python
-from kitchen_cad.models import CorpusSpec, CorpusType, HingeSpec, HandleSpec
+from kitchen_cad.models import CorpusSpec, BaseDoorConfig, HingeSpec, HandleSpec
 from kitchen_cad.panel_calculator import calculate_panels
 from kitchen_cad.drill_engine import apply_all_drilling
 from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
@@ -672,14 +723,15 @@ from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
 spec = CorpusSpec(
     id="K01",
     name="Szafka dolna pod zlew 800",
-    corpus_type=CorpusType.BASE_DOOR,
     width=800, height=720, depth=510,
     material_corpus="D3821_SW",
     material_front="U164_EM",
-    shelves=[352],
-    doors=[2],
     hinges=HingeSpec(count=2),
     handles=HandleSpec(spacing=256),
+    config=BaseDoorConfig(
+        shelves=[352],
+        doors=[2],
+    ),
 )
 
 # 2. Oblicz formatki

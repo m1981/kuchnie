@@ -1,110 +1,111 @@
-# Kitchen CAD - Generator szablonów DXF dla mebli kuchennych
+# Kitchen CAD — Parametric Cabinet Generator
 
-## Opis
+> Parametryczny system do projektowania mebli kuchennych.
+> Z definicji korpusu generuje listy cięcia (CSV) i planowane DXF.
 
-Generator parametryzowanych plików DXF dla produkcji mebli kuchennych z CNC.
-Zgodny z europejskimi standardami: System 32, Blum LEGRABOX, BLUMOTION.
+## Quick Start
 
-## Dokumentacja
+```python
+from kitchen_cad.models import CorpusSpec, BaseDoorConfig, HingeSpec
+from kitchen_cad.panel_calculator import calculate_panels
+from kitchen_cad.drill_engine import apply_all_drilling
+from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
 
-| Dokument                                                     | Opis                           |
-| ------------------------------------------------------------ | ------------------------------ |
-| [ROADMAP.md](ROADMAP.md)                                     | Plan rozwoju projektu          |
-| [CHANGELOG.md](CHANGELOG.md)                                 | Historia zmian                 |
-| [docs/architecture.md](docs/architecture.md)                 | Architektura systemu           |
-| [docs/DESIGN.md](docs/DESIGN.md)                             | Dokumentacja projektowa        |
-| [docs/LEGRABOX_SPEC.md](docs/LEGRABOX_SPEC.md)               | Specyfikacja LEGRABOX          |
-| [docs/poradnik-kompleksowy.md](docs/poradnik-kompleksowy.md) | Kompleksowy poradnik meblarski |
+spec = CorpusSpec(
+    id="K01",
+    name="Szafka dolna 800",
+    width=800, height=720, depth=510,
+    hinges=HingeSpec(count=2),
+    config=BaseDoorConfig(shelves=[352], doors=[2]),
+)
 
-## Struktura
+panels = calculate_panels(spec)
+panels = apply_all_drilling(panels, spec)
+generate_cutting_csv(panels, "output/ciecie.csv")
+generate_edging_csv(panels, "output/oklejanie.csv")
+```
+
+## Architecture
+
+```
+CorpusSpec (config: CabinetConfig)
+    │
+    ▼
+panel_calculator.calculate_panels()
+    │  ┌── _calculate_base_door()
+    │  ├── _calculate_base_drawer()
+    │  ├── _calculate_corner_blind()
+    │  ├── _calculate_corner_internal()
+    │  ├── _calculate_sink()
+    │  ├── _calculate_cargo()
+    │  └── _calculate_oven()
+    ▼
+drill_engine.apply_all_drilling()
+    │  ┌── apply_system32()
+    │  ├── apply_hinges()
+    │  └── apply_handles()
+    ▼
+csv_generator.generate_*_csv()
+```
+
+## Cabinet Types (8 variants)
+
+| Config Type            | Description           | Key Fields                          |
+| ---------------------- | --------------------- | ----------------------------------- |
+| `BaseDoorConfig`       | Standard door cabinet | `shelves[]`, `doors[]`              |
+| `BaseDrawerConfig`     | Drawer cabinet        | `drawers[]`                         |
+| `CornerBlindConfig`    | L-shaped corner blind | `corner_side`, `second_width`       |
+| `CornerInternalConfig` | Corner with carousel  | `carousel` (Optima 800/900)         |
+| `SinkConfig`           | Sink cabinet          | `has_sorting_drawer`                |
+| `CargoConfig`          | Cargo basket          | `cargo_type`, `cargo_color`         |
+| `OvenConfig`           | Oven housing          | `cavity_height`, `reinforced_shelf` |
+
+## Documentation
+
+| Document                                             | Description                            |
+| ---------------------------------------------------- | -------------------------------------- |
+| [ROADMAP.md](ROADMAP.md)                             | Development roadmap                    |
+| [CHANGELOG.md](CHANGELOG.md)                         | Version history                        |
+| [docs/architecture.md](docs/architecture.md)         | System architecture (Mermaid diagrams) |
+| [docs/DESIGN.md](docs/DESIGN.md)                     | Design documentation (Polish)          |
+| [docs/CABINET-VARIANTS.md](docs/CABINET-VARIANTS.md) | 12 cabinet type specification          |
+| [docs/LEGRABOX_SPEC.md](docs/LEGRABOX_SPEC.md)       | LEGRABOX hardware specification        |
+
+## Project Structure
 
 ```
 kitchen-cad/
-├── generators/          # Skrypty Python generujące DXF
-│   └── legrabox_side_panel.py   # Bok szafki z nawiertami LEGRABOX
-├── templates/           # Szablony DXF (gotowe wzorce)
-├── output/              # Wygenerowane pliki DXF
-└── docs/                # Dokumentacja standardów
+├── src/kitchen_cad/
+│   ├── models.py              # Domain models (Pydantic)
+│   ├── panel_calculator.py    # Panel geometry (7 variant calculators)
+│   ├── drill_engine.py        # Drill point calculations
+│   └── csv_generator.py       # CSV output
+│
+├── tests/                     # 292 tests
+│   ├── unit/                  # Unit tests
+│   ├── integration/           # Integration tests
+│   └── e2e/                   # End-to-end tests
+│
+├── generators/                # Standalone DXF generators
+│   └── legrabox_side_panel.py
+│
+└── docs/                      # Documentation
 ```
 
-## Wymagania
+## Requirements
 
 ```bash
-python3.11 -m pip install ezdxf
+pip install pydantic>=2.0
 ```
 
-## Użycie
-
-### Bok szafki dolnej - 3 szuflady LEGRABOX + BLUMOTION
+## Tests
 
 ```bash
-# Domyślna konfiguracja: szafka 510x720mm, szuflady N/M/K
-python3.11 generators/legrabox_side_panel.py
-
-# Własne wymiary
-python3.11 generators/legrabox_side_panel.py --depth 510 --height 720 --drawers N M K
-
-# Szafka z szerszymi szufladami
-python3.11 generators/legrabox_side_panel.py --depth 560 --height 720 --drawers M M K
-
-# Wysoka szafka (słupek)
-python3.11 generators/legrabox_side_panel.py --depth 560 --height 2000 --drawers N K C
+python -m pytest tests/ -v
 ```
 
-### Typy szuflad LEGRABOX
+## Technical Standards
 
-| Typ   | Wysokość boku | Zastosowanie           |
-| ----- | ------------- | ---------------------- |
-| **N** | 66.5 mm       | Sztućce, drobiazgi     |
-| **M** | 90.5 mm       | Garnki, przyprawy      |
-| **K** | 128.5 mm      | Garnki, patelnie       |
-| **C** | 177.0 mm      | Duże garnki, produkty  |
-| **F** | 241.0 mm      | Specjalne zastosowania |
-
-## Standardy techniczne
-
-### System 32
-
-- Rozstaw otworów: 32 mm
-- Odległość od krawędzi przedniej: 37 mm
-- Odległość od krawędzi tylnej: 37 mm
-- Średnica otworu: ∅5 mm
-
-### LEGRABOX
-
-- Profil kab. mocowany na ∅5mm
-- Pierwszy otwór: 9mm od dna otworu szuflady
-- Rozstaw: 32mm (System 32)
-- BLUMOTION: zintegrowany w prowadnicy
-
-### Warstwy DXF (dla CNC)
-
-| Warstwa               | Kolor    | Zawartość               |
-| --------------------- | -------- | ----------------------- |
-| `01_OUTLINE`          | Biały    | Kontur zewnętrzny       |
-| `02_SYSTEM32`         | Zielony  | Otwory System 32 (∅5mm) |
-| `03_LEGRABOX_PROFILE` | Czerwony | Otwory prowadnic        |
-| `04_DOWELS`           | Żółty    | Otwory pod kołki (∅8mm) |
-| `05_DIMENSIONS`       | Cyan     | Wymiary kontrolne       |
-| `06_NOTES`            | Szary    | Opisy i notatki         |
-| `07_EDGEBANDING`      | Magenta  | Krawędzie do oklejenia  |
-
-## Format pliku
-
-- Format: DXF R2000 (kompatybilny z AutoCAD, LibreCAD, QCAD)
-- Skala: 1:1
-- Jednostki: milimetry (mm)
-- Płaszczyzna: XY (Z=0)
-
-## Zlecenie CNC
-
-1. Wygeneruj plik DXF
-2. Otwórz w przeglądarce DXF (LibreCAD, AutoCAD) i zweryfikuj
-3. Wyślij do centrum CNC z informacją o:
-    - Materiale (płyta wiórowa laminowana, grubość 18mm)
-    - Okleinowaniu (krawędź przednia i górna - ABS)
-    - Typie okleinarki (jaka grubość obrzeża)
-
-## Autor
-
-Generator stworzony dla projektu kuchnie - meblarstwo europejskie
+- **System 32**: 32mm grid, 37mm offset, ∅5mm holes
+- **Blum CLIP top**: ∅35mm cup, 45mm screw spacing
+- **LEGRABOX**: Side heights N (66.5mm) / M (90.5mm) / K (128.5mm) / C (177mm)

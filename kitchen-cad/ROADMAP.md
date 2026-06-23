@@ -20,6 +20,20 @@
 
 ---
 
+## Phase 2.5 — Discriminated Union Config ✅ (Completed 2026-06-24)
+
+- [x] Discriminated union config pattern (BaseDoorConfig, BaseDrawerConfig, CornerBlindConfig)
+- [x] CornerInternalConfig — diagonal back, carousel (Optima 800/900)
+- [x] SinkConfig — optional sorting drawer
+- [x] CargoConfig — cargo basket (MINI_40)
+- [x] OvenConfig — reinforced shelf, ventilation
+- [x] CarouselType, CargoType, CornerSide enums
+- [x] Backward-compatible model_validator for legacy flat fields
+- [x] Variant-specific panel calculators (7 types)
+- [x] 292 tests passing
+
+---
+
 ## Phase 2 — Extended Features 🔄 (In Progress)
 
 - [x] Validator — geometry checks for drill points

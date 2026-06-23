@@ -17,11 +17,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Consolidated architecture documentation
     - Removed stale test counts from docs
 
+- Discriminated union config pattern for cabinet types (2026-06-24)
+    - BaseDoorConfig — standard door cabinet with shelves
+    - BaseDrawerConfig — drawer cabinet
+    - CornerBlindConfig — L-shaped corner blind cabinet
+    - CornerInternalConfig — corner with carousel (Optima 800/900)
+    - SinkConfig — sink cabinet with optional sorting drawer
+    - CargoConfig — cargo basket (MINI_40)
+    - OvenConfig — oven housing with reinforced shelf
+    - CarouselType, CargoType, CornerSide enums
+    - Backward-compatible model_validator for legacy flat fields
+    - 15 new tests for config variants
+
 ### Changed
 
 - `corpus_type` field changed from `str` to `CorpusType` enum (backward-compatible — Pydantic coerces strings)
 - `drill_engine.apply_*` functions are now **pure** — return new panel lists, originals are never mutated
 - Shared `SYSTEM32_OFFSET` / `SYSTEM32_SPACING` constants extracted to `models.py`
+- `CorpusSpec` now uses `config: CabinetConfig` discriminated union instead of flat `shelves`, `drawers`, `doors` fields
+- `panel_calculator.calculate_panels()` dispatches to variant-specific calculators
 
 ### Fixed
 

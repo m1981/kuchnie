@@ -212,6 +212,34 @@ flowchart LR
 classDiagram
     direction TB
 
+    class CorpusType {
+        <<enumeration>>
+        BASE_DOOR
+        BASE_DRAWER
+        CORNER_BLIND
+        CORNER_INTERNAL
+        SINK
+        CARGO
+        OVEN
+    }
+
+    class CornerSide {
+        <<enumeration>>
+        LEFT
+        RIGHT
+    }
+
+    class CarouselType {
+        <<enumeration>>
+        OPTIMA_800
+        OPTIMA_900
+    }
+
+    class CargoType {
+        <<enumeration>>
+        MINI_40
+    }
+
     class PanelRole {
         <<enumeration>>
         LEFT_SIDE
@@ -315,7 +343,6 @@ classDiagram
         <<aggregate root>>
         +str id
         +str name
-        +CorpusType corpus_type
         +float width
         +float height
         +float depth
@@ -326,9 +353,6 @@ classDiagram
         +str material_back
         +str material_front
         +str edge_material
-        +list~float~ shelves
-        +list~DrawerSpec~ drawers
-        +list~int~ doors
         +HingeSpec hinges
         +HandleSpec handles
         +float shelf_pin_diameter
@@ -337,6 +361,65 @@ classDiagram
         +float shelf_pin_back_offset
         +int shelf_pin_max_per_row
         +float front_gap
+        +CabinetConfig config
+    }
+
+    class CabinetConfig {
+        <<discriminated union>>
+        BaseDoorConfig
+        BaseDrawerConfig
+        CornerBlindConfig
+        CornerInternalConfig
+        SinkConfig
+        CargoConfig
+        OvenConfig
+    }
+
+    class BaseDoorConfig {
+        <<variant>>
+        +list~float~ shelves
+        +list~int~ doors
+    }
+
+    class BaseDrawerConfig {
+        <<variant>>
+        +list~DrawerSpec~ drawers
+    }
+
+    class CornerBlindConfig {
+        <<variant>>
+        +CornerSide corner_side
+        +float second_width
+        +list~float~ shelves
+        +list~int~ doors
+    }
+
+    class CornerInternalConfig {
+        <<variant>>
+        +CarouselType carousel
+        +list~float~ shelves
+        +list~int~ doors
+    }
+
+    class SinkConfig {
+        <<variant>>
+        +bool has_sorting_drawer
+        +DrawerSpec sorting_drawer
+        +list~int~ doors
+    }
+
+    class CargoConfig {
+        <<variant>>
+        +CargoType cargo_type
+        +str cargo_color
+        +list~int~ doors
+    }
+
+    class OvenConfig {
+        <<variant>>
+        +float cavity_height
+        +bool has_ventilation
+        +bool reinforced_shelf
     }
 
     class RunnerSpec {
@@ -365,7 +448,19 @@ classDiagram
     EdgeBand *-- EdgeSide : side
     DrillPoint *-- DrillFace : face
     DrillPoint *-- DrillType : drill_type
-    CorpusSpec *-- DrawerSpec : drawers
+    CorpusSpec *-- CabinetConfig : config
+    CabinetConfig *-- BaseDoorConfig
+    CabinetConfig *-- BaseDrawerConfig
+    CabinetConfig *-- CornerBlindConfig
+    CabinetConfig *-- CornerInternalConfig
+    CabinetConfig *-- SinkConfig
+    CabinetConfig *-- CargoConfig
+    CabinetConfig *-- OvenConfig
+    BaseDrawerConfig *-- DrawerSpec : drawers
+    CornerBlindConfig *-- CornerSide : corner_side
+    CornerInternalConfig *-- CarouselType : carousel
+    SinkConfig *-- DrawerSpec : sorting_drawer
+    CargoConfig *-- CargoType : cargo_type
     CorpusSpec *-- HingeSpec : hinges
     CorpusSpec *-- HandleSpec : handles
     DrawerSpec --> RunnerSpec : runner ⚡NEW
@@ -515,7 +610,7 @@ classDiagram
 
     class base_door_800 {
         <<preset>>
-        corpus_type = CorpusType.BASE_DOOR
+        config = BaseDoorConfig(shelves=[352], doors=[2])
         width = 800
         height = 720
         depth = 510
@@ -523,32 +618,31 @@ classDiagram
 
     class base_drawer_600 {
         <<preset>>
-        corpus_type = CorpusType.BASE_DRAWER
+        config = BaseDrawerConfig(drawers=[N, M, K])
         width = 600
         height = 720
         depth = 510
-        drawers = [N, M, K]
     }
 
     class wall_door_800 {
         <<preset>>
-        corpus_type = CorpusType.WALL_DOOR
+        config = BaseDoorConfig(shelves=[352], doors=[2])
         width = 800
         height = 720
         depth = 300
     }
 
-    class corner_900 {
+    class corner_blind_900 {
         <<preset>>
-        corpus_type = CorpusType.BASE_DOOR
+        config = CornerBlindConfig(corner_side=LEFT, second_width=510)
         width = 900
         height = 720
         depth = 510
     }
 
-    class tall_cabinet_600 {
+    class oven_600 {
         <<preset>>
-        corpus_type = CorpusType.TALL
+        config = OvenConfig(cavity_height=600)
         width = 600
         height = 2000
         depth = 560
