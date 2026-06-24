@@ -1,0 +1,7 @@
+*.py
+src/**/*.py
+!tests/__init__.py
+
+*.ts
+*.toml
+*.json
