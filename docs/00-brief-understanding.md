@@ -16,7 +16,7 @@ Here's how I read your three-stage workflow:
 - You need **predefined 2.5D layouts** (not full 3D — smart, fast)
 - Customer picks decors from **Kronospan / Egger** catalogs (melamine-faced chipboard, HPL — the bread and butter of Polish kitchen production)
 - Backend renders a **high-quality 2.5D preview** with the chosen textures
-- Output: **screenshots for the customer** — no engineering data yet
+
 
 This is essentially a **sales tool** — quick, visual, enough to get a "yes, we like option B."
 

@@ -9,7 +9,7 @@ Use case: First visit
 5.  I chose one
 6.  I have a sidebar where I can change decors for ground cabinets, tall cabinets, wall cabinets, counter top, and splashback
 7.  System is connection with backend to provide me 2.5D high quality image
-8.  I repeat steps 6 and seven and doing screenshots for all two setups customer likes most.
+8.  I repeat steps 6 and seven and doing screenshots (handled by ipad screenshot NO other feature needed) for all two setups customer likes most.
 
 Use case: Designing kitchen rows
 
