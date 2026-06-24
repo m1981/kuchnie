@@ -29,7 +29,7 @@
 </script>
 
 <div
-  class="flex min-h-0 flex-col overflow-y-auto pr-1 {isStreaming
+  class="scrollbar-hidden flex min-h-0 flex-col overflow-y-auto pr-1 {isStreaming
     ? 'pointer-events-none opacity-50'
     : ''}"
 >

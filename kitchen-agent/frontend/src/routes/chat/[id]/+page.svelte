@@ -298,7 +298,7 @@
       New chat
     </button>
 
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="scrollbar-hidden min-h-0 flex-1 overflow-y-auto">
       <SidebarLayout
         activeId={currentSessionId}
         onload={navigateToSession}

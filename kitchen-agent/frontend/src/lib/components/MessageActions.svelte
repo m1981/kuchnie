@@ -207,7 +207,6 @@
       <!-- Dropdown menu -->
       {#if menuOpen}
         <div
-          bind:this={menuRef}
           use:smartPosition={{ trigger: triggerEl!, placement: "bottom-end" }}
           class="dropdown-menu"
           role="menu"
