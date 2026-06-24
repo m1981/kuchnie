@@ -1,0 +1,68 @@
+korpus:
+    id: 'K01'
+    typ: 'dolna_szufladowa'
+    opis: 'Szafka dolna pod zlew, 2 szuflady'
+
+    wymiary:
+        szerokosc: 800   # mm
+        wysokosc: 720    # mm (standard)
+        glebokosc: 510   # mm (blat 600 - 90)
+
+    material:
+        korpus: 'swiss_krono.U119_VL'    # Beż Jasny Mat
+        plecy: 'HDF_3mm'                 # HDF biały 3mm
+        fronty: 'swiss_krono.U119_EM'    # Beż Jasny Velvet (MDF)
+
+    grubosci:
+        boki: 18
+        dna: 18
+        polki: 18
+        plecy: 3
+        fronty: 18
+
+    oklejanie:
+        typ: 'ABS'
+        grubosc: 0.8
+        kolor: 'dopasowany_do_materialu'
+        technologia: 'PUR'
+
+    plecy:
+        typ: 'wpuszczane_w_nut'
+        nut: 8  # mm głębokości rowka
+
+    wnetrze:
+        szuflady:
+            - id: 'S1'
+              typ: 'blum_metabox'
+              wysokosc: 150
+              wysokosc_wewnetrzna: 120
+            - id: 'S2'
+              typ: 'blum_metabox'
+              wysokosc: 300
+              wysokosc_wewnetrzna: 270
+
+    fronty:
+        - id: 'F1'
+          typ: 'szufladowy'
+          powiazany: 'S1'
+          margines_gora: 3
+          margines_dol: 3
+          margines_lewo: 3
+          margines_prawo: 3
+        - id: 'F2'
+          typ: 'szufladowy'
+          powiazany: 'S2'
+          margines_gora: 3
+          margines_dol: 3
+          margines_lewo: 3
+          margines_prawo: 3
+
+    uchwyty:
+        typ: 'relingowy'
+        rozstaw: 256
+        pozycja: 'srodek_frontu'
+        srednica_otworu: 5
+
+    nozki:
+        wysokosc: 100
+        typ: 'regulowane'

@@ -1,0 +1,55 @@
+korpus:
+    id: 'G01'
+    typ: 'gorna_drzwiowa'
+    opis: 'Szafka wisząca nad zlewem'
+
+    wymiary:
+        szerokosc: 800
+        wysokosc: 720
+        glebokosc: 300
+
+    material:
+        korpus: 'swiss_krono.U119_VL'
+        plecy: 'HDF_3mm'
+        fronty: 'swiss_krono.U119_EM'
+
+    grubosci:
+        boki: 18
+        dna: 18
+        polki: 18
+        plecy: 3
+        fronty: 18
+
+    oklejanie:
+        typ: 'ABS'
+        grubosc: 0.8
+        kolor: 'dopasowany_do_materialu'
+        technologia: 'PUR'
+
+    plecy:
+        typ: 'wpuszczane_w_nut'
+        nut: 8
+
+    wnetrze:
+        polki:
+            - id: 'P1'
+              pozycja_od_dolu: 352
+            - id: 'P2'
+              pozycja_od_dolu: 544
+
+    fronty:
+        - id: 'F1'
+          typ: 'drzwiowy_lewy'
+          zawias: 'blum_clip_35'
+          ilosc_zawiasow: 2
+          pozycja_pierwszego_zawiasu: 100
+        - id: 'F2'
+          typ: 'drzwiowy_prawy'
+          zawias: 'blum_clip_35'
+          ilosc_zawiasow: 2
+          pozycja_pierwszego_zawiasu: 100
+
+    uchwyty:
+        typ: 'relingowy'
+        rozstaw: 256
+        pozycja: 'srodek_frontu'

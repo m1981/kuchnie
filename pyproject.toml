@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kuchnie-core"
+version = "0.1.0"
+description = "Kitchen cabinet decomposition engine — the manufacturing heart"
+requires-python = ">=3.12"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kuchnie_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
