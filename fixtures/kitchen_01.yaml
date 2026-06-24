@@ -1,0 +1,24 @@
+# Minimal test kitchen — one row, two cabinet types.
+# Used by the walking-skeleton tests.
+
+kitchen:
+  version: "1.0"
+  project:
+    name: "Kuchnia Nowowiejska"
+    created: "2026-06-24"
+
+  rows:
+    - id: "row_1"
+      label: "Ściana północna"
+      wall_width_mm: 2400
+      wall_height_mm: 2400
+      cabinet_files:
+        - "K01.yaml"
+        - "G01.yaml"
+
+  worktops:
+    - row_id: "row_1"
+      length_mm: 2400
+      depth_mm: 600
+      thickness_mm: 40
+      material: "egger.F2060_ST87"

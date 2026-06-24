@@ -99,3 +99,57 @@ class DecompositionResult:
     cabinet_type: str
     panels: list[Panel] = field(default_factory=list)
     accessories: list[Accessory] = field(default_factory=list)
+
+
+# ── Kitchen-level models ────────────────────────────────────────
+
+
+@dataclass
+class Row:
+    """A row of cabinets along one wall."""
+    id: str
+    label: str               # "Ściana północna"
+    wall_width_mm: int
+    wall_height_mm: int
+    cabinets: list[CabinetInstance] = field(default_factory=list)
+
+    def used_width_mm(self) -> float:
+        """Total width of all cabinets placed in this row."""
+        return sum(c.width_mm for c in self.cabinets)
+
+    def remaining_mm(self) -> float:
+        """Free space left in the row."""
+        return self.wall_width_mm - self.used_width_mm()
+
+
+class GrainAxis:
+    """Constants for board grain direction."""
+    WIDTH = "width"   # grain runs along width_mm
+    HEIGHT = "height"  # grain runs along height_mm
+
+
+@dataclass
+class WorktopSegment:
+    """A worktop segment covering one row.
+
+    Simple rectangle for now.  L-shapes and cutouts come in CAM stage.
+    """
+    row_id: str
+    length_mm: float
+    depth_mm: float = 600
+    thickness_mm: int = 40
+    material: str = ""
+
+
+@dataclass
+class Kitchen:
+    """Top-level kitchen — the unit of work flowing through the whole system.
+
+    This is what gets serialized to intermediate JSON,
+    sent to the render backend, and consumed by the CLI.
+    """
+    version: str = "1.0"
+    project_name: str = ""
+    created: str = ""
+    rows: list[Row] = field(default_factory=list)
+    worktops: list[WorktopSegment] = field(default_factory=list)

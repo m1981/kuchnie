@@ -1,4 +1,4 @@
-"""YAML loader — reads a cabinet definition file into a CabinetInstance.
+"""YAML loader — reads cabinet and kitchen definition files.
 
 The loader is an ADAPTER between the YAML format (Polish keys, user-facing)
 and the domain model (English fields, engine-facing).  It has no business logic.
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from .model import CabinetInstance
+from .model import CabinetInstance, Kitchen, Row, WorktopSegment
 
 
 def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
@@ -46,4 +46,47 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         handles=k.get("uchwyty", {}),
         # Plinth (0 for wall cabinets)
         plinth_height_mm=k.get("nozki", {}).get("wysokosc", 0),
+    )
+
+
+def load_kitchen(yaml_path: str | Path) -> Kitchen:
+    """Load a kitchen definition from YAML.
+
+    Cabinet definitions are loaded from separate YAML files referenced
+    by ``cabinet_files`` (paths relative to the kitchen YAML).
+    """
+    path = Path(yaml_path).resolve()
+    data = yaml.safe_load(path.read_text())
+    k = data["kitchen"]
+
+    rows: list[Row] = []
+    for rd in k.get("rows", []):
+        cabinets = [
+            load_cabinet(path.parent / cf)
+            for cf in rd.get("cabinet_files", [])
+        ]
+        rows.append(Row(
+            id=rd["id"],
+            label=rd.get("label", ""),
+            wall_width_mm=rd["wall_width_mm"],
+            wall_height_mm=rd["wall_height_mm"],
+            cabinets=cabinets,
+        ))
+
+    worktops: list[WorktopSegment] = []
+    for wt in k.get("worktops", []):
+        worktops.append(WorktopSegment(
+            row_id=wt["row_id"],
+            length_mm=wt["length_mm"],
+            depth_mm=wt.get("depth_mm", 600),
+            thickness_mm=wt.get("thickness_mm", 40),
+            material=wt.get("material", ""),
+        ))
+
+    return Kitchen(
+        version=k.get("version", "1.0"),
+        project_name=k.get("project", {}).get("name", ""),
+        created=k.get("project", {}).get("created", ""),
+        rows=rows,
+        worktops=worktops,
     )
