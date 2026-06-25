@@ -14,7 +14,8 @@ let buildTimeout = null;
 function build() {
   try {
     console.log('\n[build] Rebuilding catalog.json...');
-    execSync(`node "${BUILD_SCRIPT}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    const env = { ...process.env, NODE_PATH: path.join(__dirname, 'node_modules') };
+    execSync(`node "${BUILD_SCRIPT}"`, { stdio: 'inherit', cwd: path.join(__dirname, '..'), env });
     console.log('[build] Done\n');
   } catch (e) {
     console.error('[build] Failed:', e.message);
@@ -56,7 +57,8 @@ watchYaml();
 
 // Start Vite
 console.log('[vite] Starting Vite dev server...\n');
-const vite = spawn('npx', ['vite', '--config', 'catalog/vite.config.mjs'], {
+const viteBin = path.join(__dirname, 'node_modules', '.bin', 'vite');
+const vite = spawn(viteBin, ['--config', 'catalog/vite.config.mjs'], {
   cwd: path.join(__dirname, '..'),
   stdio: 'inherit',
 });

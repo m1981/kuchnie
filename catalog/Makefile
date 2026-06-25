@@ -28,11 +28,11 @@ dev: ## Start dev server (watch YAML + rebuild + Vite HMR)
 
 .PHONY: build
 build: ## Build catalog.json from YAML sources
-	cd $(ROOT) && node data/materials/build.js
+	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node data/materials/build.js
 
 .PHONY: test
 test: ## Run validation tests (55 checks)
-	cd $(ROOT) && node --test data/materials/tests/validate.test.js
+	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node --test data/materials/tests/validate.test.js
 
 .PHONY: validate
 validate: build test ## Build + test (full validation)
@@ -40,7 +40,7 @@ validate: build test ## Build + test (full validation)
 ##@ Production
 .PHONY: prod
 prod: ## Build production bundle
-	cd $(ROOT) && node data/materials/build.js
+	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node data/materials/build.js
 	cd $(ROOT) && npx vite build --config catalog/vite.config.mjs
 
 .PHONY: preview
