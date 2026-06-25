@@ -1,0 +1,425 @@
+# =============================================================================
+# KATALOG KRONOSPAN - Płyty meblowe i akcesoria
+# Wygenerowany: 2026-06-25
+# Źródło: Oficjalne katalogi PDF Kronospan
+# =============================================================================
+
+manufacturer:
+  name: Kronospan
+  country: Austria/Polska
+  plants:
+    - Mielec (Polska)
+    - Warszawa (Polska)
+    - Salföld (Węgry)
+    - Lubrza (Polska)
+  website: https://www.kronospan.com
+
+# =============================================================================
+# TAKSONOMIA PRODUKTÓW (drzewo)
+# =============================================================================
+product_tree:
+  main_categories:
+    - name: MF Boards (TFL)
+      description: Płyty laminowane melaminą
+      subcategories:
+        - Standard MDF Panels
+        - Shelving and Furniture Boards
+        - Acoustic Panels
+        
+    - name: Door Laminates
+      description: Laminaty na fronty drzwiowe
+      variants:
+        - Invisible Touch
+        - FeelNess
+        
+    - name: Worktops
+      description: Blaty robocze
+      variants:
+        - Round Edge (postformowane)
+        - Square Edge (proste)
+        - Sawn Timber (lite drewno)
+        
+    - name: Kitchen
+      description: Produkty dedykowane do kuchni
+      includes:
+        - Splashbacks
+        - Tops
+        - Worktops
+        
+    - name: Boards
+      description: Płyty bazowe
+      variants:
+        - Standard MDF
+        - Standard Chipboard
+        - HDF
+        - Compact
+        - Compact Interior
+        - Solid Wood Panels
+        
+    - name: Edgebanding
+      description: Obrzeża meblowe
+      
+    - name: Flooring
+      description: Podłogi
+      variants:
+        - Vinyl Flooring
+        - Real Wood Flooring
+        - O.R.C.A Waterproof
+        - MPB
+        - mo.re! Water Resistant
+        - SPC Wall Tiles
+        
+    - name: KronoWall
+      description: Panele ścienne 3D
+
+# =============================================================================
+# STRUKTURY POWIERZCHNI (kody → nazwy)
+# =============================================================================
+surface_structures:
+  # Matowe
+  UM: { name: Ultra Matt, type: matowa }
+  SM: { name: Silk Matt, type: matowa }
+  AM: { name: Acrylic Matt, type: matowa }
+  SU: { name: Super Matt, type: matowa }
+  MM: { name: Mirror Matt, type: matowa }
+  GM: { name: Glitter Matt, type: matowa }
+  
+  # Połyskowe
+  AG: { name: Acrylic Gloss, type: połyskowa }
+  HG: { name: High Gloss, type: połyskowa }
+  MG: { name: Mirror Gloss, type: połyskowa }
+  GG: { name: Glitter Gloss, type: połyskowa }
+  SQ: { name: Super Quality Gloss, type: połyskowa }
+  
+  # Strukturalne
+  PD: { name: Pearl Sand, type: strukturalna, opis: "Matowa, delikatna tekstura piasku perłowego" }
+  PV: { name: Primavera, type: drewniana, opis: "Autentyczna struktura drewna dębu" }
+  LV: { name: Lava, type: kamienna, opis: "Szorstka tekstura granitu" }
+  PN: { name: Pluton, type: kamienna }
+  RW: { name: Rift Wood, type: drewniana }
+  HU: { name: Hudson Oak, type: drewniana }
+  AD: { name: Arvadonna Chestnut, type: drewniana }
+  
+  # Specjalne
+  AF: { name: Authentic Fine, type: specjalna }
+  RT: { name: Rust, type: specjalna }
+  SL: { name: Slate, type: kamienna }
+  SN: { name: Super Natural, type: specjalna }
+  BS: { name: Bureau Structure, type: biurowa }
+  PA: { name: Patina, type: postarzana }
+  PE: { name: Pearl, type: perłowa }
+  FP: { name: Fine Pore, type: specjalna }
+  PW: { name: Pure Wood, type: drewniana }
+  WO: { name: Wood Origin, type: drewniana }
+  PH: { name: Palazzo Touch, type: specjalna }
+  RS: { name: Rough Stone, type: kamienna }
+  UE: { name: Used Effect, type: postarzana }
+
+# =============================================================================
+# FORMATY PŁYT
+# =============================================================================
+formats:
+  standard:
+    dimensions: "2800 x 2070 mm"
+    description: Format europejski, najczęstszy
+    
+  maxi:
+    dimensions: "2620 x 2070 mm"
+    description: Format maxi (niektóre dekory)
+    
+  door:
+    dimensions: "2050 x 1830 mm"
+    description: Format drzwiowy
+    
+  splashback:
+    dimensions: "4100 x 640 mm"
+    description: Panele backsplash kuchenny
+    
+  compact:
+    dimensions: "3050 x 1230 mm"
+    description: Płyty kompaktowe HPL
+    
+  countertop:
+    dimensions: "4100 x 600/635/900 mm"
+    description: Blaty robocze
+
+# =============================================================================
+# GRUPY PRODUKTOWE - SZCZEGÓŁY
+# =============================================================================
+
+# --- PŁYTY WIÓROWE LAMINOWANE ---
+chipboard_laminated:
+  name: Płyta wiórowa laminowana
+  base: Płyta wiórowa
+  coating: Papier dekoracyjny + żywica melaminowa
+  applications:
+    - Korpusy meblowe
+    - Fronty
+    - Półki
+    - Blaty robocze (grubsze)
+  thicknesses: [16, 18, 22, 25, 28, 30, 36, 38]
+  moisture_classes:
+    P2: Standardowa
+    P3: Podwyższona odporność
+    V313: Wodoodporna (do łazienek/kuchni)
+  fire_class: B-s1-d0 (opcja)
+  collections:
+    - name: Global Collection
+      description: Główna kolekcja dekorów
+      features: ["Łatwy montaż", "Odporność na zabrudzenia", "Stabilność UV"]
+      
+    - name: Emporio Skin
+      description: Włoska kolekcja premium
+      designer: Włoscy projektanci
+      features: ["Struktura Follow-the-look", "Efekt naturalnych materiałów"]
+      structures: [PD, PW]
+      
+    - name: Focus (Falco Exclusive)
+      description: Kolekcja ekskluzywna
+      formats: ["2800 x 2070 mm"]
+
+# --- PŁYTY MDF ---
+mdf_boards:
+  name: Płyta MDF
+  base: Medium Density Fibreboard
+  density: "700-900 kg/m³"
+  
+  variants:
+    standard:
+      name: MDF Laminowany
+      description: Standardowa płyta MDF laminowana
+      thicknesses: [16, 18, 22, 25, 30]
+      lamination: "Jedno lub dwustronnie"
+      moisture_option: "Opcja zwiększonej odporności na wilgoć"
+      features: ["Łatwy montaż", "Odporność na zabrudzenia", "Stabilność UV"]
+      
+    lux:
+      name: MDF LUX
+      description: Alternatywa dla płyt akrylowych
+      thickness: 18
+      dimensions: "2800 x 2070 mm"
+      lamination: "Dwustronnie"
+      structures: [PD, SU]
+      features: ["Jedwabista w dotyku", "Podwyższona odporność na zarysowania", "Dopasowanie obrzeży 1:1"]
+      
+    acrylic_gloss:
+      name: Acrylic Gloss
+      description: Wysokiej klasy płyty akrylowe połyskowe
+      base_thickness: 17
+      acrylic_layer: 0.7
+      back_layer: 0.6
+      back_material: "Polistyren o wysokich właściwościach mechanicznych"
+      features: [
+        "Bardzo wysoki stopień połysku",
+        "Głębia kolorów",
+        "Wysoka odporność na UV",
+        "Podwyższona odporność na ścieranie",
+        "Odporność na chemikalia"
+      ]
+      protection: "Folia PE"
+      applications: [
+        "Luksusowe elementy meblowe",
+        "Fronty kuchenne",
+        "Wykończenie pomieszczeń komercyjnych"
+      ]
+      
+    acrylic_matt:
+      name: Acrylic Matt
+      description: Matowe płyty akrylowe anti-fingerprint
+      base_thickness: 17
+      acrylic_layer: 0.7
+      back_layer: 0.6
+      back_material: "Polistyren"
+      features: [
+        "Delikatna akrylowa powierzchnia",
+        "Elegancka matowa struktura",
+        "Odporność na uderzenia",
+        "Wysoka odporność na zarysowania",
+        "Odporność na UV",
+        "Anti-fingerprint"
+      ]
+      
+    mirror_gloss:
+      name: Mirror Gloss
+      description: Płyty lustrzane połyskowe
+      base: "MDF lub płyta wiórowa"
+      technology: "Laminowanie wysokociśnieniowe"
+      features: [
+        "Niezrównane wykończenie połyskowe",
+        "Gładka, lustrzana powierzchnia"
+      ]
+      formats:
+        standard: "18 x 2800 x 2050 mm"
+        note: "Na zamówienie inne wymiary"
+      
+    mirror_matt:
+      name: Mirror Matt 3.0
+      description: Matowe płyty anti-fingerprint
+      features: [
+        "Matowa powierzchnia",
+        "Anti-fingerprint",
+        "Odporność na zabrudzenia",
+        "Odporność na zarysowania"
+      ]
+      
+    metal:
+      name: Metal
+      description: Płyty z prawdziwym aluminium
+      base: MDF
+      coating: "Prawdziwe aluminium + folia ochronna"
+      variants:
+        - { code: AL08, name: "Szczotkowany Tytan" }
+        - { code: AL03, name: "Szczotkowane Aluminium" }
+        - { code: AL04, name: "Szczotkowana Złoto" }
+        - { code: AL05, name: "Szczotkowana Miedź" }
+        - { code: AL06, name: "Szczotkowany Brąz" }
+        - { code: AL07, name: "Szczotkowana Inox" }
+        - { code: AL02, name: "Szczotkowana Platyna" }
+      features: [
+        "Prawdziwe aluminium",
+        "Szczotkowana tekstura",
+        "Luksusowy wygląd"
+      ]
+
+# --- HDF ---
+hdf:
+  name: HDF
+  full_name: High Density Fibreboard
+  density: ">900 kg/m³"
+  thicknesses: [2.5, 3.0, 4.0, 5.0, 6.0]
+  formats:
+    standard: "2070 x 2800 mm"
+    door: "1830 x 2050 mm"
+  features: [
+    "Łatwy montaż",
+    "Odporność na zabrudzenia"
+  ]
+  express_available: true
+  notes: "Wersja lakierowana dostępna, format EX dostępny w 24h"
+
+# --- HPL BLACK LINE ---
+hpl_black_line:
+  name: Black Line
+  description: Innowacyjna płyta HPL z rdzeniem celulozowym
+  thickness: 12
+  features: [
+    "Antybakteryjna powierzchnia",
+    "Czarny rdzeń",
+    "Wodoodporna",
+    "Trwała i łatwa w konserwacji",
+    "Ekologiczna produkcja"
+  ]
+  ecology: {
+    water_savings: "90%",
+    energy_savings: "56%",
+    oil_savings: "72%",
+    note: "Zastąpienie papieru rdzeniowego włóknem celulozowym"
+  }
+  applications: [
+    "Obszary publiczne",
+    "Wnętrza komercyjne",
+    "Elementy wyposażenia na zewnątrz"
+  ]
+
+# --- SPLASHBACKS ---
+splashbacks:
+  name: Splashbacks
+  description: Panele backsplash do kuchni
+  construction: "Laminat HPL + MDF"
+  dimensions: "10 x 4100 x 640 mm"
+  features: [
+    "Łatwe w czyszczeniu",
+    "Higieniczne",
+    "Odporne na zabrudzenia"
+  ]
+  compatibility: "Dopasowane do blatów Post-formed i ABS Square Edge"
+  installation_tips: [
+    "Unikać bezpośredniego kontaktu z gorącymi powierzchniami",
+    "Nie wystawiać na bezpośrednie działanie promieni słonecznych"
+  ]
+
+# --- PŁYTY ŁAZIENKOWE ---
+bathroom_tiles:
+  name: Rocko Tiles
+  description: Wodoodporne płyty ścienne
+  dimensions: "2800 x 1230 mm"
+  features: [
+    "Wodoodporne",
+    "Lekkie (w porównaniu do płyt kwarcowych)",
+    "Duży format",
+    "Łatwe w obróbce i montażu",
+    "Możliwość cięcia, wiercenia, formatowania"
+  ]
+  suitable_substrates: [
+    "Beton",
+    "Płytki",
+    "Płyty G-k",
+    "OSB",
+    "Sklejka",
+    "Gips"
+  ]
+  applications: [
+    "Pomieszczenia mokre",
+    "Pomieszczenia suche",
+    "Projekty komercyjne",
+    "Indywidualne"
+  ]
+  technology: "Druk cyfrowy - autentyczny wygląd drewna, kamienia i metalu"
+
+# =============================================================================
+# GRUPOWE KOLORY / DEKORY (przykłady z PDF-ów)
+# =============================================================================
+sample_decors:
+  white:
+    - { code: "0101", name: "XX White Front", type: "Biały Frontowy", express: true }
+    - { code: "8685", name: "Biel Alpejska", structures: [SM, MM, MG] }
+    
+  grey:
+    - { code: "0112", name: "Jasny Szary", express: true, structures: [AM] }
+    - { code: "0164", name: "Antracyt", express: true, structures: [PD, SU] }
+    - { code: "0191", name: "Szary", structures: [MM, PE] }
+    - { code: "7045", name: "Szampański", structures: [MM, SU] }
+    
+  black:
+    - { code: "0190", name: "Czarny", express: true, structures: [PD] }
+    
+  wood:
+    - { code: "0362", name: "Klon", express: true }
+    - { code: "0381", name: "Buk Klasyczny", express: true }
+    - { code: "3025", name: "Dąb Cremona Terracotta", structures: [PW] }
+    - { code: "2738", name: "Dąb Canella Naturalny", structures: [PW] }
+    - { code: "K682", name: "Alpaca", structures: [PD] }
+    - { code: "K703", name: "Portobello", structures: [PN] }
+    - { code: "K2737", name: "Dąb Cremona Terracotta", structures: [PW] }
+    
+  stone:
+    - { code: "K699", name: "Calacatta Ambrosio", structures: [PN] }
+    - { code: "K695", name: "Dąb Primavera Słomkowy", structures: [PV] }
+    - { code: "K704", name: "Piasek Perlino", structures: [PN] }
+    
+  special:
+    - { code: "5981", name: "Kaszmir", express: true }
+    - { code: "7166", name: "Latte", structures: [BS] }
+    - { code: "K686", name: "Pudrowy Róż", structures: [PD] }
+
+# =============================================================================
+# OBSŁUGI (obrzeża, kleje, akcesoria)
+# =============================================================================
+accessories:
+  edgebanding:
+    name: Obrzeża meblowe
+    materials:
+      - ABS
+      - PCV
+      - Akryl
+      - Lite drewno
+    thicknesses: [0.4, 0.8, 1.0, 2.0]
+    application: "Klejenie na krawędziarce CNC"
+
+# =============================================================================
+# DOSTĘPNOŚĆ ONLINE
+# =============================================================================
+online_availability:
+  note: "Wiele dekorów dostępnych online"
+  delivery: "Ekspresowa dostawa dla dekorów EXPRESS"
+  express_h24: true
