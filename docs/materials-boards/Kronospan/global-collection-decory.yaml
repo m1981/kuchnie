@@ -1,0 +1,2272 @@
+# Kronospan Global Collection 2026 — Kompletna lista 174 dekorów
+# Źródło: plyty-wiorowe-global-collection.pdf, str. 26-31
+# Wyekstrahowano: 2026-06-25
+
+metadata:
+  producent: Kronospan
+  katalog: Global Collection 2026
+  typ: Plyta wiórowa laminowana
+  format_sz: "2800 x 2070 mm"
+  format_mx: "2620 x 2070 mm"
+  grubosci_express: [12, 16, 18]
+  laminaty_hdf: "0,8 x 3050 x 1320 mm (Pustków Express)"
+  obrzeze: Spander/Schilsner (ABS)
+
+grupy:
+  - id: I
+    nazwa: WHITE CORPUS
+  - id: II
+    nazwa: WHITE FRONT
+  - id: III
+    nazwa: COLOR BASIC
+  - id: VI
+    nazwa: COLOR SPECIAL
+  - id: VII
+    nazwa: WOOD BASIC
+  - id: VIII
+    nazwa: WOOD FRONT
+  - id: IX
+    nazwa: CONTEMPO 1
+  - id: X
+    nazwa: CONTEMPO 2
+  - id: XII
+    nazwa: HARMONY
+
+dekory:
+  # ═══════════════════════════════════════════════════════════════════
+  # I WHITE CORPUS
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 1
+    grupa: I WHITE CORPUS
+    dekor: K110
+    struktura: SM
+    nazwa: Biały Korpusowy
+    ex_12: true
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0110-SM
+    uwagi: "NCS S 0500-N, RAL 9016"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # II WHITE FRONT
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 2
+    grupa: II WHITE FRONT
+    dekor: K101
+    struktura: PE
+    nazwa: Biały Frontowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0101-PE
+    uwagi: "NCS S 0502-G50Y, RAL 9010"
+
+  - lp: 3
+    grupa: II WHITE FRONT
+    dekor: K8685
+    struktura: SM/BS/PD
+    nazwa: Biel Alpejska
+    ex_12: false
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: "868S RS"
+    dopasowanie: "AG, AM, MG, CI (BS)"
+    obrzeze: K-8685-SM/BS/PD
+    uwagi: "NCS S 0500-N, RAL 9016"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # III COLOR BASIC
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 4
+    grupa: III COLOR BASIC
+    dekor: K112
+    struktura: PE
+    nazwa: Jasny Szary
+    ex_12: false
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "AG, AM, KA, CI (BS)"
+    obrzeze: K-0112-PE
+    uwagi: "NCS S 2000-N, RAL 7047"
+
+  - lp: 5
+    grupa: III COLOR BASIC
+    dekor: K162
+    struktura: PE
+    nazwa: Grafit Szary
+    ex_12: false
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, CI (BS)"
+    obrzeze: K-0162-PE
+    uwagi: "NCS S 6500-N, RAL 7015, Pantone Cool Grey 10 C"
+
+  - lp: 6
+    grupa: III COLOR BASIC
+    dekor: K164
+    struktura: PE/PD
+    nazwa: Antracyt
+    ex_12: false
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "AG, AM, KA, CI (BS)"
+    obrzeze: K-0164-PE/PD
+    uwagi: "NCS S 7502-G, RAL 7043, Pantone Cool Grey 11 C"
+
+  - lp: 7
+    grupa: III COLOR BASIC
+    dekor: K166
+    struktura: BS
+    nazwa: Bazalt
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0166-BS
+    uwagi: "NCS S 7500-N, Pantone 447 C, RAL 7022"
+
+  - lp: 8
+    grupa: III COLOR BASIC
+    dekor: K171
+    struktura: PE
+    nazwa: Jasny Grafit
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "MG, KA, CI (BS)"
+    obrzeze: K-0171-PE
+    uwagi: "NCS S 4500-N, RAL 7037, Pantone Cool Grey 8 C"
+
+  - lp: 9
+    grupa: III COLOR BASIC
+    dekor: K190
+    struktura: PE/PD
+    nazwa: Czarny
+    ex_12: false
+    ex_16: true
+    ex_18: true
+    konfekcja: K
+    blat: "0190 RS"
+    dopasowanie: "AG, AM, MG, KA, CI (BS)"
+    obrzeze: K-0190-PE/PD
+    uwagi: "NCS S 8502-B, RAL 9004, Pantone Process Black C"
+
+  - lp: 10
+    grupa: III COLOR BASIC
+    dekor: K191
+    struktura: SU
+    nazwa: Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "MG, KA, Compact Interior (BS)"
+    obrzeze: K-0191-SU
+    uwagi: "NCS 1502-G, Pantone 427 C, RAL 7035"
+
+  - lp: 11
+    grupa: III COLOR BASIC
+    dekor: K197
+    struktura: SU
+    nazwa: Szary Chinchilla
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0197-SU
+    uwagi: "NCS S 3000-N, Pantone Warm Grey 6 C"
+
+  - lp: 12
+    grupa: III COLOR BASIC
+    dekor: "0514"
+    struktura: PE
+    nazwa: Kość Słoniowa
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "AG, KA"
+    obrzeze: K-0514-PE
+    uwagi: "NCS 0505-Y20R"
+
+  - lp: 13
+    grupa: III COLOR BASIC
+    dekor: "0515"
+    struktura: PE
+    nazwa: Piaskowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-0515-PE
+    uwagi: "NCS 1010-Y30R"
+
+  - lp: 14
+    grupa: III COLOR BASIC
+    dekor: "0522"
+    struktura: PE
+    nazwa: Beżowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-0522-PE
+    uwagi: "NCS S 1005-Y20R"
+
+  - lp: 15
+    grupa: III COLOR BASIC
+    dekor: "0540"
+    struktura: PE
+    nazwa: Manhattan Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0540-PE
+    uwagi: "NCS S 2500-N"
+
+  - lp: 16
+    grupa: III COLOR BASIC
+    dekor: K564
+    struktura: PE
+    nazwa: Migdałowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "AG"
+    obrzeze: K-0564-PE
+    uwagi: "NCS 0601-Y21R, RAL 9001"
+
+  - lp: 17
+    grupa: III COLOR BASIC
+    dekor: K1700
+    struktura: PE
+    nazwa: Stalowo Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-1700-PE
+    uwagi: "NCS S 2005-R80B, Pantone Cool Grey 5 C"
+
+  - lp: 18
+    grupa: III COLOR BASIC
+    dekor: K5981
+    struktura: BS/PD
+    nazwa: Kaszmir
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "MG, KA, CI (BS)"
+    obrzeze: K-5981-BS/PD
+    uwagi: "NCS S 2005-Y60R, RAL 080 80 05, Pantone 7528 C"
+
+  - lp: 19
+    grupa: III COLOR BASIC
+    dekor: K5982
+    struktura: BS
+    nazwa: Muszla
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-5982-BS
+    uwagi: "NCS S 1005-Y20R, RAL 1013, Pantone 7500 C"
+
+  - lp: 20
+    grupa: III COLOR BASIC
+    dekor: K7031
+    struktura: BS
+    nazwa: Krem
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-7031-BS
+    uwagi: "NCS S 0804-Y10R"
+
+  - lp: 21
+    grupa: III COLOR BASIC
+    dekor: K7045
+    struktura: SU
+    nazwa: Szampański
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "7045 RS"
+    dopasowanie: "AG, AM, MG, KA, CI (BS)"
+    obrzeze: K-7045-SU
+    uwagi: "Pantone 7527 C"
+
+  - lp: 22
+    grupa: III COLOR BASIC
+    dekor: K8100
+    struktura: SM
+    nazwa: Perłowy Biały
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8100-SM
+    uwagi: "NCS S 0300-N, RAL 9016"
+
+  - lp: 23
+    grupa: III COLOR BASIC
+    dekor: K8533
+    struktura: BS
+    nazwa: Macchiato
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-8533-BS
+    uwagi: "NCS S 3010-Y40R, Pantone 4745 C"
+
+  - lp: 24
+    grupa: III COLOR BASIC
+    dekor: K8681
+    struktura: SU/SM
+    nazwa: Biały Brylantowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-8681-SU/SM
+    uwagi: "NCS S 0505-R70B"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # VI COLOR SPECIAL
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 25
+    grupa: VI COLOR SPECIAL
+    dekor: K125
+    struktura: BS
+    nazwa: Niebieski
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0125-BS
+    uwagi: "NCS S 3060-R90B, RAL 5005, Pantone 7685 C"
+
+  - lp: 26
+    grupa: VI COLOR SPECIAL
+    dekor: K132
+    struktura: BS
+    nazwa: Pomarańczowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0132-BS
+    uwagi: "NCS S 0585-Y40R, RAL 2000, Pantone 158 C"
+
+  - lp: 27
+    grupa: VI COLOR SPECIAL
+    dekor: K134
+    struktura: BS
+    nazwa: Żółty
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0134-BS
+    uwagi: "NCS S 0560-Y10R, Pantone 136 C"
+
+  - lp: 28
+    grupa: VI COLOR SPECIAL
+    dekor: "0244"
+    struktura: SU
+    nazwa: Petrol
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-0244-SU
+    uwagi: "NCS S 6020-B30G"
+
+  - lp: 29
+    grupa: VI COLOR SPECIAL
+    dekor: K301
+    struktura: SU
+    nazwa: Cappuccino
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0301-SU
+    uwagi: "NCS S 4010-Y30R, RAL 1019, Pantone 7530 C"
+
+  - lp: 30
+    grupa: VI COLOR SPECIAL
+    dekor: K5994
+    struktura: SU
+    nazwa: Alby Blue
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-5994-SU
+    uwagi: "NCS S 6010-R90B, Pantone 5405 U"
+
+  - lp: 31
+    grupa: VI COLOR SPECIAL
+    dekor: K6299
+    struktura: BS
+    nazwa: Kobalt Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "AM, KA, CI (BS)"
+    obrzeze: K-6299-BS
+    uwagi: "NCS S 6502-Y, RAL 7039, Pantone 417 C"
+
+  - lp: 32
+    grupa: VI COLOR SPECIAL
+    dekor: K7063
+    struktura: SU
+    nazwa: Pastelowy Zielony
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-7063-SU
+    uwagi: "NCS 1505-G, Pantone 441 C"
+
+  - lp: 33
+    grupa: VI COLOR SPECIAL
+    dekor: K7113
+    struktura: BS
+    nazwa: Czerwień Chilli
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-7113-BS
+    uwagi: "NCS 1085-Y85R, RAL 3020, Pantone 1795 C"
+
+  - lp: 34
+    grupa: VI COLOR SPECIAL
+    dekor: K7166
+    struktura: BS
+    nazwa: Latte
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, CI (BS)"
+    obrzeze: K-7166-BS
+    uwagi: "RAL 7006, Pantone 7531 C"
+
+  - lp: 35
+    grupa: VI COLOR SPECIAL
+    dekor: K7181
+    struktura: BS
+    nazwa: Ciemna Czekolada
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-7181-BS
+    uwagi: "NCS S 7502-R, Pantone 412 U"
+
+  - lp: 36
+    grupa: VI COLOR SPECIAL
+    dekor: K7190
+    struktura: BS
+    nazwa: Zieleń Mamba
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-7190-BS
+    uwagi: "NCS S 0580-G30Y, Pantone 368 C"
+
+  - lp: 37
+    grupa: VI COLOR SPECIAL
+    dekor: K8984
+    struktura: BS
+    nazwa: Granatowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-8984-BS
+    uwagi: "NCS S 7020-R80B, RAL 5011, Pantone 533 C"
+
+  - lp: 38
+    grupa: VI COLOR SPECIAL
+    dekor: K9551
+    struktura: BS
+    nazwa: Czerwony Oxid
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-9551-BS
+    uwagi: "NCS S 4550-Y90R, RAL 3011, Pantone 7610"
+
+  - lp: 39
+    grupa: VI COLOR SPECIAL
+    dekor: K9561
+    struktura: BS
+    nazwa: Zielony Oxid
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-9561-BS
+    uwagi: "NCS S 3060-G10Y, RAL 6029, Pantone 349"
+
+  - lp: 40
+    grupa: VI COLOR SPECIAL
+    dekor: K096
+    struktura: SU
+    nazwa: Glina Szara
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0096-SU
+    uwagi: "NCS S 4005-Y20R, Pantone 7530 C"
+
+  - lp: 41
+    grupa: VI COLOR SPECIAL
+    dekor: K097
+    struktura: SU
+    nazwa: Błękitny Zmierzch
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA"
+    obrzeze: K-0097-SU
+    uwagi: "NCS S 4010-B50G, Pantone 5497 C"
+
+  - lp: 42
+    grupa: VI COLOR SPECIAL
+    dekor: K098
+    struktura: SU
+    nazwa: Ceramiczny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "KA, Compact Interior (BS)"
+    obrzeze: K-0098-SU
+    uwagi: "NCS S 4050-Y70R, Pantone 7600 C"
+
+  - lp: 43
+    grupa: VI COLOR SPECIAL
+    dekor: K512
+    struktura: SU
+    nazwa: Róż Naturalny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0512-SU
+    uwagi: "NCS S 2020-Y80R"
+
+  - lp: 44
+    grupa: VI COLOR SPECIAL
+    dekor: K513
+    struktura: SU
+    nazwa: Marshmallow
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0513-SU
+    uwagi: "NCS S 0520-R20B"
+
+  - lp: 45
+    grupa: VI COLOR SPECIAL
+    dekor: K514
+    struktura: SU
+    nazwa: Głębia Sahary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-K514-SU
+    uwagi: "NCS S 4030-Y60R"
+
+  - lp: 46
+    grupa: VI COLOR SPECIAL
+    dekor: K515
+    struktura: SU
+    nazwa: Pikantna Czerwień
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-K515-SU
+    uwagi: "NCS S 6030-R20B, Pantone 7644 C"
+
+  - lp: 47
+    grupa: VI COLOR SPECIAL
+    dekor: K516
+    struktura: SU
+    nazwa: Toffee
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0516-SU
+    uwagi: "Pantone 7509 C"
+
+  - lp: 48
+    grupa: VI COLOR SPECIAL
+    dekor: K517
+    struktura: SU
+    nazwa: Lazurowy Błękit
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0517-SU
+    uwagi: "NCS S 1555-R80B, Pantone 659 C, RAL 260 60 35"
+
+  - lp: 49
+    grupa: VI COLOR SPECIAL
+    dekor: K518
+    struktura: SU
+    nazwa: Surf Blue
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0518-SU
+    uwagi: "NCS S 1020-R90B, Pantone 543 C, RAL 240 80 15"
+
+  - lp: 50
+    grupa: VI COLOR SPECIAL
+    dekor: K519
+    struktura: SU
+    nazwa: Mouse Grey
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0519-SU
+    uwagi: "NCS S 4000-N, Pantone Cool Gray 7C, RAL 7040"
+
+  - lp: 51
+    grupa: VI COLOR SPECIAL
+    dekor: K520
+    struktura: SU
+    nazwa: Ciemny Szmaragd
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0520-SU
+    uwagi: "NCS S 7010-B70G, Pantone 5477 C, RAL 6004"
+
+  - lp: 52
+    grupa: VI COLOR SPECIAL
+    dekor: K521
+    struktura: SU
+    nazwa: Dymiona Zieleń
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0521-SU
+    uwagi: "NCS S 6010-G30Y, Pantone 4182 C, RAL 130 40 10"
+
+  - lp: 53
+    grupa: VI COLOR SPECIAL
+    dekor: K522
+    struktura: PE
+    nazwa: Aluminium Flash
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-K522-PE
+
+  - lp: 54
+    grupa: VI COLOR SPECIAL
+    dekor: K523
+    struktura: PE
+    nazwa: Platinium Disk
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K523 PE"
+    obrzeze: K-0523-PE
+
+  - lp: 55
+    grupa: VI COLOR SPECIAL
+    dekor: K680
+    struktura: PD
+    nazwa: Kamienny Beż
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0680-PD
+    uwagi: "NCS S 0804-G60Y, RAL 110 90 05"
+
+  - lp: 56
+    grupa: VI COLOR SPECIAL
+    dekor: K681
+    struktura: PD
+    nazwa: Macadamia
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0681-PD
+    uwagi: "NCS S 2005-Y40R, RAL 075 80 10"
+
+  - lp: 57
+    grupa: VI COLOR SPECIAL
+    dekor: K682
+    struktura: PD
+    nazwa: Alpaca
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0682-PD
+    uwagi: "RAL 050 60 20, Pantone 4725 C"
+
+  - lp: 58
+    grupa: VI COLOR SPECIAL
+    dekor: K683
+    struktura: PD
+    nazwa: Cayenne
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0683-PD
+    uwagi: "RAL 040 50 20, Pantone 7614 C"
+
+  - lp: 59
+    grupa: VI COLOR SPECIAL
+    dekor: K684
+    struktura: PD
+    nazwa: Czarna Trufla
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0684-PD
+    uwagi: "NCS S 7502-R, RAL 000 30 05, Pantone 411 C"
+
+  - lp: 60
+    grupa: VI COLOR SPECIAL
+    dekor: K685
+    struktura: PD
+    nazwa: Stalowy Grafit
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0685-PD
+    uwagi: "NCS S 7500-N, RAL 000 35 00, Pantone 4140 C"
+
+  - lp: 61
+    grupa: VI COLOR SPECIAL
+    dekor: K686
+    struktura: PD
+    nazwa: Pudrowy Róż
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0686-PD
+    uwagi: "NCS S 2005-Y80R, RAL 040 80 05, Pantone 7632 C"
+
+  - lp: 62
+    grupa: VI COLOR SPECIAL
+    dekor: K687
+    struktura: PD
+    nazwa: Ciemny Las
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0687-PD
+    uwagi: "RAL 180 20 05, Pantone 5535 C"
+
+  # ═══════════════════════════════════════════════════════════════════
+  # VII WOOD BASIC
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 63
+    grupa: VII WOOD BASIC
+    dekor: "0344"
+    struktura: BS
+    nazwa: Wiśnia
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0344-BS
+
+  - lp: 64
+    grupa: VII WOOD BASIC
+    dekor: "0375"
+    struktura: BS
+    nazwa: Klon
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0375-BS
+
+  - lp: 65
+    grupa: VII WOOD BASIC
+    dekor: "0381"
+    struktura: BS
+    nazwa: Buk Klasyczny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0381-BS
+
+  - lp: 66
+    grupa: VII WOOD BASIC
+    dekor: "0729"
+    struktura: BS
+    nazwa: Orzech
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0729-BS
+
+  - lp: 67
+    grupa: VII WOOD BASIC
+    dekor: "0854"
+    struktura: BS
+    nazwa: Wenge
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0854-BS
+
+  - lp: 68
+    grupa: VII WOOD BASIC
+    dekor: "1715"
+    struktura: BS
+    nazwa: Brzoza
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-1715-BS
+
+  - lp: 69
+    grupa: VII WOOD BASIC
+    dekor: "1912"
+    struktura: BS
+    nazwa: Olcha
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-1912-BS
+
+  - lp: 70
+    grupa: VII WOOD BASIC
+    dekor: "2737"
+    struktura: PW
+    nazwa: Dąb Cremona Terracotta
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-2737-PW
+
+  - lp: 71
+    grupa: VII WOOD BASIC
+    dekor: "2738"
+    struktura: PW
+    nazwa: Dąb Cremona Torro
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-2738-PW
+
+  - lp: 72
+    grupa: VII WOOD BASIC
+    dekor: "2739"
+    struktura: PW
+    nazwa: Dąb Cremona Cannolo
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-2739-PW
+
+  - lp: 73
+    grupa: VII WOOD BASIC
+    dekor: "3025"
+    struktura: SN
+    nazwa: Dąb Vintage Jasny
+    ex_12: true
+    ex_16: true
+    ex_18: false
+    konfekcja: K
+    blat: "3025 WO"
+    obrzeze: K-3025-PS
+
+  - lp: 74
+    grupa: VII WOOD BASIC
+    dekor: "5194"
+    struktura: SN
+    nazwa: Dąb Truflowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-5194-PS
+
+  - lp: 75
+    grupa: VII WOOD BASIC
+    dekor: "8921"
+    struktura: BS
+    nazwa: Dąb Ferrara
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8921-BS
+
+  - lp: 76
+    grupa: VII WOOD BASIC
+    dekor: "8953"
+    struktura: SU
+    nazwa: Orzech Tiepolo
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8953-SU
+
+  - lp: 77
+    grupa: VII WOOD BASIC
+    dekor: "9614"
+    struktura: BS
+    nazwa: Orzech Alpejski
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-9614-BS
+
+  - lp: 78
+    grupa: VII WOOD BASIC
+    dekor: "9763"
+    struktura: BS
+    nazwa: Wenge Luiziana
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-9763-BS
+
+  - lp: 79
+    grupa: VII WOOD BASIC
+    dekor: K688
+    struktura: PW
+    nazwa: Dąb Canella Naturalny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0688-PW
+
+  - lp: 80
+    grupa: VII WOOD BASIC
+    dekor: K689
+    struktura: PW
+    nazwa: Dąb Lamel Canella
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0689-PW
+
+  # ═══════════════════════════════════════════════════════════════════
+  # VIII WOOD FRONT
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 81
+    grupa: VIII WOOD FRONT
+    dekor: "5500"
+    struktura: SU
+    nazwa: Wiąz Szlachetny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-5500-SU
+
+  - lp: 82
+    grupa: VIII WOOD FRONT
+    dekor: "5529"
+    struktura: SN
+    nazwa: Dąb Skalny Oregon
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-5529-SN
+
+  - lp: 83
+    grupa: VIII WOOD FRONT
+    dekor: "7648"
+    struktura: SN
+    nazwa: Arusha Wenge
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-7648-SN
+
+  - lp: 84
+    grupa: VIII WOOD FRONT
+    dekor: "8431"
+    struktura: SN
+    nazwa: Dąb Nagano
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8431-SN
+
+  - lp: 85
+    grupa: VIII WOOD FRONT
+    dekor: "8548"
+    struktura: SN
+    nazwa: Fineline Mocca
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8548-SN
+
+  - lp: 86
+    grupa: VIII WOOD FRONT
+    dekor: "8995"
+    struktura: SN
+    nazwa: Coco Bolo
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-8995-SN
+
+  - lp: 87
+    grupa: VIII WOOD FRONT
+    dekor: K001
+    struktura: PW
+    nazwa: Dąb Craft Biały
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0001-PW
+
+  - lp: 88
+    grupa: VIII WOOD FRONT
+    dekor: K002
+    struktura: PW
+    nazwa: Dąb Craft Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K002 FP"
+    obrzeze: K-0002-PW
+
+  - lp: 89
+    grupa: VIII WOOD FRONT
+    dekor: K003
+    struktura: PW
+    nazwa: Dąb Craft Złoty
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K003 FP"
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0003/1-PW
+
+  - lp: 90
+    grupa: VIII WOOD FRONT
+    dekor: K004
+    struktura: PW
+    nazwa: Dąb Craft Tobacco
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0004-PW
+
+  - lp: 91
+    grupa: VIII WOOD FRONT
+    dekor: K005
+    struktura: PW
+    nazwa: Dąb Urban Oyster
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0005-PW
+
+  - lp: 92
+    grupa: VIII WOOD FRONT
+    dekor: K006
+    struktura: PW
+    nazwa: Dąb Urban Bursztynowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0006-PW
+
+  - lp: 93
+    grupa: VIII WOOD FRONT
+    dekor: K007
+    struktura: PW
+    nazwa: Dąb Urban Kawowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0007-PW
+
+  - lp: 94
+    grupa: VIII WOOD FRONT
+    dekor: K008
+    struktura: PW
+    nazwa: Orzech Select Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0008-PW
+
+  - lp: 95
+    grupa: VIII WOOD FRONT
+    dekor: K009
+    struktura: PW
+    nazwa: Orzech Select Ciemny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0009-PW
+
+  - lp: 96
+    grupa: VIII WOOD FRONT
+    dekor: K010
+    struktura: SN
+    nazwa: Sosna Loft Biała
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0010-SN
+
+  - lp: 97
+    grupa: VIII WOOD FRONT
+    dekor: K012
+    struktura: SU
+    nazwa: Buk Artisan Perłowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0012-SU
+
+  - lp: 98
+    grupa: VIII WOOD FRONT
+    dekor: K013
+    struktura: SU
+    nazwa: Buk Artisan Piaskowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K013 SU"
+    obrzeze: K-0013-SU
+
+  - lp: 99
+    grupa: VIII WOOD FRONT
+    dekor: K015
+    struktura: PW
+    nazwa: Vintage Marine Wood
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0015-PW
+
+  - lp: 100
+    grupa: VIII WOOD FRONT
+    dekor: K016
+    struktura: PW
+    nazwa: Carbon Marine Wood
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K016 SU"
+    obrzeze: K-0016-PW
+
+  - lp: 101
+    grupa: VIII WOOD FRONT
+    dekor: K017
+    struktura: PW
+    nazwa: Wiąz Liberty Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0017-PW
+
+  - lp: 102
+    grupa: VIII WOOD FRONT
+    dekor: K018
+    struktura: PW
+    nazwa: Wiąz Liberty Dymiony
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0018-PW
+
+  - lp: 103
+    grupa: VIII WOOD FRONT
+    dekor: K019
+    struktura: PW
+    nazwa: Wiąz Liberty Srebrny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0019-PW
+
+  - lp: 104
+    grupa: VIII WOOD FRONT
+    dekor: K020
+    struktura: PW
+    nazwa: Orzech Select Ciepły
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0020-PW
+
+  - lp: 105
+    grupa: VIII WOOD FRONT
+    dekor: K076
+    struktura: PW
+    nazwa: Dąb Piaskowany
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0076-PW
+
+  - lp: 106
+    grupa: VIII WOOD FRONT
+    dekor: K078
+    struktura: PW
+    nazwa: Wiśnia Riverside Ciemna
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0078-PW
+
+  - lp: 107
+    grupa: VIII WOOD FRONT
+    dekor: K079
+    struktura: PW
+    nazwa: Dąb Clubhouse Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0079-PW
+
+  - lp: 108
+    grupa: VIII WOOD FRONT
+    dekor: K080
+    struktura: PW
+    nazwa: Dąb Coastland Biały
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0080-PW
+
+  - lp: 109
+    grupa: VIII WOOD FRONT
+    dekor: K081
+    struktura: PW
+    nazwa: Dąb Coastland Szampański
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0081-PW
+
+  - lp: 110
+    grupa: VIII WOOD FRONT
+    dekor: K082
+    struktura: PW
+    nazwa: Dąb Burbon
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0082-PW
+
+  - lp: 111
+    grupa: VIII WOOD FRONT
+    dekor: K088
+    struktura: PW
+    nazwa: Drewno Nordyckie Białe
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0088-PW
+
+  - lp: 112
+    grupa: VIII WOOD FRONT
+    dekor: K089
+    struktura: PW
+    nazwa: Drewno Nordyckie Szare
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0089-PW
+
+  - lp: 113
+    grupa: VIII WOOD FRONT
+    dekor: K090
+    struktura: PW
+    nazwa: Dąb Brązowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0090-PW
+
+  - lp: 114
+    grupa: VIII WOOD FRONT
+    dekor: K365
+    struktura: PW
+    nazwa: Dąb Evoke Przybrzeżny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K365 FP"
+    obrzeze: K-0365-PW
+
+  - lp: 115
+    grupa: VIII WOOD FRONT
+    dekor: K366
+    struktura: PW
+    nazwa: Dąb Evok Kamienny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0366-PW
+
+  # ═══════════════════════════════════════════════════════════════════
+  # IX CONTEMPO 1
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 116
+    grupa: IX CONTEMPO 1
+    dekor: "4298"
+    struktura: SU
+    nazwa: Jasny Atelier
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "4298 UE"
+    obrzeze: K-4298-SU
+
+  - lp: 117
+    grupa: IX CONTEMPO 1
+    dekor: "4299"
+    struktura: SU
+    nazwa: Ciemny Atelier
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "4299 UE"
+    obrzeze: K-4299-SU
+
+  - lp: 118
+    grupa: IX CONTEMPO 1
+    dekor: "5501"
+    struktura: SN
+    nazwa: Dąb Sławonia
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-5501-SN
+
+  - lp: 119
+    grupa: IX CONTEMPO 1
+    dekor: "5527"
+    struktura: SN
+    nazwa: Stone Oak
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "5527 FP"
+    obrzeze: K-5527-SN
+
+  - lp: 120
+    grupa: IX CONTEMPO 1
+    dekor: K021
+    struktura: SN
+    nazwa: Blackwood Jęczmienny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0021-SN
+
+  - lp: 121
+    grupa: IX CONTEMPO 1
+    dekor: K022
+    struktura: SN
+    nazwa: Blackwood Satynowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0022-SN
+
+  - lp: 122
+    grupa: IX CONTEMPO 1
+    dekor: K083
+    struktura: SN
+    nazwa: Jasny Artwood
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0083-SN
+
+  - lp: 123
+    grupa: IX CONTEMPO 1
+    dekor: K084
+    struktura: SN
+    nazwa: Ciemny Artwood
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0084-SN
+
+  - lp: 124
+    grupa: IX CONTEMPO 1
+    dekor: K085
+    struktura: PW
+    nazwa: Orzech Rockford Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0085-PW
+
+  - lp: 125
+    grupa: IX CONTEMPO 1
+    dekor: K086
+    struktura: PW
+    nazwa: Orzech Rockford Naturalny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0086-PW
+
+  - lp: 126
+    grupa: IX CONTEMPO 1
+    dekor: K087
+    struktura: PW
+    nazwa: Orzech Rockford Ciemny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0087-PW
+
+  - lp: 127
+    grupa: IX CONTEMPO 1
+    dekor: K105
+    struktura: PW
+    nazwa: Dąb Surowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K105 FP"
+    obrzeze: K-0105-PW
+
+  - lp: 128
+    grupa: IX CONTEMPO 1
+    dekor: K107
+    struktura: PW
+    nazwa: Dąb Elegance
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K107 FP"
+    obrzeze: K-0107-PW
+
+  - lp: 129
+    grupa: IX CONTEMPO 1
+    dekor: K354
+    struktura: PW
+    nazwa: Dąb Grange Kolonialny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0354-PW
+
+  - lp: 130
+    grupa: IX CONTEMPO 1
+    dekor: K355
+    struktura: PW
+    nazwa: Dąb Grange Platynowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0355-PW
+
+  - lp: 131
+    grupa: IX CONTEMPO 1
+    dekor: K356
+    struktura: PW
+    nazwa: Dąb Grange Piaskowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0356-PW
+
+  - lp: 132
+    grupa: IX CONTEMPO 1
+    dekor: K357
+    struktura: PW
+    nazwa: Dąb Castello Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0357-PW
+
+  - lp: 133
+    grupa: IX CONTEMPO 1
+    dekor: K358
+    struktura: PW
+    nazwa: Dąb Castello Miodowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0358-PW
+
+  - lp: 134
+    grupa: IX CONTEMPO 1
+    dekor: K359
+    struktura: PW
+    nazwa: Dąb Castello Koniakowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0359-PW
+
+  - lp: 135
+    grupa: IX CONTEMPO 1
+    dekor: K360
+    struktura: PW
+    nazwa: Dąb Harbor Vintage
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0360-PW
+
+  - lp: 136
+    grupa: IX CONTEMPO 1
+    dekor: K361
+    struktura: PW
+    nazwa: Dąb Harbor Złoty
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0361-PW
+
+  - lp: 137
+    grupa: IX CONTEMPO 1
+    dekor: K524
+    struktura: SN
+    nazwa: Jesion Surfside
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0524-SN
+
+  - lp: 138
+    grupa: IX CONTEMPO 1
+    dekor: K525
+    struktura: SN
+    nazwa: Jesion Surfside Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0525-SN
+
+  - lp: 139
+    grupa: IX CONTEMPO 1
+    dekor: K526
+    struktura: SN
+    nazwa: Jesion Surfside Stalowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0526-SN
+
+  - lp: 140
+    grupa: IX CONTEMPO 1
+    dekor: K535
+    struktura: RW
+    nazwa: Dąb Barokowy Złoty
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K535 RW"
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0535-RW
+
+  - lp: 141
+    grupa: IX CONTEMPO 1
+    dekor: K536
+    struktura: RW
+    nazwa: Dąb Barokowy Bursztynowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K536 RW"
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0536-RW
+
+  - lp: 142
+    grupa: IX CONTEMPO 1
+    dekor: K537
+    struktura: RW
+    nazwa: Dąb Barokowy Ristretto
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K537 RW"
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0537-RW
+
+  - lp: 143
+    grupa: IX CONTEMPO 1
+    dekor: K541
+    struktura: PN
+    nazwa: Juta Jasna
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0541/DP-PN
+    uwagi: "druk cyfrowy"
+
+  - lp: 144
+    grupa: IX CONTEMPO 1
+    dekor: K542
+    struktura: PN
+    nazwa: Juta Ciemna
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0542/DP-PN
+    uwagi: "druk cyfrowy"
+
+  - lp: 145
+    grupa: IX CONTEMPO 1
+    dekor: K543
+    struktura: SN
+    nazwa: Dąb Barbera Piaskowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0543-SN
+
+  - lp: 146
+    grupa: IX CONTEMPO 1
+    dekor: K544
+    struktura: RW
+    nazwa: Dąb Silverjack Orzechowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K544 RW"
+    obrzeze: K-0544-RW
+
+  - lp: 147
+    grupa: IX CONTEMPO 1
+    dekor: K545
+    struktura: RW
+    nazwa: Dąb Silverjack Postarzany
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K545 RW"
+    obrzeze: K-0545-RW
+
+  - lp: 148
+    grupa: IX CONTEMPO 1
+    dekor: K546
+    struktura: RW
+    nazwa: Orzech Franklin Karmelowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0546-RW
+
+  - lp: 149
+    grupa: IX CONTEMPO 1
+    dekor: K547
+    struktura: RW
+    nazwa: Orzech Franklin Tobacco
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0547-RW
+
+  - lp: 150
+    grupa: IX CONTEMPO 1
+    dekor: K548
+    struktura: RW
+    nazwa: Jesion Kala Dymiony
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    dopasowanie: "Compact Interior (BS)"
+    obrzeze: K-0548-RW
+
+  # ═══════════════════════════════════════════════════════════════════
+  # X CONTEMPO 2
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 151
+    grupa: X CONTEMPO 2
+    dekor: K349
+    struktura: RT
+    nazwa: Beton Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K349 RT"
+    obrzeze: K-0349-RT
+
+  - lp: 152
+    grupa: X CONTEMPO 2
+    dekor: K350
+    struktura: RT
+    nazwa: Beton
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K350 RT"
+    obrzeze: K-0350-RT
+
+  - lp: 153
+    grupa: X CONTEMPO 2
+    dekor: K351
+    struktura: RT
+    nazwa: Beton Rdzawy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K351 RT"
+    obrzeze: K-0351-RT
+
+  - lp: 154
+    grupa: X CONTEMPO 2
+    dekor: K352
+    struktura: RT
+    nazwa: Beton Ciemny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K352 RT"
+    obrzeze: K-0352-RT
+
+  - lp: 155
+    grupa: X CONTEMPO 2
+    dekor: K353
+    struktura: RT
+    nazwa: Beton Czarny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K353 RT"
+    obrzeze: K-0353-RT
+
+  - lp: 156
+    grupa: X CONTEMPO 2
+    dekor: K538
+    struktura: PN
+    nazwa: Łupek Arosa Jasny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K538 PN"
+    obrzeze: K-0538-PN
+
+  - lp: 157
+    grupa: X CONTEMPO 2
+    dekor: K539
+    struktura: PN
+    nazwa: Łupek Arosa Ciemny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K539 PN"
+    obrzeze: K-0539-PN
+
+  - lp: 158
+    grupa: X CONTEMPO 2
+    dekor: K540
+    struktura: PN
+    nazwa: Albus Szary
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K540 PN"
+    obrzeze: K-K540/DP-PN
+    uwagi: "druk cyfrowy"
+
+  - lp: 159
+    grupa: X CONTEMPO 2
+    dekor: K691
+    struktura: PN
+    nazwa: Granada Migdałowa
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0691-PN
+
+  - lp: 160
+    grupa: X CONTEMPO 2
+    dekor: K692
+    struktura: PN
+    nazwa: Granada Niebiańska
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0692-PN
+
+  - lp: 161
+    grupa: X CONTEMPO 2
+    dekor: K693
+    struktura: PN
+    nazwa: Granada Brązowa
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0693-PN
+
+  # ═══════════════════════════════════════════════════════════════════
+  # XII HARMONY
+  # ═══════════════════════════════════════════════════════════════════
+  - lp: 162
+    grupa: XII HARMONY
+    dekor: K527
+    struktura: HU
+    nazwa: Dąb Hudson Biszkoptowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0527-HU
+
+  - lp: 163
+    grupa: XII HARMONY
+    dekor: K528
+    struktura: HU
+    nazwa: Dąb Hudson Kaszmirowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0528-HU
+
+  - lp: 164
+    grupa: XII HARMONY
+    dekor: K529
+    struktura: HU
+    nazwa: Dąb Hudson Złoty
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: "K529 RW"
+    obrzeze: K-0529-HU
+
+  - lp: 165
+    grupa: XII HARMONY
+    dekor: K530
+    struktura: HU
+    nazwa: Dąb Hudson Amaretto
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0530-HU
+
+  - lp: 166
+    grupa: XII HARMONY
+    dekor: K531
+    struktura: AD
+    nazwa: Kasztan Arvadonna Kamienny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0531-AD
+
+  - lp: 167
+    grupa: XII HARMONY
+    dekor: K532
+    struktura: AD
+    nazwa: Kasztan Arvadonna
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0532-AD
+
+  - lp: 168
+    grupa: XII HARMONY
+    dekor: K533
+    struktura: AD
+    nazwa: Kasztan Arvadonna Mink
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0533-AD
+
+  - lp: 169
+    grupa: XII HARMONY
+    dekor: K534
+    struktura: AD
+    nazwa: Kasztan Arvadonna Ciemny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0534-AD
+
+  - lp: 170
+    grupa: XII HARMONY
+    dekor: K554
+    struktura: HU
+    nazwa: Dąb Hudson Czekoladowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0554-HU
+
+  - lp: 171
+    grupa: XII HARMONY
+    dekor: K694
+    struktura: PV
+    nazwa: Dąb Primavera Jedwabny
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0694-PV
+
+  - lp: 172
+    grupa: XII HARMONY
+    dekor: K695
+    struktura: PV
+    nazwa: Dąb Primavera Słomkowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0695-PV
+
+  - lp: 173
+    grupa: XII HARMONY
+    dekor: K696
+    struktura: PV
+    nazwa: Dąb Primavera Umbra
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0696-PV
+
+  - lp: 174
+    grupa: XII HARMONY
+    dekor: K697
+    struktura: PV
+    nazwa: Dąb Primavera Kakaowy
+    ex_12: false
+    ex_16: false
+    ex_18: true
+    konfekcja: K
+    blat: null
+    obrzeze: K-0697-PV
