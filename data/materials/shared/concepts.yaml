@@ -1,0 +1,118 @@
+# shared/concepts.yaml
+# Wsplne koncepty midzy producentami
+# Uywane do: filtrowania, tagowania, mapowania struktur
+
+decor_tags:
+  # Drewno
+  - dab
+  - orzech
+  - jesion
+  - buk
+  - brzoza
+  - olcha
+  - wenge
+  - wisnia
+  - klon
+  - socha
+  - wiaz
+
+  # Kamie / mineralne
+  - beton
+  - marmur
+  - kwarcyt
+  - lupek
+  - piaskowiec
+  - granit
+
+  # Kolory
+  - bialy
+  - czarny
+  - szary
+  - bezowy
+  - zloty
+  - srebrny
+  - brazowy
+  - kremowy
+  - niebieski
+  - zielony
+  - czerwony
+  - rozowy
+
+  # Style
+  - rustykalny
+  - nowoczesny
+  - klasyczny
+  - industrialny
+  - skandynawski
+
+  # Inne
+  - unikolor
+  - drewno
+  - kamien
+  - metal
+  - fornirowany
+
+color_families:
+  warm:
+    label: "Ciepe"
+    description: "Beowe, zoote, miodowe, karmelowe"
+  cool:
+    label: "Zimne"
+    description: "Szare, stalowe, niebieskie, srebrne"
+  white:
+    label: "Biae"
+    description: "Biae, kremowe, ecru, perowe"
+  black:
+    label: "Czarne"
+    description: "Czarne, antracytowe, grafitowe"
+  grey:
+    label: "Szare"
+    description: "Jasny szary do ciemnego grafitu"
+  brown:
+    label: "Brazowe"
+    description: "Czekolada, kawa, toffee"
+
+# Typy powierzchni - mapowanie midzy producentami
+# Klucz = wspolna koncepcja, wartosci = kody struktur per producent
+surface_types:
+  smooth_matt:
+    label: "Gadki mat"
+    description: "Gadka powierzchnia, brak faktury"
+    kronospan_structures: [SM, BS, SU]
+    swiss_krono_structures: [VL, SM]
+    egger_structures: [ST9, ST15]
+
+  pearl_silk:
+    label: "Perowy jedwab"
+    description: "Delikatny polysk perlowy"
+    kronospan_structures: [PE, PD]
+    swiss_krono_structures: []
+    egger_structures: []
+
+  wood_grain:
+    label: "Faktura drewna"
+    description: "Wyczuwalna struktura slojow"
+    kronospan_structures: [PW, SN, RW, HU, AD, PV]
+    swiss_krono_structures: [OW, OV, NA, MX]
+    egger_structures: [ST32, ST36]
+
+  stone:
+    label: "Kamien / Beton"
+    description: "Faktura mineralna"
+    kronospan_structures: [RT, PN]
+    swiss_krono_structures: [KM, TO]
+    egger_structures: [ST15, ST87]
+
+  gloss:
+    label: "Polysk"
+    description: "Wysoki polysk lustrzany"
+    kronospan_structures: [AG, MG]
+    swiss_krono_structures: [SE, SQ]
+    egger_structures: [HG, PG]
+
+  metal:
+    label: "Metal"
+    description: "Powierzchnia metaliczna"
+    kronospan_structures: [AL]
+    swiss_krono_structures: []
+    egger_structures: []

@@ -50,5 +50,5 @@ preview: ## Preview production build locally
 ##@ Maintenance
 .PHONY: clean
 clean: ## Remove generated files
-	rm -rf $(DIST)/*.json dist
+	rm -rf $(DIST)/*.json dist public/catalog.json
 	@echo "$(GREEN)Cleaned$(RESET)"

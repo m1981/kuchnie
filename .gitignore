@@ -10,3 +10,8 @@ log.md
 __pychache__
 .DS_Store
 .idea
+
+# Generated
+data/dist/
+catalog/public/catalog.json
+catalog/dist/

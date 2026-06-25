@@ -1,0 +1,200 @@
+# kronospan/collections.yaml
+# Metadane kolekcji Kronospan 2026
+
+kronospan:
+  country: Polska
+  website: kronosfera.pl
+
+  collections:
+    global:
+      name: "Global Collection 2026"
+      core: chipboard
+      thicknesses: [12, 16, 18]
+      format: [2800, 2070]
+      sidedness: two_sided_same
+      source_pdf: "plyty-wiorowe-global-collection.pdf"
+      has_edgebanding: true
+      has_hdf_laminate: true
+      has_countertops: true
+      has_express_24h: true
+
+    acrylic_gloss:
+      name: "Acrylic Gloss"
+      core: mdf
+      thicknesses: [18.3]
+      format: [2800, 1300]
+      sidedness: one_sided
+      source_pdf: "plyty-mdf-acrylic-gloss.pdf"
+      source_pages: "114-118"
+      has_edgebanding: true
+      has_hdf_laminate: false
+      has_countertops: false
+      has_express_24h: false
+
+    acrylic_matt:
+      name: "Acrylic Matt"
+      core: mdf
+      thicknesses: [18.3]
+      format: [2800, 1300]
+      sidedness: one_sided
+      source_pdf: "plyty-mdf-acrylic-matt.pdf"
+
+    mirror_gloss:
+      name: "Mirror Gloss"
+      core: mdf
+      thicknesses: [18.0]
+      format: [2800, 2050]
+      sidedness: two_sided_same
+      source_pdf: "plyty-mdf-mirror-gloss.pdf"
+
+    mirror_matt:
+      name: "Mirror Matt"
+      core: mdf
+      thicknesses: [18.0]
+      format: [2800, 2050]
+      sidedness: two_sided_same
+
+    mdf_lux:
+      name: "MDF Lux"
+      core: mdf
+      thicknesses: [18.0]
+      format: [2800, 2070]
+      sidedness: two_sided_same
+      source_pdf: "plyty-mdf-lux.pdf"
+
+    metal:
+      name: "Metal"
+      core: mdf
+      thicknesses: [18.7]
+      format: [2800, 1300]
+      sidedness: two_sided_different
+      source_pdf: "plyty-mdf-metal.pdf"
+
+    mdf_standard:
+      name: "MDF Standard"
+      core: mdf
+      thicknesses: [16, 18, 19, 22, 25, 28, 30, 33, 38]
+      format: [2800, 2070]
+      sidedness: varies
+
+    mdf_plus:
+      name: "MDF Plus"
+      core: mdf
+      thicknesses: [16, 18, 19, 22, 25, 28]
+      format: [2800, 2070]
+      sidedness: varies
+
+    compact_interior:
+      name: "Compact Interior"
+      core: compact
+      thicknesses: [10, 12, 13]
+      format: [1860, 2800]
+      sidedness: two_sided_same
+
+  structures:
+    SM:
+      name: "Super Mat"
+      type: smooth
+      finish: matt
+      description: "Gadka powierzchnia matowa"
+    PE:
+      name: "Pearl Effect"
+      type: smooth
+      finish: silk_matt
+      description: "Perowy jedwabny polysk"
+    BS:
+      name: "Black Structure"
+      type: smooth
+      finish: matt
+      description: "Matowa struktura czarna"
+    PD:
+      name: "Pearl Dark"
+      type: smooth
+      finish: silk_matt
+      description: "Ciemny perlowy polysk"
+    SU:
+      name: "Super Ultra Mat"
+      type: smooth
+      finish: matt
+      fingerprint_resistant: true
+      description: "Ultra mat, odporny na odciski"
+    PW:
+      name: "Pearl Wood"
+      type: wood_grain
+      finish: silk_matt
+      description: "Faktura drewna z perlowym polyskiem"
+    SN:
+      name: "Struktura Naturalna"
+      type: wood_grain
+      finish: structured
+      description: "Naturalna faktura drewna"
+    RT:
+      name: "Rustykalna"
+      type: stone
+      finish: structured
+      description: "Faktura betonu i kamienia"
+    PN:
+      name: "Pearl Nature"
+      type: stone
+      finish: silk_matt
+      description: "Kamien z perlowym polyskiem"
+    HU:
+      name: "Hudson"
+      type: wood_grain
+      finish: structured
+      description: "Faktura drewna Hudson"
+    AD:
+      name: "Arvadonna"
+      type: wood_grain
+      finish: structured
+      description: "Faktura kasztanu"
+    PV:
+      name: "Primavera"
+      type: wood_grain
+      finish: structured
+      description: "Faktura debu Primavera"
+    RW:
+      name: "Rustic Wood"
+      type: wood_grain
+      finish: structured
+      description: "Rustykalna faktura drewna"
+    AG:
+      name: "Acrylic Gloss"
+      type: smooth
+      finish: gloss
+      description: "Akrylowy wysoki polysk"
+    AM:
+      name: "Acrylic Matt"
+      type: smooth
+      finish: matt
+      description: "Akrylowy mat"
+    MG:
+      name: "Mirror Gloss"
+      type: smooth
+      finish: gloss
+      description: "Lustrzany polysk"
+    MM:
+      name: "Mirror Matt"
+      type: smooth
+      finish: matt
+      description: "Lustrzany mat"
+    AL:
+      name: "Aluminium"
+      type: metal
+      finish: structured
+      description: "Powierzchnia aluminiowa"
+    RS:
+      name: "Robocza (blat)"
+      type: smooth
+      finish: structured
+      description: "Powierzchnia blatow roboczych"
+
+  edge_finishes:
+    HG: "High Gloss"
+    UM: "Ultra Matt"
+    AG: "Acrylic Gloss"
+    AM: "Acrylic Matt"
+    AL: "Aluminium"
+    BS: "Black Structure"
+    SM: "Super Mat"
+    PD: "Pearl Dark"
