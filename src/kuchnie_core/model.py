@@ -9,6 +9,24 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class MachiningOp:
+    """A machining operation on a panel — drill, groove, rabbet, dado.
+
+    Coordinate system (panel lying flat, viewed from the machined face):
+      x_mm  = distance from LEFT edge of panel
+      y_mm  = distance from BOTTOM edge of panel (front edge for carcass sides)
+    """
+    type: str              # "drill", "groove", "rabbet", "dado"
+    x_mm: float = 0
+    y_mm: float = 0
+    diameter_mm: float = 0  # for drill/bore
+    depth_mm: float = 0     # 0 = through hole
+    width_mm: float = 0     # for groove/rabbet
+    length_mm: float = 0    # for groove
+    note: str = ""
+
+
+@dataclass
 class EdgeBand:
     """Edge banding applied to ONE edge of a panel."""
     material: str        # e.g. "ABS_swiss_krono.U119_VL"
@@ -35,6 +53,7 @@ class Panel:
     height_mm: float
     banded_edges: dict[str, EdgeBand] = field(default_factory=dict)
     # keys: "front", "back", "left", "right" — only edges that ARE banded
+    machining_ops: list[MachiningOp] = field(default_factory=list)
     quantity: int = 1
 
 

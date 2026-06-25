@@ -10,7 +10,7 @@ registering it in TYPE_REGISTRY.
 
 from __future__ import annotations
 
-from .model import Accessory, CabinetInstance, DecompositionResult, EdgeBand, Panel
+from .model import Accessory, CabinetInstance, DecompositionResult, EdgeBand, MachiningOp, Panel
 
 
 # ---------------------------------------------------------------------------
@@ -259,10 +259,148 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
 
 
 # ---------------------------------------------------------------------------
+# dolna_legrabox — base cabinet with Blum LEGRABOX drawers
+# ---------------------------------------------------------------------------
+
+def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
+    """Decompose a base cabinet with LEGRABOX drawer system.
+
+    Differs from dolna_szufladowa:
+      - Drawer BOX panels (back + base) are produced as separate panels
+      - Runner mounting drill ops are added to carcass side panels
+      - Runner accessories carry LEGRABOX part numbers
+    """
+    from .legrabox import (
+        decompose_drawer_box,
+        make_runner_accessory,
+        validate_height_nl,
+    )
+
+    r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
+    side_h = cab.height_mm - cab.plinth_height_mm
+
+    # -- Side panels (left + right) — runner drill ops accumulated here --
+    left_ops: list[MachiningOp] = []
+    right_ops: list[MachiningOp] = []
+
+    for side, label, ops_list in [
+        ("left",  "Lewy bok", left_ops),
+        ("right", "Prawy bok", right_ops),
+    ]:
+        r.panels.append(Panel(
+            id=f"{cab.id}_{side}",
+            name=label,
+            material=cab.body_material,
+            thickness_mm=cab.thickness_side_mm,
+            width_mm=cab.depth_mm,
+            height_mm=side_h,
+            banded_edges={"front": _body_eb(cab, side_h)},
+            machining_ops=ops_list,
+        ))
+
+    # -- Bottom panel --
+    bottom_w = cab.width_mm - 2 * cab.thickness_side_mm
+    r.panels.append(Panel(
+        id=f"{cab.id}_bottom",
+        name="Dno",
+        material=cab.body_material,
+        thickness_mm=cab.thickness_bottom_mm,
+        width_mm=bottom_w,
+        height_mm=cab.depth_mm,
+        banded_edges={"front": _body_eb(cab, bottom_w)},
+    ))
+
+    # -- Back panel --
+    back_w = cab.width_mm - 2 * cab.thickness_side_mm + 2 * cab.groove_depth_mm
+    back_h = side_h + cab.groove_depth_mm
+    r.panels.append(Panel(
+        id=f"{cab.id}_back",
+        name="Plecy",
+        material=cab.back_material,
+        thickness_mm=cab.thickness_back_mm,
+        width_mm=back_w,
+        height_mm=back_h,
+        banded_edges={},
+    ))
+
+    # -- Drawer boxes + runner mounting ops --
+    for drawer in cab.drawers:
+        did = drawer["id"]
+        height_code = drawer.get("height_code", "C")
+        nl = drawer.get("nl", 500)
+        capacity = drawer.get("capacity_kg", 40)
+
+        box_panels, runner_ops = decompose_drawer_box(
+            cabinet_id=cab.id,
+            drawer_id=did,
+            kb=cab.width_mm - 2 * cab.thickness_side_mm,  # KB = internal width
+            nl=nl,
+            height_code=height_code,
+            side_thickness=cab.thickness_side_mm,
+        )
+        r.panels.extend(box_panels)
+
+        # Mounting ops go on BOTH side panels (mirrored)
+        left_ops.extend(runner_ops)
+        right_ops.extend(runner_ops)
+
+        # Runner accessory (purchased part)
+        r.accessories.append(make_runner_accessory(
+            cabinet_id=cab.id,
+            drawer_id=did,
+            height_code=height_code,
+            nl=nl,
+            capacity_kg=capacity,
+        ))
+
+    # -- Drawer fronts --
+    for front in cab.fronts:
+        if front.get("typ") != "szufladowy":
+            continue
+        drawer = next(
+            (d for d in cab.drawers if d["id"] == front.get("powiazany")),
+            None,
+        )
+        front_h = drawer["wysokosc"] if drawer else 150
+        margin_l = front.get("margines_lewo", 3)
+        margin_r = front.get("margines_prawo", 3)
+        front_w = cab.width_mm - margin_l - margin_r
+
+        r.panels.append(Panel(
+            id=f"{cab.id}_front_{front['id']}",
+            name=f"Front {front['id']}",
+            material=cab.front_material,
+            thickness_mm=cab.thickness_front_mm,
+            width_mm=front_w,
+            height_mm=front_h,
+            banded_edges={
+                "front": _front_eb(cab, front_w),
+                "back":  _front_eb(cab, front_w),
+                "left":  _front_eb(cab, front_h),
+                "right": _front_eb(cab, front_h),
+            },
+        ))
+
+    # -- Handles --
+    if cab.handles:
+        n = len([f for f in cab.fronts if f.get("typ") == "szufladowy"])
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_handles",
+            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
+                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            type="handle",
+            quantity=n,
+        ))
+
+    return r
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
 TYPE_REGISTRY: dict[str, callable] = {
     "dolna_szufladowa": decompose_dolna_szufladowa,
+    "dolna_legrabox":   decompose_dolna_legrabox,
     "gorna_drzwiowa":   decompose_gorna_drzwiowa,
 }

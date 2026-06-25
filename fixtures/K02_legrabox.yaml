@@ -1,0 +1,70 @@
+# K02 — Base cabinet with 2 LEGRABOX C-drawers (NL=500, 40kg)
+# Proof-of-concept for MachiningOps + LEGRABOX decomposition.
+
+korpus:
+    id: 'K02'
+    typ: 'dolna_legrabox'
+    opis: 'Szafka dolna, 2 szuflady LEGRABOX C/500'
+
+    wymiary:
+        szerokosc: 800
+        wysokosc: 720
+        glebokosc: 510
+
+    material:
+        korpus: 'swiss_krono.U119_VL'
+        plecy: 'HDF_3mm'
+        fronty: 'swiss_krono.U119_EM'
+
+    grubosci:
+        boki: 18
+        dna: 18
+        polki: 18
+        plecy: 3
+        fronty: 18
+
+    oklejanie:
+        typ: 'ABS'
+        grubosc: 0.8
+
+    plecy:
+        typ: 'wpuszczane_w_nut'
+        nut: 8
+
+    wnetrze:
+        szuflady:
+            - id: 'S1'
+              typ: 'legrabox'
+              height_code: 'C'
+              nl: 500
+              capacity_kg: 40
+              colour: 'SW-M'
+              motion: 'BLUMOTION S'
+              wysokosc: 177 # front height = drawer side height
+            - id: 'S2'
+              typ: 'legrabox'
+              height_code: 'C'
+              nl: 500
+              capacity_kg: 40
+              colour: 'SW-M'
+              motion: 'BLUMOTION S'
+              wysokosc: 177
+
+    fronty:
+        - id: 'F1'
+          typ: 'szufladowy'
+          powiazany: 'S1'
+          margines_lewo: 3
+          margines_prawo: 3
+        - id: 'F2'
+          typ: 'szufladowy'
+          powiazany: 'S2'
+          margines_lewo: 3
+          margines_prawo: 3
+
+    uchwyty:
+        typ: 'relingowy'
+        rozstaw: 256
+
+    nozki:
+        wysokosc: 100
