@@ -186,6 +186,43 @@ describe('Variant Completeness', () => {
         decors = loadDecors();
     });
 
+    it('only K110 has carcass-only chipboard role', () => {
+        const carcassOnly = decors.filter(d =>
+            d.variants.some(v =>
+                v.material === 'chipboard' &&
+                v.roles.includes('carcass') &&
+                !v.roles.includes('front')
+            )
+        );
+        assert.equal(carcassOnly.length, 1, 'Expected exactly 1 carcass-only chipboard decor');
+        assert.equal(carcassOnly[0].id, 'K110');
+    });
+
+    it('all other chipboard decors are front-only', () => {
+        const wrongRoles = decors.filter(d =>
+            d.id !== 'K110' &&
+            d.variants.some(v =>
+                v.material === 'chipboard' &&
+                v.roles.includes('carcass')
+            )
+        );
+        assert.deepEqual(
+            wrongRoles.map(d => d.id),
+            [],
+            `These chipboard decors should not have carcass role: ${wrongRoles.map(d => d.id).join(', ')}`
+        );
+    });
+
+    it('all mdf_acrylic variants are front-only', () => {
+        const wrongRoles = decors.filter(d =>
+            d.variants.some(v =>
+                v.material === 'mdf_acrylic' &&
+                !v.roles.includes('front')
+            )
+        );
+        assert.deepEqual(wrongRoles.map(d => d.id), []);
+    });
+
     it('all chipboard variants have edge banding', () => {
         const missing = [];
         decors.forEach((d) => {
