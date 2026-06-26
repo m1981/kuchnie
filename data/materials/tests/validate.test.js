@@ -1,356 +1,335 @@
 // tests/validate.test.js
-// Walidacja YAML + porownanie z danymi referencyjnymi
-// Uruchomienie: cd data/materials && node --test tests/validate.test.js
+// Validation tests for Decor + Variant model
+// Run: cd data/materials && node --test tests/validate.test.js
 
 const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
-const { CollectionFileSchema } = require('../shared/schema');
+const { DecorsFileSchema, COLOR_FAMILIES, MATERIAL_TYPES, ROLES } = require('../shared/schema');
 
-const MATERIALS_DIR = path.join(__dirname, '..');
-const KRONOSPAN_DIR = path.join(MATERIALS_DIR, 'kronospan');
+const KRONOSPAN_DIR = path.join(__dirname, '..', 'kronospan');
 
-// ── Helper: wczytaj YAML ──
 function loadYaml(filePath) {
     return yaml.load(fs.readFileSync(filePath, 'utf8'));
 }
 
-// ── Helper: znajdz dekor po ID ──
-function findDecor(decors, id) {
-    return decors.find((d) => d.id === id);
+function loadDecors() {
+    const content = loadYaml(path.join(KRONOSPAN_DIR, 'decors.yaml'));
+    return content.decors;
 }
 
 // ════════════════════════════════════════════════════════
-// TEST 1: Walidacja struktury YAML
+// TEST 1: Schema validation
 // ════════════════════════════════════════════════════════
 
-describe('YAML Schema Validation', () => {
-    it('acrylic-gloss.yaml passes schema validation', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        const result = CollectionFileSchema.safeParse(content);
+describe('Schema Validation', () => {
+    it('decors.yaml passes DecorsFileSchema', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'decors.yaml'));
+        const result = DecorsFileSchema.safeParse(content);
         assert.equal(result.success, true, JSON.stringify(result.error?.issues, null, 2));
     });
 
-    it('acrylic-gloss.yaml has correct collection name', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        assert.equal(content.collection, 'acrylic_gloss');
+    it('all decors have at least one variant', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            assert.ok(d.variants.length >= 1, `Decor ${d.id}: no variants`);
+        });
     });
 
-    it('acrylic-gloss.yaml has 6 decors', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        assert.equal(content.decors.length, 6);
+    it('all variants have valid material type', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                assert.ok(
+                    MATERIAL_TYPES.includes(v.material),
+                    `Decor ${d.id}, variant ${v.id}: invalid material "${v.material}"`
+                );
+            });
+        });
     });
 
-    it('all decors have required fields', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        content.decors.forEach((decor) => {
-            assert.ok(decor.id, `Decor missing id`);
-            assert.ok(decor.name, `Decor ${decor.id} missing name`);
-            assert.ok(decor.structure, `Decor ${decor.id} missing structure`);
-            assert.ok(decor.edge, `Decor ${decor.id} missing edge`);
-            assert.ok(decor.edge.code, `Decor ${decor.id} missing edge.code`);
-            assert.ok(decor.thickness_mm, `Decor ${decor.id} missing thickness_mm`);
-            assert.ok(decor.format, `Decor ${decor.id} missing format`);
+    it('all variants have valid roles', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                v.roles.forEach((r) => {
+                    assert.ok(
+                        ROLES.includes(r),
+                        `Decor ${d.id}, variant ${v.id}: invalid role "${r}"`
+                    );
+                });
+            });
         });
     });
 });
 
 // ════════════════════════════════════════════════════════
-// TEST 2: Porownanie z danymi referencyjnymi (MD)
+// TEST 2: Identity model — K-prefix
 // ════════════════════════════════════════════════════════
 
-describe('Reference Data Comparison (acrylic-gloss.md)', () => {
+describe('Identity Model', () => {
+    it('all decor IDs start with K', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            assert.ok(d.id.startsWith('K'), `Decor id="${d.id}" does not start with K`);
+        });
+    });
+
+    it('all variant IDs follow {decor_id}-{material_suffix} pattern', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                assert.ok(
+                    v.id.startsWith(d.id + '-'),
+                    `Variant ${v.id}: should start with ${d.id}-`
+                );
+                const suffix = v.id.slice(d.id.length + 1);
+                assert.ok(
+                    suffix.length >= 2,
+                    `Variant ${v.id}: missing material suffix`
+                );
+            });
+        });
+    });
+
+    it('no duplicate decor IDs', () => {
+        const decors = loadDecors();
+        const ids = decors.map((d) => d.id);
+        const unique = new Set(ids);
+        assert.equal(ids.length, unique.size, `Duplicate decor IDs found`);
+    });
+
+    it('no duplicate variant IDs across all decors', () => {
+        const decors = loadDecors();
+        const allVariantIds = decors.flatMap((d) => d.variants.map((v) => v.id));
+        const unique = new Set(allVariantIds);
+        assert.equal(
+            allVariantIds.length,
+            unique.size,
+            `Duplicate variant IDs found: ${allVariantIds.filter((id, i) => allVariantIds.indexOf(id) !== i).join(', ')}`
+        );
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 3: Color family
+// ════════════════════════════════════════════════════════
+
+describe('Color Family', () => {
+    it('all decors have valid color_family', () => {
+        const decors = loadDecors();
+        decors.forEach((d) => {
+            assert.ok(d.color_family, `Decor ${d.id}: missing color_family`);
+            assert.ok(
+                COLOR_FAMILIES.includes(d.color_family),
+                `Decor ${d.id}: invalid color_family "${d.color_family}"`
+            );
+        });
+    });
+
+    it('at least 15 distinct color families used', () => {
+        const decors = loadDecors();
+        const families = new Set(decors.map((d) => d.color_family));
+        assert.ok(
+            families.size >= 15,
+            `Only ${families.size} color families used (expected ≥15)`
+        );
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 4: Multi-variant decor merging
+// K8685, K0514, K7045 exist in both Global Collection
+// (chipboard) and Acrylic Gloss (MDF). They must appear
+// as ONE decor with TWO variants, not two separate decors.
+// ════════════════════════════════════════════════════════
+
+describe('Multi-variant Decors', () => {
+    const MULTI_VARIANT_IDS = ['K8685', 'K0514', 'K7045'];
+    let decors;
+
+    before(() => {
+        decors = loadDecors();
+    });
+
+    MULTI_VARIANT_IDS.forEach((id) => {
+        it(`${id} has exactly 2 variants (chipboard + mdf_acrylic)`, () => {
+            const decor = decors.find((d) => d.id === id);
+            assert.ok(decor, `Decor ${id} not found`);
+            assert.equal(decor.variants.length, 2, `Expected 2 variants for ${id}`);
+
+            const materials = decor.variants.map((v) => v.material).sort();
+            assert.deepEqual(materials, ['chipboard', 'mdf_acrylic']);
+        });
+    });
+
+    it('total decors is 177 (not 180 — 3 merged)', () => {
+        assert.equal(decors.length, 177);
+    });
+
+    it('total variants is 180 (same as before migration)', () => {
+        const total = decors.reduce((s, d) => s + d.variants.length, 0);
+        assert.equal(total, 180);
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 5: Variant completeness
+// ════════════════════════════════════════════════════════
+
+describe('Variant Completeness', () => {
+    let decors;
+
+    before(() => {
+        decors = loadDecors();
+    });
+
+    it('all chipboard variants have edge banding', () => {
+        const missing = [];
+        decors.forEach((d) => {
+            d.variants.filter((v) => v.material === 'chipboard').forEach((v) => {
+                if (!v.edge || !v.edge.code) {
+                    missing.push(`${d.id}/${v.id}`);
+                }
+            });
+        });
+        assert.deepEqual(missing, [], `Chipboard variants missing edge: ${missing.join(', ')}`);
+    });
+
+    it('all mdf_acrylic variants have thickness_mm and format', () => {
+        const missing = [];
+        decors.forEach((d) => {
+            d.variants.filter((v) => v.material === 'mdf_acrylic').forEach((v) => {
+                if (!v.thickness_mm) missing.push(`${d.id}/${v.id} (thickness_mm)`);
+                if (!v.format) missing.push(`${d.id}/${v.id} (format)`);
+            });
+        });
+        assert.deepEqual(missing, [], `MDF variants missing fields: ${missing.join(', ')}`);
+    });
+
+    it('all variants have at least one role', () => {
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                assert.ok(v.roles.length >= 1, `Decor ${d.id}, variant ${v.id}: no roles`);
+            });
+        });
+    });
+
+    it('all edge codes start with K-', () => {
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                if (v.edge) {
+                    assert.ok(
+                        v.edge.code.startsWith('K-'),
+                        `Decor ${d.id}, variant ${v.id}: edge code "${v.edge.code}" does not start with K-`
+                    );
+                }
+            });
+        });
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 6: Reference comparison (acrylic-gloss)
+// Verify that the migrated data matches the original
+// acrylic-gloss reference fixture.
+// ════════════════════════════════════════════════════════
+
+describe('Reference Data (acrylic-gloss migration)', () => {
     const ref = require('../tests/fixtures/acrylic-gloss-ref');
     let decors;
 
     before(() => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        decors = content.decors;
+        decors = loadDecors();
     });
 
-    it(`has exactly ${ref.expected_count} decors`, () => {
-        assert.equal(decors.length, ref.expected_count);
-    });
-
-    it('all reference decors are present in YAML', () => {
-        const ids = decors.map((d) => d.id);
-        ref.decors.forEach((expected) => {
-            assert.ok(ids.includes(expected.id), `Missing decor ${expected.id} (${expected.name})`);
-        });
-    });
-
-    it('no extra decors in YAML (not in reference)', () => {
-        const refIds = ref.decors.map((d) => d.id);
-        decors.forEach((decor) => {
-            assert.ok(
-                refIds.includes(decor.id),
-                `Extra decor in YAML: ${decor.id} (${decor.name}) - not in reference MD`
-            );
-        });
-    });
-
-    // Testy per dekor
     ref.decors.forEach((expected) => {
-        describe(`Decor ${expected.id} (${expected.name})`, () => {
+        describe(`${expected.id} (${expected.name})`, () => {
             let decor;
+            let variant;
+
             before(() => {
-                decor = findDecor(decors, expected.id);
+                decor = decors.find((d) => d.id === expected.id);
+                variant = decor?.variants.find((v) => v.material === 'mdf_acrylic');
             });
 
-            it('exists in YAML', () => {
+            it('decor exists', () => {
                 assert.ok(decor, `Decor ${expected.id} not found`);
             });
 
-            it(`name matches: "${expected.name}"`, () => {
+            it('name matches', () => {
                 assert.equal(decor.name, expected.name);
             });
 
-            it(`structure matches: "${expected.structure}"`, () => {
-                assert.equal(decor.structure, expected.structure);
-            });
-
-            it(`edge code matches: "${expected.edge_code}"`, () => {
-                assert.equal(decor.edge.code, expected.edge_code);
-            });
-
-            it(`edge finish matches: "${expected.edge_finish}"`, () => {
-                assert.equal(decor.edge.finish, expected.edge_finish);
-            });
-
-            it('thickness is 18.3mm', () => {
-                assert.equal(decor.thickness_mm, ref.expected_thickness);
-            });
-
-            it('format is [2800, 1300]', () => {
-                assert.deepEqual(decor.format, ref.expected_format);
-            });
-
-            it(`color_family matches: "${expected.color_family}"`, () => {
+            it('color_family matches', () => {
                 assert.equal(decor.color_family, expected.color_family);
+            });
+
+            it('has mdf_acrylic variant', () => {
+                assert.ok(variant, `No mdf_acrylic variant for ${expected.id}`);
+            });
+
+            it('variant structure matches', () => {
+                assert.equal(variant.structure, expected.structure);
+            });
+
+            it('variant edge code matches', () => {
+                assert.equal(variant.edge.code, expected.edge_code);
+            });
+
+            it('variant edge finish matches', () => {
+                assert.equal(variant.edge.finish, expected.edge_finish);
+            });
+
+            it('variant thickness is 18.3mm', () => {
+                assert.equal(variant.thickness_mm, ref.expected_thickness);
+            });
+
+            it('variant format is [2800, 1300]', () => {
+                assert.deepEqual(variant.format, ref.expected_format);
             });
         });
     });
 });
 
 // ════════════════════════════════════════════════════════
-// TEST 3: Cross-reference walidacja
+// TEST 7: Cross-reference — structures in collections.yaml
 // ════════════════════════════════════════════════════════
 
-describe('Cross-reference Validation', () => {
+describe('Cross-reference: collections.yaml', () => {
     let collections;
-    let acrylicDecors;
+    let decors;
 
     before(() => {
         collections = loadYaml(path.join(KRONOSPAN_DIR, 'collections.yaml'));
-        const acrylic = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        acrylicDecors = acrylic.decors;
+        decors = loadDecors();
     });
 
-    it('all structures exist in collections.yaml', () => {
+    it('all variant structures exist in collections.yaml', () => {
         const validStructures = Object.keys(collections.kronospan.structures);
-        acrylicDecors.forEach((decor) => {
-            assert.ok(
-                validStructures.includes(decor.structure),
-                `Decor ${decor.id}: structure "${decor.structure}" not in collections.yaml. Valid: ${validStructures.join(', ')}`
-            );
+        const invalid = [];
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                if (!validStructures.includes(v.structure)) {
+                    invalid.push(`${d.id}/${v.id}: "${v.structure}"`);
+                }
+            });
         });
+        assert.deepEqual(invalid, [], `Invalid structures: ${invalid.join(', ')}`);
     });
 
-    it('all decors have global_decor_id (link to Global Collection)', () => {
-        acrylicDecors.forEach((decor) => {
-            assert.ok(decor.global_decor_id, `Decor ${decor.id}: missing global_decor_id`);
+    it('all variant collections exist in collections.yaml', () => {
+        const validCollections = Object.keys(collections.kronospan.collections);
+        const invalid = [];
+        decors.forEach((d) => {
+            d.variants.forEach((v) => {
+                if (!validCollections.includes(v.collection)) {
+                    invalid.push(`${d.id}/${v.id}: "${v.collection}"`);
+                }
+            });
         });
-    });
-
-    it('edge codes follow Kronospan pattern K-*', () => {
-        acrylicDecors.forEach((decor) => {
-            assert.ok(
-                decor.edge.code.startsWith('K-'),
-                `Decor ${decor.id}: edge code "${decor.edge.code}" doesn't start with K-`
-            );
-        });
-    });
-
-    it('edge supplier is Schilsner', () => {
-        acrylicDecors.forEach((decor) => {
-            assert.equal(
-                decor.edge.supplier,
-                'Schilsner',
-                `Decor ${decor.id}: edge supplier should be Schilsner`
-            );
-        });
-    });
-});
-
-// ════════════════════════════════════════════════════════
-// TEST 4: Unikalnosc
-// ════════════════════════════════════════════════════════
-
-describe('Uniqueness Checks', () => {
-    it('no duplicate IDs in acrylic-gloss', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        const ids = content.decors.map((d) => d.id);
-        const uniqueIds = [...new Set(ids)];
-        assert.equal(
-            ids.length,
-            uniqueIds.length,
-            `Duplicate IDs found: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`
-        );
-    });
-
-    it('no duplicate edge codes in acrylic-gloss', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        const codes = content.decors.map((d) => d.edge.code);
-        const uniqueCodes = [...new Set(codes)];
-        assert.equal(codes.length, uniqueCodes.length, `Duplicate edge codes found`);
-    });
-});
-
-// ════════════════════════════════════════════════════════
-// TEST 5: Identity Model — K-prefix convention
-// All Kronospan decor IDs must start with 'K' prefix
-// to ensure global uniqueness across collections.
-// ════════════════════════════════════════════════════════
-
-describe('Identity Model — K-prefix convention', () => {
-    it('all global-collection IDs start with K', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
-        content.decors.forEach((decor) => {
-            assert.ok(
-                decor.id.startsWith('K'),
-                `Global Collection decor id="${decor.id}" does not start with K. All Kronospan IDs must use K-prefix.`
-            );
-        });
-    });
-
-    it('all acrylic-gloss IDs start with K', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        content.decors.forEach((decor) => {
-            assert.ok(
-                decor.id.startsWith('K'),
-                `Acrylic Gloss decor id="${decor.id}" does not start with K. All Kronospan IDs must use K-prefix.`
-            );
-        });
-    });
-
-    it('all global_decor_id values start with K', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        content.decors.forEach((decor) => {
-            if (decor.global_decor_id) {
-                assert.ok(
-                    decor.global_decor_id.startsWith('K'),
-                    `Decor ${decor.id}: global_decor_id="${decor.global_decor_id}" does not start with K.`
-                );
-            }
-        });
-    });
-});
-
-// ════════════════════════════════════════════════════════
-// TEST 6: Cross-collection uniqueness
-// No two decors across different collection files may
-// share the same ID UNLESS they are the same decor in
-// a different material (linked via global_decor_id).
-// This allows K8685 to exist in both Global Collection
-// (chipboard) and Acrylic Gloss (MDF) as variants.
-// ════════════════════════════════════════════════════════
-
-describe('Cross-collection Uniqueness', () => {
-    it('no accidental duplicate IDs across collections', () => {
-        const global_ = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
-        const acrylic = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-
-        const globalIds = new Set(global_.decors.map((d) => d.id));
-        const acrylicIds = acrylic.decors.map((d) => d.id);
-
-        // IDs that appear in both collections
-        const overlapping = acrylicIds.filter((id) => globalIds.has(id));
-
-        // Each overlap must be linked via global_decor_id
-        overlapping.forEach((id) => {
-            const acrylicDecor = acrylic.decors.find((d) => d.id === id);
-            assert.ok(
-                acrylicDecor.global_decor_id,
-                `Decor ${id} exists in both global-collection and acrylic-gloss but has no global_decor_id link.`
-            );
-            assert.equal(
-                acrylicDecor.global_decor_id,
-                id,
-                `Decor ${id}: global_decor_id should equal its own id (same decor, different material).`
-            );
-        });
-
-        // IDs in acrylic-gloss that are NOT in global-collection must not collide
-        const uniqueToAcrylic = acrylicIds.filter((id) => !globalIds.has(id));
-        const uniqueSet = new Set(uniqueToAcrylic);
-        assert.equal(
-            uniqueToAcrylic.length,
-            uniqueSet.size,
-            `Duplicate IDs in acrylic-gloss (not in global): ${uniqueToAcrylic.filter((id, i) => uniqueToAcrylic.indexOf(id) !== i).join(', ')}`
-        );
-    });
-});
-
-// ════════════════════════════════════════════════════════
-// TEST 7: Cross-reference integrity
-// global_decor_id must resolve to an existing decor
-// in global-collection.yaml.
-// ════════════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════
-// TEST 8: Color Family
-// Every decor must have a color_family assigned.
-// This enables cross-vendor color matching.
-// ════════════════════════════════════════════════════════
-
-describe('Color Family', () => {
-    it('all global-collection decors have color_family', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
-        const { COLOR_FAMILIES } = require('../shared/schema');
-        content.decors.forEach((decor) => {
-            assert.ok(
-                decor.color_family,
-                `Decor ${decor.id} (${decor.name}): missing color_family`
-            );
-            assert.ok(
-                COLOR_FAMILIES.includes(decor.color_family),
-                `Decor ${decor.id}: invalid color_family "${decor.color_family}". Valid: ${COLOR_FAMILIES.join(', ')}`
-            );
-        });
-    });
-
-    it('all acrylic-gloss decors have color_family', () => {
-        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-        const { COLOR_FAMILIES } = require('../shared/schema');
-        content.decors.forEach((decor) => {
-            assert.ok(
-                decor.color_family,
-                `Decor ${decor.id} (${decor.name}): missing color_family`
-            );
-            assert.ok(
-                COLOR_FAMILIES.includes(decor.color_family),
-                `Decor ${decor.id}: invalid color_family "${decor.color_family}". Valid: ${COLOR_FAMILIES.join(', ')}`
-            );
-        });
-    });
-});
-
-describe('Cross-reference Integrity', () => {
-    it('all global_decor_id values resolve to existing global-collection decors', () => {
-        const global_ = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
-        const acrylic = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
-
-        const globalIdSet = new Set(global_.decors.map((d) => d.id));
-
-        acrylic.decors.forEach((decor) => {
-            if (decor.global_decor_id) {
-                assert.ok(
-                    globalIdSet.has(decor.global_decor_id),
-                    `Decor ${decor.id}: global_decor_id="${decor.global_decor_id}" does not exist in global-collection.yaml`
-                );
-            }
-        });
+        assert.deepEqual(invalid, [], `Invalid collections: ${invalid.join(', ')}`);
     });
 });

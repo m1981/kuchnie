@@ -1,37 +1,26 @@
 // build.js
-// Walidacja YAML + generowanie JSON
-// Uruchomienie: node data/materials/build.js
+// Validate YAML + generate JSON (Decor + Variant model)
+// Run: node data/materials/build.js
 
 const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
-const { CollectionFileSchema } = require('./shared/schema');
+const { DecorsFileSchema } = require('./shared/schema');
 
 const MATERIALS_DIR = __dirname;
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 const CATALOG_PUBLIC = path.join(__dirname, '..', '..', 'catalog', 'public');
 
-// ── Producenci do przetworzenia ──
 const PRODUCERS = ['kronospan', 'swiss-krono', 'egger'];
 
 let errors = 0;
 let warnings = 0;
 
-function error(msg) {
-    console.error(`  ERROR: ${msg}`);
-    errors++;
-}
+function error(msg) { console.error(`  ERROR: ${msg}`); errors++; }
+function warn(msg) { console.warn(`  WARN:  ${msg}`); warnings++; }
+function ok(msg) { console.log(`  OK:    ${msg}`); }
 
-function warn(msg) {
-    console.warn(`  WARN:  ${msg}`);
-    warnings++;
-}
-
-function ok(msg) {
-    console.log(`  OK:    ${msg}`);
-}
-
-// ── Walidacja jednego producenta ──
+// ── Validate one producer ──
 function validateProducer(producer) {
     const dir = path.join(MATERIALS_DIR, producer);
 
@@ -44,7 +33,7 @@ function validateProducer(producer) {
     console.log(`Producer: ${producer}`);
     console.log('='.repeat(50));
 
-    // 1. Wczytaj collections.yaml
+    // 1. Load collections.yaml
     const collectionsPath = path.join(dir, 'collections.yaml');
     if (!fs.existsSync(collectionsPath)) {
         warn(`${producer}: missing collections.yaml, skipping`);
@@ -60,80 +49,127 @@ function validateProducer(producer) {
 
     const validStructures = Object.keys(producerData.structures || {});
 
-    // 2. Waliduj każdy plik YAML (oprocz collections.yaml)
-    const yamlFiles = fs
-        .readdirSync(dir)
-        .filter((f) => f.endsWith('.yaml') && f !== 'collections.yaml')
-        .sort();
+    // 2. Load decors.yaml (new format) or legacy per-collection files
+    const decorsPath = path.join(dir, 'decors.yaml');
+    const legacyGlobal = path.join(dir, 'global-collection.yaml');
+    const legacyAcrylic = path.join(dir, 'acrylic-gloss.yaml');
 
-    const allDecors = [];
+    let allDecors = [];
 
-    yamlFiles.forEach((file) => {
-        const filePath = path.join(dir, file);
-        console.log(`\n  File: ${file}`);
+    if (fs.existsSync(decorsPath)) {
+        // New format: single decors.yaml
+        console.log(`\n  File: decors.yaml`);
 
-        // Parse YAML
         let content;
         try {
-            content = yaml.load(fs.readFileSync(filePath, 'utf8'));
+            content = yaml.load(fs.readFileSync(decorsPath, 'utf8'));
         } catch (e) {
             error(`YAML parse error: ${e.message}`);
-            return;
+            return null;
         }
 
-        // Schema validation
-        const result = CollectionFileSchema.safeParse(content);
+        const result = DecorsFileSchema.safeParse(content);
         if (!result.success) {
             error(`Schema validation failed:`);
             result.error.issues.forEach((i) => {
                 error(`    ${i.path.join('.')}: ${i.message}`);
             });
-            return;
+            return null;
         }
 
-        // Structure validation
+        // Validate structures against collections.yaml
         content.decors.forEach((decor) => {
-            if (!validStructures.includes(decor.structure)) {
-                error(
-                    `Decor ${decor.id}: unknown structure "${decor.structure}". Valid: ${validStructures.join(', ')}`
-                );
-            }
-
-            // Img check (optional warning)
-            if (decor.img) {
-                const imgInMaterials = path.join(dir, 'img', decor.img);
-                const imgInPublic = path.join(CATALOG_PUBLIC, producer, 'img', decor.img);
-                if (!fs.existsSync(imgInMaterials) && !fs.existsSync(imgInPublic)) {
-                    warn(`Decor ${decor.id}: missing img file "${decor.img}" (checked ${dir}/img/ and ${CATALOG_PUBLIC}/${producer}/img/)`);
-                }
-            }
-
-            // Edge code pattern check
-            if (decor.edge && decor.edge.code) {
-                // Kronospan pattern: K-{code}-{finish}/{structure} or similar
-                if (!decor.edge.code.match(/^K-/)) {
+            decor.variants.forEach((variant) => {
+                if (!validStructures.includes(variant.structure)) {
                     warn(
-                        `Decor ${decor.id}: edge code "${decor.edge.code}" doesn't match expected pattern K-*`
+                        `Decor ${decor.id}, variant ${variant.id}: unknown structure "${variant.structure}". Valid: ${validStructures.join(', ')}`
                     );
+                }
+            });
+
+            // Img check
+            if (decor.img) {
+                const imgInPublic = path.join(CATALOG_PUBLIC, producer, 'img', decor.img);
+                if (!fs.existsSync(imgInPublic)) {
+                    warn(`Decor ${decor.id}: missing img file "${decor.img}"`);
                 }
             }
         });
 
-        // Unikalnosc ID w pliku
-        const ids = content.decors.map((d) => d.id);
-        const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
-        if (duplicates.length > 0) {
-            error(`Duplicate IDs in ${file}: ${duplicates.join(', ')}`);
+        // Uniqueness checks
+        const decorIds = content.decors.map((d) => d.id);
+        const dupes = decorIds.filter((id, i) => decorIds.indexOf(id) !== i);
+        if (dupes.length > 0) {
+            error(`Duplicate decor IDs: ${dupes.join(', ')}`);
         }
 
-        allDecors.push(...content.decors);
-        ok(`${content.decors.length} decors in ${file}`);
-    });
+        const variantIds = content.decors.flatMap((d) => d.variants.map((v) => v.id));
+        const vDupes = variantIds.filter((id, i) => variantIds.indexOf(id) !== i);
+        if (vDupes.length > 0) {
+            error(`Duplicate variant IDs: ${vDupes.join(', ')}`);
+        }
+
+        allDecors = content.decors;
+        ok(`${allDecors.length} decors, ${allDecors.reduce((s, d) => s + d.variants.length, 0)} variants in decors.yaml`);
+
+    } else if (fs.existsSync(legacyGlobal) || fs.existsSync(legacyAcrylic)) {
+        // Legacy format: per-collection files
+        warn('Using legacy per-collection format. Consider migrating to decors.yaml');
+
+        const yamlFiles = fs
+            .readdirSync(dir)
+            .filter((f) => f.endsWith('.yaml') && f !== 'collections.yaml')
+            .sort();
+
+        yamlFiles.forEach((file) => {
+            const filePath = path.join(dir, file);
+            console.log(`\n  File: ${file}`);
+
+            let content;
+            try {
+                content = yaml.load(fs.readFileSync(filePath, 'utf8'));
+            } catch (e) {
+                error(`YAML parse error: ${e.message}`);
+                return;
+            }
+
+            // Convert legacy to new format for output
+            if (content.decors) {
+                content.decors.forEach((d) => {
+                    allDecors.push({
+                        id: d.id,
+                        name: d.name,
+                        group: d.group,
+                        color_family: d.color_family || 'unikolor',
+                        tags: d.tags,
+                        ncs: d.ncs,
+                        ral: d.ral,
+                        img: d.img,
+                        variants: [{
+                            id: `${d.id}-LEGACY`,
+                            material: d.thickness_mm ? 'mdf_acrylic' : 'chipboard',
+                            collection: content.collection,
+                            structure: d.structure,
+                            roles: ['carcass', 'front'],
+                            ...(d.thickness_mm && { thickness_mm: d.thickness_mm }),
+                            ...(d.format && { format: d.format }),
+                            ...(d.sidedness && { sidedness: d.sidedness }),
+                            edge: d.edge,
+                        }]
+                    });
+                });
+                ok(`${content.decors.length} decors in ${file}`);
+            }
+        });
+    } else {
+        warn(`${producer}: no decors.yaml or legacy files found`);
+        return null;
+    }
 
     return { producer, collections: producerData, decors: allDecors };
 }
 
-// ── Glowna procedura ──
+// ── Main build ──
 function build() {
     console.log('Building catalog...\n');
 
@@ -151,61 +187,60 @@ function build() {
                 collections: result.collections,
                 decors: result.decors
             };
-            catalog.stats[producer] = result.decors.length;
+            catalog.stats[producer] = {
+                decors: result.decors.length,
+                variants: result.decors.reduce((s, d) => s + d.variants.length, 0)
+            };
         }
     });
 
-    // Wczytaj shared concepts
+    // Load shared concepts
     const conceptsPath = path.join(MATERIALS_DIR, 'shared', 'concepts.yaml');
     if (fs.existsSync(conceptsPath)) {
         catalog.shared = yaml.load(fs.readFileSync(conceptsPath, 'utf8'));
         ok('Loaded shared/concepts.yaml');
-    } else {
-        warn('shared/concepts.yaml not found');
     }
 
-    // Wczytaj substitutions (opcjonalnie)
+    // Load substitutions (optional)
     const subsPath = path.join(MATERIALS_DIR, 'substitutions.yaml');
     if (fs.existsSync(subsPath)) {
         catalog.substitutions = yaml.load(fs.readFileSync(subsPath, 'utf8'));
         ok('Loaded substitutions.yaml');
     }
 
-    // ── Generowanie JSON ──
+    // ── Write JSON ──
     if (!fs.existsSync(DIST_DIR)) {
         fs.mkdirSync(DIST_DIR, { recursive: true });
     }
 
-    // Pelen katalog
     const catalogPath = path.join(DIST_DIR, 'catalog.json');
     fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2));
     ok(`Written ${catalogPath}`);
 
-    // Per producent
     Object.entries(catalog.producers).forEach(([producer, data]) => {
         const producerPath = path.join(DIST_DIR, `${producer}.json`);
         fs.writeFileSync(producerPath, JSON.stringify(data, null, 2));
         ok(`Written ${producerPath}`);
     });
 
-    // Copy catalog.json to catalog/public/ for Vite dev server
     if (fs.existsSync(CATALOG_PUBLIC)) {
         const publicCatalogPath = path.join(CATALOG_PUBLIC, 'catalog.json');
         fs.writeFileSync(publicCatalogPath, JSON.stringify(catalog, null, 2));
         ok(`Written ${publicCatalogPath}`);
     }
 
-    // ── Podsumowanie ──
+    // ── Summary ──
     console.log('\n' + '='.repeat(50));
     console.log('SUMMARY');
     console.log('='.repeat(50));
 
-    Object.entries(catalog.stats).forEach(([producer, count]) => {
-        console.log(`  ${producer}: ${count} decors`);
+    Object.entries(catalog.stats).forEach(([producer, stats]) => {
+        console.log(`  ${producer}: ${stats.decors} decors, ${stats.variants} variants`);
     });
 
-    const totalDecors = Object.values(catalog.stats).reduce((a, b) => a + b, 0);
-    console.log(`  TOTAL: ${totalDecors} decors`);
+    const totalDecors = Object.values(catalog.stats).reduce((a, b) => a + b.decors, 0);
+    const totalVariants = Object.values(catalog.stats).reduce((a, b) => a + b.variants, 0);
+    console.log(`  TOTAL: ${totalDecors} decors, ${totalVariants} variants`);
 
     if (errors > 0) {
         console.error(`\nFAILED: ${errors} errors, ${warnings} warnings`);

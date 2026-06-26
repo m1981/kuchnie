@@ -344,6 +344,33 @@
         <button class="chip" x-show="tagOptions.length > 12" @click="showAllTags = !showAllTags" x-text="showAllTags ? 'mniej' : '...'"></button>
       </div>
     </div>
+
+    <!-- Material type -->
+    <div class="filter-section" x-show="materialOptions.length > 1">
+      <span class="filter-label">Materiał</span>
+      <div class="filter-row">
+        <template x-for="m in materialOptions" :key="m.key">
+          <button class="chip" :class="activeMaterial === m.key && 'active'" @click="toggle('activeMaterial', m.key)">
+            <span x-text="m.label"></span>
+            <span class="count" x-text="'(' + m.count + ')'"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <!-- Color family -->
+    <div class="filter-section" x-show="colorFamilyOptions.length > 0">
+      <span class="filter-label">Kolor</span>
+      <div class="filter-row">
+        <template x-for="cf in colorFamilyOptions.slice(0, showAllColors ? 999 : 10)" :key="cf.key">
+          <button class="chip" :class="activeColorFamily === cf.key && 'active'" @click="toggle('activeColorFamily', cf.key)">
+            <span x-text="cf.key"></span>
+            <span class="count" x-text="'(' + cf.count + ')'"></span>
+          </button>
+        </template>
+        <button class="chip" x-show="colorFamilyOptions.length > 10" @click="showAllColors = !showAllColors" x-text="showAllColors ? 'mniej' : '...'"></button>
+      </div>
+    </div>
   </header>
 
   <!-- ══ CONTENT ══ -->
@@ -370,6 +397,7 @@
               <span x-text="decor._allStructures"></span>
               <span class="struct-type" x-text="decor.structure"></span>
             </div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px" x-text="decor._materialLabel"></div>
             <div class="tags" x-show="decor.tags && decor.tags.length">
               <template x-for="tag in (decor.tags || []).slice(0, 4)" :key="tag">
                 <span class="tag" x-text="tag"></span>
@@ -403,6 +431,10 @@
             <div style="margin-top:6px; font-size:12px; color:var(--muted)">
               <span x-text="selected._producer"></span>
               <span x-show="selected.group"> · <span x-text="selected.group"></span></span>
+              <span x-show="selected._materialLabel"> · <span x-text="selected._materialLabel"></span></span>
+            </div>
+            <div x-show="selected.roles" style="margin-top:4px; font-size:11px; color:var(--accent)">
+              Zastosowanie: <span x-text="(selected.roles || []).join(', ')"></span>
             </div>
             <div class="structure-desc" x-show="selected._structureDesc">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px">
@@ -528,8 +560,11 @@
         activeSurfaceType: null,
         activeStructure: null,
         activeTag: null,
+        activeMaterial: null,
+        activeColorFamily: null,
         selected: null,
         showAllTags: false,
+        showAllColors: false,
         structures: {},
         surfaceTypes: {},
         edgeFinishes: {},
@@ -537,7 +572,7 @@
         // ── Computed ──
 
         get totalDecors() {
-          return Object.values(this.meta.stats || {}).reduce((a, b) => a + b, 0);
+          return Object.values(this.meta.stats || {}).reduce((a, b) => a + (b.variants || b), 0);
         },
 
         get producers() {
@@ -569,6 +604,39 @@
             .sort((a, b) => b.count - a.count);
         },
 
+        get materialOptions() {
+          const counts = {};
+          this.allDecors.forEach(d => {
+            if (d.material) counts[d.material] = (counts[d.material] || 0) + 1;
+          });
+          return Object.entries(counts)
+            .map(([key, count]) => ({
+              key,
+              label: {
+                chipboard: 'Płyta wiórowa',
+                mdf_acrylic: 'MDF Akryl',
+                mdf_lacquered: 'MDF Lakierowany',
+                mdf_foil: 'MDF Folia',
+                compact: 'Compact HPL',
+                hpl: 'HPL',
+                worktop: 'Blat',
+                splashback: 'Splashback'
+              }[key] || key,
+              count
+            }))
+            .sort((a, b) => b.count - a.count);
+        },
+
+        get colorFamilyOptions() {
+          const counts = {};
+          this.allDecors.forEach(d => {
+            if (d.color_family) counts[d.color_family] = (counts[d.color_family] || 0) + 1;
+          });
+          return Object.entries(counts)
+            .map(([key, count]) => ({ key, count }))
+            .sort((a, b) => b.count - a.count);
+        },
+
         get tagOptions() {
           const counts = {};
           this.allDecors.forEach(d => {
@@ -593,6 +661,12 @@
 
           if (this.activeTag)
             r = r.filter(d => (d.tags || []).includes(this.activeTag));
+
+          if (this.activeMaterial)
+            r = r.filter(d => d.material === this.activeMaterial);
+
+          if (this.activeColorFamily)
+            r = r.filter(d => d.color_family === this.activeColorFamily);
 
           if (this.search.trim()) {
             const q = this.search.trim().toLowerCase();
@@ -679,25 +753,60 @@
               }
             }
 
-            // Flatten decors
+            // Flatten decors → variants (each variant is a card)
             const decors = [];
             for (const [producer, pData] of Object.entries(data.producers || {})) {
               const shortName = { kronospan: 'KP', swiss_krono: 'SK', egger: 'EG' }[producer] || producer.slice(0, 2).toUpperCase();
               for (const decor of (pData.decors || [])) {
-                const structInfo = this.structures[decor.structure] || {};
-                const surfaceType = this.surfaceTypes[decor.structure];
-                decors.push({
-                  ...decor,
-                  _producer: producer,
-                  _producerShort: shortName,
-                  _key: `${producer}:${decor.id}`,
-                  _imgPath: decor.img ? `/${producer}/img/${decor.img}` : null,
-                  _structureName: structInfo.name || decor.structure,
-                  _structureDesc: structInfo.description || '',
-                  _surfaceTypeShort: surfaceType ? this.surfaceTypeLabel(surfaceType).split(' ')[0] : '',
-                  _multiStructures: decor.multi_structures || '',
-                  _allStructures: decor.multi_structures ? `${decor.structure}, ${decor.multi_structures}` : decor.structure,
-                });
+                for (const variant of (decor.variants || [])) {
+                  const structInfo = this.structures[variant.structure] || {};
+                  const surfaceType = this.surfaceTypes[variant.structure];
+                  const imgPath = decor.img ? `/${producer}/img/${decor.img}` : null;
+                  decors.push({
+                    // Decor-level (identity)
+                    id: decor.id,
+                    name: decor.name,
+                    group: decor.group,
+                    color_family: decor.color_family,
+                    ncs: decor.ncs,
+                    ral: decor.ral,
+                    pantone: decor.pantone,
+                    tags: decor.tags,
+                    img: decor.img,
+                    // Variant-level (material)
+                    variant_id: variant.id,
+                    material: variant.material,
+                    collection: variant.collection,
+                    structure: variant.structure,
+                    roles: variant.roles,
+                    thickness_mm: variant.thickness_mm,
+                    format: variant.format,
+                    sidedness: variant.sidedness,
+                    edge: variant.edge,
+                    multi_structures: variant.multi_structures,
+                    express: variant.express,
+                    // UI helpers
+                    _producer: producer,
+                    _producerShort: shortName,
+                    _key: `${producer}:${variant.id}`,
+                    _imgPath: imgPath,
+                    _structureName: structInfo.name || variant.structure,
+                    _structureDesc: structInfo.description || '',
+                    _surfaceTypeShort: surfaceType ? this.surfaceTypeLabel(surfaceType).split(' ')[0] : '',
+                    _multiStructures: variant.multi_structures || '',
+                    _allStructures: variant.multi_structures ? `${variant.structure}, ${variant.multi_structures}` : variant.structure,
+                    _materialLabel: {
+                      chipboard: 'Płyta wiórowa',
+                      mdf_acrylic: 'MDF Akryl',
+                      mdf_lacquered: 'MDF Lakierowany',
+                      mdf_foil: 'MDF Folia',
+                      compact: 'Compact HPL',
+                      hpl: 'HPL',
+                      worktop: 'Blat',
+                      splashback: 'Splashback'
+                    }[variant.material] || variant.material,
+                  });
+                }
               }
             }
 
