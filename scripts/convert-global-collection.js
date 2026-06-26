@@ -14,17 +14,15 @@ const raw = yaml.load(fs.readFileSync(INPUT, 'utf8'));
 // Wczytaj listę istniejących plików img
 const existingImages = new Set(fs.readdirSync(IMG_DIR).filter(f => f.endsWith('.jpg')));
 
-// Mapuj ID dekoru na nazwę pliku img
+// Sprawdź czy plik img istnieje dla danego ID
+// ID moze byc K110, K096, 0514, 8685 itp.
+// Pliki moga byc K0110.jpg, K096.jpg, K0514.jpg itp.
 function findImgFile(id) {
-  // Sprawdź exact match
+  // Exact match
   if (existingImages.has(`${id}.jpg`)) return `${id}.jpg`;
-  // Bez prefixu K
-  const noK = id.replace(/^K/, '');
-  if (existingImages.has(`${noK}.jpg`)) return `${noK}.jpg`;
-  // Z prefixem K
-  if (existingImages.has(`K${id}.jpg`)) return `K${id}.jpg`;
-  // Z leading zero (np. 514 → 0514)
-  const padded = noK.padStart(4, '0');
+  // Dodaj leading zero (K110 → K0110)
+  const num = id.replace(/^K/, '');
+  const padded = `K${num.padStart(4, '0')}`;
   if (existingImages.has(`${padded}.jpg`)) return `${padded}.jpg`;
   return null;
 }

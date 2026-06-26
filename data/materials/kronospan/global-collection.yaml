@@ -17,7 +17,7 @@ decors:
     countertop: null
     hdf_laminate: true
     cross_collections: []
-    img: 0110.jpg
+    img: K0110.jpg
     edge:
       code: K-0110-SM
       supplier: Schilsner
@@ -36,7 +36,7 @@ decors:
     countertop: null
     hdf_laminate: true
     cross_collections: []
-    img: 0101.jpg
+    img: K0101.jpg
     edge:
       code: K-0101-PE
       supplier: Schilsner
@@ -60,7 +60,7 @@ decors:
       - acrylic_matt
       - mirror_gloss
       - compact_interior
-    img: 8685.jpg
+    img: K8685.jpg
     edge:
       code: K-8685-SM/BS/PD
       supplier: Schilsner
@@ -83,7 +83,7 @@ decors:
       - acrylic_matt
       - kronoart
       - compact_interior
-    img: 0112.jpg
+    img: K0112.jpg
     edge:
       code: K-0112-PE
       supplier: Schilsner
@@ -105,7 +105,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0162.jpg
+    img: K0162.jpg
     edge:
       code: K-0162-PE
       supplier: Schilsner
@@ -129,7 +129,7 @@ decors:
       - acrylic_matt
       - kronoart
       - compact_interior
-    img: 0164.jpg
+    img: K0164.jpg
     edge:
       code: K-0164-PE/PD
       supplier: Schilsner
@@ -149,7 +149,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - compact_interior
-    img: 0166.jpg
+    img: K0166.jpg
     edge:
       code: K-0166-BS
       supplier: Schilsner
@@ -171,7 +171,7 @@ decors:
       - mirror_gloss
       - kronoart
       - compact_interior
-    img: 0171.jpg
+    img: K0171.jpg
     edge:
       code: K-0171-PE
       supplier: Schilsner
@@ -196,7 +196,7 @@ decors:
       - mirror_gloss
       - kronoart
       - compact_interior
-    img: 0190.jpg
+    img: K0190.jpg
     edge:
       code: K-0190-PE/PD
       supplier: Schilsner
@@ -218,7 +218,7 @@ decors:
       - mirror_gloss
       - kronoart
       - compact_interior
-    img: 0191.jpg
+    img: K0191.jpg
     edge:
       code: K-0191-SU
       supplier: Schilsner
@@ -238,7 +238,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0197.jpg
+    img: K0197.jpg
     edge:
       code: K-0197-SU
       supplier: Schilsner
@@ -257,7 +257,7 @@ decors:
     cross_collections:
       - acrylic_gloss
       - kronoart
-    img: 0514.jpg
+    img: K0514.jpg
     edge:
       code: K-0514-PE
       supplier: Schilsner
@@ -275,7 +275,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 0515.jpg
+    img: K0515.jpg
     edge:
       code: K-0515-PE
       supplier: Schilsner
@@ -293,7 +293,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 0522.jpg
+    img: K0522.jpg
     edge:
       code: K-0522-PE
       supplier: Schilsner
@@ -310,7 +310,7 @@ decors:
     countertop: null
     hdf_laminate: true
     cross_collections: []
-    img: 0540.jpg
+    img: K0540.jpg
     edge:
       code: K-0540-PE
       supplier: Schilsner
@@ -328,7 +328,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - acrylic_gloss
-    img: 0564.jpg
+    img: K0564.jpg
     edge:
       code: K-0564-PE
       supplier: Schilsner
@@ -347,7 +347,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - compact_interior
-    img: 1700.jpg
+    img: K1700.jpg
     edge:
       code: K-1700-PE
       supplier: Schilsner
@@ -368,7 +368,7 @@ decors:
       - mirror_gloss
       - kronoart
       - compact_interior
-    img: 5981.jpg
+    img: K5981.jpg
     edge:
       code: K-5981-BS/PD
       supplier: Schilsner
@@ -387,7 +387,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 5982.jpg
+    img: K5982.jpg
     edge:
       code: K-5982-BS
       supplier: Schilsner
@@ -406,7 +406,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 7031.jpg
+    img: K7031.jpg
     edge:
       code: K-7031-BS
       supplier: Schilsner
@@ -427,7 +427,7 @@ decors:
       - mirror_gloss
       - kronoart
       - compact_interior
-    img: 7045.jpg
+    img: K7045.jpg
     edge:
       code: K-7045-SU
       supplier: Schilsner
@@ -445,7 +445,7 @@ decors:
     countertop: null
     hdf_laminate: true
     cross_collections: []
-    img: 8100.jpg
+    img: K8100.jpg
     edge:
       code: K-8100-SM
       supplier: Schilsner
@@ -463,7 +463,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 8533.jpg
+    img: K8533.jpg
     edge:
       code: K-8533-BS
       supplier: Schilsner
@@ -482,7 +482,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 8681.jpg
+    img: K8681.jpg
     edge:
       code: K-8681-SU/SM
       supplier: Schilsner
@@ -503,7 +503,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0125.jpg
+    img: K0125.jpg
     edge:
       code: K-0125-BS
       supplier: Schilsner
@@ -523,7 +523,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0132.jpg
+    img: K0132.jpg
     edge:
       code: K-0132-BS
       supplier: Schilsner
@@ -542,7 +542,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0134.jpg
+    img: K0134.jpg
     edge:
       code: K-0134-BS
       supplier: Schilsner
@@ -559,7 +559,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 0244.jpg
+    img: K0244.jpg
     edge:
       code: K-0244-SU
       supplier: Schilsner
@@ -579,7 +579,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 0301.jpg
+    img: K0301.jpg
     edge:
       code: K-0301-SU
       supplier: Schilsner
@@ -598,7 +598,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - compact_interior
-    img: 5994.jpg
+    img: K5994.jpg
     edge:
       code: K-5994-SU
       supplier: Schilsner
@@ -620,7 +620,7 @@ decors:
       - acrylic_matt
       - kronoart
       - compact_interior
-    img: 6299.jpg
+    img: K6299.jpg
     edge:
       code: K-6299-BS
       supplier: Schilsner
@@ -639,7 +639,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - kronoart
-    img: 7063.jpg
+    img: K7063.jpg
     edge:
       code: K-7063-SU
       supplier: Schilsner
@@ -660,7 +660,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 7113.jpg
+    img: K7113.jpg
     edge:
       code: K-7113-BS
       supplier: Schilsner
@@ -679,7 +679,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 7166.jpg
+    img: K7166.jpg
     edge:
       code: K-7166-BS
       supplier: Schilsner
@@ -697,7 +697,7 @@ decors:
     hdf_laminate: true
     cross_collections:
       - compact_interior
-    img: 7181.jpg
+    img: K7181.jpg
     edge:
       code: K-7181-BS
       supplier: Schilsner
@@ -717,7 +717,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 7190.jpg
+    img: K7190.jpg
     edge:
       code: K-7190-BS
       supplier: Schilsner
@@ -737,7 +737,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 8984.jpg
+    img: K8984.jpg
     edge:
       code: K-8984-BS
       supplier: Schilsner
@@ -758,7 +758,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 9551.jpg
+    img: K9551.jpg
     edge:
       code: K-9551-BS
       supplier: Schilsner
@@ -779,7 +779,7 @@ decors:
     cross_collections:
       - kronoart
       - compact_interior
-    img: 9561.jpg
+    img: K9561.jpg
     edge:
       code: K-9561-BS
       supplier: Schilsner
@@ -2810,7 +2810,7 @@ decors:
     countertop: K540 PN
     hdf_laminate: true
     cross_collections: []
-    img: 0540.jpg
+    img: K0540.jpg
     edge:
       code: K-K540/DP-PN
       supplier: Schilsner
