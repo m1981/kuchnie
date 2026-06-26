@@ -15,7 +15,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K8685
-    img: "8685.jpg"
+    img: "K8685.jpg"
     edge:
       code: "K-8685-HG/AG"
       supplier: Schilsner
@@ -31,7 +31,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K112
-    img: "0112.jpg"
+    img: "K0112.jpg"
     edge:
       code: "K-0112-HG/AG"
       supplier: Schilsner
@@ -47,7 +47,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K164
-    img: "0164.jpg"
+    img: "K0164.jpg"
     edge:
       code: "K-0164-HG/AG"
       supplier: Schilsner
@@ -63,7 +63,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K190
-    img: "0190.jpg"
+    img: "K0190.jpg"
     edge:
       code: "K-0190-HG/AG"
       supplier: Schilsner
@@ -79,7 +79,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: "0514"
-    img: "0514.jpg"
+    img: "K0514.jpg"
     edge:
       code: "K-0514-UM/AG"
       supplier: Schilsner
@@ -96,7 +96,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K7045
-    img: "7045.jpg"
+    img: "K7045.jpg"
     edge:
       code: "K-7045-HG/AG"
       supplier: Schilsner
