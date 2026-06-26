@@ -82,6 +82,165 @@ Frontend catalog/index.html     ← czyta JSON, wyświetla
 
 ---
 
+## Procesy (diagramy)
+
+### 1. Build pipeline (`make build`)
+
+```mermaid
+sequenceDiagram
+    participant U as Użytkownik
+    participant M as Makefile
+    participant B as build.js
+    participant Y as YAML files
+    participant S as schema.js (Zod)
+    participant D as data/dist/*.json
+    participant P as catalog/public/catalog.json
+
+    U->>M: make build
+    M->>B: node data/materials/build.js
+    B->>Y: load shared/concepts.yaml
+    B->>Y: load kronospan/collections.yaml
+    loop per collection YAML
+        B->>Y: load acrylic-gloss.yaml
+        B->>S: CollectionFileSchema.safeParse()
+        S-->>B: validation result
+        B->>B: validate structures vs collections.yaml
+        B->>B: validate global_decor_id resolves
+        B->>B: check img files exist
+    end
+    B->>D: write catalog.json (full)
+    B->>D: write kronospan.json (per-producer)
+    B->>P: write catalog.json (Vite copy)
+    B-->>U: SUCCESS / FAILED
+```
+
+### 2. Dev server (`make dev`)
+
+```mermaid
+sequenceDiagram
+    participant U as Użytkownik
+    participant D as dev.js
+    participant W as fs.watch
+    participant B as build.js
+    participant V as Vite
+    participant Br as Browser
+
+    U->>D: node dev.js
+    D->>B: initial build
+    D->>W: watch YAML dirs
+    D->>V: start Vite dev server
+    V-->>Br: http://localhost:5173
+    Br->>V: GET /index.html
+    V-->>Br: HTML + Alpine.js
+    Br->>V: GET /catalog.json
+    V-->>Br: catalog.json
+
+    U->>U: edit acrylic-gloss.yaml
+    W->>D: file changed (debounce 300ms)
+    D->>B: rebuild
+    B-->>D: OK
+    V->>V: HMR detects catalog.json change
+    V-->>Br: HMR reload
+```
+
+### 3. Walidacja testów (`make test`)
+
+```mermaid
+sequenceDiagram
+    participant U as Użytkownik
+    participant T as validate.test.js
+    participant Y as YAML files
+    participant S as schema.js
+    participant F as fixtures/acrylic-gloss-ref.js
+
+    U->>T: node --test validate.test.js
+
+    rect rgb(240, 248, 255)
+        Note over T,S: TEST 1: Schema Validation
+        T->>Y: load acrylic-gloss.yaml
+        T->>S: CollectionFileSchema.safeParse()
+        S-->>T: ✔ pass
+    end
+
+    rect rgb(255, 248, 240)
+        Note over T,F: TEST 2: Reference Comparison
+        T->>F: load expected decors
+        T->>Y: load acrylic-gloss.yaml
+        loop per expected decor
+            T->>T: compare id, name, structure, edge, color_family
+        end
+        T-->>T: ✔ 6 decors match
+    end
+
+    rect rgb(248, 255, 240)
+        Note over T,Y: TEST 5: K-prefix Convention
+        T->>Y: load global-collection.yaml
+        loop per decor
+            T->>T: assert id.startsWith('K')
+        end
+        T->>Y: load acrylic-gloss.yaml
+        loop per decor
+            T->>T: assert id.startsWith('K')
+            T->>T: assert global_decor_id.startsWith('K')
+        end
+    end
+
+    rect rgb(255, 240, 240)
+        Note over T,Y: TEST 6: Cross-collection Uniqueness
+        T->>Y: load both collections
+        T->>T: find overlapping IDs
+        loop per overlap
+            T->>T: verify global_decor_id links them
+        end
+    end
+
+    rect rgb(248, 240, 255)
+        Note over T,Y: TEST 8: Color Family
+        T->>S: load COLOR_FAMILIES
+        T->>Y: load all decors
+        loop per decor
+            T->>T: assert color_family exists and is valid
+        end
+    end
+
+    T-->>U: 68 pass, 0 fail
+```
+
+### 4. Frontend — ładowanie danych
+
+```mermaid
+sequenceDiagram
+    participant Br as Browser
+    participant V as Vite (static)
+    participant A as Alpine.js
+    participant I as index.html
+
+    Br->>V: GET /catalog.json
+    V-->>Br: JSON (180 decors)
+    Br->>A: catalog().load()
+    A->>A: extract structures from producer data
+    A->>A: build surfaceTypes map
+    A->>A: build edgeFinishes map
+
+    loop per producer
+        loop per decor
+            A->>A: enrich with _producer, _key, _imgPath
+            A->>A: resolve _structureName, _structureDesc
+            A->>A: resolve _surfaceTypeShort
+            A->>A: build _allStructures (handle multi_structures)
+        end
+    end
+
+    A->>I: render grid (filtered)
+    I-->>Br: show cards
+
+    Br->>A: user clicks card
+    A->>I: openDetail(decor)
+    I-->>Br: show detail overlay
+```
+
+---
+
 ## Kluczowe decyzje (które mogą nie być oczywiste)
 
 ### 1. Konwencja nazewnictwa obrazów
@@ -169,7 +328,7 @@ Każdy dekor ma `edge.code` (np. `K-8685-SM/BS/PD`). Format: `K-{ID}-{STRUCTURE}
 cd catalog
 make dev         # dev server (watch + HMR) → http://localhost:5173
 make build       # YAML → catalog.json
-make test        # 55 testów
+make test        # 68 testów
 make validate    # build + test
 ```
 
