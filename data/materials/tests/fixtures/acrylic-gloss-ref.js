@@ -1,13 +1,7 @@
 // tests/fixtures/acrylic-gloss-ref.js
-// Dane referencyjne z acrylic-gloss.md
-// rdlo: plyty-mdf-acrylic-gloss.pdf, str. 114-118
+// Dane referencyjne z plyty-mdf-acrylic-gloss.pdf, str. 114-118
 //
-// TO jest "source of truth" z katalogu papierowego.
-// Porownujemy z tym co jest w YAML.
-//
-// NOTE: IDs use K-prefix convention to match Global Collection.
-// PDF codes (8685, 0112, etc.) are the manufacturer's codes.
-// We prefix with K to ensure global uniqueness across collections.
+// Porownujemy z variantami mdf_acrylic w decors.yaml.
 
 module.exports = {
     collection: 'acrylic_gloss',

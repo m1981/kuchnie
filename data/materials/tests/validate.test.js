@@ -233,11 +233,11 @@ describe('Variant Completeness', () => {
 
 // ════════════════════════════════════════════════════════
 // TEST 6: Reference comparison (acrylic-gloss)
-// Verify that the migrated data matches the original
-// acrylic-gloss reference fixture.
+// Verify that acrylic-gloss variant data matches the
+// PDF reference fixture.
 // ════════════════════════════════════════════════════════
 
-describe('Reference Data (acrylic-gloss migration)', () => {
+describe('Reference Data (acrylic-gloss)', () => {
     const ref = require('../tests/fixtures/acrylic-gloss-ref');
     let decors;
 

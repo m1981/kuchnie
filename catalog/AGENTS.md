@@ -67,7 +67,7 @@ catalog/
 - **Decor** = tożsamość (kolor, wzór, NCS, RAL, color_family) — niepowtarzalny
 - **Variant** = konkretny materiał + format — purchasable, ma `id`, `material`, `roles`
 - **Variant ID** = `{decor_id}-{material_suffix}` (np. `K8685-CH`, `K8685-AG`)
-- **Jeden plik `decors.yaml`** — zamiast osobnych `global-collection.yaml` + `acrylic-gloss.yaml`
+- **Jeden plik `decors.yaml`** — jedyne źródło prawdy
 - **Multi-variant** — K8685, K0514, K7045 mają po 2 warianty (chipboard + mdf_acrylic)
 
 ---
@@ -162,12 +162,10 @@ make validate    # build + test
 
 ---
 
-## Migracja z poprzedniego modelu
+## Historia modelu
 
-Poprzedni model: osobne pliki `global-collection.yaml` + `acrylic-gloss.yaml`, dekory jako płaskie obiekty.
-Nowy model: jeden `decors.yaml`, dekory z wariantami.
-Backup: `*.yaml.bak` w `kronospan/`.
-Skrypt migracji: `scripts/migrate-decors.js`.
+Poprzedni model (do 2026-06-26): osobne pliki `global-collection.yaml` + `acrylic-gloss.yaml`, dekory jako płaskie obiekty.
+Aktualny model: jeden `decors.yaml`, dekory z wariantami (Decor + Variant).
 
 ---
 

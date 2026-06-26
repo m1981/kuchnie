@@ -49,124 +49,68 @@ function validateProducer(producer) {
 
     const validStructures = Object.keys(producerData.structures || {});
 
-    // 2. Load decors.yaml (new format) or legacy per-collection files
+    // 2. Load decors.yaml
     const decorsPath = path.join(dir, 'decors.yaml');
-    const legacyGlobal = path.join(dir, 'global-collection.yaml');
-    const legacyAcrylic = path.join(dir, 'acrylic-gloss.yaml');
 
-    let allDecors = [];
-
-    if (fs.existsSync(decorsPath)) {
-        // New format: single decors.yaml
-        console.log(`\n  File: decors.yaml`);
-
-        let content;
-        try {
-            content = yaml.load(fs.readFileSync(decorsPath, 'utf8'));
-        } catch (e) {
-            error(`YAML parse error: ${e.message}`);
-            return null;
-        }
-
-        const result = DecorsFileSchema.safeParse(content);
-        if (!result.success) {
-            error(`Schema validation failed:`);
-            result.error.issues.forEach((i) => {
-                error(`    ${i.path.join('.')}: ${i.message}`);
-            });
-            return null;
-        }
-
-        // Validate structures against collections.yaml
-        content.decors.forEach((decor) => {
-            decor.variants.forEach((variant) => {
-                if (!validStructures.includes(variant.structure)) {
-                    warn(
-                        `Decor ${decor.id}, variant ${variant.id}: unknown structure "${variant.structure}". Valid: ${validStructures.join(', ')}`
-                    );
-                }
-            });
-
-            // Img check
-            if (decor.img) {
-                const imgInPublic = path.join(CATALOG_PUBLIC, producer, 'img', decor.img);
-                if (!fs.existsSync(imgInPublic)) {
-                    warn(`Decor ${decor.id}: missing img file "${decor.img}"`);
-                }
-            }
-        });
-
-        // Uniqueness checks
-        const decorIds = content.decors.map((d) => d.id);
-        const dupes = decorIds.filter((id, i) => decorIds.indexOf(id) !== i);
-        if (dupes.length > 0) {
-            error(`Duplicate decor IDs: ${dupes.join(', ')}`);
-        }
-
-        const variantIds = content.decors.flatMap((d) => d.variants.map((v) => v.id));
-        const vDupes = variantIds.filter((id, i) => variantIds.indexOf(id) !== i);
-        if (vDupes.length > 0) {
-            error(`Duplicate variant IDs: ${vDupes.join(', ')}`);
-        }
-
-        allDecors = content.decors;
-        ok(`${allDecors.length} decors, ${allDecors.reduce((s, d) => s + d.variants.length, 0)} variants in decors.yaml`);
-
-    } else if (fs.existsSync(legacyGlobal) || fs.existsSync(legacyAcrylic)) {
-        // Legacy format: per-collection files
-        warn('Using legacy per-collection format. Consider migrating to decors.yaml');
-
-        const yamlFiles = fs
-            .readdirSync(dir)
-            .filter((f) => f.endsWith('.yaml') && f !== 'collections.yaml')
-            .sort();
-
-        yamlFiles.forEach((file) => {
-            const filePath = path.join(dir, file);
-            console.log(`\n  File: ${file}`);
-
-            let content;
-            try {
-                content = yaml.load(fs.readFileSync(filePath, 'utf8'));
-            } catch (e) {
-                error(`YAML parse error: ${e.message}`);
-                return;
-            }
-
-            // Convert legacy to new format for output
-            if (content.decors) {
-                content.decors.forEach((d) => {
-                    allDecors.push({
-                        id: d.id,
-                        name: d.name,
-                        group: d.group,
-                        color_family: d.color_family || 'unikolor',
-                        tags: d.tags,
-                        ncs: d.ncs,
-                        ral: d.ral,
-                        img: d.img,
-                        variants: [{
-                            id: `${d.id}-LEGACY`,
-                            material: d.thickness_mm ? 'mdf_acrylic' : 'chipboard',
-                            collection: content.collection,
-                            structure: d.structure,
-                            roles: ['carcass', 'front'],
-                            ...(d.thickness_mm && { thickness_mm: d.thickness_mm }),
-                            ...(d.format && { format: d.format }),
-                            ...(d.sidedness && { sidedness: d.sidedness }),
-                            edge: d.edge,
-                        }]
-                    });
-                });
-                ok(`${content.decors.length} decors in ${file}`);
-            }
-        });
-    } else {
-        warn(`${producer}: no decors.yaml or legacy files found`);
+    if (!fs.existsSync(decorsPath)) {
+        warn(`${producer}: no decors.yaml found`);
         return null;
     }
 
-    return { producer, collections: producerData, decors: allDecors };
+    let content;
+    try {
+        content = yaml.load(fs.readFileSync(decorsPath, 'utf8'));
+    } catch (e) {
+        error(`YAML parse error: ${e.message}`);
+        return null;
+    }
+
+    console.log(`\n  File: decors.yaml`);
+
+    const result = DecorsFileSchema.safeParse(content);
+    if (!result.success) {
+        error(`Schema validation failed:`);
+        result.error.issues.forEach((i) => {
+            error(`    ${i.path.join('.')}: ${i.message}`);
+        });
+        return null;
+    }
+
+    // Validate structures against collections.yaml
+    content.decors.forEach((decor) => {
+        decor.variants.forEach((variant) => {
+            if (!validStructures.includes(variant.structure)) {
+                warn(
+                    `Decor ${decor.id}, variant ${variant.id}: unknown structure "${variant.structure}". Valid: ${validStructures.join(', ')}`
+                );
+            }
+        });
+
+        // Img check
+        if (decor.img) {
+            const imgInPublic = path.join(CATALOG_PUBLIC, producer, 'img', decor.img);
+            if (!fs.existsSync(imgInPublic)) {
+                warn(`Decor ${decor.id}: missing img file "${decor.img}"`);
+            }
+        }
+    });
+
+    // Uniqueness checks
+    const decorIds = content.decors.map((d) => d.id);
+    const dupes = decorIds.filter((id, i) => decorIds.indexOf(id) !== i);
+    if (dupes.length > 0) {
+        error(`Duplicate decor IDs: ${dupes.join(', ')}`);
+    }
+
+    const variantIds = content.decors.flatMap((d) => d.variants.map((v) => v.id));
+    const vDupes = variantIds.filter((id, i) => variantIds.indexOf(id) !== i);
+    if (vDupes.length > 0) {
+        error(`Duplicate variant IDs: ${vDupes.join(', ')}`);
+    }
+
+    ok(`${content.decors.length} decors, ${content.decors.reduce((s, d) => s + d.variants.length, 0)} variants in decors.yaml`);
+
+    return { producer, collections: producerData, decors: content.decors };
 }
 
 // ── Main build ──
