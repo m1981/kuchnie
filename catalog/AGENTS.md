@@ -1,168 +1,142 @@
-# Agent Guide — catalog
+## Co robiliśmy
 
-Read this before making changes. It's short on purpose.
-
----
-
-## Project at a glance
-
-Material catalog browser for board manufacturers (Kronospan, Swiss Krono, Egger). Takes YAML source files, validates against reference data, generates JSON, serves via Vite with live reload.
-
-**One sentence**: YAML → `build.js` (validate + generate) → `catalog.json` → Vite → browser
+Zbudowaliśmy system katalogu materiałów meblowych (płyty, obrzeża, blaty) z YAML → JSON → Vite frontend. Główna kolekcja: Kronospan Global Collection (174 dekorów) + Acrylic Gloss (6 dekorów).
 
 ---
 
-## Architecture (3 rules)
-
-1. **YAML is the source of truth.** Never edit `catalog.json` directly. It's generated. Edit the YAML, run `make build`.
-
-2. **One file per collection.** Each collection (e.g., Acrylic Gloss, Global Collection) gets its own YAML file. Collections are independent — adding one doesn't require editing another.
-
-3. **Reference tests catch drift.** The MD files in `docs/materials-boards/` contain data extracted from PDFs. Test fixtures mirror that data. If YAML drifts from the reference, tests fail.
-
----
-
-## File map
+## Architektura danych (co gdzie mieszka)
 
 ```
-catalog/
-├── package.json          Own deps (vite, js-yaml, zod). Independent from root.
-├── Makefile              make dev / test / build / validate
-├── dev.js                Watch YAML → rebuild → Vite HMR
-├── index.html            Frontend (Alpine.js, fetches catalog.json)
-├── vite.config.mjs       publicDir = public/
-└── public/               Images + generated catalog.json
-    ├── catalog.json      (generated, gitignored)
-    ├── kronospan/img/
-    ├── swiss-krono/img/
-    └── egger/img/
-
 data/materials/
 ├── shared/
-│   ├── concepts.yaml     Tags, surface types, color families (cross-producer)
-│   └── schema.js         Zod schemas for validation
+│   ├── concepts.yaml       ← wspólne tagi, typy powierzchni, kolorystyka
+│   └── schema.js           ← Zod walidacja (GlobalDecorSchema + SpecializedDecorSchema)
 ├── kronospan/
-│   ├── collections.yaml  Metadata + structures for all Kronospan collections
-│   └── *.yaml            One file per collection (acrylic-gloss.yaml, etc.)
-├── swiss-krono/          (same structure)
-├── egger/                (same structure)
+│   ├── collections.yaml    ← metadane kolekcji + definicje 18 struktur (SM, PE, BS...)
+│   ├── acrylic-gloss.yaml  ← 6 dekorów (ręcznie tworzony)
+│   ├── global-collection.yaml ← 174 dekorów (generowany skryptem)
+│   └── img/                ← (puste, obrazy są w catalog/public/)
 ├── tests/
-│   ├── validate.test.js  All automated checks
-│   └── fixtures/         Reference data from MD files
-└── build.js              YAML → JSON + validation
+│   ├── validate.test.js    ← 55 testów
+│   └── fixtures/
+│       └── acrylic-gloss-ref.js ← dane referencyjne z MD (porównanie YAML vs PDF)
+└── build.js                ← YAML → catalog.json + walidacja
+
+catalog/
+├── public/
+│   ├── catalog.json        ← generowany (gitignored)
+│   ├── kronospan/img/      ← zdjęcia dekorów (K8685.jpg, K0190.jpg...)
+│   ├── kronospan/struktury/ ← zdjęcia struktur (SM.jpg, PE.jpg, BS.jpg...)
+│   └── swiss-krono/img/    ← (puste, na przyszłość)
+│   └── egger/img/          ← (puste, na przyszłość)
+├── index.html              ← frontend Alpine.js
+├── vite.config.mjs
+├── dev.js                  ← watch YAML + rebuild + Vite HMR
+├── Makefile                ← make dev / test / build / validate
+└── package.json            ← vite, js-yaml, zod (własne deps, nie root)
 ```
 
-**Data flows**: `data/materials/**/*.yaml` → `build.js` → `data/dist/catalog.json` → copied to `catalog/public/catalog.json` → Vite serves it
-
 ---
 
-## Adding a new producer
+## Kluczowe decyzje (które mogą nie być oczywiste)
 
-1. Create directory: `data/materials/{producer}/img/`
-2. Create `data/materials/{producer}/collections.yaml` with structures, formats, metadata
-3. Create collection YAML files (e.g., `standard.yaml`)
-4. Add `{producer}` to `PRODUCERS` array in `build.js`
-5. Create `.gitkeep` in `catalog/public/{producer}/img/`
-6. Run `make validate` from `catalog/`
-7. Create test fixtures from reference data (MD/PDF)
+### 1. Konwencja nazewnictwa obrazów
+- Dekory: `{ID}.jpg` gdzie ID = dokładnie to co w YAML (np. `K8685.jpg`, `K096.jpg`, `0514.jpg`)
+- Struktury: `{CODE}.jpg` gdzie CODE = kod struktury (np. `SM.jpg`, `PE.jpg`, `AG.jpg`)
+- **WAŻNE**: ID `K110` ≠ `0110`. To mogą być różne dekory. `0522` (Beżowy) i `K522` (Aluminium Flash) to DWA ROŻNE dekory. NIE mapować, nie dodawać prefixów.
 
----
-
-## Adding a new collection to existing producer
-
-1. Create `data/materials/{producer}/{collection-name}.yaml`
-2. Follow existing YAML structure (see `acrylic-gloss.yaml` as template)
-3. Add collection metadata to `{producer}/collections.yaml`
-4. Run `make validate`
-5. Create reference fixture if data comes from a new PDF/MD source
-
----
-
-## YAML format conventions
-
+### 2. Jeden dekor = wiele struktur
+Dekor K8685 (Biel Alpejska) ma struktury `SM/BS/PD`. W YAML zapisane jako:
 ```yaml
-# Collection file structure:
-collection: collection_id     # matches key in collections.yaml
-
-decors:
-  - id: "8685"                # string, matches producer's code system
-    name: "Biel Alpejska"     # Polish name from catalog
-    group: "XXI Color Basic"  # producer's grouping
-    structure: AG             # code from collections.yaml structures
-    thickness_mm: 18.3
-    format: [2800, 1300]      # [length, width] in mm
-    sidedness: one_sided
-    konfekcja: true           # piece-ordering available
-    global_decor_id: K8685    # FK to global-collection (if applicable)
-    edge:
-      code: "K-8685-HG/AG"   # producer's edge code
-      supplier: Schilsner
-      finish: HG              # edge finish code
-      material: ABS
-    notes: "Optional notes"   # anything non-standard
+structure: SM           # struktura główna (pierwsza)
+multi_structures: BS, PD  # dodatkowe struktury
 ```
+Frontend pokazuje `_allStructures` = "SM, BS, PD" na karcie i w szczegółach.
 
-**ID format**: matches the producer's catalog exactly. Kronospan uses `"8685"`, Swiss Krono uses `"D3025"`, Egger uses `"U112"`. Don't normalize.
+### 3. Dwa typy dekorów w schemacie
+- **GlobalDecorSchema** — płyty wiórowe (Global Collection): mają `express`, `countertop`, `hdf_laminate`, `cross_collections`, NIE mają `thickness_mm`/`format`/`sidedness`
+- **SpecializedDecorSchema** — MDF/Compact (Acrylic Gloss): mają `thickness_mm`, `format`, `sidedness`, `global_decor_id`
 
-**Structure codes**: defined in `collections.yaml` per producer. Same code can mean different things across producers (Kronospan `SM` ≠ Swiss Krono `SM`). Don't assume equivalence.
+### 4. Mapowanie cross-collection
+Pole `cross_collections` w Global Collection mówi gdzie jeszcze jest ten dekor:
+```yaml
+cross_collections: [acrylic_gloss, acrylic_matt, mirror_gloss, compact_interior]
+```
+To jest.lista ID kolekcji, nie pełne dane. Pełne dane są w osobnych plikach YAML per kolekcja.
 
----
-
-## Validation layers
-
-| Layer | What it checks | When it runs |
-|-------|---------------|-------------|
-| Zod schema | Required fields, types, structure | `make build` |
-| Cross-reference | Structures exist in collections.yaml | `make build` |
-| Edge pattern | Edge codes match producer convention | `make build` |
-| Uniqueness | No duplicate IDs or edge codes | `make build` |
-| Reference comparison | YAML matches MD/PDF source data | `make test` |
-| Image existence | Referenced img files exist | `make build` (warn) |
+### 5. Obrzeża
+Każdy dekor ma `edge.code` (np. `K-8685-SM/BS/PD`). Format: `K-{ID}-{STRUCTURE}`. Dostawca: Schilsner/Spander. Acrylic Gloss ma inne obrzeże (HG/AG, UM/AG).
 
 ---
 
-## Testing conventions
+## Co działa
 
-- **Reference fixtures in `tests/fixtures/`**: one per collection, named `{collection}-ref.js`
-- **Fixtures are hand-copied from MD files**: the MD is the authority from the PDF
-- **Tests compare YAML against fixtures**: if YAML drifts, test fails
-- **Run `make test` before every commit**
+- [x] YAML → JSON build (180 dekorów)
+- [x] Walidacja Zod (55 testów)
+- [x] Frontend: karta dekoru ze zdjęciem
+- [x] Frontend: filtry (producent, powierzchnia, struktura, tagi, szukaj)
+- [x] Frontend: szczegóły dekoru (parametry, obrzeże, NCS/RAL, blat, HDF)
+- [x] Frontend: zdjęcie struktury w szczegółach
+- [x] Frontend: informacja o wielu strukturach
+- [x] Skrypt konwersji Global Collection (174 dekory)
+- [x] Makefile (dev/test/build/validate)
+
+## Co NIE działa / brakuje
+
+- [ ] Konfigurator (Front → Korpus → Blat → Ścianka → BOM) — cały widok 3
+- [ ] Zdjęcia dekorów Global Collection (tylko 55 z 174 ma pliki img)
+- [ ] Swiss Krono i Egger (puste, czekają na dane)
+- [ ] Substititions.yaml (zamienniki między producentami)
+- [ ] Eksport do CSV / druk
+- [ ] Podobne dekory (rekomendacje)
+- [ ] Ceny materiałów (pole `price_m2` nie istnieje jeszcze)
 
 ---
 
-## What NOT to do
+## Znane problemy / edge cases
 
-- Don't edit `catalog.json` or `data/dist/*.json` directly — they're generated
-- Don't put producer-specific data in `shared/concepts.yaml` — that's for cross-producer concepts only
-- Don't assume structure codes are interchangeable across producers
-- Don't hardcode structure metadata in the frontend — read it from catalog.json
-- Don't add images to `data/materials/` — put them in `catalog/public/{producer}/img/`
-- Don't commit `catalog/public/catalog.json` — it's generated and gitignored
+1. **Tagi mogą być puste** — niektóre dekory nie mają żadnych tagów (np. Aluminium Flash K522)
+2. **Nazwy plików img są case-sensitive** — `K096.jpg` ≠ `k096.jpg`
+3. **PDF nie jest czytelny jako tekst** — `02-struktury.pdf` to obraz, nie text. Nie da się go sparsować automatycznie.
+4. **Struktury w concepts.yaml mają mapowanie per producent** — `smooth_matt` → Kronospan [SM, BS, SU], Swiss Krono [VL, SM], Egger [ST9, ST15]. Ten sam kod SM u Kronospana i Swiss Krono to INNE struktury.
+5. **Global Collection nie ma `thickness_mm`** — bo to chipboard zawsze 12/16/18mm (info w collections.yaml), nie w każdym dekorze.
 
 ---
 
-## Commands
+## Jak dodać nową kolekcję (checklist)
+
+1. Utwórz `data/materials/{producer}/{collection}.yaml`
+2. Dodaj metadane w `{producer}/collections.yaml` (struktury, formaty)
+3. Uruchom `make build` z `catalog/`
+4. Stwórz fixture w `tests/fixtures/` jeśli dane z nowego PDF
+5. Dodaj obrazy dekorów do `catalog/public/{producer}/img/`
+6. Uruchom `make test`
+7. Jeśli nowa struktura → dodaj obraz do `catalog/public/{producer}/struktury/`
+8. Zaktualizuj `shared/concepts.yaml` jeśli nowy typ powierzchni
+
+---
+
+## Komendy
 
 ```bash
 cd catalog
-
-make dev         # Start dev server (watch + rebuild + HMR at localhost:5173)
+make dev         # dev server (watch + HMR) → http://localhost:5173
 make build       # YAML → catalog.json
-make test        # Run 55 validation tests
+make test        # 55 testów
 make validate    # build + test
-make prod        # Production bundle
-make clean       # Remove generated files
 ```
-
-Module resolution: `build.js` and tests live in `data/materials/` but run with `NODE_PATH=catalog/node_modules` (set by Makefile) to access `js-yaml` and `zod`.
 
 ---
 
-## Current state
+## Pliki których NIE edytować ręcznie
 
-- 1 producer: Kronospan (partial)
-- 1 collection: Acrylic Gloss (6 decors)
-- 55 tests passing
-- Global Collection (174 decors) exists as `global-collection-decory.yaml` in old format — needs migration to new YAML structure
-- Swiss Krono data exists as inline JS in old `kolekcja.html` — needs migration
-- Egger: empty, waiting for data
+- `data/dist/catalog.json` — generowany
+- `catalog/public/catalog.json` — kopia generowana
+- `data/materials/kronospan/global-collection.yaml` — generowany skryptem `scripts/convert-global-collection.js`
+
+## Pliki które edytować ręcznie
+
+- `data/materials/kronospan/acrylic-gloss.yaml` — mały, ręcznie zarządzany
+- `data/materials/kronospan/collections.yaml` — metadane + struktury
+- `data/materials/shared/concepts.yaml` — tagi, typy powierzchni
+- `catalog/index.html` — frontend
