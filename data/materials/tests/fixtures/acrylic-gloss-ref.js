@@ -46,7 +46,7 @@ module.exports = {
         },
         {
             id: '0514',
-            name: 'Kosc Sloniowa',
+            name: 'Kość Słoniowa',
             group: 'XXIII Color Special',
             structure: 'AG',
             edge_code: 'K-0514-UM/AG',
@@ -54,7 +54,7 @@ module.exports = {
         },
         {
             id: '7045',
-            name: 'Szampanski',
+            name: 'Szampański',
             group: 'XXIII Color Special',
             structure: 'AG',
             edge_code: 'K-7045-HG/AG',

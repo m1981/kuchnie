@@ -1,5 +1,5 @@
-# Acrylic Gloss — 6 dekorw
-# rdlo: plyty-mdf-acrylic-gloss.pdf, str. 114-118
+# Acrylic Gloss — 6 dekorów
+# Źródło: plyty-mdf-acrylic-gloss.pdf, str. 114-118
 # Wyekstrahowano: 2026-06-26
 
 collection: acrylic_gloss
@@ -15,6 +15,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K8685
+    img: "8685.jpg"
     edge:
       code: "K-8685-HG/AG"
       supplier: Schilsner
@@ -30,6 +31,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K112
+    img: "0112.jpg"
     edge:
       code: "K-0112-HG/AG"
       supplier: Schilsner
@@ -45,6 +47,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K164
+    img: "0164.jpg"
     edge:
       code: "K-0164-HG/AG"
       supplier: Schilsner
@@ -60,6 +63,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K190
+    img: "0190.jpg"
     edge:
       code: "K-0190-HG/AG"
       supplier: Schilsner
@@ -67,7 +71,7 @@ decors:
       material: ABS
 
   - id: "0514"
-    name: "Kosc Sloniowa"
+    name: "Kość Słoniowa"
     group: "XXIII Color Special"
     structure: AG
     thickness_mm: 18.3
@@ -75,15 +79,16 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: "0514"
+    img: "0514.jpg"
     edge:
       code: "K-0514-UM/AG"
       supplier: Schilsner
       finish: UM
       material: ABS
-    notes: "Inne obrzeze niz pozostale (UM zamiast HG)"
+    notes: "Inne obrzeże niż pozostałe (UM zamiast HG)"
 
   - id: "7045"
-    name: "Szampanski"
+    name: "Szampański"
     group: "XXIII Color Special"
     structure: AG
     thickness_mm: 18.3
@@ -91,6 +96,7 @@ decors:
     sidedness: one_sided
     konfekcja: true
     global_decor_id: K7045
+    img: "7045.jpg"
     edge:
       code: "K-7045-HG/AG"
       supplier: Schilsner
