@@ -4,6 +4,7 @@ decors:
     name: Biały Korpusowy
     group: I WHITE CORPUS
     structure: SM
+    multi_structures: null
     tags:
       - bialy
       - korpusowy
@@ -25,6 +26,7 @@ decors:
     name: Biały Frontowy
     group: II WHITE FRONT
     structure: PE
+    multi_structures: null
     tags:
       - bialy
       - frontowy
@@ -44,6 +46,7 @@ decors:
     name: Biel Alpejska
     group: II WHITE FRONT
     structure: SM
+    multi_structures: BS, PD
     tags:
       - bialy
       - frontowy
@@ -68,6 +71,7 @@ decors:
     name: Jasny Szary
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - szary
     ncs: S 2000-N
@@ -91,6 +95,7 @@ decors:
     name: Grafit Szary
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - szary
     ncs: S 6500-N
@@ -113,6 +118,7 @@ decors:
     name: Antracyt
     group: III COLOR BASIC
     structure: PE
+    multi_structures: PD
     tags:
       - czarny
     ncs: S 7502-G
@@ -137,6 +143,7 @@ decors:
     name: Bazalt
     group: III COLOR BASIC
     structure: BS
+    multi_structures: null
     tags:
       - szary
     ncs: S 7500-N
@@ -157,6 +164,7 @@ decors:
     name: Jasny Grafit
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - szary
     ncs: S 4500-N
@@ -179,6 +187,7 @@ decors:
     name: Czarny
     group: III COLOR BASIC
     structure: PE
+    multi_structures: PD
     tags:
       - czarny
     ncs: S 8502-B
@@ -204,6 +213,7 @@ decors:
     name: Szary
     group: III COLOR BASIC
     structure: SU
+    multi_structures: null
     tags:
       - szary
     ncs: 1502-G
@@ -226,6 +236,7 @@ decors:
     name: Szary Chinchilla
     group: III COLOR BASIC
     structure: SU
+    multi_structures: null
     tags:
       - szary
     ncs: S 3000-N
@@ -246,6 +257,7 @@ decors:
     name: Kość Słoniowa
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - kremowy
     ncs: 0505-Y20R
@@ -265,6 +277,7 @@ decors:
     name: Piaskowy
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - bezowy
     ncs: 1010-Y30R
@@ -283,6 +296,7 @@ decors:
     name: Beżowy
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - bezowy
     ncs: S 1005-Y20R
@@ -301,6 +315,7 @@ decors:
     name: Manhattan Szary
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - szary
     ncs: S 2500-N
@@ -318,6 +333,7 @@ decors:
     name: Migdałowy
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags: []
     ncs: 0601-Y21R
     ral: '9001'
@@ -336,6 +352,7 @@ decors:
     name: Stalowo Szary
     group: III COLOR BASIC
     structure: PE
+    multi_structures: null
     tags:
       - szary
     ncs: S 2005-R80B
@@ -355,6 +372,7 @@ decors:
     name: Kaszmir
     group: III COLOR BASIC
     structure: BS
+    multi_structures: PD
     tags: []
     ncs: S 2005-Y60R
     ral: 080 80 05
@@ -376,6 +394,7 @@ decors:
     name: Muszla
     group: III COLOR BASIC
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 1005-Y20R
     ral: '1013'
@@ -395,6 +414,7 @@ decors:
     name: Krem
     group: III COLOR BASIC
     structure: BS
+    multi_structures: null
     tags:
       - kremowy
     ncs: S 0804-Y10R
@@ -414,6 +434,7 @@ decors:
     name: Szampański
     group: III COLOR BASIC
     structure: SU
+    multi_structures: null
     tags: []
     pantone: 7527 C
     express:
@@ -435,6 +456,7 @@ decors:
     name: Perłowy Biały
     group: III COLOR BASIC
     structure: SM
+    multi_structures: null
     tags:
       - bialy
     ncs: S 0300-N
@@ -453,6 +475,7 @@ decors:
     name: Macchiato
     group: III COLOR BASIC
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 3010-Y40R
     pantone: 4745 C
@@ -471,6 +494,7 @@ decors:
     name: Biały Brylantowy
     group: III COLOR BASIC
     structure: SU
+    multi_structures: SM
     tags:
       - bialy
     ncs: S 0505-R70B
@@ -490,6 +514,7 @@ decors:
     name: Niebieski
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - niebieski
     ncs: S 3060-R90B
@@ -511,6 +536,7 @@ decors:
     name: Pomarańczowy
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 0585-Y40R
     ral: '2000'
@@ -531,6 +557,7 @@ decors:
     name: Żółty
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 0560-Y10R
     pantone: 136 C
@@ -550,6 +577,7 @@ decors:
     name: Petrol
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 6020-B30G
     express:
@@ -567,6 +595,7 @@ decors:
     name: Cappuccino
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 4010-Y30R
     ral: '1019'
@@ -587,6 +616,7 @@ decors:
     name: Alby Blue
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - niebieski
     ncs: S 6010-R90B
@@ -606,6 +636,7 @@ decors:
     name: Kobalt Szary
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - szary
     ncs: S 6502-Y
@@ -628,6 +659,7 @@ decors:
     name: Pastelowy Zielony
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - zielony
     ncs: 1505-G
@@ -647,6 +679,7 @@ decors:
     name: Czerwień Chilli
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - czerwony
     ncs: 1085-Y85R
@@ -668,6 +701,7 @@ decors:
     name: Latte
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags: []
     ral: '7006'
     pantone: 7531 C
@@ -687,6 +721,7 @@ decors:
     name: Ciemna Czekolada
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 7502-R
     pantone: 412 U
@@ -705,6 +740,7 @@ decors:
     name: Zieleń Mamba
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - zielony
     ncs: S 0580-G30Y
@@ -725,6 +761,7 @@ decors:
     name: Granatowy
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags: []
     ncs: S 7020-R80B
     ral: '5011'
@@ -745,6 +782,7 @@ decors:
     name: Czerwony Oxid
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - czerwony
     ncs: S 4550-Y90R
@@ -766,6 +804,7 @@ decors:
     name: Zielony Oxid
     group: VI COLOR SPECIAL
     structure: BS
+    multi_structures: null
     tags:
       - zielony
     ncs: S 3060-G10Y
@@ -787,6 +826,7 @@ decors:
     name: Glina Szara
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 4005-Y20R
     pantone: 7530 C
@@ -806,6 +846,7 @@ decors:
     name: Błękitny Zmierzch
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - niebieski
     ncs: S 4010-B50G
@@ -825,6 +866,7 @@ decors:
     name: Ceramiczny
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 4050-Y70R
     pantone: 7600 C
@@ -844,6 +886,7 @@ decors:
     name: Róż Naturalny
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - rozowy
     ncs: S 2020-Y80R
@@ -861,6 +904,7 @@ decors:
     name: Marshmallow
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 0520-R20B
     express:
@@ -877,6 +921,7 @@ decors:
     name: Głębia Sahary
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 4030-Y60R
     express:
@@ -894,6 +939,7 @@ decors:
     name: Pikantna Czerwień
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 6030-R20B
     pantone: 7644 C
@@ -911,6 +957,7 @@ decors:
     name: Toffee
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     pantone: 7509 C
     express:
@@ -928,6 +975,7 @@ decors:
     name: Lazurowy Błękit
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - niebieski
     ncs: S 1555-R80B
@@ -948,6 +996,7 @@ decors:
     name: Surf Blue
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - niebieski
     ncs: S 1020-R90B
@@ -968,6 +1017,7 @@ decors:
     name: Mouse Grey
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - szary
     ncs: S 4000-N
@@ -987,6 +1037,7 @@ decors:
     name: Ciemny Szmaragd
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags: []
     ncs: S 7010-B70G
     ral: '6004'
@@ -1006,6 +1057,7 @@ decors:
     name: Dymiona Zieleń
     group: VI COLOR SPECIAL
     structure: SU
+    multi_structures: null
     tags:
       - zielony
     ncs: S 6010-G30Y
@@ -1025,6 +1077,7 @@ decors:
     name: Aluminium Flash
     group: VI COLOR SPECIAL
     structure: PE
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -1040,6 +1093,7 @@ decors:
     name: Platinium Disk
     group: VI COLOR SPECIAL
     structure: PE
+    multi_structures: null
     tags:
       - srebrny
     express:
@@ -1056,6 +1110,7 @@ decors:
     name: Kamienny Beż
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags:
       - kamien
     ncs: S 0804-G60Y
@@ -1074,6 +1129,7 @@ decors:
     name: Macadamia
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags: []
     ncs: S 2005-Y40R
     ral: 075 80 10
@@ -1091,6 +1147,7 @@ decors:
     name: Alpaca
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags: []
     ral: 050 60 20
     pantone: 4725 C
@@ -1108,6 +1165,7 @@ decors:
     name: Cayenne
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags: []
     ral: 040 50 20
     pantone: 7614 C
@@ -1125,6 +1183,7 @@ decors:
     name: Czarna Trufla
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags: []
     ncs: S 7502-R
     ral: 000 30 05
@@ -1143,6 +1202,7 @@ decors:
     name: Stalowy Grafit
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags:
       - szary
     ncs: S 7500-N
@@ -1162,6 +1222,7 @@ decors:
     name: Pudrowy Róż
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags:
       - rozowy
     ncs: S 2005-Y80R
@@ -1181,6 +1242,7 @@ decors:
     name: Ciemny Las
     group: VI COLOR SPECIAL
     structure: PD
+    multi_structures: null
     tags: []
     ral: 180 20 05
     pantone: 5535 C
@@ -1198,6 +1260,7 @@ decors:
     name: Wiśnia
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - wisnia
     express:
@@ -1214,6 +1277,7 @@ decors:
     name: Klon
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - klon
     express:
@@ -1230,6 +1294,7 @@ decors:
     name: Buk Klasyczny
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - buk
     express:
@@ -1246,6 +1311,7 @@ decors:
     name: Orzech
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -1262,6 +1328,7 @@ decors:
     name: Wenge
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - wenge
     express:
@@ -1278,6 +1345,7 @@ decors:
     name: Brzoza
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - brzoza
     express:
@@ -1294,6 +1362,7 @@ decors:
     name: Olcha
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - olcha
     express:
@@ -1310,6 +1379,7 @@ decors:
     name: Dąb Cremona Terracotta
     group: VII WOOD BASIC
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1326,6 +1396,7 @@ decors:
     name: Dąb Cremona Torro
     group: VII WOOD BASIC
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1342,6 +1413,7 @@ decors:
     name: Dąb Cremona Cannolo
     group: VII WOOD BASIC
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1358,6 +1430,7 @@ decors:
     name: Dąb Vintage Jasny
     group: VII WOOD BASIC
     structure: SN
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -1376,6 +1449,7 @@ decors:
     name: Dąb Truflowy
     group: VII WOOD BASIC
     structure: SN
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1392,6 +1466,7 @@ decors:
     name: Dąb Ferrara
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1408,6 +1483,7 @@ decors:
     name: Orzech Tiepolo
     group: VII WOOD BASIC
     structure: SU
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -1424,6 +1500,7 @@ decors:
     name: Orzech Alpejski
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -1440,6 +1517,7 @@ decors:
     name: Wenge Luiziana
     group: VII WOOD BASIC
     structure: BS
+    multi_structures: null
     tags:
       - wenge
     express:
@@ -1456,6 +1534,7 @@ decors:
     name: Dąb Canella Naturalny
     group: VII WOOD BASIC
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1472,6 +1551,7 @@ decors:
     name: Dąb Lamel Canella
     group: VII WOOD BASIC
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -1488,6 +1568,7 @@ decors:
     name: Wiąz Szlachetny
     group: VIII WOOD FRONT
     structure: SU
+    multi_structures: null
     tags:
       - wiaz
       - frontowy
@@ -1505,6 +1586,7 @@ decors:
     name: Dąb Skalny Oregon
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - dab
       - frontowy
@@ -1522,6 +1604,7 @@ decors:
     name: Arusha Wenge
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - wenge
       - frontowy
@@ -1539,6 +1622,7 @@ decors:
     name: Dąb Nagano
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - dab
       - frontowy
@@ -1556,6 +1640,7 @@ decors:
     name: Fineline Mocca
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - frontowy
     express:
@@ -1572,6 +1657,7 @@ decors:
     name: Coco Bolo
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - frontowy
     express:
@@ -1588,6 +1674,7 @@ decors:
     name: Dąb Craft Biały
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - bialy
@@ -1607,6 +1694,7 @@ decors:
     name: Dąb Craft Szary
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - szary
@@ -1626,6 +1714,7 @@ decors:
     name: Dąb Craft Złoty
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - zloty
@@ -1646,6 +1735,7 @@ decors:
     name: Dąb Craft Tobacco
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -1664,6 +1754,7 @@ decors:
     name: Dąb Urban Oyster
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -1683,6 +1774,7 @@ decors:
     name: Dąb Urban Bursztynowy
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -1701,6 +1793,7 @@ decors:
     name: Dąb Urban Kawowy
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -1719,6 +1812,7 @@ decors:
     name: Orzech Select Jasny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - orzech
       - frontowy
@@ -1736,6 +1830,7 @@ decors:
     name: Orzech Select Ciemny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - orzech
       - frontowy
@@ -1753,6 +1848,7 @@ decors:
     name: Sosna Loft Biała
     group: VIII WOOD FRONT
     structure: SN
+    multi_structures: null
     tags:
       - sosna
       - frontowy
@@ -1770,6 +1866,7 @@ decors:
     name: Buk Artisan Perłowy
     group: VIII WOOD FRONT
     structure: SU
+    multi_structures: null
     tags:
       - buk
       - frontowy
@@ -1787,6 +1884,7 @@ decors:
     name: Buk Artisan Piaskowy
     group: VIII WOOD FRONT
     structure: SU
+    multi_structures: null
     tags:
       - buk
       - bezowy
@@ -1805,6 +1903,7 @@ decors:
     name: Vintage Marine Wood
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - drewno
       - rustykalny
@@ -1823,6 +1922,7 @@ decors:
     name: Carbon Marine Wood
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - drewno
       - frontowy
@@ -1840,6 +1940,7 @@ decors:
     name: Wiąz Liberty Jasny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - wiaz
       - frontowy
@@ -1858,6 +1959,7 @@ decors:
     name: Wiąz Liberty Dymiony
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - wiaz
       - frontowy
@@ -1875,6 +1977,7 @@ decors:
     name: Wiąz Liberty Srebrny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - wiaz
       - srebrny
@@ -1893,6 +1996,7 @@ decors:
     name: Orzech Select Ciepły
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - orzech
       - frontowy
@@ -1910,6 +2014,7 @@ decors:
     name: Dąb Piaskowany
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - bezowy
@@ -1928,6 +2033,7 @@ decors:
     name: Wiśnia Riverside Ciemna
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - wisnia
       - frontowy
@@ -1945,6 +2051,7 @@ decors:
     name: Dąb Clubhouse Szary
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - szary
@@ -1963,6 +2070,7 @@ decors:
     name: Dąb Coastland Biały
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - bialy
@@ -1981,6 +2089,7 @@ decors:
     name: Dąb Coastland Szampański
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - frontowy
@@ -1998,6 +2107,7 @@ decors:
     name: Dąb Burbon
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - frontowy
@@ -2015,6 +2125,7 @@ decors:
     name: Drewno Nordyckie Białe
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - drewno
       - frontowy
@@ -2032,6 +2143,7 @@ decors:
     name: Drewno Nordyckie Szare
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - drewno
       - frontowy
@@ -2049,6 +2161,7 @@ decors:
     name: Dąb Brązowy
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - brazowy
@@ -2067,6 +2180,7 @@ decors:
     name: Dąb Evoke Przybrzeżny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - frontowy
@@ -2084,6 +2198,7 @@ decors:
     name: Dąb Evok Kamienny
     group: VIII WOOD FRONT
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - kamien
@@ -2102,6 +2217,7 @@ decors:
     name: Jasny Atelier
     group: IX CONTEMPO 1
     structure: SU
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2117,6 +2233,7 @@ decors:
     name: Ciemny Atelier
     group: IX CONTEMPO 1
     structure: SU
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2132,6 +2249,7 @@ decors:
     name: Dąb Sławonia
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2148,6 +2266,7 @@ decors:
     name: Stone Oak
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - kamien
     express:
@@ -2164,6 +2283,7 @@ decors:
     name: Blackwood Jęczmienny
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - drewno
     express:
@@ -2180,6 +2300,7 @@ decors:
     name: Blackwood Satynowy
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - drewno
     express:
@@ -2196,6 +2317,7 @@ decors:
     name: Jasny Artwood
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - drewno
     express:
@@ -2212,6 +2334,7 @@ decors:
     name: Ciemny Artwood
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - drewno
     express:
@@ -2228,6 +2351,7 @@ decors:
     name: Orzech Rockford Jasny
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -2245,6 +2369,7 @@ decors:
     name: Orzech Rockford Naturalny
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -2261,6 +2386,7 @@ decors:
     name: Orzech Rockford Ciemny
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -2278,6 +2404,7 @@ decors:
     name: Dąb Surowy
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2294,6 +2421,7 @@ decors:
     name: Dąb Elegance
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2310,6 +2438,7 @@ decors:
     name: Dąb Grange Kolonialny
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2326,6 +2455,7 @@ decors:
     name: Dąb Grange Platynowy
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2342,6 +2472,7 @@ decors:
     name: Dąb Grange Piaskowy
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - bezowy
@@ -2359,6 +2490,7 @@ decors:
     name: Dąb Castello Szary
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - szary
@@ -2377,6 +2509,7 @@ decors:
     name: Dąb Castello Miodowy
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - klasyczny
@@ -2395,6 +2528,7 @@ decors:
     name: Dąb Castello Koniakowy
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - klasyczny
@@ -2413,6 +2547,7 @@ decors:
     name: Dąb Harbor Vintage
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - rustykalny
@@ -2431,6 +2566,7 @@ decors:
     name: Dąb Harbor Złoty
     group: IX CONTEMPO 1
     structure: PW
+    multi_structures: null
     tags:
       - dab
       - zloty
@@ -2449,6 +2585,7 @@ decors:
     name: Jesion Surfside
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - jesion
     express:
@@ -2466,6 +2603,7 @@ decors:
     name: Jesion Surfside Jasny
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - jesion
     express:
@@ -2483,6 +2621,7 @@ decors:
     name: Jesion Surfside Stalowy
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - jesion
     express:
@@ -2500,6 +2639,7 @@ decors:
     name: Dąb Barokowy Złoty
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - dab
       - zloty
@@ -2519,6 +2659,7 @@ decors:
     name: Dąb Barokowy Bursztynowy
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - dab
       - klasyczny
@@ -2537,6 +2678,7 @@ decors:
     name: Dąb Barokowy Ristretto
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - dab
       - klasyczny
@@ -2555,6 +2697,7 @@ decors:
     name: Juta Jasna
     group: IX CONTEMPO 1
     structure: PN
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2570,6 +2713,7 @@ decors:
     name: Juta Ciemna
     group: IX CONTEMPO 1
     structure: PN
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2585,6 +2729,7 @@ decors:
     name: Dąb Barbera Piaskowy
     group: IX CONTEMPO 1
     structure: SN
+    multi_structures: null
     tags:
       - dab
       - bezowy
@@ -2603,6 +2748,7 @@ decors:
     name: Dąb Silverjack Orzechowy
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - dab
       - orzech
@@ -2621,6 +2767,7 @@ decors:
     name: Dąb Silverjack Postarzany
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - dab
       - srebrny
@@ -2638,6 +2785,7 @@ decors:
     name: Orzech Franklin Karmelowy
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -2655,6 +2803,7 @@ decors:
     name: Orzech Franklin Tobacco
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - orzech
     express:
@@ -2672,6 +2821,7 @@ decors:
     name: Jesion Kala Dymiony
     group: IX CONTEMPO 1
     structure: RW
+    multi_structures: null
     tags:
       - jesion
     express:
@@ -2689,6 +2839,7 @@ decors:
     name: Beton Jasny
     group: X CONTEMPO 2
     structure: RT
+    multi_structures: null
     tags:
       - beton
     express:
@@ -2705,6 +2856,7 @@ decors:
     name: Beton
     group: X CONTEMPO 2
     structure: RT
+    multi_structures: null
     tags:
       - beton
     express:
@@ -2721,6 +2873,7 @@ decors:
     name: Beton Rdzawy
     group: X CONTEMPO 2
     structure: RT
+    multi_structures: null
     tags:
       - beton
     express:
@@ -2737,6 +2890,7 @@ decors:
     name: Beton Ciemny
     group: X CONTEMPO 2
     structure: RT
+    multi_structures: null
     tags:
       - beton
     express:
@@ -2753,6 +2907,7 @@ decors:
     name: Beton Czarny
     group: X CONTEMPO 2
     structure: RT
+    multi_structures: null
     tags:
       - beton
       - czarny
@@ -2770,6 +2925,7 @@ decors:
     name: Łupek Arosa Jasny
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - lupek
     express:
@@ -2786,6 +2942,7 @@ decors:
     name: Łupek Arosa Ciemny
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - lupek
     express:
@@ -2802,6 +2959,7 @@ decors:
     name: Albus Szary
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - szary
     express:
@@ -2818,6 +2976,7 @@ decors:
     name: Granada Migdałowa
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - kamien
     express:
@@ -2834,6 +2993,7 @@ decors:
     name: Granada Niebiańska
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - kamien
     express:
@@ -2850,6 +3010,7 @@ decors:
     name: Granada Brązowa
     group: X CONTEMPO 2
     structure: PN
+    multi_structures: null
     tags:
       - kamien
       - brazowy
@@ -2867,6 +3028,7 @@ decors:
     name: Dąb Hudson Biszkoptowy
     group: XII HARMONY
     structure: HU
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2883,6 +3045,7 @@ decors:
     name: Dąb Hudson Kaszmirowy
     group: XII HARMONY
     structure: HU
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2899,6 +3062,7 @@ decors:
     name: Dąb Hudson Złoty
     group: XII HARMONY
     structure: HU
+    multi_structures: null
     tags:
       - dab
       - zloty
@@ -2916,6 +3080,7 @@ decors:
     name: Dąb Hudson Amaretto
     group: XII HARMONY
     structure: HU
+    multi_structures: null
     tags:
       - dab
     express:
@@ -2932,6 +3097,7 @@ decors:
     name: Kasztan Arvadonna Kamienny
     group: XII HARMONY
     structure: AD
+    multi_structures: null
     tags:
       - kamien
     express:
@@ -2948,6 +3114,7 @@ decors:
     name: Kasztan Arvadonna
     group: XII HARMONY
     structure: AD
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2963,6 +3130,7 @@ decors:
     name: Kasztan Arvadonna Mink
     group: XII HARMONY
     structure: AD
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2978,6 +3146,7 @@ decors:
     name: Kasztan Arvadonna Ciemny
     group: XII HARMONY
     structure: AD
+    multi_structures: null
     tags: []
     express:
       - 18
@@ -2993,6 +3162,7 @@ decors:
     name: Dąb Hudson Czekoladowy
     group: XII HARMONY
     structure: HU
+    multi_structures: null
     tags:
       - dab
     express:
@@ -3009,6 +3179,7 @@ decors:
     name: Dąb Primavera Jedwabny
     group: XII HARMONY
     structure: PV
+    multi_structures: null
     tags:
       - dab
     express:
@@ -3025,6 +3196,7 @@ decors:
     name: Dąb Primavera Słomkowy
     group: XII HARMONY
     structure: PV
+    multi_structures: null
     tags:
       - dab
     express:
@@ -3041,6 +3213,7 @@ decors:
     name: Dąb Primavera Umbra
     group: XII HARMONY
     structure: PV
+    multi_structures: null
     tags:
       - dab
     express:
@@ -3057,6 +3230,7 @@ decors:
     name: Dąb Primavera Kakaowy
     group: XII HARMONY
     structure: PV
+    multi_structures: null
     tags:
       - dab
     express:

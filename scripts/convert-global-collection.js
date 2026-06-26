@@ -122,7 +122,9 @@ function generateTags(name, group) {
 // Konwersja
 const decors = raw.dekory.map(d => {
   const colors = parseColors(d.uwagi);
-  const structure = d.struktura.includes('/') ? d.struktura.split('/')[0].trim() : d.struktura;
+  const structures = d.struktura.includes('/') ? d.struktura.split('/').map(s => s.trim()) : [d.struktura];
+  const structure = structures[0];
+  const multiStructures = structures.length > 1 ? structures.slice(1).join(', ') : null;
   const express = [];
   if (d.ex_12) express.push(12);
   if (d.ex_16) express.push(16);
@@ -133,6 +135,7 @@ const decors = raw.dekory.map(d => {
     name: d.nazwa,
     group: d.grupa,
     structure,
+    multi_structures: multiStructures,
     tags: generateTags(d.nazwa, d.grupa),
     ...colors,
     express,
