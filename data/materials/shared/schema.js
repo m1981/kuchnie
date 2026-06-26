@@ -14,12 +14,22 @@ const EdgeSchema = z.object({
     width_mm: z.number().optional()
 });
 
+const COLOR_FAMILIES = [
+    'bialy', 'bezowy', 'szary', 'czarny', 'brazowy', 'kremowy',
+    'dab', 'orzech', 'jesion', 'buk', 'brzoza', 'olcha',
+    'wisnia', 'klon', 'wenge', 'wiaz',
+    'marmur', 'beton', 'lupek',
+    'niebieski', 'zielony', 'czerwony', 'rozowy', 'zloty', 'srebrny',
+    'metal', 'unikolor'
+];
+
 // ── Dekor w Global Collection (chipboard) ──
 const GlobalDecorSchema = z.object({
     id: z.string().min(1, 'Decor ID is required'),
     name: z.string().min(1, 'Decor name is required'),
     group: z.string(),
     structure: z.string().min(2).max(3),
+    color_family: z.enum(COLOR_FAMILIES),
     tags: z.array(z.string()).optional(),
     color_family: z.string().optional(),
     ncs: z.string().optional(),
@@ -41,6 +51,7 @@ const SpecializedDecorSchema = z.object({
     name: z.string().min(1, 'Decor name is required'),
     group: z.string(),
     structure: z.string().min(2).max(3),
+    color_family: z.enum(COLOR_FAMILIES),
     thickness_mm: z.number(),
     format: z.tuple([z.number(), z.number()]),
     sidedness: z.enum(['one_sided', 'two_sided_same', 'two_sided_different']),
@@ -58,6 +69,7 @@ const CollectionFileSchema = z.object({
 });
 
 module.exports = {
+    COLOR_FAMILIES,
     EdgeSchema,
     GlobalDecorSchema,
     SpecializedDecorSchema,

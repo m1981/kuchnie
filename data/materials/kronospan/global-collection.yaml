@@ -3,6 +3,7 @@ decors:
   - id: K110
     name: Biały Korpusowy
     group: I WHITE CORPUS
+    color_family: bialy
     structure: SM
     multi_structures: null
     tags:
@@ -25,6 +26,7 @@ decors:
   - id: K101
     name: Biały Frontowy
     group: II WHITE FRONT
+    color_family: bialy
     structure: PE
     multi_structures: null
     tags:
@@ -45,6 +47,7 @@ decors:
   - id: K8685
     name: Biel Alpejska
     group: II WHITE FRONT
+    color_family: bialy
     structure: SM
     multi_structures: BS, PD
     tags:
@@ -70,6 +73,7 @@ decors:
   - id: K112
     name: Jasny Szary
     group: III COLOR BASIC
+    color_family: szary
     structure: PE
     multi_structures: null
     tags:
@@ -94,6 +98,7 @@ decors:
   - id: K162
     name: Grafit Szary
     group: III COLOR BASIC
+    color_family: szary
     structure: PE
     multi_structures: null
     tags:
@@ -117,6 +122,7 @@ decors:
   - id: K164
     name: Antracyt
     group: III COLOR BASIC
+    color_family: czarny
     structure: PE
     multi_structures: PD
     tags:
@@ -142,6 +148,7 @@ decors:
   - id: K166
     name: Bazalt
     group: III COLOR BASIC
+    color_family: szary
     structure: BS
     multi_structures: null
     tags:
@@ -163,6 +170,7 @@ decors:
   - id: K171
     name: Jasny Grafit
     group: III COLOR BASIC
+    color_family: szary
     structure: PE
     multi_structures: null
     tags:
@@ -186,6 +194,7 @@ decors:
   - id: K190
     name: Czarny
     group: III COLOR BASIC
+    color_family: czarny
     structure: PE
     multi_structures: PD
     tags:
@@ -212,6 +221,7 @@ decors:
   - id: K191
     name: Szary
     group: III COLOR BASIC
+    color_family: szary
     structure: SU
     multi_structures: null
     tags:
@@ -235,6 +245,7 @@ decors:
   - id: K197
     name: Szary Chinchilla
     group: III COLOR BASIC
+    color_family: szary
     structure: SU
     multi_structures: null
     tags:
@@ -253,9 +264,10 @@ decors:
     edge:
       code: K-0197-SU
       supplier: Schilsner
-  - id: '0514'
+  - id: K0514
     name: Kość Słoniowa
     group: III COLOR BASIC
+    color_family: bezowy
     structure: PE
     multi_structures: null
     tags:
@@ -273,9 +285,10 @@ decors:
     edge:
       code: K-0514-PE
       supplier: Schilsner
-  - id: '0515'
+  - id: K0515
     name: Piaskowy
     group: III COLOR BASIC
+    color_family: bezowy
     structure: PE
     multi_structures: null
     tags:
@@ -292,9 +305,10 @@ decors:
     edge:
       code: K-0515-PE
       supplier: Schilsner
-  - id: '0522'
+  - id: K0522
     name: Beżowy
     group: III COLOR BASIC
+    color_family: bezowy
     structure: PE
     multi_structures: null
     tags:
@@ -311,9 +325,10 @@ decors:
     edge:
       code: K-0522-PE
       supplier: Schilsner
-  - id: '0540'
+  - id: K0540
     name: Manhattan Szary
     group: III COLOR BASIC
+    color_family: szary
     structure: PE
     multi_structures: null
     tags:
@@ -332,6 +347,7 @@ decors:
   - id: K564
     name: Migdałowy
     group: III COLOR BASIC
+    color_family: bezowy
     structure: PE
     multi_structures: null
     tags: []
@@ -351,6 +367,7 @@ decors:
   - id: K1700
     name: Stalowo Szary
     group: III COLOR BASIC
+    color_family: szary
     structure: PE
     multi_structures: null
     tags:
@@ -371,6 +388,7 @@ decors:
   - id: K5981
     name: Kaszmir
     group: III COLOR BASIC
+    color_family: bezowy
     structure: BS
     multi_structures: PD
     tags: []
@@ -393,6 +411,7 @@ decors:
   - id: K5982
     name: Muszla
     group: III COLOR BASIC
+    color_family: kremowy
     structure: BS
     multi_structures: null
     tags: []
@@ -413,6 +432,7 @@ decors:
   - id: K7031
     name: Krem
     group: III COLOR BASIC
+    color_family: kremowy
     structure: BS
     multi_structures: null
     tags:
@@ -433,6 +453,7 @@ decors:
   - id: K7045
     name: Szampański
     group: III COLOR BASIC
+    color_family: bezowy
     structure: SU
     multi_structures: null
     tags: []
@@ -455,6 +476,7 @@ decors:
   - id: K8100
     name: Perłowy Biały
     group: III COLOR BASIC
+    color_family: bialy
     structure: SM
     multi_structures: null
     tags:
@@ -474,6 +496,7 @@ decors:
   - id: K8533
     name: Macchiato
     group: III COLOR BASIC
+    color_family: brazowy
     structure: BS
     multi_structures: null
     tags: []
@@ -493,6 +516,7 @@ decors:
   - id: K8681
     name: Biały Brylantowy
     group: III COLOR BASIC
+    color_family: bialy
     structure: SU
     multi_structures: SM
     tags:
@@ -513,6 +537,7 @@ decors:
   - id: K125
     name: Niebieski
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: BS
     multi_structures: null
     tags:
@@ -535,6 +560,7 @@ decors:
   - id: K132
     name: Pomarańczowy
     group: VI COLOR SPECIAL
+    color_family: czerwony
     structure: BS
     multi_structures: null
     tags: []
@@ -556,6 +582,7 @@ decors:
   - id: K134
     name: Żółty
     group: VI COLOR SPECIAL
+    color_family: zloty
     structure: BS
     multi_structures: null
     tags: []
@@ -573,9 +600,10 @@ decors:
     edge:
       code: K-0134-BS
       supplier: Schilsner
-  - id: '0244'
+  - id: K0244
     name: Petrol
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: SU
     multi_structures: null
     tags: []
@@ -594,6 +622,7 @@ decors:
   - id: K301
     name: Cappuccino
     group: VI COLOR SPECIAL
+    color_family: brazowy
     structure: SU
     multi_structures: null
     tags: []
@@ -615,6 +644,7 @@ decors:
   - id: K5994
     name: Alby Blue
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: SU
     multi_structures: null
     tags:
@@ -635,6 +665,7 @@ decors:
   - id: K6299
     name: Kobalt Szary
     group: VI COLOR SPECIAL
+    color_family: szary
     structure: BS
     multi_structures: null
     tags:
@@ -658,6 +689,7 @@ decors:
   - id: K7063
     name: Pastelowy Zielony
     group: VI COLOR SPECIAL
+    color_family: zielony
     structure: SU
     multi_structures: null
     tags:
@@ -678,6 +710,7 @@ decors:
   - id: K7113
     name: Czerwień Chilli
     group: VI COLOR SPECIAL
+    color_family: czerwony
     structure: BS
     multi_structures: null
     tags:
@@ -700,6 +733,7 @@ decors:
   - id: K7166
     name: Latte
     group: VI COLOR SPECIAL
+    color_family: bezowy
     structure: BS
     multi_structures: null
     tags: []
@@ -720,6 +754,7 @@ decors:
   - id: K7181
     name: Ciemna Czekolada
     group: VI COLOR SPECIAL
+    color_family: brazowy
     structure: BS
     multi_structures: null
     tags: []
@@ -739,6 +774,7 @@ decors:
   - id: K7190
     name: Zieleń Mamba
     group: VI COLOR SPECIAL
+    color_family: zielony
     structure: BS
     multi_structures: null
     tags:
@@ -760,6 +796,7 @@ decors:
   - id: K8984
     name: Granatowy
     group: VI COLOR SPECIAL
+    color_family: czarny
     structure: BS
     multi_structures: null
     tags: []
@@ -781,6 +818,7 @@ decors:
   - id: K9551
     name: Czerwony Oxid
     group: VI COLOR SPECIAL
+    color_family: czerwony
     structure: BS
     multi_structures: null
     tags:
@@ -803,6 +841,7 @@ decors:
   - id: K9561
     name: Zielony Oxid
     group: VI COLOR SPECIAL
+    color_family: zielony
     structure: BS
     multi_structures: null
     tags:
@@ -825,6 +864,7 @@ decors:
   - id: K096
     name: Glina Szara
     group: VI COLOR SPECIAL
+    color_family: szary
     structure: SU
     multi_structures: null
     tags: []
@@ -845,6 +885,7 @@ decors:
   - id: K097
     name: Błękitny Zmierzch
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: SU
     multi_structures: null
     tags:
@@ -865,6 +906,7 @@ decors:
   - id: K098
     name: Ceramiczny
     group: VI COLOR SPECIAL
+    color_family: bezowy
     structure: SU
     multi_structures: null
     tags: []
@@ -885,6 +927,7 @@ decors:
   - id: K512
     name: Róż Naturalny
     group: VI COLOR SPECIAL
+    color_family: rozowy
     structure: SU
     multi_structures: null
     tags:
@@ -903,6 +946,7 @@ decors:
   - id: K513
     name: Marshmallow
     group: VI COLOR SPECIAL
+    color_family: bialy
     structure: SU
     multi_structures: null
     tags: []
@@ -920,6 +964,7 @@ decors:
   - id: K514
     name: Głębia Sahary
     group: VI COLOR SPECIAL
+    color_family: bezowy
     structure: SU
     multi_structures: null
     tags: []
@@ -938,6 +983,7 @@ decors:
   - id: K515
     name: Pikantna Czerwień
     group: VI COLOR SPECIAL
+    color_family: czerwony
     structure: SU
     multi_structures: null
     tags: []
@@ -956,6 +1002,7 @@ decors:
   - id: K516
     name: Toffee
     group: VI COLOR SPECIAL
+    color_family: brazowy
     structure: SU
     multi_structures: null
     tags: []
@@ -974,6 +1021,7 @@ decors:
   - id: K517
     name: Lazurowy Błękit
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: SU
     multi_structures: null
     tags:
@@ -995,6 +1043,7 @@ decors:
   - id: K518
     name: Surf Blue
     group: VI COLOR SPECIAL
+    color_family: niebieski
     structure: SU
     multi_structures: null
     tags:
@@ -1016,6 +1065,7 @@ decors:
   - id: K519
     name: Mouse Grey
     group: VI COLOR SPECIAL
+    color_family: szary
     structure: SU
     multi_structures: null
     tags:
@@ -1036,6 +1086,7 @@ decors:
   - id: K520
     name: Ciemny Szmaragd
     group: VI COLOR SPECIAL
+    color_family: czarny
     structure: SU
     multi_structures: null
     tags: []
@@ -1056,6 +1107,7 @@ decors:
   - id: K521
     name: Dymiona Zieleń
     group: VI COLOR SPECIAL
+    color_family: zielony
     structure: SU
     multi_structures: null
     tags:
@@ -1076,6 +1128,7 @@ decors:
   - id: K522
     name: Aluminium Flash
     group: VI COLOR SPECIAL
+    color_family: metal
     structure: PE
     multi_structures: null
     tags: []
@@ -1092,6 +1145,7 @@ decors:
   - id: K523
     name: Platinium Disk
     group: VI COLOR SPECIAL
+    color_family: srebrny
     structure: PE
     multi_structures: null
     tags:
@@ -1109,6 +1163,7 @@ decors:
   - id: K680
     name: Kamienny Beż
     group: VI COLOR SPECIAL
+    color_family: beton
     structure: PD
     multi_structures: null
     tags:
@@ -1128,6 +1183,7 @@ decors:
   - id: K681
     name: Macadamia
     group: VI COLOR SPECIAL
+    color_family: bezowy
     structure: PD
     multi_structures: null
     tags: []
@@ -1146,6 +1202,7 @@ decors:
   - id: K682
     name: Alpaca
     group: VI COLOR SPECIAL
+    color_family: bezowy
     structure: PD
     multi_structures: null
     tags: []
@@ -1164,6 +1221,7 @@ decors:
   - id: K683
     name: Cayenne
     group: VI COLOR SPECIAL
+    color_family: czerwony
     structure: PD
     multi_structures: null
     tags: []
@@ -1182,6 +1240,7 @@ decors:
   - id: K684
     name: Czarna Trufla
     group: VI COLOR SPECIAL
+    color_family: czarny
     structure: PD
     multi_structures: null
     tags: []
@@ -1201,6 +1260,7 @@ decors:
   - id: K685
     name: Stalowy Grafit
     group: VI COLOR SPECIAL
+    color_family: szary
     structure: PD
     multi_structures: null
     tags:
@@ -1221,6 +1281,7 @@ decors:
   - id: K686
     name: Pudrowy Róż
     group: VI COLOR SPECIAL
+    color_family: rozowy
     structure: PD
     multi_structures: null
     tags:
@@ -1241,6 +1302,7 @@ decors:
   - id: K687
     name: Ciemny Las
     group: VI COLOR SPECIAL
+    color_family: czarny
     structure: PD
     multi_structures: null
     tags: []
@@ -1256,9 +1318,10 @@ decors:
     edge:
       code: K-0687-PD
       supplier: Schilsner
-  - id: '0344'
+  - id: K0344
     name: Wiśnia
     group: VII WOOD BASIC
+    color_family: wisnia
     structure: BS
     multi_structures: null
     tags:
@@ -1273,9 +1336,10 @@ decors:
     edge:
       code: K-0344-BS
       supplier: Schilsner
-  - id: '0375'
+  - id: K0375
     name: Klon
     group: VII WOOD BASIC
+    color_family: klon
     structure: BS
     multi_structures: null
     tags:
@@ -1290,9 +1354,10 @@ decors:
     edge:
       code: K-0375-BS
       supplier: Schilsner
-  - id: '0381'
+  - id: K0381
     name: Buk Klasyczny
     group: VII WOOD BASIC
+    color_family: buk
     structure: BS
     multi_structures: null
     tags:
@@ -1307,9 +1372,10 @@ decors:
     edge:
       code: K-0381-BS
       supplier: Schilsner
-  - id: '0729'
+  - id: K0729
     name: Orzech
     group: VII WOOD BASIC
+    color_family: orzech
     structure: BS
     multi_structures: null
     tags:
@@ -1324,9 +1390,10 @@ decors:
     edge:
       code: K-0729-BS
       supplier: Schilsner
-  - id: '0854'
+  - id: K0854
     name: Wenge
     group: VII WOOD BASIC
+    color_family: wenge
     structure: BS
     multi_structures: null
     tags:
@@ -1341,9 +1408,10 @@ decors:
     edge:
       code: K-0854-BS
       supplier: Schilsner
-  - id: '1715'
+  - id: K1715
     name: Brzoza
     group: VII WOOD BASIC
+    color_family: brzoza
     structure: BS
     multi_structures: null
     tags:
@@ -1358,9 +1426,10 @@ decors:
     edge:
       code: K-1715-BS
       supplier: Schilsner
-  - id: '1912'
+  - id: K1912
     name: Olcha
     group: VII WOOD BASIC
+    color_family: olcha
     structure: BS
     multi_structures: null
     tags:
@@ -1375,9 +1444,10 @@ decors:
     edge:
       code: K-1912-BS
       supplier: Schilsner
-  - id: '2737'
+  - id: K2737
     name: Dąb Cremona Terracotta
     group: VII WOOD BASIC
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1392,9 +1462,10 @@ decors:
     edge:
       code: K-2737-PW
       supplier: Schilsner
-  - id: '2738'
+  - id: K2738
     name: Dąb Cremona Torro
     group: VII WOOD BASIC
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1409,9 +1480,10 @@ decors:
     edge:
       code: K-2738-PW
       supplier: Schilsner
-  - id: '2739'
+  - id: K2739
     name: Dąb Cremona Cannolo
     group: VII WOOD BASIC
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1426,9 +1498,10 @@ decors:
     edge:
       code: K-2739-PW
       supplier: Schilsner
-  - id: '3025'
+  - id: K3025
     name: Dąb Vintage Jasny
     group: VII WOOD BASIC
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -1445,9 +1518,10 @@ decors:
     edge:
       code: K-3025-PS
       supplier: Schilsner
-  - id: '5194'
+  - id: K5194
     name: Dąb Truflowy
     group: VII WOOD BASIC
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -1462,9 +1536,10 @@ decors:
     edge:
       code: K-5194-PS
       supplier: Schilsner
-  - id: '8921'
+  - id: K8921
     name: Dąb Ferrara
     group: VII WOOD BASIC
+    color_family: dab
     structure: BS
     multi_structures: null
     tags:
@@ -1479,9 +1554,10 @@ decors:
     edge:
       code: K-8921-BS
       supplier: Schilsner
-  - id: '8953'
+  - id: K8953
     name: Orzech Tiepolo
     group: VII WOOD BASIC
+    color_family: orzech
     structure: SU
     multi_structures: null
     tags:
@@ -1496,9 +1572,10 @@ decors:
     edge:
       code: K-8953-SU
       supplier: Schilsner
-  - id: '9614'
+  - id: K9614
     name: Orzech Alpejski
     group: VII WOOD BASIC
+    color_family: orzech
     structure: BS
     multi_structures: null
     tags:
@@ -1513,9 +1590,10 @@ decors:
     edge:
       code: K-9614-BS
       supplier: Schilsner
-  - id: '9763'
+  - id: K9763
     name: Wenge Luiziana
     group: VII WOOD BASIC
+    color_family: wenge
     structure: BS
     multi_structures: null
     tags:
@@ -1533,6 +1611,7 @@ decors:
   - id: K688
     name: Dąb Canella Naturalny
     group: VII WOOD BASIC
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1550,6 +1629,7 @@ decors:
   - id: K689
     name: Dąb Lamel Canella
     group: VII WOOD BASIC
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1564,9 +1644,10 @@ decors:
     edge:
       code: K-0689-PW
       supplier: Schilsner
-  - id: '5500'
+  - id: K5500
     name: Wiąz Szlachetny
     group: VIII WOOD FRONT
+    color_family: wiaz
     structure: SU
     multi_structures: null
     tags:
@@ -1582,9 +1663,10 @@ decors:
     edge:
       code: K-5500-SU
       supplier: Schilsner
-  - id: '5529'
+  - id: K5529
     name: Dąb Skalny Oregon
     group: VIII WOOD FRONT
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -1600,9 +1682,10 @@ decors:
     edge:
       code: K-5529-SN
       supplier: Schilsner
-  - id: '7648'
+  - id: K7648
     name: Arusha Wenge
     group: VIII WOOD FRONT
+    color_family: wenge
     structure: SN
     multi_structures: null
     tags:
@@ -1618,9 +1701,10 @@ decors:
     edge:
       code: K-7648-SN
       supplier: Schilsner
-  - id: '8431'
+  - id: K8431
     name: Dąb Nagano
     group: VIII WOOD FRONT
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -1636,9 +1720,10 @@ decors:
     edge:
       code: K-8431-SN
       supplier: Schilsner
-  - id: '8548'
+  - id: K8548
     name: Fineline Mocca
     group: VIII WOOD FRONT
+    color_family: brazowy
     structure: SN
     multi_structures: null
     tags:
@@ -1653,9 +1738,10 @@ decors:
     edge:
       code: K-8548-SN
       supplier: Schilsner
-  - id: '8995'
+  - id: K8995
     name: Coco Bolo
     group: VIII WOOD FRONT
+    color_family: brazowy
     structure: SN
     multi_structures: null
     tags:
@@ -1673,6 +1759,7 @@ decors:
   - id: K001
     name: Dąb Craft Biały
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1693,6 +1780,7 @@ decors:
   - id: K002
     name: Dąb Craft Szary
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1713,6 +1801,7 @@ decors:
   - id: K003
     name: Dąb Craft Złoty
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1734,6 +1823,7 @@ decors:
   - id: K004
     name: Dąb Craft Tobacco
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1753,6 +1843,7 @@ decors:
   - id: K005
     name: Dąb Urban Oyster
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1773,6 +1864,7 @@ decors:
   - id: K006
     name: Dąb Urban Bursztynowy
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1792,6 +1884,7 @@ decors:
   - id: K007
     name: Dąb Urban Kawowy
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1811,6 +1904,7 @@ decors:
   - id: K008
     name: Orzech Select Jasny
     group: VIII WOOD FRONT
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -1829,6 +1923,7 @@ decors:
   - id: K009
     name: Orzech Select Ciemny
     group: VIII WOOD FRONT
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -1847,6 +1942,7 @@ decors:
   - id: K010
     name: Sosna Loft Biała
     group: VIII WOOD FRONT
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -1865,6 +1961,7 @@ decors:
   - id: K012
     name: Buk Artisan Perłowy
     group: VIII WOOD FRONT
+    color_family: buk
     structure: SU
     multi_structures: null
     tags:
@@ -1883,6 +1980,7 @@ decors:
   - id: K013
     name: Buk Artisan Piaskowy
     group: VIII WOOD FRONT
+    color_family: buk
     structure: SU
     multi_structures: null
     tags:
@@ -1902,6 +2000,7 @@ decors:
   - id: K015
     name: Vintage Marine Wood
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1921,6 +2020,7 @@ decors:
   - id: K016
     name: Carbon Marine Wood
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -1939,6 +2039,7 @@ decors:
   - id: K017
     name: Wiąz Liberty Jasny
     group: VIII WOOD FRONT
+    color_family: wiaz
     structure: PW
     multi_structures: null
     tags:
@@ -1958,6 +2059,7 @@ decors:
   - id: K018
     name: Wiąz Liberty Dymiony
     group: VIII WOOD FRONT
+    color_family: wiaz
     structure: PW
     multi_structures: null
     tags:
@@ -1976,6 +2078,7 @@ decors:
   - id: K019
     name: Wiąz Liberty Srebrny
     group: VIII WOOD FRONT
+    color_family: wiaz
     structure: PW
     multi_structures: null
     tags:
@@ -1995,6 +2098,7 @@ decors:
   - id: K020
     name: Orzech Select Ciepły
     group: VIII WOOD FRONT
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -2013,6 +2117,7 @@ decors:
   - id: K076
     name: Dąb Piaskowany
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2032,6 +2137,7 @@ decors:
   - id: K078
     name: Wiśnia Riverside Ciemna
     group: VIII WOOD FRONT
+    color_family: wisnia
     structure: PW
     multi_structures: null
     tags:
@@ -2050,6 +2156,7 @@ decors:
   - id: K079
     name: Dąb Clubhouse Szary
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2069,6 +2176,7 @@ decors:
   - id: K080
     name: Dąb Coastland Biały
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2088,6 +2196,7 @@ decors:
   - id: K081
     name: Dąb Coastland Szampański
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2106,6 +2215,7 @@ decors:
   - id: K082
     name: Dąb Burbon
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2124,6 +2234,7 @@ decors:
   - id: K088
     name: Drewno Nordyckie Białe
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2142,6 +2253,7 @@ decors:
   - id: K089
     name: Drewno Nordyckie Szare
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2160,6 +2272,7 @@ decors:
   - id: K090
     name: Dąb Brązowy
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2179,6 +2292,7 @@ decors:
   - id: K365
     name: Dąb Evoke Przybrzeżny
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2197,6 +2311,7 @@ decors:
   - id: K366
     name: Dąb Evok Kamienny
     group: VIII WOOD FRONT
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2213,9 +2328,10 @@ decors:
     edge:
       code: K-0366-PW
       supplier: Schilsner
-  - id: '4298'
+  - id: K4298
     name: Jasny Atelier
     group: IX CONTEMPO 1
+    color_family: kremowy
     structure: SU
     multi_structures: null
     tags: []
@@ -2229,9 +2345,10 @@ decors:
     edge:
       code: K-4298-SU
       supplier: Schilsner
-  - id: '4299'
+  - id: K4299
     name: Ciemny Atelier
     group: IX CONTEMPO 1
+    color_family: brazowy
     structure: SU
     multi_structures: null
     tags: []
@@ -2245,9 +2362,10 @@ decors:
     edge:
       code: K-4299-SU
       supplier: Schilsner
-  - id: '5501'
+  - id: K5501
     name: Dąb Sławonia
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2262,9 +2380,10 @@ decors:
     edge:
       code: K-5501-SN
       supplier: Schilsner
-  - id: '5527'
+  - id: K5527
     name: Stone Oak
     group: IX CONTEMPO 1
+    color_family: beton
     structure: SN
     multi_structures: null
     tags:
@@ -2282,6 +2401,7 @@ decors:
   - id: K021
     name: Blackwood Jęczmienny
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2299,6 +2419,7 @@ decors:
   - id: K022
     name: Blackwood Satynowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2316,6 +2437,7 @@ decors:
   - id: K083
     name: Jasny Artwood
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2333,6 +2455,7 @@ decors:
   - id: K084
     name: Ciemny Artwood
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2350,6 +2473,7 @@ decors:
   - id: K085
     name: Orzech Rockford Jasny
     group: IX CONTEMPO 1
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -2368,6 +2492,7 @@ decors:
   - id: K086
     name: Orzech Rockford Naturalny
     group: IX CONTEMPO 1
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -2385,6 +2510,7 @@ decors:
   - id: K087
     name: Orzech Rockford Ciemny
     group: IX CONTEMPO 1
+    color_family: orzech
     structure: PW
     multi_structures: null
     tags:
@@ -2403,6 +2529,7 @@ decors:
   - id: K105
     name: Dąb Surowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2420,6 +2547,7 @@ decors:
   - id: K107
     name: Dąb Elegance
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2437,6 +2565,7 @@ decors:
   - id: K354
     name: Dąb Grange Kolonialny
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2454,6 +2583,7 @@ decors:
   - id: K355
     name: Dąb Grange Platynowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2471,6 +2601,7 @@ decors:
   - id: K356
     name: Dąb Grange Piaskowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2489,6 +2620,7 @@ decors:
   - id: K357
     name: Dąb Castello Szary
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2508,6 +2640,7 @@ decors:
   - id: K358
     name: Dąb Castello Miodowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2527,6 +2660,7 @@ decors:
   - id: K359
     name: Dąb Castello Koniakowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2546,6 +2680,7 @@ decors:
   - id: K360
     name: Dąb Harbor Vintage
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2565,6 +2700,7 @@ decors:
   - id: K361
     name: Dąb Harbor Złoty
     group: IX CONTEMPO 1
+    color_family: dab
     structure: PW
     multi_structures: null
     tags:
@@ -2584,6 +2720,7 @@ decors:
   - id: K524
     name: Jesion Surfside
     group: IX CONTEMPO 1
+    color_family: jesion
     structure: SN
     multi_structures: null
     tags:
@@ -2602,6 +2739,7 @@ decors:
   - id: K525
     name: Jesion Surfside Jasny
     group: IX CONTEMPO 1
+    color_family: jesion
     structure: SN
     multi_structures: null
     tags:
@@ -2620,6 +2758,7 @@ decors:
   - id: K526
     name: Jesion Surfside Stalowy
     group: IX CONTEMPO 1
+    color_family: jesion
     structure: SN
     multi_structures: null
     tags:
@@ -2638,6 +2777,7 @@ decors:
   - id: K535
     name: Dąb Barokowy Złoty
     group: IX CONTEMPO 1
+    color_family: dab
     structure: RW
     multi_structures: null
     tags:
@@ -2658,6 +2798,7 @@ decors:
   - id: K536
     name: Dąb Barokowy Bursztynowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: RW
     multi_structures: null
     tags:
@@ -2677,6 +2818,7 @@ decors:
   - id: K537
     name: Dąb Barokowy Ristretto
     group: IX CONTEMPO 1
+    color_family: dab
     structure: RW
     multi_structures: null
     tags:
@@ -2696,6 +2838,7 @@ decors:
   - id: K541
     name: Juta Jasna
     group: IX CONTEMPO 1
+    color_family: bezowy
     structure: PN
     multi_structures: null
     tags: []
@@ -2712,6 +2855,7 @@ decors:
   - id: K542
     name: Juta Ciemna
     group: IX CONTEMPO 1
+    color_family: brazowy
     structure: PN
     multi_structures: null
     tags: []
@@ -2728,6 +2872,7 @@ decors:
   - id: K543
     name: Dąb Barbera Piaskowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: SN
     multi_structures: null
     tags:
@@ -2747,6 +2892,7 @@ decors:
   - id: K544
     name: Dąb Silverjack Orzechowy
     group: IX CONTEMPO 1
+    color_family: dab
     structure: RW
     multi_structures: null
     tags:
@@ -2766,6 +2912,7 @@ decors:
   - id: K545
     name: Dąb Silverjack Postarzany
     group: IX CONTEMPO 1
+    color_family: dab
     structure: RW
     multi_structures: null
     tags:
@@ -2784,6 +2931,7 @@ decors:
   - id: K546
     name: Orzech Franklin Karmelowy
     group: IX CONTEMPO 1
+    color_family: orzech
     structure: RW
     multi_structures: null
     tags:
@@ -2802,6 +2950,7 @@ decors:
   - id: K547
     name: Orzech Franklin Tobacco
     group: IX CONTEMPO 1
+    color_family: orzech
     structure: RW
     multi_structures: null
     tags:
@@ -2820,6 +2969,7 @@ decors:
   - id: K548
     name: Jesion Kala Dymiony
     group: IX CONTEMPO 1
+    color_family: jesion
     structure: RW
     multi_structures: null
     tags:
@@ -2838,6 +2988,7 @@ decors:
   - id: K349
     name: Beton Jasny
     group: X CONTEMPO 2
+    color_family: beton
     structure: RT
     multi_structures: null
     tags:
@@ -2855,6 +3006,7 @@ decors:
   - id: K350
     name: Beton
     group: X CONTEMPO 2
+    color_family: beton
     structure: RT
     multi_structures: null
     tags:
@@ -2872,6 +3024,7 @@ decors:
   - id: K351
     name: Beton Rdzawy
     group: X CONTEMPO 2
+    color_family: beton
     structure: RT
     multi_structures: null
     tags:
@@ -2889,6 +3042,7 @@ decors:
   - id: K352
     name: Beton Ciemny
     group: X CONTEMPO 2
+    color_family: beton
     structure: RT
     multi_structures: null
     tags:
@@ -2906,6 +3060,7 @@ decors:
   - id: K353
     name: Beton Czarny
     group: X CONTEMPO 2
+    color_family: beton
     structure: RT
     multi_structures: null
     tags:
@@ -2924,6 +3079,7 @@ decors:
   - id: K538
     name: Łupek Arosa Jasny
     group: X CONTEMPO 2
+    color_family: szary
     structure: PN
     multi_structures: null
     tags:
@@ -2941,6 +3097,7 @@ decors:
   - id: K539
     name: Łupek Arosa Ciemny
     group: X CONTEMPO 2
+    color_family: szary
     structure: PN
     multi_structures: null
     tags:
@@ -2958,6 +3115,7 @@ decors:
   - id: K540
     name: Albus Szary
     group: X CONTEMPO 2
+    color_family: szary
     structure: PN
     multi_structures: null
     tags:
@@ -2975,6 +3133,7 @@ decors:
   - id: K691
     name: Granada Migdałowa
     group: X CONTEMPO 2
+    color_family: bezowy
     structure: PN
     multi_structures: null
     tags:
@@ -2992,6 +3151,7 @@ decors:
   - id: K692
     name: Granada Niebiańska
     group: X CONTEMPO 2
+    color_family: niebieski
     structure: PN
     multi_structures: null
     tags:
@@ -3009,6 +3169,7 @@ decors:
   - id: K693
     name: Granada Brązowa
     group: X CONTEMPO 2
+    color_family: brazowy
     structure: PN
     multi_structures: null
     tags:
@@ -3027,6 +3188,7 @@ decors:
   - id: K527
     name: Dąb Hudson Biszkoptowy
     group: XII HARMONY
+    color_family: dab
     structure: HU
     multi_structures: null
     tags:
@@ -3044,6 +3206,7 @@ decors:
   - id: K528
     name: Dąb Hudson Kaszmirowy
     group: XII HARMONY
+    color_family: dab
     structure: HU
     multi_structures: null
     tags:
@@ -3061,6 +3224,7 @@ decors:
   - id: K529
     name: Dąb Hudson Złoty
     group: XII HARMONY
+    color_family: dab
     structure: HU
     multi_structures: null
     tags:
@@ -3079,6 +3243,7 @@ decors:
   - id: K530
     name: Dąb Hudson Amaretto
     group: XII HARMONY
+    color_family: dab
     structure: HU
     multi_structures: null
     tags:
@@ -3096,6 +3261,7 @@ decors:
   - id: K531
     name: Kasztan Arvadonna Kamienny
     group: XII HARMONY
+    color_family: brazowy
     structure: AD
     multi_structures: null
     tags:
@@ -3113,6 +3279,7 @@ decors:
   - id: K532
     name: Kasztan Arvadonna
     group: XII HARMONY
+    color_family: brazowy
     structure: AD
     multi_structures: null
     tags: []
@@ -3129,6 +3296,7 @@ decors:
   - id: K533
     name: Kasztan Arvadonna Mink
     group: XII HARMONY
+    color_family: brazowy
     structure: AD
     multi_structures: null
     tags: []
@@ -3145,6 +3313,7 @@ decors:
   - id: K534
     name: Kasztan Arvadonna Ciemny
     group: XII HARMONY
+    color_family: brazowy
     structure: AD
     multi_structures: null
     tags: []
@@ -3161,6 +3330,7 @@ decors:
   - id: K554
     name: Dąb Hudson Czekoladowy
     group: XII HARMONY
+    color_family: dab
     structure: HU
     multi_structures: null
     tags:
@@ -3178,6 +3348,7 @@ decors:
   - id: K694
     name: Dąb Primavera Jedwabny
     group: XII HARMONY
+    color_family: dab
     structure: PV
     multi_structures: null
     tags:
@@ -3195,6 +3366,7 @@ decors:
   - id: K695
     name: Dąb Primavera Słomkowy
     group: XII HARMONY
+    color_family: dab
     structure: PV
     multi_structures: null
     tags:
@@ -3212,6 +3384,7 @@ decors:
   - id: K696
     name: Dąb Primavera Umbra
     group: XII HARMONY
+    color_family: dab
     structure: PV
     multi_structures: null
     tags:
@@ -3229,6 +3402,7 @@ decors:
   - id: K697
     name: Dąb Primavera Kakaowy
     group: XII HARMONY
+    color_family: dab
     structure: PV
     multi_structures: null
     tags:

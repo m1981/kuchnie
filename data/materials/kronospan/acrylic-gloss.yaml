@@ -6,10 +6,11 @@ collection: acrylic_gloss
 
 decors:
 
-  - id: "8685"
+  - id: "K8685"
     name: "Biel Alpejska"
     group: "XXI Color Basic"
     structure: AG
+    color_family: bialy
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided
@@ -22,10 +23,11 @@ decors:
       finish: HG
       material: ABS
 
-  - id: "0112"
+  - id: "K0112"
     name: "Jasny Szary"
     group: "XXIII Color Special"
     structure: AG
+    color_family: szary
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided
@@ -38,10 +40,11 @@ decors:
       finish: HG
       material: ABS
 
-  - id: "0164"
+  - id: "K0164"
     name: "Antracyt"
     group: "XXIII Color Special"
     structure: AG
+    color_family: czarny
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided
@@ -54,10 +57,11 @@ decors:
       finish: HG
       material: ABS
 
-  - id: "0190"
+  - id: "K0190"
     name: "Czarny"
     group: "XXIII Color Special"
     structure: AG
+    color_family: czarny
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided
@@ -70,15 +74,16 @@ decors:
       finish: HG
       material: ABS
 
-  - id: "0514"
+  - id: "K0514"
     name: "Kość Słoniowa"
     group: "XXIII Color Special"
     structure: AG
+    color_family: bezowy
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided
     konfekcja: true
-    global_decor_id: "0514"
+    global_decor_id: K0514
     img: "K0514.jpg"
     edge:
       code: "K-0514-UM/AG"
@@ -87,10 +92,11 @@ decors:
       material: ABS
     notes: "Inne obrzeże niż pozostałe (UM zamiast HG)"
 
-  - id: "7045"
+  - id: "K7045"
     name: "Szampański"
     group: "XXIII Color Special"
     structure: AG
+    color_family: bezowy
     thickness_mm: 18.3
     format: [2800, 1300]
     sidedness: one_sided

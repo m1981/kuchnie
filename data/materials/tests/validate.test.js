@@ -126,6 +126,10 @@ describe('Reference Data Comparison (acrylic-gloss.md)', () => {
             it('format is [2800, 1300]', () => {
                 assert.deepEqual(decor.format, ref.expected_format);
             });
+
+            it(`color_family matches: "${expected.color_family}"`, () => {
+                assert.equal(decor.color_family, expected.color_family);
+            });
         });
     });
 });
@@ -201,5 +205,152 @@ describe('Uniqueness Checks', () => {
         const codes = content.decors.map((d) => d.edge.code);
         const uniqueCodes = [...new Set(codes)];
         assert.equal(codes.length, uniqueCodes.length, `Duplicate edge codes found`);
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 5: Identity Model — K-prefix convention
+// All Kronospan decor IDs must start with 'K' prefix
+// to ensure global uniqueness across collections.
+// ════════════════════════════════════════════════════════
+
+describe('Identity Model — K-prefix convention', () => {
+    it('all global-collection IDs start with K', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
+        content.decors.forEach((decor) => {
+            assert.ok(
+                decor.id.startsWith('K'),
+                `Global Collection decor id="${decor.id}" does not start with K. All Kronospan IDs must use K-prefix.`
+            );
+        });
+    });
+
+    it('all acrylic-gloss IDs start with K', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
+        content.decors.forEach((decor) => {
+            assert.ok(
+                decor.id.startsWith('K'),
+                `Acrylic Gloss decor id="${decor.id}" does not start with K. All Kronospan IDs must use K-prefix.`
+            );
+        });
+    });
+
+    it('all global_decor_id values start with K', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
+        content.decors.forEach((decor) => {
+            if (decor.global_decor_id) {
+                assert.ok(
+                    decor.global_decor_id.startsWith('K'),
+                    `Decor ${decor.id}: global_decor_id="${decor.global_decor_id}" does not start with K.`
+                );
+            }
+        });
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 6: Cross-collection uniqueness
+// No two decors across different collection files may
+// share the same ID UNLESS they are the same decor in
+// a different material (linked via global_decor_id).
+// This allows K8685 to exist in both Global Collection
+// (chipboard) and Acrylic Gloss (MDF) as variants.
+// ════════════════════════════════════════════════════════
+
+describe('Cross-collection Uniqueness', () => {
+    it('no accidental duplicate IDs across collections', () => {
+        const global_ = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
+        const acrylic = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
+
+        const globalIds = new Set(global_.decors.map((d) => d.id));
+        const acrylicIds = acrylic.decors.map((d) => d.id);
+
+        // IDs that appear in both collections
+        const overlapping = acrylicIds.filter((id) => globalIds.has(id));
+
+        // Each overlap must be linked via global_decor_id
+        overlapping.forEach((id) => {
+            const acrylicDecor = acrylic.decors.find((d) => d.id === id);
+            assert.ok(
+                acrylicDecor.global_decor_id,
+                `Decor ${id} exists in both global-collection and acrylic-gloss but has no global_decor_id link.`
+            );
+            assert.equal(
+                acrylicDecor.global_decor_id,
+                id,
+                `Decor ${id}: global_decor_id should equal its own id (same decor, different material).`
+            );
+        });
+
+        // IDs in acrylic-gloss that are NOT in global-collection must not collide
+        const uniqueToAcrylic = acrylicIds.filter((id) => !globalIds.has(id));
+        const uniqueSet = new Set(uniqueToAcrylic);
+        assert.equal(
+            uniqueToAcrylic.length,
+            uniqueSet.size,
+            `Duplicate IDs in acrylic-gloss (not in global): ${uniqueToAcrylic.filter((id, i) => uniqueToAcrylic.indexOf(id) !== i).join(', ')}`
+        );
+    });
+});
+
+// ════════════════════════════════════════════════════════
+// TEST 7: Cross-reference integrity
+// global_decor_id must resolve to an existing decor
+// in global-collection.yaml.
+// ════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════
+// TEST 8: Color Family
+// Every decor must have a color_family assigned.
+// This enables cross-vendor color matching.
+// ════════════════════════════════════════════════════════
+
+describe('Color Family', () => {
+    it('all global-collection decors have color_family', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
+        const { COLOR_FAMILIES } = require('../shared/schema');
+        content.decors.forEach((decor) => {
+            assert.ok(
+                decor.color_family,
+                `Decor ${decor.id} (${decor.name}): missing color_family`
+            );
+            assert.ok(
+                COLOR_FAMILIES.includes(decor.color_family),
+                `Decor ${decor.id}: invalid color_family "${decor.color_family}". Valid: ${COLOR_FAMILIES.join(', ')}`
+            );
+        });
+    });
+
+    it('all acrylic-gloss decors have color_family', () => {
+        const content = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
+        const { COLOR_FAMILIES } = require('../shared/schema');
+        content.decors.forEach((decor) => {
+            assert.ok(
+                decor.color_family,
+                `Decor ${decor.id} (${decor.name}): missing color_family`
+            );
+            assert.ok(
+                COLOR_FAMILIES.includes(decor.color_family),
+                `Decor ${decor.id}: invalid color_family "${decor.color_family}". Valid: ${COLOR_FAMILIES.join(', ')}`
+            );
+        });
+    });
+});
+
+describe('Cross-reference Integrity', () => {
+    it('all global_decor_id values resolve to existing global-collection decors', () => {
+        const global_ = loadYaml(path.join(KRONOSPAN_DIR, 'global-collection.yaml'));
+        const acrylic = loadYaml(path.join(KRONOSPAN_DIR, 'acrylic-gloss.yaml'));
+
+        const globalIdSet = new Set(global_.decors.map((d) => d.id));
+
+        acrylic.decors.forEach((decor) => {
+            if (decor.global_decor_id) {
+                assert.ok(
+                    globalIdSet.has(decor.global_decor_id),
+                    `Decor ${decor.id}: global_decor_id="${decor.global_decor_id}" does not exist in global-collection.yaml`
+                );
+            }
+        });
     });
 });

@@ -85,9 +85,9 @@ Frontend catalog/index.html     ← czyta JSON, wyświetla
 ## Kluczowe decyzje (które mogą nie być oczywiste)
 
 ### 1. Konwencja nazewnictwa obrazów
-- Dekory: `{ID}.jpg` gdzie ID = dokładnie to co w YAML (np. `K8685.jpg`, `K096.jpg`, `0514.jpg`)
+- Dekory: `{ID}.jpg` gdzie ID = dokładnie to co w YAML, zawsze z prefixem K (np. `K8685.jpg`, `K0190.jpg`, `K0514.jpg`)
 - Struktury: `{CODE}.jpg` gdzie CODE = kod struktury (np. `SM.jpg`, `PE.jpg`, `AG.jpg`)
-- **WAŻNE**: ID `K110` ≠ `0110`. To mogą być różne dekory. `0522` (Beżowy) i `K522` (Aluminium Flash) to DWA ROŻNE dekory. NIE mapować, nie dodawać prefixów.
+- **WAŻNE**: Wszystkie ID w Kronospan mają prefix K. `K0514` to jedyny poprawny ID dla dekoru 0514. Nie istnieje `0514` bez prefixu.
 
 ### 2. Jeden dekor = wiele struktur
 Dekor K8685 (Biel Alpejska) ma struktury `SM/BS/PD`. W YAML zapisane jako:
@@ -116,7 +116,9 @@ Każdy dekor ma `edge.code` (np. `K-8685-SM/BS/PD`). Format: `K-{ID}-{STRUCTURE}
 ## Co działa
 
 - [x] YAML → JSON build (180 dekorów)
-- [x] Walidacja Zod (55 testów)
+- [x] Walidacja Zod (68 testów)
+- [x] Wszystkie ID z prefixem K (konwencja globalna)
+- [x] color_family na każdym dekorze (23 kategorie)
 - [x] Frontend: karta dekoru ze zdjęciem
 - [x] Frontend: filtry (producent, powierzchnia, struktura, tagi, szukaj)
 - [x] Frontend: szczegóły dekoru (parametry, obrzeże, NCS/RAL, blat, HDF)
@@ -139,11 +141,12 @@ Każdy dekor ma `edge.code` (np. `K-8685-SM/BS/PD`). Format: `K-{ID}-{STRUCTURE}
 
 ## Znane problemy / edge cases
 
-1. **Tagi mogą być puste** — niektóre dekory nie mają żadnych tagów (np. Aluminium Flash K522)
-2. **Nazwy plików img są case-sensitive** — `K096.jpg` ≠ `k096.jpg`
-3. **PDF nie jest czytelny jako tekst** — `02-struktury.pdf` to obraz, nie text. Nie da się go sparsować automatycznie.
-4. **Struktury w concepts.yaml mają mapowanie per producent** — `smooth_matt` → Kronospan [SM, BS, SU], Swiss Krono [VL, SM], Egger [ST9, ST15]. Ten sam kod SM u Kronospana i Swiss Krono to INNE struktury.
-5. **Global Collection nie ma `thickness_mm`** — bo to chipboard zawsze 12/16/18mm (info w collections.yaml), nie w każdym dekorze.
+1. **Dekory K8685, K0514, K7045 występują w dwóch kolekcjach** — Global Collection (chipboard) i Acrylic Gloss (MDF). To ten sam dekor w róznych materiałach. Testy walidują powiązanie przez `global_decor_id`.
+2. **Tagi mogą być puste** — niektóre dekory nie mają żadnych tagów (np. Aluminium Flash K522)
+3. **Nazwy plików img są case-sensitive** — `K096.jpg` ≠ `k096.jpg`
+4. **PDF nie jest czytelny jako tekst** — `02-struktury.pdf` to obraz, nie text. Nie da się go sparsować automatycznie.
+5. **Struktury w concepts.yaml mają mapowanie per producent** — `smooth_matt` → Kronospan [SM, BS, SU], Swiss Krono [VL, SM], Egger [ST9, ST15]. Ten sam kod SM u Kronospana i Swiss Krono to INNE struktury.
+6. **Global Collection nie ma `thickness_mm`** — bo to chipboard zawsze 12/16/18mm (info w collections.yaml), nie w każdym dekorze.
 
 ---
 
