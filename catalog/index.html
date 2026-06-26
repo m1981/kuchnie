@@ -367,7 +367,7 @@
             <div class="name" x-text="decor.name"></div>
             <div class="code" x-text="decor.id"></div>
             <div class="structure-info">
-              <span x-text="decor._structureName"></span>
+              <span x-text="decor._allStructures"></span>
               <span class="struct-type" x-text="decor.structure"></span>
             </div>
             <div class="tags" x-show="decor.tags && decor.tags.length">
@@ -405,7 +405,16 @@
               <span x-show="selected.group"> · <span x-text="selected.group"></span></span>
             </div>
             <div class="structure-desc" x-show="selected._structureDesc">
-              <strong x-text="selected.structure"></strong> — <span x-text="selected._structureDesc"></span>
+              <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px">
+                <img :src="'/kronospan/struktury/' + selected.structure + '.jpg'" :alt="selected.structure" style="width:80px; height:80px; border-radius:6px; object-fit:cover" onerror="this.style.display='none'" />
+                <div>
+                  <strong x-text="selected._allStructures"></strong>
+                  <div style="font-size:12px; color:var(--muted); margin-top:2px" x-text="selected._structureDesc"></div>
+                  <div x-show="selected._multiStructures" style="font-size:11px; color:var(--accent); margin-top:4px">
+                    Dostepne tez w strukturach: <span x-text="selected._multiStructures"></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -686,6 +695,8 @@
                   _structureName: structInfo.name || decor.structure,
                   _structureDesc: structInfo.description || '',
                   _surfaceTypeShort: surfaceType ? this.surfaceTypeLabel(surfaceType).split(' ')[0] : '',
+                  _multiStructures: decor.multi_structures || '',
+                  _allStructures: decor.multi_structures ? `${decor.structure}, ${decor.multi_structures}` : decor.structure,
                 });
               }
             }
