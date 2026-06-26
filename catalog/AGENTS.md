@@ -38,6 +38,50 @@ catalog/
 
 ---
 
+## Źródło prawdy (co jest kanoniczne względem czego)
+
+```
+PDF katalog producenta          ← ULTIMATE SOURCE (nieedytowalny, zewnętrzny)
+  │
+  ▼  ręcznie, jednorazowo
+MD w docs/materials-boards/     ← dokumentacja pomocnicza (nie dla aplikacji)
+  │
+  ▼  skrypt konwersji lub ręcznie
+YAML w data/materials/          ← KANONICZNE ŹRÓDŁO DLA APLIKACJI
+  │
+  ▼  build.js
+JSON w data/dist/               ← generowane, nigdy nie edytować
+  │
+  ▼  fetch()
+Frontend catalog/index.html     ← czyta JSON, wyświetla
+```
+
+### Per typ danych:
+
+| Co | Ultimate source | Kanoniczne źródło | Co jest generowane |
+|---|---|---|---|
+| Dekory (nazwy, kody, grupy) | PDF katalogu | YAML | catalog.json |
+| Struktury (definicje, opisy) | PDF katalogu | `collections.yaml` | catalog.json |
+| Tagi / typy powierzchni | — (nasza konwencja) | `shared/concepts.yaml` | catalog.json |
+| Zdjęcia dekorów | PDF / strona producenta | `catalog/public/*/img/` | — |
+| Zdjęcia struktur | PDF 02-struktury.pdf | `catalog/public/*/struktury/` | — |
+| Obrzeża (kody) | PDF katalogu | YAML | catalog.json |
+| Cross-collection refs | PDF (kolumna „dopasowanie") | YAML | catalog.json |
+| Substitutions (zamienniki) | Wiedza własna | `substitutions.yaml` (jeszcze nie istnieje) | catalog.json |
+| Ceny | Hurtownia / telefon | YAML (jeszcze nie ma pól) | catalog.json |
+| Walidacja (reguły) | — (nasz kod) | `shared/schema.js` | — |
+
+### Reguły:
+
+1. **Nigdy nie edytuj plików generowanych** (`data/dist/*.json`, `catalog/public/catalog.json`)
+2. **Zawsze edytuj YAML** a potem `make build`
+3. **YAML jest kanoniczny** wobec JSON
+4. **PDF jest kanoniczny** wobec YAML (gdy YAML różni się od PDF → popraw YAML)
+5. **MD jest dokumentacją** — pomocniczy, nie źródło danych dla aplikacji
+6. **Zdjęcia są kanoniczne** same w sobie — nie generowane, nie edytowane
+
+---
+
 ## Kluczowe decyzje (które mogą nie być oczywiste)
 
 ### 1. Konwencja nazewnictwa obrazów
@@ -86,7 +130,7 @@ Każdy dekor ma `edge.code` (np. `K-8685-SM/BS/PD`). Format: `K-{ID}-{STRUCTURE}
 - [ ] Konfigurator (Front → Korpus → Blat → Ścianka → BOM) — cały widok 3
 - [ ] Zdjęcia dekorów Global Collection (tylko 55 z 174 ma pliki img)
 - [ ] Swiss Krono i Egger (puste, czekają na dane)
-- [ ] Substititions.yaml (zamienniki między producentami)
+- [ ] Substitutions.yaml (zamienniki między producentami)
 - [ ] Eksport do CSV / druk
 - [ ] Podobne dekory (rekomendacje)
 - [ ] Ceny materiałów (pole `price_m2` nie istnieje jeszcze)
