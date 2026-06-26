@@ -32,7 +32,7 @@ const GlobalDecorSchema = z.object({
     cross_collections: z.array(z.string()).optional(),
     edge: EdgeSchema,
     notes: z.string().optional(),
-    img: z.string().optional()
+    img: z.string().nullable().optional()
 });
 
 // ── Dekor w kolekcji specjalistycznej (MDF, Compact) ──
@@ -48,7 +48,7 @@ const SpecializedDecorSchema = z.object({
     global_decor_id: z.string().nullable(),
     edge: EdgeSchema,
     notes: z.string().optional(),
-    img: z.string().optional()
+    img: z.string().nullable().optional()
 });
 
 // ── Plik kolekcji (dowolny typ dekoru) ──
