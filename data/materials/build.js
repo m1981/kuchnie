@@ -101,9 +101,10 @@ function validateProducer(producer) {
 
             // Img check (optional warning)
             if (decor.img) {
-                const imgPath = path.join(dir, 'img', decor.img);
-                if (!fs.existsSync(imgPath)) {
-                    warn(`Decor ${decor.id}: missing img file "${decor.img}"`);
+                const imgInMaterials = path.join(dir, 'img', decor.img);
+                const imgInPublic = path.join(CATALOG_PUBLIC, producer, 'img', decor.img);
+                if (!fs.existsSync(imgInMaterials) && !fs.existsSync(imgInPublic)) {
+                    warn(`Decor ${decor.id}: missing img file "${decor.img}" (checked ${dir}/img/ and ${CATALOG_PUBLIC}/${producer}/img/)`);
                 }
             }
 
