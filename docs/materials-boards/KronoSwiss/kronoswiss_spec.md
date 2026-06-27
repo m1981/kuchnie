@@ -27,9 +27,225 @@
 
 ---
 
-## 2. Struktury powierzchni płyt laminowanych (str. 58–59)
+## 2. Budowa płyt — perspektywa technologa
 
-### Tabela struktur płyt laminowanych
+### 2.1. Płyty laminowane na bazie płyty wiórowej (str. 14–15)
+
+Płyty laminowane Swiss Krono to **płyty wiórowe pokryte filmem melaminowym** z obu stron. Film melaminowy jest nakładany pod ciśnieniem i temperaturą, tworząc trwałą, odporną powierzchnię.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Film melaminowy (decor paper + impregnacja)         │  ← powierzchnia dekoracyjna
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│           Płyta wiórowa (rdzeń nośny)               │  ← warstwa nośna
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  Film melaminowy (decor paper + impregnacja)         │  ← spód (równoważący)
+└─────────────────────────────────────────────────────┘
+```
+
+**Kluczowe cechy konstrukcji:**
+- **Dwustronne laminowanie**: obie strony pokryte filmem melaminowym
+- **Film dekoracyjny**: papier dekoracyjny impregnowany żywicą melaminową
+- **Właściwości antybakteryjne**: bakterie nie namnażają się na powierzchni
+- **Norma**: EN 14322
+
+#### Parametry techniczne płyt laminowanych (str. 15)
+
+| Parametr | J.m. | Wymaganie (gr. ≤ 20mm) | Wymaganie (gr. > 20mm) | Metoda badania |
+|----------|------|-------------------------|-------------------------|----------------|
+| Odporność na zarysowanie | N | ≥ 1,5 | ≥ 1,5 | EN 14323 |
+| Odporność na ścieranie | obroty | Klasa 1* (IP≥50, IP+FP/2≥150) | Klasa 1* | EN 14323 |
+| Odporność na zaplamienie | skala | ≥ 3 | ≥ 3 | EN 14323 |
+| Odporność na pękanie | skala | ≥ 3 | ≥ 3 | EN 14323 |
+| Dopasowanie koloru | skala | R4 | R4 | EN 14323 |
+| Emisja formaldehydu | - | Klasa E1 / ED2020 | Klasa E1 / ED2020 | EN 717-1 |
+| Reakcja na ogień | klasa | D-s2,d0 (łatwo zapalna) | D-s2,d0 | EN 13501 |
+| Tolerancja grubości | mm | ±0,3 | ±0,5 | EN 14323 |
+| Tolerancja długości i szerokości | mm | ±5 | ±5 | EN 14323 |
+| Płaskość | mm/m | ≤ 2 | ≤ 2 | EN 14323 |
+| Wady powierzchni (punktowe) | mm²/m² | ≤ 2 | ≤ 2 | EN 14323 |
+| Wady powierzchni (na długości) | mm/m² | ≤ 20 | ≤ 20 | EN 14323 |
+
+*IP = wzrost grubości, FP = wzrost grubości po ekspozycji na wilgoć
+
+#### Formaty i grubości płyt laminowanych (str. 15)
+
+**Płyty wiórowe laminowane:**
+
+| Format (mm) | Grubości dostępne (mm) |
+|-------------|------------------------|
+| 2800 × 2070 | (10)*, (12)*, (15)*, (16)*, **18**, (19)*, (22)*, (25)*, (28)*, (38)* |
+
+**Płyty MDF laminowane:**
+
+| Format (mm) | Grubości dostępne (mm) |
+|-------------|------------------------|
+| 2800 × 2070 | (10)*, (12)*, (16)*, (18)*, (19)*, (22)*, (25)*, (28)*, (30**)* |
+
+- (...) * — na zamówienie / on request
+- ** ** — możliwość laminowania tylko jednostronnie / can be laminated only on one side
+
+**UWAGA!** Oferta standardowa płyt MDF laminowanych:
+- K110 SM jednostronnie laminowana w gr. 16 i 19 mm
+- U511 SM i K110 SM dwustronnie laminowane w gr. 18 i 19 mm
+
+**DO WSZYSTKICH DEKORÓW PŁYT LAMINOWANYCH DOSTĘPNE SĄ LAMINATY HPL.**
+
+---
+
+### 2.2. Ultracienkie Blaty BLACK WOOD (str. 60–61)
+
+Ultracienkie Blaty BLACK WOOD to **płyta BLACK WOOD z naklejonym jednostronnie laminatem HPL**. Ciemna, ultracienka krawędź płyty BLACK WOOD nadaje blatom nietuzinkowy, oryginalny wygląd.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Folia ochronna (do usunięcia po montażu)           │  ← tymczasowa
+├─────────────────────────────────────────────────────┤
+│  Laminat HPL                                        │  ← powierzchnia robocza
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│           Płyta bazowa BLACK WOOD (12 mm)           │  ← rdzeń nośny (czarny)
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  Papier przeciwprężny                               │  ← ochrona spodu
+├─────────────────────────────────────────────────────┤
+│  Lakier UV                                          │  ← dodatkowa ochrona wilgoci
+└─────────────────────────────────────────────────────┘
+```
+
+**Kluczowe cechy konstrukcji:**
+- **Ultracienka krawędź**: 12 mm — charakterystyczny, nowoczesny wygląd
+- **Ciemna płyta bazowa**: BLACK WOOD ma ciemny rdzeń (czarny/dark)
+- **Jednostronny laminat HPL**: wyższa klasa odporności niż melamina
+- **Właściwości antybakteryjne**: wszystkie Blaty BLACK WOOD
+- **Trudnozapalność**: D-s1,d0 (vs D-s2,d0 dla płyt laminowanych)
+
+#### Parametry techniczne blatów BLACK WOOD (str. 61)
+
+| Parametr | J.m. | Wymaganie | Metoda badania |
+|----------|------|-----------|----------------|
+| Odporność na zarysowanie | N | ≥ 3 | EN 438-2 |
+| Odporność na ścieranie | obroty | Klasa 3A (IP≥150, IP+FP/2≥350) | EN 438-2 |
+| Odporność na uderzenie | N | ≥ 20 | EN 438-2 |
+| Odporność na gorące dno naczynia (160°C) | stopień | SQ: 3, pozostałe: 4 | EN 438-2 |
+| Odporność na zaplamienie | stopień | grupa 1 i 2: 5, grupa 3: 4 | EN 438-2 |
+| Klasyfikacja ogniowa | - | D-s1,d0 (trudno zapalny) | EN 13501-1 |
+| Spęcznienie krawędziowe po 24h* | % | ≤ 8 | EN 317 |
+| Emisja formaldehydu | - | Klasa E1 / ED2020 | EN 717-1 |
+| Gęstość płyty bazowej** | kg/m³ | 900 | EN 323 |
+| Waga 1 szt.** | kg | 60,00 | - |
+
+* krawędź niezabezpieczona - tolerancja ±10% (po zabezpieczeniu np. woskiem twardym spęcznienie wynosi ok. 1,5%)
+** tolerancja: ±5%
+
+**Format i pakowanie:**
+
+| Format (mm) | Grubość (mm) | Sztuk/paleta | Waga palety (kg) |
+|-------------|--------------|--------------|-------------------|
+| 4100 × 1315 | 12 | 20 | ~1200 |
+
+#### Zalety blatów BLACK WOOD
+
+- **Wilgocioodporność** (niskie pęcznienie) — możliwość zastosowania w pomieszczeniach o podwyższonej wilgotności
+- **Trudnozapalność** (D-s1,d0) — do wyposażenia wnętrz również użyteczności publicznej
+- **Odporność na podwyższoną temperaturę** — naczynie z wrzątkiem bezpośrednio na blacie (z wyłączeniem czajników i garnków metalowych)
+- **Odporność na ścieranie, zarysowanie i uderzenia** — do cięcia zalecamy deskę do krojenia
+- **Odporność na działanie światła** — nie ulega odbarwieniu
+- **Bezpieczne dla zdrowia** (klasa higieny E1/ED2020)
+- **Brak konieczności oklejania krawędzi** — krawędź nie pęcznieje, nie brudzi się i nie ściera
+- **Możliwość uzyskiwania dowolnych kształtów**
+- **Dowolny profil krawędzi**
+
+**UWAGA**: Można montować wyłącznie **zlewy nablatowe** (NIE podwieszane)!
+
+---
+
+### 2.3. Blaty kuchenne postformed (str. 62–65)
+
+Blaty kuchenne Swiss Krono wykonywane są na bazie **płyty wiórowej** z zastosowaniem technologii **postformingu** — formowania laminatu HPL na gorąco na krawędzi blatu.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Laminat HPL (+ folia ochronna)                     │  ← powierzchnia robocza
+├─────────┬───────────────────────────────────────────┤
+│         │                                           │
+│         │         Płyta wiórowa (38 mm)            │  ← rdzeń nośny
+│         │                                           │
+├─────────┴───────────────────────────────────────────┤
+│  Papier przeciwprężny                               │  ← spód (równoważący)
+└─────────────────────────────────────────────────────┘
+
+Profil R3 (przekrój boczny):
+         R=3mm
+    ┌────╮
+    │    │  ← laminat HPL zaoblony na krawędzi
+    │    │
+    │    │  ← płyta wiórowa
+    │    │
+    │    ╰────┐
+    │         │  ← doklejka HDF 3mm
+    └─────────┘
+         R=3mm
+```
+
+**Kluczowe cechy konstrukcji:**
+- **Profil R3**: zaokrąglenie R=3mm na górnej i dolnej krawędzi
+- **Doklejka HDF 3mm**: wzmacnia i zabezpiecza zaokrągloną krawędź
+- **Laminat HPL**: powierzchnia robocza pokryta laminatem HPL (wysoka odporność)
+- **Papier przeciwprężny**: chroni spód przed odkształcaniem i wilgocią
+- **Lakier UV**: pasek ~10 cm od kleju poliuretanowego — dodatkowa ochrona przed wilgocią
+- **Klej poliuretanowy**: łączy laminat z papierem przeciwprężnym na krawędzi
+- **Obrzeże melaminowe**: zabezpiecza tylny bok przed uszkodzeniami i wilgocią
+- **Właściwości antybakteryjne**: bakterie nie namnażają się na powierzchni
+
+#### Wykończenie blatów (str. 65)
+
+| Element | Opis | Funkcja |
+|---------|------|---------|
+| **Powierzchnia** | Laminat HPL + folia ochronna | Powierzchnia robocza (do usunięcia po montażu) |
+| **Doklejka** | Płyta HDF 3 mm | Wzmacnienie zaokrąglonej krawędzi |
+| **Spód** | Papier przeciwprężny | Zapobieganie odkształceniom, ochrona przed wilgocią |
+| **Lakier UV** | Pasek ~10 cm od kleju | Ochrona przed wilgocią i parą wodną |
+| **Klej** | Poliuretanowy | Uszczelnienie styku laminatu z papierem |
+| **Obrzeże tylne** | Melaminowe | Ochrona tylnego boku |
+
+**WAŻNE UWAGI!**
+- Każda mechaniczna ingerencja (frezowanie, cięcie) wymaga **bezpośredniego zabezpieczenia** otwartych powierzchni przed wilgocią (np. kleje dyspersyjne D3)
+- Do uszczelnienia krawędzi należy zastosować **silikon**
+- W przypadku zabudowy AGD pod blatem — **dodatkowa paroszczelność** spodu
+- Obrzeże tylne (w blatach jednostronnie zaoblonych) **nie zabezpiecza** przed wodą — zalecamy listwy przyblatowe
+
+#### Formaty i pakowanie blatów postformed (str. 64)
+
+| Format (mm) | Grubość (mm) | Wykończenie | Sztuk/paleta | Waga palety (kg) |
+|-------------|--------------|-------------|--------------|-------------------|
+| 4100 × 600 | 38 | Jednostronnie zaokrąglone (U) | 10 | ~620 |
+| 4100 × 1200 | 38 | Dwustronnie zaokrąglone (U-U) | 6 | ~880 |
+
+---
+
+### 2.4. Porównanie odporności produktów
+
+| Cecha | Płyta laminowana | blat BLACK WOOD | blat postformed |
+|-------|------------------|-----------------|-----------------|
+| **Grubość** | 10–38 mm | 12 mm | 38 mm |
+| **Powierzchnia** | Melamina | HPL | HPL |
+| **Odporność na zarysowanie** | ≥ 1,5 N | ≥ 3 N | ≥ 3 N (HPL) |
+| **Odporność na ścieranie** | Klasa 1* | Klasa 3A | Klasa 3A (HPL) |
+| **Odporność na uderzenie** | - | ≥ 20 N | - |
+| **Klasa ogniowa** | D-s2,d0 (łatwo zapalny) | D-s1,d0 (trudno zapalny) | D-s1,d0 (trudno zapalny) |
+| **Spęcznienie krawędziowe** | - | ≤ 8% | - |
+| **Gęstość rdzenia** | 600–700 kg/m³ | 900 kg/m³ | 600–700 kg/m³ |
+| **Zastosowanie** | Fronty, korpusy | Blaty (nowoczesne) | Blaty (klasyczne) |
+| **Krawędź** | Wymaga obrzeża | Nie wymaga | Profil R3 + doklejka HDF |
+
+---
+
+## 3. Struktury powierzchni płyt laminowanych (str. 58–59)
+
+### 3.1. Struktury płyt laminowanych
 
 | Kod | Nazwa PL | Nazwa EN | Typ | Opis |
 |-----|----------|----------|-----|------|
@@ -44,16 +260,14 @@
 | **BS** | Biurowa | Office Surface | Struktura | Powierzchnia biurowa |
 | **TO** | Touch One | Touch One | Struktura | Struktura dotykowa |
 | **OW** | One Wood | One Wood | Struktura | Struktura drewniana |
-| **PE** | Perlista (Skórka Pomarańczy) | Pearl Like (Orange Peel) | Struktura | Efekt perlisty, skórka pomarańczy |
+| **PE** | Perlista (Skórka Pomarańczy) | Pearl Like (Orange Peel) | Struktura | Efekt perlisty |
 
 ### Legenda:
-- ♻ — Struktura synchroniczna (textura synchronizowana z dekorem)
+- ♻ — Struktura synchroniczna (tekstura synchronizowana z dekorem — rowki pokrywają się z usłojeniem)
 
 ---
 
-## 3. Struktury powierzchni blatów kuchennych (str. 94–95)
-
-### Tabela struktur blatów
+## 4. Struktury powierzchni blatów kuchennych (str. 94–95)
 
 | Kod | Nazwa PL | Nazwa EN | Opis |
 |-----|----------|----------|------|
@@ -83,9 +297,17 @@
 
 ---
 
-## 4. Kolekcja płyt laminowanych Swiss Krono (str. 96–98)
+## 5. Kolekcja płyt laminowanych Swiss Krono (str. 44–57, 96–98)
 
-### Kolumny tabeli
+### 5.1. Podział kolekcji
+
+| Sekcja | Strony | Opis |
+|--------|--------|------|
+| **Unikolory / Uni Colours** | 44–47 | Kolory jednolite (białe, szare, kolorowe) |
+| **Dekory fantazyjne / Design Decors** | 48–49 | Betony, marmury, kamienie, tkaniny |
+| **Drewnopodobne / Wood** | 50–57 | Dekory imitujące drewno (dęby, orzechy, buki) |
+
+### 5.2. Kolumny tabeli dekorów (str. 96–98)
 
 | # | Kolumna | Opis |
 |---|---------|------|
@@ -94,17 +316,12 @@
 | 3 | **Nazwa** | Nazwa polska dekoru |
 | 4 | **Name** | Nazwa angielska dekoru |
 | 5 | **One Global** | Globe icon = dekor z gamy globalnej |
-| 6 | **Blat / Worktop** | Kod odpowiednika blatu kuchennego (np. U164 KM) |
+| 6 | **Blat / Worktop** | Kod odpowiednika blatu kuchennego |
 | 7 | **HPL** | V = laminat HPL dostępny |
 | 8 | **Black Wood** (● czarny) | Black Wood Worktop dostępny |
 | 9 | **Płyta Laminowana** (● niebieski) | Płyta laminowana Black Wood dostępna |
 
-### Uwagi:
-- Wiersze oznaczone **czerwonym symbolem** (*) = do wyczerpania zapasów / until end of stock
-- Globe icon (🌐) = dekor z gamy globalnej (One Global)
-- **SYNCHRO** w kolumnie One Global = struktura synchroniczna
-
-### Pełna lista dekorów płyt laminowanych (174 dekory)
+### 5.3. Pełna lista dekorów płyt laminowanych (174 dekory)
 
 | Symbol | Struktura | Nazwa PL | Name EN | One Global | Blat/Worktop | HPL | Black Wood | Płyta Lam. |
 |--------|-----------|----------|---------|------------|--------------|-----|------------|------------|
@@ -269,26 +486,22 @@
 
 ---
 
-## 5. Kolekcja blatów kuchennych Swiss Krono (str. 98–99)
+## 6. Kolekcja blatów kuchennych Swiss Krono (str. 84–99)
 
-### Kolumny tabeli
+### 6.1. Kolumny tabeli blatów
 
 | # | Kolumna | Opis |
 |---|---------|------|
-| 1 | **Symbol** | Kod dekoru blatu (np. U164, D3274) |
-| 2 | **Struktura / Surface** | Kod struktury powierzchni (KM, VL, TO, itp.) |
-| 3 | **Nazwa** | Nazwa polska dekoru |
-| 4 | **Name** | Nazwa angielska dekoru |
-| 5 | **Płyta / MFC** | Kod odpowiednika płyty laminowanej (np. U164 PE; U164 VL) |
+| 1 | **Symbol** | Kod dekoru blatu |
+| 2 | **Struktura / Surface** | Kod struktury powierzchni |
+| 3 | **Nazwa** | Nazwa polska |
+| 4 | **Name** | Nazwa angielska |
+| 5 | **Płyta / MFC** | Kod odpowiednika płyty laminowanej |
 | 6 | **HPL** | V = laminat HPL dostępny |
 | 7 | **Black Wood** (● czarny) | Black Wood Worktop dostępny |
 | 8 | **Płyta Laminowana** (● niebieski) | Płyta laminowana Black Wood dostępna |
 
-### Uwagi:
-- **NEW 2024** = nowość w kolekcji 2024
-- Płyta/MFC = krzyżowe odniesienie do płyty laminowanej w tym samym dekorze
-
-### Pełna lista dekorów blatów kuchennych (121 dekorów)
+### 6.2. Pełna lista dekorów blatów (121 dekor)
 
 | Symbol | Struktura | Nazwa PL | Name EN | Płyta/MFC | HPL | Black Wood | Płyta Lam. |
 |--------|-----------|----------|---------|-----------|-----|------------|------------|
@@ -385,9 +598,9 @@
 
 ---
 
-## 6. Podsumowanie statystyczne
+## 7. Podsumowanie statystyczne
 
-### Struktury płyt laminowanych
+### 7.1. Struktury płyt laminowanych
 
 | Struktura | Kod | Liczba dekorów | Opis |
 |-----------|-----|----------------|------|
@@ -405,16 +618,16 @@
 | TO | Touch One | 10 | Struktura dotykowa |
 | **Razem** | | **174** | |
 
-### Struktury blatów kuchennych
+### 7.2. Struktury blatów kuchennych
 
 | Struktura | Kod | Liczba dekorów | Opis |
 |-----------|-----|----------------|------|
 | VL | Mat | 16 | Matowa powierzchnia |
-| KM | Kamienna | 8 | Struktura kamienna |
 | SM | Gładka | 16 | Gładka powierzchnia |
 | OW | One Wood | 16 | Struktura drewniana |
-| OV | One Vision | 12 | Struktura wizualna |
 | TO | Touch One | 12 | Struktura dotykowa |
+| OV | One Vision | 12 | Struktura wizualna |
+| KM | Kamienna | 8 | Struktura kamienna |
 | MX | Matrix | 8 | Struktura matrycowa |
 | IS | Italian Stone | 6 | Kamień włoski |
 | SK | Skalna | 4 | Struktura skalna |
@@ -422,16 +635,16 @@
 | PE | Perlista | 4 | Efekt perlisty |
 | BS | Biurowa | 4 | Struktura biurowa |
 | NA | Naturalne drewno | 4 | Naturalna struktura drewna |
-| BL | Blacha | 2 | Struktura blachy |
 | SA | Sandstone | 4 | Piaskowiec |
+| BL | Blacha | 2 | Struktura blachy |
+| SQ | Połysk | 1 | Powierzchnia połyskowa |
 | BZ | Bazaltowa | 1 | Bazalt |
 | PR | Pory rustykalne | 1 | Rustykalne pory |
 | LP | Łupek | 1 | Struktura łupka |
-| SQ | Połysk | 1 | Powierzchnia połyskowa |
 | SE | Drewno Jesionu | 1 | Struktura jesionu |
 | **Razem** | | **121** | |
 
-### Nowości 2024 (w kolekcji blatów)
+### 7.3. Nowości 2024 (w kolekcji blatów)
 
 | Symbol | Nazwa PL | Name EN |
 |--------|----------|---------|
@@ -448,7 +661,7 @@
 | D60724 | Marmur Fiorentino | Marble Fiorentino |
 | D30160 | Wydmy Beżowe | Seaside Beige |
 
-### Dekory do wyczerpania zapasów (*)
+### 7.4. Dekory do wyczerpania zapasów (*)
 
 | Symbol | Nazwa PL | Name EN |
 |--------|----------|---------|
@@ -460,78 +673,51 @@
 | D3196 | Wiąz Presto | Presto Elm |
 | U4438 | Żółty Dijon | Dijon Yellow |
 
-### Dekory z krzyżowym odniesieniem (Blat ↔ Płyta)
+---
 
-Dekory dostępne zarówno jako blaty kuchenne jak i płyty laminowane:
+## 8. Uwagi techniczne
 
-| Symbol | Nazwa PL | Struktura Blatu | Struktura Płyty |
-|--------|----------|-----------------|-----------------|
-| U164 | Antracyt | KM | PE, VL |
-| D3274 | Beton | VL | BS |
-| K101 | Biały | KM/PE | PE, SE |
-| D3806 | Buk Bordeaux | OW | OW |
-| U190 | Czarny | KM | SE, PE, VL |
-| D4225 | Dąb Artisan | OV | OV |
-| D4032 | Dąb Biszkoptowy | OW | OW |
-| D3273 | Dąb Canyon | MX | MX |
-| D3822 | Dąb Dublin | OW | OW |
-| D1096 | Dąb Frappe | NA | OV |
-| D1094 | Dąb Latte | NA | OV |
-| D20230 | Dąb Letni | OV | OV |
-| D20140 | Dąb Liryczny | OV | OV |
-| D1089 | Dąb Lungo | NA | OV |
-| D1092 | Dąb Mocha | OW | OW |
-| D4428 | Dąb Naturalny | OV | OV |
-| D20110 | Dąb Nostalgiczny | OV | OV |
-| D3823 | Dąb Nowy Jork | OW | OW |
-| D1041 | Dąb Odwieczny | OW | OW |
-| D1035 | Dąb Pradawny | OW | OW |
-| D4033 | Dąb Słoneczny | OW | OW |
-| D3025 | Dąb Sonoma | OW | OW |
-| D3821 | Dąb Sztokholm | OW | OW |
-| D4865 | Dąb Wersal | VL | OW |
-| D4040 | Drewno Retro | MX | MX |
-| D1038 | Beton Millennium | SK | BS |
-| D30090 | Beton Szary | TO | TO |
-| D4426 | Jesion Jasny | OV | OV |
-| D3158 | Jesion Werona | MX | MX |
-| D30220 | Kwarcyt Szary | TO | TO |
-| D4448 | Marmur Crema | SM | VL |
-| D1032 | Miedziany Zmierzch | SK | BS |
-| D3810 | Orzech Nicea | OW | OW |
-| D1039 | Orzech Południowy | OW | OW |
-| D30160 | Wydmy Beżowe | TO | TO |
-| D4878 | Wytrawny Szary Kamień | VL | VL |
+### 8.1. Różnice w strukturach między płytami a blatami
+
+Płyty laminowane i blaty kuchenne mogą mieć różne struktury powierzchni dla tego samego dekoru. Przykłady:
+
+| Dekor | Struktura płyty | Struktura blatu | Uwagi |
+|-------|-----------------|-----------------|-------|
+| D3274 Beton | BS (Biurowa) | VL (Mat) | Inna struktura |
+| D1038 Beton Millennium | BS (Biurowa) | SK (Skalna) | Inna struktura |
+| D1032 Miedziany Zmierzch | BS (Biurowa) | SK (Skalna) | Inna struktura |
+
+### 8.2. Splashback
+
+**UWAGA**: Katalog Swiss Krono **nie zawiera dedykowanej sekcji** dotyczącej paneli splashback. W odróżnieniu od Kronospan, Swiss Krono nie oferuje paneli backsplash jako osobnego produktu w tym katalogu.
+
+Możliwe rozwiązania dla splashback:
+- Użycie płyty laminowanej w tym samym dekorze (grubość 16–18 mm)
+- Użycie laminatu HPL naklejonego na płytę MDF/wiórową
+- Zastosowanie paneli backsplash od innych producentów
+
+### 8.3. Zastosowanie w meblarstwie
+
+| Produkt | Zastosowanie | Grubość | Uwagi |
+|---------|--------------|---------|-------|
+| **Płyta wiórowa laminowana** | Korpusy mebli, fronty szafek | 16–18 mm | Standardowa grubość frontów |
+| **Płyta MDF laminowana** | Fronty, elementy dekoracyjne | 16–19 mm | Lepsza do frezowania |
+| **Płyta wiórowa surowa** | Korpusy (wewnątrz) | 16–18 mm | Niedroga, niewidoczna |
+| **MDF surowy** | Fronty (do malowania) | 16–19 mm | Gładka powierzchnia |
+| **Blat BLACK WOOD** | Blaty kuchenne (nowoczesne) | 12 mm | Ultracienki, designerski |
+| **Blat postformed** | Blaty kuchenne (klasyczne) | 38 mm | Profil R3, tradycyjny |
+
+### 8.4. Właściwości antybakteryjne
+
+Wszystkie produkty Swiss Krono (płyty laminowane, blaty BLACK WOOD, blaty postformed) mają **właściwości antybakteryjne** — bakterie nie namnażają się na powierzchni. Jest to重要的 cecha dla zastosowań kuchennych i łazienkowych.
+
+### 8.5. Emisja formaldehydu
+
+Wszystkie produkty Swiss Krono spełniają normę **E1 / ED2020** w zakresie emisji formaldehydu, co oznacza niską emisję i bezpieczeństwo dla zdrowia.
 
 ---
 
-## 7. Uwagi techniczne
-
-### Różnice w strukturach między płytami a blatami
-Płyty laminowane i blaty kuchenne mogą mieć różne struktury powierzchni dla tego samego dekoru. Np.:
-- **D3274 Beton**: płyta BS (Biurowa), blat VL (Mat)
-- **D1038 Beton Millennium**: płyta BS (Biurowa), blat SK (Skalna)
-- **D1032 Miedziany Zmierzch**: płyta BS (Biurowa), blat SK (Skalna)
-
-### Dostępność produktów
-
-| Produkt | Liczba dekorów | Uwagi |
-|---------|----------------|-------|
-| Płyta laminowana | 174 | Pełna kolekcja |
-| Blat kuchenny | 121 | Podzbiór kolekcji |
-| Laminat HPL | 174 | Dla wszystkich dekorów |
-| Black Wood Worktop | ~15 | Wybrane dekory |
-| Płyta Laminowana Black Wood | ~10 | Wybrane dekory |
-
-### One Global (🌐)
-Dektory oznaczone ikoną globusa należą do gamy globalnej Swiss Krono — są dostępne we wszystkich regionach, gdzie firma prowadzi sprzedaż.
-
-### Struktury synchroniczne (♻)
-Struktury synchroniczne (SD, SW, CL) mają tekstrurę synchronizowaną z wzorem dekoru — rowki i wklęśnięcia pokrywają się z usłojeniem drewna, co daje efekt非常的 realistyczny.
-
----
-
-## 8. Encja techniczna (JSON)
+## 9. Encja techniczna (JSON)
 
 ```json
 {
@@ -540,89 +726,133 @@ Struktury synchroniczne (SD, SW, CL) mają tekstrurę synchronizowaną z wzorem 
   "catalog": "Kolekcja Płyty Laminowane i Blaty Kuchenne — Polska 2025",
   "catalog_file": "SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf",
   "total_pages": 100,
-  "sections": [
-    {"name": "Płyty wiórowe surowe", "pages": "4-5"},
-    {"name": "Płyty MDF surowe, MDF MR Front", "pages": "6-7"},
-    {"name": "Niezapalne płyty meblowe Stop Fire", "pages": "8-9"},
-    {"name": "Płyty Black Wood", "pages": "10-13"},
-    {"name": "Płyty laminowane — dane techniczne", "pages": "14-43"},
-    {"name": "Płyty laminowane — kolekcja", "pages": "44-57"},
-    {"name": "Płyty laminowane — struktury powierzchni", "pages": "58-59"},
-    {"name": "Blaty kuchenne Black Wood — dane techniczne", "pages": "60-61"},
-    {"name": "Blaty kuchenne — dane techniczne", "pages": "62-83"},
-    {"name": "Blaty kuchenne — kolekcja", "pages": "84-93"},
-    {"name": "Blaty kuchenne — struktury powierzchni", "pages": "94-95"}
-  ],
-  "laminated_board_structures": [
-    {"code": "SE", "name_pl": "Drewno Jesionu", "name_en": "Ash Structure", "type": "synchro"},
-    {"code": "OV", "name_pl": "One Vision", "name_en": "One Vision", "type": "synchro"},
-    {"code": "SD", "name_pl": "Synchro Dąb", "name_en": "Synchro Oak", "type": "synchro"},
-    {"code": "SW", "name_pl": "Synchro Wiąz", "name_en": "Synchro Elm", "type": "synchro"},
-    {"code": "CL", "name_pl": "Synchro Lambrusco", "name_en": "Synchro Lambrusco", "type": "synchro"},
-    {"code": "MX", "name_pl": "Matrix", "name_en": "Matrix", "type": "standard"},
-    {"code": "SM", "name_pl": "Gładka", "name_en": "Smooth", "type": "smooth"},
-    {"code": "VL", "name_pl": "Mat", "name_en": "Mat", "type": "matte"},
-    {"code": "BS", "name_pl": "Biurowa", "name_en": "Office Surface", "type": "standard"},
-    {"code": "TO", "name_pl": "Touch One", "name_en": "Touch One", "type": "tactile"},
-    {"code": "OW", "name_pl": "One Wood", "name_en": "One Wood", "type": "wood"},
-    {"code": "PE", "name_pl": "Perlista", "name_en": "Pearl Like", "type": "pearl"}
-  ],
-  "worktop_structures": [
-    {"code": "SQ", "name_pl": "Połysk", "name_en": "Gloss"},
-    {"code": "VL", "name_pl": "Mat", "name_en": "Mat"},
-    {"code": "BL", "name_pl": "Blacha", "name_en": "Plate"},
-    {"code": "BT", "name_pl": "Beton", "name_en": "Concrete"},
-    {"code": "KM", "name_pl": "Kamienna", "name_en": "Stone"},
-    {"code": "LP", "name_pl": "Łupek", "name_en": "Shale"},
-    {"code": "BS", "name_pl": "Biurowa", "name_en": "Office Structure"},
-    {"code": "SM", "name_pl": "Gładka", "name_en": "Smooth"},
-    {"code": "PE", "name_pl": "Perlista", "name_en": "Pearl-Like"},
-    {"code": "TO", "name_pl": "Touch One", "name_en": "Touch One"},
-    {"code": "MX", "name_pl": "Matrix", "name_en": "Matrix"},
-    {"code": "SK", "name_pl": "Skalna", "name_en": "Rock"},
-    {"code": "IS", "name_pl": "Italian Stone", "name_en": "Italian Stone"},
-    {"code": "NA", "name_pl": "Naturalne drewno", "name_en": "Natural Wood"},
-    {"code": "OW", "name_pl": "One Wood", "name_en": "One Wood"},
-    {"code": "OV", "name_pl": "One Vision", "name_en": "One Vision"},
-    {"code": "SA", "name_pl": "Sandstone", "name_en": "Sandstone"},
-    {"code": "BZ", "name_pl": "Bazaltowa", "name_en": "Basalt"},
-    {"code": "PR", "name_pl": "Pory rustykalne", "name_en": "Rustic Pores"},
-    {"code": "SE", "name_pl": "Drewno Jesionu", "name_en": "Ash Structure"},
-    {"code": "SD", "name_pl": "Synchro Dąb", "name_en": "Synchro Oak"},
-    {"code": "SW", "name_pl": "Synchro Wiąz", "name_en": "Synchro Elm"},
-    {"code": "CL", "name_pl": "Synchro Lambrusco", "name_en": "Synchro Lambrusco"}
-  ],
-  "total_laminated_decors": 174,
-  "total_worktop_decors": 121,
-  "new_in_2024": [
-    {"symbol": "D6916", "name": "Beton Capella"},
-    {"symbol": "D6915", "name": "Beton Tephra"},
-    {"symbol": "D70601", "name": "Calacatta Oro"},
-    {"symbol": "D60654", "name": "Dąb Fornir"},
-    {"symbol": "D60664", "name": "Dąb Jesienny"},
-    {"symbol": "D60684", "name": "Kamień Aurum"},
-    {"symbol": "D60674", "name": "Kwarcyt Perłowy"},
-    {"symbol": "D60694", "name": "Marmur Bernini"},
-    {"symbol": "D60714", "name": "Marmur Borghese"},
-    {"symbol": "D60704", "name": "Marmur Feruzzi"},
-    {"symbol": "D60724", "name": "Marmur Fiorentino"},
-    {"symbol": "D30160", "name": "Wydmy Beżowe"}
-  ],
-  "discontinued_until_stock": [
-    {"symbol": "D1861", "name": "Akacja Księżycowa"},
-    {"symbol": "D3822", "name": "Dąb Dublin"},
-    {"symbol": "D3194", "name": "Wiąz Allegro"},
-    {"symbol": "D3193", "name": "Wiąz Amsterdam (Moderato)"},
-    {"symbol": "D4103", "name": "Wiąz Lucerna"},
-    {"symbol": "D3196", "name": "Wiąz Presto"},
-    {"symbol": "U4438", "name": "Żółty Dijon"}
-  ],
+  "products": {
+    "laminated_boards": {
+      "description": "Płyty wiórowe/MDF pokryte filmem melaminowym",
+      "base_materials": ["chipboard", "MDF"],
+      "surface": "melamine_film",
+      "formats": {
+        "chipboard": {"size_mm": "2800 x 2070", "thicknesses_mm": [10, 12, 15, 16, 18, 19, 22, 25, 28, 38]},
+        "mdf": {"size_mm": "2800 x 2070", "thicknesses_mm": [10, 12, 16, 18, 19, 22, 25, 28, 30]}
+      },
+      "technical_parameters": {
+        "scratch_resistance_N": 1.5,
+        "abrasion_resistance": "Class 1 (IP≥50, IP+FP/2≥150)",
+        "stain_resistance": "≥ 3",
+        "crack_resistance": "≥ 3",
+        "color_matching": "R4",
+        "formaldehyde_emission": "E1 / ED2020",
+        "fire_reaction": "D-s2,d0",
+        "thickness_tolerance_mm": {"≤20mm": "±0.3", ">20mm": "±0.5"},
+        "length_width_tolerance_mm": 5,
+        "flatness_mm_per_m": 2,
+        "antibacterial": true
+      }
+    },
+    "black_wood_worktops": {
+      "description": "Ultracienkie blaty na bazie płyty BLACK WOOD z laminatem HPL",
+      "base_material": "BLACK WOOD board (density 900 kg/m³)",
+      "surface": "HPL_laminate_one_sided",
+      "format_mm": "4100 x 1315 x 12",
+      "weight_per_piece_kg": 60,
+      "packaging": {"pieces_per_pallet": 20},
+      "technical_parameters": {
+        "scratch_resistance_N": 3,
+        "abrasion_resistance": "Class 3A (IP≥150, IP+FP/2≥350)",
+        "impact_resistance_N": 20,
+        "hot_pot_resistance_grade": {"SQ": 3, "other": 4},
+        "stain_resistance_grade": {"groups_1_2": 5, "group_3": 4},
+        "fire_classification": "D-s1,d0",
+        "edge_swelling_24h_percent": 8,
+        "formaldehyde_emission": "E1 / ED2020",
+        "density_kg_per_m3": 900,
+        "antibacterial": true
+      }
+    },
+    "postformed_worktops": {
+      "description": "Blaty kuchenne na bazie płyty wiórowej z technologią postformingu",
+      "base_material": "chipboard",
+      "surface": "HPL_laminate_postformed_R3",
+      "profile": "R3 (radius 3mm)",
+      "thickness_mm": 38,
+      "construction": {
+        "top": "HPL laminate + protective film",
+        "edge": "HDF 3mm edge board + polyurethane glue",
+        "core": "particle board",
+        "bottom": "backing paper + UV varnish strip (10cm from glue)",
+        "back_edge": "melamine edging"
+      },
+      "formats": [
+        {"size_mm": "4100 x 600", "finish": "U (single postformed)", "pieces_per_pallet": 10, "pallet_weight_kg": 620},
+        {"size_mm": "4100 x 1200", "finish": "U-U (double postformed)", "pieces_per_pallet": 6, "pallet_weight_kg": 880}
+      ],
+      "antibacterial": true
+    }
+  },
+  "surface_structures": {
+    "laminated_boards": [
+      {"code": "SE", "name_pl": "Drewno Jesionu", "name_en": "Ash Structure", "type": "synchro"},
+      {"code": "OV", "name_pl": "One Vision", "name_en": "One Vision", "type": "synchro"},
+      {"code": "SD", "name_pl": "Synchro Dąb", "name_en": "Synchro Oak", "type": "synchro"},
+      {"code": "SW", "name_pl": "Synchro Wiąz", "name_en": "Synchro Elm", "type": "synchro"},
+      {"code": "CL", "name_pl": "Synchro Lambrusco", "name_en": "Synchro Lambrusco", "type": "synchro"},
+      {"code": "MX", "name_pl": "Matrix", "name_en": "Matrix", "type": "standard"},
+      {"code": "SM", "name_pl": "Gładka", "name_en": "Smooth", "type": "smooth"},
+      {"code": "VL", "name_pl": "Mat", "name_en": "Mat", "type": "matte"},
+      {"code": "BS", "name_pl": "Biurowa", "name_en": "Office Surface", "type": "standard"},
+      {"code": "TO", "name_pl": "Touch One", "name_en": "Touch One", "type": "tactile"},
+      {"code": "OW", "name_pl": "One Wood", "name_en": "One Wood", "type": "wood"},
+      {"code": "PE", "name_pl": "Perlista", "name_en": "Pearl Like", "type": "pearl"}
+    ],
+    "worktops": [
+      {"code": "SQ", "name_pl": "Połysk", "name_en": "Gloss"},
+      {"code": "VL", "name_pl": "Mat", "name_en": "Mat"},
+      {"code": "BL", "name_pl": "Blacha", "name_en": "Plate"},
+      {"code": "BT", "name_pl": "Beton", "name_en": "Concrete"},
+      {"code": "KM", "name_pl": "Kamienna", "name_en": "Stone"},
+      {"code": "LP", "name_pl": "Łupek", "name_en": "Shale"},
+      {"code": "BS", "name_pl": "Biurowa", "name_en": "Office Structure"},
+      {"code": "SM", "name_pl": "Gładka", "name_en": "Smooth"},
+      {"code": "PE", "name_pl": "Perlista", "name_en": "Pearl-Like"},
+      {"code": "TO", "name_pl": "Touch One", "name_en": "Touch One"},
+      {"code": "MX", "name_pl": "Matrix", "name_en": "Matrix"},
+      {"code": "SK", "name_pl": "Skalna", "name_en": "Rock"},
+      {"code": "IS", "name_pl": "Italian Stone", "name_en": "Italian Stone"},
+      {"code": "NA", "name_pl": "Naturalne drewno", "name_en": "Natural Wood"},
+      {"code": "OW", "name_pl": "One Wood", "name_en": "One Wood"},
+      {"code": "OV", "name_pl": "One Vision", "name_en": "One Vision"},
+      {"code": "SA", "name_pl": "Sandstone", "name_en": "Sandstone"},
+      {"code": "BZ", "name_pl": "Bazaltowa", "name_en": "Basalt"},
+      {"code": "PR", "name_pl": "Pory rustykalne", "name_en": "Rustic Pores"},
+      {"code": "SE", "name_pl": "Drewno Jesionu", "name_en": "Ash Structure"},
+      {"code": "SD", "name_pl": "Synchro Dąb", "name_en": "Synchro Oak"},
+      {"code": "SW", "name_pl": "Synchro Wiąz", "name_en": "Synchro Elm"},
+      {"code": "CL", "name_pl": "Synchro Lambrusco", "name_en": "Synchro Lambrusco"}
+    ]
+  },
+  "collection": {
+    "laminated_boards": {
+      "total_decors": 174,
+      "sections": [
+        {"name": "Unikolory / Uni Colours", "pages": "44-47"},
+        {"name": "Dekory fantazyjne / Design Decors", "pages": "48-49"},
+        {"name": "Drewnopodobne / Wood", "pages": "50-57"}
+      ]
+    },
+    "worktops": {
+      "total_decors": 121,
+      "new_in_2024": 12,
+      "discontinued_until_stock": 7
+    }
+  },
   "notes": [
     "Struktury synchroniczne (SD, SW, CL) mają tekstrurę synchronizowaną z wzorem dekoru",
     "Dektory oznaczone ikoną globusa (🌐) należą do gamy globalnej One Global",
     "Wiersze oznaczone czerwonym symbolem (*) = do wyczerpania zapasów",
     "Różnice w strukturach między płytami a blatami dla tego samego dekoru są normalne",
-    "Nowości 2024 oznaczone jako 'NEW 2024' w katalogu"
+    "Wszystkie produkty Swiss Krono mają właściwości antybakteryjne",
+    "Katalog Swiss Krono nie zawiera dedykowanej sekcji paneli splashback",
+    "Do frontów szafek zaleca się płyty laminowane 16-18 mm (wiórowe lub MDF)"
   ]
 }
 ```
@@ -630,4 +860,4 @@ Struktury synchroniczne (SD, SW, CL) mają tekstrurę synchronizowaną z wzorem 
 ---
 
 *Analiza wykonana: 2026-06-27*
-*Źródło: SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf str. 3, 58-59, 94-99*
+*Źródło: SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf str. 14-57, 60-65, 84-99*
