@@ -39,15 +39,39 @@ SZAFKA DOLNA (Base)
     └── Półka stała (nie regulowana)
 ```
 
+### Minimalne wysokości korpusów:
+
+| Typ szafki | Min wysokość | Max wysokość | Uwagi |
+|------------|--------------|--------------|-------|
+| Standardowa dolna | 250mm | 1000mm | Zależna od ilości szuflad i typu prowadnic |
+| Z piekarnikiem | 600mm | 1000mm | Min 600mm dla standardowego piekarnika do zabudowy |
+| Zlewowa | 400mm | 1000mm | Min 400mm dla komory zlewu |
+| Cargo | 600mm | 1000mm | Zależna od kosza cargo |
+| Narożna | 250mm | 1000mm | Jak standardowa |
+| Ścienna (górna) | 300mm | 900mm | Zależna od wysokości montażu |
+
+**Uwaga:** Wysokość 160mm jest niepraktyczna — minimalna nóżka to 80-100mm, a korpus musi zmieścić min. 1 szufladę lub półkę. Poprawiono minimum na 250mm.
+
 ---
 
 ## 2. WYMIARY
 
 ```
-Szerokość (W):   30 — 120 cm  (min 15cm dla 1-front, max 120cm)
-Wysokość (H):    16 — 100 cm  (zależna od typu: base 25-100, oven 60-100)
-Głębokość (D):   30 — 70 cm   (standard 51cm, min 30.7cm z frontem)
+Szerokość (W):   200 — 1200 mm  (min 200mm dla 1-front, max 1200mm)
+Wysokość (H):    250 — 1000 mm  (zależna od typu: base 250-1000, oven 600-1000)
+Głębokość (D):   300 — 700 mm   (patrz: typy głębokości poniżej)
 ```
+
+### Typy głębokości:
+
+| Typ | Wartość | Uwagi |
+|-----|---------|-------|
+| **Głębokość korpusu (zewnętrzna)** | 560 mm | Standard dla szafek dolnych (bez frontu i bez pleców) |
+| **Głębokość wewnętrzna** | ~520 mm | Po odjęciu pleców (5mm) i frontu (18mm) — wymagana dla prowadnic Blum |
+| **Głębokość całkowita** | ~580 mm | Korpus + front (18mm) + plecy (5mm) |
+| **Głębokość minimalna** | 300 mm | Dla szafek ściennych/płytkich |
+
+**Uwaga:** Standard 560mm zapewnia kompatybilność z prowadnicami Blum Tandembox (wymagają min. 500mm wewnętrznej głębokości).
 
 ### Auto-obliczenia:
 
@@ -57,9 +81,22 @@ Głębokość (D):   30 — 70 cm   (standard 51cm, min 30.7cm z frontem)
 
 ### Ostrzeżenia auto-korekty:
 
-- Min szerokość dla bieżących ustawień (np. min 88.4cm, min 97.6cm)
+- Min szerokość dla bieżących ustawień (np. min 884mm, min 976mm)
 - Auto-zmiana szerokości, głębokości przy konflikcie wymiarów
 - Auto-zmiana nawierceń pod uchwyty (poziome niedostępne przy dużym uchwycie)
+
+### Minimalne szerokości per typ:
+
+| Typ szafki | Min szerokość | Uwagi |
+|------------|---------------|-------|
+| 1-front (drzwi) | 200mm | Miejsce na zawias + front |
+| 2-fronty | 400mm | 2× drzwi min. 200mm |
+| 1 szuflada | 250mm | Min. dla prowadnic Blum |
+| Narożna ślepa | 800mm | 400mm widoczny front + 400mm ukryty |
+| Narożna diagonalna | 900mm | Rogowa, min. dla mechanizmu |
+| Zlewowa | 500mm | Miejsce na komorę zlewu |
+| Cargo | 300mm | Min. dla kosza cargo |
+| Piekarnik | 600mm | Standardowa szerokość piekarnika |
 
 ---
 
@@ -105,10 +142,16 @@ Bez frontu szuflady  (szuflada wewnętrzna, niewidoczna)
 ### Rozmieszczenie półek:
 
 ```
-Rozmieszczenie symetryczne półek
-├── Normalne (co 32mm System32)
-└── Symetryczne, po 3 nawiercy na półkę (co 64mm)
+Rozmieszczenie półek (System 32)
+├── Normalne — otwory co 32mm (pełna siatka System 32)
+│   └── Każda półka wspierana na 2-4 kołkach (w zależności od szerokości)
+│
+└── Symetryczne — otwory co 64mm (co drugi otwór System 32)
+    └── 3 otwory na stronę na półkę (6 total: 3 lewa + 3 prawa strona)
+    └── Zastosowanie: lżejsze obciążenie, szybsze wiercenie
 ```
+
+**Uwaga:** System 32 zawsze używa siatki 32mm. Opcja "symetryczne" oznacza użycie co drugiego otworu (64mm odstęp), co daje rozkład symetryczny wizualnie i wystarczający dla większości zastosowań.
 
 ### Szafki narożne — warianty półek:
 
@@ -125,19 +168,20 @@ Corner Optima 2 półki 900×500 wysuwane
 ### 5.1 Typ prowadnic (per szuflada)
 
 ```
-Blum Tandembox
-├── Wys N  (h=68mm)
-├── Wys M  (h=83mm)   — klasyczny
-└── Wys D  (h=198mm)  — z relingiem (wysoka)
+Blum TANDEMBOX antaro
+├── Wys N  (h=83mm)   — niska
+├── Wys M  (h=116mm)  — średnia (klasyczny)
+└── Wys D  (h=199mm)  — wysoka / z relingiem
 
-Blum Merivobox
-├── Wys N  (h=60.5mm)
-├── Wys M  (h=83mm)
-└── Wys E  (h=184mm)  — z relingiem
+Blum MERIVOBOX
+├── Wys N  (h=65.5mm) — niska
+├── Wys M  (h=90mm)   — średnia
+└── Wys E  (h=184mm)  — wysoka / z relingiem
 
-Blum Legrabox
-├── Wys M  (h=90mm)
-└── Wys C  (h=177mm)  — standard premium
+Blum LEGRABOX
+├── Wys S  (h=77mm)   — niska
+├── Wys M  (h=116mm)  — średnia
+└── Wys C  (h=167mm)  — wysoka
 ```
 
 ### 5.2 Długość prowadnic
