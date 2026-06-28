@@ -63,6 +63,100 @@ See `docs/adr/` for full rationale:
 
 ---
 
+## 2026-06-27 — Material Master Catalog (Kronospan + Swiss Krono)
+
+### Architecture decisions
+
+- ADR-008: Material Master Catalog — separate bounded context from project domain
+- ER diagram: `catalog/docs/architecture/04-er-diagram.md` (32 entities, 2 bounded contexts)
+- Schema: 6 incremental migrations (`01-schema.sql` through `05-phase4b-property-flags.sql`)
+
+### Added
+
+**Catalog schema** (`catalog/docs/architecture/`):
+
+- 21 tables: producers, structures, collections, subcollections, materials,
+  material_types, decors, variants, worktop_constructions, worktop_profiles,
+  worktop_specs, sheet_formats, edges, edge_suppliers, variant_edges,
+  decor_structures, pairings, variant_availability, property_flags,
+  color_families, tags, decor_tags
+- 9 views: v_decors_full, v_pairings_full, v_worktops_full,
+  v_synchro_variants, v_variants_availability, v_property_flags,
+  v_decor_structures_full
+- 13 indexes
+
+**Catalog importer** (`catalog/scripts/`):
+
+- `importer.py` — CatalogImporter class (11 import methods, FK validation, idempotent)
+- `generate_kronospan_yaml.py` — YAML generator from Kronospan data
+- `generate_kronoswiss_yaml.py` — YAML generator from Swiss Krono data
+
+**Catalog data** (`catalog/data/`):
+
+- `kronospan_full.yaml` — 62 decors, 11 variants, 6 worktops, 69 junction rows,
+  5 pairings, 11 availability, 10 property flags
+- `kronoswiss_full.yaml` — 40 decors, 10 variants, 6 worktops, 40 junction rows,
+  4 pairings, 5 availability, 12 property flags
+
+**Material analysis** (`docs/materials-boards/`):
+
+- Kronospan: 20 markdown spec files (Global Collection, MDF, Acrylic, Mirror,
+  Metal, HDF, HPL, Emporio, Kaindl, Focus, Rocko Tiles, blaty 4 collections)
+- Swiss Krono: 3 markdown spec files (laminated boards, worktops, BE Velvet)
+- PDF page exports for visual reference
+
+**Tests** (`catalog/tests/`):
+
+- 177 tests passing across 7 test files (catalog schema + import)
+- Phase 1: 32 tests — worktop specs, sheet formats, subcollections
+- Phase 2: 28 tests — decor_structures junction, pairings expansion
+- Phase 3: 33 tests — importer (per-entity + full import + validation)
+- Import: 45 tests — Kronospan + KronoSwiss + cross-catalog
+- Phase 4a: 21 tests — variant availability (Express 24h, konfekcja)
+- Phase 4b: 18 tests — property flags (antibacterial, waterproof, etc.)
+
+**Materials bridge** (`src/kuchnie_core/materials/`):
+
+- `models.py` — 5 frozen DTOs: VariantInfo, EdgeInfo, WorktopInfo, PropertyFlag, AvailabilityInfo
+- `exceptions.py` — 3 domain exceptions: MaterialNotFoundError, EdgeNotFoundError, CatalogUnavailableError
+- `protocol.py` — MaterialCatalog Protocol (runtime_checkable, 4 methods)
+- `sqlite_repository.py` — SqliteMaterialCatalog (lazy connection, PRAGMA query_only)
+- `resolver.py` — MaterialResolver (cached facade, LRU-style dict cache)
+- `__init__.py` — public API with __all__ exports
+- 26 tests: protocol conformance, SQLite reads, caching, FakeCatalog for engine tests
+
+**ADR** (`docs/adr/`):
+
+- ADR-008: Material Master Catalog — 7 decisions (bounded contexts, EAV, junction tables, Protocol pattern)
+
+### Fixed
+
+- `structures.code UNIQUE` column-level constraint blocked same code per producer
+  (e.g. Kronospan SM vs KronoSwiss SM). Removed column-level UNIQUE,
+  kept only `UNIQUE(code, producer_id)` composite.
+
+### Key entities
+
+| Entity | Kronospan | KronoSwiss | Total |
+|--------|-----------|------------|-------|
+| Decors | 62 | 40 | 102 |
+| Variants | 11 | 10 | 21 |
+| Worktop specs | 6 | 6 | 12 |
+| Structures | 26 | 23 | 49 |
+| Pairings | 5 | 4 | 9 |
+| Availability | 11 | 5 | 16 |
+| Property flags | 10 | 12 | 22 |
+
+### Design patterns applied
+
+- **Bounded contexts**: Catalog (material master) vs Project (customer kitchen)
+- **EAV pattern**: property_flags table prevents schema bloat
+- **Junction table**: decor_structures replaces CSV multi_structures column
+- **Bridge by business_id**: Project references Catalog via string codes, not FK
+- **Idempotent migrations**: CREATE TABLE IF NOT EXISTS + INSERT OR IGNORE
+
+---
+
 ## Next (planned)
 
 - [ ] Add remaining cabinet types from taxonomy (corner blind, corner internal, sink, cargo, oven)
@@ -74,3 +168,9 @@ See `docs/adr/` for full rationale:
 - [ ] Dimension constraints per cabinet type (min/max, auto-correction)
 - [ ] Blender render service (FastAPI + headless Blender)
 - [ ] kitchen-plugin web app (Svelte layout editor)
+- [ ] ADR-008: Material Master Catalog decision record  ✅ DONE
+- [ ] ADR-009: Worktop construction types
+- [ ] Full YAML data: expand to 174 Kronospan + 174 KronoSwiss decors
+- [x] Bridge module: `src/kuchnie_core/materials/` — Python API over catalog SQLite  ✅ DONE
+- [ ] Catalog REST API (FastAPI) — parallel agent in progress
+- [ ] Catalog frontend (Svelte) — parallel agent in progress

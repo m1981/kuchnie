@@ -1,0 +1,1025 @@
+producers:
+- slug: kronospan
+  name: Kronospan
+  country: Polska
+  website: kronosfera.pl
+structures:
+- code: SM
+  name: Super Mat
+  type: smooth
+  finish: matt
+  producer_slug: kronospan
+- code: PE
+  name: Pearl Effect
+  type: structured
+  finish: gloss
+  producer_slug: kronospan
+- code: BS
+  name: Black Structure
+  type: structured
+  finish: matt
+  producer_slug: kronospan
+- code: PD
+  name: Pearl Dark
+  type: structured
+  finish: matt
+  producer_slug: kronospan
+- code: PW
+  name: Pearl Wood
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: RS
+  name: Rustykalna
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: SU
+  name: Super Ultra Mat
+  type: smooth
+  finish: matt
+  fingerprint_resistant: true
+  producer_slug: kronospan
+- code: FP
+  name: Front Plain
+  type: smooth
+  finish: matt
+  producer_slug: kronospan
+- code: SN
+  name: Struktura Naturalna
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: RT
+  name: Rustykalna (kamień)
+  type: stone
+  finish: structured
+  producer_slug: kronospan
+- code: HU
+  name: Hudson
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: AD
+  name: Arvadonna
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: PV
+  name: Primavera
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: RW
+  name: Rustic Wood
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+- code: SL
+  name: Slate
+  type: stone
+  finish: structured
+  producer_slug: kronospan
+- code: GM
+  name: Glass Matte
+  type: smooth
+  finish: matt
+  producer_slug: kronospan
+- code: SQ
+  name: Square
+  type: structured
+  finish: gloss
+  producer_slug: kronospan
+- code: GG
+  name: Glass Gloss
+  type: structured
+  finish: gloss
+  producer_slug: kronospan
+- code: PA
+  name: Pearl Antyczny
+  type: structured
+  finish: matt
+  producer_slug: kronospan
+- code: PH
+  name: Photo
+  type: stone
+  finish: structured
+  producer_slug: kronospan
+- code: LV
+  name: Lava
+  type: stone
+  finish: matt
+  producer_slug: kronospan
+- code: UE
+  name: Urban Effect
+  type: structured
+  finish: matt
+  producer_slug: kronospan
+- code: TO
+  name: Touch One
+  type: structured
+  finish: matt
+  producer_slug: kronospan
+- code: IS
+  name: Italian Stone
+  type: stone
+  finish: structured
+  producer_slug: kronospan
+- code: PN
+  name: Pearl Nature
+  type: stone
+  finish: structured
+  producer_slug: kronospan
+- code: SE
+  name: Drewno Jesionu
+  type: wood_grain
+  finish: structured
+  producer_slug: kronospan
+collections:
+- slug: kronospan-global
+  producer_slug: kronospan
+  name: Global Collection 2026
+  source_pdf: plyty-wiorowe-global-collection.pdf
+  has_edgebanding: true
+  has_hdf: true
+  has_countertops: true
+  has_express: true
+- slug: kronospan-postformed
+  producer_slug: kronospan
+  name: Global Collection 2026 — Blaty Post-formed
+  source_pdf: blaty.pdf
+  has_edgebanding: true
+  has_countertops: true
+  has_express: true
+- slug: kronospan-abs-edge
+  producer_slug: kronospan
+  name: ABS Square Edge
+  source_pdf: blaty.pdf
+  has_edgebanding: true
+  has_countertops: true
+  has_express: true
+- slug: kronospan-slim-line
+  producer_slug: kronospan
+  name: Slim Line
+  source_pdf: blaty.pdf
+  has_edgebanding: false
+  has_countertops: true
+  has_express: true
+materials:
+- slug: kronospan-chipboard-global
+  collection_slug: kronospan-global
+  material_type_slug: chipboard
+  name: Global Collection — Płyta wiórowa laminowana
+  sidedness: two_sided_same
+  has_express: true
+- slug: kronospan-postformed-global
+  collection_slug: kronospan-postformed
+  material_type_slug: worktop_postformed
+  name: Global Collection — Blat Post-formed 38mm
+- slug: kronospan-abs-edge-board
+  collection_slug: kronospan-abs-edge
+  material_type_slug: worktop_abs_edge
+  name: ABS Square Edge — Blat 38mm
+- slug: kronospan-slim-line-board
+  collection_slug: kronospan-slim-line
+  material_type_slug: worktop_slim
+  name: Slim Line — Płyta kompaktowa 12mm
+decors:
+- business_id: K110
+  name: Biały Korpusowy
+  group_name: WHITE CORPUS
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K101
+  name: Biały Frontowy
+  name_en: Front White
+  group_name: WHITE FRONT
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K8685
+  name: Biel Alpejska
+  name_en: Alpine White
+  group_name: WHITE FRONT
+  color_family_slug: bialy
+  ncs: S 0500-N
+  ral: '9016'
+  producer_slug: kronospan
+- business_id: K190
+  name: Czarny
+  name_en: Black
+  group_name: COLOR BASIC
+  color_family_slug: czarny
+  ncs: S 8502-B
+  ral: '9004'
+  pantone: Process Black C
+  producer_slug: kronospan
+- business_id: K164
+  name: Antracyt
+  name_en: Anthracite
+  group_name: COLOR BASIC
+  color_family_slug: szary
+  ncs: S 7502-G
+  ral: '7043'
+  producer_slug: kronospan
+- business_id: K7045
+  name: Szampański
+  name_en: Champagne
+  group_name: COLOR BASIC
+  color_family_slug: bezowy
+  pantone: 7527 C
+  producer_slug: kronospan
+- business_id: K523
+  name: Galaxus
+  group_name: COLOR BASIC
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K5981
+  name: Kaszmir
+  name_en: Cashmere
+  group_name: COLOR BASIC
+  color_family_slug: kremowy
+  producer_slug: kronospan
+- business_id: K0112
+  name: Jasny Szary
+  name_en: Light Grey
+  group_name: COLOR BASIC
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K553
+  name: Galaxus SU
+  group_name: COLOR SPECIAL
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K2738
+  name: Dąb Cremona Torro
+  name_en: Oak Cremona Torro
+  group_name: WOOD BASIC
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K9103
+  name: Dąb Jasny
+  name_en: Light Oak
+  group_name: WOOD BASIC
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K5307
+  name: Dąb Artisan
+  name_en: Artisan Oak
+  group_name: WOOD BASIC
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K3025
+  name: Dąb Vintage Jasny
+  name_en: Vintage Light Oak
+  group_name: WOOD BASIC
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K365
+  name: Dąb Coast Evoke
+  name_en: Coast Evoke Oak
+  group_name: WOOD FRONT
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K003
+  name: Dąb Craft Złoty
+  name_en: Craft Golden Oak
+  group_name: WOOD FRONT
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K091
+  name: Dąb Porterhouse Jasny
+  name_en: Porterhouse Light Oak
+  group_name: WOOD FRONT
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K092
+  name: Dąb Porterhouse Ciemny
+  name_en: Porterhouse Dark Oak
+  group_name: WOOD FRONT
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K203
+  name: Granit Antracyt
+  name_en: Anthracite Granite
+  group_name: CONTEMPO 1
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K023
+  name: Venato
+  name_en: Venato
+  group_name: CONTEMPO 1
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K212
+  name: Marmur Beżowy Royal
+  name_en: Royal Beige Marble
+  group_name: CONTEMPO 1
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K215
+  name: Białe Wydmy
+  name_en: White Dunes
+  group_name: CONTEMPO 1
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K367
+  name: Navona Kremowa
+  name_en: Cream Navona
+  group_name: CONTEMPO 1
+  color_family_slug: kremowy
+  producer_slug: kronospan
+- business_id: K368
+  name: Marmur Atlantycki Szary
+  name_en: Atlantic Grey Marble
+  group_name: CONTEMPO 1
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K749
+  name: Babylon Slate
+  name_en: Babylon Slate
+  group_name: XVIII SPECIAL
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K750
+  name: Agra Travertine
+  name_en: Agra Travertine
+  group_name: XVIII SPECIAL
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K594
+  name: Breccia Vivaldo
+  name_en: Breccia Vivaldo
+  group_name: XVIII SPECIAL
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K595
+  name: Pietra Belvedere
+  name_en: Pietra Belvedere
+  group_name: XVIII SPECIAL
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K551
+  name: Calacatta Olympus
+  name_en: Calacatta Olympus
+  group_name: XVIII SPECIAL
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K552
+  name: Biały Marmur Lodowy
+  name_en: White Marble Icy
+  group_name: XVIII SPECIAL
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: 868S
+  name: Biel Alpejska
+  name_en: Alpine White
+  group_name: XIV MAT 1
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: 0190
+  name: Czarny
+  name_en: Black
+  group_name: XIV MAT 1
+  color_family_slug: czarny
+  producer_slug: kronospan
+- business_id: '5527'
+  name: Dąb Kamienny
+  name_en: Stone Oak
+  group_name: XIV MAT 1
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: '7045'
+  name: Szampański
+  group_name: XIV MAT 1
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: '4298'
+  name: Jasny Atelier
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: '4299'
+  name: Ciemny Atelier
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K201
+  name: Beton Ciemnoszary
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K205
+  name: Beton Czarny
+  group_name: XV MAT 2
+  color_family_slug: czarny
+  producer_slug: kronospan
+- business_id: K207
+  name: Galaxy Szary
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K209
+  name: Wapiń Crema
+  group_name: XV MAT 2
+  color_family_slug: kremowy
+  producer_slug: kronospan
+- business_id: K210
+  name: Krzemień Czarny
+  group_name: XV MAT 2
+  color_family_slug: czarny
+  producer_slug: kronospan
+- business_id: K213
+  name: Tivoli Ciemne
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K214
+  name: Tivoli Jasne
+  group_name: XV MAT 2
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K217
+  name: Andromeda Biała
+  group_name: XVII HG 2
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K218
+  name: Andromeda Czarna
+  group_name: XVII HG 2
+  color_family_slug: czarny
+  producer_slug: kronospan
+- business_id: K698
+  name: Ciemny Brąz
+  group_name: XVIII SPECIAL
+  color_family_slug: brazowy
+  producer_slug: kronospan
+- business_id: K699
+  name: Calacatta Ambrosio
+  group_name: XVIII SPECIAL
+  color_family_slug: bialy
+  producer_slug: kronospan
+- business_id: K703
+  name: Portobello
+  group_name: XVIII SPECIAL
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K704
+  name: Piasek Perlino
+  group_name: XVIII SPECIAL
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K705
+  name: Piasek Stonehaven
+  group_name: XVIII SPECIAL
+  color_family_slug: bezowy
+  producer_slug: kronospan
+- business_id: K093
+  name: Marmur Szary Emperador
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K105
+  name: Dąb Endgrain Surowy
+  group_name: ABS
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K200
+  name: Beton Jasnoszary
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K349
+  name: Beton Jasny
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K350
+  name: Beton
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K351
+  name: Beton Rdzawy
+  group_name: ABS
+  color_family_slug: brazowy
+  producer_slug: kronospan
+- business_id: K352
+  name: Beton Ciemny
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+- business_id: K353
+  name: Beton Czarny
+  group_name: ABS
+  color_family_slug: czarny
+  producer_slug: kronospan
+- business_id: K535
+  name: Dąb Barokowy Złoty
+  group_name: ABS
+  color_family_slug: dab
+  producer_slug: kronospan
+- business_id: K538
+  name: Łupek Arosa Jasny
+  group_name: ABS
+  color_family_slug: lupek
+  producer_slug: kronospan
+- business_id: K539
+  name: Łupek Arosa Ciemny
+  group_name: ABS
+  color_family_slug: lupek
+  producer_slug: kronospan
+- business_id: K540
+  name: Albus Szary
+  group_name: ABS
+  color_family_slug: szary
+  producer_slug: kronospan
+variants:
+- business_id: K8685-CH-18-SM
+  decor_code: K8685
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  multi_structures: BS, PD, PW
+- business_id: K190-CH-18-PE
+  decor_code: K190
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  multi_structures: PD, PW
+- business_id: K523-CH-18-PE
+  decor_code: K523
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K8685-CH-12-SM
+  decor_code: K8685
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 12.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - carcass
+- business_id: K8685-CH-16-SM
+  decor_code: K8685
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 16.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+- business_id: 868S-PF-U-600
+  decor_code: 868S
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: 7045-PF-UU-900
+  decor_code: '7045'
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x900
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K349-ABS-635
+  decor_code: K349
+  material_slug: kronospan-abs-edge-board
+  structure_code: RT
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K749-SL-12
+  decor_code: K749
+  material_slug: kronospan-slim-line-board
+  structure_code: LV
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K551-SL-12
+  decor_code: K551
+  material_slug: kronospan-slim-line-board
+  structure_code: SU
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: 0190-SL-12
+  decor_code: 0190
+  material_slug: kronospan-slim-line-board
+  structure_code: SL
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+worktops:
+- variant_business_id: 868S-PF-U-600
+  construction_slug: postformed
+  profile_code: U
+  max_length_mm: 4100
+  available_widths_mm:
+  - 600
+  edge_material: Unoflex
+  edge_material_thickness_mm: 1.0
+  splashback_available: true
+  matching_board_available: true
+  pieces_per_pallet: 10
+  pallet_weight_kg: 620
+- variant_business_id: 7045-PF-UU-900
+  construction_slug: postformed
+  profile_code: U-U
+  max_length_mm: 4100
+  available_widths_mm:
+  - 900
+  - 1200
+  edge_material: Unoflex
+  edge_material_thickness_mm: 1.0
+  splashback_available: true
+  matching_board_available: true
+  pieces_per_pallet: 10
+  pallet_weight_kg: 946
+- variant_business_id: K349-ABS-635
+  construction_slug: abs_square_edge
+  profile_code: SQUARE
+  max_length_mm: 4100
+  available_widths_mm:
+  - 635
+  edge_material: ABS 1.5mm
+  edge_material_thickness_mm: 1.5
+  pieces_per_pallet: 10
+- variant_business_id: K749-SL-12
+  construction_slug: slim_line
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 650
+  edge_material: naturalna
+  core_color: Beżowy
+- variant_business_id: K551-SL-12
+  construction_slug: slim_line
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 650
+  edge_material: naturalna
+  core_color: Biały
+- variant_business_id: 0190-SL-12
+  construction_slug: slim_line
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 650
+  edge_material: naturalna
+  core_color: Czarny
+decor_structures:
+- decor_code: K110
+  structure_code: SM
+  is_primary: true
+- decor_code: K101
+  structure_code: PE
+  is_primary: true
+- decor_code: K101
+  structure_code: SE
+  is_primary: false
+- decor_code: K8685
+  structure_code: SM
+  is_primary: true
+- decor_code: K8685
+  structure_code: BS
+  is_primary: false
+- decor_code: K8685
+  structure_code: PD
+  is_primary: false
+- decor_code: K8685
+  structure_code: PW
+  is_primary: false
+- decor_code: K190
+  structure_code: PE
+  is_primary: true
+- decor_code: K190
+  structure_code: PD
+  is_primary: false
+- decor_code: K190
+  structure_code: PW
+  is_primary: false
+- decor_code: K164
+  structure_code: SM
+  is_primary: true
+- decor_code: K7045
+  structure_code: SM
+  is_primary: true
+- decor_code: K7045
+  structure_code: PW
+  is_primary: false
+- decor_code: K523
+  structure_code: PE
+  is_primary: true
+- decor_code: K5981
+  structure_code: SM
+  is_primary: true
+- decor_code: K0112
+  structure_code: SM
+  is_primary: true
+- decor_code: K553
+  structure_code: SU
+  is_primary: true
+- decor_code: K2738
+  structure_code: FP
+  is_primary: true
+- decor_code: K9103
+  structure_code: FP
+  is_primary: true
+- decor_code: K5307
+  structure_code: FP
+  is_primary: true
+- decor_code: K3025
+  structure_code: FP
+  is_primary: true
+- decor_code: K365
+  structure_code: FP
+  is_primary: true
+- decor_code: K003
+  structure_code: FP
+  is_primary: true
+- decor_code: K091
+  structure_code: FP
+  is_primary: true
+- decor_code: K092
+  structure_code: FP
+  is_primary: true
+- decor_code: K203
+  structure_code: PE
+  is_primary: true
+- decor_code: K023
+  structure_code: SU
+  is_primary: true
+- decor_code: K212
+  structure_code: PA
+  is_primary: true
+- decor_code: K215
+  structure_code: BS
+  is_primary: true
+- decor_code: K367
+  structure_code: PH
+  is_primary: true
+- decor_code: K368
+  structure_code: PH
+  is_primary: true
+- decor_code: K749
+  structure_code: LV
+  is_primary: true
+- decor_code: K750
+  structure_code: LV
+  is_primary: true
+- decor_code: K594
+  structure_code: SU
+  is_primary: true
+- decor_code: K595
+  structure_code: SU
+  is_primary: true
+- decor_code: K551
+  structure_code: SU
+  is_primary: true
+- decor_code: K552
+  structure_code: SU
+  is_primary: true
+- decor_code: 868S
+  structure_code: RS
+  is_primary: true
+- decor_code: 0190
+  structure_code: RS
+  is_primary: true
+- decor_code: '5527'
+  structure_code: FP
+  is_primary: true
+- decor_code: '7045'
+  structure_code: RS
+  is_primary: true
+- decor_code: '4298'
+  structure_code: UE
+  is_primary: true
+- decor_code: '4299'
+  structure_code: UE
+  is_primary: true
+- decor_code: K201
+  structure_code: RS
+  is_primary: true
+- decor_code: K205
+  structure_code: RS
+  is_primary: true
+- decor_code: K207
+  structure_code: RS
+  is_primary: true
+- decor_code: K209
+  structure_code: RS
+  is_primary: true
+- decor_code: K210
+  structure_code: PE
+  is_primary: true
+- decor_code: K213
+  structure_code: RS
+  is_primary: true
+- decor_code: K214
+  structure_code: RS
+  is_primary: true
+- decor_code: K217
+  structure_code: GG
+  is_primary: true
+- decor_code: K218
+  structure_code: GG
+  is_primary: true
+- decor_code: K698
+  structure_code: PN
+  is_primary: true
+- decor_code: K699
+  structure_code: PN
+  is_primary: true
+- decor_code: K703
+  structure_code: PN
+  is_primary: true
+- decor_code: K704
+  structure_code: PN
+  is_primary: true
+- decor_code: K705
+  structure_code: PN
+  is_primary: true
+- decor_code: K093
+  structure_code: SL
+  is_primary: true
+- decor_code: K105
+  structure_code: FP
+  is_primary: true
+- decor_code: K200
+  structure_code: RS
+  is_primary: true
+- decor_code: K349
+  structure_code: RT
+  is_primary: true
+- decor_code: K350
+  structure_code: RT
+  is_primary: true
+- decor_code: K351
+  structure_code: RT
+  is_primary: true
+- decor_code: K352
+  structure_code: RT
+  is_primary: true
+- decor_code: K353
+  structure_code: RT
+  is_primary: true
+- decor_code: K535
+  structure_code: RW
+  is_primary: true
+- decor_code: K538
+  structure_code: PN
+  is_primary: true
+- decor_code: K539
+  structure_code: PN
+  is_primary: true
+- decor_code: K540
+  structure_code: PN
+  is_primary: true
+pairings:
+- front_decor_code: K8685
+  target_decor_code: 868S
+  pairing_type: worktop
+  match_type: exact
+  priority: 1
+- front_decor_code: K8685
+  target_decor_code: K523
+  pairing_type: acrylic
+  match_type: close
+  priority: 2
+- front_decor_code: K190
+  target_decor_code: 0190
+  pairing_type: worktop
+  match_type: exact
+  priority: 1
+- front_decor_code: K190
+  target_decor_code: '7045'
+  pairing_type: worktop
+  match_type: close
+  priority: 2
+- front_decor_code: K190
+  target_decor_code: K523
+  pairing_type: hpl_laminate
+  match_type: close
+  priority: 2
+availability:
+- variant_business_id: K8685-CH-18-SM
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K190-CH-18-PE
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K8685-CH-12-SM
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K8685-CH-16-SM
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: 868S-PF-U-600
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: 7045-PF-UU-900
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K749-SL-12
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K349-ABS-635
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K8685-CH-18-SM
+  channel: konfekcja
+  available: true
+  min_order_qty: 1
+- variant_business_id: K190-CH-18-PE
+  channel: konfekcja
+  available: true
+  min_order_qty: 1
+- variant_business_id: K8685-CH-12-SM
+  channel: konfekcja
+  available: true
+  min_order_qty: 1
+property_flags:
+- variant_business_id: K749-SL-12
+  property: waterproof
+  value: true
+  source: catalog_page
+- variant_business_id: K551-SL-12
+  property: waterproof
+  value: true
+  source: catalog_page
+- variant_business_id: 0190-SL-12
+  property: waterproof
+  value: true
+  source: catalog_page
+- variant_business_id: K8685-CH-18-SM
+  property: scratch_resistant
+  value: true
+  source: datasheet
+- variant_business_id: K190-CH-18-PE
+  property: scratch_resistant
+  value: true
+  source: datasheet
+- variant_business_id: K8685-CH-18-SM
+  property: uv_stable
+  value: true
+  source: datasheet
+- variant_business_id: 868S-PF-U-600
+  property: scratch_resistant
+  value: true
+  source: datasheet
+- variant_business_id: K749-SL-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: K551-SL-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: 0190-SL-12
+  property: antibacterial
+  value: true
+  source: datasheet

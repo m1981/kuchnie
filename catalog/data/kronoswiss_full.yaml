@@ -1,0 +1,806 @@
+producers:
+- slug: swiss_krono
+  name: Swiss Krono
+  country: Szwajcaria
+  website: swisskrono.pl
+structures:
+- code: SE
+  name: Drewno Jesionu
+  name_en: Ash Structure
+  type: wood_grain
+  finish: structured
+  synchronized_texture: true
+  producer_slug: swiss_krono
+- code: OV
+  name: One Vision
+  name_en: One Vision
+  type: wood_grain
+  finish: structured
+  synchronized_texture: true
+  producer_slug: swiss_krono
+- code: SD
+  name: Synchro Dąb
+  name_en: Synchro Oak
+  type: wood_grain
+  finish: structured
+  synchronized_texture: true
+  producer_slug: swiss_krono
+- code: SW
+  name: Synchro Wiąz
+  name_en: Synchro Elm
+  type: wood_grain
+  finish: structured
+  synchronized_texture: true
+  producer_slug: swiss_krono
+- code: CL
+  name: Synchro Lambrusco
+  name_en: Synchro Lambrusco
+  type: wood_grain
+  finish: structured
+  synchronized_texture: true
+  producer_slug: swiss_krono
+- code: MX
+  name: Matrix
+  name_en: Matrix
+  type: structured
+  finish: matt
+  producer_slug: swiss_krono
+- code: SM
+  name: Gładka
+  name_en: Smooth
+  type: smooth
+  finish: matt
+  producer_slug: swiss_krono
+- code: VL
+  name: Mat
+  name_en: Mat
+  type: smooth
+  finish: matt
+  producer_slug: swiss_krono
+- code: BS
+  name: Biurowa
+  name_en: Office Surface
+  type: structured
+  finish: matt
+  producer_slug: swiss_krono
+- code: TO
+  name: Touch One
+  name_en: Touch One
+  type: structured
+  finish: matt
+  fingerprint_resistant: true
+  producer_slug: swiss_krono
+- code: OW
+  name: One Wood
+  name_en: One Wood
+  type: wood_grain
+  finish: structured
+  producer_slug: swiss_krono
+- code: PE
+  name: Perlista
+  name_en: Pearl Like
+  type: structured
+  finish: gloss
+  producer_slug: swiss_krono
+- code: SQ
+  name: Połysk
+  name_en: Gloss
+  type: smooth
+  finish: gloss
+  producer_slug: swiss_krono
+- code: BL
+  name: Blacha
+  name_en: Plate
+  type: metal
+  finish: structured
+  producer_slug: swiss_krono
+- code: BT
+  name: Beton
+  name_en: Concrete
+  type: stone
+  finish: matt
+  producer_slug: swiss_krono
+- code: KM
+  name: Kamienna
+  name_en: Stone
+  type: stone
+  finish: structured
+  producer_slug: swiss_krono
+- code: LP
+  name: Łupek
+  name_en: Shale
+  type: stone
+  finish: structured
+  producer_slug: swiss_krono
+- code: SK
+  name: Skalna
+  name_en: Rock
+  type: stone
+  finish: structured
+  producer_slug: swiss_krono
+- code: IS
+  name: Italian Stone
+  name_en: Italian Stone
+  type: stone
+  finish: structured
+  producer_slug: swiss_krono
+- code: NA
+  name: Naturalne drewno
+  name_en: Natural Wood
+  type: wood_grain
+  finish: structured
+  producer_slug: swiss_krono
+- code: SA
+  name: Sandstone
+  name_en: Sandstone
+  type: stone
+  finish: structured
+  producer_slug: swiss_krono
+- code: BZ
+  name: Bazaltowa
+  name_en: Basalt
+  type: stone
+  finish: matt
+  producer_slug: swiss_krono
+- code: PR
+  name: Pory rustykalne
+  name_en: Rustic Pores
+  type: wood_grain
+  finish: structured
+  producer_slug: swiss_krono
+collections:
+- slug: swiss-laminated
+  producer_slug: swiss_krono
+  name: Płyty Laminowane 2025
+  source_pdf: SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf
+  has_edgebanding: true
+  has_express: true
+- slug: swiss-worktops
+  producer_slug: swiss_krono
+  name: Blaty Kuchenne 2025
+  source_pdf: SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf
+  has_countertops: true
+  has_express: true
+- slug: swiss-blackwood
+  producer_slug: swiss_krono
+  name: BLACK WOOD Worktops
+  source_pdf: SWISSKRONO_PL-Catalogue-Laminated-boards-and-Worktops-2025_PL_EN.pdf
+  has_countertops: true
+materials:
+- slug: swiss-chipboard
+  collection_slug: swiss-laminated
+  material_type_slug: chipboard
+  name: Swiss Krono — Płyta wiórowa laminowana
+  sidedness: two_sided_same
+  has_express: true
+- slug: swiss-postformed
+  collection_slug: swiss-worktops
+  material_type_slug: worktop_postformed
+  name: Swiss Krono — Blat Post-formed 38mm
+- slug: swiss-blackwood-board
+  collection_slug: swiss-blackwood
+  material_type_slug: worktop_slim
+  name: BLACK WOOD — HPL na rdzeniu 12mm
+decors:
+- business_id: U164
+  name: Antracyt
+  name_en: Anthracite
+  group_name: Unikolory
+  color_family_slug: czarny
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U190
+  name: Czarny
+  name_en: Black
+  group_name: Unikolory
+  color_family_slug: czarny
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U112
+  name: Popiel
+  name_en: Grey
+  group_name: Unikolory
+  color_family_slug: szary
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U570
+  name: Biała Porcelana
+  name_en: White Porcelain
+  group_name: Unikolory
+  color_family_slug: bialy
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U8685
+  name: Biel Alpejska
+  name_en: Alpine White
+  group_name: Unikolory
+  color_family_slug: bialy
+  producer_slug: swiss_krono
+- business_id: U119
+  name: Beż Jasły
+  name_en: Light Beige
+  group_name: Unikolory
+  color_family_slug: bezowy
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U6933
+  name: Kaszmirowy
+  name_en: Cashmere
+  group_name: Unikolory
+  color_family_slug: kremowy
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U10030
+  name: Aloesowy
+  name_en: Aloe Green
+  group_name: Unikolory
+  color_family_slug: zielony
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: U4809
+  name: Morski
+  name_en: Granit Grey
+  group_name: Unikolory
+  color_family_slug: szary
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D9103
+  name: Dąb Jasny
+  name_en: Light Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3025
+  name: Dąb Sonoma
+  name_en: Sonoma Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D4225
+  name: Dąb Artisan
+  name_en: Artisan Oak Yellow
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D4428
+  name: Dąb Naturalny
+  name_en: Oak Natural
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D20110
+  name: Dąb Nostalgiczny
+  name_en: Soul Oak Natural
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D20230
+  name: Dąb Letni
+  name_en: Grace Oak Natural
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D3823
+  name: Dąb Nowy Jork
+  name_en: New York Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D3314
+  name: Dąb Giovanni
+  name_en: Giovanni Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3316
+  name: Dąb Helsinki
+  name_en: Helsinki Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3801
+  name: Dąb Madryt
+  name_en: Madrid Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3798
+  name: Dąb Londyn
+  name_en: London Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3800
+  name: Dąb Rzym
+  name_en: Rome Oak
+  group_name: Drewnopodobne
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: D3806
+  name: Buk Bordeaux
+  name_en: Bordeaux Beech
+  group_name: Drewnopodobne
+  color_family_slug: buk
+  producer_slug: swiss_krono
+- business_id: D3193
+  name: Wiąz Amsterdam
+  name_en: Amsterdam Elm
+  group_name: Drewnopodobne
+  color_family_slug: wiaz
+  producer_slug: swiss_krono
+  discontinued: true
+- business_id: D3194
+  name: Wiąz Allegro
+  name_en: Allegro Elm
+  group_name: Drewnopodobne
+  color_family_slug: wiaz
+  producer_slug: swiss_krono
+  discontinued: true
+- business_id: D722
+  name: Orzech
+  name_en: Walnut
+  group_name: Drewnopodobne
+  color_family_slug: orzech
+  producer_slug: swiss_krono
+- business_id: D3813
+  name: Orzech Barcelona
+  name_en: Barcelona Walnut
+  group_name: Drewnopodobne
+  color_family_slug: orzech
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D4822
+  name: Orzech Ambasador
+  name_en: Walnut Ambassador
+  group_name: Drewnopodobne
+  color_family_slug: orzech
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D3158
+  name: Jesion Werona
+  name_en: Verona Ash
+  group_name: Drewnopodobne
+  color_family_slug: jesion
+  producer_slug: swiss_krono
+- business_id: D4426
+  name: Jesion Jasny
+  name_en: Ash White
+  group_name: Drewnopodobne
+  color_family_slug: jesion
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D30090
+  name: Beton Szary
+  name_en: Cloudy Grey
+  group_name: Dekory fantazyjne
+  color_family_slug: szary
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D3274
+  name: Beton
+  name_en: Concrete
+  group_name: Dekory fantazyjne
+  color_family_slug: szary
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D1038
+  name: Beton Millennium
+  name_en: Millennium Concrete
+  group_name: Dekory fantazyjne
+  color_family_slug: szary
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D4448
+  name: Marmur Crema
+  name_en: Marmo Romeo White
+  group_name: Dekory fantazyjne
+  color_family_slug: marmur
+  one_global: true
+  producer_slug: swiss_krono
+- business_id: D1861
+  name: Akacja Księżycowa
+  name_en: Moon Acacia
+  group_name: Dekory fantazyjne
+  color_family_slug: brzoza
+  producer_slug: swiss_krono
+- business_id: D4878
+  name: Wytrawny Szary Kamień
+  name_en: Sophisticated Grey Rock
+  group_name: Dekory fantazyjne
+  color_family_slug: szary
+  producer_slug: swiss_krono
+- business_id: D70060
+  name: Terrazzo Fresco
+  name_en: Terrazzo Fresh
+  group_name: Dekory fantazyjne
+  color_family_slug: kremowy
+  one_global: true
+  new_2024: true
+  producer_slug: swiss_krono
+- business_id: D4033
+  name: Dąb Słoneczny
+  name_en: Solar Oak
+  group_name: BLACK WOOD
+  color_family_slug: dab
+  producer_slug: swiss_krono
+- business_id: K101
+  name: Biały
+  name_en: White
+  group_name: Postformed
+  color_family_slug: bialy
+  producer_slug: swiss_krono
+- business_id: D70601
+  name: Calacatta Oro
+  name_en: Calacatta Oro
+  group_name: Postformed
+  color_family_slug: bialy
+  new_2024: true
+  producer_slug: swiss_krono
+- business_id: D60664
+  name: Dąb Jesienny
+  name_en: Autumn Oak
+  group_name: Postformed
+  color_family_slug: dab
+  new_2024: true
+  producer_slug: swiss_krono
+variants:
+- business_id: U190-CH-18-VL
+  decor_code: U190
+  material_slug: swiss-chipboard
+  structure_code: VL
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: U190-BW-12
+  decor_code: U190
+  material_slug: swiss-blackwood-board
+  structure_code: KM
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x1315
+  roles:
+  - worktop
+- business_id: D3274-BW-12
+  decor_code: D3274
+  material_slug: swiss-blackwood-board
+  structure_code: VL
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x1315
+  roles:
+  - worktop
+- business_id: D3314-CH-18-SD
+  decor_code: D3314
+  material_slug: swiss-chipboard
+  structure_code: SD
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+- business_id: D3801-CH-18-CL
+  decor_code: D3801
+  material_slug: swiss-chipboard
+  structure_code: CL
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+- business_id: D3806-BW-12
+  decor_code: D3806
+  material_slug: swiss-blackwood-board
+  structure_code: OW
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x1315
+  roles:
+  - worktop
+- business_id: U164-CH-18-VL
+  decor_code: U164
+  material_slug: swiss-chipboard
+  structure_code: VL
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+- business_id: K101-PF-R3-600
+  decor_code: K101
+  material_slug: swiss-postformed
+  structure_code: KM
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+- business_id: D4878-BW-12
+  decor_code: D4878
+  material_slug: swiss-blackwood-board
+  structure_code: VL
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x1315
+  roles:
+  - worktop
+- business_id: D70601-PF-R3-600
+  decor_code: D70601
+  material_slug: swiss-postformed
+  structure_code: SM
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+worktops:
+- variant_business_id: U190-BW-12
+  construction_slug: black_wood
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 1315
+  edge_material: naturalna
+  pieces_per_pallet: 20
+  pallet_weight_kg: 1200
+- variant_business_id: D3274-BW-12
+  construction_slug: black_wood
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 1315
+  edge_material: naturalna
+  pieces_per_pallet: 20
+- variant_business_id: D3806-BW-12
+  construction_slug: black_wood
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 1315
+  edge_material: naturalna
+  pieces_per_pallet: 20
+- variant_business_id: D4878-BW-12
+  construction_slug: black_wood
+  profile_code: NATURAL
+  max_length_mm: 4100
+  available_widths_mm:
+  - 1315
+  edge_material: naturalna
+  pieces_per_pallet: 20
+- variant_business_id: K101-PF-R3-600
+  construction_slug: postformed
+  profile_code: R3
+  max_length_mm: 4100
+  available_widths_mm:
+  - 600
+  edge_material: HPL
+  pieces_per_pallet: 10
+- variant_business_id: D70601-PF-R3-600
+  construction_slug: postformed
+  profile_code: R3
+  max_length_mm: 4100
+  available_widths_mm:
+  - 600
+  edge_material: HPL
+  pieces_per_pallet: 10
+decor_structures:
+- decor_code: U164
+  structure_code: VL
+  is_primary: true
+- decor_code: U190
+  structure_code: VL
+  is_primary: true
+- decor_code: U112
+  structure_code: PE
+  is_primary: true
+- decor_code: U570
+  structure_code: SM
+  is_primary: true
+- decor_code: U8685
+  structure_code: SM
+  is_primary: true
+- decor_code: U119
+  structure_code: VL
+  is_primary: true
+- decor_code: U6933
+  structure_code: VL
+  is_primary: true
+- decor_code: U10030
+  structure_code: VL
+  is_primary: true
+- decor_code: U4809
+  structure_code: VL
+  is_primary: true
+- decor_code: D9103
+  structure_code: OW
+  is_primary: true
+- decor_code: D3025
+  structure_code: OW
+  is_primary: true
+- decor_code: D4225
+  structure_code: OV
+  is_primary: true
+- decor_code: D4428
+  structure_code: OV
+  is_primary: true
+- decor_code: D20110
+  structure_code: OV
+  is_primary: true
+- decor_code: D20230
+  structure_code: OV
+  is_primary: true
+- decor_code: D3823
+  structure_code: OW
+  is_primary: true
+- decor_code: D3314
+  structure_code: SD
+  is_primary: true
+- decor_code: D3316
+  structure_code: SD
+  is_primary: true
+- decor_code: D3801
+  structure_code: CL
+  is_primary: true
+- decor_code: D3798
+  structure_code: CL
+  is_primary: true
+- decor_code: D3800
+  structure_code: CL
+  is_primary: true
+- decor_code: D3806
+  structure_code: OW
+  is_primary: true
+- decor_code: D3193
+  structure_code: SW
+  is_primary: true
+- decor_code: D3194
+  structure_code: SW
+  is_primary: true
+- decor_code: D722
+  structure_code: SE
+  is_primary: true
+- decor_code: D3813
+  structure_code: OW
+  is_primary: true
+- decor_code: D4822
+  structure_code: OV
+  is_primary: true
+- decor_code: D3158
+  structure_code: MX
+  is_primary: true
+- decor_code: D4426
+  structure_code: OV
+  is_primary: true
+- decor_code: D30090
+  structure_code: TO
+  is_primary: true
+- decor_code: D3274
+  structure_code: BS
+  is_primary: true
+- decor_code: D1038
+  structure_code: BS
+  is_primary: true
+- decor_code: D4448
+  structure_code: VL
+  is_primary: true
+- decor_code: D1861
+  structure_code: MX
+  is_primary: true
+- decor_code: D4878
+  structure_code: VL
+  is_primary: true
+- decor_code: D70060
+  structure_code: TO
+  is_primary: true
+- decor_code: D4033
+  structure_code: OW
+  is_primary: true
+- decor_code: K101
+  structure_code: PE
+  is_primary: true
+- decor_code: D70601
+  structure_code: SM
+  is_primary: true
+- decor_code: D60664
+  structure_code: OW
+  is_primary: true
+pairings:
+- front_decor_code: U190
+  target_decor_code: U190
+  pairing_type: black_wood
+  match_type: exact
+  priority: 1
+  notes: Same decor, different material (board → BLACK WOOD worktop)
+- front_decor_code: D3274
+  target_decor_code: D3274
+  pairing_type: black_wood
+  match_type: exact
+  priority: 1
+- front_decor_code: U190
+  target_decor_code: U190
+  pairing_type: hpl_laminate
+  match_type: exact
+  priority: 1
+- front_decor_code: U190
+  target_decor_code: K101
+  pairing_type: worktop
+  match_type: close
+  priority: 2
+  notes: Contrasting white worktop for black carcass
+availability:
+- variant_business_id: U190-CH-18-VL
+  channel: standard
+  available: true
+  warehouse: Żary
+  lead_time: 7d
+- variant_business_id: U190-BW-12
+  channel: standard
+  available: true
+  warehouse: Żary
+  lead_time: 7d
+- variant_business_id: D3314-CH-18-SD
+  channel: standard
+  available: true
+  warehouse: Żary
+  lead_time: 7d
+- variant_business_id: D3801-CH-18-CL
+  channel: standard
+  available: true
+  warehouse: Żary
+  lead_time: 7d
+- variant_business_id: K101-PF-R3-600
+  channel: standard
+  available: true
+  warehouse: Żary
+  lead_time: 7d
+property_flags:
+- variant_business_id: U190-BW-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: U190-BW-12
+  property: waterproof
+  value: true
+  source: datasheet
+- variant_business_id: U190-BW-12
+  property: fire_resistant
+  value: true
+  source: datasheet
+  notes: D-s1,d0 (trudnopalny)
+- variant_business_id: D3274-BW-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: D3274-BW-12
+  property: waterproof
+  value: true
+  source: datasheet
+- variant_business_id: D3806-BW-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: D4878-BW-12
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: U190-CH-18-VL
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: D3314-CH-18-SD
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: D3801-CH-18-CL
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: K101-PF-R3-600
+  property: antibacterial
+  value: true
+  source: datasheet
+- variant_business_id: D70601-PF-R3-600
+  property: antibacterial
+  value: true
+  source: datasheet

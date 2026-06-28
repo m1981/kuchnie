@@ -45,7 +45,7 @@ CREATE TABLE material_types (
 
 CREATE TABLE structures (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    code            TEXT NOT NULL UNIQUE,              -- 'SM', 'PE', 'AG', 'RS', 'ST9'
+    code            TEXT NOT NULL,                     -- 'SM', 'PE', 'AG', 'RS', 'ST9'
     name            TEXT NOT NULL,                     -- 'Super Mat', 'Pearl Effect'
     type            TEXT,                              -- 'smooth', 'wood_grain', 'stone', 'metal'
     finish          TEXT,                              -- 'matt', 'silk_matt', 'gloss', 'structured'
