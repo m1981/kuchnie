@@ -21,6 +21,7 @@ ARCHITECTURE_DIR = (
 SCHEMA_FILES = [
     "01-schema.sql",
     "02-phase1-worktop-specs.sql",
+    "03-phase2-decor-structures-and-pairings.sql",
 ]
 
 
@@ -101,9 +102,21 @@ def db_with_kronospan(db: sqlite3.Connection) -> sqlite3.Connection:
     )
 
     # Structures (producer-scoped to avoid clashes with KronoSwiss SM)
+    # SM = Super Mat (primary for K8685), BS = Black Structure,
+    # PE = Pearl Effect (primary for K190), RS = Rustykalna
     cur.execute(
         "INSERT INTO structures (code, name, type, finish, producer_id) "
         "VALUES ('SM', 'Super Mat', 'smooth', 'matt', ?)",
+        (producer_id,),
+    )
+    cur.execute(
+        "INSERT INTO structures (code, name, type, finish, producer_id) "
+        "VALUES ('BS', 'Black Structure', 'structured', 'matt', ?)",
+        (producer_id,),
+    )
+    cur.execute(
+        "INSERT INTO structures (code, name, type, finish, producer_id) "
+        "VALUES ('PE', 'Pearl Effect', 'structured', 'gloss', ?)",
         (producer_id,),
     )
     cur.execute(
@@ -121,6 +134,11 @@ def db_with_kronospan(db: sqlite3.Connection) -> sqlite3.Connection:
     cur.execute(
         "INSERT INTO decors (business_id, producer_id, name, group_name) "
         "VALUES ('868S', ?, 'Biel Alpejska', 'XIV MAT 1')",
+        (producer_id,),
+    )
+    cur.execute(
+        "INSERT INTO decors (business_id, producer_id, name, group_name) "
+        "VALUES ('K190', ?, 'Czarny', 'COLOR BASIC')",
         (producer_id,),
     )
 
