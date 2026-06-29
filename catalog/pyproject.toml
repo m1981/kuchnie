@@ -1,0 +1,29 @@
+[project]
+name = "kuchnie-catalog-api"
+version = "0.1.0"
+description = "FastAPI catalog API for kuchnie material database"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pyyaml>=6,<7",
+    "pydantic>=2,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<9",
+    "httpx>=0.27,<1",
+    "pytest-asyncio>=0.24,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["api", "db", "models", "repositories", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".."]

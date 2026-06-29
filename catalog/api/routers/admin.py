@@ -5,12 +5,49 @@ from __future__ import annotations
 import json
 import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
 from catalog.api.deps import get_db
 from catalog.models.domain import StatsOut
+
+_PUBLIC_DIR = Path(__file__).parent.parent.parent / "public"
+
+
+def _find_img(producer: str, business_id: str, stored_img: str | None) -> str:
+    """Find image filename for a decor.
+
+    Tries:
+      1. Stored img field (from YAML/DB)
+      2. {business_id}.jpg  (e.g. K8685.jpg)
+      3. {business_id with leading zero}.jpg  (e.g. K08685.jpg)
+      4. Padded to 5 chars: K0112.jpg for K112
+    """
+    if stored_img:
+        return stored_img
+
+    img_dir = _PUBLIC_DIR / producer / "img"
+    if not img_dir.exists():
+        return ""
+
+    # Try exact match
+    for ext in (".jpg", ".png", ".webp"):
+        if (img_dir / f"{business_id}{ext}").exists():
+            return f"{business_id}{ext}"
+
+    # Try with leading zero (K112 → K0112)
+    if business_id and business_id[0].isalpha() and business_id[1:].isdigit():
+        letter = business_id[0]
+        num = int(business_id[1:])
+        for width in (5, 4, 3):
+            padded = f"{letter}{num:0{width}d}"
+            for ext in (".jpg", ".png", ".webp"):
+                if (img_dir / f"{padded}{ext}").exists():
+                    return f"{padded}{ext}"
+
+    return ""
 
 router = APIRouter(tags=["admin"])
 
@@ -213,7 +250,7 @@ def get_full_catalog(
                 "ncs": drow["ncs"] or "",
                 "ral": drow["ral"] or "",
                 "pantone": drow["pantone"] or "",
-                "img": drow["img"] or "",
+                "img": _find_img(pslug, drow["business_id"], drow["img"]),
                 "tags": tags,
                 "one_global": bool(drow["one_global"]),
                 "new_2024": bool(drow["new_2024"]),
