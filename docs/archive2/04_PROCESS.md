@@ -1,10 +1,41 @@
 # Solo Dev Working Method — Anti-Drift Process for an LLM-Augmented Workflow
 
-> **Purpose:** Keep one developer + multiple LLM sessions from drifting on a multi-app kitchen-design system. Every feature must have a single entry point that an LLM agent can find in ≤ 2 hops.
+> **Purpose:** Keep one developer + multiple LLM sessions from drifting on a multi-subsystem kitchen-design system. Every feature must have a single entry point that an LLM agent can find in ≤ 2 hops.
 >
-> **Companion docs:** `01_architecture.md` (plugin internals), `02_pattern_analysis.md` (CAD comparison), `03_implementation_placement.md` (where each pattern lives).
+> **Companion docs:** `00_README.md` (system overview), `01_DECISIONS.md` (architectural decisions), `05_PATTERN_GOLD.md` (CAD/CAM patterns), `06_AUDIT_EVIDENCE.md` (cold-execution evidence base for `01_DECISIONS.md`).
 >
 > **Reading time:** 15 minutes. **Setup time:** 1 day. **Payoff:** every feature thereafter.
+
+---
+
+## 0. MANDATORY Pre-Planning Checklist (added 2026-06-29)
+
+**Before any architectural diagram, spec, or feature plan, the LLM session MUST execute the following. Three audit misses in this project's history (see `06_AUDIT_EVIDENCE.md`) were all caused by skipping this.**
+
+```
+1. ls $PROJECT_ROOT
+2. For each sibling directory, count Python LOC:
+     find $DIR -name '*.py' -not -path '*/.venv/*' -not -path '*/__pycache__/*' \
+       -not -path '*/node_modules/*' | xargs wc -l | tail -1
+3. For every dir > 1000 LOC:
+     a. pysum $DIR > /tmp/audit/${dir}_pysum.md
+     b. py-diagram $DIR --format token --skip __pycache__ tests > /tmp/audit/${dir}_diagram.txt
+     c. head -40 $DIR/README.md  (if present)
+     d. grep -E '^class (Cabinet|Material|Panel|Recipe|Kitchen|Decor)' $DIR -r
+     e. Note the import direction with the rest of the system:
+          grep -rln 'from kuchnie_core\|from kitchen_cad\|from kitchen_plugin\|from compositor' $DIR
+4. The phrases "I assume this is empty", "external", "out of scope",
+   "scaffolding only" are FORBIDDEN without evidence from step 3.
+5. No planning artifact (architecture diagram, spec, ADR, roadmap) may be
+   written until steps 1-3 have been completed and documented in the chat.
+```
+
+**Why this is mandatory.** Directory names are unreliable signals:
+- `kitchen-plugin/` is NOT a Blender addon — it's a 10K-LOC standalone Python project. (Audit miss #1.)
+- `krono-compositor-mvp/` was missed entirely until specifically queried. (Audit miss #2.)
+- `catalog/`, `kitchen-app/`, `kitchen-cad/` all looked like "empty scaffolding" — they have 6–8K LOC each. (Audit miss #3.)
+
+If you violate this rule and produce a planning artifact, that artifact is **automatically wrong** and must be discarded.
 
 ---
 
@@ -75,7 +106,10 @@ Each app is a **bounded context**. Inside, words have one meaning. Across bounda
 | **Domain Core** | `src/kuchnie_core/` | Kitchen, Row, CabinetInstance, ConstructionMethod, Recipe, Panel, SubAssembly | **Core** ← your competitive advantage |
 | **CAD / Manufacturing** | `kitchen-cad/` | Panel, DrillPoint, EdgeBand, CutPiece, MachiningFeature | **Core** (CSV/DXF for Polish CNC = no SaaS for this) |
 | **Web Configurator** | `kitchen-app/` | Project, CabinetUI, RowUI, BOM, CostEstimate | **Supporting** (necessary but commoditized — Reflex is fine) |
-| **Render Adapter + Plugin** | `home_builder_5/` + thin Python wrapper | Scene, WallPlacement, Texture, Material visualization | **Supporting** (renderer is bought — Blender does the work) |
+| **3D Engineering Render** | `kitchen-plugin/` | Cabinet (placement), Wall, Room, Layout, CabinetGeometry, ManifestValidator | **Supporting** (Blender does the work; we own the scene setup) |
+| **2.5D Live Render** | `krono-compositor-mvp/` | SceneCompositor, ZoneConfig, Pass | **Core** (real-time decor swap is the killer feature for UC1) |
+
+> `home_builder_5/` is **external** — a sibling community-maintained Blender addon, GPL-licensed, **not in v1.0 scope**. See note at the end of § 0.
 
 ### Why this classification matters for a solo dev
 
@@ -131,8 +165,9 @@ Each app is a **bounded context**. Inside, words have one meaning. Across bounda
 | Catalog → Core | **Published Language** | Catalog publishes stable decor/edge IDs. Core never modifies catalog data. |
 | Core → CAD | **Customer/Supplier (Conformist)** | CAD accepts core's model as-is. No translation. |
 | Core → Web | **Customer/Supplier (Conformist)** | Web accepts core's model as-is. UI types wrap, don't redefine. |
-| Core → Render | **Anti-Corruption Layer (ACL)** | Adapter translates core model → plugin's `kitchen_config.yaml`. Plugin is upstream legacy — protect core from it. |
-| Web ↔ Web/Backend | **Shared Kernel** (you only) | Same Python process, shared types. |
+| Core → 3D Render | **Customer/Supplier** | kitchen-plugin imports `kuchnie_core.Cabinet`/`Layout`, builds bpy scene from them. |
+| Core → 2.5D Render | **Adapter** | `kuchnie_core.render.composite()` POSTs to compositor's FastAPI; subprocess for the offline bake. |
+| Web ↔ Core | **Shared Kernel** (you only) | Same Python process, shared types via `kuchnie_core`. |
 
 ---
 
