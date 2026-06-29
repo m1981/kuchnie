@@ -22,8 +22,9 @@ def _find_img(producer: str, business_id: str, stored_img: str | None) -> str:
     Tries:
       1. Stored img field (from YAML/DB)
       2. {business_id}.jpg  (e.g. K8685.jpg)
-      3. {business_id with leading zero}.jpg  (e.g. K08685.jpg)
-      4. Padded to 5 chars: K0112.jpg for K112
+      3. With K/D/U prefix (0190 → K0190)
+      4. With leading zeros (K112 → K0112)
+      5. Scan filesystem for partial match
     """
     if stored_img:
         return stored_img
@@ -37,6 +38,13 @@ def _find_img(producer: str, business_id: str, stored_img: str | None) -> str:
         if (img_dir / f"{business_id}{ext}").exists():
             return f"{business_id}{ext}"
 
+    # Try with K/D/U prefix (0190 → K0190, 7045 → K7045)
+    if business_id and business_id[0].isdigit():
+        for prefix in ("K", "D", "U"):
+            for ext in (".jpg", ".png", ".webp"):
+                if (img_dir / f"{prefix}{business_id}{ext}").exists():
+                    return f"{prefix}{business_id}{ext}"
+
     # Try with leading zero (K112 → K0112)
     if business_id and business_id[0].isalpha() and business_id[1:].isdigit():
         letter = business_id[0]
@@ -46,6 +54,21 @@ def _find_img(producer: str, business_id: str, stored_img: str | None) -> str:
             for ext in (".jpg", ".png", ".webp"):
                 if (img_dir / f"{padded}{ext}").exists():
                     return f"{padded}{ext}"
+
+    # Scan filesystem for partial match (e.g. decor K091 → find K0091.jpg)
+    for f in img_dir.iterdir():
+        if not f.is_file():
+            continue
+        stem = f.stem.upper()
+        bid = business_id.upper()
+        # Direct contains match
+        if bid in stem or stem in bid:
+            return f.name
+        # Numeric match: extract digits from both
+        bid_digits = ''.join(c for c in bid if c.isdigit())
+        stem_digits = ''.join(c for c in stem if c.isdigit())
+        if bid_digits and stem_digits and bid_digits == stem_digits:
+            return f.name
 
     return ""
 
