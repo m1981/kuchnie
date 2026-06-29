@@ -1,36 +1,42 @@
 Please analzye my use cases and help me rethink scope and boundaries and in/out
 based on feateure and best workflow patterns from Polyboard, PRO100, Winner Flex, TopSolid'Wood, PaletteCAD.
 
+## krono-compositor-mvp (works, need refinemnt)
+1. The first visit app can be disconnected from the system and I can manage decors separately to the catalog app right now. 
+2. it is inteded to choose decors matching
+3. To help customer choose the initial material I open web app 
+4. A few predefined 2.5D kitchen layouts popup I, L, U 
+5. I chose one 
+6. I have a sidebar where I can change decors for ground cabinets, tall cabinets, wall cabinets, counter top, and splashback. Thats all. 
+7. System is connection with backend to provide me 2.5D high quality image 
+8. The output from First visit is not complicated just few decors I have to note. Thats it. 
 
-1. The first visit app can be disconnected from the system and I can manage decors separately to the catalog app right now.
-
-2.  The output from First visit is not complicated just few decors I have to note. Thats it. 
-
-3. Easy kitchen cost estimation and BOM was my  
+## kitchen-app (works, need refinemnt)
+9. Next Easy kitchen cost estimation and BOM was my  
 idea to help user take smarter expensive decision. 
-4. Drawers are costly more than simple cabinets. 
-5. Corner cabinet can be cheeper or  expensive. 
-6. Egger boards are more expensive than KronoSwiss.
-7. So  I thought system could roughly generate BOM with costs estimation.  
+10. Drawers are costly more than simple cabinets. 
+11. Corner cabinet can be cheeper or  expensive. 
+12. Egger boards are more expensive than KronoSwiss. 
+13. So  I thought system could roughly generate BOM with costs estimation.  
 
-8. When customer settles on core decisions I move to the next stage. 
-9. I have to layout kitchen and add all cabinets to match space constraints and customer decisions,
-10. Add table tops with proper locks,
-11.  add handles, 
-12. add splash back 
-13. it all affects renders.
-14. then I will generate renders for approval.
+## kitchen_plugin proof of concept and new discovery  home_builder_5
+14. When customer settles on core decisions I move to the next stage. 
+15. I have to layout kitchen and add all cabinets to match space constraints and customer decisions, 
+16. Add table tops with proper locks, 
+17. add handles, 
+18. add splash back 
+19. it all affects renders. 
+20. then I will generate renders for approval.
 
-15. Then I need to be able to make CAM enrichments (maybe Blender home 5 extension or export in some format from it)
-16. Enrichment phase (I need to be able to set cabinet construction type, grooves, drilling holes to hinges and Blum drawers (many options) 
+21. Then I need to be able to make CAM enrichments (maybe Blender home 5 extension or export in some format from it)
+22. Enrichment phase (I need to be able to set cabinet construction type, grooves, drilling holes to hinges and Blum drawers (many options) 
 
-17. Then I should be able to:
-18.  make CAM level validation 
-19. I have to have all board materials with right codes including edge banding.
-20. Then to produce Cut list artifact (just CSV list since CNC has own nesting tool)
-21. Then to have DXF drilling files for each board
-22. BOM for hinges, handles, screws, Blum rides 
-
+23. Then I should be able to:
+24. make CAM level validation 
+25. I have to have all board materials with right codes including edge banding. 
+26. Then to produce Cut list artifact (just CSV list since CNC has own nesting tool)
+27. Then to have DXF drilling files for each board 
+28. BOM for hinges, handles, screws, Blum rides 
 
 ——
 
