@@ -1,16 +1,15 @@
 # Catalog Makefile — Material catalog browser
 # Usage: make help
-# Run from: project root (cd .. && make -C catalog) or catalog/ dir
+# Run from: catalog/ dir
 
 BLUE := \033[36m
 YELLOW := \033[33m
 GREEN := \033[32m
 RESET := \033[0m
 
-# Paths relative to catalog/ (parent = project root)
-ROOT := ..
-DATA := $(ROOT)/data/materials
-DIST := $(ROOT)/data/dist
+# Paths relative to catalog/
+DATA := data/materials
+DIST := data/dist
 
 .DEFAULT_GOAL := help
 
@@ -28,11 +27,11 @@ dev: ## Start dev server (watch YAML + rebuild + Vite HMR)
 
 .PHONY: build
 build: ## Build catalog.json from YAML sources
-	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node data/materials/build.js
+	node $(DATA)/build.js
 
 .PHONY: test
-test: ## Run validation tests (55 checks)
-	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node --test data/materials/tests/validate.test.js
+test: ## Run validation tests (78 checks)
+	node --test $(DATA)/tests/validate.test.js
 
 .PHONY: validate
 validate: build test ## Build + test (full validation)
@@ -40,12 +39,12 @@ validate: build test ## Build + test (full validation)
 ##@ Production
 .PHONY: prod
 prod: ## Build production bundle
-	cd $(ROOT) && NODE_PATH=$(CURDIR)/node_modules node data/materials/build.js
-	cd $(ROOT) && npx vite build --config catalog/vite.config.mjs
+	node $(DATA)/build.js
+	npx vite build
 
 .PHONY: preview
 preview: ## Preview production build locally
-	cd $(ROOT) && npx vite preview --config catalog/vite.config.mjs
+	npx vite preview
 
 ##@ Maintenance
 .PHONY: clean

@@ -695,8 +695,8 @@ PROJECT bounded context (`kitchen, cabinet, panel, bom`) → osobne ADR i osobny
 ---
 
 *Źródła*:
-- Analiza katalogu Kronospan (`docs/materials-boards/Kronospan/*.md`) — 18 plików, ~570 SKU
-- Analiza katalogu Swiss Krono (`docs/materials-boards/KronoSwiss/*.md`) — 3 pliki, ~300 SKU
+- Analiza katalogu Kronospan (`catalog/docs/materials/Kronospan/*.md`) — 18 plików, ~570 SKU
+- Analiza katalogu Swiss Krono (`catalog/docs/materials/KronoSwiss/*.md`) — 3 pliki, ~300 SKU
 - Obecny model: `catalog/docs/architecture/01-schema.sql` (13 tabel)
 - Obecny model: `src/kuchnie_core/model.py` (8 dataklass)
 

@@ -8,27 +8,36 @@ Model: **Decor + Variant** — dekor (kolor/wzór) + warianty materiałowe (pły
 ## Architektura danych (co gdzie mieszka)
 
 ```
-data/materials/
-├── shared/
-│   ├── concepts.yaml       ← wspólne tagi, typy powierzchni, kolorystyka
-│   └── schema.js           ← Zod walidacja (DecorSchema, VariantSchema, DecorsFileSchema)
-├── kronospan/
-│   ├── collections.yaml    ← metadane kolekcji + definicje 18 struktur (SM, PE, BS...)
-│   ├── decors.yaml         ← 177 dekorów, 180 wariantów (JEDYNE źródło prawdy)
-│   └── img/                ← (obrazy są w catalog/public/)
-├── tests/
-│   ├── validate.test.js    ← 75 testów
-│   └── fixtures/
-│       └── acrylic-gloss-ref.js ← dane referencyjne z PDF
-└── build.js                ← YAML → catalog.json + walidacja
-
 catalog/
+├── data/
+│   ├── materials/
+│   │   ├── shared/
+│   │   │   ├── concepts.yaml       ← wspólne tagi, typy powierzchni, kolorystyka
+│   │   │   └── schema.js           ← Zod walidacja (DecorSchema, VariantSchema, DecorsFileSchema)
+│   │   ├── kronospan/
+│   │   │   ├── collections.yaml    ← metadane kolekcji + definicje 18 struktur (SM, PE, BS...)
+│   │   │   ├── decors.yaml         ← 177 dekorów, 180 wariantów (JEDYNE źródło prawdy)
+│   │   │   └── img/                ← (obrazy są w catalog/public/)
+│   │   ├── tests/
+│   │   │   ├── validate.test.js    ← 75 testów
+│   │   │   └── fixtures/
+│   │   │       └── acrylic-gloss-ref.js ← dane referencyjne z PDF
+│   │   └── build.js                ← YAML → catalog.json + walidacja
+│   ├── kronospan_full.yaml         ← generowany
+│   └── kronoswiss_full.yaml        ← generowany
+├── docs/
+│   ├── architecture/
+│   └── materials/                  ← źródłowe PDF + markdown specs
 ├── public/
-│   ├── catalog.json        ← generowany (gitignored)
-│   └── kronospan/img/      ← zdjęcia dekorów (K8685.jpg, K0190.jpg...)
-├── index.html              ← frontend Alpine.js (z filtrami: materiał, kolor, struktura)
+│   ├── catalog.json                ← generowany (gitignored)
+│   └── kronospan/img/              ← zdjęcia dekorów (K8685.jpg, K0190.jpg...)
+├── scripts/
+│   ├── generate_kronospan_yaml.py  ← generuje YAML
+│   ├── convert-global-collection.js ← konwertuje formaty
+│   └── seed.py                     ← seeduje DB
+├── index.html                      ← frontend Alpine.js
 ├── vite.config.mjs
-├── Makefile                ← make dev / test / build / validate
+├── Makefile                        ← make dev / test / build / validate
 └── package.json
 ```
 
@@ -142,7 +151,7 @@ Frontend: index.html        ← czyta JSON, wyświetla
 
 ## Jak dodać nową kolekcję
 
-1. Utwórz `data/materials/{producer}/decors.yaml` (lub dodaj warianty do istniejącego)
+1. Utwórz `catalog/data/materials/{producer}/decors.yaml` (lub dodaj warianty do istniejącego)
 2. Dodaj metadane w `{producer}/collections.yaml` (struktury, formaty)
 3. Uruchom `make build`
 4. Dodaj obrazy dekorów do `catalog/public/{producer}/img/`

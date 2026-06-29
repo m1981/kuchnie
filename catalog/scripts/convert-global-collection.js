@@ -5,9 +5,9 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
 
-const INPUT = path.join(__dirname, '..', 'docs', 'materials-boards', 'Kronospan', 'global-collection-decory.yaml');
+const INPUT = path.join(__dirname, '..', 'docs', 'materials', 'Kronospan', 'global-collection-decory.yaml');
 const OUTPUT = path.join(__dirname, '..', 'data', 'materials', 'kronospan', 'global-collection.yaml');
-const IMG_DIR = path.join(__dirname, '..', 'catalog', 'public', 'kronospan', 'img');
+const IMG_DIR = path.join(__dirname, '..', 'public', 'kronospan', 'img');
 
 const raw = yaml.load(fs.readFileSync(INPUT, 'utf8'));
 

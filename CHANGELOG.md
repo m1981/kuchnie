@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## 2026-06-30 — Catalog consolidation
+
+### Moved
+
+- `data/materials/` → `catalog/data/materials/` (YAML source data + build pipeline)
+- `docs/materials-boards/` → `catalog/docs/materials/` (source PDFs + markdown specs)
+- `scripts/convert-global-collection.js` → `catalog/scripts/` (conversion script)
+
+### Updated
+
+- `catalog/package.json` — build/test scripts now run from catalog/ directly
+- `catalog/data/materials/build.js` — fixed output path to `catalog/public/`
+- `catalog/AGENTS.md` — updated directory structure diagram
+- `catalog/Makefile` — simplified paths (no more `cd ..`)
+- `catalog/docs/architecture/` — updated path references
+
+### Verified
+
+- 78/78 catalog validation tests pass
+- 110/110 root tests pass
+- `make build`, `make test`, `make validate` all pass
+
+---
+
 ## 2026-06-24 — Walking skeleton + LEGRABOX + Kitchen model
 
 ### Architecture decisions

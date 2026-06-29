@@ -41,9 +41,9 @@ Date: 2026-06-27
                           │ migration
 ┌─────────────────────────┴───────────────────────────────────┐
 │  YAML (source of truth)                                     │
-│  data/materials/kronospan/decors.yaml                       │
-│  data/materials/egger/decors.yaml (future)                  │
-│  data/materials/swiss-krono/decors.yaml (future)            │
+│  catalog/data/materials/kronospan/decors.yaml               │
+│  catalog/data/materials/egger/decors.yaml (future)          │
+│  catalog/data/materials/swiss-krono/decors.yaml (future)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 

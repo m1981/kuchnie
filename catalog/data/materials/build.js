@@ -9,7 +9,7 @@ const { DecorsFileSchema } = require('./shared/schema');
 
 const MATERIALS_DIR = __dirname;
 const DIST_DIR = path.join(__dirname, '..', 'dist');
-const CATALOG_PUBLIC = path.join(__dirname, '..', '..', 'catalog', 'public');
+const CATALOG_PUBLIC = path.join(__dirname, '..', '..', 'public');
 
 const PRODUCERS = ['kronospan', 'swiss-krono', 'egger'];
 

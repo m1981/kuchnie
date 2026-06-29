@@ -5,10 +5,10 @@
   "private": true,
   "scripts": {
     "dev": "node dev.js",
-    "build": "cd .. && node data/materials/build.js",
-    "test": "cd .. && node --test data/materials/tests/validate.test.js",
-    "validate": "cd .. && node data/materials/build.js && node --test data/materials/tests/validate.test.js",
-    "preview": "cd .. && npx vite preview --config catalog/vite.config.mjs"
+    "build": "node data/materials/build.js",
+    "test": "node --test data/materials/tests/validate.test.js",
+    "validate": "node data/materials/build.js && node --test data/materials/tests/validate.test.js",
+    "preview": "npx vite preview --config vite.config.mjs"
   },
   "dependencies": {
     "js-yaml": "^5.1.0",
