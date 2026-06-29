@@ -23,15 +23,21 @@
 
 ---
 
-## Bounded Contexts (for reference)
+## Bounded Contexts (corrected 2026-06-29 — see `01_DECISIONS.md`)
+
+> **The One Rule.** Cross-subsystem imports must go through `kuchnie_core` only. The table below shows where each concept is **owned**; consumers should import via `kuchnie_core`, never directly from a sibling.
 
 | Short name | Location | Owns words like |
 |---|---|---|
-| **Catalog** | `catalog/` | Decor, Edge, Producer |
-| **Core** | `src/kuchnie_core/` | Kitchen, Cabinet, Panel, Recipe |
-| **CAD** | `kitchen-cad/` | DrillPoint, CutPiece, MachiningFeature |
-| **Web** | `kitchen-app/` | Project, CabinetUI, BOM |
-| **Render** | render adapter + `home_builder_5/` | Scene, Texture, WallPlacement |
+| **Catalog** | `catalog/` | Decor, Edge, Variant, Pairing, Producer, Worktop, Availability |
+| **Core (glue)** | `src/kuchnie_core/` | Kitchen, Run, ConstructionMethod, MaterialResolver, ValidationGate, the YAML schema |
+| **CAD** | `kitchen-cad/` | CorpusSpec, Panel, DrillPoint, EdgeBand, BaseDoorConfig (& siblings) |
+| **Plugin / 3D Render** | `kitchen-plugin/` | Cabinet (placement-aware), Wall, Room, Layout, CabinetGeometry, KitchenStandards, ManifestValidator |
+| **Compositor / 2.5D Render** | `krono-compositor-mvp/` | SceneCompositor, ZoneConfig (mask→texture), Pass (base/uv/mask/reflection/handle) |
+| **Web** | `kitchen-app/` | BOMAssembly, BOMPart, PurchasingStrategy, RulesEngine (hardware tags), CabinetUI |
+| **External (untouched)** | `home_builder_5/` (separate repo, **GPL**, not in v1.0 scope) | Community Blender addon — reference only, **not imported, never imported in v1.0** |
+
+> Note: every "File of record" entry below points at the actual owning module per the table above. Some entries say `Core` for the glue type but the implementation lives in a sibling — that's intentional and matches the cross-import rule.
 
 ---
 
