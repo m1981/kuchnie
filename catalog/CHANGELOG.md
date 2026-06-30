@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-01
+
+### Added
+
+- Builder GUI walking skeleton (`public/index.html` rewrite)
+  - Grid + sidebar layout (catalog left, kitchen assembly right)
+  - 4 slots: base_front, wall_front, carcass, worktop
+  - Click card → assign to active slot → advance to next empty
+  - localStorage persistence (save/restore state + templates)
+  - "Zapisz jako szablon" saves to localStorage
+  - "Eksportuj BOM" downloads JSON
+  - Search, producer/material/color/role filters
+- `docs/specs/builder-gui.md` — walking skeleton spec
+- `docs/scenarios-edge-cases.md` — 6 scenarios + 10 edge cases
+- `public/mockup-builder.html` — reference mockup
+
+### Changed
+
+- Schema version bumped to 1.4.0 (4 new tables: worktop_compatibility,
+  style_tags, decor_style_tags, curated_kitchens)
+
+## [0.2.0] — 2026-06-30
+
 ### Added
 
 - Style filter on configurator options: `?style=scandinavian`

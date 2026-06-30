@@ -1,6 +1,6 @@
 -- ══════════════════════════════════════════════════════════════════
 -- KUCHNIE CATALOG — Consolidated SQLite Schema
--- Version: 1.3.0
+-- Version: 1.4.0
 -- Tables ordered by FK dependency: no forward references.
 -- ══════════════════════════════════════════════════════════════════
 
