@@ -190,12 +190,14 @@ decors:
   group_name: WHITE CORPUS
   color_family_slug: bialy
   producer_slug: kronospan
+  img: K0110.jpg
 - business_id: K101
   name: Biały Frontowy
   name_en: Front White
   group_name: WHITE FRONT
   color_family_slug: bialy
   producer_slug: kronospan
+  img: K0101.jpg
 - business_id: K8685
   name: Biel Alpejska
   name_en: Alpine White
@@ -204,6 +206,7 @@ decors:
   ncs: S 0500-N
   ral: '9016'
   producer_slug: kronospan
+  img: K8685.jpg
 - business_id: K190
   name: Czarny
   name_en: Black
@@ -213,6 +216,7 @@ decors:
   ral: '9004'
   pantone: Process Black C
   producer_slug: kronospan
+  img: K0190.jpg
 - business_id: K164
   name: Antracyt
   name_en: Anthracite
@@ -221,6 +225,7 @@ decors:
   ncs: S 7502-G
   ral: '7043'
   producer_slug: kronospan
+  img: K0164.jpg
 - business_id: K7045
   name: Szampański
   name_en: Champagne
@@ -228,23 +233,27 @@ decors:
   color_family_slug: bezowy
   pantone: 7527 C
   producer_slug: kronospan
+  img: K7045.jpg
 - business_id: K523
   name: Galaxus
   group_name: COLOR BASIC
   color_family_slug: szary
   producer_slug: kronospan
+  img: K523.jpg
 - business_id: K5981
   name: Kaszmir
   name_en: Cashmere
   group_name: COLOR BASIC
   color_family_slug: kremowy
   producer_slug: kronospan
+  img: K5981.jpg
 - business_id: K0112
   name: Jasny Szary
   name_en: Light Grey
   group_name: COLOR BASIC
   color_family_slug: szary
   producer_slug: kronospan
+  img: K0112.jpg
 - business_id: K553
   name: Galaxus SU
   group_name: COLOR SPECIAL
@@ -382,6 +391,7 @@ decors:
   group_name: XIV MAT 1
   color_family_slug: czarny
   producer_slug: kronospan
+  img: K0190.jpg
 - business_id: '5527'
   name: Dąb Kamienny
   name_en: Stone Oak
@@ -393,6 +403,7 @@ decors:
   group_name: XIV MAT 1
   color_family_slug: bezowy
   producer_slug: kronospan
+  img: K7045.jpg
 - business_id: '4298'
   name: Jasny Atelier
   group_name: XV MAT 2
@@ -533,6 +544,7 @@ decors:
   group_name: ABS
   color_family_slug: szary
   producer_slug: kronospan
+  img: K0540.jpg
 variants:
 - business_id: K110-CH-18-SM
   decor_code: K110

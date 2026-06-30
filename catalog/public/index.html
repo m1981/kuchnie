@@ -761,7 +761,7 @@
                 for (const variant of (decor.variants || [])) {
                   const structInfo = this.structures[variant.structure] || {};
                   const surfaceType = this.surfaceTypes[variant.structure];
-                  const imgPath = decor.img ? `/producers/${producer}/decors/${decor.img}` : null;
+                  const imgPath = decor.img_url;
                   decors.push({
                     // Decor-level (identity)
                     id: decor.id,

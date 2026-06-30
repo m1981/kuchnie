@@ -314,9 +314,9 @@ class CatalogImporter:
             self.db.execute(
                 "INSERT OR IGNORE INTO decors "
                 "(business_id, producer_id, name, name_en, group_name, "
-                " color_family_id, ncs, ral, pantone, one_global, "
-                " new_2024, discontinued, notes) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " color_family_id, ncs, ral, pantone, img, "
+                " one_global, new_2024, discontinued, notes) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     item["business_id"],
                     producer_id,
@@ -327,6 +327,7 @@ class CatalogImporter:
                     item.get("ncs"),
                     item.get("ral"),
                     item.get("pantone"),
+                    item.get("img"),
                     item.get("one_global", False),
                     item.get("new_2024", False),
                     item.get("discontinued", False),
