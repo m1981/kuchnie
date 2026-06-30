@@ -14,61 +14,57 @@ from catalog.api.deps import get_db
 from catalog.models.domain import StatsOut
 
 _PUBLIC_DIR = Path(__file__).parent.parent.parent / "public"
+_PRODUCERS_DIR = _PUBLIC_DIR / "producers"
 
 
 def _find_img(producer: str, business_id: str, stored_img: str | None) -> str:
     """Find image filename for a decor.
 
-    Tries:
-      1. Stored img field (from YAML/DB)
-      2. {business_id}.jpg  (e.g. K8685.jpg)
-      3. With K/D/U prefix (0190 → K0190)
-      4. With leading zeros (K112 → K0112)
-      5. Scan filesystem for partial match
+    Searches in producers/{producer}/decors/ directory.
+    Tries multiple naming patterns to handle inconsistencies.
     """
     if stored_img:
         return stored_img
 
-    img_dir = _PUBLIC_DIR / producer / "img"
+    img_dir = _PRODUCERS_DIR / producer / "decors"
     if not img_dir.exists():
+        return ""
+
+    bid = business_id.strip()
+    if not bid:
         return ""
 
     # Try exact match
     for ext in (".jpg", ".png", ".webp"):
-        if (img_dir / f"{business_id}{ext}").exists():
-            return f"{business_id}{ext}"
+        if (img_dir / f"{bid}{ext}").exists():
+            return f"{bid}{ext}"
 
     # Try with K/D/U prefix (0190 → K0190, 7045 → K7045)
-    if business_id and business_id[0].isdigit():
+    if bid[0].isdigit():
         for prefix in ("K", "D", "U"):
             for ext in (".jpg", ".png", ".webp"):
-                if (img_dir / f"{prefix}{business_id}{ext}").exists():
-                    return f"{prefix}{business_id}{ext}"
+                if (img_dir / f"{prefix}{bid}{ext}").exists():
+                    return f"{prefix}{bid}{ext}"
 
     # Try with leading zero (K112 → K0112)
-    if business_id and business_id[0].isalpha() and business_id[1:].isdigit():
-        letter = business_id[0]
-        num = int(business_id[1:])
+    if bid[0].isalpha() and bid[1:].isdigit():
+        letter = bid[0]
+        num = int(bid[1:])
         for width in (5, 4, 3):
             padded = f"{letter}{num:0{width}d}"
             for ext in (".jpg", ".png", ".webp"):
                 if (img_dir / f"{padded}{ext}").exists():
                     return f"{padded}{ext}"
 
-    # Scan filesystem for partial match (e.g. decor K091 → find K0091.jpg)
-    for f in img_dir.iterdir():
-        if not f.is_file():
-            continue
-        stem = f.stem.upper()
-        bid = business_id.upper()
-        # Direct contains match
-        if bid in stem or stem in bid:
-            return f.name
-        # Numeric match: extract digits from both
-        bid_digits = ''.join(c for c in bid if c.isdigit())
-        stem_digits = ''.join(c for c in stem if c.isdigit())
-        if bid_digits and stem_digits and bid_digits == stem_digits:
-            return f.name
+    # Scan filesystem for numeric match
+    bid_digits = ''.join(c for c in bid if c.isdigit())
+    if bid_digits:
+        for f in img_dir.iterdir():
+            if not f.is_file():
+                continue
+            stem_digits = ''.join(c for c in f.stem if c.isdigit())
+            if stem_digits and bid_digits == stem_digits:
+                return f.name
 
     return ""
 

@@ -15,3 +15,6 @@ __pychache__
 data/dist/
 catalog/public/catalog.json
 catalog/dist/
+catalog/db/catalog.db
+catalog/db/catalog.db-shm
+catalog/db/catalog.db-wal

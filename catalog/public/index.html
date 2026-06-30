@@ -438,7 +438,7 @@
             </div>
             <div class="structure-desc" x-show="selected._structureDesc">
               <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px">
-                <img :src="'/kronospan/struktury/' + selected.structure + '.jpg'" :alt="selected.structure" style="width:80px; height:80px; border-radius:6px; object-fit:cover" onerror="this.style.display='none'" />
+                <img :src="`/producers/${selected._producer}/structures/${selected.structure}.jpg`" :alt="selected.structure" style="width:80px; height:80px; border-radius:6px; object-fit:cover" onerror="this.style.display='none'" />
                 <div>
                   <strong x-text="selected._allStructures"></strong>
                   <div style="font-size:12px; color:var(--muted); margin-top:2px" x-text="selected._structureDesc"></div>
@@ -761,7 +761,7 @@
                 for (const variant of (decor.variants || [])) {
                   const structInfo = this.structures[variant.structure] || {};
                   const surfaceType = this.surfaceTypes[variant.structure];
-                  const imgPath = decor.img ? `/${producer}/img/${decor.img}` : null;
+                  const imgPath = decor.img ? `/producers/${producer}/decors/${decor.img}` : null;
                   decors.push({
                     // Decor-level (identity)
                     id: decor.id,

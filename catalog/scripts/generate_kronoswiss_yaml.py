@@ -269,6 +269,81 @@ SWISS_WORKTOP_DECORS = [
 # Build YAML dict
 # ══════════════════════════════════════════════════════════════════
 
+# Mapping: decor_code → primary structure_code (KronoSwiss)
+SWISS_PRIMARY = {
+    # Unikolory
+    "U164": "VL", "U190": "VL", "U112": "PE", "U570": "SM",
+    "U8685": "SM", "U119": "VL", "U6933": "VL", "U10030": "VL",
+    "U4809": "VL",
+    # Drewnopodobne
+    "D9103": "OW", "D3025": "OW", "D4225": "OV", "D4428": "OV",
+    "D20110": "OV", "D20230": "OV", "D3823": "OW", "D3314": "SD",
+    "D3316": "SD", "D3801": "CL", "D3798": "CL", "D3800": "CL",
+    "D3806": "OW", "D3193": "SW", "D3194": "SW",
+    "D722": "SE", "D3813": "OW", "D4822": "OV",
+    "D3158": "MX", "D4426": "OV",
+    # Fantazyjne
+    "D30090": "TO", "D3274": "BS", "D1038": "BS",
+    "D4448": "VL", "D1861": "MX", "D4878": "VL",
+    "D70060": "TO",
+    # Worktops
+    "K101": "PE", "D4033": "OW", "D70601": "SM", "D60664": "OW",
+}
+
+
+def _build_swiss_variants(decors: list[dict], primary_map: dict) -> list[dict]:
+    """Auto-generate variants for ALL KronoSwiss decors.
+
+    - BLACK WOOD decors → 12mm worktop variant
+    - Postformed decors → 38mm worktop variant
+    - Others → 18mm chipboard variant
+    """
+    blackwood_ids = {"U190", "D3274", "D3806", "D4033", "D3158", "D4878"}
+    postformed_ids = {"K101", "D4225", "D3823", "D3025", "D70601", "D60664"}
+
+    variants = []
+    seen = set()
+    for d in decors:
+        code = d["business_id"]
+        if code in seen:
+            continue
+        seen.add(code)
+        primary = primary_map.get(code)
+        if not primary:
+            continue
+
+        if code in blackwood_ids:
+            variants.append({
+                "business_id": f"{code}-BW-12",
+                "decor_code": code,
+                "material_slug": "swiss-blackwood-board",
+                "structure_code": primary,
+                "thickness_mm": 12.0,
+                "sheet_format_slug": "4100x1315",
+                "roles": ["worktop"],
+            })
+        elif code in postformed_ids:
+            variants.append({
+                "business_id": f"{code}-PF-R3-600",
+                "decor_code": code,
+                "material_slug": "swiss-postformed",
+                "structure_code": primary,
+                "thickness_mm": 38.0,
+                "sheet_format_slug": "4100x600",
+                "roles": ["worktop"],
+            })
+        else:
+            variants.append({
+                "business_id": f"{code}-CH-18-{primary}",
+                "decor_code": code,
+                "material_slug": "swiss-chipboard",
+                "structure_code": primary,
+                "thickness_mm": 18.0,
+                "sheet_format_slug": "2800x2070",
+                "roles": ["front", "carcass"],
+            })
+    return variants
+
 
 def generate_kronoswiss_yaml() -> dict:
     # Merge decors (deduplicated)
@@ -330,109 +405,7 @@ def generate_kronoswiss_yaml() -> dict:
             },
         ],
         "decors": all_decors,
-        "variants": [
-            # ── U190 Czarny chipboard 18mm ─────────────────────────
-            {
-                "business_id": "U190-CH-18-VL",
-                "decor_code": "U190",
-                "material_slug": "swiss-chipboard",
-                "structure_code": "VL",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-                "hpl_available": True,
-            },
-            # ── U190 Czarny BLACK WOOD 12mm (worktop) ──────────────
-            {
-                "business_id": "U190-BW-12",
-                "decor_code": "U190",
-                "material_slug": "swiss-blackwood-board",
-                "structure_code": "KM",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x1315",
-                "roles": ["worktop"],
-            },
-            # ── D3274 Beton BLACK WOOD 12mm (worktop) ──────────────
-            {
-                "business_id": "D3274-BW-12",
-                "decor_code": "D3274",
-                "material_slug": "swiss-blackwood-board",
-                "structure_code": "VL",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x1315",
-                "roles": ["worktop"],
-            },
-            # ── D3314 Dąb Giovanni chipboard 18mm (synchro) ────────
-            {
-                "business_id": "D3314-CH-18-SD",
-                "decor_code": "D3314",
-                "material_slug": "swiss-chipboard",
-                "structure_code": "SD",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-            },
-            # ── D3801 Dąb Madryt chipboard 18mm (synchro) ──────────
-            {
-                "business_id": "D3801-CH-18-CL",
-                "decor_code": "D3801",
-                "material_slug": "swiss-chipboard",
-                "structure_code": "CL",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-            },
-            # ── D3806 Buk Bordeaux BLACK WOOD 12mm ─────────────────
-            {
-                "business_id": "D3806-BW-12",
-                "decor_code": "D3806",
-                "material_slug": "swiss-blackwood-board",
-                "structure_code": "OW",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x1315",
-                "roles": ["worktop"],
-            },
-            # ── U164 Antracyt chipboard 18mm ───────────────────────
-            {
-                "business_id": "U164-CH-18-VL",
-                "decor_code": "U164",
-                "material_slug": "swiss-chipboard",
-                "structure_code": "VL",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-            },
-            # ── Postformed worktop K101 Biały ──────────────────────
-            {
-                "business_id": "K101-PF-R3-600",
-                "decor_code": "K101",
-                "material_slug": "swiss-postformed",
-                "structure_code": "KM",
-                "thickness_mm": 38.0,
-                "sheet_format_slug": "4100x600",
-                "roles": ["worktop"],
-            },
-            # ── D4878 BLACK WOOD 12mm ──────────────────────────────
-            {
-                "business_id": "D4878-BW-12",
-                "decor_code": "D4878",
-                "material_slug": "swiss-blackwood-board",
-                "structure_code": "VL",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x1315",
-                "roles": ["worktop"],
-            },
-            # ── D70601 Calacatta Oro postformed ────────────────────
-            {
-                "business_id": "D70601-PF-R3-600",
-                "decor_code": "D70601",
-                "material_slug": "swiss-postformed",
-                "structure_code": "SM",
-                "thickness_mm": 38.0,
-                "sheet_format_slug": "4100x600",
-                "roles": ["worktop"],
-            },
-        ],
+        "variants": _build_swiss_variants(all_decors, SWISS_PRIMARY),
         "worktops": [
             # BLACK WOOD — U190 Czarny
             {
@@ -536,7 +509,7 @@ def generate_kronoswiss_yaml() -> dict:
         "availability": [
             # KronoSwiss: standard delivery from Żary warehouse
             {
-                "variant_business_id": "U190-CH-18-VL",
+                "variant_business_id": "U190-BW-12",
                 "channel": "standard",
                 "available": True,
                 "warehouse": "Żary",
@@ -618,7 +591,7 @@ def generate_kronoswiss_yaml() -> dict:
             },
             # Laminated boards — antibacterial (all Swiss Krono products)
             {
-                "variant_business_id": "U190-CH-18-VL",
+                "variant_business_id": "U190-BW-12",
                 "property": "antibacterial",
                 "value": True,
                 "source": "datasheet",

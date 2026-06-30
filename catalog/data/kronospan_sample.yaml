@@ -1,0 +1,358 @@
+# ══════════════════════════════════════════════════════════════════
+# Kronospan — Sample Data (Phase 3 import test)
+# ══════════════════════════════════════════════════════════════════
+# Minimal but complete subset: enough to validate the full import
+# pipeline from YAML → SQLite for one real producer.
+#
+# Data sources:
+#   - Global Collection 2026: global-collection.md str. 6-31
+#   - Postformed worktops:    blaty_postformed_spec.md str. 48
+#   - Slim Line:              blaty_slim_line_spec.md str. 64-65
+# ══════════════════════════════════════════════════════════════════
+
+
+# ──────────────────────────────────────────────────────────────────
+# 1. PRODUCERS
+# ──────────────────────────────────────────────────────────────────
+producers:
+  - slug: kronospan
+    name: Kronospan
+    country: Polska
+    website: kronosfera.pl
+
+
+# ──────────────────────────────────────────────────────────────────
+# 2. STRUCTURES (subset from global-collection.md)
+# ──────────────────────────────────────────────────────────────────
+structures:
+  # Kronospan Global Collection structures (producer-scoped)
+  - code: SM
+    name: Super Mat
+    type: smooth
+    finish: matt
+    producer_slug: kronospan
+
+  - code: PE
+    name: Pearl Effect
+    type: structured
+    finish: gloss
+    producer_slug: kronospan
+
+  - code: BS
+    name: Black Structure
+    type: structured
+    finish: matt
+    producer_slug: kronospan
+
+  - code: PD
+    name: Pearl Dark
+    type: structured
+    finish: matt
+    producer_slug: kronospan
+
+  - code: PW
+    name: Pearl Wood
+    type: wood_grain
+    finish: structured
+    producer_slug: kronospan
+
+  - code: RS
+    name: Rustykalna
+    type: wood_grain
+    finish: structured
+    producer_slug: kronospan
+
+  - code: SU
+    name: Super Ultra Mat
+    type: smooth
+    finish: matt
+    fingerprint_resistant: true
+    producer_slug: kronospan
+
+  - code: LV
+    name: Lava
+    type: stone
+    finish: matt
+    producer_slug: kronospan
+
+
+# ──────────────────────────────────────────────────────────────────
+# 3. COLLECTIONS
+# ──────────────────────────────────────────────────────────────────
+collections:
+  - slug: kronospan-global
+    producer_slug: kronospan
+    name: Global Collection 2026
+    source_pdf: plyty-wiorowe-global-collection.pdf
+    has_edgebanding: true
+    has_hdf: true
+    has_countertops: true
+    has_express: true
+
+  - slug: kronospan-postformed
+    producer_slug: kronospan
+    name: Global Collection 2026 — Blaty Post-formed
+    source_pdf: blaty.pdf
+    has_edgebanding: true
+    has_countertops: true
+    has_express: true
+
+  - slug: kronospan-slim-line
+    producer_slug: kronospan
+    name: Slim Line
+    source_pdf: blaty.pdf
+    has_edgebanding: false
+    has_countertops: true
+    has_express: true
+
+
+# ──────────────────────────────────────────────────────────────────
+# 4. MATERIALS
+# ──────────────────────────────────────────────────────────────────
+materials:
+  - slug: kronospan-chipboard-global
+    collection_slug: kronospan-global
+    material_type_slug: chipboard
+    name: Global Collection — Płyta wiórowa laminowana
+    sidedness: two_sided_same
+    has_express: true
+
+  - slug: kronospan-postformed-global
+    collection_slug: kronospan-postformed
+    material_type_slug: worktop_postformed
+    name: Global Collection — Blat Post-formed 38mm
+
+  - slug: kronospan-slim-line-board
+    collection_slug: kronospan-slim-line
+    material_type_slug: worktop_slim
+    name: Slim Line — Płyta kompaktowa 12mm
+
+
+# ──────────────────────────────────────────────────────────────────
+# 5. DECORS (5 decors — covers unikolor, wood, marble, discontinued)
+# ──────────────────────────────────────────────────────────────────
+decors:
+  # ── K8685 Biel Alpejska ────────────────────────────────────────
+  # global-collection.md: K8685, SM, WHITE FRONT
+  # multi_structures: BS, PD, PW
+  - business_id: K8685
+    producer_slug: kronospan
+    name: Biel Alpejska
+    name_en: Alpine White
+    group_name: WHITE FRONT
+    color_family_slug: bialy
+    ncs: "S 0500-N"
+    ral: "9016"
+
+  # ── K190 Czarny ────────────────────────────────────────────────
+  # global-collection.md: K190, PE, COLOR BASIC
+  # multi_structures: PD, PW
+  - business_id: K190
+    producer_slug: kronospan
+    name: Czarny
+    name_en: Black
+    group_name: COLOR BASIC
+    color_family_slug: czarny
+    ncs: "S 8502-B"
+    ral: "9004"
+
+  # ── K523 Galaxus ───────────────────────────────────────────────
+  # global-collection.md: K523, PE, COLOR SPECIAL
+  - business_id: K523
+    producer_slug: kronospan
+    name: Galaxus
+    group_name: COLOR SPECIAL
+    color_family_slug: szary
+
+  # ── 868S Biel Alpejska (postformed worktop pair to K8685) ─────
+  # blaty_postformed_spec.md str. 48: 868S, RS, XIV MAT 1
+  - business_id: "868S"
+    producer_slug: kronospan
+    name: Biel Alpejska
+    group_name: XIV MAT 1
+    color_family_slug: bialy
+
+  # ── 7045 Szampański (postformed worktop) ───────────────────────
+  # blaty_postformed_spec.md str. 48: 7045, RS, XIV MAT 1
+  - business_id: "7045"
+    producer_slug: kronospan
+    name: Szampański
+    group_name: XIV MAT 1
+    color_family_slug: bezowy
+
+  # ── K749 Babylon Slate (Slim Line, LV structure, beżowy rdzeń) ─
+  # blaty_slim_line_spec.md str. 64: K749, LV, Global Collection
+  - business_id: K749
+    producer_slug: kronospan
+    name: Babylon Slate
+    group_name: XVIII SPECIAL
+    color_family_slug: bezowy
+
+  # ── K091 Dąb Porterhouse Jasny (discontinued, multi-structure) ──
+  # global-collection.md: K091, FP/OW, WOOD FRONT
+  - business_id: K091
+    producer_slug: kronospan
+    name: Dąb Porterhouse Jasny
+    group_name: WOOD FRONT
+    color_family_slug: dab
+    discontinued: false
+
+
+# ──────────────────────────────────────────────────────────────────
+# 6. VARIANTS (one or more per decor, different thickness/material/structure)
+# ──────────────────────────────────────────────────────────────────
+variants:
+  # ── K8685 as chipboard 18mm, structure SM ──────────────────────
+  - business_id: K8685-CH-18-SM
+    decor_code: K8685
+    material_slug: kronospan-chipboard-global
+    structure_code: SM
+    thickness_mm: 18.0
+    sheet_format_slug: 2800x2070
+    roles: [front, carcass]
+    hpl_available: true
+    multi_structures: "BS, PD, PW"
+
+  # ── K190 as chipboard 18mm, structure PE ───────────────────────
+  - business_id: K190-CH-18-PE
+    decor_code: K190
+    material_slug: kronospan-chipboard-global
+    structure_code: PE
+    thickness_mm: 18.0
+    sheet_format_slug: 2800x2070
+    roles: [front, carcass]
+    hpl_available: true
+    multi_structures: "PD, PW"
+
+  # ── 868S as postformed worktop, 38mm, structure RS, 600mm wide ─
+  - business_id: 868S-PF-U-600
+    decor_code: "868S"
+    material_slug: kronospan-postformed-global
+    structure_code: RS
+    thickness_mm: 38.0
+    sheet_format_slug: 4100x600
+    roles: [worktop]
+    splashback_available: true
+    hpl_available: true
+
+  # ── 7045 as postformed worktop, 38mm, structure RS, 900mm wide ─
+  - business_id: 7045-PF-UU-900
+    decor_code: "7045"
+    material_slug: kronospan-postformed-global
+    structure_code: RS
+    thickness_mm: 38.0
+    sheet_format_slug: 4100x900
+    roles: [worktop]
+    splashback_available: true
+    hpl_available: true
+
+  # ── K749 as Slim Line 12mm, structure LV ───────────────────────
+  - business_id: K749-SL-12
+    decor_code: K749
+    material_slug: kronospan-slim-line-board
+    structure_code: LV
+    thickness_mm: 12.0
+    sheet_format_slug: 4100x650
+    roles: [worktop]
+
+
+# ──────────────────────────────────────────────────────────────────
+# 7. WORKTOPS (specs for worktop-role variants only)
+# ──────────────────────────────────────────────────────────────────
+worktops:
+  - variant_business_id: 868S-PF-U-600
+    construction_slug: postformed
+    profile_code: U
+    max_length_mm: 4100
+    available_widths_mm: [600]
+    edge_material: Unoflex
+    edge_material_thickness_mm: 1.0
+    splashback_available: true
+    matching_board_available: true
+    pieces_per_pallet: 10
+    pallet_weight_kg: 620
+
+  - variant_business_id: 7045-PF-UU-900
+    construction_slug: postformed
+    profile_code: "U-U"
+    max_length_mm: 4100
+    available_widths_mm: [900, 1200]
+    edge_material: Unoflex
+    edge_material_thickness_mm: 1.0
+    splashback_available: true
+    matching_board_available: true
+    pieces_per_pallet: 10
+    pallet_weight_kg: 946
+
+  - variant_business_id: K749-SL-12
+    construction_slug: slim_line
+    profile_code: NATURAL
+    max_length_mm: 4100
+    available_widths_mm: [650]
+    edge_material: naturalna
+    core_color: Beżowy
+
+
+# ──────────────────────────────────────────────────────────────────
+# 8. DECOR_STRUCTURES (M2M junction: which structures for each decor)
+# ──────────────────────────────────────────────────────────────────
+decor_structures:
+  # K8685 Biel Alpejska: SM (primary) + BS, PD, PW
+  - decor_code: K8685
+    structure_code: SM
+    is_primary: true
+  - decor_code: K8685
+    structure_code: BS
+    is_primary: false
+  - decor_code: K8685
+    structure_code: PD
+    is_primary: false
+  - decor_code: K8685
+    structure_code: PW
+    is_primary: false
+
+  # K190 Czarny: PE (primary) + PD, PW
+  - decor_code: K190
+    structure_code: PE
+    is_primary: true
+  - decor_code: K190
+    structure_code: PD
+    is_primary: false
+  - decor_code: K190
+    structure_code: PW
+    is_primary: false
+
+  # K749 Babylon Slate: LV (primary only)
+  - decor_code: K749
+    structure_code: LV
+    is_primary: true
+
+
+# ──────────────────────────────────────────────────────────────────
+# 9. PAIRINGS (matching products across material types)
+# ──────────────────────────────────────────────────────────────────
+pairings:
+  # K8685 (board) → 868S (worktop)
+  - front_decor_code: K8685
+    target_decor_code: "868S"
+    pairing_type: worktop
+    match_type: exact
+    priority: 1
+
+  # K8685 (board) → K8685 (acrylic — same decor, different material)
+  # (In reality there'd be a K8685-AG decor. We simulate with K523 as
+  # a close match to show the acrylic pairing type works.)
+  - front_decor_code: K8685
+    target_decor_code: K523
+    pairing_type: acrylic
+    match_type: close
+    priority: 2
+    notes: "Close match — in production, K8685-AG would be the exact target"
+
+  # K190 (board) → 7045 (worktop as close match for champagne tones)
+  - front_decor_code: K190
+    target_decor_code: "7045"
+    pairing_type: worktop
+    match_type: close
+    priority: 2
+    notes: "Close match for dark worktop pairing"

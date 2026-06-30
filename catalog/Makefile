@@ -1,4 +1,4 @@
-# Catalog Makefile — Material catalog browser
+# Catalog Makefile — Material catalog API
 # Usage: make help
 # Run from: catalog/ dir
 
@@ -7,47 +7,41 @@ YELLOW := \033[33m
 GREEN := \033[32m
 RESET := \033[0m
 
-# Paths relative to catalog/
-DATA := data/materials
-DIST := data/dist
-
 .DEFAULT_GOAL := help
 
 ##@ General
 .PHONY: help
 help: ## Display this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\n$(BLUE)Catalog$(RESET)\n\n  make $(YELLOW)<target>$(RESET)\n"} \
+	@awk 'BEGIN {FS = ":.*##"; printf "\n$(BLUE)Catalog API$(RESET)\n\n  make $(YELLOW)<target>$(RESET)\n"} \
 		/^[a-zA-Z0-9_-]+:.*?##/ { printf "  $(YELLOW)%-20s$(RESET) %s\n", $$1, $$2 } \
 		/^##@/ { printf "\n$(GREEN)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
 ##@ Development
 .PHONY: dev
-dev: ## Start dev server (watch YAML + rebuild + Vite HMR)
-	node dev.js
+dev: ## Start FastAPI dev server (uvicorn --reload)
+	cd .. && .venv/bin/uvicorn catalog.api.main:app --reload --port 8000
 
-.PHONY: build
-build: ## Build catalog.json from YAML sources
-	node $(DATA)/build.js
+.PHONY: seed
+seed: ## Seed database from YAML files
+	cd .. && .venv/bin/python -m catalog.scripts.seed catalog/data/kronospan_full.yaml catalog/data/kronoswiss_full.yaml
 
+##@ Testing
 .PHONY: test
-test: ## Run validation tests (78 checks)
-	node --test $(DATA)/tests/validate.test.js
+test: ## Run pytest (API + schema tests)
+	cd .. && .venv/bin/python -m pytest catalog/tests/test_catalog_api.py -v
 
-.PHONY: validate
-validate: build test ## Build + test (full validation)
+.PHONY: test-all
+test-all: ## Run all tests
+	cd .. && .venv/bin/python -m pytest catalog/tests/ -v
 
 ##@ Production
 .PHONY: prod
-prod: ## Build production bundle
-	node $(DATA)/build.js
-	npx vite build
-
-.PHONY: preview
-preview: ## Preview production build locally
-	npx vite preview
+prod: ## Start production server
+	cd .. && .venv/bin/uvicorn catalog.api.main:app --port 8000
 
 ##@ Maintenance
 .PHONY: clean
 clean: ## Remove generated files
-	rm -rf $(DIST)/*.json dist public/catalog.json
+	rm -f db/catalog.db db/catalog.db-shm db/catalog.db-wal
+	rm -rf __pycache__ */__pycache__ */*/__pycache__
 	@echo "$(GREEN)Cleaned$(RESET)"

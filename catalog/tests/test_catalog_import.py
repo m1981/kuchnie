@@ -144,8 +144,8 @@ class TestKronospanImport:
             "SELECT wf.construction, wf.profile_code, wf.available_widths_mm "
             "FROM v_worktops_full wf WHERE wf.decor_id = '7045'"
         ).fetchone()
-        assert row["profile_code"] == "U-U"
-        assert json.loads(row["available_widths_mm"]) == [900, 1200]
+        assert row["profile_code"] == "U"
+        assert json.loads(row["available_widths_mm"]) == [600]
 
     def test_slim_line_worktop_k749(self):
         row = self.db.execute(

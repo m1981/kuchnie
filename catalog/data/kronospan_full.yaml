@@ -534,6 +534,27 @@ decors:
   color_family_slug: szary
   producer_slug: kronospan
 variants:
+- business_id: K110-CH-18-SM
+  decor_code: K110
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K101-CH-18-PE
+  decor_code: K101
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  multi_structures: SE
 - business_id: K8685-CH-18-SM
   decor_code: K8685
   material_slug: kronospan-chipboard-global
@@ -556,6 +577,27 @@ variants:
   - carcass
   hpl_available: true
   multi_structures: PD, PW
+- business_id: K164-CH-18-SM
+  decor_code: K164
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K7045-CH-18-SM
+  decor_code: K7045
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  multi_structures: PW
 - business_id: K523-CH-18-PE
   decor_code: K523
   material_slug: kronospan-chipboard-global
@@ -566,23 +608,294 @@ variants:
   - front
   - carcass
   hpl_available: true
-- business_id: K8685-CH-12-SM
-  decor_code: K8685
+- business_id: K5981-CH-18-SM
+  decor_code: K5981
   material_slug: kronospan-chipboard-global
   structure_code: SM
-  thickness_mm: 12.0
-  sheet_format_slug: 2800x2070
-  roles:
-  - carcass
-- business_id: K8685-CH-16-SM
-  decor_code: K8685
-  material_slug: kronospan-chipboard-global
-  structure_code: SM
-  thickness_mm: 16.0
+  thickness_mm: 18.0
   sheet_format_slug: 2800x2070
   roles:
   - front
   - carcass
+  hpl_available: true
+- business_id: K0112-CH-18-SM
+  decor_code: K0112
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K553-CH-18-SU
+  decor_code: K553
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K2738-CH-18-FP
+  decor_code: K2738
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K9103-CH-18-FP
+  decor_code: K9103
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K5307-CH-18-FP
+  decor_code: K5307
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K3025-CH-18-FP
+  decor_code: K3025
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K365-CH-18-FP
+  decor_code: K365
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K003-CH-18-FP
+  decor_code: K003
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K091-CH-18-FP
+  decor_code: K091
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K092-CH-18-FP
+  decor_code: K092
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K203-CH-18-PE
+  decor_code: K203
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K023-CH-18-SU
+  decor_code: K023
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K212-CH-18-PA
+  decor_code: K212
+  material_slug: kronospan-chipboard-global
+  structure_code: PA
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K215-CH-18-BS
+  decor_code: K215
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K367-CH-18-PH
+  decor_code: K367
+  material_slug: kronospan-chipboard-global
+  structure_code: PH
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K368-CH-18-PH
+  decor_code: K368
+  material_slug: kronospan-chipboard-global
+  structure_code: PH
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K749-CH-18-LV
+  decor_code: K749
+  material_slug: kronospan-chipboard-global
+  structure_code: LV
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K749-SL-12
+  decor_code: K749
+  material_slug: kronospan-slim-line-board
+  structure_code: LV
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K750-CH-18-LV
+  decor_code: K750
+  material_slug: kronospan-chipboard-global
+  structure_code: LV
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K750-SL-12
+  decor_code: K750
+  material_slug: kronospan-slim-line-board
+  structure_code: LV
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K594-CH-18-SU
+  decor_code: K594
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K594-SL-12
+  decor_code: K594
+  material_slug: kronospan-slim-line-board
+  structure_code: SU
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K595-CH-18-SU
+  decor_code: K595
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K595-SL-12
+  decor_code: K595
+  material_slug: kronospan-slim-line-board
+  structure_code: SU
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K551-CH-18-SU
+  decor_code: K551
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K551-SL-12
+  decor_code: K551
+  material_slug: kronospan-slim-line-board
+  structure_code: SU
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: K552-CH-18-SU
+  decor_code: K552
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K552-SL-12
+  decor_code: K552
+  material_slug: kronospan-slim-line-board
+  structure_code: SU
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: 868S-CH-18-RS
+  decor_code: 868S
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
 - business_id: 868S-PF-U-600
   decor_code: 868S
   material_slug: kronospan-postformed-global
@@ -593,15 +906,450 @@ variants:
   - worktop
   splashback_available: true
   hpl_available: true
-- business_id: 7045-PF-UU-900
+- business_id: 0190-CH-18-RS
+  decor_code: 0190
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: 0190-PF-U-600
+  decor_code: 0190
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: 0190-SL-12
+  decor_code: 0190
+  material_slug: kronospan-slim-line-board
+  structure_code: RS
+  thickness_mm: 12.0
+  sheet_format_slug: 4100x650
+  roles:
+  - worktop
+- business_id: 5527-CH-18-FP
+  decor_code: '5527'
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: 7045-CH-18-RS
+  decor_code: '7045'
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: 7045-PF-U-600
   decor_code: '7045'
   material_slug: kronospan-postformed-global
   structure_code: RS
   thickness_mm: 38.0
-  sheet_format_slug: 4100x900
+  sheet_format_slug: 4100x600
   roles:
   - worktop
   splashback_available: true
+  hpl_available: true
+- business_id: 4298-CH-18-UE
+  decor_code: '4298'
+  material_slug: kronospan-chipboard-global
+  structure_code: UE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: 4298-PF-U-600
+  decor_code: '4298'
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: 4299-CH-18-UE
+  decor_code: '4299'
+  material_slug: kronospan-chipboard-global
+  structure_code: UE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: 4299-PF-U-600
+  decor_code: '4299'
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K201-CH-18-RS
+  decor_code: K201
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K201-PF-U-600
+  decor_code: K201
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K205-CH-18-RS
+  decor_code: K205
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K205-PF-U-600
+  decor_code: K205
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K207-CH-18-RS
+  decor_code: K207
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K207-PF-U-600
+  decor_code: K207
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K209-CH-18-RS
+  decor_code: K209
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K209-PF-U-600
+  decor_code: K209
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K210-CH-18-PE
+  decor_code: K210
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K210-PF-U-600
+  decor_code: K210
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K213-CH-18-RS
+  decor_code: K213
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K213-PF-U-600
+  decor_code: K213
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K214-CH-18-RS
+  decor_code: K214
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K214-PF-U-600
+  decor_code: K214
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K217-CH-18-GG
+  decor_code: K217
+  material_slug: kronospan-chipboard-global
+  structure_code: GG
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K217-PF-U-600
+  decor_code: K217
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K218-CH-18-GG
+  decor_code: K218
+  material_slug: kronospan-chipboard-global
+  structure_code: GG
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K218-PF-U-600
+  decor_code: K218
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K698-CH-18-PN
+  decor_code: K698
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K698-PF-U-600
+  decor_code: K698
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K699-CH-18-PN
+  decor_code: K699
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K699-PF-U-600
+  decor_code: K699
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K703-CH-18-PN
+  decor_code: K703
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K703-PF-U-600
+  decor_code: K703
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K704-CH-18-PN
+  decor_code: K704
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K704-PF-U-600
+  decor_code: K704
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K705-CH-18-PN
+  decor_code: K705
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K705-PF-U-600
+  decor_code: K705
+  material_slug: kronospan-postformed-global
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x600
+  roles:
+  - worktop
+  splashback_available: true
+  hpl_available: true
+- business_id: K093-CH-18-SL
+  decor_code: K093
+  material_slug: kronospan-chipboard-global
+  structure_code: SL
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K093-ABS-635
+  decor_code: K093
+  material_slug: kronospan-abs-edge-board
+  structure_code: SL
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K105-CH-18-FP
+  decor_code: K105
+  material_slug: kronospan-chipboard-global
+  structure_code: FP
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K105-ABS-635
+  decor_code: K105
+  material_slug: kronospan-abs-edge-board
+  structure_code: FP
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K200-CH-18-RS
+  decor_code: K200
+  material_slug: kronospan-chipboard-global
+  structure_code: RS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K200-ABS-635
+  decor_code: K200
+  material_slug: kronospan-abs-edge-board
+  structure_code: RS
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K349-CH-18-RT
+  decor_code: K349
+  material_slug: kronospan-chipboard-global
+  structure_code: RT
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
   hpl_available: true
 - business_id: K349-ABS-635
   decor_code: K349
@@ -612,30 +1360,159 @@ variants:
   roles:
   - worktop
   splashback_available: true
-- business_id: K749-SL-12
-  decor_code: K749
-  material_slug: kronospan-slim-line-board
-  structure_code: LV
-  thickness_mm: 12.0
-  sheet_format_slug: 4100x650
+- business_id: K350-CH-18-RT
+  decor_code: K350
+  material_slug: kronospan-chipboard-global
+  structure_code: RT
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K350-ABS-635
+  decor_code: K350
+  material_slug: kronospan-abs-edge-board
+  structure_code: RT
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
   roles:
   - worktop
-- business_id: K551-SL-12
-  decor_code: K551
-  material_slug: kronospan-slim-line-board
-  structure_code: SU
-  thickness_mm: 12.0
-  sheet_format_slug: 4100x650
+  splashback_available: true
+- business_id: K351-CH-18-RT
+  decor_code: K351
+  material_slug: kronospan-chipboard-global
+  structure_code: RT
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K351-ABS-635
+  decor_code: K351
+  material_slug: kronospan-abs-edge-board
+  structure_code: RT
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
   roles:
   - worktop
-- business_id: 0190-SL-12
-  decor_code: 0190
-  material_slug: kronospan-slim-line-board
-  structure_code: SL
-  thickness_mm: 12.0
-  sheet_format_slug: 4100x650
+  splashback_available: true
+- business_id: K352-CH-18-RT
+  decor_code: K352
+  material_slug: kronospan-chipboard-global
+  structure_code: RT
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K352-ABS-635
+  decor_code: K352
+  material_slug: kronospan-abs-edge-board
+  structure_code: RT
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
   roles:
   - worktop
+  splashback_available: true
+- business_id: K353-CH-18-RT
+  decor_code: K353
+  material_slug: kronospan-chipboard-global
+  structure_code: RT
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K353-ABS-635
+  decor_code: K353
+  material_slug: kronospan-abs-edge-board
+  structure_code: RT
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K535-CH-18-RW
+  decor_code: K535
+  material_slug: kronospan-chipboard-global
+  structure_code: RW
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K535-ABS-635
+  decor_code: K535
+  material_slug: kronospan-abs-edge-board
+  structure_code: RW
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K538-CH-18-PN
+  decor_code: K538
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K538-ABS-635
+  decor_code: K538
+  material_slug: kronospan-abs-edge-board
+  structure_code: PN
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K539-CH-18-PN
+  decor_code: K539
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K539-ABS-635
+  decor_code: K539
+  material_slug: kronospan-abs-edge-board
+  structure_code: PN
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+- business_id: K540-CH-18-PN
+  decor_code: K540
+  material_slug: kronospan-chipboard-global
+  structure_code: PN
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+- business_id: K540-ABS-635
+  decor_code: K540
+  material_slug: kronospan-abs-edge-board
+  structure_code: PN
+  thickness_mm: 38.0
+  sheet_format_slug: 4100x635
+  roles:
+  - worktop
+  splashback_available: true
+multi_structures: BS, PD, PW
 worktops:
 - variant_business_id: 868S-PF-U-600
   construction_slug: postformed
@@ -649,13 +1526,12 @@ worktops:
   matching_board_available: true
   pieces_per_pallet: 10
   pallet_weight_kg: 620
-- variant_business_id: 7045-PF-UU-900
+- variant_business_id: 7045-PF-U-600
   construction_slug: postformed
-  profile_code: U-U
+  profile_code: U
   max_length_mm: 4100
   available_widths_mm:
-  - 900
-  - 1200
+  - 600
   edge_material: Unoflex
   edge_material_thickness_mm: 1.0
   splashback_available: true
@@ -940,12 +1816,12 @@ availability:
   available: true
   warehouse: Mielec
   lead_time: 24h
-- variant_business_id: K8685-CH-12-SM
+- variant_business_id: K8685-CH-18-SM
   channel: express_24h
   available: true
   warehouse: Mielec
   lead_time: 24h
-- variant_business_id: K8685-CH-16-SM
+- variant_business_id: K8685-CH-18-SM
   channel: express_24h
   available: true
   warehouse: Mielec
@@ -955,7 +1831,7 @@ availability:
   available: true
   warehouse: Mielec
   lead_time: 24h
-- variant_business_id: 7045-PF-UU-900
+- variant_business_id: 7045-PF-U-600
   channel: express_24h
   available: true
   warehouse: Mielec
@@ -970,15 +1846,26 @@ availability:
   available: true
   warehouse: Mielec
   lead_time: 24h
+- variant_business_id: K523-CH-18-PE
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K0112-CH-18-SM
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
+- variant_business_id: K5981-CH-18-SM
+  channel: express_24h
+  available: true
+  warehouse: Mielec
+  lead_time: 24h
 - variant_business_id: K8685-CH-18-SM
   channel: konfekcja
   available: true
   min_order_qty: 1
 - variant_business_id: K190-CH-18-PE
-  channel: konfekcja
-  available: true
-  min_order_qty: 1
-- variant_business_id: K8685-CH-12-SM
   channel: konfekcja
   available: true
   min_order_qty: 1

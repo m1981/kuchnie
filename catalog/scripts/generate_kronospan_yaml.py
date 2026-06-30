@@ -283,6 +283,33 @@ ABS_EDGE_DECORS = [
 # YAML generation
 # ══════════════════════════════════════════════════════════════════
 
+# Mapping: decor_code → primary structure_code
+PRIMARY = {
+    "K8685": "SM", "K101": "PE", "K110": "SM",
+    "K190": "PE", "K164": "SM", "K7045": "SM",
+    "K523": "PE", "K5981": "SM", "K0112": "SM",
+    "K2738": "FP", "K9103": "FP", "K5307": "FP",
+    "K3025": "FP", "K365": "FP", "K003": "FP",
+    "K091": "FP", "K092": "FP", "K203": "PE",
+    "K023": "SU", "K212": "PA", "K215": "BS",
+    "K367": "PH", "K368": "PH", "K553": "SU",
+    "K749": "LV", "K750": "LV", "K594": "SU",
+    "K595": "SU", "K551": "SU", "K552": "SU",
+    # Worktops
+    "868S": "RS", "0190": "RS", "7045": "RS",
+    "4298": "UE", "4299": "UE",
+    "5527": "FP", "K201": "RS", "K205": "RS",
+    "K207": "RS", "K209": "RS", "K210": "PE",
+    "K213": "RS", "K214": "RS",
+    "K217": "GG", "K218": "GG",
+    "K698": "PN", "K699": "PN", "K703": "PN",
+    "K704": "PN", "K705": "PN",
+    # ABS
+    "K093": "SL", "K105": "FP", "K200": "RS",
+    "K349": "RT", "K350": "RT", "K351": "RT",
+    "K352": "RT", "K353": "RT",
+    "K535": "RW", "K538": "PN", "K539": "PN", "K540": "PN",
+}
 
 def generate_kronospan_yaml() -> dict:
     """Build the complete Kronospan YAML dict."""
@@ -366,125 +393,8 @@ def generate_kronospan_yaml() -> dict:
             },
         ],
         "decors": all_decors,
-        "variants": [
-            # ── K8685 chipboard 18mm, SM primary ───────────────────
-            {
-                "business_id": "K8685-CH-18-SM",
-                "decor_code": "K8685",
-                "material_slug": "kronospan-chipboard-global",
-                "structure_code": "SM",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-                "hpl_available": True,
+        "variants": _build_variants(all_decors, PRIMARY),
                 "multi_structures": "BS, PD, PW",
-            },
-            # ── K190 chipboard 18mm, PE primary ────────────────────
-            {
-                "business_id": "K190-CH-18-PE",
-                "decor_code": "K190",
-                "material_slug": "kronospan-chipboard-global",
-                "structure_code": "PE",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-                "hpl_available": True,
-                "multi_structures": "PD, PW",
-            },
-            # ── K523 chipboard 18mm ────────────────────────────────
-            {
-                "business_id": "K523-CH-18-PE",
-                "decor_code": "K523",
-                "material_slug": "kronospan-chipboard-global",
-                "structure_code": "PE",
-                "thickness_mm": 18.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-                "hpl_available": True,
-            },
-            # ── K8685 chipboard 12mm ───────────────────────────────
-            {
-                "business_id": "K8685-CH-12-SM",
-                "decor_code": "K8685",
-                "material_slug": "kronospan-chipboard-global",
-                "structure_code": "SM",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["carcass"],
-            },
-            # ── K8685 chipboard 16mm ───────────────────────────────
-            {
-                "business_id": "K8685-CH-16-SM",
-                "decor_code": "K8685",
-                "material_slug": "kronospan-chipboard-global",
-                "structure_code": "SM",
-                "thickness_mm": 16.0,
-                "sheet_format_slug": "2800x2070",
-                "roles": ["front", "carcass"],
-            },
-            # ── Postformed worktops ────────────────────────────────
-            {
-                "business_id": "868S-PF-U-600",
-                "decor_code": "868S",
-                "material_slug": "kronospan-postformed-global",
-                "structure_code": "RS",
-                "thickness_mm": 38.0,
-                "sheet_format_slug": "4100x600",
-                "roles": ["worktop"],
-                "splashback_available": True,
-                "hpl_available": True,
-            },
-            {
-                "business_id": "7045-PF-UU-900",
-                "decor_code": "7045",
-                "material_slug": "kronospan-postformed-global",
-                "structure_code": "RS",
-                "thickness_mm": 38.0,
-                "sheet_format_slug": "4100x900",
-                "roles": ["worktop"],
-                "splashback_available": True,
-                "hpl_available": True,
-            },
-            # ── ABS Square Edge worktops ───────────────────────────
-            {
-                "business_id": "K349-ABS-635",
-                "decor_code": "K349",
-                "material_slug": "kronospan-abs-edge-board",
-                "structure_code": "RT",
-                "thickness_mm": 38.0,
-                "sheet_format_slug": "4100x635",
-                "roles": ["worktop"],
-                "splashback_available": True,
-            },
-            # ── Slim Line worktops ─────────────────────────────────
-            {
-                "business_id": "K749-SL-12",
-                "decor_code": "K749",
-                "material_slug": "kronospan-slim-line-board",
-                "structure_code": "LV",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x650",
-                "roles": ["worktop"],
-            },
-            {
-                "business_id": "K551-SL-12",
-                "decor_code": "K551",
-                "material_slug": "kronospan-slim-line-board",
-                "structure_code": "SU",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x650",
-                "roles": ["worktop"],
-            },
-            {
-                "business_id": "0190-SL-12",
-                "decor_code": "0190",
-                "material_slug": "kronospan-slim-line-board",
-                "structure_code": "SL",
-                "thickness_mm": 12.0,
-                "sheet_format_slug": "4100x650",
-                "roles": ["worktop"],
-            },
-        ],
         "worktops": [
             {
                 "variant_business_id": "868S-PF-U-600",
@@ -500,11 +410,11 @@ def generate_kronospan_yaml() -> dict:
                 "pallet_weight_kg": 620,
             },
             {
-                "variant_business_id": "7045-PF-UU-900",
+                "variant_business_id": "7045-PF-U-600",
                 "construction_slug": "postformed",
-                "profile_code": "U-U",
+                "profile_code": "U",
                 "max_length_mm": 4100,
-                "available_widths_mm": [900, 1200],
+                "available_widths_mm": [600],
                 "edge_material": "Unoflex",
                 "edge_material_thickness_mm": 1.0,
                 "splashback_available": True,
@@ -605,14 +515,14 @@ def generate_kronospan_yaml() -> dict:
                 "lead_time": "24h",
             },
             {
-                "variant_business_id": "K8685-CH-12-SM",
+                "variant_business_id": "K8685-CH-18-SM",
                 "channel": "express_24h",
                 "available": True,
                 "warehouse": "Mielec",
                 "lead_time": "24h",
             },
             {
-                "variant_business_id": "K8685-CH-16-SM",
+                "variant_business_id": "K8685-CH-18-SM",
                 "channel": "express_24h",
                 "available": True,
                 "warehouse": "Mielec",
@@ -627,7 +537,7 @@ def generate_kronospan_yaml() -> dict:
                 "lead_time": "24h",
             },
             {
-                "variant_business_id": "7045-PF-UU-900",
+                "variant_business_id": "7045-PF-U-600",
                 "channel": "express_24h",
                 "available": True,
                 "warehouse": "Mielec",
@@ -649,7 +559,30 @@ def generate_kronospan_yaml() -> dict:
                 "warehouse": "Mielec",
                 "lead_time": "24h",
             },
-            # Konfekcja (small quantities, all variants)
+
+            # Chipboard Express 24h (all primary decors)
+            {
+                "variant_business_id": "K523-CH-18-PE",
+                "channel": "express_24h",
+                "available": True,
+                "warehouse": "Mielec",
+                "lead_time": "24h",
+            },
+            {
+                "variant_business_id": "K0112-CH-18-SM",
+                "channel": "express_24h",
+                "available": True,
+                "warehouse": "Mielec",
+                "lead_time": "24h",
+            },
+            {
+                "variant_business_id": "K5981-CH-18-SM",
+                "channel": "express_24h",
+                "available": True,
+                "warehouse": "Mielec",
+                "lead_time": "24h",
+            },
+            # Konfekcja (small quantities)
             {
                 "variant_business_id": "K8685-CH-18-SM",
                 "channel": "konfekcja",
@@ -658,12 +591,6 @@ def generate_kronospan_yaml() -> dict:
             },
             {
                 "variant_business_id": "K190-CH-18-PE",
-                "channel": "konfekcja",
-                "available": True,
-                "min_order_qty": 1,
-            },
-            {
-                "variant_business_id": "K8685-CH-12-SM",
                 "channel": "konfekcja",
                 "available": True,
                 "min_order_qty": 1,
@@ -739,6 +666,117 @@ def generate_kronospan_yaml() -> dict:
     }
 
 
+def _build_variants(decors: list[dict], primary_map: dict) -> list[dict]:
+    """Auto-generate variants for ALL decors.
+
+    For each decor:
+      - If it's in POSTFORMED_WORKTOP_DECORS → worktop variant (38mm, postformed)
+      - If it's in ABS_EDGE_DECORS → ABS edge variant (38mm)
+      - If it's in SLIM_LINE_DECORS (from YAML) → slim line variant (12mm)
+      - Otherwise → chipboard variant (18mm) with primary structure
+    """
+    # Build lookup sets
+    postformed_ids = {d["business_id"] for d in POSTFORMED_WORKTOP_DECORS}
+    abs_ids = {d["business_id"] for d in ABS_EDGE_DECORS}
+
+    # Slim Line decors from the YAML data (K749, K750, K551, K552, etc.)
+    slim_ids = {"K749", "K750", "K551", "K552", "K594", "K595", "0190"}
+
+    # ABS Square Edge structures
+    ABS_STRUCTURES = {
+        "K093": "SL", "K105": "FP", "K200": "RS", "K349": "RT",
+        "K350": "RT", "K351": "RT", "K352": "RT", "K353": "RT",
+        "K535": "RW", "K538": "PN", "K539": "PN", "K540": "PN",
+        "K023": "SQ", "K217": "GM", "K218": "GM",
+        "K365": "FP", "K523": "PE",
+        "K107": "FP", "K367": "PH", "K368": "PH",
+        "K544": "RW", "K545": "RW",
+        "K549": "SL", "K550": "SL",
+        "K091": "FP", "K092": "FP",
+        "K1090": "BT", "K1085": "SM", "K1093": "IS",
+        "K1091": "SK", "K1101": "IS", "K1083": "BT",
+        "K1078": "IS", "K4008": "PE",
+        "K1097": "SM", "K4876": "SM", "K4871": "BS",
+        "K1099": "SM", "K1087": "PE", "K1052": "BL",
+        "K1082": "SM", "K1032": "SK", "K1100": "SM",
+        "K1098": "SM", "K1088": "SA", "K1102": "VL",
+        "K1104": "SM", "K1103": "SM",
+    }
+
+    # Multi-structures: decor → all structures (from Global Collection tables)
+    MULTI = {
+        "K8685": "BS, PD, PW",
+        "K190": "PD, PW",
+        "K101": "SE",
+        "K7045": "PW",
+    }
+
+    variants = []
+
+    for d in decors:
+        code = d["business_id"]
+        primary = primary_map.get(code)
+        if not primary:
+            continue
+
+        # Chipboard variant (18mm) — always
+        chipboard = {
+            "business_id": f"{code}-CH-18-{primary}",
+            "decor_code": code,
+            "material_slug": "kronospan-chipboard-global",
+            "structure_code": primary,
+            "thickness_mm": 18.0,
+            "sheet_format_slug": "2800x2070",
+            "roles": ["front", "carcass"],
+            "hpl_available": True,
+        }
+        if code in MULTI:
+            chipboard["multi_structures"] = MULTI[code]
+        variants.append(chipboard)
+
+        # Postformed worktop variant — if in postformed collection
+        if code in postformed_ids:
+            variants.append({
+                "business_id": f"{code}-PF-U-600",
+                "decor_code": code,
+                "material_slug": "kronospan-postformed-global",
+                "structure_code": "RS",
+                "thickness_mm": 38.0,
+                "sheet_format_slug": "4100x600",
+                "roles": ["worktop"],
+                "splashback_available": True,
+                "hpl_available": True,
+            })
+
+        # ABS Square Edge variant — if in ABS collection
+        if code in abs_ids:
+            struct = ABS_STRUCTURES.get(code, "RT")
+            variants.append({
+                "business_id": f"{code}-ABS-635",
+                "decor_code": code,
+                "material_slug": "kronospan-abs-edge-board",
+                "structure_code": struct,
+                "thickness_mm": 38.0,
+                "sheet_format_slug": "4100x635",
+                "roles": ["worktop"],
+                "splashback_available": True,
+            })
+
+        # Slim Line variant — if in slim collection
+        if code in slim_ids:
+            variants.append({
+                "business_id": f"{code}-SL-12",
+                "decor_code": code,
+                "material_slug": "kronospan-slim-line-board",
+                "structure_code": primary,
+                "thickness_mm": 12.0,
+                "sheet_format_slug": "4100x650",
+                "roles": ["worktop"],
+            })
+
+    return variants
+
+
 def _build_decor_structures(decors: list[dict]) -> list[dict]:
     """Build decor_structures junction rows.
 
@@ -747,32 +785,6 @@ def _build_decor_structures(decors: list[dict]) -> list[dict]:
     until the full 174-decor import fills the junction table.
     """
     # Mapping: decor_code → primary structure_code
-    PRIMARY = {
-        "K8685": "SM", "K101": "PE", "K110": "SM",
-        "K190": "PE", "K164": "SM", "K7045": "SM",
-        "K523": "PE", "K5981": "SM", "K0112": "SM",
-        "K2738": "FP", "K9103": "FP", "K5307": "FP",
-        "K3025": "FP", "K365": "FP", "K003": "FP",
-        "K091": "FP", "K092": "FP", "K203": "PE",
-        "K023": "SU", "K212": "PA", "K215": "BS",
-        "K367": "PH", "K368": "PH", "K553": "SU",
-        "K749": "LV", "K750": "LV", "K594": "SU",
-        "K595": "SU", "K551": "SU", "K552": "SU",
-        # Worktops
-        "868S": "RS", "0190": "RS", "7045": "RS",
-        "4298": "UE", "4299": "UE",
-        "5527": "FP", "K201": "RS", "K205": "RS",
-        "K207": "RS", "K209": "RS", "K210": "PE",
-        "K213": "RS", "K214": "RS",
-        "K217": "GG", "K218": "GG",
-        "K698": "PN", "K699": "PN", "K703": "PN",
-        "K704": "PN", "K705": "PN",
-        # ABS
-        "K093": "SL", "K105": "FP", "K200": "RS",
-        "K349": "RT", "K350": "RT", "K351": "RT",
-        "K352": "RT", "K353": "RT",
-        "K535": "RW", "K538": "PN", "K539": "PN", "K540": "PN",
-    }
 
     # Multi-structures: decor → all structures (from Global Collection tables)
     MULTI = {

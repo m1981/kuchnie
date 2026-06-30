@@ -251,7 +251,7 @@ class TestKronoSwissStandard:
             "SELECT va.channel, va.warehouse, va.lead_time "
             "FROM variant_availability va "
             "JOIN variants v ON v.id = va.variant_id "
-            "WHERE v.business_id = 'U190-CH-18-VL' "
+            "WHERE v.business_id = 'U190-BW-12' "
             "AND va.channel = 'standard'"
         ).fetchone()
         assert row is not None
