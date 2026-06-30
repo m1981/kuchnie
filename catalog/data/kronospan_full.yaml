@@ -545,6 +545,346 @@ decors:
   color_family_slug: szary
   producer_slug: kronospan
   img: K0540.jpg
+- business_id: K112
+  name: Jasny Szary
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0112.jpg
+  color_family_slug: szary
+  ncs: S 2000-N
+  ral: '7047'
+- business_id: K162
+  name: Grafit Szary
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0162.jpg
+  color_family_slug: szary
+  ncs: S 6500-N
+  ral: '7015'
+- business_id: K166
+  name: Bazalt
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0166.jpg
+  color_family_slug: szary
+  ncs: S 7500-N
+  ral: '7022'
+- business_id: K171
+  name: Jasny Grafit
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0171.jpg
+  color_family_slug: szary
+  ncs: S 4500-N
+  ral: '7037'
+- business_id: K191
+  name: Szary
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0191.jpg
+  color_family_slug: szary
+  ncs: 1502-G
+  ral: '7035'
+- business_id: K197
+  name: Szary Chinchilla
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0197.jpg
+  color_family_slug: szary
+  ncs: S 3000-N
+- business_id: '0514'
+  name: Kość Słoniowa
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0514.jpg
+  color_family_slug: szary
+  ncs: 0505-Y20R
+- business_id: '0515'
+  name: Piaskowy
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0515.jpg
+  color_family_slug: szary
+  ncs: 1010-Y30R
+- business_id: '0522'
+  name: Beżowy
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0522.jpg
+  color_family_slug: bezowy
+  ncs: S 1005-Y20R
+- business_id: '0540'
+  name: Manhattan Szary
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0540.jpg
+  color_family_slug: szary
+  ncs: S 2500-N
+- business_id: K564
+  name: Migdałowy
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K0564.jpg
+  color_family_slug: szary
+  ncs: 0601-Y21R
+  ral: '9001'
+- business_id: K1700
+  name: Stalowo Szary
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K1700.jpg
+  color_family_slug: szary
+  ncs: S 2005-R80B
+- business_id: K5982
+  name: Muszla
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K5982.jpg
+  color_family_slug: szary
+  ncs: S 1005-Y20R
+  ral: '1013'
+- business_id: K7031
+  name: Krem
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K7031.jpg
+  color_family_slug: kremowy
+  ncs: S 0804-Y10R
+- business_id: K8100
+  name: Perłowy Biały
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K8100.jpg
+  color_family_slug: bialy
+  ncs: S 0300-N
+  ral: '9016'
+- business_id: K8533
+  name: Macchiato
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K8533.jpg
+  color_family_slug: szary
+  ncs: S 3010-Y40R
+- business_id: K8681
+  name: Biały Brylantowy
+  group_name: COLOR BASIC
+  producer_slug: kronospan
+  img: K8681.jpg
+  color_family_slug: bialy
+  ncs: S 0505-R70B
+- business_id: K125
+  name: Niebieski
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K0125.jpg
+  color_family_slug: niebieski
+  ncs: S 3060-R90B
+  ral: '5005'
+- business_id: K132
+  name: Pomarańczowy
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K0132.jpg
+  color_family_slug: szary
+  ncs: S 0585-Y40R
+  ral: '2000'
+- business_id: K134
+  name: Żółty
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K0134.jpg
+  color_family_slug: szary
+  ncs: S 0560-Y10R
+- business_id: '0244'
+  name: Petrol
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K0244.jpg
+  color_family_slug: szary
+  ncs: S 6020-B30G
+- business_id: K301
+  name: Cappuccino
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K0301.jpg
+  color_family_slug: szary
+  ncs: S 4010-Y30R
+  ral: '1019'
+- business_id: K5994
+  name: Alby Blue
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K5994.jpg
+  color_family_slug: niebieski
+  ncs: S 6010-R90B
+- business_id: K6299
+  name: Kobalt Szary
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K6299.jpg
+  color_family_slug: szary
+  ncs: S 6502-Y
+  ral: '7039'
+- business_id: K7063
+  name: Pastelowy Zielony
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K7063.jpg
+  color_family_slug: zielony
+  ncs: 1505-G
+- business_id: K7113
+  name: Czerwień Chilli
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K7113.jpg
+  color_family_slug: szary
+  ncs: 1085-Y85R
+  ral: '3020'
+- business_id: K7166
+  name: Latte
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K7166.jpg
+  color_family_slug: szary
+- business_id: K7181
+  name: Ciemna Czekolada
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K7181.jpg
+  color_family_slug: szary
+  ncs: S 7502-R
+- business_id: K7190
+  name: Zieleń Mamba
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K7190.jpg
+  color_family_slug: zielony
+  ncs: S 0580-G30Y
+- business_id: K8984
+  name: Granatowy
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K8984.jpg
+  color_family_slug: szary
+  ncs: S 7020-R80B
+  ral: '5011'
+- business_id: K9551
+  name: Czerwony Oxid
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K9551.jpg
+  color_family_slug: czerwony
+  ncs: S 4550-Y90R
+  ral: '3011'
+- business_id: K9561
+  name: Zielony Oxid
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K9561.jpg
+  color_family_slug: zielony
+  ncs: S 3060-G10Y
+  ral: '6029'
+- business_id: K096
+  name: Glina Szara
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K096.jpg
+  color_family_slug: szary
+  ncs: S 4005-Y20R
+- business_id: K097
+  name: Błękitny Zmierzch
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K097.jpg
+  color_family_slug: szary
+  ncs: S 4010-B50G
+- business_id: K098
+  name: Ceramiczny
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K098.jpg
+  color_family_slug: szary
+  ncs: S 4050-Y70R
+- business_id: K512
+  name: Róż Naturalny
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K512.jpg
+  color_family_slug: szary
+  ncs: S 2020-Y80R
+- business_id: K513
+  name: Marshmallow
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K513.jpg
+  color_family_slug: szary
+  ncs: S 0520-R20B
+- business_id: K514
+  name: Głębia Sahary
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K514.jpg
+  color_family_slug: szary
+  ncs: S 4030-Y60R
+- business_id: K515
+  name: Pikantna Czerwień
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K515.jpg
+  color_family_slug: szary
+  ncs: S 6030-R20B
+- business_id: K516
+  name: Toffee
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K516.jpg
+  color_family_slug: szary
+- business_id: K517
+  name: Lazurowy Błękit
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K517.jpg
+  color_family_slug: szary
+  ncs: S 1555-R80B
+  ral: 260 60 35
+- business_id: K518
+  name: Surf Blue
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K518.jpg
+  color_family_slug: niebieski
+  ncs: S 1020-R90B
+  ral: 240 80 15
+- business_id: K519
+  name: Mouse Grey
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K519.jpg
+  color_family_slug: szary
+  ncs: S 4000-N
+  ral: '7040'
+- business_id: K520
+  name: Ciemny Szmaragd
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K520.jpg
+  color_family_slug: szary
+  ncs: S 7010-B70G
+  ral: '6004'
+- business_id: K521
+  name: Dymiona Zieleń
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K521.jpg
+  color_family_slug: zielony
+  ncs: S 6010-G30Y
+  ral: 130 40 10
+- business_id: K522
+  name: Aluminium Flash
+  group_name: COLOR SPECIAL
+  producer_slug: kronospan
+  img: K522.jpg
+  color_family_slug: jesion
 variants:
 - business_id: K110-CH-18-SM
   decor_code: K110
@@ -1524,6 +1864,561 @@ variants:
   roles:
   - worktop
   splashback_available: true
+- business_id: K112-CH-18-PE
+  decor_code: K112
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 16
+  - 18
+- business_id: K162-CH-18-PE
+  decor_code: K162
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 16
+  - 18
+- business_id: K166-CH-18-BS
+  decor_code: K166
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K171-CH-18-PE
+  decor_code: K171
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K191-CH-18-SU
+  decor_code: K191
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K197-CH-18-SU
+  decor_code: K197
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: 0514-CH-18-PE
+  decor_code: '0514'
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: 0515-CH-18-PE
+  decor_code: '0515'
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: 0522-CH-18-PE
+  decor_code: '0522'
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: 0540-CH-18-PE
+  decor_code: '0540'
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K564-CH-18-PE
+  decor_code: K564
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K1700-CH-18-PE
+  decor_code: K1700
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K5982-CH-18-BS
+  decor_code: K5982
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7031-CH-18-BS
+  decor_code: K7031
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K8100-CH-18-SM
+  decor_code: K8100
+  material_slug: kronospan-chipboard-global
+  structure_code: SM
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K8533-CH-18-BS
+  decor_code: K8533
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K8681-CH-18-SU
+  decor_code: K8681
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  multi_structures: SM
+  express:
+  - 18
+- business_id: K125-CH-18-BS
+  decor_code: K125
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K132-CH-18-BS
+  decor_code: K132
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K134-CH-18-BS
+  decor_code: K134
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: 0244-CH-18-SU
+  decor_code: '0244'
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K301-CH-18-SU
+  decor_code: K301
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K5994-CH-18-SU
+  decor_code: K5994
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K6299-CH-18-BS
+  decor_code: K6299
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7063-CH-18-SU
+  decor_code: K7063
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7113-CH-18-BS
+  decor_code: K7113
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7166-CH-18-BS
+  decor_code: K7166
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7181-CH-18-BS
+  decor_code: K7181
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K7190-CH-18-BS
+  decor_code: K7190
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K8984-CH-18-BS
+  decor_code: K8984
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K9551-CH-18-BS
+  decor_code: K9551
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K9561-CH-18-BS
+  decor_code: K9561
+  material_slug: kronospan-chipboard-global
+  structure_code: BS
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K096-CH-18-SU
+  decor_code: K096
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K097-CH-18-SU
+  decor_code: K097
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K098-CH-18-SU
+  decor_code: K098
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K512-CH-18-SU
+  decor_code: K512
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K513-CH-18-SU
+  decor_code: K513
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K514-CH-18-SU
+  decor_code: K514
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K515-CH-18-SU
+  decor_code: K515
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K516-CH-18-SU
+  decor_code: K516
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K517-CH-18-SU
+  decor_code: K517
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K518-CH-18-SU
+  decor_code: K518
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K519-CH-18-SU
+  decor_code: K519
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K520-CH-18-SU
+  decor_code: K520
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K521-CH-18-SU
+  decor_code: K521
+  material_slug: kronospan-chipboard-global
+  structure_code: SU
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
+- business_id: K522-CH-18-PE
+  decor_code: K522
+  material_slug: kronospan-chipboard-global
+  structure_code: PE
+  thickness_mm: 18.0
+  sheet_format_slug: 2800x2070
+  roles:
+  - front
+  - carcass
+  hpl_available: true
+  express:
+  - 18
 multi_structures: BS, PD, PW
 worktops:
 - variant_business_id: 868S-PF-U-600

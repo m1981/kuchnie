@@ -118,7 +118,7 @@ def get_full_catalog(
             # Variants for this decor
             variants = []
             for vrow in db.execute(
-                "SELECT v.business_id, COALESCE(mt.slug, '') AS material_type, "
+                "SELECT v.id, v.business_id, COALESCE(mt.slug, '') AS material_type, "
                 "       m.slug AS material_slug, COALESCE(s.code, '') AS structure, "
                 "       v.thickness_mm, v.width_mm, v.length_mm, "
                 "       v.format_mm, v.sidedness, v.roles, "
@@ -143,7 +143,7 @@ def get_full_catalog(
                     "LEFT JOIN edge_suppliers es ON es.id = e.supplier_id "
                     "WHERE ve.variant_id = ? "
                     "LIMIT 1",
-                    (vrow["business_id"],),
+                    (vrow["id"],),
                 ).fetchone()
                 if edge_row:
                     edge_data = {
