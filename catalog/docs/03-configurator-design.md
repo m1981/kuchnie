@@ -1,5 +1,8 @@
 # Kitchen Configurator — Data Model Design
 
+> **Status**: Phase 1 MVP complete (2026-06-30). Phase 2 (curated content) pending.
+> See `ROADMAP.md` for task tracking, `specs/configurator-api.md` for API spec.
+
 > **Goal**: Walk a customer through 6 steps to a complete material specification
 > for their kitchen, with pre-filtered options at each step based on prior choices.
 

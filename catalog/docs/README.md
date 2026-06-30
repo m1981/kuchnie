@@ -16,9 +16,12 @@ Docs here capture decisions, comparisons, and future plans — not field lists.
 | Path | Purpose |
 |---|---|
 | `adr/001-pairings-as-decor-relations.md` | Why pairings are decor-level, not variant-level |
+| `adr/002-configurator-session-fk-strategy.md` | Why sessions store business_id strings, not integer FKs |
 | `architecture/01-schema.sql` … `05-…sql` | Historical migration log (the path we took) |
 | `architecture/multi-producer-strategy.md` | Kronospan vs Egger vs Swiss Krono modeling |
+| `specs/configurator-api.md` | Configurator API spec + test cases |
 | `03-configurator-design.md` | 6-step wizard data model + API design |
+| `curated-kitchens.md` | Reference kitchen templates for configurator |
 | `materials/` | Source material spec scans + extracted decor lists |
 
 ---
