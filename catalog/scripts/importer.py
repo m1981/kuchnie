@@ -43,6 +43,8 @@ class ImportStats:
     worktop_specs: int = 0
     decor_structures: int = 0
     pairings: int = 0
+    edges: int = 0
+    variant_edges: int = 0
     availability: int = 0
     property_flags: int = 0
 
@@ -51,6 +53,7 @@ class ImportStats:
             self.producers + self.collections + self.structures
             + self.materials + self.decors + self.variants
             + self.worktop_specs + self.decor_structures + self.pairings
+            + self.edges + self.variant_edges
             + self.availability + self.property_flags
         )
 
@@ -158,6 +161,9 @@ class CatalogImporter:
 
         if "pairings" in data:
             stats.pairings = self.import_pairings(data["pairings"])
+
+        if "edges" in data:
+            stats.edges, stats.variant_edges = self.import_edges(data["edges"])
 
         if "availability" in data:
             stats.availability = self.import_availability(
@@ -513,6 +519,65 @@ class CatalogImporter:
             )
             count += 1
         return count
+
+    def import_edges(self, items: list[dict]) -> tuple[int, int]:
+        """Import edges and variant-edge links.
+
+        YAML format:
+          edges:
+            - code: K-0110-SM
+              supplier_slug: schilsner
+              material: ABS
+              variant_ids:
+                - K110-CH-18-SM
+
+        Returns (edges_added, variant_edges_added).
+        """
+        edges_count = 0
+        links_count = 0
+        for item in items:
+            _require(item, "code", "edges")
+
+            supplier_id = None
+            if item.get("supplier_slug"):
+                supplier_id = self._require_id(
+                    "edge_suppliers", "slug", item["supplier_slug"],
+                    f"edge {item['code']}"
+                )
+
+            self.db.execute(
+                "INSERT OR IGNORE INTO edges "
+                "(code, supplier_id, material, finish, thickness_mm, width_mm, notes) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    item["code"],
+                    supplier_id,
+                    item.get("material", "ABS"),
+                    item.get("finish"),
+                    item.get("thickness_mm"),
+                    item.get("width_mm"),
+                    item.get("notes"),
+                ),
+            )
+            edges_count += 1
+
+            edge_id = self.db.execute(
+                "SELECT id FROM edges WHERE code = ?", (item["code"],)
+            ).fetchone()[0]
+
+            for vid in item.get("variant_ids", []):
+                variant_id = self._require_id(
+                    "variants", "business_id", vid,
+                    f"variant_edge {vid}→{item['code']}"
+                )
+                self.db.execute(
+                    "INSERT OR IGNORE INTO variant_edges (variant_id, edge_id) "
+                    "VALUES (?, ?)",
+                    (variant_id, edge_id),
+                )
+                links_count += 1
+
+        return edges_count, links_count
 
     def import_availability(self, items: list[dict]) -> int:
         """Import variant availability data.

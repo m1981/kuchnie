@@ -2,6 +2,13 @@
 
 ## 2026-06-30
 
+### Added — Configurator data seeding
+
+- `scripts/seed_pairings_edges.py` — seeds carcass pairings (136 rows) and
+  edge bandings from obrzeze codes (69 edges, 69 variant-edge links)
+- `scripts/importer.py` — added `import_edges()` method for edges + variant_edges
+  YAML format (auto-imported on seed)
+
 ### Added — Configurator API (Phase 1 MVP)
 
 - `configurator_sessions` table in `db/schema.sql` — stores wizard state
