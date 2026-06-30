@@ -16,20 +16,21 @@
 | 10 | ADR-002: FK strategy | ✅ |
 | 11 | CHANGELOG | ✅ |
 
-## Phase 2: Curated content
+## Phase 2: Curated content ✅
 
 | # | Task | Status |
 |---|---|---|
-| 1 | Seed `worktop_compatibility` table (front ↔ worktop matches) | 📋 |
-| 2 | Seed `curated_kitchens` (8 reference templates) | 📋 |
-| 3 | Wire `from_template` endpoint with real data | 📋 |
-| 4 | Tests for template flow | 📋 |
+| 1 | Seed `worktop_compatibility` (6626 rows) | ✅ |
+| 2 | Seed `curated_kitchens` (8 templates, 6 featured) | ✅ |
+| 3 | `from_template` endpoint working | ✅ |
+| 4 | `TemplateOut` model with `featured` field | ✅ |
 
-## Phase 3: Smart UX (future)
+## Phase 3: Smart UX
 
 | # | Task | Status |
 |---|---|---|
-| 1 | `style_tags` + `decor_style_tags` tables | ❄️ |
-| 2 | Compare 3 options side-by-side | ❄️ |
-| 3 | Shareable session links | ❄️ |
-| 4 | Price calculation (`variant_prices` table) | ❄️ |
+| 1 | Seed `decor_style_tags` (359 associations) | ✅ |
+| 2 | Style filter: `?style=scandinavian` on options | ✅ |
+| 3 | Compare endpoint: `GET /compare?ids=...` | ✅ |
+| 4 | Session state: `GET /sessions/{token}` for shareable links | ✅ |
+| 5 | Price calculation (`variant_prices` table) | ❄️ |

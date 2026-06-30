@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Style filter on configurator options: `?style=scandinavian`
+- Compare endpoint: `GET /configurator/compare?ids=K003-CH-18-FP,K190-CH-18-PE`
+- Session state endpoint: `GET /configurator/sessions/{token}` for shareable links
+- `scripts/seed_decor_style_tags.py` — 359 decor-style associations
+- `scripts/seed_worktop_compat.py` — 6626 worktop compatibility rows
+- `scripts/seed_curated_kitchens.py` — 8 reference kitchen templates
+- `style_tags`, `decor_style_tags`, `curated_kitchens`, `worktop_compatibility` tables
+
+## [0.2.0] — 2026-06-30
+
+### Added
+
 - Configurator API (Phase 1 MVP) — 6-step kitchen material wizard
   - `configurator_sessions` table in `db/schema.sql`
   - 6 endpoints: `POST /sessions`, `GET .../options`, `PATCH .../select`,
