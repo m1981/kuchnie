@@ -5,3 +5,6 @@ src/**/*.py
 *.ts
 *.toml
 *.json
+
+
+Makefile
