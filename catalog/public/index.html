@@ -43,6 +43,14 @@
     .role-tab:hover { border-color: var(--text); color: var(--text); }
     .role-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
 
+    /* ── Filter chips ── */
+    .filter-row { padding: 6px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+    .filter-row .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-right: 4px; }
+    .chip { padding: 3px 10px; border-radius: 16px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); background: none; transition: all 0.15s; }
+    .chip:hover { border-color: var(--text); color: var(--text); }
+    .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+    .chip .count { font-size: 9px; opacity: 0.7; margin-left: 2px; }
+
     /* ── Stats ── */
     .stats-bar { padding: 4px 16px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
 
@@ -133,7 +141,7 @@
       </div>
     </div>
 
-    <!-- Search + filters -->
+    <!-- Search + producer filter -->
     <div class="toolbar">
       <div class="search">
         <span class="icon">🔍</span>
@@ -145,18 +153,29 @@
           <option :value="p" x-text="p"></option>
         </template>
       </select>
-      <select x-model="filterMaterial">
-        <option value="">Typ materiału</option>
-        <option value="chipboard">Płyta wiórowa</option>
-        <option value="mdf_acrylic">MDF Akryl</option>
-        <option value="compact">Compact HPL</option>
-      </select>
-      <select x-model="filterColor">
-        <option value="">Kolor</option>
-        <template x-for="c in colorFamilies" :key="c">
-          <option :value="c" x-text="c"></option>
-        </template>
-      </select>
+    </div>
+
+    <!-- Typ materiału — pills -->
+    <div class="filter-row" x-show="materialOptions.length > 1">
+      <span class="label">Materiał:</span>
+      <template x-for="m in materialOptions" :key="m.key">
+        <button class="chip" :class="{ active: filterMaterial === m.key }" @click="filterMaterial = filterMaterial === m.key ? '' : m.key">
+          <span x-text="m.label"></span>
+          <span class="count" x-text="'(' + m.count + ')'"</span>
+        </button>
+      </template>
+    </div>
+
+    <!-- Typ dekoru / kolor — pills -->
+    <div class="filter-row" x-show="colorFamilyOptions.length > 0">
+      <span class="label">Kolor:</span>
+      <template x-for="cf in colorFamilyOptions.slice(0, showAllColors ? 999 : 10)" :key="cf.key">
+        <button class="chip" :class="{ active: filterColor === cf.key }" @click="filterColor = filterColor === cf.key ? '' : cf.key">
+          <span x-text="cf.key"></span>
+          <span class="count" x-text="'(' + cf.count + ')'"</span>
+        </button>
+      </template>
+      <button class="chip" x-show="colorFamilyOptions.length > 10" @click="showAllColors = !showAllColors" x-text="showAllColors ? 'mniej' : '...'"</button>
     </div>
 
     <!-- Role tabs -->
@@ -347,6 +366,7 @@ function builder() {
     filterMaterial: '',
     filterColor: '',
     filterRole: '',
+    showAllColors: false,
     structures: {},
 
     // ── Sidebar state ──
@@ -365,6 +385,40 @@ function builder() {
     },
     get colorFamilies() {
       return [...new Set(this.allDecors.map(d => d.color_family).filter(Boolean))].sort();
+    },
+    get materialOptions() {
+      const counts = {};
+      this.allDecors.forEach(d => {
+        if (d.material) counts[d.material] = (counts[d.material] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .map(([key, count]) => ({
+          key,
+          label: {
+            chipboard: 'Płyta wiórowa',
+            mdf_acrylic: 'MDF Akryl',
+            mdf_lacquered: 'MDF Lakierowany',
+            mdf_foil: 'MDF Folia',
+            compact: 'Compact HPL',
+            hpl: 'HPL',
+            worktop_postformed: 'Blat Post-formed',
+            worktop_fitline: 'Blat FitLine',
+            worktop_abs_edge: 'Blat ABS SE',
+            worktop_slim: 'Blat Slim Line',
+            splashback: 'Splashback',
+          }[key] || key,
+          count
+        }))
+        .sort((a, b) => b.count - a.count);
+    },
+    get colorFamilyOptions() {
+      const counts = {};
+      this.allDecors.forEach(d => {
+        if (d.color_family) counts[d.color_family] = (counts[d.color_family] || 0) + 1;
+      });
+      return Object.entries(counts)
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count);
     },
     get roleOptions() {
       return [
