@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kuchnie — Katalog + Konfigurator</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --card: #1a1a1a; --card-hover: #222; --sidebar: #151515;
+    --accent: #2d7a4f; --accent-dim: #1e5638; --accent-hover: #3a9d62;
+    --warn: #c55; --warn-dim: #6a2a2a;
+    --text: #eee; --muted: #888; --border: #333;
+    --radius: 8px; --radius-sm: 5px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; }
+
+  /* ── Layout ── */
+  .layout { display: flex; height: 100vh; }
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar { width: 320px; min-width: 320px; background: var(--sidebar); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+
+  /* ── Top bar ── */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .topbar .logo { font-weight: 700; font-size: 15px; }
+  .topbar .logo span { color: var(--accent); }
+  .topbar .nav { display: flex; gap: 12px; align-items: center; }
+  .topbar .nav a { color: var(--muted); text-decoration: none; font-size: 12px; }
+  .topbar .nav a:hover { color: var(--text); }
+  .topbar .nav a.active { color: var(--text); font-weight: 600; }
+
+  /* ── Search + filters ── */
+  .toolbar { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .search { flex: 1; min-width: 180px; position: relative; }
+  .search input { width: 100%; padding: 7px 10px 7px 28px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 12px; outline: none; }
+  .search input:focus { border-color: var(--accent); }
+  .search .icon { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 12px; }
+  select { padding: 7px 10px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 11px; }
+  select:focus { border-color: var(--accent); outline: none; }
+
+  /* ── Role filter tabs ── */
+  .role-tabs { padding: 6px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; align-items: center; }
+  .role-tab { padding: 4px 10px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .role-tab:hover { border-color: var(--text); color: var(--text); }
+  .role-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+  .role-tab .count { font-size: 9px; opacity: 0.7; margin-left: 2px; }
+
+  /* ── Stats ── */
+  .stats-bar { padding: 4px 16px; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+
+  /* ── Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 10px 16px; flex: 1; }
+
+  /* ── Card ── */
+  .card { background: var(--card); border-radius: var(--radius); border: 2px solid transparent; cursor: pointer; transition: all 0.15s; overflow: hidden; position: relative; }
+  .card:hover { border-color: var(--border); }
+  .card .swatch { width: 100%; aspect-ratio: 1; background: #333; position: relative; }
+  .card .swatch img { width: 100%; height: 100%; object-fit: cover; }
+  .card .swatch .no-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .card .swatch .badge { position: absolute; top: 4px; left: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; }
+  .card .swatch .badge.kp { background: rgba(45,122,79,0.8); color: #fff; }
+  .card .swatch .badge.sk { background: rgba(100,100,200,0.8); color: #fff; }
+  .card .body { padding: 6px; }
+  .card .body .name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .body .code { font-size: 9px; color: var(--muted); }
+  .card .body .roles { display: flex; gap: 2px; margin-top: 2px; }
+  .card .body .roles span { font-size: 8px; padding: 0 3px; border-radius: 2px; background: #222; color: var(--muted); }
+
+  /* ── Card assigned state ── */
+  .card.assigned-front-base { border-color: var(--accent); }
+  .card.assigned-front-wall { border-color: #6a9; }
+  .card.assigned-worktop { border-color: #a85; }
+  .card.assigned-carcass { border-color: #888; }
+  .card .assigned-badge { position: absolute; bottom: 4px; right: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; color: #fff; }
+  .card .assigned-badge.base { background: var(--accent); }
+  .card .assigned-badge.wall { background: #6a9; }
+  .card .assigned-badge.worktop { background: #a85; }
+  .card .assigned-badge.carcass { background: #666; }
+
+  /* ── Sidebar ── */
+  .sidebar .header { padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .sidebar .header h2 { font-size: 14px; font-weight: 700; }
+  .sidebar .header .clear { font-size: 11px; color: var(--muted); cursor: pointer; border: none; background: none; }
+  .sidebar .header .clear:hover { color: var(--warn); }
+
+  /* ── Slot ── */
+  .slot { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .slot .slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .slot .slot-header .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  .slot .slot-header .required { font-size: 9px; color: var(--warn); }
+  .slot .slot-header .optional { font-size: 9px; color: var(--muted); }
+
+  .slot .empty { padding: 14px; border: 1.5px dashed var(--border); border-radius: var(--radius-sm); text-align: center; color: var(--muted); font-size: 11px; cursor: pointer; transition: all 0.15s; }
+  .slot .empty:hover { border-color: var(--accent); color: var(--text); }
+
+  .slot .filled { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  .slot .filled .swatch-sm { width: 32px; height: 32px; border-radius: 3px; background: #444; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); }
+  .slot .filled .info { flex: 1; min-width: 0; }
+  .slot .filled .info .name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slot .filled .info .code { font-size: 10px; color: var(--muted); }
+  .slot .filled .remove { width: 20px; height: 20px; border-radius: 3px; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .slot .filled .remove:hover { background: var(--warn-dim); color: var(--warn); }
+
+  /* ── Sidebar actions ── */
+  .sidebar .actions { padding: 12px; border-top: 1px solid var(--border); margin-top: auto; }
+  .sidebar .actions .compat { padding: 8px; background: #1a1a1a; border-radius: var(--radius-sm); margin-bottom: 8px; }
+  .sidebar .actions .compat .ok { font-size: 11px; color: var(--accent); }
+  .sidebar .actions .compat .warn { font-size: 11px; color: var(--warn); }
+  .sidebar .actions .compat .info { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .btn { width: 100%; padding: 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { background: #333; color: #666; cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-top: 6px; }
+  .btn-outline:hover { color: var(--text); border-color: var(--text); }
+
+  /* ── Templates list ── */
+  .templates-section { border-top: 1px solid var(--border); }
+  .templates-section .section-header { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .templates-section .section-header a { font-size: 10px; color: var(--accent); text-decoration: none; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .tmpl { padding: 8px 12px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.15s; }
+  .tmpl:hover { background: var(--card); }
+  .tmpl .dots { display: flex; gap: 3px; }
+  .tmpl .dots .dot { width: 16px; height: 16px; border-radius: 2px; }
+  .tmpl .info { flex: 1; }
+  .tmpl .info .name { font-size: 11px; font-weight: 600; }
+  .tmpl .info .desc { font-size: 9px; color: var(--muted); }
+  .tmpl .tag { font-size: 8px; padding: 1px 4px; border-radius: 2px; background: #222; color: var(--muted); }
+
+  /* ── Active slot highlight ── */
+  .slot.active { background: #1a1a20; }
+  .slot.active .empty { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ════════════════ MAIN: Catalog grid ════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div class="logo"><span>KUCHNIE</span></div>
+    <div class="nav">
+      <a href="#" class="active">Katalog</a>
+      <a href="#">Szablony</a>
+    </div>
+  </div>
+
+  <!-- Search + filters -->
+  <div class="toolbar">
+    <div class="search">
+      <span class="icon">🔍</span>
+      <input type="text" placeholder="Szukaj po nazwie, kodzie..." />
+    </div>
+    <select><option>Producenci</option><option>Kronospan</option><option>Swiss Krono</option></select>
+    <select><option>Typ</option><option>Płyta wiórowa</option><option>MDF Akryl</option></select>
+    <select><option>Struktura</option><option>SM</option><option>PE</option><option>BS</option></select>
+    <select><option>Kolor</option><option>Biały</option><option>Szary</option><option>Dąb</option></select>
+  </div>
+
+  <!-- Role filter tabs -->
+  <div class="role-tabs">
+    <span style="font-size:10px;color:var(--muted);margin-right:4px">Rola:</span>
+    <div class="role-tab active">Wszystkie<span class="count">(186)</span></div>
+    <div class="role-tab">Front<span class="count">(136)</span></div>
+    <div class="role-tab">Korpus<span class="count">(136)</span></div>
+    <div class="role-tab">Blat<span class="count">(50)</span></div>
+    <div class="role-tab">Bok<span class="count">(136)</span></div>
+    <div class="role-tab">Cokół<span class="count">(136)</span></div>
+  </div>
+
+  <div class="stats-bar">
+    <span>Kliknij kartę aby przypisać do roli w panelu bocznym</span>
+    <span>148 dekorów &middot; 186 wariantów</span>
+  </div>
+
+  <!-- Card grid -->
+  <div class="grid">
+    <div class="card assigned-front-base">
+      <div class="swatch" style="background:#c8a951">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K003</div>
+        <span class="assigned-badge base">DÓŁ</span>
+      </div>
+      <div class="body">
+        <div class="name">Dąb Craft Złoty</div>
+        <div class="code">K003-CH-18-FP</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card assigned-carcass">
+      <div class="swatch" style="background:#f5f5f0">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K110</div>
+        <span class="assigned-badge carcass">KORPUS</span>
+      </div>
+      <div class="body">
+        <div class="name">Biały Korpusowy</div>
+        <div class="code">K110-CH-18-SM</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card assigned-worktop">
+      <div class="swatch" style="background:#888">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K093</div>
+        <span class="assigned-badge worktop">BLAT</span>
+      </div>
+      <div class="body">
+        <div class="name">Marmur Szary Emp.</div>
+        <div class="code">K093-ABS-635</div>
+        <div class="roles"><span>blat</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#f5f5f0">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K8685</div>
+      </div>
+      <div class="body">
+        <div class="name">Biel Alpejska</div>
+        <div class="code">K8685-CH-18-SM</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#333">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K190</div>
+      </div>
+      <div class="body">
+        <div class="name">Czarny</div>
+        <div class="code">K190-CH-18-PE</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#aaa">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K164</div>
+      </div>
+      <div class="body">
+        <div class="name">Antracyt</div>
+        <div class="code">K164-CH-18-SM</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#d4c5a0">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K5981</div>
+      </div>
+      <div class="body">
+        <div class="name">Kaszmir</div>
+        <div class="code">K5981-CH-18-SM</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card assigned-front-wall">
+      <div class="swatch" style="background:#f5f5f0">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K101</div>
+        <span class="assigned-badge wall">GÓRA</span>
+      </div>
+      <div class="body">
+        <div class="name">Biały Frontowy</div>
+        <div class="code">K101-CH-18-PE</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#6b8e6b">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K520</div>
+      </div>
+      <div class="body">
+        <div class="name">Ciemny Szmaragd</div>
+        <div class="code">K520-CH-18-SU</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#999">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K200</div>
+      </div>
+      <div class="body">
+        <div class="name">Beton Jasnoszary</div>
+        <div class="code">K200-ABS-635</div>
+        <div class="roles"><span>blat</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#b0a080">
+        <span class="badge sk">SK</span>
+        <div class="no-img">D70408</div>
+      </div>
+      <div class="body">
+        <div class="name">Dąb Sherwood</div>
+        <div class="code">D70408-CH-18</div>
+        <div class="roles"><span>front</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="swatch" style="background:#4a6a8a">
+        <span class="badge kp">KP</span>
+        <div class="no-img">K8984</div>
+      </div>
+      <div class="body">
+        <div class="name">Granatowy</div>
+        <div class="code">K8984-CH-18-BS</div>
+        <div class="roles"><span>front</span><span>korpus</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SIDEBAR: Kitchen assembly ════════════════ -->
+<div class="sidebar">
+  <div class="header">
+    <h2>🏠 Twoja kuchnia</h2>
+    <button class="clear">Wyczyść wszystko</button>
+  </div>
+
+  <!-- Slot: Front dolny (base) — REQUIRED -->
+  <div class="slot active">
+    <div class="slot-header">
+      <span class="label">Front dolny (base)</span>
+      <span class="required">*wymagany</span>
+    </div>
+    <div class="filled">
+      <div class="swatch-sm" style="background:#c8a951">K003</div>
+      <div class="info">
+        <div class="name">Dąb Craft Złoty</div>
+        <div class="code">K003-CH-18-FP · FP · 18mm</div>
+      </div>
+      <button class="remove">✕</button>
+    </div>
+  </div>
+
+  <!-- Slot: Front górny (wall) — OPTIONAL -->
+  <div class="slot">
+    <div class="slot-header">
+      <span class="label">Front górny (wall)</span>
+      <span class="optional">opcjonalny</span>
+    </div>
+    <div class="filled">
+      <div class="swatch-sm" style="background:#f5f5f0">K101</div>
+      <div class="info">
+        <div class="name">Biały Frontowy</div>
+        <div class="code">K101-CH-18-PE · PE · 18mm</div>
+      </div>
+      <button class="remove">✕</button>
+    </div>
+  </div>
+
+  <!-- Slot: Korpus — REQUIRED -->
+  <div class="slot">
+    <div class="slot-header">
+      <span class="label">Korpus (wnętrze)</span>
+      <span class="required">*wymagany</span>
+    </div>
+    <div class="filled">
+      <div class="swatch-sm" style="background:#f5f5f0">K110</div>
+      <div class="info">
+        <div class="name">Biały Korpusowy</div>
+        <div class="code">K110-CH-18-SM · SM · 18mm</div>
+      </div>
+      <button class="remove">✕</button>
+    </div>
+  </div>
+
+  <!-- Slot: Blat — REQUIRED -->
+  <div class="slot">
+    <div class="slot-header">
+      <span class="label">Blat (worktop)</span>
+      <span class="required">*wymagany</span>
+    </div>
+    <div class="filled">
+      <div class="swatch-sm" style="background:#888">K093</div>
+      <div class="info">
+        <div class="name">Marmur Szary Emperador</div>
+        <div class="code">K093-ABS-635 · 38mm</div>
+      </div>
+      <button class="remove">✕</button>
+    </div>
+  </div>
+
+  <!-- Slot: Obrzeże — AUTO -->
+  <div class="slot">
+    <div class="slot-header">
+      <span class="label">Obrzeże (edge)</span>
+      <span class="optional">auto</span>
+    </div>
+    <div class="filled" style="opacity:0.6">
+      <div class="swatch-sm" style="background:#555">—</div>
+      <div class="info">
+        <div class="name">K-0003-FP</div>
+        <div class="code">Dopasowane automatycznie</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slot: Cokół — OPTIONAL -->
+  <div class="slot">
+    <div class="slot-header">
+      <span class="label">Cokół (plinth)</span>
+      <span class="optional">opcjonalny</span>
+    </div>
+    <div class="empty">+ Kliknij kartę lub wybierz tutaj</div>
+  </div>
+
+  <!-- Compatibility check -->
+  <div class="actions">
+    <div class="compat">
+      <div class="ok">✓ Materiały kompatybilne</div>
+      <div class="info">Front K003 + blat K093: kontrast (dab + szary)</div>
+      <div class="info">Korpus K110: uniwersalny biały — pasuje do wszystkiego</div>
+    </div>
+    <button class="btn btn-primary">Zapisz jako szablon</button>
+    <button class="btn btn-outline">Eksportuj BOM</button>
+  </div>
+
+  <!-- Saved templates -->
+  <div class="templates-section">
+    <div class="section-header">
+      Zapisane szablony
+      <a href="#">Zobacz wszystkie →</a>
+    </div>
+    <div class="tmpl">
+      <div class="dots">
+        <div class="dot" style="background:#c8a951"></div>
+        <div class="dot" style="background:#f5f5f0"></div>
+        <div class="dot" style="background:#888"></div>
+      </div>
+      <div class="info">
+        <div class="name">Dąb Craft + Biel</div>
+        <div class="desc">K003 dół · K101 góra · K093 blat</div>
+      </div>
+      <span class="tag">skandynawski</span>
+    </div>
+    <div class="tmpl">
+      <div class="dots">
+        <div class="dot" style="background:#333"></div>
+        <div class="dot" style="background:#f5f5f0"></div>
+        <div class="dot" style="background:#999"></div>
+      </div>
+      <div class="info">
+        <div class="name">Czarny + Beton</div>
+        <div class="desc">K190 dół · K110 korpus · K200 blat</div>
+      </div>
+      <span class="tag">industrialny</span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>

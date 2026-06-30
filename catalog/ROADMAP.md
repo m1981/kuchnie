@@ -34,3 +34,14 @@
 | 3 | Compare endpoint: `GET /compare?ids=...` | ✅ |
 | 4 | Session state: `GET /sessions/{token}` for shareable links | ✅ |
 | 5 | Price calculation (`variant_prices` table) | ❄️ |
+
+## Phase 4: Builder GUI (walking skeleton)
+
+| # | Task | Status |
+|---|---|---|
+| 1 | Spec: `docs/specs/builder-gui.md` | ✅ |
+| 2 | Layout: grid + sidebar CSS from mockup-builder | ✅ |
+| 3 | Grid loads data from /catalog/full | ✅ |
+| 4 | Click-to-assign + slot state (Alpine.js) | ✅ |
+| 5 | localStorage persistence | ✅ |
+| 6 | Verify: 227 tests pass | ✅ |
