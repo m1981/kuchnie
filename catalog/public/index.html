@@ -161,7 +161,7 @@
       <template x-for="m in materialOptions" :key="m.key">
         <button class="chip" :class="{ active: filterMaterial === m.key }" @click="filterMaterial = filterMaterial === m.key ? '' : m.key">
           <span x-text="m.label"></span>
-          <span class="count" x-text="'(' + m.count + ')'"</span>
+          <span class="count" x-text="'(' + m.count + ')'"></span>
         </button>
       </template>
     </div>
@@ -172,10 +172,10 @@
       <template x-for="cf in colorFamilyOptions.slice(0, showAllColors ? 999 : 10)" :key="cf.key">
         <button class="chip" :class="{ active: filterColor === cf.key }" @click="filterColor = filterColor === cf.key ? '' : cf.key">
           <span x-text="cf.key"></span>
-          <span class="count" x-text="'(' + cf.count + ')'"</span>
+          <span class="count" x-text="'(' + cf.count + ')'"></span>
         </button>
       </template>
-      <button class="chip" x-show="colorFamilyOptions.length > 10" @click="showAllColors = !showAllColors" x-text="showAllColors ? 'mniej' : '...'"</button>
+      <button class="chip" x-show="colorFamilyOptions.length > 10" @click="showAllColors = !showAllColors" x-text="showAllColors ? 'mniej' : '...'"></button>
     </div>
 
     <!-- Role tabs -->
