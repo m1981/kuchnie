@@ -41,6 +41,22 @@ def create_session(db: sqlite3.Connection = Depends(get_db)) -> SessionOut:
     return SessionOut(**result)
 
 
+@router.get("/sessions/{token}", response_model=SessionOut)
+def get_session(
+    token: str,
+    db: sqlite3.Connection = Depends(get_db),
+) -> SessionOut:
+    """Get session state. Used for shareable links."""
+    repo = ConfiguratorRepository(db)
+    session = repo.get_session(token)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return SessionOut(
+        session_token=session["session_token"],
+        current_step=session["current_step"],
+    )
+
+
 @router.get(
     "/sessions/{token}/options",
     response_model=ConfiguratorStepOut,
@@ -48,6 +64,7 @@ def create_session(db: sqlite3.Connection = Depends(get_db)) -> SessionOut:
 def get_options(
     token: str,
     color_family: str | None = None,
+    style: str | None = None,
     db: sqlite3.Connection = Depends(get_db),
 ) -> ConfiguratorStepOut:
     repo = ConfiguratorRepository(db)
@@ -58,7 +75,7 @@ def get_options(
     step = session["current_step"]
 
     if step == "front":
-        raw = repo.front_options(color_family=color_family)
+        raw = repo.front_options(color_family=color_family, style=style)
     elif step == "carcass":
         raw = repo.carcass_options(session["front_variant_id"])
     elif step == "worktop":
@@ -152,6 +169,25 @@ def get_bom(
         raise HTTPException(status_code=404, detail="Session not found")
     result = repo.build_bom(session)
     return BOMOut(**result)
+
+
+@router.get("/compare")
+def compare_variants(
+    ids: str,
+    db: sqlite3.Connection = Depends(get_db),
+) -> list[dict]:
+    """Compare multiple variants side-by-side.
+
+    Usage: GET /configurator/compare?ids=K003-CH-18-FP,K190-CH-18-PE
+    """
+    variant_ids = [v.strip() for v in ids.split(",") if v.strip()]
+    if len(variant_ids) < 2 or len(variant_ids) > 5:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide 2-5 variant IDs, comma-separated",
+        )
+    repo = ConfiguratorRepository(db)
+    return repo.compare_variants(variant_ids)
 
 
 @router.get("/templates", response_model=list[TemplateOut])

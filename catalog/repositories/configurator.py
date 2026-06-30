@@ -69,7 +69,7 @@ class ConfiguratorRepository:
 
     # ── Front options ────────────────────────────────────────────
 
-    def front_options(self, color_family: str | None = None) -> list[dict]:
+    def front_options(self, color_family: str | None = None, style: str | None = None) -> list[dict]:
         sql = (
             "SELECT v.business_id AS variant_id, d.name AS decor_name, "
             "       COALESCE(cf.slug, '') AS color_family, "
@@ -83,12 +83,20 @@ class ConfiguratorRepository:
             "JOIN material_types mt ON mt.id = m.material_type_id "
             "LEFT JOIN color_families cf ON cf.id = d.color_family_id "
             "LEFT JOIN structures s ON s.id = v.structure_id "
-            "WHERE v.roles LIKE '%front%' "
         )
         params: list = []
+        if style:
+            sql += (
+                "JOIN decor_style_tags dst ON dst.decor_id = d.id "
+                "JOIN style_tags st ON st.id = dst.style_tag_id "
+            )
+        sql += "WHERE v.roles LIKE '%front%' "
         if color_family:
             sql += "AND cf.slug = ? "
             params.append(color_family)
+        if style:
+            sql += "AND st.slug = ? "
+            params.append(style)
         sql += "ORDER BY d.name"
         rows = self.db.execute(sql, params).fetchall()
         return [self._option_from_row(r) for r in rows]
@@ -303,3 +311,41 @@ class ConfiguratorRepository:
             "thickness_mm": row["thickness_mm"],
             "recommendation": getattr(row, "recommendation", None),
         }
+
+    def compare_variants(self, variant_ids: list[str]) -> list[dict]:
+        """Get full details for multiple variants (for side-by-side comparison)."""
+        results = []
+        for vid in variant_ids:
+            row = self.db.execute(
+                "SELECT v.business_id AS variant_id, d.name AS decor_name, "
+                "       COALESCE(cf.slug, '') AS color_family, "
+                "       COALESCE(d.img, '') AS img, "
+                "       COALESCE(mt.slug, '') AS material_type, "
+                "       COALESCE(s.code, '') AS structure, "
+                "       v.thickness_mm, v.roles, v.express, "
+                "       COALESCE(p.slug, '') AS producer "
+                "FROM variants v "
+                "JOIN decors d ON d.id = v.decor_id "
+                "JOIN materials m ON m.id = v.material_id "
+                "JOIN material_types mt ON mt.id = m.material_type_id "
+                "JOIN producers p ON p.id = d.producer_id "
+                "LEFT JOIN color_families cf ON cf.id = d.color_family_id "
+                "LEFT JOIN structures s ON s.id = v.structure_id "
+                "WHERE v.business_id = ?",
+                (vid,),
+            ).fetchone()
+            if row:
+                results.append({
+                    "variant_id": row["variant_id"],
+                    "name": row["decor_name"],
+                    "decor_name": row["decor_name"],
+                    "color_family": row["color_family"] or None,
+                    "img_url": f"/producers/{row['producer']}/decors/{row['img']}" if row["img"] else None,
+                    "material_type": row["material_type"] or None,
+                    "structure": row["structure"] or None,
+                    "thickness_mm": row["thickness_mm"],
+                    "roles": row["roles"],
+                    "express": row["express"],
+                    "producer": row["producer"],
+                })
+        return results
