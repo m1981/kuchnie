@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from catalog.api import deps
-from catalog.api.routers import admin, availability, decors, producers, worktops
+from catalog.api.routers import admin, availability, configurator, decors, producers, worktops
 from catalog.db.engine import get_connection, init_schema
 
 _DB_PATH = Path(__file__).parent.parent / "db" / "catalog.db"
@@ -50,6 +50,7 @@ app.include_router(decors.router, prefix="/catalog")
 app.include_router(worktops.router, prefix="/catalog")
 app.include_router(availability.router, prefix="/catalog")
 app.include_router(admin.router, prefix="/catalog")
+app.include_router(configurator.router)
 
 # Serve frontend static files (index.html, images, catalog.json fallback)
 if _PUBLIC_DIR.exists():

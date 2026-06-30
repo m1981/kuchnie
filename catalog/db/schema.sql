@@ -340,6 +340,26 @@ CREATE TABLE IF NOT EXISTS property_flags (
 CREATE INDEX IF NOT EXISTS idx_property_flags_variant ON property_flags(variant_id);
 
 
+-- ── 6c. CONFIGURATOR SESSIONS ───────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS configurator_sessions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_token   TEXT NOT NULL UNIQUE,
+    current_step    TEXT NOT NULL DEFAULT 'front'
+                    CHECK (current_step IN ('front','carcass','worktop','edge','side_panel','plinth','done')),
+    front_variant_id        TEXT,    -- variants.business_id (validated in app)
+    carcass_variant_id      TEXT,
+    worktop_variant_id      TEXT,
+    edge_id                 INTEGER, -- edges.id (validated in app)
+    side_panel_variant_id   TEXT,
+    plinth_variant_id       TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_config_sessions_token ON configurator_sessions(session_token);
+
+
 -- ── 7. VIEWS ────────────────────────────────────────────────────
 
 CREATE VIEW IF NOT EXISTS v_decors_full AS

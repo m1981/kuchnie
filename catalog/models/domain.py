@@ -161,3 +161,63 @@ class StatsOut(BaseModel):
     variants: int
     pairings: int
     worktops: int
+
+
+# ── Configurator models ──────────────────────────────────────────
+
+
+class SessionOut(BaseModel):
+    session_token: str
+    current_step: str
+
+
+class SelectRequest(BaseModel):
+    step: str
+    variant_id: str | None = None
+    edge_id: int | None = None
+
+
+class ConfiguratorOption(BaseModel):
+    variant_id: str | None = None
+    edge_id: int | None = None
+    name: str
+    decor_name: str | None = None
+    color_family: str | None = None
+    img_url: str | None = None
+    recommendation: str | None = None
+    material_type: str | None = None
+    structure: str | None = None
+    thickness_mm: float | None = None
+
+
+class ConfiguratorStepOut(BaseModel):
+    current_step: str
+    options: list[ConfiguratorOption]
+
+
+class BOMItem(BaseModel):
+    role: str
+    variant_id: str | None = None
+    edge_id: int | None = None
+    name: str
+    decor_name: str | None = None
+    material_type: str | None = None
+    structure: str | None = None
+    thickness_mm: float | None = None
+
+
+class BOMOut(BaseModel):
+    complete: bool
+    items: list[BOMItem]
+
+
+class TemplateOut(BaseModel):
+    slug: str
+    name: str
+    description: str | None = None
+    hero_image: str | None = None
+    front_variant_id: str | None = None
+
+
+class FromTemplateRequest(BaseModel):
+    template_slug: str
