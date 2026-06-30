@@ -572,7 +572,7 @@
         // ── Computed ──
 
         get totalDecors() {
-          return Object.values(this.meta.stats || {}).reduce((a, b) => a + (b.variants || b), 0);
+          return this.allDecors.length;
         },
 
         get producers() {
