@@ -217,6 +217,7 @@ class TemplateOut(BaseModel):
     description: str | None = None
     hero_image: str | None = None
     front_variant_id: str | None = None
+    featured: bool = False
 
 
 class FromTemplateRequest(BaseModel):

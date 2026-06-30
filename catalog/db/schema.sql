@@ -360,6 +360,65 @@ CREATE TABLE IF NOT EXISTS configurator_sessions (
 CREATE INDEX IF NOT EXISTS idx_config_sessions_token ON configurator_sessions(session_token);
 
 
+-- ── 6d. WORKTOP COMPATIBILITY ───────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS worktop_compatibility (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    front_decor_id  INTEGER NOT NULL REFERENCES decors(id),
+    worktop_decor_id INTEGER NOT NULL REFERENCES decors(id),
+    match_quality   TEXT NOT NULL
+                    CHECK (match_quality IN ('designer_pick','safe','bold')),
+    style_note      TEXT,
+    priority        INTEGER DEFAULT 1,
+    UNIQUE(front_decor_id, worktop_decor_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_worktop_compat_front ON worktop_compatibility(front_decor_id);
+CREATE INDEX IF NOT EXISTS idx_worktop_compat_worktop ON worktop_compatibility(worktop_decor_id);
+
+
+-- ── 6e. STYLE TAGS ─────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS style_tags (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug            TEXT NOT NULL UNIQUE,
+    name_pl         TEXT NOT NULL,
+    name_en         TEXT,
+    category        TEXT NOT NULL
+                    CHECK (category IN ('aesthetic','era','material_feel','color_mood')),
+    description     TEXT
+);
+
+CREATE TABLE IF NOT EXISTS decor_style_tags (
+    decor_id        INTEGER NOT NULL REFERENCES decors(id) ON DELETE CASCADE,
+    style_tag_id    INTEGER NOT NULL REFERENCES style_tags(id) ON DELETE CASCADE,
+    relevance       INTEGER NOT NULL DEFAULT 1
+                    CHECK (relevance BETWEEN 1 AND 3),
+    PRIMARY KEY (decor_id, style_tag_id)
+);
+
+
+-- ── 6f. CURATED KITCHENS ───────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS curated_kitchens (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug            TEXT NOT NULL UNIQUE,
+    name            TEXT NOT NULL,
+    description     TEXT,
+    hero_image      TEXT,
+    front_variant_id        TEXT NOT NULL,
+    carcass_variant_id      TEXT NOT NULL,
+    worktop_variant_id      TEXT,
+    edge_code               TEXT,
+    side_panel_variant_id   TEXT,
+    plinth_variant_id       TEXT,
+    style_tag_slugs         TEXT,
+    budget_tier             TEXT,
+    featured                BOOLEAN DEFAULT FALSE,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+
 -- ── 7. VIEWS ────────────────────────────────────────────────────
 
 CREATE VIEW IF NOT EXISTS v_decors_full AS

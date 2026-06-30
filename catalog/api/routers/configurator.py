@@ -161,7 +161,7 @@ def list_templates(
     # MVP: curated_kitchens table may not exist yet
     try:
         rows = db.execute(
-            "SELECT slug, name, description, hero_image, front_variant_id "
+            "SELECT slug, name, description, hero_image, front_variant_id, featured "
             "FROM curated_kitchens ORDER BY featured DESC, name"
         ).fetchall()
         return [TemplateOut(**dict(r)) for r in rows]
