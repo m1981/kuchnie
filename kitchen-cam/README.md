@@ -1,4 +1,4 @@
-# Kitchen CAD — Parametric Cabinet Generator
+# kitchen-cam — Parametric Cabinet Generator
 
 > Parametryczny system do projektowania mebli kuchennych.
 > Z definicji korpusu generuje listy cięcia (CSV) i planowane DXF.
@@ -6,10 +6,10 @@
 ## Quick Start
 
 ```python
-from kitchen_cad.models import CorpusSpec, BaseDoorConfig, HingeSpec
-from kitchen_cad.panel_calculator import calculate_panels
-from kitchen_cad.drill_engine import apply_all_drilling
-from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
+from kitchen_cam.models import CorpusSpec, BaseDoorConfig, HingeSpec
+from kitchen_cam.panel_calculator import calculate_panels
+from kitchen_cam.machining import apply_all_drilling
+from kitchen_cam.csv_generator import generate_cutting_csv, generate_edging_csv
 
 spec = CorpusSpec(
     id="K01",
@@ -40,7 +40,7 @@ panel_calculator.calculate_panels()
     │  ├── _calculate_cargo()
     │  └── _calculate_oven()
     ▼
-drill_engine.apply_all_drilling()
+machining.apply_all_drilling()
     │  ┌── apply_system32()
     │  ├── apply_hinges()
     │  └── apply_handles()
@@ -74,11 +74,12 @@ csv_generator.generate_*_csv()
 ## Project Structure
 
 ```
-kitchen-cad/
-├── src/kitchen_cad/
+kitchen-cam/
+├── src/kitchen_cam/
 │   ├── models.py              # Domain models (Pydantic)
 │   ├── panel_calculator.py    # Panel geometry (7 variant calculators)
-│   ├── drill_engine.py        # Drill point calculations
+│   ├── machining.py           # Drill point calculations (System32, hinges, handles)
+│   ├── dxf/                   # Drawer-runner DXF assets (Legrabox)
 │   └── csv_generator.py       # CSV output
 │
 ├── tests/                     # 292 tests

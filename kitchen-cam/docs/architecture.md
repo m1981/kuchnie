@@ -1,4 +1,4 @@
-# Kitchen-CAD — Architecture
+# kitchen-cam — Architecture
 
 > **This is the authoritative architecture document.**
 > Last updated: 2026-06-23

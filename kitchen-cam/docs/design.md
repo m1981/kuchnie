@@ -1,4 +1,4 @@
-# kitchen-cad — dokumentacja projektowa
+# kitchen-cam — dokumentacja projektowa
 
 > **Wersja:** 2.0
 > **Data:** 2026-06-23
