@@ -12,6 +12,29 @@ Kitchen cabinet decomposition engine. Takes YAML cabinet definitions, produces p
 
 ---
 
+## Component roster (monorepo)
+
+This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; every other component depends on it, never the other way. Roles and boundaries are codified in ADRs 009–011.
+
+| Component | Role | AGENTS.md | Defining ADR |
+|---|---|---|---|
+| `src/kuchnie_core/` | **Domain hub** — Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. Imported by everyone. | this file | 001, 002, 003 |
+| `catalog/` | Material catalog service — Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | `catalog/AGENTS.md` | 008 |
+| `krono-compositor-mvp/` | **Sales tool (Stage 1)** — first-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | `krono-compositor-mvp/AGENTS.md` *(todo)* | 011 |
+| `kitchen-erp/` *(was `kitchen-app/`)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
+| `kitchen-cam/` *(was `kitchen-cad/`)* | **CAM enrichment** — machining ops (System32, hinges, handles), DXF for CNC shop. Downstream consumer of `kuchnie_core`. | `kitchen-cam/AGENTS.md` *(todo)* | 010 |
+| `home-builder-adapter/` *(was `kitchen-plugin/`)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
+
+**External (not in this repo):**
+
+- `/Users/michal/PycharmProjects/home_builder_5` — third-party licensed Blender addon used for interactive kitchen layout (Stage 2). Untouched per F007 Rule 4. Its scene tree is the input to `home-builder-adapter/`.
+
+**Dependency direction:** every peripheral component imports `kuchnie_core`. No cycles. `kuchnie_core` imports only stdlib + Pydantic + PyYAML.
+
+**Workflow stages:** Sales → Design (`home_builder_5`) → Extract (`home-builder-adapter`) → Refine + BOM (`kitchen-erp`) → CAM (`kitchen-cam`).
+
+---
+
 ## Architecture (3 rules)
 
 1. **Panel is the atom.** Not the cabinet. Everything above panels is organizational. Everything on panels (edges, machining ops) is decoration. (`ADR-001`)

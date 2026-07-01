@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-01 — Architecture decisions codified
+
+### Decided (documented, not yet executed)
+
+- **ADR-009**: `kitchen-plugin/` → `home-builder-adapter/`. Ports & Adapters pattern. Pure code (geometry, standards, construction math, manifest validator) migrates into `kuchnie_core/`. `bpy`-dependent extraction stays isolated as an anti-corruption layer against `home_builder_5` (external, licensed).
+- **ADR-010**: `kitchen-cad/` → `kitchen-cam/`. Downstream consumer of `kuchnie_core`. Duplicate Panel / CabinetInstance / Hinge / Drawer models deleted. Package keeps System32 drilling and DXF generation only; CSV cut list merges into `kuchnie_core.export`.
+- **ADR-011**: `kitchen-app/` → `kitchen-erp/`. Accept ERP scope (BOM, purchasing, rules, admin). Sales-tool role explicitly reassigned to `krono-compositor-mvp/`. Old (non-recipe) BOM path deleted; `use_new_bom` flag removed.
+
+Execution plan: phases B–F in session handoff notes. No code moved yet.
+
+---
+
 ## 2026-06-30 — Catalog consolidation
 
 ### Moved
