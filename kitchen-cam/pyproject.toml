@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kitchen-cam"
+version = "0.1.0"
+description = "Parametric furniture corpus → CSV (cutting/edging) + DXF (drilling)"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "pyyaml>=6.0,<7.0",
+]
+
+[project.optional-dependencies]
+dxf = ["ezdxf>=0.18,<1.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "ezdxf>=0.18,<1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kitchen_cam"]
