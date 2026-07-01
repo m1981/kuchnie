@@ -1,6 +1,6 @@
-# Kitchen CAD — Overview
+# Kitchen CAM — Overview
 
-**Kitchen CAD** is a kitchen cabinet design and manufacturing automation system. It takes high-level cabinet specifications and generates the detailed panel cutting lists, edge banding instructions, and CNC drilling templates needed to actually build them.
+**Kitchen CAM** is a kitchen cabinet design and manufacturing automation system. It takes high-level cabinet specifications and generates the detailed panel cutting lists, edge banding instructions, and CNC drilling templates needed to actually build them.
 
 ## The Core Pipeline
 
@@ -8,15 +8,15 @@
 CorpusSpec (cabinet design) → Panel Calculator → Drill Engine → CSV/DXF Output
 ```
 
-### 1. Models (`src/kitchen_cad/models.py`)
+### 1. Models (`src/kitchen_cam/models.py`)
 
 Defines the domain: `CorpusSpec` (a cabinet with width/height/depth, shelves, drawers, doors, hinges, handles), `Panel` (individual board with dimensions, edges, drill points), and supporting enums (`PanelRole`, `DrillType`, `DrillFace`, etc.)
 
-### 2. Panel Calculator (`src/kitchen_cad/panel_calculator.py`)
+### 2. Panel Calculator (`src/kitchen_cam/panel_calculator.py`)
 
 Takes a `CorpusSpec` and calculates all panels: side walls, top/bottom, shelves, back, door fronts, drawer fronts — with correct dimensions, materials, and edge banding assignments.
 
-### 3. Drill Engine (`src/kitchen_cad/drill_engine.py`)
+### 3. Machining (`src/kitchen_cam/machining.py`)
 
 Adds drilling operations to panels:
 
@@ -25,7 +25,7 @@ Adds drilling operations to panels:
 - **Handle** mounting holes
 - **Shelf pin** holes
 
-### 4. CSV Generator (`src/kitchen_cad/csv_generator.py`)
+### 4. CSV Generator (`src/kitchen_cam/csv_generator.py`)
 
 Exports cutting lists and edging lists as CSV for saws/edge banders.
 

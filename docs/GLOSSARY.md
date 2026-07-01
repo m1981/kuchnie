@@ -31,7 +31,7 @@
 |---|---|---|
 | **Catalog** | `catalog/` | Decor, Edge, Variant, Pairing, Producer, Worktop, Availability |
 | **Core (glue)** | `src/kuchnie_core/` | Kitchen, Run, ConstructionMethod, MaterialResolver, ValidationGate, the YAML schema |
-| **CAD** | `kitchen-cad/` | CorpusSpec, Panel, DrillPoint, EdgeBand, BaseDoorConfig (& siblings) |
+| **CAM** | `kitchen-cam/` | CorpusSpec, Panel, DrillPoint, EdgeBand, BaseDoorConfig (& siblings) |
 | **Plugin / 3D Render** | `kitchen-plugin/` | Cabinet (placement-aware), Wall, Room, Layout, CabinetGeometry, KitchenStandards, ManifestValidator |
 | **Compositor / 2.5D Render** | `krono-compositor-mvp/` | SceneCompositor, ZoneConfig (mask→texture), Pass (base/uv/mask/reflection/handle) |
 | **Web** | `kitchen-app/` | BOMAssembly, BOMPart, PurchasingStrategy, RulesEngine (hardware tags), CabinetUI |
@@ -55,7 +55,7 @@
 ## ACL (Anti-Corruption Layer)
 - **Context:** Architecture (cross-context)
 - **Definition:** A translation layer that protects our domain model from an upstream legacy model. We use one between Core and the Blender plugin: the render adapter translates `CabinetInstance` to the plugin's `kitchen_config.yaml`.
-- **File of record:** (TBD) `kitchen-cad/render_adapter/` or similar
+- **File of record:** (TBD) `kitchen-cam/render_adapter/` or similar
 - **Related ADR:** see `04_solo_dev_process.md` § Context Map
 
 # B
@@ -108,7 +108,7 @@
 ## CAM (Computer-Aided Manufacturing)
 - **Context:** CAD
 - **Definition:** The output stage where the system produces files for the CNC company — cut list CSV (compatible with e-rozkroj / e-rozrys), drill pattern CSV, DXF for panels with cutouts.
-- **File of record:** `kitchen-cad/src/kitchen_cad/` (export modules)
+- **File of record:** `kitchen-cam/src/kitchen_cam/` (export modules)
 - **Introduced by:** F008
 
 ## CAM Readiness
@@ -154,7 +154,7 @@
 ## DrillPoint
 - **Context:** CAD
 - **Definition:** A single drill operation on a panel — position (x, y), face (front/rear/edge), diameter, depth, type (system32, hinge, dowel, handle).
-- **File of record:** `kitchen-cad/src/kitchen_cad/models.py::DrillPoint`
+- **File of record:** `kitchen-cam/src/kitchen_cam/models.py::DrillPoint`
 - **Introduced by:** (pre-existing)
 
 # E
@@ -168,7 +168,7 @@
 ## EdgeSide
 - **Context:** Core / CAD
 - **Definition:** Enum of `FRONT`, `REAR`, `LEFT`, `RIGHT` — which sides of a panel receive edge banding.
-- **File of record:** `kitchen-cad/src/kitchen_cad/models.py::EdgeSide`
+- **File of record:** `kitchen-cam/src/kitchen_cam/models.py::EdgeSide`
 
 # F
 
@@ -223,7 +223,7 @@
 - **Not to be confused with:**
   - `MachiningOp` (legacy term from `kuchnie_core/model.py` — to be reconciled in F004 or F008)
   - `DrillPoint` (a single drill — a `MachiningFeature` may produce many `DrillPoint`s)
-- **File of record:** `kitchen-cad/src/kitchen_cad/features.py::MachiningFeature`
+- **File of record:** `kitchen-cam/src/kitchen_cam/features.py::MachiningFeature`
 - **Introduced by:** F008
 
 ## MachiningOp
@@ -292,7 +292,7 @@
 ## RecipeEngine
 - **Context:** CAD
 - **Definition:** The evaluator that takes a `Recipe`, a `CabinetInstance`, and a `ConstructionMethod`, and produces a list of `Panel` with concrete dimensions. Uses a safe expression evaluator (`asteval`, not `eval`).
-- **File of record:** `kitchen-cad/src/kitchen_cad/recipe_engine.py::RecipeEngine`
+- **File of record:** `kitchen-cam/src/kitchen_cam/machining.py::MachiningEngine`
 - **Introduced by:** F002
 
 ## ResolvedMaterial
@@ -367,7 +367,7 @@
 ## WallPlacement
 - **Context:** Render
 - **Definition:** Cabinet position expressed as `(wall_id, offset_along_wall_mm, rotation_rad)`. The render adapter's coordinate model. Converted from `RowPlacement`.
-- **File of record:** `kitchen-cad/render_adapter/placement.py::WallPlacement` (TBD F007)
+- **File of record:** `kitchen-cam/render_adapter/placement.py::WallPlacement` (TBD F007)
 - **Introduced by:** F007
 
 ## WorktopSegment

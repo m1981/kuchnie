@@ -1,4 +1,4 @@
-# Kitchen CAD — Roadmap
+# Kitchen CAM — Roadmap
 
 > **Last updated:** 2026-06-23
 > **Current status:** Phase 1 completed, Phase 2 in progress

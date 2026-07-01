@@ -22,10 +22,10 @@ graph TB
         LBP[legrabox_side_panel.py<br/>⚠️ disconnected]
     end
 
-    subgraph "kitchen_cad (src/)"
+    subgraph "kitchen_cam (src/)"
         M[models.py<br/>Pydantic + Enums]
         PC[panel_calculator.py<br/>Pure functions]
-        DE[drill_engine.py<br/>Pure functions]
+        DE[machining.py<br/>Pure functions]
         CSV[csv_generator.py<br/>CSV output]
     end
 
@@ -98,7 +98,7 @@ graph TB
 
     subgraph "Calculation Layer"
         PC[panel_calculator.py<br/>Pure functions]
-        DE[drill_engine.py<br/>Pure functions]
+        DE[machining.py<br/>Pure functions]
         PIPE[pipeline.py<br/>⚡ NEW: Orchestration]
     end
 
@@ -474,7 +474,7 @@ sequenceDiagram
     participant Presets as presets.py
     participant Pipeline as pipeline.py
     participant Calc as panel_calculator.py
-    participant Drill as drill_engine.py
+    participant Drill as machining.py
     participant Valid as validator.py
     participant CSV as csv_generator.py
     participant DXF as dxf_exporter.py
@@ -779,11 +779,11 @@ flowchart TD
 
 ```mermaid
 graph LR
-    subgraph "kitchen-cad CLI"
-        CMD1[kitchen-cad generate<br/>Generate cabinet panels]
-        CMD2[kitchen-cad export<br/>Export to DXF/CSV]
-        CMD3[kitchen-cad validate<br/>Validate spec]
-        CMD4[kitchen-cad presets<br/>List presets]
+    subgraph "kitchen-cam CLI"
+        CMD1[kitchen-cam generate<br/>Generate cabinet panels]
+        CMD2[kitchen-cam export<br/>Export to DXF/CSV]
+        CMD3[kitchen-cam validate<br/>Validate spec]
+        CMD4[kitchen-cam presets<br/>List presets]
     end
 
     subgraph "Flags"
@@ -806,12 +806,12 @@ graph LR
 ## 7. File Structure — Target
 
 ```
-kitchen-cad/
-├── src/kitchen_cad/
+kitchen-cam/
+├── src/kitchen_cam/
 │   ├── __init__.py
 │   ├── models.py              # Domain models (existing)
 │   ├── panel_calculator.py    # Geometry calculations (existing)
-│   ├── drill_engine.py        # Drill point calculations (existing)
+│   ├── machining.py           # Machining operations (existing)
 │   ├── csv_generator.py       # CSV output (existing)
 │   │
 │   ├── runners.py             # ⚡ Runner specifications (LEGRABOX, METABOX...)
@@ -830,7 +830,7 @@ kitchen-cad/
 ├── tests/
 │   ├── test_models.py
 │   ├── test_panel_calculator.py
-│   ├── test_drill_engine.py
+│   ├── test_machining.py
 │   ├── test_csv_generator.py
 │   ├── test_runner_registry.py    # ⚡ NEW
 │   ├── test_presets.py            # ⚡ NEW

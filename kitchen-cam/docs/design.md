@@ -51,7 +51,7 @@ Pomiar pomieszczenia
 Projekt w Corpus CAD
        │
        ▼
-Definicja korpusu (YAML)  ──► kitchen-cad ──► CSV cięcie
+Definicja korpusu (YAML)  ──► kitchen-cam ──► CSV cięcie
        │                         │         ──► CSV oklejanie
        │                         │         ──► DXF nawierty (Faza 2)
        │                         │
@@ -68,11 +68,11 @@ Walidacja z reference files   Wysyłka do CNC
 ### Quick Overview
 
 ```
-kitchen-cad/
-├── src/kitchen_cad/          # Core library
+kitchen-cam/
+├── src/kitchen_cam/          # Core library
 │   ├── models.py             # Pydantic models
 │   ├── panel_calculator.py   # Panel dimensions
-│   ├── drill_engine.py       # Drill positions
+│   ├── machining.py          # Machining operations
 │   └── csv_generator.py      # CSV output
 │
 ├── tests/                    # Test suite
@@ -398,7 +398,7 @@ SYSTEM32_OFFSET: float = 37.0   # mm from front/bottom edge
 SYSTEM32_SPACING: float = 32.0  # mm between holes
 ```
 
-These constants are defined in `models.py` and used by both `panel_calculator` and `drill_engine`.
+These constants are defined in `models.py` and used by both `panel_calculator` and `machining`.
 
 ---
 
@@ -568,7 +568,7 @@ Przykład:
 ### 8.1 Porównanie CSV (`compare_csv`)
 
 ```python
-from kitchen_cad.compare import compare_csv
+from kitchen_cam.compare import compare_csv
 
 diff = compare_csv(
     reference="output/reference/K01_ciecie.csv",
@@ -588,7 +588,7 @@ assert diff.ok, diff.report()
 ### 8.2 Porównanie DXF (`compare_dxf`)
 
 ```python
-from kitchen_cad.compare import compare_dxf
+from kitchen_cam.compare import compare_dxf
 
 diff = compare_dxf(
     reference="output/reference/K01_nawierty.dxf",
@@ -634,7 +634,7 @@ tests/
 ├── conftest.py              # Fixtures: base_door_spec, base_drawer_spec, wall_door_spec
 ├── test_models.py           # 10 testów — walidacja Pydantic
 ├── test_panel_calculator.py # 22 testów — wymiary formatek
-├── test_drill_engine.py     # 24 testów — pozycje otworów
+├── test_machining.py        # 24 testów — pozycje otworów
 ├── test_csv_generator.py    # 14 testów — struktura CSV
 └── test_compare.py          # 5 testów — narzędzia porównawcze
 ```
@@ -645,7 +645,7 @@ tests/
 | ---------------- | ---------------------- | ------------------------------------------------- |
 | models           | Walidacja pól          | zerowa szerokość → błąd, ujemne koordynaty → błąd |
 | panel_calculator | Wymiary formatek       | bok = D×H,półka = (W-2T)×(D-G-37)                 |
-| drill_engine     | Pozycje otworów        | System 32 X=37, Blum cup X=5, spacing 45mm        |
+| machining        | Pozycje otworów        | System 32 X=37, Blum cup X=5, spacing 45mm        |
 | csv_generator    | Struktura pliku        | separator `;`, kolumny, brak krawędzi na plecach  |
 | compare          | Walidacja referencyjna | self-compare, missing rows, value mismatch        |
 
@@ -662,10 +662,10 @@ tests/
 ```
 Name                              Stmts  Miss  Cover
 ─────────────────────────────────────────────────────
-src/kitchen_cad/models.py           91     0   100%
-src/kitchen_cad/panel_calculator    58     0   100%
-src/kitchen_cad/csv_generator       29     0   100%
-src/kitchen_cad/drill_engine        72    11    85%
+src/kitchen_cam/models.py           91     0   100%
+src/kitchen_cam/panel_calculator    58     0   100%
+src/kitchen_cam/csv_generator       29     0   100%
+src/kitchen_cam/machining           72    11    85%
 ─────────────────────────────────────────────────────
 TOTAL                              250    11    96%
 ```
@@ -714,10 +714,10 @@ TOTAL                              250    11    96%
 ## Załącznik B: Przykład użycia
 
 ```python
-from kitchen_cad.models import CorpusSpec, BaseDoorConfig, HingeSpec, HandleSpec
-from kitchen_cad.panel_calculator import calculate_panels
-from kitchen_cad.drill_engine import apply_all_drilling
-from kitchen_cad.csv_generator import generate_cutting_csv, generate_edging_csv
+from kitchen_cam.models import CorpusSpec, BaseDoorConfig, HingeSpec, HandleSpec
+from kitchen_cam.panel_calculator import calculate_panels
+from kitchen_cam.machining import apply_all_drilling
+from kitchen_cam.csv_generator import generate_cutting_csv, generate_edging_csv
 
 # 1. Zdefiniuj korpus
 spec = CorpusSpec(

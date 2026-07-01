@@ -33,7 +33,7 @@ Concrete acceptance criteria as a checklist. **No "TBD" allowed before status = 
 | Path | Change |
 |---|---|
 | `src/kuchnie_core/…` | … |
-| `kitchen-cad/…` | … |
+| `kitchen-cam/…` | … |
 
 ## Out of scope
 
