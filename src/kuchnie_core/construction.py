@@ -194,10 +194,11 @@ class ConstructionMethodRegistry:
         return reg
 
 
-# ── Cabinet Geometry (from kitchen-plugin) ────────────────────────
+# ── Cabinet Geometry ──────────────────────────────────────────────
 # European frameless construction calculations.
 # Converts external dimensions to internal cavity and component dimensions.
-# Will be consolidated with ConstructionMethod in a future migration.
+# Migrated from former kitchen-plugin per ADR-009.
+# TODO: consolidate with ConstructionMethod in a future migration.
 
 # European standard board thicknesses (mm)
 DEFAULT_CORPUS_THICKNESS = 18   # Chipboard for carcass

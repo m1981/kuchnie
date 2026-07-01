@@ -55,7 +55,7 @@ __all__ = [
     "kitchen_from_dict", "kitchen_from_json", "kitchen_from_json_str",
     # Export
     "export_cutlist_csv", "aggregate_panels",
-    # Geometry (from kitchen-plugin extraction)
+    # Geometry (migrated from former kitchen-plugin, per ADR-009)
     "Vector2D", "Vector3D", "BoundingBox", "Transform2D", "mm_to_m",
     # Standards
     "KitchenStandards",

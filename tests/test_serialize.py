@@ -1,7 +1,8 @@
 """Intermediate format — JSON round-trip tests.
 
 Proves: Kitchen → JSON → Kitchen preserves all data.
-This is the contract between kitchen-plugin, render-service, and kitchen-cli.
+This is the contract between home-builder-adapter, krono-compositor-mvp,
+kitchen-cam, and kitchen-erp (per ADR-004, ADR-009).
 """
 
 import json

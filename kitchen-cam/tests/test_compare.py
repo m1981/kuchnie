@@ -1,4 +1,4 @@
-"""Tests for comparison tools — validate kitchen-cad output against reference files.
+"""Tests for comparison tools — validate kitchen-cam output against reference files.
 
 Supports:
   - CSV comparison (exact + fuzzy numeric)

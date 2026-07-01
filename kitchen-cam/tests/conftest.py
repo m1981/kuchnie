@@ -1,4 +1,4 @@
-"""Shared fixtures for kitchen-cad tests."""
+"""Shared fixtures for kitchen-cam tests."""
 
 from __future__ import annotations
 

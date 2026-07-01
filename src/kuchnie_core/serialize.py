@@ -1,9 +1,13 @@
 """Intermediate format — JSON serialization of Kitchen.
 
-This is THE contract between kitchen-plugin, render-service, and kitchen-cli.
-The format is self-contained: no external file references.
+This is THE contract between home-builder-adapter, krono-compositor-mvp,
+kitchen-cam, and kitchen-erp. The format is self-contained: no external file
+references.
 
 Round-trip:  Kitchen → dict → JSON → dict → Kitchen
+
+See ADR-004 (intermediate format is logical) and ADR-009 (home-builder-adapter
+produces this format from home_builder_5 Blender scenes).
 """
 
 from __future__ import annotations
