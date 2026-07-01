@@ -1,13 +1,13 @@
 # Features
 
-> **Source of truth for what comes next:** [`../docs/03_ROADMAP.md`](../docs/03_ROADMAP.md).
+> **Source of truth for what comes next:** [`../docs/archive/03_ROADMAP.md`](../docs/03_ROADMAP.md).
 > Per-feature folders here are created **only when a feature is actively being implemented** — not preemptively. Speculative specs cause drift.
 
 ---
 
 ## Status
 
-**Current phase:** P0 — Walking Skeleton (see [`../docs/02_WALKING_SKELETON.md`](../docs/02_WALKING_SKELETON.md)).
+**Current phase:** P0 — Walking Skeleton (see [`../docs/archive/02_WALKING_SKELETON.md`](../docs/02_WALKING_SKELETON.md)).
 No feature folder exists yet; the skeleton is its own work item.
 
 ---

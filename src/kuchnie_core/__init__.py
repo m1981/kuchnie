@@ -10,6 +10,10 @@ from .model import (
     Row,
     WorktopSegment,
 )
+from .construction import ConstructionMethod, ConstructionMethodRegistry
+from .blum_drawers import DrawerSystem, DrawerSystemFactory, TandemboxAntaro, Merivobox, Legrabox
+from .blum_hinges import BlumHinge, BlumClipTop110, BlumClipTop95, BlumClipTop155, HingeFactory, calculate_hinge_count
+from .recipe import PanelRecipe, RecipeSchema, evaluate_formula, RecipeValidationError
 from .decomposer import decompose
 from .bom import BOM, BOMItem, calculate_bom
 from .loader import load_cabinet, load_kitchen
@@ -28,6 +32,14 @@ __all__ = [
     # Models
     "Panel", "Accessory", "CabinetInstance", "DecompositionResult", "EdgeBand",
     "Kitchen", "Row", "WorktopSegment",
+    # Construction
+    "ConstructionMethod", "ConstructionMethodRegistry",
+    # Blum drawer systems
+    "DrawerSystem", "DrawerSystemFactory", "TandemboxAntaro", "Merivobox", "Legrabox",
+    # Blum hinges
+    "BlumHinge", "BlumClipTop110", "BlumClipTop95", "BlumClipTop155", "HingeFactory", "calculate_hinge_count",
+    # Recipes (formulas as data)
+    "PanelRecipe", "RecipeSchema", "evaluate_formula", "RecipeValidationError",
     # Engine
     "decompose",
     "BOM", "BOMItem", "calculate_bom",

@@ -14,8 +14,8 @@ K02-F1;front_szuflada;594;355.5;18;U164_EM;1;gora,dol,lewo,prawo
 K02-F2;front_szuflada;594;355.5;18;U164_EM;1;gora,dol,lewo,prawo
 K03-BOK-L;bok_lewy;510;720;18;D3821_SW;1;gora,lewo
 K03-BOK-P;bok_prawy;510;720;18;D3821_SW;1;gora,lewo
-K03-GORA;gora;864;502;18;D3821_SW;1;lewo
-K03-DNO;dno;864;502;18;D3821_SW;1;lewo
+K03-GORA;gora;1356;502;18;D3821_SW;1;lewo
+K03-DNO;dno;1356;502;18;D3821_SW;1;lewo
 K03-POL1;polka;864;465;18;D3821_SW;1;lewo
 K03-PLECY;plecy;864;720;3;HDF_3mm_bialy;1;
 K03-F1;front_drzwi;894;714;18;U164_EM;1;gora,dol,lewo,prawo

@@ -10,6 +10,7 @@ registering it in TYPE_REGISTRY.
 
 from __future__ import annotations
 
+from .construction import ConstructionMethod
 from .model import Accessory, CabinetInstance, DecompositionResult, EdgeBand, MachiningOp, Panel
 
 
@@ -17,10 +18,45 @@ from .model import Accessory, CabinetInstance, DecompositionResult, EdgeBand, Ma
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _method_from_cab(cab: CabinetInstance) -> ConstructionMethod:
+    """Derive ConstructionMethod from CabinetInstance's thickness fields.
+
+    This bridges the existing YAML-based config with the new ConstructionMethod
+    pattern.  When CabinetInstance gets a construction_ref field, this will
+    look up the method from the registry instead.
+    """
+    return ConstructionMethod(
+        id=f"_derived_{cab.id}",
+        name=f"Derived from {cab.id}",
+        side_thickness_mm=cab.thickness_side_mm,
+        top_thickness_mm=cab.thickness_side_mm,  # same as side in current model
+        bottom_thickness_mm=cab.thickness_bottom_mm,
+        shelf_thickness_mm=cab.thickness_shelf_mm,
+        back_thickness_mm=cab.thickness_back_mm,
+        front_thickness_mm=cab.thickness_front_mm,
+        back_groove_depth_mm=cab.groove_depth_mm,
+        edge_band_thickness_mm=cab.edge_banding_thickness_mm,
+    )
+
+
+def _normalize_edge_material(edge_type: str, board_material: str) -> str:
+    """Construct edge band material identifier.
+
+    Format: "{edge_type}_{board_material}"
+    Example: "ABS_swiss_krono.U119_VL"
+
+    This is a LOCAL identifier for BOM/cutlist purposes.
+    It does NOT directly map to catalog DB edge codes (e.g. "K-8685-SM/BS/PD").
+    The mapping between local identifiers and catalog codes happens at
+    procurement time, when the BOM is matched against supplier catalogs.
+    """
+    return f"{edge_type}_{board_material}"
+
+
 def _body_eb(cab: CabinetInstance, length_mm: float) -> EdgeBand:
     """Edge band for carcass panels (body material)."""
     return EdgeBand(
-        material=f"{cab.edge_banding_type}_{cab.body_material}",
+        material=_normalize_edge_material(cab.edge_banding_type, cab.body_material),
         thickness_mm=cab.edge_banding_thickness_mm,
         length_mm=length_mm,
     )
@@ -29,7 +65,7 @@ def _body_eb(cab: CabinetInstance, length_mm: float) -> EdgeBand:
 def _front_eb(cab: CabinetInstance, length_mm: float) -> EdgeBand:
     """Edge band for front panels (front material)."""
     return EdgeBand(
-        material=f"{cab.edge_banding_type}_{cab.front_material}",
+        material=_normalize_edge_material(cab.edge_banding_type, cab.front_material),
         thickness_mm=cab.edge_banding_thickness_mm,
         length_mm=length_mm,
     )
@@ -46,6 +82,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
       1× left side, 1× right side, 1× bottom, 1× back,
       N× drawer fronts (one per drawer)
     """
+    m = _method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
 
     side_h = cab.height_mm - cab.plinth_height_mm  # 720 - 100 = 620
@@ -56,32 +93,32 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
             id=f"{cab.id}_{side}",
             name=label,
             material=cab.body_material,
-            thickness_mm=cab.thickness_side_mm,
+            thickness_mm=m.side_thickness_mm,
             width_mm=cab.depth_mm,
             height_mm=side_h,
             banded_edges={"front": _body_eb(cab, side_h)},
         ))
 
     # -- Bottom panel --
-    bottom_w = cab.width_mm - 2 * cab.thickness_side_mm
+    bottom_w = m.carcass_bottom_width(cab.width_mm)
     r.panels.append(Panel(
         id=f"{cab.id}_bottom",
         name="Dno",
         material=cab.body_material,
-        thickness_mm=cab.thickness_bottom_mm,
+        thickness_mm=m.bottom_thickness_mm,
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
     ))
 
     # -- Back panel (in groove, no banding) --
-    back_w = cab.width_mm - 2 * cab.thickness_side_mm + 2 * cab.groove_depth_mm
-    back_h = side_h + cab.groove_depth_mm  # extends into bottom groove
+    back_w = m.back_panel_width(cab.width_mm)
+    back_h = m.back_panel_height(side_h)
     r.panels.append(Panel(
         id=f"{cab.id}_back",
         name="Plecy",
         material=cab.back_material,
-        thickness_mm=cab.thickness_back_mm,
+        thickness_mm=m.back_thickness_mm,
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},  # HDF — never banded
@@ -104,7 +141,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
             id=f"{cab.id}_front_{front['id']}",
             name=f"Front {front['id']}",
             material=cab.front_material,
-            thickness_mm=cab.thickness_front_mm,
+            thickness_mm=m.front_thickness_mm,
             width_mm=front_w,
             height_mm=front_h,
             banded_edges={
@@ -149,6 +186,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
       1× left side, 1× right side, 1× top, 1× bottom, 1× back,
       N× shelves, N× door fronts
     """
+    m = _method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
 
     # -- Side panels --
@@ -157,47 +195,47 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             id=f"{cab.id}_{side}",
             name=label,
             material=cab.body_material,
-            thickness_mm=cab.thickness_side_mm,
+            thickness_mm=m.side_thickness_mm,
             width_mm=cab.depth_mm,
             height_mm=cab.height_mm,
             banded_edges={"front": _body_eb(cab, cab.height_mm)},
         ))
 
     # -- Top + Bottom panels --
-    horiz_w = cab.width_mm - 2 * cab.thickness_side_mm
+    horiz_w = m.carcass_bottom_width(cab.width_mm)
     for pos, label in [("top", "Góra"), ("bottom", "Dno")]:
         r.panels.append(Panel(
             id=f"{cab.id}_{pos}",
             name=label,
             material=cab.body_material,
-            thickness_mm=cab.thickness_bottom_mm,
+            thickness_mm=m.bottom_thickness_mm,
             width_mm=horiz_w,
             height_mm=cab.depth_mm,
             banded_edges={"front": _body_eb(cab, horiz_w)},
         ))
 
     # -- Back panel (in groove, no banding) --
-    back_w = cab.width_mm - 2 * cab.thickness_side_mm + 2 * cab.groove_depth_mm
-    back_h = cab.height_mm - 2 * cab.thickness_bottom_mm + 2 * cab.groove_depth_mm
+    back_w = m.back_panel_width(cab.width_mm)
+    back_h = cab.height_mm - 2 * m.bottom_thickness_mm + 2 * m.back_groove_depth_mm
     r.panels.append(Panel(
         id=f"{cab.id}_back",
         name="Plecy",
         material=cab.back_material,
-        thickness_mm=cab.thickness_back_mm,
+        thickness_mm=m.back_thickness_mm,
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},
     ))
 
     # -- Shelves --
-    shelf_w = horiz_w - 2   # 1 mm clearance per side
+    shelf_w = m.shelf_width(cab.width_mm)
     shelf_d = cab.depth_mm - 5  # clearance from back panel
     for shelf in cab.shelves:
         r.panels.append(Panel(
             id=f"{cab.id}_shelf_{shelf['id']}",
             name=f"Półka {shelf['id']}",
             material=cab.body_material,
-            thickness_mm=cab.thickness_shelf_mm,
+            thickness_mm=m.shelf_thickness_mm,
             width_mm=shelf_w,
             height_mm=shelf_d,
             banded_edges={"front": _body_eb(cab, shelf_w)},
@@ -206,16 +244,136 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
     # -- Doors --
     door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
     n_doors = len(door_fronts) or 1
-    gap_total = 3 * (n_doors + 1)  # 3 mm per gap (left, right, between)
-    door_w = (cab.width_mm - gap_total) / n_doors
-    door_h = cab.height_mm - 6  # 3 mm top + 3 mm bottom
+    door_w = m.door_width(cab.width_mm, n_doors)
+    door_h = m.door_height(cab.height_mm)
 
     for front in door_fronts:
         r.panels.append(Panel(
             id=f"{cab.id}_front_{front['id']}",
             name=f"Front {front['id']}",
             material=cab.front_material,
-            thickness_mm=cab.thickness_front_mm,
+            thickness_mm=m.front_thickness_mm,
+            width_mm=door_w,
+            height_mm=door_h,
+            banded_edges={
+                "front": _front_eb(cab, door_w),
+                "back":  _front_eb(cab, door_w),
+                "left":  _front_eb(cab, door_h),
+                "right": _front_eb(cab, door_h),
+            },
+        ))
+
+    # -- Hinges --
+    for front in door_fronts:
+        n_hinges = front.get("ilosc_zawiasow", 2)
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_hinge_{front['id']}",
+            name=f"Zawias {front.get('zawias', 'standard')}",
+            type="hinge",
+            quantity=n_hinges,
+        ))
+
+    # -- Shelf pins (4 per shelf) --
+    if cab.shelves:
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_shelf_pins",
+            name="Kołek półkowy 5 mm",
+            type="shelf_pin",
+            quantity=len(cab.shelves) * 4,
+        ))
+
+    # -- Handles --
+    if cab.handles and door_fronts:
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_handles",
+            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
+                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            type="handle",
+            quantity=len(door_fronts),
+        ))
+
+    return r
+
+
+# ---------------------------------------------------------------------------
+# dolna_drzwiowa — base cabinet with doors
+# ---------------------------------------------------------------------------
+
+def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
+    """Decompose a base cabinet with doors.
+
+    Panels produced:
+      1× left side, 1× right side, 1× bottom, 1× back,
+      N× shelves, N× door fronts
+    """
+    m = _method_from_cab(cab)
+    r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
+
+    side_h = cab.height_mm - cab.plinth_height_mm
+
+    # -- Side panels (left + right) --
+    for side, label in [("left", "Lewy bok"), ("right", "Prawy bok")]:
+        r.panels.append(Panel(
+            id=f"{cab.id}_{side}",
+            name=label,
+            material=cab.body_material,
+            thickness_mm=m.side_thickness_mm,
+            width_mm=cab.depth_mm,
+            height_mm=side_h,
+            banded_edges={"front": _body_eb(cab, side_h)},
+        ))
+
+    # -- Bottom panel --
+    bottom_w = m.carcass_bottom_width(cab.width_mm)
+    r.panels.append(Panel(
+        id=f"{cab.id}_bottom",
+        name="Dno",
+        material=cab.body_material,
+        thickness_mm=m.bottom_thickness_mm,
+        width_mm=bottom_w,
+        height_mm=cab.depth_mm,
+        banded_edges={"front": _body_eb(cab, bottom_w)},
+    ))
+
+    # -- Back panel (in groove, no banding) --
+    back_w = m.back_panel_width(cab.width_mm)
+    back_h = m.back_panel_height(side_h)
+    r.panels.append(Panel(
+        id=f"{cab.id}_back",
+        name="Plecy",
+        material=cab.back_material,
+        thickness_mm=m.back_thickness_mm,
+        width_mm=back_w,
+        height_mm=back_h,
+        banded_edges={},
+    ))
+
+    # -- Shelves --
+    shelf_w = m.shelf_width(cab.width_mm)
+    shelf_d = cab.depth_mm - 5  # clearance from back panel
+    for shelf in cab.shelves:
+        r.panels.append(Panel(
+            id=f"{cab.id}_shelf_{shelf['id']}",
+            name=f"Półka {shelf['id']}",
+            material=cab.body_material,
+            thickness_mm=m.shelf_thickness_mm,
+            width_mm=shelf_w,
+            height_mm=shelf_d,
+            banded_edges={"front": _body_eb(cab, shelf_w)},
+        ))
+
+    # -- Door fronts --
+    door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
+    n_doors = len(door_fronts) or 1
+    door_w = m.door_width(cab.width_mm, n_doors)
+    door_h = m.door_height(side_h)
+
+    for front in door_fronts:
+        r.panels.append(Panel(
+            id=f"{cab.id}_front_{front['id']}",
+            name=f"Front {front['id']}",
+            material=cab.front_material,
+            thickness_mm=m.front_thickness_mm,
             width_mm=door_w,
             height_mm=door_h,
             banded_edges={
@@ -276,6 +434,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         validate_height_nl,
     )
 
+    m = _method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
     side_h = cab.height_mm - cab.plinth_height_mm
 
@@ -291,7 +450,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             id=f"{cab.id}_{side}",
             name=label,
             material=cab.body_material,
-            thickness_mm=cab.thickness_side_mm,
+            thickness_mm=m.side_thickness_mm,
             width_mm=cab.depth_mm,
             height_mm=side_h,
             banded_edges={"front": _body_eb(cab, side_h)},
@@ -299,25 +458,25 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         ))
 
     # -- Bottom panel --
-    bottom_w = cab.width_mm - 2 * cab.thickness_side_mm
+    bottom_w = m.carcass_bottom_width(cab.width_mm)
     r.panels.append(Panel(
         id=f"{cab.id}_bottom",
         name="Dno",
         material=cab.body_material,
-        thickness_mm=cab.thickness_bottom_mm,
+        thickness_mm=m.bottom_thickness_mm,
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
     ))
 
     # -- Back panel --
-    back_w = cab.width_mm - 2 * cab.thickness_side_mm + 2 * cab.groove_depth_mm
-    back_h = side_h + cab.groove_depth_mm
+    back_w = m.back_panel_width(cab.width_mm)
+    back_h = m.back_panel_height(side_h)
     r.panels.append(Panel(
         id=f"{cab.id}_back",
         name="Plecy",
         material=cab.back_material,
-        thickness_mm=cab.thickness_back_mm,
+        thickness_mm=m.back_thickness_mm,
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},
@@ -333,10 +492,10 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         box_panels, runner_ops = decompose_drawer_box(
             cabinet_id=cab.id,
             drawer_id=did,
-            kb=cab.width_mm - 2 * cab.thickness_side_mm,  # KB = internal width
+            kb=m.carcass_bottom_width(cab.width_mm),  # KB = internal width
             nl=nl,
             height_code=height_code,
-            side_thickness=cab.thickness_side_mm,
+            side_thickness=m.side_thickness_mm,
         )
         r.panels.extend(box_panels)
 
@@ -370,7 +529,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             id=f"{cab.id}_front_{front['id']}",
             name=f"Front {front['id']}",
             material=cab.front_material,
-            thickness_mm=cab.thickness_front_mm,
+            thickness_mm=m.front_thickness_mm,
             width_mm=front_w,
             height_mm=front_h,
             banded_edges={
@@ -401,6 +560,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
 
 TYPE_REGISTRY: dict[str, callable] = {
     "dolna_szufladowa": decompose_dolna_szufladowa,
+    "dolna_drzwiowa":   decompose_dolna_drzwiowa,
     "dolna_legrabox":   decompose_dolna_legrabox,
     "gorna_drzwiowa":   decompose_gorna_drzwiowa,
 }

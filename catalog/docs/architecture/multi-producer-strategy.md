@@ -69,7 +69,7 @@ No accidental cross-producer collisions.
 
 ### 2. `pairings` is decor-level, not variant-level
 
-See [ADR-001](./adr/001-pairings-as-decor-relations.md). This makes
+See [ADR-001](../adr/001-pairings-as-decor-relations.md). This makes
 Kronospan's explicit pairings cheap to maintain, and Egger's implicit
 pairings simply means the rows reduce to identity (`front_decor_id =
 target_decor_id`).

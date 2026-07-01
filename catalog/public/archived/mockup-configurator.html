@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Konfigurator kuchni — Krok 2/6: Korpus (dwukolorowy)</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --card: #1a1a1a; --card-hover: #222;
+    --accent: #2d7a4f; --accent-dim: #1e5638;
+    --text: #eee; --muted: #888; --border: #333;
+    --radius: 10px; --radius-sm: 6px;
+    --designer: #c8a951; --safe: #5a9; --bold: #c55;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.4; }
+
+  /* ── Top bar ── */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+  .topbar .logo { font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+  .topbar .logo span { color: var(--accent); }
+  .topbar .session-info { font-size: 12px; color: var(--muted); }
+  .topbar .session-info a { color: var(--accent); text-decoration: none; }
+
+  /* ── Progress bar ── */
+  .progress { display: flex; align-items: center; gap: 4px; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+  .progress .step { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .progress .step .num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .progress .step.done .num { background: var(--accent); color: #fff; }
+  .progress .step.active .num { background: var(--accent); color: #fff; box-shadow: 0 0 0 2px var(--accent-dim); }
+  .progress .step.pending .num { background: var(--border); color: var(--muted); }
+  .progress .step .label { display: none; }
+  .progress .step.active .label { display: inline; color: var(--text); font-weight: 600; }
+  .progress .line { flex: 1; height: 2px; background: var(--border); }
+  .progress .line.done { background: var(--accent); }
+
+  /* ── Context bar ── */
+  .context { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .context .chosen { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  .context .chosen img { width: 36px; height: 36px; border-radius: 4px; object-fit: cover; }
+  .context .chosen .info { font-size: 13px; }
+  .context .chosen .info .name { font-weight: 600; }
+  .context .chosen .info .code { color: var(--muted); font-size: 11px; }
+  .context .arrow { color: var(--muted); font-size: 18px; }
+  .context .prompt { font-size: 14px; color: var(--muted); }
+
+  /* ── Filter strip ── */
+  .filters { padding: 10px 24px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .filters .chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .filters .chip:hover { border-color: var(--text); color: var(--text); }
+  .filters .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+  /* ── Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; padding: 20px 24px; }
+
+  /* ── Option card ── */
+  .card { background: var(--card); border-radius: var(--radius); border: 2px solid transparent; cursor: pointer; transition: all 0.2s; overflow: hidden; position: relative; }
+  .card:hover { border-color: var(--border); background: var(--card-hover); }
+  .card.selected { border-color: var(--accent); }
+  .card .swatch { width: 100%; aspect-ratio: 1; background: #333; position: relative; overflow: hidden; }
+  .card .swatch img { width: 100%; height: 100%; object-fit: cover; }
+  .card .swatch .no-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .badge-rec { position: absolute; top: 6px; left: 6px; font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.5px; }
+  .card .badge-rec.designer { background: var(--designer); color: #000; }
+  .card .badge-rec.safe { background: var(--safe); color: #000; }
+  .card .badge-rec.bold { background: var(--bold); color: #fff; }
+  .card .badge-rec.default { background: #555; color: #ccc; }
+  .card .body { padding: 10px; }
+  .card .body .name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .card .body .code { font-size: 11px; color: var(--muted); }
+  .card .body .meta { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .card .compare-check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 4px; background: rgba(0,0,0,0.6); border: 1.5px solid #888; display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; }
+  .card:hover .compare-check { border-color: #ccc; }
+  .card .compare-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Footer nav ── */
+  .footer { position: sticky; bottom: 0; background: var(--bg); border-top: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .footer .selected-count { font-size: 13px; color: var(--muted); }
+  .footer .selected-count strong { color: var(--text); }
+  .btn { padding: 10px 24px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a9d62; }
+  .btn-secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-secondary:hover { color: var(--text); border-color: var(--text); }
+  .footer .nav { display: flex; gap: 8px; }
+
+  /* ── Compare bar ── */
+  .compare-bar { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius); padding: 10px 20px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 10; }
+  .compare-bar .items { display: flex; gap: 6px; }
+  .compare-bar .items .thumb { width: 32px; height: 32px; border-radius: 4px; background: #444; border: 1px solid var(--border); }
+  .compare-bar .btn { padding: 6px 14px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="logo"><span>KUCHNIE</span> KONFIGURATOR</div>
+    <nav style="display:flex;gap:12px;align-items:center">
+      <a href="mockup-catalog.html" style="color:var(--muted);text-decoration:none;font-size:12px">Katalog</a>
+      <a href="mockup-templates.html" style="color:var(--muted);text-decoration:none;font-size:12px">Szablony</a>
+    </nav>
+  </div>
+  <div class="session-info">
+    Sesja: <a href="#">abc123def456</a> &middot;
+    <a href="#">Kopiuj link</a>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="progress">
+  <div class="step done"><span class="num">✓</span></div>
+  <div class="line done"></div>
+  <div class="step active"><span class="num">2</span><span class="label">Korpus</span></div>
+  <div class="line"></div>
+  <div class="step pending"><span class="num">3</span></div>
+  <div class="line"></div>
+  <div class="step pending"><span class="num">4</span></div>
+  <div class="line"></div>
+  <div class="step pending"><span class="num">5</span></div>
+  <div class="line"></div>
+  <div class="step pending"><span class="num">6</span></div>
+</div>
+
+<!-- Context: what was chosen before -->
+<div class="context">
+  <div class="chosen">
+    <img src="https://placehold.co/72x72/5a4a3a/fff?text=K003" alt="" />
+    <div class="info">
+      <div class="name">Dąb Craft Złoty</div>
+      <div class="code">K003-CH-18-FP &middot; front dolny</div>
+    </div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="prompt">Wybierz <strong>korpus</strong> (wnętrze szafek)</div>
+</div>
+
+<!-- Two-tone toggle -->
+<div style="padding: 10px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;">
+  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+    <input type="checkbox" id="two-tone" style="accent-color: var(--accent); width: 16px; height: 16px;" />
+    <span>Inne fronty na szafkach górnych?</span>
+  </label>
+  <span style="font-size: 11px; color: var(--muted);">(np. białe góra + dąb dół)</span>
+</div>
+
+<!-- Filter chips -->
+<div class="filters">
+  <div class="chip active">Wszystkie</div>
+  <div class="chip">Polecane</div>
+  <div class="chip">Dopasowane</div>
+  <div class="chip">Kontrast</div>
+</div>
+
+<!-- Options grid -->
+<div class="grid">
+  <!-- Recommended default -->
+  <div class="card selected">
+    <div class="swatch" style="background:#f5f5f0">
+      <div class="no-img">K110</div>
+      <span class="badge-rec default">Domyślny</span>
+    </div>
+    <div class="body">
+      <div class="name">Biały Korpusowy</div>
+      <div class="code">K110-CH-18-SM</div>
+      <div class="meta">Płyta wiórowa · 18mm · SM</div>
+    </div>
+  </div>
+
+  <!-- Designer pick -->
+  <div class="card">
+    <div class="swatch" style="background:#c8a951">
+      <div class="no-img">K003</div>
+      <span class="badge-rec designer">Dopasowany</span>
+    </div>
+    <div class="body">
+      <div class="name">Dąb Craft Złoty</div>
+      <div class="code">K003-CH-18-FP</div>
+      <div class="meta">Płyta wiórowa · 18mm · FP</div>
+    </div>
+  </div>
+
+  <!-- Another option -->
+  <div class="card">
+    <div class="swatch" style="background:#e8e8e8">
+      <div class="no-img">K8685</div>
+      <span class="badge-rec safe">Bezpieczny</span>
+    </div>
+    <div class="body">
+      <div class="name">Biel Alpejska</div>
+      <div class="code">K8685-CH-18-SM</div>
+      <div class="meta">Płyta wiórowa · 18mm · SM</div>
+    </div>
+  </div>
+
+  <!-- Cards without recommendation -->
+  <div class="card">
+    <div class="swatch" style="background:#aaa">
+      <div class="no-img">K164</div>
+    </div>
+    <div class="body">
+      <div class="name">Antracyt</div>
+      <div class="code">K164-CH-18-SM</div>
+      <div class="meta">Płyta wiórowa · 18mm · SM</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="swatch" style="background:#333">
+      <div class="no-img">K190</div>
+    </div>
+    <div class="body">
+      <div class="name">Czarny</div>
+      <div class="code">K190-CH-18-PE</div>
+      <div class="meta">Płyta wiórowa · 18mm · PE</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="swatch" style="background:#d4c5a0">
+      <div class="no-img">K5981</div>
+    </div>
+    <div class="body">
+      <div class="name">Kaszmir</div>
+      <div class="code">K5981-CH-18-SM</div>
+      <div class="meta">Płyta wiórowa · 18mm · SM</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="swatch" style="background:#6b8e6b">
+      <div class="no-img">K520</div>
+    </div>
+    <div class="body">
+      <div class="name">Ciemny Szmaragd</div>
+      <div class="code">K520-CH-18-SU</div>
+      <div class="meta">Płyta wiórowa · 18mm · SU</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="swatch" style="background:#4a6a8a">
+      <div class="no-img">K8984</div>
+    </div>
+    <div class="body">
+      <div class="name">Granatowy</div>
+      <div class="code">K8984-CH-18-BS</div>
+      <div class="meta">Płyta wiórowa · 18mm · BS</div>
+    </div>
+  </div>
+</div>
+
+<!-- Compare bar (floating) -->
+<div class="compare-bar">
+  <div class="items">
+    <div class="thumb"></div>
+    <div class="thumb"></div>
+  </div>
+  <span style="font-size:12px;color:var(--muted)">2 wybrane</span>
+  <button class="btn btn-secondary">Porównaj</button>
+</div>
+
+<!-- Footer navigation -->
+<div class="footer">
+  <button class="btn btn-secondary">← Wstecz</button>
+  <div class="selected-count">Wybrany: <strong>Biały Korpusowy K110</strong></div>
+  <div class="nav">
+    <button class="btn btn-secondary">Pomiń</button>
+    <button class="btn btn-primary">Dalej →</button>
+  </div>
+</div>
+
+</body>
+</html>

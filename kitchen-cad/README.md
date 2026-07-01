@@ -67,9 +67,9 @@ csv_generator.generate_*_csv()
 | [ROADMAP.md](ROADMAP.md)                             | Development roadmap                    |
 | [CHANGELOG.md](CHANGELOG.md)                         | Version history                        |
 | [docs/architecture.md](docs/architecture.md)         | System architecture (Mermaid diagrams) |
-| [docs/DESIGN.md](docs/DESIGN.md)                     | Design documentation (Polish)          |
-| [docs/CABINET-VARIANTS.md](docs/CABINET-VARIANTS.md) | 12 cabinet type specification          |
-| [docs/LEGRABOX_SPEC.md](docs/LEGRABOX_SPEC.md)       | LEGRABOX hardware specification        |
+| [docs/design.md](docs/design.md)                     | Design documentation (Polish)          |
+| [docs/specs/cabinet-variants.md](docs/specs/cabinet-variants.md) | 12 cabinet type specification          |
+| [docs/specs/legrabox-spec.md](docs/specs/legrabox-spec.md)       | LEGRABOX hardware specification        |
 
 ## Project Structure
 

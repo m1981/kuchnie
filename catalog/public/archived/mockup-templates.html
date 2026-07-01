@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Konfigurator — Wybierz styl</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --card: #1a1a1a; --card-hover: #222;
+    --accent: #2d7a4f; --accent-dim: #1e5638;
+    --text: #eee; --muted: #888; --border: #333;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.4; }
+
+  /* ── Top bar ── */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+  .topbar .logo { font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+  .topbar .logo span { color: var(--accent); }
+
+  /* ── Hero ── */
+  .hero { text-align: center; padding: 48px 24px 24px; }
+  .hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .hero p { font-size: 14px; color: var(--muted); max-width: 480px; margin: 0 auto; }
+  .hero .actions { margin-top: 20px; display: flex; gap: 12px; justify-content: center; }
+  .btn { padding: 10px 24px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a9d62; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--text); }
+
+  /* ── Section header ── */
+  .section { padding: 24px 24px 8px; }
+  .section h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .section p { font-size: 13px; color: var(--muted); }
+
+  /* ── Template grid ── */
+  .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 12px 24px 32px; }
+
+  .template-card { background: var(--card); border-radius: var(--radius); border: 2px solid transparent; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; }
+  .template-card:hover { border-color: var(--border); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .template-card .hero-img { width: 100%; aspect-ratio: 16/9; background: #333; position: relative; overflow: hidden; }
+  .template-card .hero-img .placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .template-card .badge-featured { position: absolute; top: 10px; left: 10px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .template-card .body { padding: 14px; }
+  .template-card .body h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .template-card .body .desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .template-card .materials { display: flex; gap: 6px; flex-wrap: wrap; }
+  .template-card .materials .mat { display: flex; align-items: center; gap: 4px; padding: 3px 8px; background: #222; border-radius: 4px; font-size: 10px; color: var(--muted); }
+  .template-card .materials .mat .dot { width: 12px; height: 12px; border-radius: 2px; }
+  .template-card .tags { display: flex; gap: 4px; margin-top: 8px; }
+  .template-card .tags .tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: #2a2a2a; color: var(--muted); }
+
+  /* ── Style filter tabs ── */
+  .style-tabs { display: flex; gap: 8px; padding: 0 24px 12px; flex-wrap: wrap; }
+  .style-tab { padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .style-tab:hover { border-color: var(--text); color: var(--text); }
+  .style-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+  /* ── Divider ── */
+  .divider { display: flex; align-items: center; gap: 12px; padding: 16px 24px; }
+  .divider .line { flex: 1; height: 1px; background: var(--border); }
+  .divider .text { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span>KUCHNIE</span> KONFIGURATOR</div>
+  <nav style="display:flex;gap:16px;align-items:center">
+    <a href="mockup-catalog.html" style="color:var(--muted);text-decoration:none;font-size:13px">Katalog</a>
+    <a href="#" style="color:var(--text);text-decoration:none;font-size:13px;font-weight:600">Konfigurator</a>
+  </nav>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Stwórz swoją kuchnię</h1>
+  <p>Wybierz gotowy styl i dostosuj, albo zacznij od zera. Każdy materiał jest dostępny w naszym katalogu.</p>
+  <div class="actions">
+    <button class="btn btn-primary">Zacznij od zera</button>
+    <button class="btn btn-outline">Przeglądaj katalog</button>
+  </div>
+</div>
+
+<!-- Style tabs -->
+<div class="style-tabs">
+  <div class="style-tab active">Wszystkie</div>
+  <div class="style-tab">Skandynawski</div>
+  <div class="style-tab">Nowoczesny</div>
+  <div class="style-tab">Industrialny</div>
+  <div class="style-tab">Klasyczny</div>
+  <div class="style-tab">Odwazny</div>
+</div>
+
+<!-- Featured templates -->
+<div class="section">
+  <h2>Polecane aranżacje</h2>
+  <p>Gotowe zestawy materiałów zaprojektowane przez architektów</p>
+</div>
+
+<div class="template-grid">
+  <!-- Template 1 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #c8a951 0%, #8a7040 50%, #f5f0e0 100%)">
+      <div class="placeholder">🪵</div>
+      <span class="badge-featured">Polecane</span>
+    </div>
+    <div class="body">
+      <h3>Dąb Craft Złoty</h3>
+      <div class="desc">Ciepła klasyczna kuchnia — złoty dąb z marmurowym blatem. Dla tych, którzy chcą „kuchnię jako serce domu".</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#c8a951"></div> K003 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#888"></div> K093 Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">klasyczny</div>
+        <div class="tag">ciepły</div>
+        <div class="tag">drewno</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 2: TWO-TONE Scandinavian -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(180deg, #f5f5f0 0%, #f5f5f0 45%, #c8a951 45%, #c8a951 100%)">
+      <div class="placeholder" style="flex-direction:column;font-size:14px;line-height:1.3">"><span style="font-size:28px">🤍🪵</span><br>góra + dół</div>
+      <span class="badge-featured">Dwukolorowa</span>
+    </div>
+    <div class="body">
+      <h3>Skandynawski Dąb + Biel</h3>
+      <div class="desc">Białe szafki górne + dębowe dolne. Klasyka skandynawskiego designu — lekkość u góry, ciepło u dołu.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K8685 Góra</div>
+        <div class="mat"><div class="dot" style="background:#c8a951"></div> K003 Dół</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+      </div>
+      <div class="tags">
+        <div class="tag">skandynawski</div>
+        <div class="tag">dwukolorowy</div>
+        <div class="tag">drewno</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 3: TWO-TONE Japandi -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(180deg, #f5f0e8 0%, #f5f0e8 45%, #3a3a3a 45%, #3a3a3a 100%)">
+      <div class="placeholder" style="flex-direction:column;font-size:14px;line-height:1.3"><span style="font-size:28px">🤍🖤</span><br>góra + dół</div>
+      <span class="badge-featured">Dwukolorowa</span>
+    </div>
+    <div class="body">
+      <h3>Japandi Krem + Antracyt</h3>
+      <div class="desc">Kremowe górne szafki + ciemne dolne. Spokojny kontrast w duchu japońsko-skandynawskim.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#f5f0e8"></div> K5981 Góra</div>
+        <div class="mat"><div class="dot" style="background:#3a3a3a"></div> K164 Dół</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+      </div>
+      <div class="tags">
+        <div class="tag">japandi</div>
+        <div class="tag">dwukolorowy</div>
+        <div class="tag">kontrast</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 4 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #f5f5f0 0%, #ddd 50%, #e8e0d0 100%)">
+      <div class="placeholder">🤍</div>
+    </div>
+    <div class="body">
+      <h3>Biel Alpejska Ultra</h3>
+      <div class="desc">Monochromatyczna biała kuchnia. Antybakteryjna powierzchnia Mirror Matt 3.0. Minimalizm w czystej formie.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K8685 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> 868S Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">nowoczesny</div>
+        <div class="tag">minimalistyczny</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 3 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #555 0%, #333 50%, #777 100%)">
+      <div class="placeholder">🪨</div>
+    </div>
+    <div class="body">
+      <h3>Beton & Czarny</h3>
+      <div class="desc">Czarne betonowe fronty z jasnoszarym betonowym blatem. Industrialny loft w Twojej kuchni.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#333"></div> K353 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#999"></div> K200 Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">industrialny</div>
+        <div class="tag">kamień</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 4 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #6b8e6b 0%, #3a5a3a 50%, #9ab89a 100%)">
+      <div class="placeholder">🌿</div>
+    </div>
+    <div class="body">
+      <h3>Ciemny Szmaragd</h3>
+      <div class="desc">Zielone fronty z białym marmurowym blatem. Odważny kolor natury, który zastępuje szarości.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#3a5a3a"></div> K520 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#eee"></div> K217 Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">odważny</div>
+        <div class="tag">nowoczesny</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 5 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #d4c5a0 0%, #b0a080 50%, #e8dcc0 100%)">
+      <div class="placeholder">🧶</div>
+    </div>
+    <div class="body">
+      <h3>Szampański Minimalizm</h3>
+      <div class="desc">Ciepły neutralny front z dębowym blatem. Kuchnia „kaszmirowa" — zastępuje czystą biel.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#d4c5a0"></div> K5981 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#c8a951"></div> K003 Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">skandynawski</div>
+        <div class="tag">ciepły</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template 6 -->
+  <div class="template-card">
+    <div class="hero-img" style="background: linear-gradient(135deg, #4a6a8a 0%, #2a3a4a 50%, #6a8aaa 100%)">
+      <div class="placeholder">🌊</div>
+    </div>
+    <div class="body">
+      <h3>Granatowa Elegancja</h3>
+      <div class="desc">Głęboki granatowy front z szarym kamiennym blatem. „Nowy czarny" — elegancki i odważny.</div>
+      <div class="materials">
+        <div class="mat"><div class="dot" style="background:#2a3a4a"></div> K8984 Front</div>
+        <div class="mat"><div class="dot" style="background:#f5f5f0"></div> K110 Korpus</div>
+        <div class="mat"><div class="dot" style="background:#aaa"></div> K540 Blat</div>
+      </div>
+      <div class="tags">
+        <div class="tag">odważny</div>
+        <div class="tag">nowoczesny</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider">
+  <div class="line"></div>
+  <div class="text">lub zacznij od zera</div>
+  <div class="line"></div>
+</div>
+
+<div style="text-align:center; padding: 20px 24px 48px;">
+  <button class="btn btn-primary" style="padding: 14px 36px; font-size: 15px;">Wybierz front →</button>
+</div>
+
+</body>
+</html>

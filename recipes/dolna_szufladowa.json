@@ -1,0 +1,65 @@
+{
+  "cabinet_type": "dolna_szufladowa",
+  "construction_ref": "dowel_confirmat_18mm",
+  "context_defaults": {
+    "plinth": 100,
+    "door_gap": 3,
+    "shelf_clearance": 2,
+    "drawer_margin": 3
+  },
+  "panels": [
+    {
+      "id": "side_left",
+      "name": "Lewy bok",
+      "width_formula": "depth",
+      "height_formula": "height - plinth",
+      "thickness_formula": "side_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "side_right",
+      "name": "Prawy bok",
+      "width_formula": "depth",
+      "height_formula": "height - plinth",
+      "thickness_formula": "side_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "bottom",
+      "name": "Dno",
+      "width_formula": "width - 2 * side_thickness",
+      "height_formula": "depth",
+      "thickness_formula": "bottom_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "back",
+      "name": "Plecy",
+      "width_formula": "width - 2*side_thickness + 2*groove_depth",
+      "height_formula": "height - plinth + groove_depth",
+      "thickness_formula": "back_thickness",
+      "material_ref": "back",
+      "edges": {},
+      "quantity": 1
+    }
+  ],
+  "accessories": [
+    {
+      "type": "runner",
+      "per": "drawer",
+      "name_template": "Prowadnica {drawer.typ} ({drawer.id})"
+    },
+    {
+      "type": "handle",
+      "per": "front",
+      "name_template": "Uchwyt {handles.typ} (rozstaw {handles.rozstaw}mm)"
+    }
+  ],
+  "notes": "Drawer fronts are added dynamically based on cab.fronts array. Each front references a drawer by powiazany field."
+}

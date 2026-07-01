@@ -5,9 +5,9 @@
 >
 > For domain specifications, see:
 >
-> - [LEGRABOX Specification](LEGRABOX_SPEC.md)
-> - [Poradnik Kompleksowy](poradnik-kompleksowy.md)
-> - [Panel Configurator Analysis](analiza_konfiguratora_formatek.md)
+> - [LEGRABOX Specification](specs/legrabox-spec.md)
+> - [Poradnik Kompleksowy](archive/comprehensive-guide.md)
+> - [Panel Configurator Analysis](archive/configurator-analysis.md)
 
 ---
 

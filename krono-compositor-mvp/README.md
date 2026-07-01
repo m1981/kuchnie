@@ -134,17 +134,17 @@ assets/              # Textures and rendered scene passes
 | Document                                                   | Description                                                                           |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | [Architecture](docs/architecture.md)                       | Architectural decisions, layered design, and key implementation choices               |
-| [Blender Scene Reference](docs/blender-scene-reference.md) | Camera, lighting, geometry, and render pass settings for `gen_kitchen.py`             |
-| [Pipeline Rules](docs/PIPELINE_RULES.md)                   | Strict rules for separating Art passes from Math passes in the 3D→2D pipeline         |
-| [Conflicting Paradigms](docs/conflicting_paradigms.md)     | Why Blender's visual approximation and OpenCV's exact math require careful separation |
-| [Rendering Improvements](docs/rendering-improvements.md)   | Phased plan and status for improving render quality                                   |
+| [Blender Scene Reference](docs/specs/blender-scene-ref.md) | Camera, lighting, geometry, and render pass settings for `gen_kitchen.py`             |
+| [Pipeline Rules](docs/specs/pipeline-rules.md)                   | Strict rules for separating Art passes from Math passes in the 3D→2D pipeline         |
+| [Conflicting Paradigms](docs/archive/conflicting-paradigms.md)     | Why Blender's visual approximation and OpenCV's exact math require careful separation |
+| [Rendering Improvements](docs/archive/rendering-improvements.md)   | Phased plan and status for improving render quality                                   |
 
 ### Reference Materials
 
 | Document                                        | Description                                                                       |
 | ----------------------------------------------- | --------------------------------------------------------------------------------- |
-| [Blender Script Prompt](docs/prompt_blender.md) | Prompt used to generate `gen_kitchen.py` — useful for understanding design intent |
-| [Frontend UX Spec](docs/prompt_web.md)          | UX requirements and layout that drove the Alpine.js frontend                      |
+| [Blender Script Prompt](docs/archive/prompt_blender.md) | Prompt used to generate `gen_kitchen.py` — useful for understanding design intent |
+| [Frontend UX Spec](docs/archive/prompt_web.md)          | UX requirements and layout that drove the Alpine.js frontend                      |
 
 ## Tech Stack
 

@@ -1,0 +1,91 @@
+{
+  "cabinet_type": "gorna_drzwiowa",
+  "construction_ref": "dowel_confirmat_18mm",
+  "context_defaults": {
+    "door_gap": 3,
+    "shelf_clearance": 2,
+    "door_bottom_gap": 3
+  },
+  "panels": [
+    {
+      "id": "side_left",
+      "name": "Lewy bok",
+      "width_formula": "depth",
+      "height_formula": "height",
+      "thickness_formula": "side_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "side_right",
+      "name": "Prawy bok",
+      "width_formula": "depth",
+      "height_formula": "height",
+      "thickness_formula": "side_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "top",
+      "name": "Góra",
+      "width_formula": "width - 2 * side_thickness",
+      "height_formula": "depth",
+      "thickness_formula": "top_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "bottom",
+      "name": "Dno",
+      "width_formula": "width - 2 * side_thickness",
+      "height_formula": "depth",
+      "thickness_formula": "bottom_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": 1
+    },
+    {
+      "id": "back",
+      "name": "Plecy",
+      "width_formula": "width - 2*side_thickness + 2*groove_depth",
+      "height_formula": "height - 2*bottom_thickness + 2*groove_depth",
+      "thickness_formula": "back_thickness",
+      "material_ref": "back",
+      "edges": {},
+      "quantity": 1
+    },
+    {
+      "id": "shelf",
+      "name": "Półka",
+      "width_formula": "width - 2*side_thickness - shelf_clearance",
+      "height_formula": "depth - 5",
+      "thickness_formula": "shelf_thickness",
+      "material_ref": "body",
+      "edges": {"front": "body"},
+      "quantity": "dynamic"
+    }
+  ],
+  "accessories": [
+    {
+      "type": "hinge",
+      "per": "door",
+      "count_formula": "2 if door_height <= 1200 else 3",
+      "name_template": "Zawias {construction.default_hinge}"
+    },
+    {
+      "type": "shelf_pin",
+      "per": "shelf",
+      "quantity": 4,
+      "name_template": "Kołek półkowy 5mm"
+    },
+    {
+      "type": "handle",
+      "per": "door",
+      "name_template": "Uchwyt {handles.typ} (rozstaw {handles.rozstaw}mm)"
+    }
+  ],
+  "notes": "Door fronts are added dynamically. Each door width = (width - door_gap * (door_count + 1)) / door_count."
+}

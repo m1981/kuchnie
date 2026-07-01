@@ -90,7 +90,7 @@ Kronospan SM = "Super Mat" (smooth, matt). Swiss Krono SM = "Gładka" (smooth, m
 
 ## References
 
-- ER diagram: `catalog/docs/architecture/04-er-diagram.md`
+- ER diagram: `catalog/docs/architecture/configurator-design.md`
 - Schema: `catalog/docs/architecture/01-schema.sql` through `05-*.sql`
 - Importer: `catalog/scripts/importer.py`
 - Tests: `catalog/tests/test_*.py` (177 tests)

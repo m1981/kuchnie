@@ -79,6 +79,14 @@ Never import downward. `model.py` imports nothing from this package.
 
 **Never write a separate doc that restates what the code does.** If the code is clear and tested, it IS the documentation.
 
+### File naming
+
+- **kebab-case**: `configurator-api.md`, `wall-centric-model.md`
+- **SCREAMING_SNAKE**: `README.md`, `CHANGELOG.md`, `AGENTS.md` only
+- **Numbered**: ADRs (`001-*.md`) and vision (`00-*.md`) only
+- **English**: file names in English, content can be Polish
+- Full rules: `docs/file-naming-convention.md`
+
 ---
 
 ## Testing conventions
@@ -136,6 +144,23 @@ If a formula changes, update the function, the test, and the ADR (as a new ADR, 
 - 84 tests passing
 - LEGRABOX: C height fully verified, M/F heights from catalogue (not yet PDF-confirmed)
 - Runner screw positions: partial (PoC values, full table needed from Blum Montageanleitung)
+
+---
+
+## Doc routing (what to update when)
+
+| Change | Update | Skip |
+|--------|--------|------|
+| New feature | `CHANGELOG.md` + relevant spec | `vision/` |
+| Bug fix | `CHANGELOG.md` only | Everything else |
+| Formula change | Spec + test + `CHANGELOG.md` | `architecture/` |
+| Schema change | Spec + ADR + `CHANGELOG.md` | `vision/` |
+| New decision | `docs/adr/NNN-*.md` | — |
+| Config change | `docs/config-syntax.md` + `CHANGELOG.md` | `vision/` |
+
+**Max 3 doc files per change.** If more, you're over-documenting.
+
+Full routing: `docs/DOC_ROUTING.md`
 
 ---
 

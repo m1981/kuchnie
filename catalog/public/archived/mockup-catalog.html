@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Katalog materiałów</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --card: #1a1a1a; --card-hover: #222;
+    --accent: #2d7a4f; --accent-dim: #1e5638;
+    --text: #eee; --muted: #888; --border: #333;
+    --radius: 10px; --radius-sm: 6px;
+    --designer: #c8a951; --safe: #5a9; --bold: #c55;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.4; }
+
+  /* ── Top bar ── */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+  .topbar .logo { font-weight: 700; font-size: 16px; letter-spacing: 0.5px; }
+  .topbar .logo span { color: var(--accent); }
+  .topbar .nav { display: flex; gap: 16px; align-items: center; }
+  .topbar .nav a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color 0.15s; }
+  .topbar .nav a:hover { color: var(--text); }
+  .topbar .nav a.active { color: var(--text); font-weight: 600; }
+  .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a9d62; }
+
+  /* ── Search + filters bar ── */
+  .toolbar { padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .search { flex: 1; min-width: 200px; position: relative; }
+  .search input { width: 100%; padding: 8px 12px 8px 32px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; outline: none; }
+  .search input:focus { border-color: var(--accent); }
+  .search .icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+  select { padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 12px; cursor: pointer; }
+  select:focus { border-color: var(--accent); outline: none; }
+
+  /* ── View toggle + stats ── */
+  .subbar { padding: 8px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .subbar .stats { font-size: 12px; color: var(--muted); }
+  .subbar .stats strong { color: var(--text); }
+  .subbar .actions { display: flex; gap: 8px; align-items: center; }
+  .chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .chip:hover { border-color: var(--text); color: var(--text); }
+  .chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+  /* ── Grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; padding: 16px 24px; }
+
+  /* ── Card ── */
+  .card { background: var(--card); border-radius: var(--radius); border: 2px solid transparent; cursor: pointer; transition: all 0.2s; overflow: hidden; position: relative; }
+  .card:hover { border-color: var(--border); background: var(--card-hover); }
+  .card .swatch { width: 100%; aspect-ratio: 1; background: #333; position: relative; overflow: hidden; }
+  .card .swatch img { width: 100%; height: 100%; object-fit: cover; }
+  .card .swatch .no-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .swatch .producer { position: absolute; top: 6px; left: 6px; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; background: rgba(0,0,0,0.6); color: #ccc; }
+  .card .swatch .struct { position: absolute; bottom: 6px; right: 6px; font-size: 9px; padding: 2px 5px; border-radius: 3px; background: rgba(0,0,0,0.6); color: #aaa; }
+  .card .swatch .compare-check { position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 3px; background: rgba(0,0,0,0.5); border: 1.5px solid #666; display: flex; align-items: center; justify-content: center; font-size: 10px; color: transparent; opacity: 0; transition: opacity 0.15s; }
+  .card:hover .compare-check { opacity: 1; }
+  .card .compare-check.checked { background: var(--accent); border-color: var(--accent); color: #fff; opacity: 1; }
+  .card .body { padding: 8px; }
+  .card .body .name { font-size: 12px; font-weight: 600; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .body .code { font-size: 10px; color: var(--muted); }
+  .card .body .meta { font-size: 10px; color: var(--muted); margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .card .body .meta span { background: #222; padding: 1px 4px; border-radius: 2px; }
+
+  /* ── Compare bar (floating) ── */
+  .compare-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius); padding: 10px 20px; display: none; align-items: center; gap: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.6); z-index: 100; }
+  .compare-bar.visible { display: flex; }
+  .compare-bar .items { display: flex; gap: 4px; }
+  .compare-bar .items .thumb { width: 28px; height: 28px; border-radius: 3px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted); }
+  .compare-bar .label { font-size: 12px; color: var(--muted); }
+  .compare-bar .btn { padding: 6px 12px; font-size: 11px; }
+
+  /* ── Pagination ── */
+  .pagination { display: flex; justify-content: center; gap: 4px; padding: 16px 24px 32px; }
+  .pagination .page { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 12px; border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .pagination .page:hover { border-color: var(--text); color: var(--text); }
+  .pagination .page.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── Style tags row ── */
+  .style-row { padding: 6px 24px; border-bottom: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .style-row .label { font-size: 10px; color: var(--muted); margin-right: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="logo"><span>KUCHNIE</span> KATALOG</div>
+  <div class="nav">
+    <a href="#" class="active">Katalog</a>
+    <a href="#">Konfigurator</a>
+    <a href="#">Szablony</a>
+    <button class="btn btn-primary">+ Nowa sesja</button>
+  </div>
+</div>
+
+<!-- Search + filters -->
+<div class="toolbar">
+  <div class="search">
+    <span class="icon">🔍</span>
+    <input type="text" placeholder="Szukaj po nazwie, kodzie, kolorze..." />
+  </div>
+  <select>
+    <option>Wszyscy producenci</option>
+    <option>Kronospan</option>
+    <option>Swiss Krono</option>
+  </select>
+  <select>
+    <option>Wszystkie typy</option>
+    <option>Płyta wiórowa</option>
+    <option>MDF Akryl</option>
+    <option>MDF Lakierowany</option>
+  </select>
+  <select>
+    <option>Wszystkie struktury</option>
+    <option>SM (Super Mat)</option>
+    <option>PE (Pearl Effect)</option>
+    <option>BS (Black Structure)</option>
+  </select>
+  <select>
+    <option>Wszystkie role</option>
+    <option>Front</option>
+    <option>Korpus</option>
+    <option>Blat</option>
+  </select>
+  <select>
+    <option>Wszystkie kolory</option>
+    <option>Biały</option>
+    <option>Szary</option>
+    <option>Dąb</option>
+    <option>Czarny</option>
+    <option>Beżowy</option>
+  </select>
+</div>
+
+<!-- Style filter row -->
+<div class="style-row">
+  <span class="label">Styl:</span>
+  <div class="chip active">Wszystkie</div>
+  <div class="chip">🪵 Drewno</div>
+  <div class="chip">⚪ Minimalistyczny</div>
+  <div class="chip">🪨 Industrialny</div>
+  <div class="chip">🟢 Odważny</div>
+  <div class="chip">🧶 Ciepły</div>
+  <div class="chip">❄️ Nowoczesny</div>
+</div>
+
+<!-- Stats + compare -->
+<div class="subbar">
+  <div class="stats"><strong>148</strong> dekorów &middot; <strong>186</strong> wariantów &middot; <strong>58</strong> ze zdjęciami</div>
+  <div class="actions">
+    <div class="chip" id="compare-toggle">☐ Porównaj</div>
+  </div>
+</div>
+
+<!-- Card grid -->
+<div class="grid">
+  <!-- Card with image -->
+  <div class="card">
+    <div class="swatch" style="background:#5a4a3a">
+      <img src="https://placehold.co/340x340/5a4a3a/fff?text=K003" alt="" />
+      <span class="producer">KP</span>
+      <span class="struct">FP</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Dąb Craft Złoty</div>
+      <div class="code">K003</div>
+      <div class="meta"><span>dab</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card with image -->
+  <div class="card">
+    <div class="swatch" style="background:#f5f5f0">
+      <img src="https://placehold.co/340x340/f5f5f0/333?text=K8685" alt="" />
+      <span class="producer">KP</span>
+      <span class="struct">SM</span>
+      <span class="compare-check checked">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Biel Alpejska</div>
+      <div class="code">K8685</div>
+      <div class="meta"><span>bialy</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#c8a951">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">KP</span>
+      <span class="struct">PE</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Dąb Barokowy Złoty</div>
+      <div class="code">K535</div>
+      <div class="meta"><span>dab</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card with image -->
+  <div class="card">
+    <div class="swatch" style="background:#333">
+      <img src="https://placehold.co/340x340/333/fff?text=K190" alt="" />
+      <span class="producer">KP</span>
+      <span class="struct">PE</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Czarny</div>
+      <div class="code">K190</div>
+      <div class="meta"><span>czarny</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#aaa">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">KP</span>
+      <span class="struct">SM</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Antracyt</div>
+      <div class="code">K164</div>
+      <div class="meta"><span>szary</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card with image -->
+  <div class="card">
+    <div class="swatch" style="background:#d4c5a0">
+      <img src="https://placehold.co/340x340/d4c5a0/333?text=K5981" alt="" />
+      <span class="producer">KP</span>
+      <span class="struct">SM</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Kaszmir</div>
+      <div class="code">K5981</div>
+      <div class="meta"><span>kremowy</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#6b8e6b">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">KP</span>
+      <span class="struct">SU</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Ciemny Szmaragd</div>
+      <div class="code">K520</div>
+      <div class="meta"><span>zielony</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#4a6a8a">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">KP</span>
+      <span class="struct">BS</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Granatowy</div>
+      <div class="code">K8984</div>
+      <div class="meta"><span>niebieski</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card with image — worktop -->
+  <div class="card">
+    <div class="swatch" style="background:#888">
+      <img src="https://placehold.co/340x340/888/fff?text=868S" alt="" />
+      <span class="producer">KP</span>
+      <span class="struct">PF</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Biel Alpejska</div>
+      <div class="code">868S</div>
+      <div class="meta"><span>bialy</span><span>blat</span><span>38mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#999">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">KP</span>
+      <span class="struct">RS</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Beton Jasnoszary</div>
+      <div class="code">K200</div>
+      <div class="meta"><span>szary</span><span>blat</span><span>38mm</span></div>
+    </div>
+  </div>
+
+  <!-- Card without image -->
+  <div class="card">
+    <div class="swatch" style="background:#b0a080">
+      <div class="no-img">brak zdjęcia</div>
+      <span class="producer">SK</span>
+      <span class="struct">FH</span>
+      <span class="compare-check">✓</span>
+    </div>
+    <div class="body">
+      <div class="name">Dąb Sherwood</div>
+      <div class="code">D70408</div>
+      <div class="meta"><span>dab</span><span>front</span><span>18mm</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination">
+  <div class="page active">1</div>
+  <div class="page">2</div>
+  <div class="page">3</div>
+  <div class="page">4</div>
+  <div class="page">...</div>
+  <div class="page">13</div>
+</div>
+
+<!-- Compare bar (floating) -->
+<div class="compare-bar visible">
+  <div class="items">
+    <div class="thumb">K8685</div>
+  </div>
+  <span class="label">1 wybrany do porównania</span>
+  <button class="btn btn-primary">Porównaj (2+)</button>
+  <button class="btn" style="background:transparent;color:var(--muted);border:1px solid var(--border)">Wyczyść</button>
+</div>
+
+</body>
+</html>

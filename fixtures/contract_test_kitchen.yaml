@@ -1,0 +1,135 @@
+# Contract test kitchen — simulates Blender export output
+# This fixture proves the contract between Home Builder 5 and kuchnie_core
+
+version: "2.0"
+project_name: "Contract Test Kitchen"
+
+settings:
+  base_height: 720
+  base_depth: 560
+  wall_height: 720
+  wall_depth: 300
+  plinth_height: 120
+  corpus_thickness: 18
+  back_thickness: 3
+  front_thickness: 19
+
+materials:
+  body: "swiss_krono.U119_VL"
+  back: "HDF_3mm"
+  front: "swiss_krono.U119_EM"
+
+rows:
+  - label: "Ściana północna"
+    wall_width_mm: 3600
+    cabinets:
+      # K01: Base drawer cabinet (2 drawers)
+      - id: "K01"
+        type: "dolna_szufladowa"
+        width_mm: 800
+        height_mm: 720
+        depth_mm: 510
+        body_material: "swiss_krono.U119_VL"
+        back_material: "HDF_3mm"
+        front_material: "swiss_krono.U119_EM"
+        drawers:
+          - id: "S1"
+            height_mm: 150
+            system: "tandembox_antaro"
+            height_code: "N"
+            nl: 500
+          - id: "S2"
+            height_mm: 300
+            system: "tandembox_antaro"
+            height_code: "M"
+            nl: 500
+        fronts:
+          - id: "F1"
+            type: "drawer"
+            linked_to: "S1"
+            margins: {left: 3, right: 3, top: 3, bottom: 3}
+          - id: "F2"
+            type: "drawer"
+            linked_to: "S2"
+            margins: {left: 3, right: 3, top: 3, bottom: 3}
+        handles:
+          type: "rail"
+          spacing_mm: 256
+
+      # K02: Base door cabinet (1 shelf)
+      - id: "K02"
+        type: "dolna_drzwiowa"
+        width_mm: 600
+        height_mm: 720
+        depth_mm: 510
+        body_material: "swiss_krono.U119_VL"
+        back_material: "HDF_3mm"
+        front_material: "swiss_krono.U119_EM"
+        shelves:
+          - id: "P1"
+        fronts:
+          - id: "F1"
+            type: "door"
+            side: "right"
+            hinge_count: 2
+        handles:
+          type: "rail"
+          spacing_mm: 192
+
+      # K03: Wall door cabinet (2 shelves)
+      - id: "K03"
+        type: "gorna_drzwiowa"
+        width_mm: 600
+        height_mm: 720
+        depth_mm: 300
+        body_material: "swiss_krono.U119_VL"
+        back_material: "HDF_3mm"
+        front_material: "swiss_krono.U119_EM"
+        shelves:
+          - id: "P1"
+          - id: "P2"
+        fronts:
+          - id: "F1"
+            type: "door"
+            side: "left"
+            hinge_count: 2
+          - id: "F2"
+            type: "door"
+            side: "right"
+            hinge_count: 2
+        handles:
+          type: "rail"
+          spacing_mm: 192
+
+      # K04: Base Legrabox cabinet
+      - id: "K04"
+        type: "dolna_legrabox"
+        width_mm: 900
+        height_mm: 720
+        depth_mm: 510
+        body_material: "swiss_krono.U119_VL"
+        back_material: "HDF_3mm"
+        front_material: "swiss_krono.U119_EM"
+        drawers:
+          - id: "S1"
+            height_mm: 167
+            system: "legrabox"
+            height_code: "C"
+            nl: 550
+          - id: "S2"
+            height_mm: 167
+            system: "legrabox"
+            height_code: "C"
+            nl: 550
+        fronts:
+          - id: "F1"
+            type: "drawer"
+            linked_to: "S1"
+            margins: {left: 3, right: 3, top: 3, bottom: 3}
+          - id: "F2"
+            type: "drawer"
+            linked_to: "S2"
+            margins: {left: 3, right: 3, top: 3, bottom: 3}
+        handles:
+          type: "rail"
+          spacing_mm: 256

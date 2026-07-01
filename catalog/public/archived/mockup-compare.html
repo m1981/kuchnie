@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Porównanie wariantów</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --card: #1a1a1a; --card-hover: #222;
+    --accent: #2d7a4f; --accent-dim: #1e5638;
+    --text: #eee; --muted: #888; --border: #333;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.4; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid var(--border); }
+  .topbar .logo { font-weight: 700; font-size: 16px; }
+  .topbar .logo span { color: var(--accent); }
+  .topbar .back { color: var(--muted); text-decoration: none; font-size: 13px; }
+  .topbar .back:hover { color: var(--text); }
+
+  .header { padding: 24px; text-align: center; }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 13px; color: var(--muted); }
+
+  /* ── Compare table ── */
+  .compare { display: grid; grid-template-columns: 160px 1fr 1fr 1fr; gap: 0; padding: 0 24px 32px; max-width: 900px; margin: 0 auto; }
+
+  .compare .label { padding: 10px 12px; font-size: 12px; color: var(--muted); display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+  .compare .label:first-child { background: none; }
+
+  .compare .cell { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; }
+  .compare .cell.winner { color: var(--accent); font-weight: 600; }
+
+  .compare .header-row { padding: 12px; text-align: center; border-bottom: 2px solid var(--border); }
+  .compare .header-row .swatch { width: 100%; aspect-ratio: 1; border-radius: var(--radius-sm); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .compare .header-row .name { font-size: 14px; font-weight: 700; }
+  .compare .header-row .code { font-size: 11px; color: var(--muted); }
+  .compare .header-row .pick { margin-top: 8px; }
+  .btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3a9d62; }
+  .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-outline:hover { color: var(--text); border-color: var(--text); }
+
+  .compare .section-header { grid-column: 1 / -1; padding: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); background: #151515; border-bottom: 1px solid var(--border); }
+
+  /* ── Best value indicator ── */
+  .best { position: relative; }
+  .best::after { content: '★'; position: absolute; top: 6px; right: 8px; font-size: 10px; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span>KUCHNIE</span> KONFIGURATOR</div>
+  <a class="back" href="#">← Wróć do konfiguratora</a>
+</div>
+
+<div class="header">
+  <h1>Porównanie wariantów</h1>
+  <p>Porównaj 3 wybrane dekory obok siebie</p>
+</div>
+
+<div class="compare">
+  <!-- Header row: the 3 variants -->
+  <div class="label"></div>
+  <div class="header-row">
+    <div class="swatch" style="background: #c8a951">🪵</div>
+    <div class="name">Dąb Craft Złoty</div>
+    <div class="code">K003-CH-18-FP</div>
+    <div class="pick"><button class="btn btn-primary">Wybierz</button></div>
+  </div>
+  <div class="header-row">
+    <div class="swatch" style="background: #f5f5f0; border: 1px solid #ddd">🤍</div>
+    <div class="name">Biel Alpejska</div>
+    <div class="code">K8685-CH-18-SM</div>
+    <div class="pick"><button class="btn btn-outline">Wybierz</button></div>
+  </div>
+  <div class="header-row">
+    <div class="swatch" style="background: #333">🖤</div>
+    <div class="name">Czarny</div>
+    <div class="code">K190-CH-18-PE</div>
+    <div class="pick"><button class="btn btn-outline">Wybierz</button></div>
+  </div>
+
+  <!-- Section: Basic info -->
+  <div class="section-header">Podstawowe informacje</div>
+
+  <div class="label">Producent</div>
+  <div class="cell">Kronospan</div>
+  <div class="cell">Kronospan</div>
+  <div class="cell">Kronospan</div>
+
+  <div class="label">Kolor</div>
+  <div class="cell">Dąb (dab)</div>
+  <div class="cell">Biały (bialy)</div>
+  <div class="cell">Czarny (czarny)</div>
+
+  <div class="label">Grubość</div>
+  <div class="cell">18mm</div>
+  <div class="cell">18mm</div>
+  <div class="cell">18mm</div>
+
+  <div class="label">Struktura</div>
+  <div class="cell">FP (Pearl Front)</div>
+  <div class="cell">SM (Super Mat)</div>
+  <div class="cell">PE (Pearl Effect)</div>
+
+  <div class="label">Typ materiału</div>
+  <div class="cell">Płyta wiórowa</div>
+  <div class="cell">Płyta wiórowa</div>
+  <div class="cell">Płyta wiórowa</div>
+
+  <!-- Section: Availability -->
+  <div class="section-header">Dostępność</div>
+
+  <div class="label">Rola</div>
+  <div class="cell">front, korpus</div>
+  <div class="cell">front, korpus</div>
+  <div class="cell">front, korpus</div>
+
+  <div class="label">Express 24h</div>
+  <div class="cell best">Tak (16, 18mm)</div>
+  <div class="cell">Tak (18mm)</div>
+  <div class="cell">Tak (18mm)</div>
+
+  <div class="label">Konfekcja</div>
+  <div class="cell">Tak</div>
+  <div class="cell">Tak</div>
+  <div class="cell">Tak</div>
+
+  <!-- Section: Compatibilities -->
+  <div class="section-header">Kompatybilność</div>
+
+  <div class="label">Obrzeże</div>
+  <div class="cell">K-0003-FP</div>
+  <div class="cell">K-8685-SM/BS/PD</div>
+  <div class="cell">K-0190-PE/PD</div>
+
+  <div class="label">Pasujące blaty</div>
+  <div class="cell best">7 (dębowe)</div>
+  <div class="cell">4 (białe, szare)</div>
+  <div class="cell">4 (czarne, szare)</div>
+
+  <div class="label">Zalecany korpus</div>
+  <div class="cell">K110 Biały</div>
+  <div class="cell">K110 Biały</div>
+  <div class="cell">K110 Biały</div>
+
+  <!-- Section: Style -->
+  <div class="section-header">Styl</div>
+
+  <div class="label">Tagi stylu</div>
+  <div class="cell">drewno, ciepły, klasyczny</div>
+  <div class="cell">minimalistyczny, nowoczesny</div>
+  <div class="cell">industrialny, odważny</div>
+
+  <div class="label">Nastrój</div>
+  <div class="cell">🟢 Ciepły, naturalny</div>
+  <div class="cell">⚪ Czysty, neutralny</div>
+  <div class="cell">⚫ Mocny, dramatyczny</div>
+
+  <div class="label">Najlepiej z</div>
+  <div class="cell">Blaty marmurowe, białe</div>
+  <div class="cell">Blaty drewniane, szare</div>
+  <div class="cell">Blaty betonowe, drewniane</div>
+</div>
+
+<div style="text-align:center; padding: 0 24px 48px;">
+  <button class="btn btn-outline" style="padding: 10px 24px; font-size: 13px;">← Wróć do konfiguratora</button>
+</div>
+
+</body>
+</html>

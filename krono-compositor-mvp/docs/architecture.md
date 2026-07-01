@@ -24,5 +24,5 @@ We built this system using **Clean Architecture** and **Domain-Driven Design (DD
 
 ---
 
-> **See also:** [Blender Scene Configuration](blender-scene-reference.md) for detailed camera, lighting, geometry, and render pass settings.
-> **See also:** [Conflicting Paradigms](conflicting_paradigms.md) and [Pipeline Rules](PIPELINE_RULES.md) for lessons learned bridging 3D rendering and 2D math.
+> **See also:** [Blender Scene Configuration](specs/blender-scene-ref.md) for detailed camera, lighting, geometry, and render pass settings.
+> **See also:** [Pipeline Rules](specs/pipeline-rules.md) for lessons learned bridging 3D rendering and 2D math. See [archive/conflicting-paradigms.md](archive/conflicting_paradigms.md) for historical context.

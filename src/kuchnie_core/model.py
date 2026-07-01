@@ -107,6 +107,34 @@ class CabinetInstance:
     fronts: list[dict] = field(default_factory=list)
     handles: dict = field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        """Validate dimensions after construction."""
+        errors = self.validate()
+        if errors:
+            raise ValueError(
+                f"Invalid CabinetInstance '{self.id}': {'; '.join(errors)}"
+            )
+
+    def validate(self) -> list[str]:
+        """Check dimensional sanity.  Returns list of error messages (empty if valid)."""
+        errors: list[str] = []
+        if self.width_mm <= 0:
+            errors.append(f"width_mm must be > 0, got {self.width_mm}")
+        if self.height_mm <= 0:
+            errors.append(f"height_mm must be > 0, got {self.height_mm}")
+        if self.depth_mm <= 0:
+            errors.append(f"depth_mm must be > 0, got {self.depth_mm}")
+        if self.thickness_side_mm <= 0:
+            errors.append(f"thickness_side_mm must be > 0, got {self.thickness_side_mm}")
+        # Check that internal width is positive
+        internal_w = self.width_mm - 2 * self.thickness_side_mm
+        if internal_w <= 0:
+            errors.append(
+                f"Internal width would be {internal_w}mm. "
+                f"Increase width_mm or reduce thickness_side_mm."
+            )
+        return errors
+
     # Plinth / legs
     plinth_height_mm: int = 100
 
