@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 import math
-from src.core.geometry import Vector2D, Vector3D, BoundingBox, Transform2D
+from kuchnie_core.geometry import Vector2D, Vector3D, BoundingBox, Transform2D
 
 
 # ─── Vector2D Tests ──────────────────────────────────────────────────────────

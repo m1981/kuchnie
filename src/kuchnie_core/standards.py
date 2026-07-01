@@ -9,7 +9,7 @@ This module depends only on src/core/.
 from dataclasses import dataclass
 from typing import List, Set
 
-from ..core.types import Dimensions
+from kuchnie_core.types import Dimensions
 
 
 # Standard cabinet widths (mm)

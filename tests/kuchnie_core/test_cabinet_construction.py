@@ -12,8 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
-from src.core.types import Dimensions
-from src.kitchen.cabinet_geometry import (
+from kuchnie_core.types import Dimensions
+from kuchnie_core.construction import (
     CabinetGeometry,
     DEFAULT_CORPUS_THICKNESS,
     DEFAULT_FRONT_THICKNESS,

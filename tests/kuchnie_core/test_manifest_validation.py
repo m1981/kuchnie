@@ -11,7 +11,7 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from manifest_validator import (
+from kuchnie_core.validator import (
     validate_manifest,
     check_dimensions,
     check_overlaps,
