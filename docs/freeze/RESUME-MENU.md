@@ -16,7 +16,7 @@ These items execute after `kitchen_cam.models/panel_calculator/csv_generator` ar
 
 ## Pydantic tension — needs a decision
 
-- **ADR-013 (candidate): Pydantic at the schema boundary** — `kuchnie_core/schema.py` imports Pydantic (now declared in `pyproject.toml` per D1). ADR-012 alternative 12a rationale says "no Pydantic dep by design." The tension is real: `schema.py` uses `BaseModel` for YAML/JSON schema validation at the boundary, while `model.py` uses plain dataclasses for the domain core. Whether Pydantic stays at the schema boundary (acceptable) or gets refactored out (ADR-012 purity) is a resume decision. Possibly a one-page ADR.
+- **ADR candidate: pydantic-boundary** — `kuchnie_core/schema.py` imports Pydantic (now declared in `pyproject.toml` per D1). ADR-012 alternative 12a rationale says "no Pydantic dep by design." The tension is real: `schema.py` uses `BaseModel` for YAML/JSON schema validation at the boundary, while `model.py` uses plain dataclasses for the domain core. Whether Pydantic stays at the schema boundary (acceptable) or gets refactored out (ADR-012 purity) is a resume decision. Possibly a one-page ADR.
 
 ---
 
