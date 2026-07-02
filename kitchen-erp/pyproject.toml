@@ -1,12 +1,11 @@
 [project]
 name = "kitchen-erp"
 version = "0.1.0"
-description = "Add your description here"
+description = "BOM, cost estimation, purchasing, rules admin — ops UI for kitchen manufacturing"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pydantic>=2.13.4",
-    "pytest>=9.0.3",
     "reflex>=0.9.2",
     "sqlmodel>=0.0.38",
 ]
@@ -32,7 +31,7 @@ filterwarnings = [
     "ignore:Using `@model_validator` with mode='after' on a classmethod is deprecated:pydantic.warnings.PydanticDeprecatedSince20"
 ]
 [tool.coverage.run]
-source = ["kitchen_erp "]
+source = ["kitchen_erp"]
 branch = true
 omit = [
     "*/__init__.py",
@@ -69,5 +68,6 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
 ]
