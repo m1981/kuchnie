@@ -310,8 +310,8 @@ Three distinct recipe systems exist:
 
 | File | Stale because | Pointer |
 |---|---|---|
-| `docs/doc-routing.md` | References `kitchen-cad/`, `kitchen-plugin/`, `kitchen-app/` sections | `AGENTS.md` component roster |
-| `.pi/doc-routing-prompt.md` | References `kitchen-cad/`, `kitchen-plugin/` routing | `AGENTS.md` component roster |
+| `docs/doc-routing.md` | ~~References `kitchen-cad/`, `kitchen-plugin/`, `kitchen-app/` sections~~ → **REWRITTEN** (D2) | `AGENTS.md` component roster |
+| `.pi/doc-routing-prompt.md` | ~~References `kitchen-cad/`, `kitchen-plugin/` routing~~ → **REWRITTEN** (D2) | `AGENTS.md` component roster |
 | `kitchen-cam/README.md` | Deprecated modules as primary pipeline, no migration mention | `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` |
 | `kitchen-cam/ROADMAP.md` | Pre-ADR-010, no migration plan | `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` |
 | `kitchen-cam/docs/specs/overview.md` | Deprecated modules as primary pipeline | `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` |
@@ -321,38 +321,40 @@ Three distinct recipe systems exist:
 
 ## DECISION NEEDED items
 
-### D1: Pydantic undeclared dependency in `kuchnie_core`
+### D1: Pydantic undeclared dependency in `kuchnie_core` — ✅ RESOLVED (packaging), tension noted
 
-`src/kuchnie_core/schema.py` imports `pydantic` but `pyproject.toml` lists only `pyyaml`. Root `AGENTS.md` says "imports only stdlib + Pydantic + PyYAML" which is directionally correct but the packaging is wrong. **Decision needed:** Add `pydantic>=2.0` to `pyproject.toml` dependencies, or refactor `schema.py` to use plain dataclasses (matching the ADR-012 "no Pydantic in kuchnie_core" intent).
+`src/kuchnie_core/schema.py` imports `pydantic` but `pyproject.toml` listed only `pyyaml`. **Fixed:** added `pydantic>=2,<3` to `pyproject.toml`. Packaging now matches code.
 
-### D2: `docs/doc-routing.md` needs full rewrite
+**Deeper tension (resume decision):** ADR-012 alternative 12a says "no Pydantic dep by design" for `kuchnie_core.model`, yet `schema.py` uses `BaseModel` at the YAML/JSON boundary. The split is intentional (`model.py` = plain dataclasses, `schema.py` = Pydantic validation) but undocumented. Whether Pydantic stays at the schema boundary or gets refactored out warrants a one-page ADR. Tracked in `docs/freeze/RESUME-MENU.md`.
 
-Contains routing tables for `kitchen-cad/`, `kitchen-plugin/`, and example `fix(kitchen-cad):` changelog entry. All pre-ADR-009/010/011. Should be updated to reference `kitchen-cam/`, `home-builder-adapter/`, `kitchen-erp/`. **Decision needed:** Rewrite now or defer to next doc-maintenance pass.
+### D2: `docs/doc-routing.md` needs full rewrite — ✅ RESOLVED
 
-### D3: `kitchen-plugin/docs/wall-centric-model.md` — already resolved
+Both `docs/doc-routing.md` and `.pi/doc-routing-prompt.md` rewritten. Mechanical substitutions: `kitchen-cad/` → `kitchen-cam/`, `kitchen-plugin/` → `home-builder-adapter/`, `kitchen-app/` → `kitchen-erp/`. Added `kitchen-erp/` routing section. STALE stamps removed.
+
+### D3: `kitchen-plugin/docs/wall-centric-model.md` — ✅ RESOLVED
 
 File exists in both `attic/kitchen-plugin/docs/` and `home-builder-adapter/docs/archive/`. No action needed.
 
-### D4: `kitchen-cam/README.md` and `ROADMAP.md` — rewrite scope
+### D4: `kitchen-cam/README.md` and `ROADMAP.md` — ⏸ DEFERRED
 
-Both describe the deprecated module pipeline as primary. `kitchen-cam/AGENTS.md` is the authoritative post-ADR-010 document. **Decision needed:** Rewrite README/ROADMAP to match AGENTS.md, or delete them and point to AGENTS.md as the single source.
+Deliberately deferred. Those docs describe modules scheduled for deletion; rewriting them now documents a transitional state that will be deleted on resume. Stamps pointing to `kitchen-cam/AGENTS.md` are sufficient. **Resume action:** rewrite kitchen-cam docs after deletion queue executes. Tracked in `docs/freeze/RESUME-MENU.md`.
 
-### D5: Recipe system convergence
+### D5: Recipe system convergence — ⏸ DEFERRED
 
-`kuchnie_core/recipe.py` (formula engine) and `kitchen-erp/core/recipe_loader.py` (BOM recipes) are parallel systems sharing a name. ADR-011 declares intent to make `BOMGenerator` call `kuchnie_core.decompose()`. **Decision needed:** Should kitchen-erp's `recipes.json` eventually be replaced by `kuchnie_core` recipe files, or are they genuinely separate concerns (decomposition formulas vs. cost formulas)?
+The audit's verdict is right — genuinely parallel concerns (decomposition formulas vs. cost recipes), not duplication. No freeze action. **Resume note:** after `BOMGenerator` integrates `kuchnie_core.decompose()`, rename kitchen-erp's to "cost recipes" to kill the name collision. Tracked in `docs/freeze/RESUME-MENU.md`.
 
-### D6: `docs/00-brief-understanding.md` — dangling ADR references
+### D6: `docs/00-brief-understanding.md` — dangling ADR references — ✅ RESOLVED
 
-ADR-009 and ADR-011 reference `docs/00-brief-understanding.md` which no longer exists. Content is preserved in `docs/vision/00-mission.md`. **Decision needed:** Update ADR references (violates "don't edit old ADRs" rule) or accept the dangling reference with a note in this report.
+Created tombstone: `docs/00-brief-understanding.md` containing three lines ("Superseded; content lives in `docs/vision/00-mission.md`; kept as a link target for ADR-009/011"). Fixes the danglers without violating ADR immutability.
 
-### D7: `code-sum.md` — dangling ADR-010 reference
+### D7: `code-sum.md` — dangling ADR-010 reference — ✅ ACCEPTED
 
-ADR-010 references `code-sum.md` (repo root) as a source. This is a generated file (`.gitignore`d). **Decision needed:** Accept as-is (generated artifacts are expected to be untracked) or add a note in ADR-010.
+Generated file, expected to be untracked. This report note suffices. No action.
 
-### D8: `package.json` stale `fix-all` script
+### D8: `package.json` stale `fix-all` script — ✅ RESOLVED
 
-References `kitchen-agent/frontend` which doesn't exist. **Decision needed:** Remove the reference or update to current frontend path.
+Trimmed dead `cd kitchen-agent/frontend && pnpm format && pnpm lint:fix` from the `fix-all` script. Now just `prettier --write .`.
 
 ---
 
-*Report generated by trust audit, 2026-07-03. No code files were modified. Only `.md` stamps and this report were written.*
+*Report generated by trust audit, 2026-07-03. D1–D3, D6, D8 resolved; D4–D5 deferred to resume (see `docs/freeze/RESUME-MENU.md`); D7 accepted as-is.*

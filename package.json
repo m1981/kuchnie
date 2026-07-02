@@ -7,7 +7,7 @@
         "prepare": "husky",
         "format": "prettier --write .",
         "verify": "prettier --check .",
-        "fix-all": "prettier --write . && cd kitchen-agent/frontend && pnpm format && pnpm lint:fix"
+        "fix-all": "prettier --write ."
     },
     "keywords": [],
     "author": "",

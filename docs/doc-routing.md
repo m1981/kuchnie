@@ -1,5 +1,3 @@
-> ⚠️ STALE (audit 2026-07): describes pre-ADR-009/010/011 state (references `kitchen-cad/`, `kitchen-plugin/`, `kitchen-app/`). Trust `AGENTS.md` component roster instead. Do not act on this file without re-verification.
-
 # Documentation Routing Instructions
 
 When making changes, update the RIGHT files based on what changed.
@@ -48,8 +46,8 @@ What changed?
 | New API endpoint | `catalog/docs/specs/configurator-api.md`, `CHANGELOG.md` | `architecture/` |
 | Schema change | `catalog/docs/specs/`, ADR, `CHANGELOG.md` | `vision/` |
 | New material data | `catalog/docs/materials/`, `CHANGELOG.md` | `specs/` |
-| Blender geometry fix | `krono-compositor/docs/specs/`, `CHANGELOG.md` | `architecture/` |
-| Config syntax change | `kitchen-plugin/docs/config-syntax.md`, `CHANGELOG.md` | `vision/` |
+| Blender geometry fix | `krono-compositor-mvp/docs/specs/`, `CHANGELOG.md` | `architecture/` |
+| Config syntax change | `home-builder-adapter/docs/config-syntax.md`, `CHANGELOG.md` | `vision/` |
 | Formula correction | Relevant spec + test + `CHANGELOG.md` | `architecture/` |
 | Dependency update | `CHANGELOG.md` only | Everything else |
 | Test addition | Nothing (tests ARE the doc) | Everything |
@@ -73,7 +71,7 @@ If you're touching more than 3 doc files, you're probably over-documenting.
 - feat(catalog): worktop_compatibility table for front↔worktop matching
 
 ### Changed
-- fix(kitchen-cad): corrected LEGRABOX side panel formula
+- fix(kitchen-cam): corrected LEGRABOX side panel formula
 
 ### Deprecated
 - (nothing)
@@ -129,21 +127,25 @@ What becomes easier or harder?
 | `catalog/docs/adr/NNN-*.md` | New decision made |
 | `catalog/CHANGELOG.md` | Always |
 
-### kitchen-cad/
+### kitchen-cam/
 | File | When |
 |------|------|
-| `kitchen-cad/docs/architecture.md` | Pipeline structure changed |
-| `kitchen-cad/docs/specs/legrabox-spec.md` | LEGRABOX formula changed |
-| `kitchen-cad/docs/specs/cabinet-variants.md` | New cabinet type added |
-| `kitchen-cad/CHANGELOG.md` | Always |
+| `kitchen-cam/AGENTS.md` | Migration status or constraints changed |
+| `kitchen-cam/docs/architecture.md` | Pipeline structure changed |
+| `kitchen-cam/docs/specs/legrabox-spec.md` | LEGRABOX formula changed |
+| `kitchen-cam/docs/specs/cabinet-variants.md` | New cabinet type added |
+| `kitchen-cam/CHANGELOG.md` | Always |
 
-### kitchen-plugin/
+### home-builder-adapter/
 | File | When |
 |------|------|
-| `kitchen-plugin/docs/architecture.md` | DDD boundaries changed |
-| `kitchen-plugin/docs/config-syntax.md` | Config format changed |
-| `kitchen-plugin/docs/wall-centric-model.md` | Wall model changed |
-| `kitchen-plugin/CHANGELOG.md` | Always |
+| `home-builder-adapter/AGENTS.md` | Extraction rules or constraints changed |
+| `home-builder-adapter/CHANGELOG.md` | Always |
+
+### kitchen-erp/
+| File | When |
+|------|------|
+| `kitchen-erp/CHANGELOG.md` | Always |
 
 ### krono-compositor-mvp/
 | File | When |
@@ -161,7 +163,7 @@ When asking the LLM to make changes, include:
 Update the following docs for this change:
 - [ ] CHANGELOG.md (append under [Unreleased])
 - [ ] Relevant spec in docs/specs/ (if behavior changed)
-- [ ] ADR in docs/adr/ (if new decision)
+- [ ] ADR in docs/adr/ (if a decision was made)
 - [ ] AGENTS.md (if architecture constraints changed)
 
 Don't touch:

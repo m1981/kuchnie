@@ -1,5 +1,3 @@
-> ⚠️ STALE (audit 2026-07): describes pre-ADR-009/010 state (references `kitchen-cad/`, `kitchen-plugin/`). Trust `AGENTS.md` component roster instead. Do not act on this file without re-verification.
-
 # Doc Routing Prompt (for LLM sessions)
 
 Include this in your system prompt or paste when making changes:
@@ -40,16 +38,22 @@ Update: catalog/CHANGELOG.md, catalog/docs/specs/*.md (if API/behavior changed),
 Skip: docs/vision/, docs/archive/, catalog/docs/materials/ (unless material data changed)
 ```
 
-### When working in kitchen-cad/:
+### When working in kitchen-cam/:
 ```
-Update: kitchen-cad/CHANGELOG.md, kitchen-cad/docs/specs/*.md (if formula/behavior changed)
-Skip: kitchen-cad/docs/archive/, docs/vision/
+Update: kitchen-cam/CHANGELOG.md, kitchen-cam/AGENTS.md (if migration status changed), kitchen-cam/docs/specs/*.md (if formula/behavior changed)
+Skip: kitchen-cam/docs/archive/, docs/vision/
 ```
 
-### When working in kitchen-plugin/:
+### When working in home-builder-adapter/:
 ```
-Update: kitchen-plugin/CHANGELOG.md, kitchen-plugin/docs/config-syntax.md (if config changed), kitchen-plugin/docs/architecture.md (if DDD boundaries changed)
-Skip: kitchen-plugin/docs/archive/, docs/vision/
+Update: home-builder-adapter/CHANGELOG.md, home-builder-adapter/AGENTS.md (if extraction rules changed)
+Skip: home-builder-adapter/docs/archive/, docs/vision/
+```
+
+### When working in kitchen-erp/:
+```
+Update: kitchen-erp/CHANGELOG.md
+Skip: kitchen-erp/docs/archive/, kitchen-erp/docs/archived/, docs/vision/
 ```
 
 ### When working in krono-compositor-mvp/:
