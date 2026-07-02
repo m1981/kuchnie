@@ -1,5 +1,22 @@
 """Domain models for parametric kitchen cabinet design.
 
+.. deprecated:: ADR-010
+    This module duplicates ``kuchnie_core.model`` (Panel, CabinetInstance),
+    ``kuchnie_core.blum_hinges`` (HingeSpec) and ``kuchnie_core.blum_drawers``
+    (DrawerSpec). Per ADR-010 it MUST be deleted and callers MUST import
+    from ``kuchnie_core``.
+
+    Deletion is BLOCKED by field-parity gaps documented in ADR-012
+    (`kuchnie_core.model` extensions required to unblock ADR-010).
+    Specifically ``kuchnie_core.model`` currently lacks: ``PanelRole`` enum,
+    ``MachiningOp.face`` / ``MachiningOp.drill_type``, ``ShelfPinSpec``,
+    typed ``HandleSpec``, extended ``HingeSpec`` (screw geometry), and a
+    discriminated ``CabinetInstance.config`` union.
+
+    Once ADR-012 is executed, this module and its consumers
+    (``panel_calculator``, ``csv_generator``, ``machining``) are deleted.
+    DO NOT add new features here.
+
 All dimensions in millimeters (mm).
 Coordinate system: origin at bottom-left of panel face.
 """

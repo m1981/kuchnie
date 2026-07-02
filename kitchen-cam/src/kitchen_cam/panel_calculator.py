@@ -1,5 +1,10 @@
 """Derive cutting panels (formatki) from a CorpusSpec.
 
+.. deprecated:: ADR-010
+    Duplicates ``kuchnie_core.catalog`` + ``kuchnie_core.decomposer``.
+    Deletion is BLOCKED by ADR-012 (kuchnie_core model extensions).
+    DO NOT add new features here.
+
 Naming convention — all dimensions in mm:
   W = external width   H = external height   D = external depth
   T = panel thickness  G = back groove depth  BT = back thickness

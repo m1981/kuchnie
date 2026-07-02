@@ -1,5 +1,22 @@
 """Drill engine — calculate hole positions for System 32, hinges, handles.
 
+.. attention:: ADR-010 migration in progress
+    This module CURRENTLY imports from ``kitchen_cam.models`` (deprecated,
+    duplicates ``kuchnie_core.model``). Per ADR-010 it must be rewritten to
+    consume ``kuchnie_core.model.Panel`` + ``kuchnie_core.model.CabinetInstance``
+    directly. The rewrite is BLOCKED by field-parity gaps:
+
+      * ``kuchnie_core.model.Panel`` has no ``role`` field (needed to select
+        LEFT_SIDE / RIGHT_SIDE / FRONT_DOOR / FRONT_DRAWER)
+      * ``kuchnie_core.model.MachiningOp`` has no ``face`` / ``drill_type``
+        discriminators (needed for CAM layer routing)
+      * ``kuchnie_core.model.CabinetInstance`` has no typed ``HingeSpec`` /
+        ``HandleSpec`` / ``ShelfPinSpec``, no discriminated ``config`` union
+
+    See ADR-012 for the exact extensions required. Do NOT add features
+    here — extend ``kuchnie_core.model`` first, then this file gets
+    rewritten to import from it.
+
 All coordinates are in mm, relative to bottom-left of the panel's
 INSIDE face (face toward cabinet interior).
 

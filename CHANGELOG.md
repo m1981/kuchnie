@@ -7,13 +7,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Added — ADR-010 partial execution (safe, additive)
+
+- `kuchnie_core.export.edging_csv` — per-edge banding worklist CSV. One row per banded edge across the kitchen. Same Polish CNC format as `cutlist_csv` (UTF-8-SIG BOM, `;` delimiter, Polish headers). Migrated semantically from `kitchen_cam.csv_generator.generate_edging_csv` but rewritten against `kuchnie_core.model.Panel.banded_edges` (dict-keyed) instead of the deprecated `kitchen_cam.models.Panel.edges` (list-with-side).
+- `tests/test_edging_csv.py` — 8 tests covering row collection, edge-length rule (front/back → width; left/right → height), Polish header, UTF-8-SIG BOM, semicolon delimiter, round-trip. Also a regression guard for `cutlist_csv` Polish format.
+- Deprecation banners on `kitchen-cam/src/kitchen_cam/{models,panel_calculator,csv_generator,machining}.py` pointing at ADR-012 as the unblocking work.
+
+### Decided — ADR-012
+
+- **ADR-012**: enumerates the `kuchnie_core.model` extensions required to execute the remaining ADR-010 steps (delete `kitchen_cam.models` / `panel_calculator` / `csv_generator`, rewrite `machining.py`). Extensions: `PanelRole` enum, `MachiningOp.face`/`drill_type`, `HingeGeometry`, `HandleSpec`, `ShelfPinSpec`, discriminated `CabinetInstance.config` union. Migration is BLOCKED on this — attempted mechanical rewrite fails to import.
+
 ### Decided (documented, not yet executed)
 
 - **ADR-009**: `kitchen-plugin/` → `home-builder-adapter/`. Ports & Adapters pattern. Pure code (geometry, standards, construction math, manifest validator) migrates into `kuchnie_core/`. `bpy`-dependent extraction stays isolated as an anti-corruption layer against `home_builder_5` (external, licensed).
-- **ADR-010**: `kitchen-cad/` → `kitchen-cam/`. Downstream consumer of `kuchnie_core`. Duplicate Panel / CabinetInstance / Hinge / Drawer models deleted. Package keeps System32 drilling and DXF generation only; CSV cut list merges into `kuchnie_core.export`.
+- **ADR-010**: `kitchen-cad/` → `kitchen-cam/`. Downstream consumer of `kuchnie_core`. Duplicate Panel / CabinetInstance / Hinge / Drawer models deleted. Package keeps System32 drilling and DXF generation only; CSV cut list merges into `kuchnie_core.export`. **Partially executed**: CSV merge done (see above). Model migration blocked on ADR-012.
 - **ADR-011**: `kitchen-app/` → `kitchen-erp/`. Accept ERP scope (BOM, purchasing, rules, admin). Sales-tool role explicitly reassigned to `krono-compositor-mvp/`. Old (non-recipe) BOM path deleted; `use_new_bom` flag removed.
 
-Execution plan: phases B–F in session handoff notes. No code moved yet.
+Execution plan: phases B–F in session handoff notes. Rename phase (Phase C, commit `8e85da1`) complete. Model migration deferred to ADR-012.
 
 ---
 

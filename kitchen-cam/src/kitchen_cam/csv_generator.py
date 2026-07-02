@@ -1,5 +1,13 @@
 """Generate CSV files for CNC cutting and edge banding orders.
 
+.. deprecated:: ADR-010
+    Replaced by ``kuchnie_core.export.cutlist_csv`` (aggregated cut list,
+    Polish headers, UTF-8-SIG) and ``kuchnie_core.export.edging_csv``
+    (per-edge worklist). Both preserve the semicolon-delimited format.
+    This module remains in-tree only because ``kitchen-cam`` panel
+    calculator (also deprecated) still emits ``kitchen_cam.models.Panel``
+    instances. Deletion is BLOCKED by ADR-012. DO NOT add new features here.
+
 Output format: semicolon-delimited UTF-8 (standard for Polish CNC centres).
 """
 
