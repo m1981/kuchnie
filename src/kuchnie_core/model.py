@@ -20,6 +20,14 @@ class PanelRole(str, Enum):
     English values keep the model layer English-only (AGENTS.md rule
     "Model fields English, YAML keys Polish"). Non-carcass panels
     (e.g. LEGRABOX drawer-box back/base) use ``role=None``.
+
+    Value coverage in ``catalog.py`` decomposers (as of ADR-012 §1):
+      * emitted today: LEFT_SIDE, RIGHT_SIDE, TOP, BOTTOM, SHELF, BACK,
+        FRONT_DOOR, FRONT_DRAWER
+      * aspirational (no decomposer emits yet): PLINTH — reserved for
+        the future plinth-panel decomposition step. Locked in the enum
+        so downstream CAM code can already ``match`` on it exhaustively
+        without a follow-up model change.
     """
     LEFT_SIDE    = "left_side"
     RIGHT_SIDE   = "right_side"
@@ -29,7 +37,7 @@ class PanelRole(str, Enum):
     BACK         = "back"
     FRONT_DOOR   = "front_door"
     FRONT_DRAWER = "front_drawer"
-    PLINTH       = "plinth"
+    PLINTH       = "plinth"  # aspirational; see class docstring
 
 
 @dataclass
@@ -137,6 +145,9 @@ class CabinetInstance:
     edge_banding_type: str = "ABS"
     edge_banding_thickness_mm: float = 0.8
 
+    # Plinth / legs
+    plinth_height_mm: int = 100
+
     # Interior elements
     drawers: list[dict] = field(default_factory=list)
     shelves: list[dict] = field(default_factory=list)
@@ -170,9 +181,6 @@ class CabinetInstance:
                 f"Increase width_mm or reduce thickness_side_mm."
             )
         return errors
-
-    # Plinth / legs
-    plinth_height_mm: int = 100
 
 
 @dataclass

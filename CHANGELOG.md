@@ -7,6 +7,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Cleanup — post-ADR-012 §1/§2 audit follow-ups
+
+From the 2026-07-02 `code-sum-kitchen.md` audit; low-risk documentation
+and ordering polish, no behaviour change.
+
+- `CabinetInstance.plinth_height_mm` moved from **after** the `validate()`
+  method to be with the other dimensional fields (between
+  `edge_banding_thickness_mm` and the interior-element collections).
+  Pre-existing code smell from commit `35f6927` (walking skeleton):
+  Python dataclasses accept field annotations after methods, but a
+  reader scanning top-to-bottom would see the methods and assume the
+  field list ended above — silently defaulting `plinth_height_mm` to
+  100 mm. Dataclass field order verified stable; both default and
+  keyword-override construction still work.
+- `PanelRole` enum docstring gained a coverage note: 8 values are emitted
+  today by `catalog.py`; `PLINTH` is aspirational (reserved for the
+  future plinth-panel decomposition, locked in the enum so downstream
+  CAM can pattern-match exhaustively without a follow-up model change).
+- `docs/session-handoff-2026-07-02.md` updated:
+  - Landed-commits table extended with `5e03187` and `1603017`.
+  - Test baseline: `kuchnie_core` 533 → **565** pass.
+  - Workstream 2 table now shows §1 and §2 as ✅ done; §3–§6 ⏳ remaining.
+  - Workstream 3 gained two warnings from the audit:
+    * **Atomic-commit warning** — after §1, `PanelRole` exists in BOTH
+      namespaces (`kuchnie_core.model` English vs `kitchen_cam.models`
+      Polish, deprecated). The `machining.py` rewrite MUST land in the
+      same commit as `kitchen_cam.models` deletion.
+    * **Runner-op `drill_type` back-fill** — `legrabox.decompose_drawer_box`
+      and `DrawerSystem._runner_screw_ops` emit `drill_type=""` today.
+      Classification decision (probably `"minifix"` from ADR-012 §2
+      vocabulary) is deferred to the ADR-010 machining rewrite; back-
+      fill at origin and update the LEGRABOX regression test.
+
+Test posture: `kuchnie_core` **565 pass** (unchanged — all edits are
+documentation, field ordering, or handoff-doc updates).
+
 ### Added — ADR-012 Extension 2: `MachiningOp.face` + `MachiningOp.drill_type`
 
 Second of the six `kuchnie_core.model` extensions ADR-012 requires.

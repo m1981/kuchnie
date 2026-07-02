@@ -14,10 +14,13 @@ pending. Between them, the repo has been reshaped from
 `kitchen-cam / kitchen-erp / home-builder-adapter` (rename ADRs 009–011),
 with `kuchnie_core` growing into the domain hub.
 
-**Landed this session (5 commits, newest first):**
+**Landed as of 2026-07-02 14:14 (newest first):**
 
 | Commit | What |
 |---|---|
+| `1603017` | ADR-012 **§2**: `MachiningOp.face` + `.drill_type` discriminators (+7 tests) |
+| `5e03187` | ADR-012 **§1**: `PanelRole` enum + `Panel.role` field (+25 tests) |
+| `2333cef` | (this) session handoff document — you're reading it |
 | `70ae04f` | ADR-011 Commit **B.ii**: unify `kitchen_app/` + `kitchen_erp/` → `kitchen_erp/{ui,core}/` |
 | `13757ef` | Package re-export: `kuchnie_core.export_edging_csv` at package root |
 | `1cf04d0` | ADR-011 Commit **A**: `git mv kitchen-app/ kitchen-erp/` (43 files) |
@@ -26,17 +29,17 @@ with `kuchnie_core` growing into the domain hub.
 
 **Test baseline (must be preserved):**
 
-- `kuchnie_core`: **533 pass** (`pytest tests/ -q`)
+- `kuchnie_core`: **565 pass** (`pytest tests/ -q`) — up from 533 after ADR-012 §1+§2 landed (+32 tests).
 - `kitchen-erp`: **38 pass / 3 fail / 12 errors / 1 collect error** — all pre-existing, unrelated to the renames. Same 15 test names in the failing set as before commit `71948db`.
 - `kitchen-cam`: 292 pass / 35 xfail / 13 xpass — unaffected since commit `c4873aa` (docstring-only edits there).
 
 **Pending workstreams (any subset, any order except where noted):**
 
 1. **ADR-011 Commit C** — delete old BOM path (surgical, ~1 session).
-2. **ADR-012 execution** — extend `kuchnie_core.model` (multi-commit, ~2–3 sessions). **Blocks** the ADR-010 deletion queue.
+2. **ADR-012 execution** — extend `kuchnie_core.model` (**§1 and §2 done**; §3–§6 remaining, ~1–2 sessions). **Blocks** the ADR-010 deletion queue.
 3. **ADR-010 completion** — delete `kitchen_cam.models/panel_calculator/csv_generator`, rewrite `kitchen_cam.machining` against `kuchnie_core.model`. Depends on ADR-012.
 4. **Fix pre-existing kitchen-erp test failures** — HARDWARE_RULES + SQLAlchemy fixtures + oven backward-compat. Orthogonal cleanup.
-5. **Regenerate `all-signatures.md`** — housekeeping, part of any commit.
+5. **Regenerate `all-signatures.md` / `code-sum-kitchen.md`** — housekeeping, part of any commit.
 
 ---
 
@@ -116,14 +119,14 @@ Each extension is a separate commit ideally.
 
 **Files that will change (extension by extension):**
 
-| Extension | Files touched | New tests |
-|---|---|---|
-| 1. `PanelRole` enum + `Panel.role` | `src/kuchnie_core/model.py`, all of `src/kuchnie_core/catalog.py`, `src/kuchnie_core/legrabox.py` (populate `role` in every decomposition function) | `tests/test_panel_role.py` |
-| 2. `MachiningOp.face` + `.drill_type` | `src/kuchnie_core/model.py`, existing tests referencing `MachiningOp` (verify defaults don't break them) | grow `tests/test_construction.py` |
-| 3. `HingeGeometry` on `BlumHinge` | `src/kuchnie_core/blum_hinges.py` | grow `tests/test_blum_hinges.py` |
-| 4. `HandleSpec` on `CabinetInstance` | `src/kuchnie_core/model.py`, `src/kuchnie_core/loader.py` | grow `tests/test_cabinet_instance.py` |
-| 5. `ShelfPinSpec` on `CabinetInstance` | `src/kuchnie_core/model.py`, `src/kuchnie_core/loader.py` | grow `tests/test_cabinet_instance.py` |
-| 6. `CabinetInstance.config` union | `src/kuchnie_core/model.py` (7 new dataclasses), `src/kuchnie_core/loader.py` (synthesise from legacy fields), fixtures may need `config:` blocks | new `tests/test_cabinet_config.py` |
+| # | Extension | Files touched | Tests | Status |
+|---|---|---|---|---|
+| 1 | `PanelRole` enum + `Panel.role` | `src/kuchnie_core/model.py`, `src/kuchnie_core/catalog.py` (4 decomposers populate `role`), `src/kuchnie_core/legrabox.py` (drawer-box parts intentionally `role=None`) | `tests/test_panel_role.py` (25) | ✅ `5e03187` |
+| 2 | `MachiningOp.face` + `.drill_type` | `src/kuchnie_core/model.py` (additive) | `tests/test_machining_op.py` (7) | ✅ `1603017` |
+| 3 | `HingeGeometry` on `BlumHinge` | `src/kuchnie_core/blum_hinges.py` | grow `tests/test_blum_hinges.py` | ⏳ next |
+| 4 | `HandleSpec` on `CabinetInstance` | `src/kuchnie_core/model.py`, `src/kuchnie_core/loader.py` | grow `tests/test_cabinet_instance.py` | ⏳ |
+| 5 | `ShelfPinSpec` on `CabinetInstance` | `src/kuchnie_core/model.py`, `src/kuchnie_core/loader.py` | grow `tests/test_cabinet_instance.py` | ⏳ |
+| 6 | `CabinetInstance.config` union | `src/kuchnie_core/model.py` (7 new dataclasses), `src/kuchnie_core/loader.py` (synthesise from legacy fields), fixtures may need `config:` blocks | new `tests/test_cabinet_config.py` | ⏳ (biggest, do last) |
 
 **Success criteria per extension:**
 
@@ -169,6 +172,10 @@ duplicated modules.
 - `grep -r "kitchen_cam.models\|kitchen_cam.panel_calculator\|kitchen_cam.csv_generator" kitchen-cam/` returns 0.
 - All `kitchen-cam/tests/` either pass or are explicitly xfailed with a reason string referencing ADR-010.
 
+**Atomic-commit warning (F4 from 2026-07-02 audit).** After ADR-012 §1 landed, `PanelRole` now exists in BOTH namespaces: `kuchnie_core.model.PanelRole` (dataclass-friendly str-Enum, English values) AND `kitchen_cam.models.PanelRole` (Pydantic, Polish values `bok_lewy` / `bok_prawy`). The `machining.py` rewrite MUST land in the same commit as `kitchen_cam.models` deletion — otherwise there's a window with two same-named symbols carrying different vocabulary. Do NOT split "rewrite imports" and "delete duplicate module" across two commits.
+
+**Runner-op `drill_type` back-fill (F3 from 2026-07-02 audit).** `kuchnie_core.legrabox.decompose_drawer_box` and `blum_drawers.DrawerSystem._runner_screw_ops` currently emit `MachiningOp(...)` with `drill_type=""` (default), deliberately deferred by commit `1603017`. When rewriting `machining.py`, decide the vocabulary for runner-mount screws (candidates: `"minifix"` from ADR-012 §2 vocabulary, or a new value like `"runner_screw"`) and back-fill those two call sites at origin, then update `tests/test_machining_op.py::TestLegraboxRunnerOpDefaults` to lock the new value.
+
 ---
 
 ## Workstream 4 — pre-existing kitchen-erp failures (orthogonal cleanup)
@@ -202,9 +209,9 @@ on demand).
 
 ## Non-obvious rules learned this session
 
-1. **The kuchnie_core Panel model has no `role` field.** Anyone writing CAM-adjacent code will assume it does (because `kitchen_cam.models.PanelRole` exists). This is the single biggest reason ADR-010 got stuck. ADR-012 fixes it.
-2. **`kuchnie_core.MachiningOp` has no `face` / `drill_type` discriminator.** Rich drilling metadata from `kitchen_cam.DrillPoint` doesn't have a home yet. Same fix.
-3. **`kuchnie_core.CabinetInstance.handles: dict` is untyped.** Any code that wants hinge geometry (`first_position`, `screw_spacing`, `edge_to_cup_centre`) currently can't get it from `kuchnie_core`. ADR-012 adds `HingeGeometry`.
+1. ~~**The kuchnie_core Panel model has no `role` field.**~~ **RESOLVED** by commit `5e03187` (ADR-012 §1). `kuchnie_core.model.PanelRole` now exists with English values (`left_side`, `right_side`, ...). Do NOT confuse it with `kitchen_cam.models.PanelRole` which is Pydantic + Polish values (`bok_lewy`, `bok_prawy`) — the latter is deprecated pending ADR-010 completion.
+2. ~~**`kuchnie_core.MachiningOp` has no `face` / `drill_type` discriminator.**~~ **RESOLVED** by commit `1603017` (ADR-012 §2). `MachiningOp.face` defaults to `"inside"`, `drill_type` defaults to `""` (unclassified). Vocabulary is open-string per ADR-012 §2 decision.
+3. **`kuchnie_core.CabinetInstance.handles: dict` is still untyped.** Pending ADR-012 §4 (`HandleSpec`). Any code that wants hinge geometry (`first_position`, `screw_spacing`, `edge_to_cup_centre`) still can't get it from `kuchnie_core` — pending §3 (`HingeGeometry` on `BlumHinge`).
 4. **`rxconfig.py`'s `app_name` matches a Python module name, not the directory name.** After ADR-011 B.ii, `app_name = "kitchen_erp"` maps to `kitchen_erp/kitchen_erp.py`. Do not confuse "app name" with "component name".
 5. **`kuchnie_core` uses plain dataclasses, not Pydantic.** Deliberately. ADR-012 alternative 12a explains why. Do not introduce Pydantic into `kuchnie_core`.
 6. **Model fields English, YAML keys Polish.** Loader is the adapter. Enforced by every existing ADR.
@@ -232,12 +239,12 @@ Read in this order:
   2. docs/session-handoff-2026-07-02.md   (this file)
   3. CHANGELOG.md § [Unreleased]
   4. docs/adr/012-kuchnie-core-model-extensions.md
-  5. all-signatures.md   (regenerate first if stale)
+  5. all-signatures.md OR code-sum-kitchen.md   (regenerate first if stale)
 
 Task: <pick a workstream from the handoff>
 
 Constraints:
-  - Preserve test baseline: kuchnie_core 533 pass; kitchen-erp 38/3/12/1;
+  - Preserve test baseline: kuchnie_core 565 pass; kitchen-erp 38/3/12/1;
     kitchen-cam 292/35/13.
   - Do not touch unrelated staged/unstaged files
     (home-builder-adapter delete, catalog/ untracked, kitchen-plugin/).
@@ -246,15 +253,21 @@ Constraints:
 
 ---
 
-## Repo state at handoff
+## Repo state at handoff (updated 2026-07-02 14:30)
 
 ```
-HEAD:      70ae04f  refactor(kitchen-erp): unify internal packages under kitchen_erp/ (ADR-011 Commit B.ii)
-branch:    main (23 commits ahead of origin — not yet pushed)
+HEAD:      1603017  feat(model): add MachiningOp.face + .drill_type (ADR-012 §2)
+branch:    main (26 commits ahead of origin — not yet pushed)
 untracked (leave alone):
   - home-builder-adapter/docs/archive/wall-centric-model.md   (pre-existing deletion, unrelated)
   - catalog/docs/adr/003-worktop-filtering-hierarchy.md       (other work)
   - catalog/docs/specs/worktop-uu-seeding.md                  (other work)
   - kitchen-plugin/                                           (other work, unrelated to ADR-009)
   - all-signatures.md                                          (generated)
+  - code-sum-kitchen.md                                        (generated)
 ```
+
+**Progress since original handoff (2333cef):**
+- ADR-012 §1 done (`5e03187`) — PanelRole enum + Panel.role field
+- ADR-012 §2 done (`1603017`) — MachiningOp discriminators
+- 4 of 6 ADR-012 extensions remaining. Next: §3 (`HingeGeometry`) — smallest, self-contained in `blum_hinges.py`.
