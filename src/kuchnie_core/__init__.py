@@ -2,15 +2,24 @@
 
 from .model import (
     Accessory,
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CabinetConfig,
     CabinetInstance,
+    CargoConfig,
+    CornerBlindConfig,
+    CornerInternalConfig,
     DecompositionResult,
+    DrawerSlot,
     EdgeBand,
     HandleSpec,
     Kitchen,
+    OvenConfig,
     Panel,
     PanelRole,
     Row,
     ShelfPinSpec,
+    SinkConfig,
     WorktopSegment,
 )
 from .construction import ConstructionMethod, ConstructionMethodRegistry
@@ -39,6 +48,12 @@ __all__ = [
     # Models
     "Panel", "Accessory", "CabinetInstance", "DecompositionResult", "EdgeBand",
     "Kitchen", "Row", "WorktopSegment",
+    "PanelRole", "HandleSpec", "ShelfPinSpec",
+    # ADR-012 §6 — discriminated cabinet-config union
+    "CabinetConfig", "DrawerSlot",
+    "BaseDoorConfig", "BaseDrawerConfig",
+    "CornerBlindConfig", "CornerInternalConfig",
+    "SinkConfig", "CargoConfig", "OvenConfig",
     # Construction
     "ConstructionMethod", "ConstructionMethodRegistry",
     # Blum drawer systems

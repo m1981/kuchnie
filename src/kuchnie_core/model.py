@@ -7,6 +7,7 @@ Everything above panels is organizational. Everything on panels
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Union
 
 
 class PanelRole(str, Enum):
@@ -151,6 +152,108 @@ class HandleSpec:
     position: str = "center"
 
 
+# ── ADR-012 §6 — Discriminated cabinet-type config ──────────────
+#
+# Today ``CabinetInstance.type`` is a free string and variant-specific data
+# lives in loose ``list[dict]`` fields (``drawers``, ``shelves``, ``fronts``).
+# The seven dataclasses below give each cabinet variant a typed config; the
+# loader synthesises one from the loose fields until every caller migrates.
+#
+# Naming follows the AGENTS.md rule: English fields, ``_mm`` suffix on
+# millimetre quantities. Loader remains the Polish → English adapter.
+#
+# Discrimination is done by the concrete dataclass (``isinstance`` on the
+# ``config`` attribute); no explicit ``type: Literal[...]`` field is needed
+# — that keeps the model plain-dataclass and avoids the Pydantic tag pattern
+# used by ``kitchen_cam.models``. All fields have safe defaults so a variant
+# can be constructed with no arguments, and equality is structural.
+
+
+@dataclass
+class DrawerSlot:
+    """One drawer within a base-drawer / sink-sorting configuration.
+
+    Mirrors the shape of the legacy ``CabinetInstance.drawers`` dict entries
+    (``id``, ``typ``, ``wysokosc`` …) but with English field names. Runner
+    system is a free string so kitchen-cam can extend the vocabulary
+    without a core dependency inversion (same rationale as
+    ``MachiningOp.drill_type``).
+    """
+    id: str = ""
+    system: str = "tandembox_antaro"
+    height_mm: float = 0.0
+    height_code: str = "M"
+    nl_mm: float = 500.0
+    capacity_kg: float = 40.0
+
+
+@dataclass
+class BaseDoorConfig:
+    """Standard base or wall cabinet with doors + optional shelves."""
+    shelves: list[float] = field(default_factory=list)  # positions from inside bottom (mm)
+    doors: list[int] = field(default_factory=list)      # hinge count per door
+
+
+@dataclass
+class BaseDrawerConfig:
+    """Base cabinet whose interior is a stack of drawers (Tandembox/LEGRABOX)."""
+    drawers: list[DrawerSlot] = field(default_factory=list)
+
+
+@dataclass
+class CornerBlindConfig:
+    """Corner cabinet with a blind front (L-shaped body)."""
+    corner_side: str = "left"        # "left" | "right"
+    second_width_mm: float = 0.0     # perpendicular width of the corner leg
+    shelves: list[float] = field(default_factory=list)
+    doors: list[int] = field(default_factory=list)
+
+
+@dataclass
+class CornerInternalConfig:
+    """Corner internal cabinet with a diagonal back and a rotating carousel."""
+    carousel: str = "optima_800"     # "optima_800" | "optima_900"
+    shelves: list[float] = field(default_factory=list)
+    doors: list[int] = field(default_factory=list)
+
+
+@dataclass
+class SinkConfig:
+    """Sink base cabinet — no shelves, optional sorting drawer."""
+    has_sorting_drawer: bool = False
+    sorting_drawer: DrawerSlot | None = None
+    doors: list[int] = field(default_factory=list)
+
+
+@dataclass
+class CargoConfig:
+    """Base cabinet with a pull-out cargo basket (rail hardware)."""
+    cargo_type: str = "mini_40"      # e.g. Blum VARIANT MULTI 40cm
+    cargo_colour: str = "ocynk"      # "ocynk" | "bialy" | "grafit"
+    doors: list[int] = field(default_factory=list)
+
+
+@dataclass
+class OvenConfig:
+    """Tall oven-housing cabinet with a reinforced fixed shelf."""
+    cavity_height_mm: float = 0.0
+    has_ventilation: bool = True
+    reinforced_shelf: bool = True
+
+
+#: Discriminated union of every cabinet-config variant. Downstream code
+#: dispatches with ``isinstance``; the concrete class IS the discriminator.
+CabinetConfig = Union[
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CornerBlindConfig,
+    CornerInternalConfig,
+    SinkConfig,
+    CargoConfig,
+    OvenConfig,
+]
+
+
 @dataclass
 class Accessory:
     """A hardware item — not cut from board, purchased as-is."""
@@ -204,6 +307,11 @@ class CabinetInstance:
     fronts: list[dict] = field(default_factory=list)
     handles: HandleSpec | None = None   # ADR-012 §4 — typed replacement for former dict
     shelf_pins: ShelfPinSpec = field(default_factory=ShelfPinSpec)  # ADR-012 §5
+    # ADR-012 §6 — typed variant config. Legacy loose fields above stay
+    # until callers migrate; ``loader._synthesise_config`` populates this
+    # from them on load. Directly-constructed instances (tests, code) may
+    # set it explicitly or leave it ``None``.
+    config: CabinetConfig | None = None
 
     def __post_init__(self) -> None:
         """Validate dimensions after construction."""

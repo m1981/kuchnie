@@ -7,6 +7,59 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Added — ADR-012 Extension 6: `CabinetInstance.config` discriminated union
+
+Sixth and final `kuchnie_core.model` extension required by ADR-012.
+With this landed all six extensions are complete and Workstream 3
+(ADR-010 completion — deleting `kitchen_cam.models`,
+`panel_calculator`, `csv_generator`, and rewriting `machining.py`) is
+fully unblocked.
+
+Purely additive: `config` defaults to `None`, legacy loose fields
+(`drawers`, `shelves`, `fronts`) remain in place, and the loader
+synthesises `config` from them on load. No existing decomposer, test,
+or fixture required changes.
+
+- `kuchnie_core.model` — seven typed variant dataclasses (ADR-012 §6):
+  * `BaseDoorConfig(shelves: list[float], doors: list[int])`
+  * `BaseDrawerConfig(drawers: list[DrawerSlot])`
+  * `CornerBlindConfig(corner_side, second_width_mm, shelves, doors)`
+  * `CornerInternalConfig(carousel, shelves, doors)`
+  * `SinkConfig(has_sorting_drawer, sorting_drawer, doors)`
+  * `CargoConfig(cargo_type, cargo_colour, doors)`
+  * `OvenConfig(cavity_height_mm, has_ventilation, reinforced_shelf)`
+- `DrawerSlot` — English-fielded replacement for the legacy drawer dict
+  (`id`, `system`, `height_mm`, `height_code`, `nl_mm`, `capacity_kg`).
+- `CabinetConfig = Union[...]` — discriminated by concrete dataclass
+  (`isinstance`), no explicit `type: Literal[...]` tag needed. Keeps the
+  model plain-dataclass (no Pydantic dependency).
+- `CabinetInstance.config: CabinetConfig | None = None` — new field.
+  Legacy `drawers` / `shelves` / `fronts` fields kept until callers migrate.
+- `loader._synthesise_config(cab) -> CabinetConfig | None` — mirrors
+  `kitchen_cam.models.CorpusSpec._sync_config_from_legacy`. Maps every
+  Polish cabinet type (`dolna_szufladowa`, `gorna_drzwiowa`,
+  `dolna_legrabox`, plus forward-compatible corner/sink/cargo/oven
+  aliases) to the correct variant. Unknown types return `None` (no
+  false variant).
+- `loader._apply_synthesised_config(cab)` — idempotent guard called from
+  both `load_cabinet` (Polish YAML) and `_cabinet_from_schema` (English
+  schema YAML). Preserves an explicitly-set `config` (no clobber).
+- Loader helpers `_shelf_positions`, `_door_hinge_counts`,
+  `_drawer_slot_from_dict` extract values from loose fields, accepting
+  both Polish and English key names for robustness.
+- Re-exported at package root: `from kuchnie_core import (CabinetConfig,
+  DrawerSlot, BaseDoorConfig, BaseDrawerConfig, CornerBlindConfig,
+  CornerInternalConfig, SinkConfig, CargoConfig, OvenConfig)`.
+- 37 new tests in `tests/test_cabinet_config.py`: variant defaults,
+  `default_factory` isolation, `CabinetConfig` union membership,
+  `CabinetInstance.config` field, loader helper unit tests, dispatch
+  table for all nine recognised Polish types + unknown, `_apply_...`
+  guard (populate-when-None + preserve-explicit), and fixture round-trip
+  for K01 / G01 / K02_legrabox.
+
+Test posture: `kuchnie_core` **626 → 663 pass** (+37). `kitchen-erp`
+(38/3/12/1) and `kitchen-cam` (292/35/13) baselines verified unchanged.
+
 ### Cleanup — post-ADR-012 §1/§2 audit follow-ups
 
 From the 2026-07-02 `code-sum-kitchen.md` audit; low-risk documentation

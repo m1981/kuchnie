@@ -13,11 +13,20 @@ from pathlib import Path
 import yaml
 
 from .model import (
+    BaseDoorConfig,
+    BaseDrawerConfig,
+    CabinetConfig,
     CabinetInstance,
+    CargoConfig,
+    CornerBlindConfig,
+    CornerInternalConfig,
+    DrawerSlot,
     HandleSpec,
     Kitchen,
+    OvenConfig,
     Row,
     ShelfPinSpec,
+    SinkConfig,
     WorktopSegment,
 )
 
@@ -116,12 +125,141 @@ def _handle_spec_from_schema(d: dict | None) -> HandleSpec | None:
     )
 
 
+# ── ADR-012 §6: legacy loose fields → typed ``CabinetConfig`` ──
+#
+# Mirrors ``kitchen_cam.models.CorpusSpec._sync_config_from_legacy``.
+# Called from every ``load_cabinet`` path (Polish YAML + schema YAML).
+# The loose ``drawers`` / ``shelves`` / ``fronts`` fields stay on the
+# instance until every caller migrates — the synthesised ``config`` is
+# purely additive information.
+
+# Polish ``CabinetInstance.type`` values grouped by variant.
+_DOOR_TYPES = {
+    "dolna_drzwiowa",
+    "gorna_drzwiowa",
+    "wysoka_drzwiowa",
+    "slupek_drzwiowy",
+}
+_DRAWER_TYPES = {
+    "dolna_szufladowa",
+    "dolna_legrabox",
+    "dolna_tandembox",
+    "dolna_merivobox",
+}
+_CORNER_BLIND_TYPES = {"dolna_narozna_slepa", "gorna_narozna_slepa"}
+_CORNER_INTERNAL_TYPES = {"dolna_narozna_karuzela", "dolna_narozna_wewnetrzna"}
+_SINK_TYPES = {"dolna_zlewozmywakowa", "dolna_zlew"}
+_CARGO_TYPES = {"dolna_cargo"}
+_OVEN_TYPES = {"slupek_piekarnikowy", "slupek_agd"}
+
+
+def _shelf_positions(cab: CabinetInstance) -> list[float]:
+    """Extract shelf Y-positions from the loose ``shelves`` list of dicts.
+
+    Recognised keys (either allowed): ``pozycja_od_dolu`` (Polish YAML),
+    ``position_mm`` (English schema). Shelves without a position contribute
+    nothing — downstream code either ignores or spaces them evenly.
+    """
+    out: list[float] = []
+    for s in cab.shelves:
+        if not isinstance(s, dict):
+            continue
+        if "pozycja_od_dolu" in s:
+            out.append(float(s["pozycja_od_dolu"]))
+        elif "position_mm" in s:
+            out.append(float(s["position_mm"]))
+    return out
+
+
+def _door_hinge_counts(cab: CabinetInstance) -> list[int]:
+    """Collect ``ilosc_zawiasow`` per door-type front, in declaration order."""
+    counts: list[int] = []
+    for f in cab.fronts:
+        if not isinstance(f, dict):
+            continue
+        typ = f.get("typ", "")
+        if typ.startswith("drzwiowy") or typ == "drzwi":
+            counts.append(int(f.get("ilosc_zawiasow", 2)))
+    return counts
+
+
+def _drawer_slot_from_dict(d: dict) -> DrawerSlot:
+    """Legacy drawer dict → ``DrawerSlot``.
+
+    Accepts both Polish (``typ`` / ``wysokosc`` / ``nl``) and English
+    (``system`` / ``height_mm`` / ``nl_mm``) key names — the schema loader
+    already normalises to Polish, but be forgiving.
+    """
+    return DrawerSlot(
+        id=str(d.get("id", "")),
+        system=str(d.get("typ") or d.get("system") or "tandembox_antaro"),
+        height_mm=float(d.get("wysokosc") or d.get("height_mm") or 0),
+        height_code=str(d.get("height_code", "M")),
+        nl_mm=float(d.get("nl") or d.get("nl_mm") or 500),
+        capacity_kg=float(d.get("capacity_kg", 40)),
+    )
+
+
+def _synthesise_config(cab: CabinetInstance) -> CabinetConfig | None:
+    """Build the ADR-012 §6 discriminated ``config`` from legacy loose fields.
+
+    Returns ``None`` for cabinet types not recognised as any variant, so
+    hand-built ``CabinetInstance`` objects with unusual types keep
+    ``config = None`` (opt-in explicit assignment still works).
+    """
+    t = cab.type
+    if t in _DOOR_TYPES:
+        return BaseDoorConfig(
+            shelves=_shelf_positions(cab),
+            doors=_door_hinge_counts(cab),
+        )
+    if t in _DRAWER_TYPES:
+        return BaseDrawerConfig(
+            drawers=[_drawer_slot_from_dict(d) for d in cab.drawers if isinstance(d, dict)],
+        )
+    if t in _CORNER_BLIND_TYPES:
+        return CornerBlindConfig(
+            corner_side="left",
+            second_width_mm=float(cab.depth_mm),
+            shelves=_shelf_positions(cab),
+            doors=_door_hinge_counts(cab),
+        )
+    if t in _CORNER_INTERNAL_TYPES:
+        return CornerInternalConfig(
+            shelves=_shelf_positions(cab),
+            doors=_door_hinge_counts(cab),
+        )
+    if t in _SINK_TYPES:
+        return SinkConfig(
+            doors=_door_hinge_counts(cab),
+        )
+    if t in _CARGO_TYPES:
+        return CargoConfig(
+            doors=_door_hinge_counts(cab),
+        )
+    if t in _OVEN_TYPES:
+        return OvenConfig(
+            cavity_height_mm=float(cab.height_mm) * 0.6,
+        )
+    return None
+
+
+def _apply_synthesised_config(cab: CabinetInstance) -> CabinetInstance:
+    """Populate ``cab.config`` from legacy loose fields when caller left it ``None``.
+
+    Kept as a tiny helper so both load paths share the same guard.
+    """
+    if cab.config is None:
+        cab.config = _synthesise_config(cab)
+    return cab
+
+
 def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
     """Load a single cabinet definition from a YAML file."""
     data = yaml.safe_load(Path(yaml_path).read_text())
     k = data["korpus"]
 
-    return CabinetInstance(
+    cab = CabinetInstance(
         id=k["id"],
         type=k["typ"],
         description=k.get("opis", ""),
@@ -153,11 +291,12 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         # Plinth (0 for wall cabinets)
         plinth_height_mm=k.get("nozki", {}).get("wysokosc", 0),
     )
+    return _apply_synthesised_config(cab)
 
 
 def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
     """Convert schema format cabinet to CabinetInstance."""
-    return CabinetInstance(
+    cab = CabinetInstance(
         id=cab_data["id"],
         type=cab_data["type"],
         description=cab_data.get("description", ""),
@@ -201,6 +340,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
         handles=_handle_spec_from_schema(cab_data.get("handles")),
         shelf_pins=_shelf_pins_from_schema(cab_data.get("shelf_pins")),
     )
+    return _apply_synthesised_config(cab)
 
 
 def load_kitchen(yaml_path: str | Path) -> Kitchen:
