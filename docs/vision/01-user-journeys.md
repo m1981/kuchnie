@@ -11,7 +11,7 @@ based on feateure and best workflow patterns from Polyboard, PRO100, Winner Flex
 7. System is connection with backend to provide me 2.5D high quality image 
 8. The output from First visit is not complicated just few decors I have to note. Thats it. 
 
-## kitchen-app (works, need refinemnt)
+## kitchen-erp (works, needs refinement)
 9. Next Easy kitchen cost estimation and BOM was my  
 idea to help user take smarter expensive decision. 
 10. Drawers are costly more than simple cabinets. 

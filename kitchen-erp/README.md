@@ -9,7 +9,7 @@ A professional-grade Bill of Materials (BOM) generation system for kitchen cabin
 See the complete BOM system in action:
 
 ```bash
-cd kitchen-app
+cd kitchen-erp
 uv run python examples/demo_bom_system.py
 ```
 

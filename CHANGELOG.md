@@ -7,6 +7,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Renamed — ADR-011 Commit A: directory rename
+
+- `kitchen-app/` → `kitchen-erp/` (43 files moved via `git mv`; history preserved).
+- `kitchen-erp/pyproject.toml` — package name `kitchen-app` → `kitchen-erp`.
+- `kitchen-erp/uv.lock` — package name updated to match.
+- `kitchen-erp/README.md` — shell snippet `cd kitchen-app` → `cd kitchen-erp`.
+- `docs/GLOSSARY.md` — file-of-record paths updated (4 entries: CabinetUI, HardwareSet, Material, Project).
+- `docs/vision/01-user-journeys.md` — heading `kitchen-app` → `kitchen-erp` (fixed adjacent typo `refinemnt` → `refinement`).
+
+**Deliberately deferred to follow-up commits:**
+
+- Internal package restructure `kitchen_app/` + `kitchen_erp/` → `ui/` + `core/` (or `kitchen_erp_ui/` + `kitchen_erp_core/`). `rxconfig.py` `app_name="kitchen_app"` remains — refers to the internal package, not the directory.
+- Delete old BOM path (`Cabinet.calculate_cost`, `use_new_bom` toggle, `_new`-suffix normalisation, backward-compat tests). Semantic change, distinct from the rename.
+- `kuchnie_core` integration (`BOMGenerator` → `kuchnie_core.decompose`). Explicitly deferred by ADR-011 itself.
+
+ADRs 003 and 009 still mention `kitchen-app` — not edited per the AGENTS.md rule "Don't edit an old ADR"; ADR-011 supersedes.
+
 ### Added — ADR-010 partial execution (safe, additive)
 
 - `kuchnie_core.export.edging_csv` — per-edge banding worklist CSV. One row per banded edge across the kitchen. Same Polish CNC format as `cutlist_csv` (UTF-8-SIG BOM, `;` delimiter, Polish headers). Migrated semantically from `kitchen_cam.csv_generator.generate_edging_csv` but rewritten against `kuchnie_core.model.Panel.banded_edges` (dict-keyed) instead of the deprecated `kitchen_cam.models.Panel.edges` (list-with-side).
