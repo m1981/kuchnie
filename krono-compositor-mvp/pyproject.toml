@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11,<3.12"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Michal", email = "m.nakiewicz@gmail.com"}
 ]
 dependencies = [
     "fastapi>=0.136.3",
@@ -36,7 +36,7 @@ ignore_missing_imports = true
 where = ["src"]
 
 [tool.coverage.run]
-source = ["src "]
+source = ["src"]
 branch = true
 omit = [
     "*/__init__.py",
