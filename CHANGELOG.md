@@ -7,6 +7,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Added — ADR-012 Extension 1: `PanelRole` enum + `Panel.role` field
+
+First of the six `kuchnie_core.model` extensions ADR-012 requires to unblock
+the ADR-010 deletion queue (`kitchen_cam.models` / `panel_calculator` /
+`csv_generator`, plus the `machining.py` rewrite).
+
+- `kuchnie_core.model.PanelRole` — str-Enum with the 9 structural roles
+  from ADR-012 §1 (`LEFT_SIDE`, `RIGHT_SIDE`, `BOTTOM`, `TOP`, `SHELF`,
+  `BACK`, `FRONT_DOOR`, `FRONT_DRAWER`, `PLINTH`). English values keep
+  the model layer English-only per the AGENTS.md rule.
+- `Panel.role: PanelRole | None = None` — optional structural marker.
+  Default `None` preserves every existing constructor call site.
+  Populated on all carcass panels by the 4 decomposers in `catalog.py`
+  (`dolna_szufladowa`, `dolna_drzwiowa`, `dolna_legrabox`, `gorna_drzwiowa`).
+  LEGRABOX drawer-box back/base panels intentionally keep `role=None`
+  — those are intermediate parts, not carcass roles (documented in
+  `tests/test_panel_role.py::TestLegraboxRoles::test_drawer_box_panels_have_no_role`).
+- Re-exported at package root: `from kuchnie_core import PanelRole`.
+- 25 new tests in `tests/test_panel_role.py` covering: enum vocabulary,
+  default value, per-decomposer role assignment (K01 / G01 / K02 LEGRABOX),
+  role-based filtering (the primary downstream use case).
+
+Test posture: `kuchnie_core` **533 → 558 pass**. No pre-existing test
+touched. `kitchen-erp` and `kitchen-cam` unaffected (model layer is
+additive, `role=None` is the safe default).
+
 ### Restructured — ADR-011 Commit B.ii: internal package unification
 
 Single top-level ``kitchen_erp/`` package with ``ui/`` + ``core/``

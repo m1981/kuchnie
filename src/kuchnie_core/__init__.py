@@ -7,6 +7,7 @@ from .model import (
     EdgeBand,
     Kitchen,
     Panel,
+    PanelRole,
     Row,
     WorktopSegment,
 )

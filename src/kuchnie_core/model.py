@@ -6,6 +6,30 @@ Everything above panels is organizational. Everything on panels
 """
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class PanelRole(str, Enum):
+    """Structural role of a panel within the cabinet carcass.
+
+    Per ADR-012 §1. Enables role-based filtering in downstream CAM
+    ("apply hinge cups to FRONT_DOOR only", "drill runner holes on
+    LEFT_SIDE / RIGHT_SIDE only") without string matching on
+    user-facing Polish names like "Lewy bok".
+
+    English values keep the model layer English-only (AGENTS.md rule
+    "Model fields English, YAML keys Polish"). Non-carcass panels
+    (e.g. LEGRABOX drawer-box back/base) use ``role=None``.
+    """
+    LEFT_SIDE    = "left_side"
+    RIGHT_SIDE   = "right_side"
+    BOTTOM       = "bottom"
+    TOP          = "top"
+    SHELF        = "shelf"
+    BACK         = "back"
+    FRONT_DOOR   = "front_door"
+    FRONT_DRAWER = "front_drawer"
+    PLINTH       = "plinth"
 
 
 @dataclass
@@ -55,6 +79,7 @@ class Panel:
     # keys: "front", "back", "left", "right" — only edges that ARE banded
     machining_ops: list[MachiningOp] = field(default_factory=list)
     quantity: int = 1
+    role: PanelRole | None = None   # ADR-012 §1 — structural role for CAM filtering
 
 
 @dataclass

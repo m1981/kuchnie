@@ -11,7 +11,21 @@ registering it in TYPE_REGISTRY.
 from __future__ import annotations
 
 from .construction import ConstructionMethod
-from .model import Accessory, CabinetInstance, DecompositionResult, EdgeBand, MachiningOp, Panel
+from .model import (
+    Accessory,
+    CabinetInstance,
+    DecompositionResult,
+    EdgeBand,
+    MachiningOp,
+    Panel,
+    PanelRole,
+)
+
+# Side-panel role lookup (used by every carcass decomposer)
+_SIDE_ROLE: dict[str, PanelRole] = {
+    "left":  PanelRole.LEFT_SIDE,
+    "right": PanelRole.RIGHT_SIDE,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +111,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=cab.depth_mm,
             height_mm=side_h,
             banded_edges={"front": _body_eb(cab, side_h)},
+            role=_SIDE_ROLE[side],
         ))
 
     # -- Bottom panel --
@@ -109,6 +124,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
+        role=PanelRole.BOTTOM,
     ))
 
     # -- Back panel (in groove, no banding) --
@@ -122,6 +138,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},  # HDF — never banded
+        role=PanelRole.BACK,
     ))
 
     # -- Drawer fronts --
@@ -150,6 +167,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
                 "left":  _front_eb(cab, front_h),
                 "right": _front_eb(cab, front_h),
             },
+            role=PanelRole.FRONT_DRAWER,
         ))
 
     # -- Drawer runners (accessories) --
@@ -199,10 +217,12 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=cab.depth_mm,
             height_mm=cab.height_mm,
             banded_edges={"front": _body_eb(cab, cab.height_mm)},
+            role=_SIDE_ROLE[side],
         ))
 
     # -- Top + Bottom panels --
     horiz_w = m.carcass_bottom_width(cab.width_mm)
+    _horiz_role = {"top": PanelRole.TOP, "bottom": PanelRole.BOTTOM}
     for pos, label in [("top", "Góra"), ("bottom", "Dno")]:
         r.panels.append(Panel(
             id=f"{cab.id}_{pos}",
@@ -212,6 +232,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=horiz_w,
             height_mm=cab.depth_mm,
             banded_edges={"front": _body_eb(cab, horiz_w)},
+            role=_horiz_role[pos],
         ))
 
     # -- Back panel (in groove, no banding) --
@@ -225,6 +246,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},
+        role=PanelRole.BACK,
     ))
 
     # -- Shelves --
@@ -239,6 +261,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=shelf_w,
             height_mm=shelf_d,
             banded_edges={"front": _body_eb(cab, shelf_w)},
+            role=PanelRole.SHELF,
         ))
 
     # -- Doors --
@@ -261,6 +284,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
                 "left":  _front_eb(cab, door_h),
                 "right": _front_eb(cab, door_h),
             },
+            role=PanelRole.FRONT_DOOR,
         ))
 
     # -- Hinges --
@@ -321,6 +345,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=cab.depth_mm,
             height_mm=side_h,
             banded_edges={"front": _body_eb(cab, side_h)},
+            role=_SIDE_ROLE[side],
         ))
 
     # -- Bottom panel --
@@ -333,6 +358,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
+        role=PanelRole.BOTTOM,
     ))
 
     # -- Back panel (in groove, no banding) --
@@ -346,6 +372,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},
+        role=PanelRole.BACK,
     ))
 
     # -- Shelves --
@@ -360,6 +387,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
             width_mm=shelf_w,
             height_mm=shelf_d,
             banded_edges={"front": _body_eb(cab, shelf_w)},
+            role=PanelRole.SHELF,
         ))
 
     # -- Door fronts --
@@ -382,6 +410,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
                 "left":  _front_eb(cab, door_h),
                 "right": _front_eb(cab, door_h),
             },
+            role=PanelRole.FRONT_DOOR,
         ))
 
     # -- Hinges --
@@ -455,6 +484,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             height_mm=side_h,
             banded_edges={"front": _body_eb(cab, side_h)},
             machining_ops=ops_list,
+            role=_SIDE_ROLE[side],
         ))
 
     # -- Bottom panel --
@@ -467,6 +497,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
+        role=PanelRole.BOTTOM,
     ))
 
     # -- Back panel --
@@ -480,6 +511,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         width_mm=back_w,
         height_mm=back_h,
         banded_edges={},
+        role=PanelRole.BACK,
     ))
 
     # -- Drawer boxes + runner mounting ops --
@@ -538,6 +570,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
                 "left":  _front_eb(cab, front_h),
                 "right": _front_eb(cab, front_h),
             },
+            role=PanelRole.FRONT_DRAWER,
         ))
 
     # -- Handles --
