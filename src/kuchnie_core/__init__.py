@@ -27,6 +27,7 @@ from .serialize import (
     kitchen_from_json_str,
 )
 from .export.cutlist_csv import export_cutlist_csv, aggregate_panels
+from .export.edging_csv import export_edging_csv, collect_edging_rows
 from .geometry import Vector2D, Vector3D, BoundingBox, Transform2D, mm_to_m
 from .standards import KitchenStandards
 from .types import Direction, CabinetLevel, CabinetType, HandleType, DoorSide, Dimensions
@@ -55,6 +56,7 @@ __all__ = [
     "kitchen_from_dict", "kitchen_from_json", "kitchen_from_json_str",
     # Export
     "export_cutlist_csv", "aggregate_panels",
+    "export_edging_csv", "collect_edging_rows",
     # Geometry (migrated from former kitchen-plugin, per ADR-009)
     "Vector2D", "Vector3D", "BoundingBox", "Transform2D", "mm_to_m",
     # Standards

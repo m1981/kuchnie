@@ -121,6 +121,23 @@ def test_export_round_trip(tmp_path: Path) -> None:
     assert text == expected
 
 
+# ── Package-level re-export contract ────────────────────────────
+# ``kuchnie_core`` re-exports its public entrypoints; ``edging_csv`` should
+# follow the same convention as its sister ``cutlist_csv``.
+
+def test_edging_csv_reexported_from_kuchnie_core() -> None:
+    import kuchnie_core
+
+    assert hasattr(kuchnie_core, "export_edging_csv")
+    assert hasattr(kuchnie_core, "collect_edging_rows")
+    assert "export_edging_csv" in kuchnie_core.__all__
+    assert "collect_edging_rows" in kuchnie_core.__all__
+
+    # Same callable reached via both import paths.
+    from kuchnie_core.export.edging_csv import export_edging_csv as direct
+    assert kuchnie_core.export_edging_csv is direct
+
+
 # ── Cutlist CSV format sanity ───────────────────────────────────
 # Also asserted here (small guard test) so a regression in cutlist_csv's
 # Polish format shows up next to its sister test.
