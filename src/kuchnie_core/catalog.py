@@ -320,7 +320,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
     if cab.shelves:
         r.accessories.append(Accessory(
             id=f"{cab.id}_shelf_pins",
-            name="Kołek półkowy 5 mm",
+            name=f"Kołek półkowy {int(cab.shelf_pins.diameter_mm)} mm",
             type="shelf_pin",
             quantity=len(cab.shelves) * 4,
         ))
@@ -445,7 +445,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
     if cab.shelves:
         r.accessories.append(Accessory(
             id=f"{cab.id}_shelf_pins",
-            name="Kołek półkowy 5 mm",
+            name=f"Kołek półkowy {int(cab.shelf_pins.diameter_mm)} mm",
             type="shelf_pin",
             quantity=len(cab.shelves) * 4,
         ))

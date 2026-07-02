@@ -102,6 +102,34 @@ class Panel:
 
 
 @dataclass
+class ShelfPinSpec:
+    """Shelf-pin drilling specification for a cabinet (ADR-012 §5).
+
+    Applied to both carcass side panels: shelf pins are drilled from the
+    inside face at fixed offsets from front and back edges. Two pins per
+    side (front + back) support each shelf.
+
+    Fields:
+      * ``diameter_mm``     — pin hole diameter (typically 5mm).
+      * ``depth_mm``        — blind-hole depth (typically 8mm; through
+        holes weaken side panels).
+      * ``front_offset_mm`` — X distance from the front edge of the side
+        panel to the front pin row.
+      * ``back_offset_mm``  — X distance from the back edge of the side
+        panel to the back pin row.
+      * ``max_per_row``     — maximum drillable pin positions along the
+        vertical axis per shelf row per side. Typically 3 (two used,
+        one optional). Actual quantity used per shelf is computed by the
+        catalog decomposer (2 pins per side × 2 sides = 4 per shelf).
+    """
+    diameter_mm: float = 5.0
+    depth_mm: float = 8.0
+    front_offset_mm: float = 50.0
+    back_offset_mm: float = 80.0
+    max_per_row: int = 3
+
+
+@dataclass
 class HandleSpec:
     """Handle specification for a cabinet's front-facing pulls (ADR-012 §4).
 
@@ -175,6 +203,7 @@ class CabinetInstance:
     shelves: list[dict] = field(default_factory=list)
     fronts: list[dict] = field(default_factory=list)
     handles: HandleSpec | None = None   # ADR-012 §4 — typed replacement for former dict
+    shelf_pins: ShelfPinSpec = field(default_factory=ShelfPinSpec)  # ADR-012 §5
 
     def __post_init__(self) -> None:
         """Validate dimensions after construction."""

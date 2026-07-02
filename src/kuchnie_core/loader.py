@@ -12,7 +12,14 @@ from pathlib import Path
 
 import yaml
 
-from .model import CabinetInstance, HandleSpec, Kitchen, Row, WorktopSegment
+from .model import (
+    CabinetInstance,
+    HandleSpec,
+    Kitchen,
+    Row,
+    ShelfPinSpec,
+    WorktopSegment,
+)
 
 
 # ── Handle translation tables (ADR-012 §4) ────────────────────
@@ -54,6 +61,42 @@ def _handle_spec_from_polish(d: dict | None) -> HandleSpec | None:
         position=_HANDLE_POSITION_PL_TO_EN.get(
             d.get("pozycja", "center"), d.get("pozycja", "center")
         ),
+    )
+
+
+def _shelf_pins_from_polish(d: dict | None) -> ShelfPinSpec:
+    """Polish YAML ``kolki_polkowe`` block → ``ShelfPinSpec``.
+
+    Missing block yields the ADR-012 default spec (5mm × 8mm, standard
+    50/80 offsets). Recognised Polish keys:
+
+      * ``srednica``   → ``diameter_mm``
+      * ``glebokosc``  → ``depth_mm``
+      * ``odsuniecie_przod``  → ``front_offset_mm``
+      * ``odsuniecie_tyl``    → ``back_offset_mm``
+      * ``maks_na_rzad`` → ``max_per_row``
+    """
+    if not d:
+        return ShelfPinSpec()
+    return ShelfPinSpec(
+        diameter_mm=float(d.get("srednica", 5.0)),
+        depth_mm=float(d.get("glebokosc", 8.0)),
+        front_offset_mm=float(d.get("odsuniecie_przod", 50.0)),
+        back_offset_mm=float(d.get("odsuniecie_tyl", 80.0)),
+        max_per_row=int(d.get("maks_na_rzad", 3)),
+    )
+
+
+def _shelf_pins_from_schema(d: dict | None) -> ShelfPinSpec:
+    """Schema-format (English keys) shelf-pin dict → ``ShelfPinSpec``."""
+    if not d:
+        return ShelfPinSpec()
+    return ShelfPinSpec(
+        diameter_mm=float(d.get("diameter_mm", 5.0)),
+        depth_mm=float(d.get("depth_mm", 8.0)),
+        front_offset_mm=float(d.get("front_offset_mm", 50.0)),
+        back_offset_mm=float(d.get("back_offset_mm", 80.0)),
+        max_per_row=int(d.get("max_per_row", 3)),
     )
 
 
@@ -106,6 +149,7 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         shelves=k["wnetrze"].get("polki", []),
         fronts=k.get("fronty", []),
         handles=_handle_spec_from_polish(k.get("uchwyty")),
+        shelf_pins=_shelf_pins_from_polish(k.get("kolki_polkowe")),
         # Plinth (0 for wall cabinets)
         plinth_height_mm=k.get("nozki", {}).get("wysokosc", 0),
     )
@@ -155,6 +199,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
             for f in cab_data.get("fronts", [])
         ],
         handles=_handle_spec_from_schema(cab_data.get("handles")),
+        shelf_pins=_shelf_pins_from_schema(cab_data.get("shelf_pins")),
     )
 
 

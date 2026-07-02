@@ -43,6 +43,45 @@ and ordering polish, no behaviour change.
 Test posture: `kuchnie_core` **565 pass** (unchanged — all edits are
 documentation, field ordering, or handoff-doc updates).
 
+### Added — ADR-012 Extension 5: `ShelfPinSpec` on `CabinetInstance`
+
+Fifth of the six `kuchnie_core.model` extensions ADR-012 requires.
+Purely additive — default factory means every cabinet gets a spec
+without opt-in, and every existing YAML fixture keeps working unchanged.
+
+- `kuchnie_core.model.ShelfPinSpec` — new dataclass with the ADR-012 §5
+  fields (`diameter_mm`, `depth_mm`, `front_offset_mm`, `back_offset_mm`,
+  `max_per_row`) and default values matching standard European 5mm
+  shelf-pin drilling (5mm × 8mm depth, 50/80 offsets, 3 positions per
+  row per side).
+- `CabinetInstance.shelf_pins: ShelfPinSpec = field(default_factory=ShelfPinSpec)`
+  — default_factory (not mutable default) so each cabinet gets its own
+  spec instance (regression-guarded by
+  `test_shelf_pin_spec.py::TestCabinetInstanceShelfPinsField::test_each_cabinet_gets_its_own_spec`).
+- `loader.py` — two new optional adapter helpers:
+  * `_shelf_pins_from_polish(dict) -> ShelfPinSpec` translates the
+    optional Polish YAML `kolki_polkowe` block (`srednica`, `glebokosc`,
+    `odsuniecie_przod`, `odsuniecie_tyl`, `maks_na_rzad`) into the
+    English spec. Missing block returns the ADR-012 default.
+  * `_shelf_pins_from_schema(dict) -> ShelfPinSpec` lifts the schema-
+    format English dict directly. Both always return a `ShelfPinSpec`
+    (never `None`) so the field is always populated.
+- `catalog.py` — the shelf-pin accessory name now builds from
+  `cab.shelf_pins.diameter_mm` (`f"Kołek półkowy {int(...)}\ mm"`).
+  For the default 5mm case, BOM output is byte-identical to pre-ADR-012
+  (`"Kołek półkowy 5 mm"`). Non-default diameters reflect in the label.
+  Quantity math (`4 × n_shelves`) is unchanged.
+- Re-exported at package root: `from kuchnie_core import ShelfPinSpec`.
+- 21 new tests in `tests/test_shelf_pin_spec.py`: dataclass defaults,
+  default_factory isolation, Polish/schema loader translation, partial
+  override semantics, real-fixture round-trip (all 3 fixtures use
+  defaults), BOM name stability + non-default reflection, YAML override
+  end-to-end.
+
+Test posture: `kuchnie_core` **605 → 626 pass**. No pre-existing test
+touched. `kitchen-erp` (38/3/12) and `kitchen-cam` (292/35/13) baselines
+verified unchanged.
+
 ### Changed — ADR-012 Extension 4: `HandleSpec` replaces `handles: dict`
 
 Fourth of the six `kuchnie_core.model` extensions ADR-012 requires.

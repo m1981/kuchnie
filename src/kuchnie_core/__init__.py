@@ -10,6 +10,7 @@ from .model import (
     Panel,
     PanelRole,
     Row,
+    ShelfPinSpec,
     WorktopSegment,
 )
 from .construction import ConstructionMethod, ConstructionMethodRegistry
