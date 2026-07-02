@@ -7,6 +7,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Restructured — ADR-011 Commit B.ii: internal package unification
+
+Single top-level ``kitchen_erp/`` package with ``ui/`` + ``core/``
+subpackages, replacing the previous two-siblings layout
+(``kitchen_app/`` + inner ``kitchen_erp/``).
+
+**Moves (14 files, history preserved by git rename detection):**
+
+- ``kitchen_app/kitchen_app.py`` → ``kitchen_erp/kitchen_erp.py`` (Reflex entry — matches Reflex convention: ``app_name="kitchen_erp"`` → ``kitchen_erp/kitchen_erp.py``).
+- ``kitchen_app/{state,admin_state,admin_ui,__init__}.py`` → ``kitchen_erp/ui/*``.
+- ``kitchen_erp/{models,database,schemas,bom_generator,purchasing,recipe_loader,rules_engine,recipes.json,__init__.py}`` → ``kitchen_erp/core/*``.
+
+**New:** ``kitchen_erp/__init__.py`` describing the package layout.
+
+**Import rewrites** (25 files touched):
+
+- Within ``kitchen_erp/core/``: absolute ``from kitchen_erp.X`` → relative ``from .X`` (5 files: ``models``, ``bom_generator``, ``database``, ``rules_engine`` + lazy imports inside those).
+- Within ``kitchen_erp/ui/``: absolute ``from kitchen_erp.X`` → relative ``from ..core.X`` (state, admin_state + lazy imports).
+- Reflex entry ``kitchen_erp/kitchen_erp.py``: ``from .state`` → ``from .ui.state``, ``from .admin_ui`` → ``from .ui.admin_ui``, ``from .admin_state`` → ``from .ui.admin_state``.
+- Tests, examples, scripts (13 files): ``from kitchen_erp.X`` → ``from kitchen_erp.core.X`` (models, database, schemas, bom_generator, purchasing, rules_engine, recipe_loader).
+- ``database.py``: replaced the unusual ``import kitchen_erp.models`` side-effect line with ``from . import models`` (same behaviour, package-relative).
+
+**Config:** ``rxconfig.py`` ``app_name = "kitchen_app"`` → ``"kitchen_erp"``.
+
+**Style choice:** within-package uses relative imports (``.X`` inside ``core/``, ``..core.X`` inside ``ui/``), cross-package (tests/examples/scripts) uses absolute. Matches Python community convention (PEP 8) and makes the package internally movable.
+
+Test posture identical to pre-restructure: 38 pass / 3 fail / 12 errors / 1 collect error. Same 15 test names in the failing set (all pre-existing: ``HARDWARE_RULES`` symbol missing, SQLAlchemy fixture issues, oven-cabinet backward-compat check). ``kuchnie_core`` unaffected (533 pass).
+
 ### Renamed — ADR-011 Commit A: directory rename
 
 - `kitchen-app/` → `kitchen-erp/` (43 files moved via `git mv`; history preserved).

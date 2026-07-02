@@ -1,6 +1,6 @@
 """Tests for purchasing strategies"""
 import pytest
-from kitchen_erp.purchasing import (
+from kitchen_erp.core.purchasing import (
     SheetMaterialStrategy,
     LinearMaterialStrategy,
     CountertopStrategy,

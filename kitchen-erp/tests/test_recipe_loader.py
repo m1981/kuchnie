@@ -1,6 +1,6 @@
 """Tests for recipe loading and formula evaluation"""
 import pytest
-from kitchen_erp.recipe_loader import (
+from kitchen_erp.core.recipe_loader import (
     load_recipes,
     get_recipe,
     get_recipe_tags,

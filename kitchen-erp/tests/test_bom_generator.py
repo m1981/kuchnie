@@ -1,9 +1,9 @@
 """Tests for BOM generator"""
 import pytest
 from sqlmodel import Session, create_engine, SQLModel
-from kitchen_erp.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.schemas import BOMAssembly
+from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.schemas import BOMAssembly
 
 
 @pytest.fixture(name="engine")

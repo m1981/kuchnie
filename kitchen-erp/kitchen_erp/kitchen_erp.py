@@ -1,6 +1,11 @@
-# kitchen_app/kitchen_app.py
+# kitchen_erp/kitchen_erp.py
+#
+# Reflex application entry point.
+# rxconfig.py has ``app_name = "kitchen_erp"`` which makes Reflex look for
+# ``kitchen_erp/kitchen_erp.py`` in this package. This file wires up pages,
+# state, and admin UI from the ``ui/`` subpackage.
 import reflex as rx
-from .state import KitchenState, CabinetUI, CostTraceLineUI
+from .ui.state import KitchenState, CabinetUI, CostTraceLineUI
 
 def top_bar() -> rx.Component:
     """The Deal Closer Header."""
@@ -697,8 +702,8 @@ app = rx.App()
 app.add_page(index, route="/", on_load=KitchenState.load_mock_data)
 
 # Admin panel
-from .admin_ui import admin_page
-from .admin_state import AdminState
+from .ui.admin_ui import admin_page
+from .ui.admin_state import AdminState
 app.add_page(
     admin_page,
     route="/admin",

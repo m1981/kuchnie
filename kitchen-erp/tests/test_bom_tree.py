@@ -1,6 +1,6 @@
 """Tests for BOM tree structure (Composite pattern)"""
 import pytest
-from kitchen_erp.schemas import BOMPart, BOMAssembly
+from kitchen_erp.core.schemas import BOMPart, BOMAssembly
 
 
 def test_bom_part_calculation():

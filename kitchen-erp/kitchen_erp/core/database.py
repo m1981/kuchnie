@@ -1,4 +1,4 @@
-# kitchen_erp/database.py
+# kitchen_erp/core/database.py
 from sqlmodel import create_engine, SQLModel, Session
 
 # We will use SQLite for local development and testing
@@ -9,7 +9,7 @@ connect_args = {"check_same_thread": False}
 engine = create_engine(sqlite_url, echo=False, connect_args=connect_args)
 
 # DODAJ TĘ LINIJKĘ - wymusza załadowanie wszystkich modeli przed utworzeniem bazy
-import kitchen_erp.models
+from . import models  # noqa: F401,E402  — side-effect import to register SQLModel tables
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

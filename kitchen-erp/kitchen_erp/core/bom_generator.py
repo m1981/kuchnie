@@ -1,8 +1,8 @@
 """BOM Generator - orchestrates recipe loading, rules engine, and cost calculation"""
-from kitchen_erp.schemas import BOMAssembly, BOMPart
-from kitchen_erp.recipe_loader import get_recipe, eval_formula
-from kitchen_erp.rules_engine import RulesEngine
-from kitchen_erp.models import Cabinet, ProjectDefaults
+from .schemas import BOMAssembly, BOMPart
+from .recipe_loader import get_recipe, eval_formula
+from .rules_engine import RulesEngine
+from .models import Cabinet, ProjectDefaults
 
 
 class BOMGenerator:
@@ -183,7 +183,7 @@ class BOMGenerator:
         Returns:
             List of CostTraceLine objects
         """
-        from kitchen_erp.schemas import CostTraceLine
+        from .schemas import CostTraceLine
         
         tree = self.generate()
         parts = tree.get_all_parts()

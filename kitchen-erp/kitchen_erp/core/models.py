@@ -1,6 +1,6 @@
-# kitchen_erp/models.py
+# kitchen_erp/core/models.py
 from sqlmodel import SQLModel, Field, Relationship
-from kitchen_erp.schemas import CabinetCostResult, CostTraceLine
+from .schemas import CabinetCostResult, CostTraceLine
 
 
 class Material(SQLModel, table=True):
@@ -108,7 +108,7 @@ class Cabinet(SQLModel, table=True):
         LEGACY METHOD: Calculates cost using relationships. Assumes relationships are loaded.
         
         NOTE: This is the OLD cost calculation system. For new projects, use:
-            from kitchen_erp.bom_generator import BOMGenerator
+            from kitchen_erp.core.bom_generator import BOMGenerator
             generator = BOMGenerator(cabinet, defaults)
             bom_tree = generator.generate()
         
@@ -291,8 +291,8 @@ class Project(SQLModel, table=True):
             result = project.generate_project_bom()
             print(f"Total project cost: ${result['total_cost']:.2f}")
         """
-        from kitchen_erp.bom_generator import BOMGenerator
-        from kitchen_erp.purchasing import get_strategy_for_material
+        from .bom_generator import BOMGenerator
+        from .purchasing import get_strategy_for_material
         
         if not self.defaults:
             raise ValueError("Project has no defaults configured")

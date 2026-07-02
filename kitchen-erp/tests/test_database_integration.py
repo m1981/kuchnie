@@ -1,6 +1,6 @@
 # tests/test_database_integration.py
 from sqlmodel import Session, select
-from kitchen_erp.models import Material, HardwareSet, Project, ProjectDefaults, Cabinet
+from kitchen_erp.core.models import Material, HardwareSet, Project, ProjectDefaults, Cabinet
 
 
 def test_full_project_database_lifecycle(session: Session):

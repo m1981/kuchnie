@@ -13,10 +13,10 @@ Run with: uv run python examples/demo_bom_system.py
 """
 
 from sqlmodel import Session, create_engine, SQLModel, select
-from kitchen_erp.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.purchasing import get_strategy_for_material
-from kitchen_erp.recipe_loader import get_recipe
+from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.purchasing import get_strategy_for_material
+from kitchen_erp.core.recipe_loader import get_recipe
 
 
 def create_demo_database():
@@ -109,7 +109,7 @@ def demo_recipe_system():
     print("="*70)
     
     # Show available recipes
-    from kitchen_erp.recipe_loader import load_recipes
+    from kitchen_erp.core.recipe_loader import load_recipes
     recipes = load_recipes()
     
     print(f"\nAvailable cabinet types ({len(recipes)} recipes loaded):")
@@ -198,7 +198,7 @@ def demo_rules_engine(engine, cabinet_id):
         print(f"Recipe tags: {recipe['tags']}")
         
         # Show what hardware gets added
-        from kitchen_erp.rules_engine import RulesEngine
+        from kitchen_erp.core.rules_engine import RulesEngine
         engine_rules = RulesEngine()
         required_hardware = engine_rules.get_required_hardware_for_tags(recipe['tags'])
         

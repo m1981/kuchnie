@@ -1,7 +1,7 @@
 # tests/conftest.py
 import pytest
 from sqlmodel import SQLModel, Session, create_engine
-from kitchen_erp.database import get_session
+from kitchen_erp.core.database import get_session
 
 @pytest.fixture(name="session")
 def session_fixture():

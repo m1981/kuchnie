@@ -10,10 +10,10 @@ This test serves as both validation and documentation, showing:
 """
 import pytest
 from sqlmodel import Session, create_engine, SQLModel
-from kitchen_erp.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.purchasing import get_strategy_for_material
-from kitchen_erp.recipe_loader import get_recipe
+from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.purchasing import get_strategy_for_material
+from kitchen_erp.core.recipe_loader import get_recipe
 
 
 @pytest.fixture(name="engine")

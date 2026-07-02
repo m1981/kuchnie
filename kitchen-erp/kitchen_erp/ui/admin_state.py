@@ -1,9 +1,9 @@
-# kitchen_app/admin_state.py
+# kitchen_erp/ui/admin_state.py
 import reflex as rx
 from pydantic import BaseModel
 from sqlmodel import select
-from kitchen_erp.database import get_session
-from kitchen_erp.models import Material, HardwareSet, HardwareRule
+from ..core.database import get_session
+from ..core.models import Material, HardwareSet, HardwareRule
 
 
 class MaterialUI(BaseModel):
@@ -406,7 +406,7 @@ class AdminState(rx.State):
     
     def initialize_default_rules(self):
         """Initialize database with default hardware rules"""
-        from kitchen_erp.rules_engine import get_default_hardware_rules
+        from ..core.rules_engine import get_default_hardware_rules
         
         with next(get_session()) as session:
             # Check if rules already exist

@@ -102,7 +102,7 @@
 ## CabinetUI
 - **Context:** Web
 - **Definition:** Reflex-side wrapper for displaying a `CabinetInstance` in the UI. Holds derived values for rendering (formatted dimensions, color hex, thumbnail path). Has no domain authority.
-- **File of record:** `kitchen-erp/kitchen_app/state.py::CabinetUI`
+- **File of record:** `kitchen-erp/kitchen_erp/ui/state.py::CabinetUI`
 - **Introduced by:** (pre-existing)
 
 ## CAM (Computer-Aided Manufacturing)
@@ -190,7 +190,7 @@
 ## HardwareSet
 - **Context:** Web
 - **Definition:** A UI-side bundle of accessories used together (e.g., "Blum Tandembox M, 500mm, silk-white"). Resolves to multiple `Accessory` objects in Core.
-- **File of record:** `kitchen-erp/kitchen_erp/models.py::HardwareSet`
+- **File of record:** `kitchen-erp/kitchen_erp/core/models.py::HardwareSet`
 
 # J
 
@@ -236,7 +236,7 @@
 - **Context:** Web (summary), Core (by reference)
 - **Definition:** UI-level summary of a board material — name, brand, price, sheet size, has_woodgrain flag.
 - **Not to be confused with:** `Decor` (Catalog — the finish), `Variant` (Catalog — finish + thickness)
-- **File of record:** `kitchen-erp/kitchen_erp/models.py::Material`
+- **File of record:** `kitchen-erp/kitchen_erp/core/models.py::Material`
 
 ## MaterialRef
 - **Context:** Core
@@ -272,7 +272,7 @@
 ## Project
 - **Context:** Web
 - **Definition:** A customer engagement — name, address, status (consultation / quote / accepted / production), and one `Kitchen`. Web-only concept; **Core does not know about Projects**.
-- **File of record:** `kitchen-erp/kitchen_erp/models.py::Project`
+- **File of record:** `kitchen-erp/kitchen_erp/core/models.py::Project`
 
 ## Published Language
 - **Context:** Architecture (cross-context pattern)

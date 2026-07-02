@@ -1,10 +1,7 @@
-# kitchen_erp/rules_engine.py
-
-# kitchen_erp/rules_engine.py
-
+# kitchen_erp/core/rules_engine.py
 """Rules engine for tag-based component addition"""
 from typing import Any
-from kitchen_erp.schemas import BOMPart, BOMAssembly
+from .schemas import BOMPart, BOMAssembly
 
 
 def get_default_hardware_rules():
@@ -47,8 +44,8 @@ def load_hardware_rules_from_db():
     Falls back to default rules if database is empty or doesn't exist yet.
     """
     # Local imports to prevent circular dependency issues during app startup
-    from kitchen_erp.database import engine
-    from kitchen_erp.models import HardwareRule
+    from .database import engine
+    from .models import HardwareRule
     from sqlmodel import Session, select
     from sqlalchemy.exc import OperationalError
 

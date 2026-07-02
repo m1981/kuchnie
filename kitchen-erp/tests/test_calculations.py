@@ -1,7 +1,7 @@
 # tests/test_calculations.py
 import pytest
-from kitchen_erp.models import Material, HardwareSet, ProjectDefaults, Cabinet
-from kitchen_erp.schemas import CabinetCostResult
+from kitchen_erp.core.models import Material, HardwareSet, ProjectDefaults, Cabinet
+from kitchen_erp.core.schemas import CabinetCostResult
 
 
 def test_cabinet_cost_calculation():

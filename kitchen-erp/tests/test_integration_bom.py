@@ -1,9 +1,9 @@
 """Integration tests showing how new BOM system works with existing code"""
 import pytest
 from sqlmodel import Session, create_engine, SQLModel, select
-from kitchen_erp.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.schemas import CabinetCostResult
+from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.schemas import CabinetCostResult
 
 
 @pytest.fixture(name="engine")
@@ -261,7 +261,7 @@ def test_no_back_panel_for_oven_cabinet(session: Session):
 
 def test_purchasing_strategy_integration(session: Session, test_project: Project):
     """Test that purchasing strategies can be applied to BOM parts"""
-    from kitchen_erp.purchasing import get_strategy_for_material
+    from kitchen_erp.core.purchasing import get_strategy_for_material
     
     defaults = session.exec(
         select(ProjectDefaults).where(ProjectDefaults.project_id == test_project.id)

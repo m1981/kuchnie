@@ -1,7 +1,7 @@
 """Tests for rules engine (tag-based component addition)"""
 import pytest
-from kitchen_erp.rules_engine import RulesEngine, HARDWARE_RULES
-from kitchen_erp.schemas import BOMAssembly
+from kitchen_erp.core.rules_engine import RulesEngine, HARDWARE_RULES
+from kitchen_erp.core.schemas import BOMAssembly
 
 
 def test_rules_engine_initialization():

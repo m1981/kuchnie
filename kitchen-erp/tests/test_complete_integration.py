@@ -1,9 +1,9 @@
 """Complete end-to-end integration test"""
 import pytest
 from sqlmodel import Session, create_engine, SQLModel, select
-from kitchen_erp.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.purchasing import get_strategy_for_material
+from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.purchasing import get_strategy_for_material
 
 
 @pytest.fixture(name="engine")
@@ -229,7 +229,7 @@ def test_complete_kitchen_workflow(session: Session):
 
 def test_recipe_driven_cabinet_creation(session: Session):
     """Test that new cabinets can be created using recipes"""
-    from kitchen_erp.recipe_loader import get_recipe
+    from kitchen_erp.core.recipe_loader import get_recipe
     
     # Load recipe
     recipe = get_recipe("DRAWER_BASE")
@@ -262,9 +262,9 @@ def test_recipe_driven_cabinet_creation(session: Session):
 
 def test_tag_based_hardware_addition(session: Session):
     """Test that tags automatically add correct hardware"""
-    from kitchen_erp.recipe_loader import get_recipe_tags
-    from kitchen_erp.rules_engine import RulesEngine
-    from kitchen_erp.schemas import BOMAssembly
+    from kitchen_erp.core.recipe_loader import get_recipe_tags
+    from kitchen_erp.core.rules_engine import RulesEngine
+    from kitchen_erp.core.schemas import BOMAssembly
     
     # Get tags for drawer base
     tags = get_recipe_tags("DRAWER_BASE")

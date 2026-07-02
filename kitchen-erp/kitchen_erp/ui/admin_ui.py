@@ -1,4 +1,4 @@
-# kitchen_app/admin_ui.py
+# kitchen_erp/ui/admin_ui.py
 
 import reflex as rx
 from .admin_state import AdminState, MaterialUI, HardwareUI, HardwareRuleUI

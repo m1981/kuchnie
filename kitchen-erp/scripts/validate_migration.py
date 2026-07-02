@@ -14,10 +14,10 @@ Run with: uv run python scripts/validate_migration.py
 import sys
 from pathlib import Path
 from sqlmodel import Session, select, func
-from kitchen_erp.database import get_session, create_db_and_tables
-from kitchen_erp.models import Cabinet, Project, ProjectDefaults
-from kitchen_erp.bom_generator import BOMGenerator
-from kitchen_erp.recipe_loader import load_recipes
+from kitchen_erp.core.database import get_session, create_db_and_tables
+from kitchen_erp.core.models import Cabinet, Project, ProjectDefaults
+from kitchen_erp.core.bom_generator import BOMGenerator
+from kitchen_erp.core.recipe_loader import load_recipes
 
 
 def check_recipe_coverage():

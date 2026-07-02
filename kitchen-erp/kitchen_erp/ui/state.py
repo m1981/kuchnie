@@ -1,12 +1,12 @@
-# kitchen_app/state.py
+# kitchen_erp/ui/state.py
 import re
 import reflex as rx
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import select
-from kitchen_erp.database import get_session, engine, SQLModel
-from kitchen_erp.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule
-from kitchen_erp.schemas import CostTraceLine
+from ..core.database import get_session, engine, SQLModel
+from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule
+from ..core.schemas import CostTraceLine
 
 MODULE_LABELS = {
     "BASE_CABINET": "Base cabinet",
@@ -448,7 +448,7 @@ class KitchenState(rx.State):
         """
         NEW: Open cost trace for selected cabinet using BOM generator system.
         """
-        from kitchen_erp.bom_generator import BOMGenerator
+        from ..core.bom_generator import BOMGenerator
         
         if self.selected_cabinet_id is None:
             return
@@ -530,8 +530,8 @@ class KitchenState(rx.State):
         NEW: Open cost trace for entire project using BOM generator system.
         Shows material aggregation and purchasing strategies.
         """
-        from kitchen_erp.bom_generator import BOMGenerator
-        from kitchen_erp.purchasing import get_strategy_for_material
+        from ..core.bom_generator import BOMGenerator
+        from ..core.purchasing import get_strategy_for_material
         
         with next(get_session()) as session:
             project = session.exec(select(Project)).first()
@@ -1060,7 +1060,7 @@ class KitchenState(rx.State):
             wall_width, base_width = 0.0, 0.0
 
             # Use new BOM system for total price calculation
-            from kitchen_erp.bom_generator import BOMGenerator
+            from ..core.bom_generator import BOMGenerator
             
             for cab in wall_cabs + base_cabs + decor_cabs:
                 # Generate cost using new BOM system
