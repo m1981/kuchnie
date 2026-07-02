@@ -43,6 +43,45 @@ and ordering polish, no behaviour change.
 Test posture: `kuchnie_core` **565 pass** (unchanged — all edits are
 documentation, field ordering, or handoff-doc updates).
 
+### Changed — ADR-012 Extension 4: `HandleSpec` replaces `handles: dict`
+
+Fourth of the six `kuchnie_core.model` extensions ADR-012 requires.
+Breaking type change on `CabinetInstance.handles` (dict → dataclass),
+kept safe by the YAML loader (adapter) and by a display-map in
+`catalog.py` that preserves BOM Polish output verbatim.
+
+- `kuchnie_core.model.HandleSpec` — new dataclass with the ADR-012 §4
+  fields (`type`, `spacing_mm`, `hole_diameter_mm`, `position`).
+  English values (AGENTS.md rule).
+- `CabinetInstance.handles: HandleSpec | None = None` — replaces
+  `handles: dict = field(default_factory=dict)`. Default `None`
+  short-circuits every `if cab.handles is not None:` branch in the
+  4 catalog decomposers.
+- `loader.py` — two new adapter helpers:
+  * `_handle_spec_from_polish(dict) -> HandleSpec | None` translates
+    the Polish YAML block (`typ: 'relingowy'`, `rozstaw: 256`,
+    `srednica_otworu: 5`, `pozycja: 'srodek_frontu'`) into English
+    (`type='bar'`, `spacing_mm=256.0`, `hole_diameter_mm=5.0`,
+    `position='center'`). Handles 4 Polish handle types (relingowy,
+    kulisty, profilowy, wpuszczany) and 3 positions.
+  * `_handle_spec_from_schema(dict) -> HandleSpec | None` lifts the
+    schema-format English dict directly. Both return `None` on empty
+    input so cabinets without handles carry `handles=None` cleanly.
+- `catalog.py` — `_HANDLE_TYPE_EN_TO_PL` + `_handle_accessory_name()`
+  build the user-facing Polish BOM accessory name from the English
+  `HandleSpec.type`. BOM output byte-identical to pre-ADR-012
+  ("Uchwyt relingowy (rozstaw 256mm)") — regression guarded by
+  `test_handle_spec.py::TestBOMAccessoryNamePolish`.
+- Re-exported at package root: `from kuchnie_core import HandleSpec`.
+- 27 new tests in `tests/test_handle_spec.py`: dataclass defaults,
+  field-type replacement, Polish↔English loader translation (both
+  formats), K01/G01/K02 fixture round-trip, BOM Polish-name stability,
+  cabinet-without-handles behaviour.
+
+Test posture: `kuchnie_core` **578 → 605 pass**. No pre-existing test
+touched. `kitchen-erp` (38/3/12) and `kitchen-cam` (292/35/13) baselines
+verified unchanged.
+
 ### Added — ADR-012 Extension 3: `HingeGeometry` on `BlumHinge`
 
 Third of the six `kuchnie_core.model` extensions ADR-012 requires.

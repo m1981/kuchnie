@@ -5,6 +5,7 @@ from .model import (
     CabinetInstance,
     DecompositionResult,
     EdgeBand,
+    HandleSpec,
     Kitchen,
     Panel,
     PanelRole,

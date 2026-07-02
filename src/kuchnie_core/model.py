@@ -102,6 +102,28 @@ class Panel:
 
 
 @dataclass
+class HandleSpec:
+    """Handle specification for a cabinet's front-facing pulls (ADR-012 §4).
+
+    Replaces the loose ``handles: dict`` field that previously lived on
+    ``CabinetInstance``. All values English (AGENTS.md rule); YAML loader
+    translates Polish keys/values (e.g. ``typ: relingowy`` → ``type: 'bar'``).
+
+    Fields:
+      * ``type``             — ``"bar"`` | ``"knob"`` | ``"profile"`` | ``"recessed"``
+      * ``spacing_mm``       — centre-to-centre distance between the two
+        mounting screws ("rozstaw" in Polish).
+      * ``hole_diameter_mm`` — pilot hole diameter for the mounting screws.
+      * ``position``         — ``"center"`` | ``"top"`` | ``"bottom"``
+        (vertical position of the handle on the front panel).
+    """
+    type: str = "bar"
+    spacing_mm: float = 128.0
+    hole_diameter_mm: float = 5.0
+    position: str = "center"
+
+
+@dataclass
 class Accessory:
     """A hardware item — not cut from board, purchased as-is."""
     id: str
@@ -152,7 +174,7 @@ class CabinetInstance:
     drawers: list[dict] = field(default_factory=list)
     shelves: list[dict] = field(default_factory=list)
     fronts: list[dict] = field(default_factory=list)
-    handles: dict = field(default_factory=dict)
+    handles: HandleSpec | None = None   # ADR-012 §4 — typed replacement for former dict
 
     def __post_init__(self) -> None:
         """Validate dimensions after construction."""

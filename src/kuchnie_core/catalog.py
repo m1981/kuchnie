@@ -16,6 +16,7 @@ from .model import (
     CabinetInstance,
     DecompositionResult,
     EdgeBand,
+    HandleSpec,
     MachiningOp,
     Panel,
     PanelRole,
@@ -26,6 +27,25 @@ _SIDE_ROLE: dict[str, PanelRole] = {
     "left":  PanelRole.LEFT_SIDE,
     "right": PanelRole.RIGHT_SIDE,
 }
+
+# ADR-012 §4 — English → Polish display map for user-facing BOM strings.
+# Model fields are English; the BOM output text is Polish (customer-facing).
+_HANDLE_TYPE_EN_TO_PL: dict[str, str] = {
+    "bar":      "relingowy",
+    "knob":     "kulisty",
+    "profile":  "profilowy",
+    "recessed": "wpuszczany",
+}
+
+
+def _handle_accessory_name(spec: HandleSpec) -> str:
+    """Polish BOM label for a ``HandleSpec`` — preserves pre-ADR-012 output.
+
+    Format: ``"Uchwyt <polish_type> (rozstaw <spacing>mm)"``. Falls back to
+    the raw English ``type`` when unknown, so future values propagate.
+    """
+    label = _HANDLE_TYPE_EN_TO_PL.get(spec.type, spec.type)
+    return f"Uchwyt {label} (rozstaw {int(spec.spacing_mm)}mm)"
 
 
 # ---------------------------------------------------------------------------
@@ -180,12 +200,11 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
         ))
 
     # -- Handles --
-    if cab.handles:
+    if cab.handles is not None:
         n = len([f for f in cab.fronts if f.get("typ") == "szufladowy"])
         r.accessories.append(Accessory(
             id=f"{cab.id}_handles",
-            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
-                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            name=_handle_accessory_name(cab.handles),
             type="handle",
             quantity=n,
         ))
@@ -307,11 +326,10 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
         ))
 
     # -- Handles --
-    if cab.handles and door_fronts:
+    if cab.handles is not None and door_fronts:
         r.accessories.append(Accessory(
             id=f"{cab.id}_handles",
-            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
-                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            name=_handle_accessory_name(cab.handles),
             type="handle",
             quantity=len(door_fronts),
         ))
@@ -433,11 +451,10 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
         ))
 
     # -- Handles --
-    if cab.handles and door_fronts:
+    if cab.handles is not None and door_fronts:
         r.accessories.append(Accessory(
             id=f"{cab.id}_handles",
-            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
-                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            name=_handle_accessory_name(cab.handles),
             type="handle",
             quantity=len(door_fronts),
         ))
@@ -574,12 +591,11 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         ))
 
     # -- Handles --
-    if cab.handles:
+    if cab.handles is not None:
         n = len([f for f in cab.fronts if f.get("typ") == "szufladowy"])
         r.accessories.append(Accessory(
             id=f"{cab.id}_handles",
-            name=f"Uchwyt {cab.handles.get('typ', 'standard')} "
-                 f"(rozstaw {cab.handles.get('rozstaw', '')}mm)",
+            name=_handle_accessory_name(cab.handles),
             type="handle",
             quantity=n,
         ))

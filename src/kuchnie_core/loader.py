@@ -12,7 +12,65 @@ from pathlib import Path
 
 import yaml
 
-from .model import CabinetInstance, Kitchen, Row, WorktopSegment
+from .model import CabinetInstance, HandleSpec, Kitchen, Row, WorktopSegment
+
+
+# ── Handle translation tables (ADR-012 §4) ────────────────────
+
+_HANDLE_TYPE_PL_TO_EN = {
+    "relingowy": "bar",
+    "reling":    "bar",
+    "kulisty":   "knob",
+    "kula":      "knob",
+    "profilowy": "profile",
+    "profil":    "profile",
+    "wpuszczany": "recessed",
+    "frezowany":  "recessed",
+}
+
+_HANDLE_POSITION_PL_TO_EN = {
+    "srodek_frontu": "center",
+    "srodek":        "center",
+    "centrum":       "center",
+    "gora":          "top",
+    "góra":          "top",
+    "dol":           "bottom",
+    "dól":           "bottom",
+}
+
+
+def _handle_spec_from_polish(d: dict | None) -> HandleSpec | None:
+    """Polish YAML ``uchwyty`` block → ``HandleSpec``.
+
+    Returns ``None`` for an empty/missing dict so ``if cab.handles is not None``
+    still short-circuits when the fixture has no handles.
+    """
+    if not d:
+        return None
+    return HandleSpec(
+        type=_HANDLE_TYPE_PL_TO_EN.get(d.get("typ", "bar"), d.get("typ", "bar")),
+        spacing_mm=float(d.get("rozstaw", 128.0)),
+        hole_diameter_mm=float(d.get("srednica_otworu", 5.0)),
+        position=_HANDLE_POSITION_PL_TO_EN.get(
+            d.get("pozycja", "center"), d.get("pozycja", "center")
+        ),
+    )
+
+
+def _handle_spec_from_schema(d: dict | None) -> HandleSpec | None:
+    """Schema-format (English keys) handles dict → ``HandleSpec``.
+
+    Values are already English; this is a straight field lift with type
+    coercion and safe defaults.
+    """
+    if not d:
+        return None
+    return HandleSpec(
+        type=d.get("type", "bar"),
+        spacing_mm=float(d.get("spacing_mm", 128.0)),
+        hole_diameter_mm=float(d.get("hole_diameter_mm", 5.0)),
+        position=d.get("position", "center"),
+    )
 
 
 def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
@@ -47,7 +105,7 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         drawers=k["wnetrze"].get("szuflady", []),
         shelves=k["wnetrze"].get("polki", []),
         fronts=k.get("fronty", []),
-        handles=k.get("uchwyty", {}),
+        handles=_handle_spec_from_polish(k.get("uchwyty")),
         # Plinth (0 for wall cabinets)
         plinth_height_mm=k.get("nozki", {}).get("wysokosc", 0),
     )
@@ -96,7 +154,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
             }
             for f in cab_data.get("fronts", [])
         ],
-        handles=cab_data.get("handles", {}),
+        handles=_handle_spec_from_schema(cab_data.get("handles")),
     )
 
 
