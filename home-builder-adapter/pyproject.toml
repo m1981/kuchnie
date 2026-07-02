@@ -1,9 +1,12 @@
 [project]
-name = "kitchen-generator"
+name = "home-builder-adapter"
 version = "0.1.0"
-description = "Config-driven kitchen cabinet generator for Blender"
+description = "Blender scene → kuchnie_core.Kitchen extractor (Anti-Corruption Layer for home_builder_5)"
 requires-python = ">=3.10"
-dependencies = []
+# bpy is the host-provided heavy dependency (Blender interpreter). ADR-009.
+dependencies = [
+    "kuchnie-core",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
