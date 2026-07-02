@@ -1,3 +1,5 @@
+> Type: D | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: BOM, cost estimation, purchasing, rules admin, ops UI | ADRs: 011
+
 # Kitchen App - Professional BOM System
 
 A professional-grade Bill of Materials (BOM) generation system for kitchen cabinet design and costing.

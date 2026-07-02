@@ -1,3 +1,5 @@
+> Type: C+F | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Sales tool — first-visit 2.5D previews + decor picker | ADRs: 008, 011
+
 # Krono Compositor MVP
 
 A **2.5D image compositing engine** for real-time kitchen interior visualization. Users interactively swap materials (wood, marble, stone) on pre-rendered 3D kitchen scenes and see photorealistic results in ~500ms.

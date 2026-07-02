@@ -1,3 +1,5 @@
+> Type: F | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Blender scene → kuchnie_core.Kitchen extractor | ADRs: 009
+
 # home-builder-adapter
 
 Blender adapter that extracts kitchen data from a `home_builder_5` scene and
