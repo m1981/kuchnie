@@ -39,6 +39,10 @@ class MachiningOp:
     Coordinate system (panel lying flat, viewed from the machined face):
       x_mm  = distance from LEFT edge of panel
       y_mm  = distance from BOTTOM edge of panel (front edge for carcass sides)
+
+    Fields ``face`` and ``drill_type`` (ADR-012 §2) let downstream CAM
+    filter and route operations without string-matching on ``note``.
+    Both default to safe values so existing constructors are unchanged.
     """
     type: str              # "drill", "groove", "rabbet", "dado"
     x_mm: float = 0
@@ -48,6 +52,13 @@ class MachiningOp:
     width_mm: float = 0     # for groove/rabbet
     length_mm: float = 0    # for groove
     note: str = ""
+    # ADR-012 §2 — discriminators for CAM routing:
+    face: str = "inside"    # "inside" | "outside" | "front" | "back"
+    drill_type: str = ""    # "" | "system32" | "hinge_cup" | "hinge_screw"
+                            # | "hinge_dowel" | "dowel_connector"
+                            # | "minifix" | "handle" | "shelf_pin"
+                            # (open string; kitchen-cam may extend the
+                            # vocabulary without a core dependency inversion)
 
 
 @dataclass

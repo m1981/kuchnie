@@ -7,6 +7,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased] — 2026-07-01 — Architecture decisions codified
 
+### Added — ADR-012 Extension 2: `MachiningOp.face` + `MachiningOp.drill_type`
+
+Second of the six `kuchnie_core.model` extensions ADR-012 requires.
+
+- `MachiningOp.face: str = "inside"` — which face of the panel the
+  operation is applied to (`inside` | `outside` | `front` | `back`).
+  Default `"inside"` matches every operation kuchnie_core produces
+  today (LEGRABOX runner-mount screws are drilled from the inside face
+  of the carcass side panel).
+- `MachiningOp.drill_type: str = ""` — CAM discriminator with the
+  ADR-012 §2 vocabulary (`system32`, `hinge_cup`, `hinge_screw`,
+  `hinge_dowel`, `dowel_connector`, `minifix`, `handle`, `shelf_pin`).
+  Open string, not enum, so kitchen-cam can extend the vocabulary
+  without a core dependency inversion. Default `""` = unclassified;
+  classifying LEGRABOX runner ops belongs in the ADR-010 rewrite of
+  `kitchen-cam.machining`.
+- Both new fields are additive with safe defaults — every existing
+  `MachiningOp(...)` call site keeps working unchanged. The LEGRABOX
+  ops in `legrabox.py` and `blum_drawers.py` are not touched;
+  `test_machining_op.py::TestLegraboxRunnerOpDefaults` locks in that
+  they carry `face="inside"` via the default.
+- 7 new tests in `tests/test_machining_op.py` covering: field defaults,
+  full ADR-012 vocabulary acceptance, open-string extensibility, and
+  the LEGRABOX-decomposer real-output regression guard.
+
+Test posture: `kuchnie_core` **558 → 565 pass**. No pre-existing test
+touched.
+
 ### Added — ADR-012 Extension 1: `PanelRole` enum + `Panel.role` field
 
 First of the six `kuchnie_core.model` extensions ADR-012 requires to unblock
