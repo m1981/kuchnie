@@ -1,3 +1,5 @@
+> ⚠️ STALE (audit 2026-07): describes pre-ADR-010 state (no migration plan, deprecated modules listed as features). Trust `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` instead. Do not act on this file without re-verification.
+
 # Kitchen CAM — Roadmap
 
 > **Last updated:** 2026-06-23

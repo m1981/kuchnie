@@ -1,3 +1,5 @@
+> ⚠️ STALE (audit 2026-07): describes pre-ADR-010 state (deprecated modules listed as primary pipeline). Trust `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` instead. Do not act on this file without re-verification.
+
 # kitchen-cam — Parametric Cabinet Generator
 
 > Parametryczny system do projektowania mebli kuchennych.

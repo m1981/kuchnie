@@ -1,3 +1,5 @@
+> ⚠️ STALE (audit 2026-07): describes pre-ADR-009/010/011 state (references `kitchen-cad/`, `kitchen-plugin/`, `kitchen-app/`). Trust `AGENTS.md` component roster instead. Do not act on this file without re-verification.
+
 # Documentation Routing Instructions
 
 When making changes, update the RIGHT files based on what changed.

@@ -1,3 +1,5 @@
+> ⚠️ STALE (audit 2026-07): describes pre-ADR-010 state (deprecated modules as primary pipeline). Trust `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` instead. Do not act on this file without re-verification.
+
 # Kitchen CAM — Overview
 
 **Kitchen CAM** is a kitchen cabinet design and manufacturing automation system. It takes high-level cabinet specifications and generates the detailed panel cutting lists, edge banding instructions, and CNC drilling templates needed to actually build them.
