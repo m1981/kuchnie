@@ -15,6 +15,39 @@ from dataclasses import dataclass
 from .model import Accessory
 
 
+# ── Hinge drilling geometry (ADR-012 §3) ─────────────────────────
+
+@dataclass(frozen=True)
+class HingeGeometry:
+    """All drilling geometry a CAM stage needs for one hinge.
+
+    Field defaults match Blum CLIP top 110° standard European kitchen
+    hinges (35mm cup, 45mm plate screw spacing, 3mm pilot holes).
+    Concrete ``BlumHinge`` subclasses may override the ``geometry``
+    property to supply different values if a hinge in the catalog has
+    non-standard drilling.
+
+    Coordinate note (matches ``MachiningOp`` on the door panel):
+      * ``edge_to_cup_centre_mm`` — distance from door edge to cup centre
+        along the short axis (X), i.e. how far the cup sits inboard from
+        the hinge-side edge.
+      * ``first_position_mm``     — distance from door top edge to the
+        first hinge cup centre along the long axis (Y).
+      * ``screw_spacing_mm``      — centre-to-centre of the two plate
+        screws (parallel to the door edge).
+      * ``screw_offset_x_mm``     — distance from door edge to the plate
+        screw axis.
+    """
+    cup_diameter_mm: int          # cup drill diameter (typically 35mm)
+    cup_drill_depth_mm: int       # cup drill depth (typically 13mm)
+    edge_to_cup_centre_mm: float = 5.0
+    screw_spacing_mm: float = 45.0
+    screw_offset_x_mm: float = 9.5
+    screw_diameter_mm: float = 3.0
+    screw_depth_mm: float = 2.0
+    first_position_mm: float = 100.0   # first cup centre from door top
+
+
 # ── Abstract base ────────────────────────────────────────────────
 
 class BlumHinge(ABC):
@@ -81,6 +114,21 @@ class BlumHinge(ABC):
             name=f"Zawias {self.name}",
             type="hinge",
             quantity=quantity,
+        )
+
+    @property
+    def geometry(self) -> HingeGeometry:
+        """Return drilling geometry for this hinge (ADR-012 §3).
+
+        Default implementation combines the concrete subclass's cup
+        drilling data (``cup_diameter_mm`` / ``cup_drill_depth_mm``)
+        with the standard European plate-screw geometry from ADR-012.
+        Subclasses may override this property to provide non-standard
+        values.
+        """
+        return HingeGeometry(
+            cup_diameter_mm=self.cup_diameter_mm,
+            cup_drill_depth_mm=self.cup_drill_depth_mm,
         )
 
 

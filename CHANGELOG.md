@@ -43,6 +43,31 @@ and ordering polish, no behaviour change.
 Test posture: `kuchnie_core` **565 pass** (unchanged — all edits are
 documentation, field ordering, or handoff-doc updates).
 
+### Added — ADR-012 Extension 3: `HingeGeometry` on `BlumHinge`
+
+Third of the six `kuchnie_core.model` extensions ADR-012 requires.
+
+- `kuchnie_core.blum_hinges.HingeGeometry` — frozen dataclass carrying
+  every drilling parameter a CAM stage needs for one hinge: cup drill
+  (diameter, depth), plate-screw geometry (spacing, offset, pilot
+  diameter and depth), edge-to-cup-centre offset, and first cup position
+  from door top. Field defaults match Blum CLIP top 110° standard
+  European geometry from ADR-012 §3.
+- `BlumHinge.geometry` — concrete `@property` on the abstract base.
+  Combines each subclass's already-implemented `cup_diameter_mm` /
+  `cup_drill_depth_mm` with the ADR-012 default plate-screw geometry.
+  Zero changes to `BlumClipTop110` / `95` / `155`; they inherit the
+  property. Subclasses can override the property if a hinge in the
+  catalog has non-standard drilling.
+- Re-exported at package root: `from kuchnie_core import HingeGeometry`.
+- 13 new tests in `tests/test_blum_hinges.py` covering: direct
+  construction defaults, frozen-immutability guard, concrete-hinge
+  round-trip (cup values propagate, plate-screw defaults preserved),
+  factory-produced hinges expose `geometry`, package-root re-export.
+
+Test posture: `kuchnie_core` **565 → 578 pass**. No pre-existing test
+touched. `kitchen-erp` / `kitchen-cam` unaffected.
+
 ### Added — ADR-012 Extension 2: `MachiningOp.face` + `MachiningOp.drill_type`
 
 Second of the six `kuchnie_core.model` extensions ADR-012 requires.

@@ -14,6 +14,7 @@ from kuchnie_core.blum_hinges import (
     BlumClipTop95,
     BlumClipTop155,
     HingeFactory,
+    HingeGeometry,
     calculate_hinge_count,
 )
 
@@ -185,3 +186,79 @@ class TestHingeToAccessory:
         assert acc.type == "hinge"
         assert acc.quantity == 2
         assert "110" in acc.name
+
+
+# -- HingeGeometry (ADR-012 §3) --------------------------------------
+
+class TestHingeGeometryDefaults:
+    """Direct construction — field defaults match ADR-012 §3."""
+
+    def test_required_cup_fields(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.cup_diameter_mm == 35
+        assert g.cup_drill_depth_mm == 13
+
+    def test_edge_to_cup_centre_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.edge_to_cup_centre_mm == 5.0
+
+    def test_screw_spacing_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.screw_spacing_mm == 45.0
+
+    def test_screw_offset_x_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.screw_offset_x_mm == 9.5
+
+    def test_screw_diameter_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.screw_diameter_mm == 3.0
+
+    def test_screw_depth_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.screw_depth_mm == 2.0
+
+    def test_first_position_default(self):
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        assert g.first_position_mm == 100.0
+
+    def test_is_frozen(self):
+        """Geometry is immutable — CAM code should not mutate it."""
+        g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
+        with pytest.raises(Exception):
+            g.cup_diameter_mm = 40  # type: ignore[misc]
+
+
+class TestHingeGeometryFromBlumHinge:
+    """``BlumHinge.geometry`` produces sensible defaults from each concrete hinge."""
+
+    def test_cliptop_110_geometry_cup_matches_hinge(self):
+        h = BlumClipTop110()
+        g = h.geometry
+        assert g.cup_diameter_mm == h.cup_diameter_mm
+        assert g.cup_drill_depth_mm == h.cup_drill_depth_mm
+
+    def test_cliptop_110_geometry_uses_adr012_defaults(self):
+        # Standard European plate-screw geometry.
+        g = BlumClipTop110().geometry
+        assert g.screw_spacing_mm == 45.0
+        assert g.screw_offset_x_mm == 9.5
+        assert g.edge_to_cup_centre_mm == 5.0
+
+    def test_all_concrete_hinges_have_geometry(self):
+        # Every concrete BlumHinge exposes .geometry — mandatory for CAM.
+        for h in (BlumClipTop110(), BlumClipTop95(), BlumClipTop155()):
+            assert isinstance(h.geometry, HingeGeometry)
+            assert h.geometry.cup_diameter_mm == 35
+            assert h.geometry.cup_drill_depth_mm == 13
+
+    def test_factory_hinges_expose_geometry(self):
+        # HingeFactory-produced hinges also carry geometry (regression guard).
+        h = HingeFactory.get_default()
+        assert isinstance(h.geometry, HingeGeometry)
+        assert h.geometry.cup_diameter_mm == 35
+
+    def test_package_root_reexports_hinge_geometry(self):
+        # from kuchnie_core import HingeGeometry must work — CAM callers do this.
+        from kuchnie_core import HingeGeometry as ReexportedGeometry
+        assert ReexportedGeometry is HingeGeometry

@@ -13,7 +13,7 @@ from .model import (
 )
 from .construction import ConstructionMethod, ConstructionMethodRegistry
 from .blum_drawers import DrawerSystem, DrawerSystemFactory, TandemboxAntaro, Merivobox, Legrabox
-from .blum_hinges import BlumHinge, BlumClipTop110, BlumClipTop95, BlumClipTop155, HingeFactory, calculate_hinge_count
+from .blum_hinges import BlumHinge, BlumClipTop110, BlumClipTop95, BlumClipTop155, HingeFactory, HingeGeometry, calculate_hinge_count
 from .recipe import PanelRecipe, RecipeSchema, evaluate_formula, RecipeValidationError
 from .decomposer import decompose
 from .bom import BOM, BOMItem, calculate_bom
