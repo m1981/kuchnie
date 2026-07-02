@@ -8,9 +8,14 @@ node_modules
 log.md
 .synthadoc/extracted/
 *.pyc
-__pychache__
+__pycache__/
 .DS_Store
 .idea
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
 
 # Generated
 data/dist/
