@@ -50,4 +50,4 @@ All freeze documentation lives in `docs/freeze/`:
 | [`FREEZE-PLAN.md`](docs/freeze/FREEZE-PLAN.md) | The original freeze plan |
 | [`TEST-BASELINE-2026-07.md`](docs/freeze/TEST-BASELINE-2026-07.md) | Per-component test results at freeze |
 | [`DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) | Trust audit of all 109 tracked `.md` files |
-| [`RESUME-MENU.md`](docs/freeze/RESUME-MENU.md) | → points to `RESUME.md` |
+| [`RESUME.md`](RESUME.md) | Post-freeze resume checklist |

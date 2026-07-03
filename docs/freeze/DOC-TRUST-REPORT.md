@@ -30,6 +30,7 @@
 | `docs/file-naming-convention.md` | **TRUSTED** | Naming rules are convention-only, no path claims to verify. |
 | `docs/GLOSSARY.md` | **TRUSTED** | Terms match codebase usage. |
 | `docs/home-build-5-external-plugin.md` | **TRUSTED** | Describes external `home_builder_5` addon analysis. Path `/Users/michal/PycharmProjects/home_builder_5` verified exists. No rename sensitivity. |
+| `docs/prompt-dump-knowledge.md` | **ARCHIVE** | Generic LLM prompt template. Claims `docs/specs/` and `docs/architecture/` routing dirs — neither exists in this repo. Not referenced by any other file. Superseded by AGENTS.md § Documentation conventions. Late grade (missed by trust audit). |
 | `docs/README.md` | **TRUSTED** | Index file, no stale claims found. |
 | `docs/freeze/TEST-BASELINE-2026-07.md` | **TRUSTED** | `kuchnie_core: 663 pass` matches `git log` (ADR-012 §1–§6 all landed). |
 | `docs/vision/00-mission.md` | **TRUSTED** | User-authored brief. No code paths referenced. |

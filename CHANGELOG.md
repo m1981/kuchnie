@@ -16,7 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - `docs/00-brief-understanding.md`: tombstone linking to `docs/vision/00-mission.md` (fixes ADR-009/011 dangling refs)
 - `docs/freeze/DOC-TRUST-REPORT.md`: full trust audit of all 109 tracked `.md` files
-- `docs/freeze/RESUME-MENU.md`: deferred items for post-freeze resumption
+- `docs/freeze/RESUME-MENU.md`: deferred items for post-freeze resumption (absorbed into RESUME.md, deleted)
 
 ### Stamped
 - `kitchen-cam/README.md`, `kitchen-cam/ROADMAP.md`, `kitchen-cam/docs/specs/overview.md`, `docs/session-handoff-2026-07-02.md`: `> ⚠️ STALE` markers pointing to authoritative docs
