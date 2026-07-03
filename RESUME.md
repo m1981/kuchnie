@@ -33,7 +33,7 @@ duplicate what AGENTS.md already says. One commit:
 
 **Then** retag `freeze-2026-07`.
 
-### 1. Execute ADR-010/012 deletion queue — UNBLOCKED
+### 1. ~~Execute ADR-010/012 deletion queue~~ — DONE (commit `115d953`)
 
 Rewire `kitchen-cam/src/kitchen_cam/machining.py` to import from
 `kuchnie_core.model` instead of `kitchen_cam.models`. Delete the
@@ -94,8 +94,9 @@ Decision: keep Pydantic at schema boundary, or refactor out.
 
 ### 7. Post-deletion housekeeping
 
-- After (1): rewrite `kitchen-cam/README.md`, `ROADMAP.md`,
-  `docs/specs/overview.md` (currently STALE-stamped).
+- ~~After (1): rewrite `kitchen-cam/README.md`, `ROADMAP.md`,~~
+  ~~`docs/specs/overview.md` (currently STALE-stamped).~~ **DONE** (commit
+  `8c5ba33`; `docs/specs/overview.md` did not exist).
 - After (3): rename kitchen-erp recipes to "cost recipes" to kill name
   collision with `kuchnie_core/recipe.py`.
 
