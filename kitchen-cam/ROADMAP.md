@@ -1,101 +1,57 @@
-> ⚠️ STALE (audit 2026-07): describes pre-ADR-010 state (no migration plan, deprecated modules listed as features). Trust `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` instead. Do not act on this file without re-verification.
+> Reader: kitchen-cam contributors | Enables: prioritising next CAM work |
+> Update-trigger: after each milestone ships or scope changes
 
 # Kitchen CAM — Roadmap
 
-> **Last updated:** 2026-06-23
-> **Current status:** Phase 1 completed, Phase 2 in progress
+> **Last updated:** 2026-07-03
+> **Status:** ADR-010 migration complete. kitchen-cam is now a pure downstream
+> consumer of `kuchnie_core`.
 
 ---
 
-## Phase 1 — Core Engine ✅ (Completed)
+## Done
 
-- [x] Pydantic models (CorpusSpec, Panel, DrillPoint, HingeSpec, HandleSpec)
-- [x] Panel calculator (base, drawer, wall, 2-door)
-- [x] System 32 drill engine
-- [x] Blum CLIP 35mm drill engine
-- [x] Handle drilling (relingowe)
-- [x] CSV cutting list generator
-- [x] CSV edge banding generator
-- [x] Comparison tools (CSV + DXF)
-- [x] Shelf pin drilling from Corpus .cmk reference
-- [x] Comprehensive test suite
-
----
-
-## Phase 2.5 — Discriminated Union Config ✅ (Completed 2026-06-24)
-
-- [x] Discriminated union config pattern (BaseDoorConfig, BaseDrawerConfig, CornerBlindConfig)
-- [x] CornerInternalConfig — diagonal back, carousel (Optima 800/900)
-- [x] SinkConfig — optional sorting drawer
-- [x] CargoConfig — cargo basket (MINI_40)
-- [x] OvenConfig — reinforced shelf, ventilation
-- [x] CarouselType, CargoType, CornerSide enums
-- [x] Backward-compatible model_validator for legacy flat fields
-- [x] Variant-specific panel calculators (7 types)
-- [x] 292 tests passing
+- [x] **ADR-010 rename** — old name replaced with `kitchen-cam/`
+- [x] **ADR-012 model extensions** — `PanelRole`, `MachiningOp.face/drill_type`,
+      `HingeGeometry`, `HandleSpec`, `ShelfPinSpec`, `CabinetConfig` union
+- [x] **Deletion queue** — removed `models.py`, `panel_calculator.py`,
+      `csv_generator.py` and all deprecated test files
+- [x] **machining.py** — rewired to import from `kuchnie_core.model`
+- [x] **System 32** drilling (raster + shelf pins)
+- [x] **Blum CLIP top** hinge cup + screw drilling
+- [x] **Handle** drilling on drawer fronts
+- [x] **CSV/DXF comparison** utilities
 
 ---
 
-## Phase 2 — Extended Features 🔄 (In Progress)
+## Next
 
-- [x] Validator — geometry checks for drill points
-- [x] Mirror — X/Y reflection for drill points and edges
-- [x] Grooving — back panel groove calculation
-- [x] Edge drilling — holes in panel edges
-- [x] Flip-up fronts — AVENTOS-style hinges
-- [x] Handle configuration — multiple handle types
-- [x] Hinge configuration — multiple hinge specs
-- [x] Materials catalog — material validation
-- [ ] DXF generator with layers (ezdxf)
-    - Layer `CUT` (red) — panel outlines
-    - Layer `DRILL` (green) — holes as circles
-    - Layer `NOTES` (gray) — dimensions, names
-- [ ] YAML loader — corpus definitions in files
+### DXF export
+
+- [ ] DXF drilling file generator (panel → DXF with layers: CUT, DRILL, NOTES)
+- [ ] LEGRABOX side-panel DXF with drilling patterns for CNC
+- [ ] CLI: `kitchen-cam drill kitchen.json --out drilling/`
+
+### Machining extensions
+
 - [ ] Hettich Sensys support (screw_spacing=52mm)
-- [ ] Minifix / cam-lock (∅15mm)
+- [ ] Minifix / cam-lock (∅15mm) edge drilling
 - [ ] Dowel connectors (∅8mm)
-- [ ] Drawer runners (Blum METABOX, TANDEM, LEGRABOX)
+- [ ] AVENTOS flip-up front mounting plates
+- [ ] Groove (back-panel rabbet) as MachiningOp
+
+### Integration
+
+- [ ] Wire kitchen-cam into kitchen-erp pipeline (BOM → CAM enrichment → DXF)
+- [ ] Read `kuchnie_core.Kitchen` from JSON intermediate format
 
 ---
 
-## Phase 3 — User Interface (Planned)
+## Not planned
 
-- [ ] CLI interface (Typer/Click)
-- [ ] Streamlit UI — corpus visualization in browser
-- [ ] Import from Corpus LTR (CSV)
-- [ ] Cut optimization (minimize waste)
-- [ ] Barcode labels
-- [ ] Integration with e-rozkroj (FastCut API)
-
----
-
-## Phase 4 — Production Integration (Future)
-
-- [ ] REST API for external tools
-- [ ] G-code export (NC machine code)
-- [ ] Multi-corpus kitchen generator
-- [ ] Cost estimation (material + labor)
-- [ ] PDF report generation
-
----
-
-## Technical Debt
-
-- [ ] Consolidate architecture documentation
-- [ ] Add YAML schema validation
-- [ ] Create CorpusSpec format documentation
-- [ ] Add integration tests for full pipeline
-
----
-
-## Completed Milestones
-
-| Milestone        | Date       | Tests           | Coverage            |
-| ---------------- | ---------- | --------------- | ------------------- |
-| Phase 1 Core     | 2026-06-17 | Run `make test` | Run `make coverage` |
-| Phase 2 Features | 2026-06-23 | Run `make test` | Run `make coverage` |
-
-> **Note:** Run `make test` to verify all tests pass. Run `make coverage` for current coverage report.
+- Panel decomposition — owned by `kuchnie_core.catalog`
+- CSV cut lists — owned by `kuchnie_core.export`
+- Material catalog — owned by `catalog/`
 
 ---
 

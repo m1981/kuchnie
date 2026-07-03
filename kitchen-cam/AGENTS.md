@@ -11,7 +11,7 @@ CAM enrichment layer for kitchen cabinet manufacturing. Takes panels produced by
 handles, dowels). Exports DXF drilling files for CNC shops.
 
 **One sentence:** `kuchnie_core` produces panels → `kitchen-cam` adds drilling →
-DXF/CSV for CNC.
+DXF for CNC.
 
 ---
 
@@ -35,54 +35,25 @@ DXF/CSV for CNC.
 ```
 src/kitchen_cam/
 ├── __init__.py
-├── models.py           Pydantic models (Panel, DrillPoint, CorpusSpec, etc.)
-                        NOTE: these are kitchen-cam-local models used by
-                        panel_calculator. They WILL be consolidated with
-                        kuchnie_core.model in a future migration.
-├── panel_calculator.py Cabinet → panel decomposition (Pydantic-based).
-                        NOTE: duplicates kuchnie_core.catalog + decomposer.
-                        Will be deleted when migration to kuchnie_core is done.
-├── machining.py        System32, hinges, handles — adds DrillPoint[] to panels.
-├── csv_generator.py    CSV cut list and edging export.
-├── dxf/
-│   └── legrabox_side_panel.py  Blum LEGRABOX DXF side-panel generator.
-tests/
-├── unit/               Model validation, edge banding, hinge config, materials.
-├── integration/        Drill templates, grooving, edge drilling, mirror.
-├── e2e/                Full pipeline: spec → panels → drilling → CSV/DXF.
+├── machining.py        System32, hinges, handles — imports from kuchnie_core.model
+└── dxf/
+    └── legrabox_side_panel.py  Blum LEGRABOX DXF side-panel generator
 ```
 
-**Dependency direction:** `dxf/` → `machining.py` → `models.py`.
-Never import downward. `models.py` imports nothing from this package.
-
----
-
-## The migration status (ADR-010)
-
-**Renamed from:** `kitchen-cad/` (commit history preserved in git)
-
-**Current state:** Renamed and cleaned. `panel_calculator.py` and `models.py`
-are kept as temporary compatibility shims — they duplicate `kuchnie_core.catalog`
-and `kuchnie_core.model`. The plan is to:
-
-1. Make `panel_calculator.py` delegate to `kuchnie_core.decompose()` instead of
-   computing panels locally
-2. Delete `models.py` and have all code use `kuchnie_core.model` directly
-3. Delete `panel_calculator.py` once tests use `kuchnie_core` directly
-
-This is **follow-up work** tracked separately from the rename.
+**Dependency direction:** `dxf/` → `machining.py` → `kuchnie_core.model`.
+Never import downward. `kuchnie_core` owns all domain types.
 
 ---
 
 ## Adding a machining operation
 
-1. Add a `DrillType` enum value in `models.py` (or `kuchnie_core.model` after
-   migration)
-2. Write an `apply_<operation>(panels, spec) -> list[Panel]` function in
+1. Extend `MachiningOp.drill_type` vocabulary if needed (open string in
+   `kuchnie_core.model`)
+2. Write an `apply_<operation>(panels, cab) -> list[Panel]` function in
    `machining.py`
 3. Register it in `apply_all_drilling()`
-4. Write tests in `tests/integration/` verifying drill positions, diameters,
-   depths
+4. Write tests in `tests/test_drill_engine.py` verifying drill positions,
+   diameters, depths
 5. Run `pytest -v` — all tests must pass
 
 ---
@@ -91,7 +62,7 @@ This is **follow-up work** tracked separately from the rename.
 
 1. Create `src/kitchen_cam/dxf/<name>.py`
 2. Use `ezdxf` to generate the DXF
-3. Import panel dimensions from `kitchen_cam.models` (or `kuchnie_core.model`)
+3. Import panel dimensions from `kuchnie_core.model`
 4. Write tests that verify geometry output
 5. Run `pytest -v`
 
@@ -99,20 +70,7 @@ This is **follow-up work** tracked separately from the rename.
 
 ## Key constraints
 
-- `ezdxf` is only in `dxf/` — keep it out of `machining.py` and `models.py`
-- `kuchnie_core` is the canonical panel model — kitchen-cam models are temporary
-- CNC company requires DXF format — don't add other output formats without
-  checking their requirements
-- All coordinates are in mm, relative to bottom-left of the panel's inside face
-
----
-
-## Documentation conventions
-
-| What | Where |
-|---|---|
-| "We chose X because Y" | `docs/adr/NNN-<slug>.md` (in repo root) |
-| "The formula is Z" | Docstring + test assertion |
-| "What changed" | `CHANGELOG.md` |
-| "How to use this" | Module docstring at top of file |
-| "How the system works" | `AGENTS.md` (this file) |
+- `ezdxf` is only in `dxf/` — keep it out of `machining.py`
+- `kuchnie_core` is the canonical panel model — kitchen-cam never redefines it
+- CNC company requires DXF format — don't add output formats without checking
+- All coordinates in mm, relative to bottom-left of panel's inside face

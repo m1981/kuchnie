@@ -1,116 +1,87 @@
-> Type: A | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: CAM enrichment — machining ops, DXF for CNC | ADRs: 010, 012
+> Type: A | Status: active | Role: CAM enrichment — machining ops, DXF for CNC | ADRs: 010, 012
 
-> ⚠️ STALE (audit 2026-07): describes pre-ADR-010 state (deprecated modules listed as primary pipeline). Trust `kitchen-cam/AGENTS.md` + `docs/adr/010-*.md` instead. Do not act on this file without re-verification.
+# kitchen-cam — CAM Enrichment Layer
 
-# kitchen-cam — Parametric Cabinet Generator
+Downstream consumer of `kuchnie_core`. Takes panels produced by the
+decomposition engine and adds machining operations for CNC manufacturing.
 
-> Parametryczny system do projektowania mebli kuchennych.
-> Z definicji korpusu generuje listy cięcia (CSV) i planowane DXF.
+**One sentence:** `kuchnie_core` produces panels → `kitchen-cam` adds drilling →
+DXF/CSV for CNC.
 
 ## Quick Start
 
 ```python
-from kitchen_cam.models import CorpusSpec, BaseDoorConfig, HingeSpec
-from kitchen_cam.panel_calculator import calculate_panels
+from kuchnie_core.model import CabinetInstance, HandleSpec
+from kuchnie_core.blum_hinges import HingeGeometry
+from kuchnie_core.decomposer import decompose
 from kitchen_cam.machining import apply_all_drilling
-from kitchen_cam.csv_generator import generate_cutting_csv, generate_edging_csv
 
-spec = CorpusSpec(
-    id="K01",
-    name="Szafka dolna 800",
-    width=800, height=720, depth=510,
-    hinges=HingeSpec(count=2),
-    config=BaseDoorConfig(shelves=[352], doors=[2]),
+cab = CabinetInstance(
+    id="K01", type="dolna_drzwiowa", description="Szafka dolna 800",
+    width_mm=800, height_mm=720, depth_mm=510,
+    body_material="U119_VL", back_material="HDF_3mm", front_material="U119_EM",
+    hinges=HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13),
+    handles=HandleSpec(spacing_mm=256.0),
+    shelves=[{"id": "P1", "pozycja_od_dolu": 352}],
+    fronts=[{"id": "F1", "typ": "drzwiowy_lewy", "ilosc_zawiasow": 2}],
 )
 
-panels = calculate_panels(spec)
-panels = apply_all_drilling(panels, spec)
-generate_cutting_csv(panels, "output/ciecie.csv")
-generate_edging_csv(panels, "output/oklejanie.csv")
+result = decompose(cab)
+panels = apply_all_drilling(result.panels, cab)
+# Each panel now has machining_ops with drill positions
 ```
 
 ## Architecture
 
 ```
-CorpusSpec (config: CabinetConfig)
+kuchnie_core.CabinetInstance
     │
     ▼
-panel_calculator.calculate_panels()
-    │  ┌── _calculate_base_door()
-    │  ├── _calculate_base_drawer()
-    │  ├── _calculate_corner_blind()
-    │  ├── _calculate_corner_internal()
-    │  ├── _calculate_sink()
-    │  ├── _calculate_cargo()
-    │  └── _calculate_oven()
+kuchnie_core.decomposer.decompose()
+    │  → DecompositionResult (panels + accessories)
     ▼
-machining.apply_all_drilling()
-    │  ┌── apply_system32()
-    │  ├── apply_hinges()
-    │  └── apply_handles()
+kitchen_cam.machining.apply_all_drilling()
+    │  ┌── apply_system32()   — ∅5mm shelf-pin + System32 raster
+    │  ├── apply_hinges()     — ∅35mm cup + ∅3mm screws (Blum CLIP top)
+    │  └── apply_handles()    — ∅5mm handle holes on drawer fronts
     ▼
-csv_generator.generate_*_csv()
+panels with machining_ops[]  →  DXF export (dxf/)
 ```
-
-## Cabinet Types (8 variants)
-
-| Config Type            | Description           | Key Fields                          |
-| ---------------------- | --------------------- | ----------------------------------- |
-| `BaseDoorConfig`       | Standard door cabinet | `shelves[]`, `doors[]`              |
-| `BaseDrawerConfig`     | Drawer cabinet        | `drawers[]`                         |
-| `CornerBlindConfig`    | L-shaped corner blind | `corner_side`, `second_width`       |
-| `CornerInternalConfig` | Corner with carousel  | `carousel` (Optima 800/900)         |
-| `SinkConfig`           | Sink cabinet          | `has_sorting_drawer`                |
-| `CargoConfig`          | Cargo basket          | `cargo_type`, `cargo_color`         |
-| `OvenConfig`           | Oven housing          | `cavity_height`, `reinforced_shelf` |
-
-## Documentation
-
-| Document                                             | Description                            |
-| ---------------------------------------------------- | -------------------------------------- |
-| [ROADMAP.md](ROADMAP.md)                             | Development roadmap                    |
-| [CHANGELOG.md](CHANGELOG.md)                         | Version history                        |
-| [docs/architecture.md](docs/architecture.md)         | System architecture (Mermaid diagrams) |
-| [docs/design.md](docs/design.md)                     | Design documentation (Polish)          |
-| [docs/specs/cabinet-variants.md](docs/specs/cabinet-variants.md) | 12 cabinet type specification          |
-| [docs/specs/legrabox-spec.md](docs/specs/legrabox-spec.md)       | LEGRABOX hardware specification        |
 
 ## Project Structure
 
 ```
 kitchen-cam/
 ├── src/kitchen_cam/
-│   ├── models.py              # Domain models (Pydantic)
-│   ├── panel_calculator.py    # Panel geometry (7 variant calculators)
-│   ├── machining.py           # Drill point calculations (System32, hinges, handles)
-│   ├── dxf/                   # Drawer-runner DXF assets (Legrabox)
-│   └── csv_generator.py       # CSV output
+│   ├── __init__.py
+│   ├── machining.py              # System32, hinges, handles (imports kuchnie_core)
+│   └── dxf/
+│       └── legrabox_side_panel.py  # Blum LEGRABOX DXF side-panel generator
 │
-├── tests/                     # 292 tests
-│   ├── unit/                  # Unit tests
-│   ├── integration/           # Integration tests
-│   └── e2e/                   # End-to-end tests
+├── tests/                        # 45 tests
+│   ├── test_drill_engine.py      # Machining ops: System32, hinges, handles
+│   └── test_compare.py           # CSV/DXF comparison utilities
 │
-├── generators/                # Standalone DXF generators
-│   └── legrabox_side_panel.py
-│
-└── docs/                      # Documentation
+└── CHANGELOG.md
 ```
 
-## Requirements
+## Key Constraints
 
-```bash
-pip install pydantic>=2.0
-```
-
-## Tests
-
-```bash
-python -m pytest tests/ -v
-```
+- `ezdxf` stays in `dxf/` only — keep it out of `machining.py`
+- `kuchnie_core.model` is the canonical panel/cabinet model — kitchen-cam
+  never defines its own (ADR-010)
+- CNC company requires DXF format — don't add output formats without
+  checking their requirements
+- All coordinates in mm, relative to bottom-left of panel's inside face
 
 ## Technical Standards
 
 - **System 32**: 32mm grid, 37mm offset, ∅5mm holes
 - **Blum CLIP top**: ∅35mm cup, 45mm screw spacing
 - **LEGRABOX**: Side heights N (66.5mm) / M (90.5mm) / K (128.5mm) / C (177mm)
+
+## Tests
+
+```bash
+cd kitchen-cam && .venv/bin/python -m pytest tests -v
+```
