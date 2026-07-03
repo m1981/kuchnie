@@ -1,22 +1,6 @@
-"""Drill engine — calculate hole positions for System 32, hinges, handles.
+"""Machining operations — calculate hole positions for System 32, hinges, handles.
 
-.. attention:: ADR-010 migration in progress
-    This module CURRENTLY imports from ``kitchen_cam.models`` (deprecated,
-    duplicates ``kuchnie_core.model``). Per ADR-010 it must be rewritten to
-    consume ``kuchnie_core.model.Panel`` + ``kuchnie_core.model.CabinetInstance``
-    directly. The rewrite is BLOCKED by field-parity gaps:
-
-      * ``kuchnie_core.model.Panel`` has no ``role`` field (needed to select
-        LEFT_SIDE / RIGHT_SIDE / FRONT_DOOR / FRONT_DRAWER)
-      * ``kuchnie_core.model.MachiningOp`` has no ``face`` / ``drill_type``
-        discriminators (needed for CAM layer routing)
-      * ``kuchnie_core.model.CabinetInstance`` has no typed ``HingeSpec`` /
-        ``HandleSpec`` / ``ShelfPinSpec``, no discriminated ``config`` union
-
-    See ADR-012 for the exact extensions required. Do NOT add features
-    here — extend ``kuchnie_core.model`` first, then this file gets
-    rewritten to import from it.
-
+Imports from ``kuchnie_core.model`` (ADR-010 migration complete).
 All coordinates are in mm, relative to bottom-left of the panel's
 INSIDE face (face toward cabinet interior).
 
@@ -29,24 +13,22 @@ from __future__ import annotations
 
 import copy
 
-from kitchen_cam.models import (
-    SYSTEM32_OFFSET,
-    SYSTEM32_SPACING,
-    BaseDoorConfig,
-    BaseDrawerConfig,
-    CargoConfig,
-    CornerBlindConfig,
-    CornerInternalConfig,
-    CorpusSpec,
-    DrillFace,
-    DrillPoint,
-    DrillType,
-    HingeSpec,
-    OvenConfig,
+from kuchnie_core.blum_hinges import HingeGeometry
+from kuchnie_core.model import (
+    CabinetInstance,
+    HandleSpec,
+    MachiningOp,
     Panel,
     PanelRole,
-    SinkConfig,
 )
+
+
+# ---------------------------------------------------------------------------
+# System 32 constants (local to kitchen-cam)
+# ---------------------------------------------------------------------------
+
+SYSTEM32_OFFSET: float = 37.0   # mm from front/bottom edge
+SYSTEM32_SPACING: float = 32.0  # mm between holes
 
 
 # ---------------------------------------------------------------------------
@@ -75,77 +57,82 @@ def _shelf_pin_offsets(max_per_row: int, raster: float = SYSTEM32_SPACING) -> li
     return offsets
 
 
-def _get_shelf_positions(spec: CorpusSpec) -> list[float]:
-    """Extract shelf positions from config, if available."""
-    config = spec.config
-    if isinstance(config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig)):
-        return config.shelves
-    return []
+def _get_shelf_positions(cab: CabinetInstance) -> list[float]:
+    """Extract shelf positions from legacy shelves list."""
+    return [
+        s.get("pozycja_od_dolu", 0)
+        for s in cab.shelves
+        if "pozycja_od_dolu" in s
+    ]
 
 
-def _get_door_hinge_counts(spec: CorpusSpec) -> list[int]:
-    """Extract door hinge counts from config, if available."""
-    config = spec.config
-    if isinstance(config, (BaseDoorConfig, CornerBlindConfig, CornerInternalConfig, SinkConfig, CargoConfig)):
-        return config.doors
-    return []
+def _get_door_hinge_counts(cab: CabinetInstance) -> list[int]:
+    """Extract door hinge counts from legacy fronts list."""
+    return [
+        f.get("ilosc_zawiasow", 2)
+        for f in cab.fronts
+        if f.get("typ", "").startswith("drzwiowy")
+    ]
 
 
-def apply_system32(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
-    """Add System 32 (∅5 mm) drill points to LEFT and RIGHT side panels.
+def apply_system32(panels: list[Panel], cab: CabinetInstance) -> list[Panel]:
+    """Add System 32 (∅5 mm) machining ops to LEFT and RIGHT side panels.
 
     Returns a new list with copied panels — the originals are not modified.
     """
     panels = [copy.deepcopy(p) for p in panels]
-    shelves = _get_shelf_positions(spec)
+    shelves = _get_shelf_positions(cab)
 
     for panel in panels:
         if panel.role not in (PanelRole.LEFT_SIDE, PanelRole.RIGHT_SIDE):
             continue
 
         # --- main System 32 column (front row, X=37) ---
-        for y in system32_y_positions(panel.height):
-            panel.drill_points.append(DrillPoint(
-                x=SYSTEM32_OFFSET,
-                y=y,
-                diameter=5.0,
-                depth=13.0,
-                face=DrillFace.INSIDE,
-                drill_type=DrillType.SYSTEM_32,
-                label=f"S32 y={y:.0f}",
+        for y in system32_y_positions(panel.height_mm):
+            panel.machining_ops.append(MachiningOp(
+                type="drill",
+                x_mm=SYSTEM32_OFFSET,
+                y_mm=y,
+                diameter_mm=5.0,
+                depth_mm=13.0,
+                face="inside",
+                drill_type="system32",
+                note=f"S32 y={y:.0f}",
             ))
 
         # --- shelf-pin holes at shelf positions ---
         if not shelves:
             continue
 
-        front_x = spec.shelf_pin_front_offset
-        back_x = spec.depth - spec.shelf_pin_back_offset
-        offsets = _shelf_pin_offsets(spec.shelf_pin_max_per_row)
+        front_x = cab.shelf_pins.front_offset_mm
+        back_x = cab.depth_mm - cab.shelf_pins.back_offset_mm
+        offsets = _shelf_pin_offsets(cab.shelf_pins.max_per_row)
 
         for shelf_pos in shelves:
-            y_shelf = spec.panel_thickness + shelf_pos
+            y_shelf = cab.thickness_side_mm + shelf_pos
 
             for dy in offsets:
-                panel.drill_points.append(DrillPoint(
-                    x=front_x,
-                    y=round(y_shelf + dy, 2),
-                    diameter=spec.shelf_pin_diameter,
-                    depth=spec.shelf_pin_depth,
-                    face=DrillFace.INSIDE,
-                    drill_type=DrillType.SHELF_PIN,
-                    label=f"shelf front y={y_shelf + dy:.0f}",
+                panel.machining_ops.append(MachiningOp(
+                    type="drill",
+                    x_mm=front_x,
+                    y_mm=round(y_shelf + dy, 2),
+                    diameter_mm=cab.shelf_pins.diameter_mm,
+                    depth_mm=cab.shelf_pins.depth_mm,
+                    face="inside",
+                    drill_type="shelf_pin",
+                    note=f"shelf front y={y_shelf + dy:.0f}",
                 ))
 
             for dy in offsets:
-                panel.drill_points.append(DrillPoint(
-                    x=back_x,
-                    y=round(y_shelf + dy, 2),
-                    diameter=spec.shelf_pin_diameter,
-                    depth=spec.shelf_pin_depth,
-                    face=DrillFace.INSIDE,
-                    drill_type=DrillType.SHELF_PIN,
-                    label=f"shelf back y={y_shelf + dy:.0f}",
+                panel.machining_ops.append(MachiningOp(
+                    type="drill",
+                    x_mm=back_x,
+                    y_mm=round(y_shelf + dy, 2),
+                    diameter_mm=cab.shelf_pins.diameter_mm,
+                    depth_mm=cab.shelf_pins.depth_mm,
+                    face="inside",
+                    drill_type="shelf_pin",
+                    note=f"shelf back y={y_shelf + dy:.0f}",
                 ))
 
     return panels
@@ -167,14 +154,22 @@ def _hinge_positions(front_height: float, count: int, first_pos: float) -> list[
     return [round(bottom + i * step, 2) for i in range(count)]
 
 
-def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
-    """Add hinge drill points to FRONT_DOOR panels.
+def apply_hinges(panels: list[Panel], cab: CabinetInstance) -> list[Panel]:
+    """Add hinge drill machining ops to FRONT_DOOR panels.
 
     Returns a new list with copied panels — the originals are not modified.
     """
     panels = [copy.deepcopy(p) for p in panels]
-    hinge = spec.hinges
-    door_hinge_counts = _get_door_hinge_counts(spec)
+
+    if not cab.handles:
+        # No handles spec, but hinges may still exist via default HingeGeometry
+        pass
+
+    hinge = cab.hinges  # HingeGeometry or None
+    if hinge is None:
+        return panels
+
+    door_hinge_counts = _get_door_hinge_counts(cab)
 
     for panel in panels:
         if panel.role != PanelRole.FRONT_DOOR:
@@ -190,29 +185,31 @@ def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
         if count == 0:
             continue
 
-        positions = _hinge_positions(panel.height, count, hinge.first_position)
-        x_cup = hinge.edge_to_cup_centre
-        half_spacing = hinge.screw_spacing / 2
+        positions = _hinge_positions(panel.height_mm, count, hinge.first_position_mm)
+        x_cup = hinge.edge_to_cup_centre_mm
+        half_spacing = hinge.screw_spacing_mm / 2
 
         for y_cup in positions:
-            panel.drill_points.append(DrillPoint(
-                x=x_cup,
-                y=y_cup,
-                diameter=hinge.cup_diameter,
-                depth=hinge.cup_depth,
-                face=DrillFace.INSIDE,
-                drill_type=DrillType.HINGE_CUP,
-                label=f"cup y={y_cup:.0f}",
+            panel.machining_ops.append(MachiningOp(
+                type="drill",
+                x_mm=x_cup,
+                y_mm=y_cup,
+                diameter_mm=hinge.cup_diameter_mm,
+                depth_mm=hinge.cup_drill_depth_mm,
+                face="inside",
+                drill_type="hinge_cup",
+                note=f"cup y={y_cup:.0f}",
             ))
             for dy, suffix in ((-half_spacing, "top"), (half_spacing, "bot")):
-                panel.drill_points.append(DrillPoint(
-                    x=x_cup,
-                    y=round(y_cup + dy, 2),
-                    diameter=hinge.screw_diameter,
-                    depth=hinge.screw_depth,
-                    face=DrillFace.INSIDE,
-                    drill_type=DrillType.HINGE_SCREW,
-                    label=f"screw {suffix} y={y_cup + dy:.0f}",
+                panel.machining_ops.append(MachiningOp(
+                    type="drill",
+                    x_mm=x_cup,
+                    y_mm=round(y_cup + dy, 2),
+                    diameter_mm=hinge.screw_diameter_mm,
+                    depth_mm=hinge.screw_depth_mm,
+                    face="inside",
+                    drill_type="hinge_screw",
+                    note=f"screw {suffix} y={y_cup + dy:.0f}",
                 ))
 
     return panels
@@ -222,35 +219,36 @@ def apply_hinges(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
 # Handles
 # ---------------------------------------------------------------------------
 
-def apply_handles(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
+def apply_handles(panels: list[Panel], cab: CabinetInstance) -> list[Panel]:
     """Add handle drill holes to drawer fronts.
 
     Returns a new list with copied panels — the originals are not modified.
     """
     panels = [copy.deepcopy(p) for p in panels]
 
-    if not spec.handles:
+    if not cab.handles:
         return panels
 
-    handles = spec.handles
-    half_spacing = handles.spacing / 2
+    handles: HandleSpec = cab.handles
+    half_spacing = handles.spacing_mm / 2
 
     for panel in panels:
         if panel.role != PanelRole.FRONT_DRAWER:
             continue
 
-        cx = panel.width / 2
-        cy = panel.height / 2
+        cx = panel.width_mm / 2
+        cy = panel.height_mm / 2
 
         for dx in (-half_spacing, half_spacing):
-            panel.drill_points.append(DrillPoint(
-                x=round(cx + dx, 2),
-                y=cy,
-                diameter=handles.hole_diameter,
-                depth=0,
-                face=DrillFace.INSIDE,
-                drill_type=DrillType.HANDLE,
-                label=f"handle x={cx + dx:.0f}",
+            panel.machining_ops.append(MachiningOp(
+                type="drill",
+                x_mm=round(cx + dx, 2),
+                y_mm=cy,
+                diameter_mm=handles.hole_diameter_mm,
+                depth_mm=0,
+                face="inside",
+                drill_type="handle",
+                note=f"handle x={cx + dx:.0f}",
             ))
 
     return panels
@@ -260,12 +258,12 @@ def apply_handles(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
 # Convenience
 # ---------------------------------------------------------------------------
 
-def apply_all_drilling(panels: list[Panel], spec: CorpusSpec) -> list[Panel]:
+def apply_all_drilling(panels: list[Panel], cab: CabinetInstance) -> list[Panel]:
     """Run all drill macros in the standard order.
 
     Returns a new list with copied panels — the originals are not modified.
     """
-    panels = apply_system32(panels, spec)
-    panels = apply_hinges(panels, spec)
-    panels = apply_handles(panels, spec)
+    panels = apply_system32(panels, cab)
+    panels = apply_hinges(panels, cab)
+    panels = apply_handles(panels, cab)
     return panels

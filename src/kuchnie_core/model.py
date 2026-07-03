@@ -5,9 +5,14 @@ Everything above panels is organizational. Everything on panels
 (edges, machining ops) is decoration on that physical piece.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Union
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from .blum_hinges import HingeGeometry
 
 
 class PanelRole(str, Enum):
@@ -307,6 +312,7 @@ class CabinetInstance:
     fronts: list[dict] = field(default_factory=list)
     handles: HandleSpec | None = None   # ADR-012 §4 — typed replacement for former dict
     shelf_pins: ShelfPinSpec = field(default_factory=ShelfPinSpec)  # ADR-012 §5
+    hinges: HingeGeometry | None = None  # drilling geometry for CAM stage (from blum_hinges)
     # ADR-012 §6 — typed variant config. Legacy loose fields above stay
     # until callers migrate; ``loader._synthesise_config`` populates this
     # from them on load. Directly-constructed instances (tests, code) may

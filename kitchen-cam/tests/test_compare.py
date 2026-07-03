@@ -231,30 +231,21 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
-# Self-tests (using our own generated output)
+# Self-tests (pure comparison logic — no deprecated module dependencies)
 # ---------------------------------------------------------------------------
 
 class TestCsvSelfCompare:
-    """Compare our own generated CSV against itself — should always pass."""
+    """CSV comparison utility tests."""
 
     def test_csv_self_compare(self, tmp_path):
-        """Generate CSV, then compare against itself."""
-        from kitchen_cam.models import CorpusSpec, HingeSpec
-        from kitchen_cam.panel_calculator import calculate_panels
-        from kitchen_cam.csv_generator import generate_cutting_csv
+        """Comparing a CSV against itself should always pass."""
+        content = "id;width;height\nA;100;200\nB;300;400\n"
+        ref = tmp_path / "ref.csv"
+        gen = tmp_path / "gen.csv"
+        ref.write_text(content)
+        gen.write_text(content)
 
-        spec = CorpusSpec(
-            id="T1", name="Test", corpus_type="base_door",
-            width=800, height=720, depth=510,
-            doors=[2], hinges=HingeSpec(count=2),
-        )
-        panels = calculate_panels(spec)
-        ref_path = tmp_path / "ref.csv"
-        gen_path = tmp_path / "gen.csv"
-        generate_cutting_csv(panels, ref_path)
-        generate_cutting_csv(panels, gen_path)
-
-        diff = compare_csv(ref_path, gen_path)
+        diff = compare_csv(ref, gen)
         assert diff.ok, diff.report()
 
     def test_csv_detects_missing_row(self, tmp_path):
