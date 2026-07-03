@@ -24,6 +24,15 @@ execution status: [`MIGRATION-STATUS.md`](MIGRATION-STATUS.md).
 
 ## Resume menu (priority order)
 
+### 0. Execute Part C — merge governance rules into AGENTS.md
+
+Add the six Layer 0 rules from `docs/DOC-GOVERNANCE-KIT.md` to root
+`AGENTS.md` under a new "Documentation governance" section. Merge, don't
+duplicate what AGENTS.md already says. One commit:
+`docs: merge charter governance rules into AGENTS.md`.
+
+**Then** retag `freeze-2026-07`.
+
 ### 1. Execute ADR-010/012 deletion queue — UNBLOCKED
 
 Rewire `kitchen-cam/src/kitchen_cam/machining.py` to import from

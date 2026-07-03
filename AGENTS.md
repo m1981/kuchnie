@@ -144,6 +144,38 @@ Never import downward. `model.py` imports nothing from this package.
 
 ---
 
+## Documentation governance
+
+> Source: `docs/DOC-GOVERNANCE-KIT.md` Layer 0. Merged here at resume time.
+
+1. **Evidence protocol.** Every repo-state claim in any doc or review is tagged
+   `VERIFIED(cmd)` / `INFERRED(basis)` / `UNVERIFIED`. Hedging is not a
+   substitute for the tag.
+2. **New-doc gate.** No new `.md` without three answers in the file header:
+   `Reader:`, `Enables:`, `Update-trigger:`. Empty answer = don't write the
+   doc.
+3. **New-component gate.** No new top-level package without an accepted ADR
+   stating purpose, why existing components can't absorb it, and lifespan.
+   Run a duplication scan first. This rule would have prevented the
+   kitchen-cam fork.
+4. **Review output contract.** Audits/reviews are: 3-line TL;DR → 2–4 P0
+   findings with evidence → one matrix → unknowns → one question. No praise
+   without a named trade-off.
+5. **Diagram labels.** Every architecture diagram is captioned `OBSERVED`
+   (each arrow grep-verified) or `PROPOSED`. No unlabeled arrows.
+6. **Freshness ritual.** At every freeze or quarter boundary, rerun the trust
+   audit (`docs/freeze/FREEZE-PLAN.md`, Prompt 1 pattern) and re-stamp.
+   STALE stamps are removed only by rewriting against code.
+
+Trigger moments: session start → read order · new .md → gate 2 ·
+new component → gate 3 · any review → contract 4 · new diagram → rule 5 ·
+freeze/quarter → ritual 6.
+
+Enforced by: Layer 1 (pre-commit hook, `scripts/check-governance.sh`) and
+Layer 2 (LLM semantic gate, `scripts/llm-doc-gate.sh`, manual for now).
+
+---
+
 ## Key formulas (reference, verified by tests)
 
 | Formula | Source | Test |
