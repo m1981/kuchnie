@@ -60,8 +60,8 @@ Outputs `kuchnie_core.Kitchen` JSON to stdout.
 
 | Concern | Where |
 |---|---|
-| Domain model (Kitchen, Row, CabinetInstance) | `src/kuchnie_core/model.py` |
-| Cabinet geometry, panels, standards, validator | `src/kuchnie_core/` |
+| Domain model (Kitchen, Row, CabinetInstance) | `kuchnie-core/src/kuchnie_core/model.py` |
+| Cabinet geometry, panels, standards, validator | `kuchnie-core/src/kuchnie_core/` |
 | CAM output — cut list CSV, drilling DXF | `kitchen-cam/` |
 | Rendering, decor swap, sales screenshot | `krono-compositor-mvp/` |
 | BOM, cost, purchasing | `kitchen-erp/` (formerly `kitchen-app/`) |

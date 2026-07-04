@@ -12,7 +12,7 @@ from pathlib import Path
 # Load schema for validation.
 # Schema is owned by home-builder-adapter (its output contract, per ADR-009).
 # Path: <repo>/home-builder-adapter/schemas/manifest_v2.schema.json
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = _REPO_ROOT / "home-builder-adapter" / "schemas" / "manifest_v2.schema.json"
 
 

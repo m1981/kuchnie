@@ -12,8 +12,13 @@ STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
 EXEMPT='^(docs/archive/|attic/|docs/adr/|catalog/docs/adr/|docs/freeze/|features/archive/|.*/docs/archive/|.*/docs/archived/|CHANGELOG|.*CHANGELOG)'
 
 # ── Check 1: dead component names in newly added lines ──────────────
+# Pure renames (R100) carry no new content; path-limited diffs can't pair
+# them with their old location and would report every line as added.
+PURE_RENAMES=$(git diff --cached --name-status --diff-filter=R \
+  | awk '$1 == "R100" { print $NF }')
 for f in $STAGED; do
   echo "$f" | grep -Eq "$EXEMPT" && continue
+  printf '%s\n' "$PURE_RENAMES" | grep -Fxq "$f" && continue
   case "$f" in *.md|*.py|*.toml|*.json|*.yaml|*.yml) ;; *) continue ;; esac
   hits=$(git diff --cached -U0 -- "$f" \
     | grep -E '^\+' | grep -Ev '^\+\+\+' \
@@ -58,7 +63,7 @@ done
 for f in $STAGED; do
   case "$f" in
     catalog/README.md|kitchen-erp/README.md|kitchen-cam/README.md|\
-    home-builder-adapter/README.md|krono-compositor-mvp/README.md|src/README.md)
+    home-builder-adapter/README.md|krono-compositor-mvp/README.md|kuchnie-core/README.md)
       git show ":$f" | head -8 | grep -q '> Type:' || {
         say "✗ $f lost its '> Type: ... | Status: ...' header block"; fail=1; } ;;
   esac

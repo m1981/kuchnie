@@ -68,7 +68,7 @@ Baseline shows 38 pass / 3 fail / 13 errors / 1 collection error. Root cause: `t
 
 ### (c) Pydantic design tension
 
-`src/kuchnie_core/schema.py:23` imports `from pydantic import BaseModel`. Meanwhile `src/kuchnie_core/model.py` uses plain dataclasses exclusively. ADR-012 alternative 12a rationale states: *"kuchnie_core uses plain dataclasses by design (no Pydantic dep, no runtime coercion)."* The split is intentional (Pydantic at the YAML/JSON schema boundary, dataclasses in the domain core) but undocumented. Dependency now declared in `pyproject.toml` (D1 from trust audit). Whether Pydantic stays at the schema boundary or gets refactored out is a **resume decision** — see "ADR candidate: pydantic-boundary" in `RESUME.md`.
+`kuchnie-core/src/kuchnie_core/schema.py:23` imports `from pydantic import BaseModel`. Meanwhile `kuchnie-core/src/kuchnie_core/model.py` uses plain dataclasses exclusively. ADR-012 alternative 12a rationale states: *"kuchnie_core uses plain dataclasses by design (no Pydantic dep, no runtime coercion)."* The split is intentional (Pydantic at the YAML/JSON schema boundary, dataclasses in the domain core) but undocumented. Dependency now declared in `pyproject.toml` (D1 from trust audit). Whether Pydantic stays at the schema boundary or gets refactored out is a **resume decision** — see "ADR candidate: pydantic-boundary" in `RESUME.md`.
 
 ---
 

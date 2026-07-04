@@ -10,6 +10,7 @@ Covers:
 
 import json
 import sqlite3
+import sys
 from pathlib import Path
 
 import pytest
@@ -28,7 +29,14 @@ from kuchnie_core.materials.protocol import MaterialCatalog as Protocol
 
 # ── Paths ────────────────────────────────────────────────────────
 
-CATALOG_DIR = Path(__file__).resolve().parent.parent / "catalog"
+# Contract test against the sibling `catalog` component: its schema +
+# importer build the test DB. Dev-time-only dependency; kuchnie_core
+# source stays catalog-free.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+CATALOG_DIR = REPO_ROOT / "catalog"
 DATA_DIR = CATALOG_DIR / "data"
 ARCH_DIR = CATALOG_DIR / "docs" / "architecture"
 
@@ -38,6 +46,7 @@ SCHEMA_FILES = [
     "03-phase2-decor-structures-and-pairings.sql",
     "04-phase4a-variant-availability.sql",
     "05-phase4b-property-flags.sql",
+    "06-phase5-producer-generalization.sql",
 ]
 
 

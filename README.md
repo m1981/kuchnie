@@ -12,7 +12,7 @@ never the other way.
 
 | Component | Type | Role (per ADR-011 stage table) | Freeze status |
 |---|---|---|---|
-| `src/kuchnie_core/` | A — Domain hub | Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. | 663/663 clean |
+| `kuchnie-core/` | A — Domain hub | Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. | 663/663 clean |
 | `kitchen-cam/` | A — CAM enrichment | Machining ops (System32, hinges, handles), DXF for CNC. Downstream of `kuchnie_core`. | 292 pass / 35 xfail / 13 xpass |
 | `catalog/` | C — Material catalog service | Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | 227/227 clean |
 | `kitchen-erp/` | D — BOM + ops UI | Cost estimation, purchasing, rules admin. Reflex + SQLModel. | 38 pass / 3 fail / 13 err |

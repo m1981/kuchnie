@@ -18,7 +18,7 @@ This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; ever
 
 | Component | Role | AGENTS.md | Defining ADR |
 |---|---|---|---|
-| `src/kuchnie_core/` | **Domain hub** — Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. Imported by everyone. | this file | 001, 002, 003 |
+| `kuchnie-core/` | **Domain hub** — Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. Imported by everyone. | this file | 001, 002, 003 |
 | `catalog/` | Material catalog service — Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | `catalog/AGENTS.md` | 008 |
 | `krono-compositor-mvp/` | **Sales tool (Stage 1)** — first-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | `krono-compositor-mvp/AGENTS.md` *(todo)* | 011 |
 | `kitchen-erp/` *(was `kitchen-app/`)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
@@ -48,7 +48,7 @@ This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; ever
 ## File map
 
 ```
-src/kuchnie_core/
+kuchnie-core/src/kuchnie_core/
 ├── model.py          Dataclasses. No logic. No imports from other modules.
 ├── catalog.py        Decompose functions per cabinet type. Imports model only.
 ├── decomposer.py     Thin dispatcher: type → catalog function. 20 lines.

@@ -30,7 +30,7 @@
 | Short name | Location | Owns words like |
 |---|---|---|
 | **Catalog** | `catalog/` | Decor, Edge, Variant, Pairing, Producer, Worktop, Availability |
-| **Core (glue)** | `src/kuchnie_core/` | Kitchen, Run, ConstructionMethod, MaterialResolver, ValidationGate, the YAML schema |
+| **Core (glue)** | `kuchnie-core/src/kuchnie_core/` | Kitchen, Run, ConstructionMethod, MaterialResolver, ValidationGate, the YAML schema |
 | **CAM** | `kitchen-cam/` | CorpusSpec, Panel, DrillPoint, EdgeBand, BaseDoorConfig (& siblings) |
 | **Plugin / 3D Render** | `kitchen-plugin/` | Cabinet (placement-aware), Wall, Room, Layout, CabinetGeometry, KitchenStandards, ManifestValidator |
 | **Compositor / 2.5D Render** | `krono-compositor-mvp/` | SceneCompositor, ZoneConfig (mask→texture), Pass (base/uv/mask/reflection/handle) |
@@ -49,7 +49,7 @@
 - **Not to be confused with:**
   - `HardwareSet` (Web context — a UI bundle of accessories)
   - Blender plugin's `GeoNodeHardware` (visual proxy only)
-- **File of record:** `src/kuchnie_core/model.py::Accessory`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::Accessory`
 - **Introduced by:** (pre-existing)
 
 ## ACL (Anti-Corruption Layer)
@@ -63,14 +63,14 @@
 ## BackType
 - **Context:** Core
 - **Definition:** Enum of how the back panel attaches to the carcass — `GROOVE`, `NAILED`, `RABBET`, `SCREWED`. Part of `ConstructionMethod`.
-- **File of record:** `src/kuchnie_core/construction.py::BackType`
+- **File of record:** `kuchnie-core/src/kuchnie_core/construction.py::BackType`
 - **Introduced by:** F001
 
 ## BOM (Bill of Materials)
 - **Context:** Web (presentation), Core (calculation)
 - **Definition:** Aggregated list of all panels, edges, accessories, and worktops required for a kitchen, with quantities, materials, and prices. Generated from a `DecompositionResult`.
 - **Not to be confused with:** cut list (which is panel-only, for CNC nesting)
-- **File of record:** `src/kuchnie_core/bom.py::BOM`
+- **File of record:** `kuchnie-core/src/kuchnie_core/bom.py::BOM`
 - **Introduced by:** (pre-existing)
 
 # C
@@ -88,14 +88,14 @@
 - **Not to be confused with:**
   - `CabinetTemplate` (the recipe/macro)
   - `CabinetUI` (display wrapper in Web)
-- **File of record:** `src/kuchnie_core/model.py::CabinetInstance`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::CabinetInstance`
 - **Introduced by:** (pre-existing, refactored by F001)
 
 ## CabinetTemplate
 - **Context:** Core
 - **Definition:** A reusable cabinet "macro" — type, default dimensions, default sub-assemblies, allowed dimension ranges, recipe reference. The thing you pick from a sidebar. Borrowed pattern from PRO100.
 - **Not to be confused with:** `CabinetInstance` (a placed instance of a template)
-- **File of record:** `src/kuchnie_core/templates.py::CabinetTemplate`
+- **File of record:** `kuchnie-core/src/kuchnie_core/templates.py::CabinetTemplate`
 - **Introduced by:** F003
 - **Related ADR:** `features/F003-template-registry/adr.md`
 
@@ -114,7 +114,7 @@
 ## CAM Readiness
 - **Context:** Core (validation)
 - **Definition:** Gate 4 of the validation gates. A kitchen is CAM-ready when every panel has positive dimensions, every edge is assigned, every machining feature is fully resolved, and no cutout exceeds panel bounds. Refuse export if any check fails.
-- **File of record:** `src/kuchnie_core/validation/gates.py::CAMReadinessGate`
+- **File of record:** `kuchnie-core/src/kuchnie_core/validation/gates.py::CAMReadinessGate`
 - **Introduced by:** F004
 
 ## ConstructionMethod
@@ -123,14 +123,14 @@
 - **Not to be confused with:**
   - Plugin's `draw_construction()` UI panel (just visual grouping in Blender)
   - The `corpusThickness` setting in `config_parser.py` (legacy flat dict)
-- **File of record:** `src/kuchnie_core/construction.py::ConstructionMethod`
+- **File of record:** `kuchnie-core/src/kuchnie_core/construction.py::ConstructionMethod`
 - **Introduced by:** F001
 - **Related ADR:** `features/F001-construction-method/adr.md`
 
 ## CutPiece
 - **Context:** CAD
 - **Definition:** A single row in the cut list CSV — one panel with length, width, thickness, material, edge banding spec, grain direction. The format the CNC company expects.
-- **File of record:** `src/kuchnie_core/export/cutlist_csv.py::CutPiece`
+- **File of record:** `kuchnie-core/src/kuchnie_core/export/cutlist_csv.py::CutPiece`
 - **Introduced by:** (pre-existing)
 
 # D
@@ -138,7 +138,7 @@
 ## DecompositionResult
 - **Context:** Core
 - **Definition:** The output of decomposing a `CabinetInstance` into its panels and accessories. Used as input to BOM calculation and cut list generation.
-- **File of record:** `src/kuchnie_core/model.py::DecompositionResult`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::DecompositionResult`
 - **Introduced by:** (pre-existing)
 
 ## Decor
@@ -197,7 +197,7 @@
 ## JoineryType
 - **Context:** Core
 - **Definition:** Enum of how panels join — `DOWEL_CAMLOCK`, `CONFIRMAT`, `DADO`, `BUTT_GLUE`. Part of `ConstructionMethod`.
-- **File of record:** `src/kuchnie_core/construction.py::JoineryType`
+- **File of record:** `kuchnie-core/src/kuchnie_core/construction.py::JoineryType`
 - **Introduced by:** F001
 
 # K
@@ -206,7 +206,7 @@
 - **Context:** Core
 - **Definition:** The top-level domain aggregate. Contains rows, worktop segments, global construction method, global material references. The thing serialized to `kitchen_config.yaml`.
 - **Not to be confused with:** `Project` (Web — wraps a Kitchen with customer/admin data)
-- **File of record:** `src/kuchnie_core/model.py::Kitchen`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::Kitchen`
 - **Introduced by:** (pre-existing)
 
 ## kitchen_config.yaml
@@ -229,7 +229,7 @@
 ## MachiningOp
 - **Context:** Core (legacy)
 - **Definition:** Original lightweight machining operation in `kuchnie_core/model.py`. Will be aligned with `MachiningFeature` or deprecated in F008.
-- **File of record:** `src/kuchnie_core/model.py::MachiningOp`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::MachiningOp`
 - **Status:** ⚠️ legacy — see F008 ADR for resolution.
 
 ## Material
@@ -241,13 +241,13 @@
 ## MaterialRef
 - **Context:** Core
 - **Definition:** A reference (by ID) to a catalog material. Cabinet stores `MaterialRef`s for body / front / back / shelf; never the material data itself.
-- **File of record:** `src/kuchnie_core/model.py::MaterialRef`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::MaterialRef`
 - **Introduced by:** F005
 
 ## MaterialResolver
 - **Context:** Core (service)
 - **Definition:** Service that translates a `MaterialRef` or `decor_id` into a `ResolvedMaterial` (texture path + edge spec + color hex + grain) by querying the Catalog.
-- **File of record:** `src/kuchnie_core/material_resolver.py::MaterialResolver`
+- **File of record:** `kuchnie-core/src/kuchnie_core/material_resolver.py::MaterialResolver`
 - **Introduced by:** F005
 
 # P
@@ -256,7 +256,7 @@
 - **Context:** Core
 - **Definition:** A single rectangular piece of board with dimensions, material reference, edge banding sides, role (side / top / bottom / shelf / back / door / drawer-front), and grain direction. **The atomic manufacturing unit** — all five commercial CAD systems converge on this.
 - **Not to be confused with:** `CutPiece` (the export-format representation of a Panel)
-- **File of record:** `src/kuchnie_core/model.py::Panel`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::Panel`
 - **Introduced by:** (pre-existing)
 
 ## Pairing
@@ -285,7 +285,7 @@
 ## Recipe
 - **Context:** Core
 - **Definition:** A YAML declaration of how to decompose a `CabinetTemplate` into panels — list of panels, each with dimension formulas, edge assignments, drill patterns, and material role references. Evaluated by the CAD-side `RecipeEngine`.
-- **File of record:** `src/kuchnie_core/recipes/*.yaml` (data) + `src/kuchnie_core/recipes.py` (model)
+- **File of record:** `kuchnie-core/src/kuchnie_core/recipes/*.yaml` (data) + `kuchnie-core/src/kuchnie_core/recipes.py` (model)
 - **Introduced by:** F002
 - **Related ADR:** `features/F002-recipe-engine/adr.md`
 
@@ -298,19 +298,19 @@
 ## ResolvedMaterial
 - **Context:** Core
 - **Definition:** The output of `MaterialResolver` — concrete texture path, edge spec, color hex, grain direction, ready for use by render adapter or cut list export.
-- **File of record:** `src/kuchnie_core/material_resolver.py::ResolvedMaterial`
+- **File of record:** `kuchnie-core/src/kuchnie_core/material_resolver.py::ResolvedMaterial`
 - **Introduced by:** F005
 
 ## Row
 - **Context:** Core, Web
 - **Definition:** A linear sequence of cabinets along one wall in a `Kitchen`. v1.0 excludes islands and slanted walls. Has a wall reference, start position, direction, and ordered `cabinets` list.
-- **File of record:** `src/kuchnie_core/model.py::Row`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::Row`
 - **Introduced by:** (pre-existing)
 
 ## RowPlacement
 - **Context:** Core, Web
 - **Definition:** Cabinet position expressed as `(row_id, slot_index)`. The web app's coordinate model. Converted to `WallPlacement` by the render adapter.
-- **File of record:** `src/kuchnie_core/placement.py::RowPlacement`
+- **File of record:** `kuchnie-core/src/kuchnie_core/placement.py::RowPlacement`
 - **Introduced by:** F007
 
 # S
@@ -323,7 +323,7 @@
 ## SubAssembly
 - **Context:** Core
 - **Definition:** A composable group inside a `CabinetInstance` — a drawer box, a door pair, a shelf bank, a cargo unit. Holds its own panels and accessories. Borrowed pattern from Winner Flex.
-- **File of record:** `src/kuchnie_core/model.py::SubAssembly`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::SubAssembly`
 - **Introduced by:** F001 (refactored into existing model)
 
 # T
@@ -348,13 +348,13 @@
 ## ValidationGate
 - **Context:** Core
 - **Definition:** A check that runs at a specific stage. Four gates exist: Cabinet (1), Row (2), Kitchen (3), CAMReadiness (4). Each app calls the gates relevant to its stage.
-- **File of record:** `src/kuchnie_core/validation/gates.py`
+- **File of record:** `kuchnie-core/src/kuchnie_core/validation/gates.py`
 - **Introduced by:** F004
 
 ## ValidationResult
 - **Context:** Core
 - **Definition:** Output of a gate — list of issues (errors + warnings), each with a code, message, and affected entity ID. Truthy if no errors.
-- **File of record:** `src/kuchnie_core/validation/result.py::ValidationResult`
+- **File of record:** `kuchnie-core/src/kuchnie_core/validation/result.py::ValidationResult`
 - **Introduced by:** F004
 
 ## Variant
@@ -373,7 +373,7 @@
 ## WorktopSegment
 - **Context:** Core
 - **Definition:** A piece of countertop covering one or more adjacent base cabinets. Has length, depth, thickness, material reference, joints, cutouts (sink, hob).
-- **File of record:** `src/kuchnie_core/model.py::WorktopSegment`
+- **File of record:** `kuchnie-core/src/kuchnie_core/model.py::WorktopSegment`
 - **Introduced by:** (pre-existing)
 
 ---

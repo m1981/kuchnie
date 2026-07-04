@@ -87,7 +87,7 @@ the catalog service.
 
 ### 6. DECISION — ADR candidate: pydantic-boundary
 
-`src/kuchnie_core/schema.py` uses `pydantic.BaseModel` at the YAML/JSON
+`kuchnie-core/src/kuchnie_core/schema.py` uses `pydantic.BaseModel` at the YAML/JSON
 boundary. `model.py` uses plain dataclasses. ADR-012 alt 12a says
 "no Pydantic dep by design." Dependency now declared in `pyproject.toml`.
 Decision: keep Pydantic at schema boundary, or refactor out.
