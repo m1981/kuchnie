@@ -6,6 +6,12 @@ The configurator API works (6 endpoints, 227 tests pass) but the frontend is
 still a flat catalog grid. Users can't build a kitchen — they can only browse
 decors. The mockup-builder.html shows the target UX: grid + sidebar assembly.
 
+**Motivation (ground truth: ADR-005)**: templates make repeat work cheap.
+The sidebar is free slot composition + saved templates, deliberately chosen
+over the rigid wizard flow the backend implements — load a proven
+combination, swap one slot, save as a new template. The wizard API stays the
+validation/recommendation engine; it does not dictate the UI's step order.
+
 ## Walking Skeleton (thinnest end-to-end slice)
 
 ```
@@ -42,16 +48,21 @@ decors. The mockup-builder.html shows the target UX: grid + sidebar assembly.
 
 ### What's OUT of scope (later)
 
-- Search input
-- Filter dropdowns (producer, type, structure, color)
-- Role tab filtering
+- Search input *(since shipped)*
+- Filter dropdowns (producer, type, structure, color) *(since shipped)*
+- Role tab filtering *(since shipped — slot focus auto-filters, advisory per ADR-005)*
 - Edge auto-assignment
-- Compatibility check
-- Template list in sidebar
+- Compatibility check *(partially shipped — pairing recommendations + role
+  mismatch warnings + discontinued flags, all advisory)*
+- Template list in sidebar *(since shipped)*
 - Compare mode
-- Two-tone toggle (wall_front just shows as optional slot)
+- Two-tone toggle *(since shipped — wall_front advances after base_front
+  with explicit "pomiń" skip; decision persisted)*
 - Responsive/mobile
 - Keyboard navigation
+
+Backend sync (session replay on BOM export, shareable token) also shipped —
+see CHANGELOG and ADR-005.
 
 ## Architecture
 

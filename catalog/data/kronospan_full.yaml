@@ -597,14 +597,14 @@ decors:
   group_name: COLOR BASIC
   producer_slug: kronospan
   img: K0514.jpg
-  color_family_slug: szary
+  color_family_slug: kremowy
   ncs: 0505-Y20R
 - business_id: '0515'
   name: Piaskowy
   group_name: COLOR BASIC
   producer_slug: kronospan
   img: K0515.jpg
-  color_family_slug: szary
+  color_family_slug: bezowy
   ncs: 1010-Y30R
 - business_id: '0522'
   name: Beżowy

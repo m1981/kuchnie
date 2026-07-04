@@ -97,7 +97,8 @@ def get_full_catalog(
             "SELECT d.id AS decor_pk, d.business_id, d.name, d.name_en, "
             "       d.group_name, d.ncs, d.ral, d.pantone, d.img, "
             "       d.discontinued, "
-            "       COALESCE(cf.slug, '') AS color_family "
+            "       COALESCE(cf.slug, '') AS color_family, "
+            "       cf.hex_approx AS color_hex "
             "FROM decors d "
             "LEFT JOIN color_families cf ON cf.id = d.color_family_id "
             "WHERE d.producer_id = (SELECT id FROM producers WHERE slug = ?) "
@@ -212,6 +213,7 @@ def get_full_catalog(
                 "name_en": drow["name_en"] or "",
                 "group": drow["group_name"] or "",
                 "color_family": drow["color_family"] or "",
+                "color_hex": drow["color_hex"],
                 "ncs": drow["ncs"] or "",
                 "ral": drow["ral"] or "",
                 "pantone": drow["pantone"] or "",

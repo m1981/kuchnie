@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Builder GUI: sidebar gaps closed per ADR-005 (all advisory, none blocking)
+  - Slot focus soft-filters the grid by role; clearing a slot re-filters (S5);
+    role mismatch shows a ⚠ line but the assignment stands
+  - Backend sync: pairing recommendations (★ polecane, float to top) for the
+    chosen front; "Eksportuj BOM" replays the composition into a configurator
+    session and downloads the server BOM with a shareable session token;
+    discontinued decors flagged on cards and in the summary
+  - Two-tone flow: wall_front advances right after base_front with an explicit
+    "pomiń — jednokolorowa" skip; the decision persists in localStorage and
+    in saved templates
+- Verified in-browser (Playwright, 30 checks): slot advance, skip, S5
+  filtering, recommendations, backend BOM, reload persistence, and
+  grid↔sidebar color/code consistency
+
+### Fixed
+
+- Builder GUI: `parseRoles()` crashed on the list-typed `roles` from
+  `/catalog/full` — role chips never rendered and every slot showed a false
+  role-mismatch warning
+- Decor swatch colors: `/catalog/full` now returns `color_hex`
+  (`color_families.hex_approx`) and the builder uses it as the source of
+  truth instead of a partial hardcoded JS map — Kość Słoniowa rendered gray
+- Data: 0514 Kość Słoniowa szary→kremowy, 0515 Piaskowy szary→bezowy
+  (`kronospan_full.yaml` + live DB)
+
+- `docs/adr/005-sidebar-free-composition-over-wizard.md` — builder sidebar's
+  top-level motivation is "templates make repeat work cheap": free
+  composition + templates over the backend's rigid wizard flow; spec
+  `builder-gui.md` now references it
+
 ## [0.4.0] — 2026-07-04
 
 ### Changed

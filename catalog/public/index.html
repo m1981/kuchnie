@@ -65,6 +65,8 @@
     .card .swatch .no-img { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); text-transform: uppercase; }
     .card .swatch .badge { position: absolute; top: 4px; left: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; background: rgba(0,0,0,0.6); color: #ccc; }
     .card .swatch .assigned-badge { position: absolute; bottom: 4px; right: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; color: #fff; }
+    .card .swatch .rec-badge { position: absolute; top: 4px; right: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; background: var(--accent); color: #fff; }
+    .card .swatch .disc-badge { position: absolute; bottom: 4px; left: 4px; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 2px; background: var(--warn); color: #fff; }
     .card .swatch .assigned-badge.base { background: var(--accent); }
     .card .swatch .assigned-badge.wall { background: #6a9; }
     .card .swatch .assigned-badge.worktop { background: #a85; }
@@ -103,6 +105,13 @@
     .slot .filled .info .code { font-size: 10px; color: var(--muted); }
     .slot .filled .remove { width: 20px; height: 20px; border-radius: 3px; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
     .slot .filled .remove:hover { background: var(--warn-dim); color: var(--warn); }
+    .slot .warn-line { margin-top: 4px; font-size: 10px; color: var(--warn); }
+    .slot .rec-line { margin-top: 4px; font-size: 10px; color: var(--accent); }
+    .slot .skip-row { display: flex; gap: 6px; margin-top: 6px; }
+    .slot .skip-btn { flex: 1; padding: 5px; font-size: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: none; color: var(--muted); cursor: pointer; }
+    .slot .skip-btn:hover { border-color: var(--text); color: var(--text); }
+    .slot .skipped { padding: 8px; border: 1.5px dashed var(--border); border-radius: var(--radius-sm); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+    .slot .skipped .undo { border: none; background: none; color: var(--accent); cursor: pointer; font-size: 10px; }
 
     .sidebar .actions { padding: 12px; border-top: 1px solid var(--border); margin-top: auto; }
     .sidebar .actions .compat { padding: 8px; background: #1a1a1a; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 11px; }
@@ -206,6 +215,8 @@
             </template>
             <span x-show="!d._imgPath" class="no-img">brak zdjęcia</span>
             <span class="badge" x-text="d._producerShort"></span>
+            <span x-show="isRecommended(d)" class="rec-badge">★ polecane</span>
+            <span x-show="d._discontinued" class="disc-badge">wycofany</span>
             <span x-show="d._assignedSlot" class="assigned-badge"
                   :class="d._assignedSlot"
                   x-text="slotLabel(d._assignedSlot)"></span>
@@ -232,7 +243,7 @@
     </div>
 
     <!-- Slot: base_front -->
-    <div class="slot" :class="{ active: activeSlot === 'base_front' }" @click="activeSlot = 'base_front'">
+    <div class="slot" :class="{ active: activeSlot === 'base_front' }" @click="focusSlot('base_front')">
       <div class="slot-header">
         <span class="label">Front dolny (base)</span>
         <span class="required">*wymagany</span>
@@ -253,10 +264,10 @@
     </div>
 
     <!-- Slot: wall_front -->
-    <div class="slot" :class="{ active: activeSlot === 'wall_front' }" @click="activeSlot = 'wall_front'">
+    <div class="slot" :class="{ active: activeSlot === 'wall_front' }" @click="focusSlot('wall_front')">
       <div class="slot-header">
         <span class="label">Front górny (wall)</span>
-        <span class="optional">opcjonalny</span>
+        <span class="optional" x-text="wallFrontSkipped ? 'pominięty' : 'opcjonalny'"></span>
       </div>
       <template x-if="slots.wall_front">
         <div class="filled">
@@ -268,13 +279,24 @@
           <button class="remove" @click.stop="clearSlot('wall_front')">✕</button>
         </div>
       </template>
-      <template x-if="!slots.wall_front">
-        <div class="empty">+ Kliknij kartę lub pomiń</div>
+      <template x-if="!slots.wall_front && wallFrontSkipped">
+        <div class="skipped">
+          <span>jednokolorowa — góra jak dół</span>
+          <button class="undo" @click.stop="unskipWallFront()">zmień</button>
+        </div>
+      </template>
+      <template x-if="!slots.wall_front && !wallFrontSkipped">
+        <div>
+          <div class="empty">+ Kliknij kartę lub pomiń</div>
+          <div class="skip-row">
+            <button class="skip-btn" @click.stop="skipWallFront()">pomiń — jednokolorowa</button>
+          </div>
+        </div>
       </template>
     </div>
 
     <!-- Slot: carcass -->
-    <div class="slot" :class="{ active: activeSlot === 'carcass' }" @click="activeSlot = 'carcass'">
+    <div class="slot" :class="{ active: activeSlot === 'carcass' }" @click="focusSlot('carcass')">
       <div class="slot-header">
         <span class="label">Korpus (wnętrze)</span>
         <span class="required">*wymagany</span>
@@ -292,10 +314,12 @@
       <template x-if="!slots.carcass">
         <div class="empty">+ Kliknij kartę w katalogu</div>
       </template>
+      <div class="warn-line" x-show="roleMismatch('carcass')">⚠ wariant nie ma roli „korpus”</div>
+      <div class="rec-line" x-show="slotIsRecommended('carcass')">★ polecany do wybranego frontu</div>
     </div>
 
     <!-- Slot: worktop -->
-    <div class="slot" :class="{ active: activeSlot === 'worktop' }" @click="activeSlot = 'worktop'">
+    <div class="slot" :class="{ active: activeSlot === 'worktop' }" @click="focusSlot('worktop')">
       <div class="slot-header">
         <span class="label">Blat (worktop)</span>
         <span class="required">*wymagany</span>
@@ -313,6 +337,8 @@
       <template x-if="!slots.worktop">
         <div class="empty">+ Kliknij kartę w katalogu</div>
       </template>
+      <div class="warn-line" x-show="roleMismatch('worktop')">⚠ wariant nie ma roli „blat”</div>
+      <div class="rec-line" x-show="slotIsRecommended('worktop')">★ polecany do wybranego frontu</div>
     </div>
 
     <!-- Actions -->
@@ -323,6 +349,12 @@
           <span x-text="slots.base_front?.name"></span> +
           <span x-text="slots.carcass?.name"></span> +
           <span x-text="slots.worktop?.name"></span>
+        </div>
+        <div style="color:var(--warn);margin-top:4px;font-size:10px" x-show="discontinuedSlots().length">
+          ⚠ Dekor wycofany: <span x-text="discontinuedSlots().join(', ')"></span>
+        </div>
+        <div style="color:var(--muted);margin-top:4px;font-size:10px" x-show="sessionToken">
+          Sesja: <span x-text="sessionToken"></span>
         </div>
       </div>
       <button class="btn btn-primary" :disabled="!isComplete()" @click="saveTemplate()">
@@ -378,6 +410,10 @@ function builder() {
       worktop: null,
     },
     savedTemplates: [],
+    wallFrontSkipped: false,
+    // decor_id -> match_type, keyed by pairing target role (from backend pairings)
+    recommended: { carcass: {}, worktop: {} },
+    sessionToken: null,
 
     // ── Computed ──
     get producers() {
@@ -442,16 +478,70 @@ function builder() {
           (d.id || '').toLowerCase().includes(q)
         );
       }
+      // Recommended-for-active-slot cards float to the top (advisory, ADR-005)
+      const recs = this.recommended[this.slotRole(this.activeSlot)];
+      if (recs && Object.keys(recs).length) {
+        r = [...r].sort((a, b) => (recs[b.id] ? 1 : 0) - (recs[a.id] ? 1 : 0));
+      }
       return r;
     },
 
     // ── Methods ──
-    parseRoles(rolesStr) {
-      try { return JSON.parse(rolesStr || '[]'); } catch { return []; }
+    parseRoles(roles) {
+      if (Array.isArray(roles)) return roles;   // /catalog/full sends a list
+      try { return JSON.parse(roles || '[]'); } catch { return []; }
     },
 
     slotLabel(slot) {
       return { base_front: 'DÓŁ', wall_front: 'GÓRA', carcass: 'KORPUS', worktop: 'BLAT' }[slot] || '';
+    },
+
+    slotRole(slot) {
+      return { base_front: 'front', wall_front: 'front', carcass: 'carcass', worktop: 'worktop' }[slot] || '';
+    },
+
+    // Gap 1 (S5): focusing a slot soft-filters the grid to its role.
+    // Advisory — the role tab stays clickable, "Wszystkie" clears it.
+    focusSlot(slot) {
+      this.activeSlot = slot;
+      this.filterRole = this.slotRole(slot);
+    },
+
+    roleMismatch(slot) {
+      const d = this.slots[slot];
+      return d ? !this.parseRoles(d.roles).includes(this.slotRole(slot)) : false;
+    },
+
+    isRecommended(d) {
+      if (d._assignedSlot) return false;
+      const recs = this.recommended[this.slotRole(this.activeSlot)];
+      return !!(recs && recs[d.id]);
+    },
+
+    slotIsRecommended(slot) {
+      const d = this.slots[slot];
+      const recs = this.recommended[this.slotRole(slot)];
+      return !!(d && recs && recs[d.id]);
+    },
+
+    discontinuedSlots() {
+      return Object.values(this.slots)
+        .filter(d => d && d._discontinued)
+        .map(d => d.name);
+    },
+
+    // Gap 2: pairing recommendations from the backend for the chosen front
+    async fetchRecommendations(d) {
+      this.recommended = { carcass: {}, worktop: {} };
+      try {
+        const res = await fetch(`/catalog/decors/${encodeURIComponent(d.id)}/pairings`);
+        if (!res.ok) return;
+        for (const p of await res.json()) {
+          if (p.pairing_type === 'carcass' || p.pairing_type === 'worktop') {
+            this.recommended[p.pairing_type][p.target_decor_id] = p.match_type;
+          }
+        }
+      } catch {}
     },
 
     cardClass(d) {
@@ -478,16 +568,33 @@ function builder() {
       // Assign
       this.slots[this.activeSlot] = d;
       d._assignedSlot = this.activeSlot;
+      if (this.activeSlot === 'wall_front') this.wallFrontSkipped = false;
+      if (this.activeSlot === 'base_front') this.fetchRecommendations(d);
       // Advance to next empty required slot
       this.advanceSlot();
       this.persist();
     },
 
+    // Gap 3 (S2/S3): wall_front comes right after base_front, so the
+    // two-tone decision is made explicitly — assign or skip, never forgotten.
     advanceSlot() {
-      const order = ['base_front', 'carcass', 'worktop', 'wall_front'];
+      const order = ['base_front', 'wall_front', 'carcass', 'worktop'];
       for (const s of order) {
-        if (!this.slots[s]) { this.activeSlot = s; return; }
+        if (s === 'wall_front' && this.wallFrontSkipped) continue;
+        if (!this.slots[s]) { this.focusSlot(s); return; }
       }
+    },
+
+    skipWallFront() {
+      this.wallFrontSkipped = true;
+      if (this.activeSlot === 'wall_front') this.advanceSlot();
+      this.persist();
+    },
+
+    unskipWallFront() {
+      this.wallFrontSkipped = false;
+      this.focusSlot('wall_front');
+      this.persist();
     },
 
     clearSlot(slot) {
@@ -497,13 +604,17 @@ function builder() {
         if (card) card._assignedSlot = null;
       }
       this.slots[slot] = null;
-      this.activeSlot = slot;
+      if (slot === 'base_front') this.recommended = { carcass: {}, worktop: {} };
+      this.focusSlot(slot);
       this.persist();
     },
 
     clearAll() {
       for (const slot of Object.keys(this.slots)) this.clearSlot(slot);
-      this.activeSlot = 'base_front';
+      this.wallFrontSkipped = false;
+      this.recommended = { carcass: {}, worktop: {} };
+      this.sessionToken = null;
+      this.focusSlot('base_front');
       localStorage.removeItem('kuchnie_builder');
     },
 
@@ -519,6 +630,7 @@ function builder() {
         name,
         base_front: this.slots.base_front ? { ...this.slots.base_front } : null,
         wall_front: this.slots.wall_front ? { ...this.slots.wall_front } : null,
+        wall_front_skipped: this.wallFrontSkipped,
         carcass: this.slots.carcass ? { ...this.slots.carcass } : null,
         worktop: this.slots.worktop ? { ...this.slots.worktop } : null,
       };
@@ -537,15 +649,55 @@ function builder() {
           }
         }
       }
-      this.activeSlot = 'base_front';
+      this.wallFrontSkipped = !!tmpl.wall_front_skipped;
+      if (this.slots.base_front) this.fetchRecommendations(this.slots.base_front);
       this.advanceSlot();
+      this.persist();
     },
 
-    exportBOM() {
-      const bom = Object.entries(this.slots)
-        .filter(([_, v]) => v)
-        .map(([slot, v]) => ({ role: slot, variant_id: v.variant_id, name: v.name }));
-      const blob = new Blob([JSON.stringify(bom, null, 2)], { type: 'application/json' });
+    // Gap 2: replay the free-order composition into a backend wizard
+    // session (the wizard is a service, not the UX — ADR-005), download
+    // the server BOM. Falls back to a local BOM if the backend is away.
+    async exportBOM() {
+      let payload = null;
+      if (this.isComplete()) {
+        try {
+          const s = await fetch('/configurator/sessions', { method: 'POST' });
+          const token = (await s.json()).session_token;
+          const steps = [
+            ['front', this.slots.base_front],
+            ['carcass', this.slots.carcass],
+            ['worktop', this.slots.worktop],
+          ];
+          for (const [step, d] of steps) {
+            const r = await fetch(`/configurator/sessions/${token}/select`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ step, variant_id: d.variant_id }),
+            });
+            if (!r.ok) throw new Error(`select ${step} failed`);
+          }
+          const bom = await (await fetch(`/configurator/sessions/${token}/bom`)).json();
+          if (this.slots.wall_front) {
+            bom.items.push({
+              role: 'wall_front',
+              variant_id: this.slots.wall_front.variant_id,
+              name: this.slots.wall_front.name,
+            });
+          }
+          this.sessionToken = token;
+          payload = { source: 'backend', session_token: token, ...bom };
+        } catch {}
+      }
+      if (!payload) {
+        payload = {
+          source: 'local',
+          items: Object.entries(this.slots)
+            .filter(([_, v]) => v)
+            .map(([slot, v]) => ({ role: slot, variant_id: v.variant_id, name: v.name })),
+        };
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'bom.json';
@@ -553,7 +705,7 @@ function builder() {
     },
 
     persist() {
-      const state = {};
+      const state = { _wallFrontSkipped: this.wallFrontSkipped };
       for (const [slot, val] of Object.entries(this.slots)) {
         state[slot] = val ? val._key : null;
       }
@@ -565,7 +717,9 @@ function builder() {
         const raw = localStorage.getItem('kuchnie_builder');
         if (!raw) return;
         const state = JSON.parse(raw);
+        this.wallFrontSkipped = !!state._wallFrontSkipped;
         for (const [slot, key] of Object.entries(state)) {
+          if (slot.startsWith('_')) continue;
           if (key) {
             const card = this.allDecors.find(c => c._key === key);
             if (card) {
@@ -574,6 +728,7 @@ function builder() {
             }
           }
         }
+        if (this.slots.base_front) this.fetchRecommendations(this.slots.base_front);
         this.advanceSlot();
       } catch {}
 
@@ -607,6 +762,7 @@ function builder() {
                 name: decor.name,
                 color_family: decor.color_family,
                 tags: decor.tags,
+                _discontinued: !!decor.discontinued,
                 img: decor.img,
                 variant_id: variant.id,
                 material: variant.material,
@@ -617,7 +773,8 @@ function builder() {
                 _producerShort: shortName,
                 _key: `${producer}:${variant.id}`,
                 _imgPath: decor.img_url,
-                _hex: this.colorHex(decor.color_family),
+                // DB hex_approx is the source of truth; JS map is a fallback
+                _hex: decor.color_hex || this.colorHex(decor.color_family),
                 _assignedSlot: null,
               });
             }
@@ -626,6 +783,8 @@ function builder() {
         this.allDecors = decors;
         this.loading = false;
         this.restore();
+        // Fresh load (nothing restored): apply the active slot's role filter
+        if (!this.filterRole) this.focusSlot(this.activeSlot);
       } catch (e) {
         this.loading = false;
       }
