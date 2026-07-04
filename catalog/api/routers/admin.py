@@ -96,7 +96,7 @@ def get_full_catalog(
         for drow in db.execute(
             "SELECT d.id AS decor_pk, d.business_id, d.name, d.name_en, "
             "       d.group_name, d.ncs, d.ral, d.pantone, d.img, "
-            "       d.one_global, d.new_2024, d.discontinued, "
+            "       d.discontinued, "
             "       COALESCE(cf.slug, '') AS color_family "
             "FROM decors d "
             "LEFT JOIN color_families cf ON cf.id = d.color_family_id "
@@ -217,8 +217,9 @@ def get_full_catalog(
                 "pantone": drow["pantone"] or "",
                 "img_url": f"/producers/{pslug}/decors/{drow['img']}" if drow["img"] else None,
                 "tags": tags,
-                "one_global": bool(drow["one_global"]),
-                "new_2024": bool(drow["new_2024"]),
+                # collection flags live in decor_tags since schema 1.5.0
+                "one_global": "one-global" in tags,
+                "new_2024": "new-2024" in tags,
                 "discontinued": bool(drow["discontinued"]),
                 "variants": variants,
             })

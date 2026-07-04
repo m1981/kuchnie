@@ -151,6 +151,26 @@ class TestEdgeOptions:
         body = resp.json()
         assert body["current_step"] == "edge"
 
+    def test_select_edge_never_500s(self, client):
+        """Regression: EDGE_STEPS was not imported → NameError → 500."""
+        token = _select_to_edge(client)
+        options = client.get(
+            f"/configurator/sessions/{token}/options"
+        ).json()["options"]
+        if options:
+            resp = client.patch(
+                f"/configurator/sessions/{token}/select",
+                json={"step": "edge", "edge_id": options[0]["edge_id"]},
+            )
+            assert resp.status_code == 200
+        else:
+            # No edges in sample data — a nonexistent id must 400, not 500
+            resp = client.patch(
+                f"/configurator/sessions/{token}/select",
+                json={"step": "edge", "edge_id": 999999},
+            )
+            assert resp.status_code == 400
+
 
 class TestSidePanelOptions:
     """GET /configurator/sessions/{token}/options (step=side_panel)"""

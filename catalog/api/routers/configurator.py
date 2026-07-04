@@ -26,6 +26,7 @@ from catalog.models.domain import (
     TemplateOut,
 )
 from catalog.repositories.configurator import (
+    EDGE_STEPS,
     STEPS,
     VARIANT_STEPS,
     ConfiguratorRepository,
