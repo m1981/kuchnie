@@ -18,9 +18,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Two-tone flow: wall_front advances right after base_front with an explicit
     "pomiń — jednokolorowa" skip; the decision persists in localStorage and
     in saved templates
-- Verified in-browser (Playwright, 30 checks): slot advance, skip, S5
+- Builder GUI: sidebar slot swatches and template dots render the decor's
+  texture miniature (same image the grid uses, browser-cached) when one
+  exists on disk; hex color + decor code remain the fallback. 58/148 decors
+  have miniature refs — no true wood decor has one yet (image acquisition
+  is the remaining gap for grain fidelity)
+- Verified in-browser (Playwright, 36 checks): slot advance, skip, S5
   filtering, recommendations, backend BOM, reload persistence, and
-  grid↔sidebar color/code consistency
+  grid↔sidebar swatch consistency (miniature filename or color + code)
 
 ### Fixed
 

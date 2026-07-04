@@ -99,7 +99,8 @@
     .slot.active .empty { border-color: var(--accent); color: var(--accent); }
 
     .slot .filled { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); }
-    .slot .filled .swatch-sm { width: 32px; height: 32px; border-radius: 3px; background: #444; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); }
+    .slot .filled .swatch-sm { width: 40px; height: 40px; border-radius: 3px; background: #444; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); overflow: hidden; }
+    .slot .filled .swatch-sm img { width: 100%; height: 100%; object-fit: cover; }
     .slot .filled .info { flex: 1; min-width: 0; }
     .slot .filled .info .name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .slot .filled .info .code { font-size: 10px; color: var(--muted); }
@@ -250,7 +251,10 @@
       </div>
       <template x-if="slots.base_front">
         <div class="filled">
-          <div class="swatch-sm" :style="'background:' + (slots.base_front._hex || '#444')" x-text="slots.base_front.id"></div>
+          <div class="swatch-sm" :style="slots.base_front._imgPath ? '' : 'background:' + (slots.base_front._hex || '#444')">
+            <template x-if="slots.base_front._imgPath"><img :src="slots.base_front._imgPath" :alt="slots.base_front.name" /></template>
+            <span x-show="!slots.base_front._imgPath" x-text="slots.base_front.id"></span>
+          </div>
           <div class="info">
             <div class="name" x-text="slots.base_front.name"></div>
             <div class="code" x-text="slots.base_front.variant_id"></div>
@@ -271,7 +275,10 @@
       </div>
       <template x-if="slots.wall_front">
         <div class="filled">
-          <div class="swatch-sm" :style="'background:' + (slots.wall_front._hex || '#444')" x-text="slots.wall_front.id"></div>
+          <div class="swatch-sm" :style="slots.wall_front._imgPath ? '' : 'background:' + (slots.wall_front._hex || '#444')">
+            <template x-if="slots.wall_front._imgPath"><img :src="slots.wall_front._imgPath" :alt="slots.wall_front.name" /></template>
+            <span x-show="!slots.wall_front._imgPath" x-text="slots.wall_front.id"></span>
+          </div>
           <div class="info">
             <div class="name" x-text="slots.wall_front.name"></div>
             <div class="code" x-text="slots.wall_front.variant_id"></div>
@@ -303,7 +310,10 @@
       </div>
       <template x-if="slots.carcass">
         <div class="filled">
-          <div class="swatch-sm" :style="'background:' + (slots.carcass._hex || '#444')" x-text="slots.carcass.id"></div>
+          <div class="swatch-sm" :style="slots.carcass._imgPath ? '' : 'background:' + (slots.carcass._hex || '#444')">
+            <template x-if="slots.carcass._imgPath"><img :src="slots.carcass._imgPath" :alt="slots.carcass.name" /></template>
+            <span x-show="!slots.carcass._imgPath" x-text="slots.carcass.id"></span>
+          </div>
           <div class="info">
             <div class="name" x-text="slots.carcass.name"></div>
             <div class="code" x-text="slots.carcass.variant_id"></div>
@@ -326,7 +336,10 @@
       </div>
       <template x-if="slots.worktop">
         <div class="filled">
-          <div class="swatch-sm" :style="'background:' + (slots.worktop._hex || '#444')" x-text="slots.worktop.id"></div>
+          <div class="swatch-sm" :style="slots.worktop._imgPath ? '' : 'background:' + (slots.worktop._hex || '#444')">
+            <template x-if="slots.worktop._imgPath"><img :src="slots.worktop._imgPath" :alt="slots.worktop.name" /></template>
+            <span x-show="!slots.worktop._imgPath" x-text="slots.worktop.id"></span>
+          </div>
           <div class="info">
             <div class="name" x-text="slots.worktop.name"></div>
             <div class="code" x-text="slots.worktop.variant_id"></div>
@@ -369,9 +382,9 @@
       <template x-for="tmpl in savedTemplates" :key="tmpl.name">
         <div class="tmpl" @click="loadTemplate(tmpl)">
           <div class="dots">
-            <div class="dot" :style="'background:' + (tmpl.base_front?._hex || '#444')"></div>
-            <div class="dot" :style="'background:' + (tmpl.carcass?._hex || '#444')"></div>
-            <div class="dot" :style="'background:' + (tmpl.worktop?._hex || '#444')"></div>
+            <div class="dot" :style="tmpl.base_front?._imgPath ? 'background:url(' + tmpl.base_front._imgPath + ') center/cover' : 'background:' + (tmpl.base_front?._hex || '#444')"></div>
+            <div class="dot" :style="tmpl.carcass?._imgPath ? 'background:url(' + tmpl.carcass._imgPath + ') center/cover' : 'background:' + (tmpl.carcass?._hex || '#444')"></div>
+            <div class="dot" :style="tmpl.worktop?._imgPath ? 'background:url(' + tmpl.worktop._imgPath + ') center/cover' : 'background:' + (tmpl.worktop?._hex || '#444')"></div>
           </div>
           <div class="info">
             <div class="name" x-text="tmpl.name"></div>
