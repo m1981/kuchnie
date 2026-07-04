@@ -7,31 +7,34 @@
 ## State summary
 
 All six ADR-012 model extensions landed (663/663 root tests clean). The
-ADR-010 deletion queue (`kitchen_cam.models`, `panel_calculator`,
-`csv_generator`) is **unblocked** — 13 xpasses in kitchen-cam confirm
-field parity. ADR-011 rename is done but the old BOM path
-(`calculate_cost` / `use_new_bom`) survives in `kitchen-erp`. Full
-execution status: [`MIGRATION-STATUS.md`](MIGRATION-STATUS.md).
+ADR-010 deletion queue was **executed** (`115d953`) and the governance
+rules merged into `AGENTS.md` (`f111dde`, tag retagged). ADR-011 rename
+is done but the old BOM path (`calculate_cost` / `use_new_bom`) survives
+in `kitchen-erp`. Frozen execution-status snapshot:
+[`docs/freeze/MIGRATION-STATUS-2026-07.md`](docs/freeze/MIGRATION-STATUS-2026-07.md)
+(immutable — this file is the living status doc).
+
+**Post-freeze events** (not in any freeze doc):
+
+- Catalog schema 1.5.0 — producer generalization ahead of Egger,
+  catalog-internal ADR-004 (`cc69f4c`, 2026-07-04) + fallout fixes
+  (`e7c6808`, 2026-07-05).
+- `kuchnie_core` moved to its own component home `kuchnie-core/`
+  (`69e09c6`, 2026-07-05).
 
 ---
 
 ## Read order
 
-`AGENTS.md` → **this file** → `MIGRATION-STATUS.md` →
-`docs/freeze/DOC-TRUST-REPORT.md` → the ADR of your workstream.
+`AGENTS.md` → **this file** → `docs/freeze/DOC-TRUST-REPORT.md` →
+the ADR of your workstream. (Historical freeze state:
+`docs/freeze/MIGRATION-STATUS-2026-07.md`.)
 
 ---
 
 ## Resume menu (priority order)
 
-### 0. Execute Part C — merge governance rules into AGENTS.md
-
-Add the six Layer 0 rules from `docs/DOC-GOVERNANCE-KIT.md` to root
-`AGENTS.md` under a new "Documentation governance" section. Merge, don't
-duplicate what AGENTS.md already says. One commit:
-`docs: merge charter governance rules into AGENTS.md`.
-
-**Then** retag `freeze-2026-07`.
+### 0. ~~Execute Part C — merge governance rules into AGENTS.md~~ — DONE (commit `f111dde`, `freeze-2026-07` retagged)
 
 ### 1. ~~Execute ADR-010/012 deletion queue~~ — DONE (commit `115d953`)
 
@@ -125,6 +128,7 @@ Decision: keep Pydantic at schema boundary, or refactor out.
 
 ## Trust rule
 
-> ADRs record decisions, not state. For state, read
-> `MIGRATION-STATUS.md` and verify with the commands it lists. Any
+> ADRs record decisions, not state. For state, read **this file** —
+> the single living status doc — and verify against code. Freeze-dated
+> docs under `docs/freeze/` are immutable snapshots, never updated. Any
 > document's claim about code is stale until re-verified in your session.

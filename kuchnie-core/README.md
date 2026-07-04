@@ -1,4 +1,4 @@
-> Type: A | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Domain hub — Kitchen, Panel, decomposition, BOM, standards, validator | ADRs: 001, 002, 003
+> Type: A | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: Domain hub — Kitchen, Panel, decomposition, BOM, standards, validator | ADRs: 001, 002, 003
 
 # kuchnie-core
 

@@ -1,4 +1,4 @@
-> Type: C+F | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Sales tool — first-visit 2.5D previews + decor picker | ADRs: 008, 011
+> Type: C+F | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: Sales tool — first-visit 2.5D previews + decor picker | ADRs: 008, 011
 
 # Krono Compositor MVP
 

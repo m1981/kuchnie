@@ -10,14 +10,19 @@ never the other way.
 
 ## Components
 
-| Component | Type | Role (per ADR-011 stage table) | Freeze status |
-|---|---|---|---|
-| `kuchnie-core/` | A — Domain hub | Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. | 663/663 clean |
-| `kitchen-cam/` | A — CAM enrichment | Machining ops (System32, hinges, handles), DXF for CNC. Downstream of `kuchnie_core`. | 292 pass / 35 xfail / 13 xpass |
-| `catalog/` | C — Material catalog service | Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | 227/227 clean |
-| `kitchen-erp/` | D — BOM + ops UI | Cost estimation, purchasing, rules admin. Reflex + SQLModel. | 38 pass / 3 fail / 13 err |
-| `krono-compositor-mvp/` | C+F — Sales tool | First-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | 7 pass / 2 fail |
-| `home-builder-adapter/` | F — Blender extractor | Walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | 0 tests (suite deleted) |
+| Component | Type | Role (per ADR-011 stage table) |
+|---|---|---|
+| `kuchnie-core/` | A — Domain hub | Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. |
+| `kitchen-cam/` | A — CAM enrichment | Machining ops (System32, hinges, handles), DXF for CNC. Downstream of `kuchnie_core`. |
+| `catalog/` | C — Material catalog service | Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. |
+| `kitchen-erp/` | D — BOM + ops UI | Cost estimation, purchasing, rules admin. Reflex + SQLModel. |
+| `krono-compositor-mvp/` | C+F — Sales tool | First-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. |
+| `home-builder-adapter/` | F — Blender extractor | Walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. |
+
+Per-component test status at the freeze point:
+[`docs/freeze/TEST-BASELINE-2026-07.md`](docs/freeze/TEST-BASELINE-2026-07.md).
+For current status, run the suites — test counts are not maintained in
+this file.
 
 **External:** `/Users/michal/PycharmProjects/home_builder_5` — third-party
 licensed Blender addon for interactive kitchen layout (Stage 2). Untouched
@@ -34,10 +39,9 @@ No cycles. `kuchnie_core` imports only stdlib + Pydantic + PyYAML.
 ## Read order for new sessions
 
 1. [`AGENTS.md`](AGENTS.md) — operational rules, architecture constraints, file map
-2. [`RESUME.md`](RESUME.md) — what to do next, priority order, DO-NOT list
-3. [`MIGRATION-STATUS.md`](MIGRATION-STATUS.md) — ADR-008–012 execution status with verified evidence
-4. [`docs/freeze/DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) — which `.md` files to trust
-5. The ADR of your workstream (in `docs/adr/`)
+2. [`RESUME.md`](RESUME.md) — living status doc: what to do next, priority order, DO-NOT list
+3. [`docs/freeze/DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) — which `.md` files to trust
+4. The ADR of your workstream (in `docs/adr/`)
 
 ---
 
@@ -49,5 +53,6 @@ All freeze documentation lives in `docs/freeze/`:
 |---|---|
 | [`FREEZE-PLAN.md`](docs/freeze/FREEZE-PLAN.md) | The original freeze plan |
 | [`TEST-BASELINE-2026-07.md`](docs/freeze/TEST-BASELINE-2026-07.md) | Per-component test results at freeze |
+| [`MIGRATION-STATUS-2026-07.md`](docs/freeze/MIGRATION-STATUS-2026-07.md) | ADR-008–012 execution status snapshot at freeze (immutable) |
 | [`DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) | Trust audit of all 109 tracked `.md` files |
-| [`RESUME.md`](RESUME.md) | Post-freeze resume checklist |
+| [`RESUME.md`](RESUME.md) | Living status doc + resume checklist (repo root) |

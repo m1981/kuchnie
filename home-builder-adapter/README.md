@@ -1,4 +1,4 @@
-> Type: F | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Blender scene → kuchnie_core.Kitchen extractor | ADRs: 009
+> Type: F | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: Blender scene → kuchnie_core.Kitchen extractor | ADRs: 009
 
 # home-builder-adapter
 

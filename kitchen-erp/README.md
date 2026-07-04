@@ -1,4 +1,4 @@
-> Type: D | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: BOM, cost estimation, purchasing, rules admin, ops UI | ADRs: 011
+> Type: D | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: BOM, cost estimation, purchasing, rules admin, ops UI | ADRs: 011
 
 # Kitchen App - Professional BOM System
 

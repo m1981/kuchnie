@@ -1,4 +1,4 @@
-> Type: C | Status: frozen 2026-07 (see /MIGRATION-STATUS.md) | Role: Material catalog — Kronospan/Egger decors, worktops, pairings, availability | ADRs: 008
+> Type: C | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: Material catalog — Kronospan/Egger decors, worktops, pairings, availability | ADRs: 008
 
 # catalog
 

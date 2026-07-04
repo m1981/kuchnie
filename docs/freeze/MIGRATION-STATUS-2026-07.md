@@ -1,8 +1,15 @@
 # Migration Status — freeze-2026-07
 
+> **⚠️ IMMUTABLE SNAPSHOT.** State as verified at freeze tag `freeze-2026-07`
+> (snapshot commit `612a2db`). **Not maintained** — rows below may be
+> superseded (e.g. the ADR-010 deletion queue was executed in `115d953`, the
+> ADR-009 pyproject drift fixed in `5d3e70e`, both hours after this snapshot).
+> For current state see [`/RESUME.md`](../../RESUME.md).
+
 > **Purpose.** Record execution status of ADR-008 through ADR-012 so no future
-> session re-derives it. Each row is verified against code at HEAD.
-> **Rule:** ADRs record decisions, not state. THIS file records state.
+> session re-derives it. Each row is verified against code at `612a2db`.
+> **Rule:** ADRs record decisions, not state. THIS file recorded state at the
+> freeze point; `RESUME.md` is the living status doc.
 
 ---
 
