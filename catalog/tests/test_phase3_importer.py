@@ -188,12 +188,19 @@ class TestImportDecors:
         }])
         db.commit()
         row = db.execute(
-            "SELECT one_global, new_2024, discontinued FROM decors "
-            "WHERE business_id = 'X1'"
+            "SELECT discontinued FROM decors WHERE business_id = 'X1'"
         ).fetchone()
-        assert row["one_global"] == 1
-        assert row["new_2024"] == 1
         assert row["discontinued"] == 1
+        # one_global / new_2024 land in decor_tags since schema 1.5.0
+        tags = {
+            r["slug"] for r in db.execute(
+                "SELECT t.slug FROM decor_tags dt "
+                "JOIN tags t ON t.id = dt.tag_id "
+                "JOIN decors d ON d.id = dt.decor_id "
+                "WHERE d.business_id = 'X1'"
+            )
+        }
+        assert tags == {"one-global", "new-2024"}
 
 
 class TestImportVariants:

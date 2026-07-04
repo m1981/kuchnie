@@ -34,7 +34,24 @@ def init_schema(db: sqlite3.Connection) -> None:
 
     Idempotent: safe to call multiple times (uses CREATE TABLE IF NOT EXISTS
     and INSERT OR IGNORE where needed). For a fresh database, this creates
-    all tables, views, indexes, and seeds lookup tables.
+    all tables, views, indexes, and seeds lookup tables. A database on an
+    older schema version is migrated first (see scripts/migrate_1_5_0.py).
     """
+    _migrate_if_needed(db)
     schema_sql = _SCHEMA_PATH.read_text(encoding="utf-8")
     db.executescript(schema_sql)
+
+
+def _migrate_if_needed(db: sqlite3.Connection) -> None:
+    """Apply pending in-place migrations to a pre-1.5.0 database."""
+    has_decors = db.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='decors'"
+    ).fetchone()
+    if not has_decors:
+        return  # fresh DB — schema.sql creates everything at current version
+    columns = {row[1] for row in db.execute("PRAGMA table_info(decors)")}
+    if "one_global" in columns:
+        # import here: migrate_1_5_0 imports this module at top level
+        from catalog.scripts.migrate_1_5_0 import migrate
+
+        migrate(db)

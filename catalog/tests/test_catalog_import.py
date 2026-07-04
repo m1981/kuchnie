@@ -306,7 +306,9 @@ class TestKronoSwissImport:
 
     def test_one_global_flag(self):
         rows = self.db.execute(
-            "SELECT business_id FROM decors WHERE one_global = 1"
+            "SELECT d.business_id FROM decors d "
+            "JOIN decor_tags dt ON dt.decor_id = d.id "
+            "JOIN tags t ON t.id = dt.tag_id WHERE t.slug = 'one-global'"
         ).fetchall()
         ids = {r["business_id"] for r in rows}
         assert "U164" in ids  # Antracyt
@@ -324,7 +326,9 @@ class TestKronoSwissImport:
 
     def test_new_2024_decors(self):
         rows = self.db.execute(
-            "SELECT business_id FROM decors WHERE new_2024 = 1"
+            "SELECT d.business_id FROM decors d "
+            "JOIN decor_tags dt ON dt.decor_id = d.id "
+            "JOIN tags t ON t.id = dt.tag_id WHERE t.slug = 'new-2024'"
         ).fetchall()
         ids = {r["business_id"] for r in rows}
         assert "D70060" in ids  # Terrazzo Fresco

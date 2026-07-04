@@ -1,7 +1,8 @@
 -- ══════════════════════════════════════════════════════════════════
 -- KUCHNIE CATALOG — Consolidated SQLite Schema
--- Version: 1.4.0
+-- Version: 1.5.0
 -- Tables ordered by FK dependency: no forward references.
+-- Existing DBs: apply scripts/migrate_1_5_0.py before this file.
 -- ══════════════════════════════════════════════════════════════════
 
 PRAGMA foreign_keys = ON;
@@ -88,6 +89,15 @@ CREATE TABLE IF NOT EXISTS tags (
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS pairing_types (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug            TEXT NOT NULL UNIQUE,
+    name            TEXT NOT NULL,
+    producer_hint   TEXT,
+    description     TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 
 -- ── 2. TABLES DEPENDING ON producers ────────────────────────────
 
@@ -133,8 +143,8 @@ CREATE TABLE IF NOT EXISTS decors (
     ral             TEXT,
     pantone         TEXT,
     img             TEXT,
-    one_global      BOOLEAN NOT NULL DEFAULT 0,
-    new_2024        BOOLEAN NOT NULL DEFAULT 0,
+    -- collection-membership flags (one_global, new_2024, …) live in
+    -- decor_tags since 1.5.0; v_decors_full still exposes them as columns
     discontinued    BOOLEAN NOT NULL DEFAULT 0,
     notes           TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
@@ -185,6 +195,7 @@ CREATE TABLE IF NOT EXISTS variants (
     material_id     INTEGER NOT NULL REFERENCES materials(id),
     structure_id    INTEGER REFERENCES structures(id),
     sheet_format_id INTEGER REFERENCES sheet_formats(id),
+    producer_sku    TEXT,    -- producer's own article number (nullable)
     roles           TEXT NOT NULL DEFAULT '["front"]',
     thickness_mm    REAL,
     width_mm        INTEGER,
@@ -198,7 +209,7 @@ CREATE TABLE IF NOT EXISTS variants (
     splashback_available BOOLEAN DEFAULT FALSE,
     hpl_available   BOOLEAN DEFAULT FALSE,
     countertop      TEXT,
-    multi_structures TEXT,
+    multi_structures TEXT,   -- DEPRECATED since 1.5.0: expand to one variant per structure instead (ADR-004)
     notes           TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
@@ -222,11 +233,7 @@ CREATE TABLE IF NOT EXISTS pairings (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     front_decor_id      INTEGER NOT NULL REFERENCES decors(id),
     target_decor_id     INTEGER NOT NULL REFERENCES decors(id),
-    pairing_type        TEXT NOT NULL CHECK (pairing_type IN (
-                            'carcass', 'worktop', 'splashback', 'side_panel',
-                            'plinth', 'hpl_laminate', 'acrylic', 'mirror',
-                            'compact', 'kronoart', 'black_wood'
-                        )),
+    pairing_type        TEXT NOT NULL REFERENCES pairing_types(slug),
     match_type          TEXT NOT NULL CHECK (match_type IN (
                             'exact', 'close', 'default'
                         )),
@@ -309,6 +316,8 @@ CREATE INDEX IF NOT EXISTS idx_variants_decor ON variants(decor_id);
 CREATE INDEX IF NOT EXISTS idx_variants_material ON variants(material_id);
 CREATE INDEX IF NOT EXISTS idx_variants_structure ON variants(structure_id);
 CREATE INDEX IF NOT EXISTS idx_variants_thickness ON variants(thickness_mm);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_variants_producer_sku
+    ON variants(producer_sku) WHERE producer_sku IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_edges_supplier ON edges(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_pairings_front ON pairings(front_decor_id);
 CREATE INDEX IF NOT EXISTS idx_pairings_target ON pairings(target_decor_id);
@@ -430,7 +439,11 @@ SELECT
     d.group_name,
     cf.slug         AS color_family,
     d.ncs, d.ral, d.pantone, d.img,
-    d.one_global, d.new_2024, d.discontinued,
+    EXISTS(SELECT 1 FROM decor_tags dt JOIN tags t ON t.id = dt.tag_id
+           WHERE dt.decor_id = d.id AND t.slug = 'one-global') AS one_global,
+    EXISTS(SELECT 1 FROM decor_tags dt JOIN tags t ON t.id = dt.tag_id
+           WHERE dt.decor_id = d.id AND t.slug = 'new-2024') AS new_2024,
+    d.discontinued,
     p.slug          AS producer,
     v.id            AS variant_pk,
     v.business_id   AS variant_id,
@@ -599,6 +612,22 @@ INSERT OR IGNORE INTO color_families (slug, name, hex_approx) VALUES
 
 INSERT OR IGNORE INTO edge_suppliers (slug, name) VALUES
     ('schilsner','Schilsner'),('rehau','REHAU Interior Solutions');
+
+INSERT OR IGNORE INTO pairing_types (slug, name, producer_hint) VALUES
+    ('carcass','Korpus',NULL),
+    ('worktop','Blat',NULL),
+    ('splashback','Panel ścienny',NULL),
+    ('side_panel','Bok widoczny',NULL),
+    ('plinth','Cokół',NULL),
+    ('hpl_laminate','Laminat HPL',NULL),
+    ('acrylic','Akryl',NULL),
+    ('mirror','Lustro',NULL),
+    ('compact','Compact',NULL),
+    ('kronoart','KronoArt','kronospan'),
+    ('black_wood','BLACK WOOD','swiss_krono');
+
+INSERT OR IGNORE INTO tags (slug) VALUES
+    ('one-global'),('new-2024');
 
 INSERT OR IGNORE INTO worktop_constructions (slug, name, description, producer_hint) VALUES
     ('postformed','Post-formed','HPL formed hot over R3 edge',NULL),

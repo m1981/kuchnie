@@ -55,8 +55,11 @@ class TestSchemaIntegrity:
 
     def test_decors_has_bilingual_and_flag_columns(self, db: sqlite3.Connection):
         cols = {row[1] for row in db.execute("PRAGMA table_info(decors)")}
-        for col in ("name_en", "one_global", "new_2024", "discontinued"):
+        for col in ("name_en", "discontinued"):
             assert col in cols, f"Phase 1 decor column missing: {col}"
+        # one_global / new_2024 moved to decor_tags in phase 5 (ADR-004)
+        for col in ("one_global", "new_2024"):
+            assert col not in cols, f"Phase 5 removed decor column: {col}"
 
     def test_views_exist(self, db: sqlite3.Connection):
         views = {
@@ -449,8 +452,8 @@ class TestKronoSwissBlackWood:
         # Decor U190 'Czarny' / 'Black' — KronoSwiss bilingual
         cur.execute(
             "INSERT INTO decors "
-            "(business_id, producer_id, name, name_en, group_name, one_global) "
-            "VALUES ('U190', ?, 'Czarny', 'Black', 'Unikolory', 1)",
+            "(business_id, producer_id, name, name_en, group_name) "
+            "VALUES ('U190', ?, 'Czarny', 'Black', 'Unikolory')",
             (producer_id,),
         )
         decor_id = cur.lastrowid
@@ -499,14 +502,23 @@ class TestKronoSwissBlackWood:
         )
         producer_id = cur.lastrowid
         cur.execute(
-            "INSERT INTO decors (business_id, producer_id, name, one_global) "
-            "VALUES ('U164', ?, 'Antracyt', 1)",
+            "INSERT INTO decors (business_id, producer_id, name) "
+            "VALUES ('U164', ?, 'Antracyt')",
             (producer_id,),
         )
+        # one_global is a decor_tags row since phase 5 (ADR-004)
+        cur.execute(
+            "INSERT INTO decor_tags (decor_id, tag_id) "
+            "SELECT ?, id FROM tags WHERE slug = 'one-global'",
+            (cur.lastrowid,),
+        )
         row = db.execute(
-            "SELECT one_global FROM decors WHERE business_id = 'U164'"
+            "SELECT COUNT(*) AS n FROM decor_tags dt "
+            "JOIN tags t ON t.id = dt.tag_id "
+            "JOIN decors d ON d.id = dt.decor_id "
+            "WHERE d.business_id = 'U164' AND t.slug = 'one-global'"
         ).fetchone()
-        assert row["one_global"] == 1
+        assert row["n"] == 1
 
 
 class TestKronospanSlimLineSubcollections:

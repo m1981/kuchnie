@@ -321,8 +321,8 @@ class CatalogImporter:
                 "INSERT OR IGNORE INTO decors "
                 "(business_id, producer_id, name, name_en, group_name, "
                 " color_family_id, ncs, ral, pantone, img, "
-                " one_global, new_2024, discontinued, notes) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                " discontinued, notes) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     item["business_id"],
                     producer_id,
@@ -334,14 +334,31 @@ class CatalogImporter:
                     item.get("ral"),
                     item.get("pantone"),
                     item.get("img"),
-                    item.get("one_global", False),
-                    item.get("new_2024", False),
                     item.get("discontinued", False),
                     item.get("notes"),
                 ),
             )
+            # Collection-membership flags are stored as decor_tags
+            # (schema 1.5.0); the YAML keys are unchanged.
+            for yaml_key, tag_slug in (
+                ("one_global", "one-global"),
+                ("new_2024", "new-2024"),
+            ):
+                if item.get(yaml_key, False):
+                    self._tag_decor(item["business_id"], producer_id, tag_slug)
             count += 1
         return count
+
+    def _tag_decor(self, business_id: str, producer_id: int, tag_slug: str) -> None:
+        self.db.execute(
+            "INSERT OR IGNORE INTO tags (slug) VALUES (?)", (tag_slug,)
+        )
+        self.db.execute(
+            "INSERT OR IGNORE INTO decor_tags (decor_id, tag_id) "
+            "SELECT d.id, t.id FROM decors d, tags t "
+            "WHERE d.business_id = ? AND d.producer_id = ? AND t.slug = ?",
+            (business_id, producer_id, tag_slug),
+        )
 
     def import_variants(self, items: list[dict]) -> int:
         count = 0
@@ -382,16 +399,17 @@ class CatalogImporter:
             self.db.execute(
                 "INSERT OR IGNORE INTO variants "
                 "(business_id, decor_id, material_id, structure_id, "
-                " sheet_format_id, thickness_mm, width_mm, length_mm, "
+                " sheet_format_id, producer_sku, thickness_mm, width_mm, length_mm, "
                 " sidedness, roles, multi_structures, "
                 " hpl_available, splashback_available, notes) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     item["business_id"],
                     decor_id,
                     material_id,
                     structure_id,
                     sheet_format_id,
+                    item.get("producer_sku"),
                     item.get("thickness_mm"),
                     item.get("width_mm"),
                     item.get("length_mm"),

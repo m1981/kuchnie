@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-04
+
+### Changed
+
+- Schema 1.5.0 — producer generalization ahead of Egger onboarding (ADR-004):
+  - `pairing_types` lookup table replaces the `pairings.pairing_type`
+    CHECK enum (producer-branded types are now data, not DDL)
+  - `decors.one_global` / `decors.new_2024` columns removed; stored as
+    `decor_tags` (`one-global`, `new-2024`); `v_decors_full` recomputes
+    both columns, so the API contract is unchanged
+  - `variants.producer_sku` added (producer's own article number,
+    unique when present)
+  - `variants.multi_structures` deprecated (expand to per-structure
+    variants instead)
+- `init_schema()` auto-migrates pre-1.5.0 databases
+  (`scripts/migrate_1_5_0.py`; incremental
+  `docs/architecture/06-phase5-producer-generalization.sql`)
+
+### Added
+
+- `docs/adr/004-producer-generalization-for-egger.md` — incl. Egger
+  variant `business_id` grammar (`U702-EU-18-ST9`)
+- `tests/test_phase5_producer_generalization.py` (8 tests; suite 227 → 235)
+
 ## [0.3.0] — 2026-07-01
 
 ### Added

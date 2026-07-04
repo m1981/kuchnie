@@ -35,6 +35,7 @@ SCHEMA_FILES = [
     "03-phase2-decor-structures-and-pairings.sql",
     "04-phase4a-variant-availability.sql",
     "05-phase4b-property-flags.sql",
+    "06-phase5-producer-generalization.sql",
 ]
 
 
