@@ -52,7 +52,8 @@ class MachiningOp:
 
     Coordinate system (panel lying flat, viewed from the machined face):
       x_mm  = distance from LEFT edge of panel
-      y_mm  = distance from BOTTOM edge of panel (front edge for carcass sides)
+              (for carcass side panels this is the cabinet FRONT edge)
+      y_mm  = distance from BOTTOM edge of panel
 
     Fields ``face`` and ``drill_type`` (ADR-012 §2) let downstream CAM
     filter and route operations without string-matching on ``note``.

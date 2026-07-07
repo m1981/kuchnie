@@ -16,10 +16,25 @@ import json
 import sys
 
 
-def main() -> None:
-    """Extract kitchen from current Blender scene and print JSON."""
+def main(argv: list[str] | None = None) -> None:
+    """Extract kitchen from a .blend file (or the current scene) and print JSON.
+
+    A ``.blend`` path in the args is opened first; without one, whatever
+    scene the interpreter already holds is used. Inside Blender, script
+    args arrive after the ``--`` separator — everything before it belongs
+    to Blender itself and is ignored here.
+    """
     from .extract import extract_cabinets_from_scene, cabinets_to_kitchen
     from kuchnie_core.serialize import kitchen_to_dict
+
+    args = list(sys.argv[1:] if argv is None else argv)
+    if "--" in args:
+        args = args[args.index("--") + 1:]
+    blend_path = next((a for a in args if a.endswith(".blend")), None)
+
+    if blend_path is not None:
+        import bpy
+        bpy.ops.wm.open_mainfile(filepath=blend_path)
 
     cabinets = extract_cabinets_from_scene()
 

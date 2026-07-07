@@ -106,6 +106,7 @@ def test_drawer_box_panel_count():
     panels, ops = decompose_drawer_box(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
+        runner_y_mm=18,
     )
     assert len(panels) == 2
     assert panels[0].name.endswith("tył")
@@ -117,6 +118,7 @@ def test_drawer_box_back_dimensions():
     panels, _ = decompose_drawer_box(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
+        runner_y_mm=18,
     )
     back = panels[0]
     assert back.width_mm == 700
@@ -129,6 +131,7 @@ def test_drawer_box_base_dimensions():
     panels, _ = decompose_drawer_box(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
+        runner_y_mm=18,
     )
     base = panels[1]
     assert base.width_mm == 703
@@ -141,6 +144,7 @@ def test_drawer_box_runner_ops_count():
     _, ops = decompose_drawer_box(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
+        runner_y_mm=18,
     )
     assert len(ops) == 4
     assert all(op.type == "drill" for op in ops)
@@ -148,12 +152,15 @@ def test_drawer_box_runner_ops_count():
 
 
 def test_drawer_box_first_screw_position():
-    """First runner screw at 46mm from front edge."""
+    """First runner screw at 46mm from front edge (x axis on side panels),
+    at the runner height passed by the caller (y axis)."""
     _, ops = decompose_drawer_box(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
+        runner_y_mm=18,
     )
-    assert ops[0].y_mm == 46
+    assert ops[0].x_mm == 46
+    assert all(op.y_mm == 18 for op in ops)
 
 
 # ── Full cabinet integration ────────────────────────────────────
@@ -185,15 +192,19 @@ def test_K02_has_machining_ops():
 
 
 def test_K02_runner_ops_positions():
-    """First screw at 46mm, second at 78mm (from PoC table)."""
+    """Screws at 46/78mm from the front edge (x); each drawer's runner at
+    its own stack height (y): S1 on the bottom panel (18), S2 one front
+    height up (18 + 177 = 195)."""
     cab = load_cabinet(FIXTURES / "K02_legrabox.yaml")
     result = decompose(cab)
     side = next(p for p in result.panels if p.id.endswith("_left"))
     # First drawer screws
-    assert side.machining_ops[0].y_mm == 46
-    assert side.machining_ops[1].y_mm == 78
+    assert side.machining_ops[0].x_mm == 46
+    assert side.machining_ops[1].x_mm == 78
+    assert side.machining_ops[0].y_mm == 18
     # Second drawer screws (offset in list by 4)
-    assert side.machining_ops[4].y_mm == 46
+    assert side.machining_ops[4].x_mm == 46
+    assert side.machining_ops[4].y_mm == 195
 
 
 def test_K02_accessories():

@@ -38,8 +38,8 @@ class HingeGeometry:
       * ``screw_offset_x_mm``     — distance from door edge to the plate
         screw axis.
     """
-    cup_diameter_mm: int          # cup drill diameter (typically 35mm)
-    cup_drill_depth_mm: int       # cup drill depth (typically 13mm)
+    cup_diameter_mm: int = 35     # cup drill diameter (Blum CLIP top: 35mm)
+    cup_drill_depth_mm: int = 13  # cup drill depth (Blum CLIP top: 13mm)
     edge_to_cup_centre_mm: float = 5.0
     screw_spacing_mm: float = 45.0
     screw_offset_x_mm: float = 9.5

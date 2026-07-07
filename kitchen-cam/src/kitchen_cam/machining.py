@@ -161,13 +161,9 @@ def apply_hinges(panels: list[Panel], cab: CabinetInstance) -> list[Panel]:
     """
     panels = [copy.deepcopy(p) for p in panels]
 
-    if not cab.handles:
-        # No handles spec, but hinges may still exist via default HingeGeometry
-        pass
-
-    hinge = cab.hinges  # HingeGeometry or None
-    if hinge is None:
-        return panels
+    # YAML-loaded cabinets carry no explicit HingeGeometry — fall back to
+    # the Blum CLIP top defaults; hinge counts still come from the fronts.
+    hinge = cab.hinges or HingeGeometry()
 
     door_hinge_counts = _get_door_hinge_counts(cab)
 

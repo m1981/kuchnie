@@ -48,6 +48,10 @@ _TYPE_MAP = {
     "UPPER": "gorna_drzwiowa",
 }
 
+# Blender scenes carry geometry, not decor codes. Materials stay explicitly
+# unassigned; the BOM stage resolves them against the catalog (ADR-008).
+_UNASSIGNED_MATERIAL = "unassigned"
+
 
 # ---------------------------------------------------------------------------
 # Extraction
@@ -116,26 +120,39 @@ def cabinets_to_kitchen(cabinets: list[dict[str, Any]]) -> Kitchen:
     """Convert extracted cabinet dicts into a kuchnie_core.Kitchen.
 
     All cabinets go into a single Row (the user can restructure later).
+    Wall dimensions are inferred from the cabinets — Blender scenes don't
+    carry an explicit wall entity for us to read.
     """
     cab_instances = []
     for i, cab in enumerate(cabinets):
         cab_instances.append(CabinetInstance(
             id=f"cab_{i:03d}",
             type=cab["type"],
+            description=f"Extracted from Blender ({cab['type']})",
             width_mm=cab["width_mm"],
             height_mm=cab["height_mm"],
             depth_mm=cab["depth_mm"],
+            body_material=_UNASSIGNED_MATERIAL,
+            back_material=_UNASSIGNED_MATERIAL,
+            front_material=_UNASSIGNED_MATERIAL,
+            plinth_height_mm=cab["toe_kick_mm"],
+            drawers=[
+                {"id": f"S{j + 1}", "wysokosc": h}
+                for j, h in enumerate(cab.get("drawers", []))
+            ],
         ))
 
     row = Row(
         id="row_0",
-        name="Extracted Row",
+        label="Extracted Row",
+        wall_width_mm=sum(c.width_mm for c in cab_instances),
+        wall_height_mm=max((c.height_mm for c in cab_instances), default=0),
         cabinets=cab_instances,
     )
 
     return Kitchen(
         rows=[row],
-        name="Extracted Kitchen",
+        project_name="Extracted Kitchen",
     )
 
 

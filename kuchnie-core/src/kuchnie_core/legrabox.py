@@ -178,13 +178,22 @@ def decompose_drawer_box(
     back_material: str = "plyta_16mm",
     base_thickness: int = 16,
     back_thickness: int = 16,
+    *,
+    runner_y_mm: float,
 ) -> tuple[list[Panel], list[MachiningOp]]:
     """Decompose one LEGRABOX drawer into board-cut panels + runner ops.
 
+    ``runner_y_mm`` is the runner screw-axis height above the side panel's
+    BOTTOM edge — the caller knows where this drawer sits in the stack, this
+    module only knows Blum's screw offsets along the depth. Required, no
+    default: a runner op without a vertical position is scrap board.
+
     Returns:
       panels:  drawer back + drawer base (the two board-cut parts)
-      ops:     runner mounting drill positions for ONE side panel
-               (apply to both left and right carcass sides)
+      ops:     runner mounting drill positions for ONE side panel; the ops
+               use the CAM convention for carcass sides (x = from FRONT
+               edge, y = from BOTTOM edge). The caller must give each side
+               its own copies — these objects must not be shared.
 
     The metal drawer sides, runners, and clips are purchased accessories
     (not panels) — tracked separately.
@@ -224,13 +233,15 @@ def decompose_drawer_box(
     # Runner mounting screws — on each carcass side panel
     screw_offsets = RUNNER_SCREW_POSITIONS.get(nl, [46, 78, 110])
     ops: list[MachiningOp] = []
-    for y in screw_offsets:
+    for x in screw_offsets:
         ops.append(MachiningOp(
             type="drill",
-            x_mm=0,   # x position on side panel = depth-inset, set by caller
-            y_mm=y,   # distance from front edge of side panel
+            x_mm=x,             # distance from front edge of side panel
+            y_mm=runner_y_mm,   # runner axis height above panel bottom
             diameter_mm=5,
             depth_mm=0,  # through-hole for Euro screw
+            face="inside",
+            drill_type="runner_screw",
             note=f"LEGRABOX {height_code} runner screw (NL={nl})",
         ))
 

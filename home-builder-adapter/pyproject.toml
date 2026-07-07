@@ -10,3 +10,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The package literally lives at src/ (imported as ``src.extract`` etc.);
+# tests fake ``bpy`` in conftest so they run outside Blender.
+pythonpath = ["."]
+addopts = "-v --tb=short"

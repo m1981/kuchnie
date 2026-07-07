@@ -16,7 +16,15 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .model import CabinetInstance, Kitchen, Row, WorktopSegment
+from .blum_hinges import HingeGeometry
+from .model import (
+    CabinetInstance,
+    HandleSpec,
+    Kitchen,
+    Row,
+    ShelfPinSpec,
+    WorktopSegment,
+)
 
 
 # ── To dict / JSON ──────────────────────────────────────────────
@@ -42,11 +50,30 @@ def kitchen_to_json_str(kitchen: Kitchen) -> str:
 # ── From dict / JSON ────────────────────────────────────────────
 
 def _build_cabinet(d: dict) -> CabinetInstance:
-    """Reconstruct a CabinetInstance from a dict (handles extra/missing keys)."""
+    """Reconstruct a CabinetInstance from a dict (handles extra/missing keys).
+
+    ``asdict`` flattens nested spec dataclasses to plain dicts; they must be
+    rehydrated here or every downstream attribute access breaks. ``config``
+    is a discriminated union whose variant name is not stored in JSON, so it
+    is re-synthesised from the legacy fields — the same (deterministic) path
+    the YAML loader uses.
+    """
     # Only pass fields that CabinetInstance actually accepts
     known = {f.name for f in CabinetInstance.__dataclass_fields__.values()}
     filtered = {k: v for k, v in d.items() if k in known}
-    return CabinetInstance(**filtered)
+
+    if isinstance(filtered.get("handles"), dict):
+        filtered["handles"] = HandleSpec(**filtered["handles"])
+    if isinstance(filtered.get("shelf_pins"), dict):
+        filtered["shelf_pins"] = ShelfPinSpec(**filtered["shelf_pins"])
+    if isinstance(filtered.get("hinges"), dict):
+        filtered["hinges"] = HingeGeometry(**filtered["hinges"])
+    filtered.pop("config", None)
+
+    cab = CabinetInstance(**filtered)
+
+    from .loader import _apply_synthesised_config
+    return _apply_synthesised_config(cab)
 
 
 def _build_row(d: dict) -> Row:

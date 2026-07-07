@@ -81,15 +81,12 @@ class TestMachiningOpExplicit:
 # ── LEGRABOX runner-mount ops \u2014 real decomposer output ─────────
 
 class TestLegraboxRunnerOpDefaults:
-    """LEGRABOX runner-mount screws are drilled from the inside face.
-
-    kuchnie_core doesn't yet classify them by ``drill_type`` \u2014 that vocabulary
-    decision belongs in the ADR-010 rewrite of ``kitchen-cam.machining``.
-    So they should carry ``face="inside"`` (default, factually correct)
-    and ``drill_type=""`` (default, explicitly unclassified).
+    """LEGRABOX runner-mount screws are drilled from the inside face and
+    classified ``drill_type="runner_screw"`` so downstream CAM can route
+    them without string-matching on ``note`` (ADR-012 \u00a72).
     """
 
-    def test_runner_ops_use_default_face_and_drill_type(self):
+    def test_runner_ops_are_classified_and_inside_face(self):
         from pathlib import Path
         fixtures = Path(__file__).resolve().parent.parent / "fixtures"
         cab = load_cabinet(fixtures / "K02_legrabox.yaml")
@@ -105,8 +102,6 @@ class TestLegraboxRunnerOpDefaults:
             assert op.face == "inside", (
                 f"LEGRABOX runner ops drilled from inside face; got face={op.face!r}"
             )
-            assert op.drill_type == "", (
-                "kuchnie_core does not yet classify LEGRABOX runner ops by "
-                "drill_type — that vocabulary belongs in the ADR-010 "
-                f"machining.py rewrite. Got drill_type={op.drill_type!r}"
+            assert op.drill_type == "runner_screw", (
+                f"runner ops must be routable by drill_type; got {op.drill_type!r}"
             )

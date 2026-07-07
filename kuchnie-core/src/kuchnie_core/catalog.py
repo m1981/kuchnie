@@ -10,6 +10,8 @@ registering it in TYPE_REGISTRY.
 
 from __future__ import annotations
 
+import copy
+
 from .construction import ConstructionMethod
 from .model import (
     Accessory,
@@ -475,6 +477,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
       - Runner accessories carry LEGRABOX part numbers
     """
     from .legrabox import (
+        HEIGHTS,
         decompose_drawer_box,
         make_runner_accessory,
         validate_height_nl,
@@ -532,6 +535,11 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     ))
 
     # -- Drawer boxes + runner mounting ops --
+    # Drawers stack bottom-up: each runner's screw axis sits at the bottom
+    # of its drawer zone, the first zone starting on top of the bottom panel.
+    # TODO: add the exact Blum screw-axis offset within the zone once the
+    # Montageanleitung chart is transcribed (see legrabox.RUNNER_SCREW_POSITIONS).
+    runner_y = float(m.bottom_thickness_mm)
     for drawer in cab.drawers:
         did = drawer["id"]
         height_code = drawer.get("height_code", "C")
@@ -545,12 +553,15 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             nl=nl,
             height_code=height_code,
             side_thickness=m.side_thickness_mm,
+            runner_y_mm=runner_y,
         )
         r.panels.extend(box_panels)
+        runner_y += drawer.get("wysokosc") or HEIGHTS[height_code].side_height_mm
 
-        # Mounting ops go on BOTH side panels (mirrored)
+        # Mounting ops go on BOTH side panels (mirrored) — each side gets
+        # its own instances; downstream CAM mutates ops per side.
         left_ops.extend(runner_ops)
-        right_ops.extend(runner_ops)
+        right_ops.extend(copy.deepcopy(runner_ops))
 
         # Runner accessory (purchased part)
         r.accessories.append(make_runner_accessory(

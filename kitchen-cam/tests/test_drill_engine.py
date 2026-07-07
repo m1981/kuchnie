@@ -273,16 +273,37 @@ class TestApplyHinges:
         # Front height = 614; top hinge at y = 614 - 100 = 514
         assert cups[-1].y_mm == pytest.approx(614 - 100)
 
-    def test_no_hinges_when_spec_has_none(self):
-        """Cabinet with no hinge geometry → no hinge ops."""
+    def test_default_geometry_when_spec_has_none(self):
+        """``hinges=None`` means "not specified", not "no hinges" — the
+        YAML loader never sets it, yet doors still need cups. CAM falls
+        back to Blum CLIP top defaults (cup ⌀35, 13 deep)."""
         cab = CabinetInstance(
-            id="X", type="dolna_drzwiowa", description="No hinges",
+            id="X", type="dolna_drzwiowa", description="No hinge spec",
             width_mm=600, height_mm=400, depth_mm=300,
             body_material="U119_VL", back_material="HDF_3mm_bialy",
             front_material="U119_EM",
             hinges=None,
             shelves=[],
             fronts=[{"id": "F1", "typ": "drzwiowy_lewy", "ilosc_zawiasow": 2}],
+        )
+        result = decompose(cab)
+        panels = apply_hinges(result.panels, cab)
+        front = next(p for p in panels if p.role == PanelRole.FRONT_DOOR)
+        cups = [op for op in front.machining_ops if op.drill_type == "hinge_cup"]
+        assert len(cups) == 2
+        assert all(op.diameter_mm == 35 and op.depth_mm == 13 for op in cups)
+
+    def test_no_hinge_ops_when_front_declares_zero_hinges(self):
+        """A front that genuinely takes no hinges says so explicitly
+        (``ilosc_zawiasow: 0``) — absence of a HingeGeometry does not."""
+        cab = CabinetInstance(
+            id="X", type="dolna_drzwiowa", description="Zero hinges",
+            width_mm=600, height_mm=400, depth_mm=300,
+            body_material="U119_VL", back_material="HDF_3mm_bialy",
+            front_material="U119_EM",
+            hinges=None,
+            shelves=[],
+            fronts=[{"id": "F1", "typ": "drzwiowy_lewy", "ilosc_zawiasow": 0}],
         )
         result = decompose(cab)
         panels = apply_hinges(result.panels, cab)

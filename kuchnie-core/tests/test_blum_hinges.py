@@ -193,6 +193,14 @@ class TestHingeToAccessory:
 class TestHingeGeometryDefaults:
     """Direct construction — field defaults match ADR-012 §3."""
 
+    def test_no_arg_construction_is_blum_cliptop(self):
+        """The docstring promises Blum CLIP top 110° defaults — a bare
+        ``HingeGeometry()`` must be a valid, drillable geometry (35mm cup,
+        13mm deep). It is the fallback CAM uses when YAML names no hinge."""
+        g = HingeGeometry()
+        assert g.cup_diameter_mm == 35
+        assert g.cup_drill_depth_mm == 13
+
     def test_required_cup_fields(self):
         g = HingeGeometry(cup_diameter_mm=35, cup_drill_depth_mm=13)
         assert g.cup_diameter_mm == 35

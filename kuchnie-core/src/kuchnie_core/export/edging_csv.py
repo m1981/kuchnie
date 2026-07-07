@@ -15,8 +15,13 @@ per ADR-010. The old function operated on the (now-deprecated) local
 ``kitchen_cam.models.Panel`` with ``edges: list[EdgeBand(side, material)]``.
 This version operates on the canonical ``kuchnie_core.model.Panel`` whose
 ``banded_edges`` is a dict keyed by side name ("front" | "back" | "left" |
-"right"); edge length is derived from panel dimensions using the same
-rule as the previous implementation:
+"right").
+
+Edge length comes from ``EdgeBand.length_mm`` — the decomposer stores the
+true strip length there (a carcass side panel's "front" edge runs along the
+panel HEIGHT, which no dimension rule keyed on side names can know). Only
+when a band carries no length (0 / legacy producers) do we fall back to the
+old derivation rule:
 
   * ``front`` / ``back``  edge runs along ``width_mm``
   * ``left``  / ``right`` edge runs along ``height_mm``
@@ -79,7 +84,7 @@ def collect_edging_rows(panels: list[Panel]) -> list[EdgingRow]:
                 panel_id=p.id,
                 panel_name=p.name,
                 side=side,
-                length_mm=_edge_length_mm(p, side),
+                length_mm=band.length_mm or _edge_length_mm(p, side),
                 material=band.material,
                 thickness_mm=band.thickness_mm,
             ))
