@@ -21,6 +21,15 @@ in `kitchen-erp`. Frozen execution-status snapshot:
   (`e7c6808`, 2026-07-05).
 - `kuchnie_core` moved to its own component home `kuchnie-core/`
   (`69e09c6`, 2026-07-05).
+- Cold-review findings F1–F6 fixed TDD-style with execution-path seam
+  tests (`afd7e04`, 2026-07-07): serialize round-trip rehydration,
+  edging lengths from stored bands, Blum hinge defaults on the YAML
+  path, LEGRABOX runner axes/stacking/aliasing, adapter constructor
+  drift + first adapter tests (fake-bpy), generic `panel_to_dxf`
+  consumer for machining ops. Key new seam suites:
+  `kuchnie-core/tests/test_execution_paths.py`,
+  `kitchen-cam/tests/{test_yaml_path_drilling,test_panel_dxf}.py`,
+  `home-builder-adapter/tests/`.
 
 ---
 
@@ -71,12 +80,12 @@ Make `kitchen_erp.Material` a local cache/mirror of `catalog/` data
 
 **ADR:** `docs/adr/011-kitchen-app-becomes-kitchen-erp.md`
 
-### 4. Write tests for home-builder-adapter
+### 4. ~~Write tests for home-builder-adapter~~ — DONE (commit `afd7e04`)
 
-`home-builder-adapter/src/extract.py` (148 LOC) and `cli.py` (36 LOC)
-have **zero tests**. Old 23-file suite was deleted in commit `8da1a61`
-"Phase d"; only `tests/__init__.py` survived. 23 orphaned `.pyc` files
-under `tests/__pycache__/` should be cleaned.
+13 tests via fake-bpy `tests/conftest.py`: extraction unit tests, the
+extract → JSON → decompose contract test, and CLI argv/open-mainfile
+tests. The extract/cli constructor-drift bugs they exposed are fixed in
+the same commit. Orphaned `tests/__pycache__/` cleaned.
 
 **ADR:** `docs/adr/009-kitchen-plugin-becomes-home-builder-adapter.md`
 
