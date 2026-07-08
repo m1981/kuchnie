@@ -56,6 +56,9 @@ The ledger must beat it to earn its rent.
 |---|---|---|---|
 | TL-1 | High | `doctor` reported hooks OK while hooks were dead: it checks hook *file contents*, not the effective `core.hooksPath` chain (husky had seized it). Doctor's one job is "your repo is wired" and it failed open on day 0. Fix: doctor must resolve `git config core.hooksPath` and trace what actually executes. | reported here; not yet fixed upstream |
 | TL-2 | Low | `check-truth.sh` on macOS/BSD: `head -n 0` is illegal when the committed ledger is empty; outcome accidentally correct (cmp empty-vs-empty). Guard `OLD_N -gt 0`. First macOS datapoint (paper claims Linux-only reproduction). | reported here; not yet fixed upstream |
+| TL-3 | High | **Dispatch prompt integrity is transport-dependent.** An output-compression proxy (sqz) in the agent harness silently dropped rule 3 (VERDICT RULES — including "never soften a diverge into an agree") from `truth dispatch` output in **all 10** verifier sessions. G11 scripts what the verifier receives, but nothing guarantees it *arrives* intact. Fix idea: dispatch prints a sha256 of the fixed prompt; verifier protocol step 0 = verify it against `prompts/truth-verifier.md`. | found by verifiers themselves; not yet fixed upstream |
+| TL-4 | Medium | `truth verdict <id> --recheck` is not a dry-run: it silently **files an auto-`agree` verdict** ("recheck: output hash matches recorded evidence") before the verifier's interpretation step. Every protocol-obedient verifier therefore double-files; a verifier diverging at step 2 would leave contradictory verdicts; a verifier that stopped after step 1 would appear to have completed verification. Nothing in the prompt documents the write. Fix: recheck reports without filing (or files only diverge/cannot_verify). Found independently by 5 of 10 verifiers. | reported here; not yet fixed upstream |
+| TL-5 | Low | Verdict/claim records carry `session: "s-unknown"` — the CLI has no session identity source in this environment, weakening the provenance envelope. | reported here |
 
 ## Event log
 
@@ -63,3 +66,7 @@ The ledger must beat it to earn its rent.
 |---|---|
 | 2026-07-08 | Hooks wired via husky; gate live-verified; doctor 7/7 OK. TL-1, TL-2 found. |
 | 2026-07-08 | Day-0 baseline filed: 10 claims (C1–C10), actor `claude-fable-dev`. 2 freeze-doc rows found already decayed. |
+| 2026-07-08 | Baseline committed (1bd4558) through the live gate; post-commit scan fired, 0 stale. |
+| 2026-07-08 | **Verification round 1**: 10 fresh isolated agent sessions (actors `claude-verifier-1..10`), dispatch-only context. Result: **10/10 agree → all claims `live`**. Every verifier went beyond hash recheck and closed the evidence→text interpretation gap (blind-spot sweeps for absence claims, ADR cross-reads, SQLite magic-byte check, addon manifest inspection). One letter-vs-spirit note recorded in tr-8962a692's basis (bpy host-provided, not declared). |
+| 2026-07-08 | Concurrency stress (incidental): 10 parallel same-machine verifier sessions, 20 appends — 30/30 records validate, no corruption. First empirical datapoint for the `O_APPEND` assumption. |
+| 2026-07-08 | **Calibration caveat on round 1 unanimity**: all verifiers judged without VERDICT RULES (dropped in transit, TL-3), i.e. without the anti-sycophancy instruction. Their independent evidence work argues the agreements are sound, but round 2 must run with verified-intact prompts. |
