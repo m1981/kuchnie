@@ -1,8 +1,11 @@
 """BOM Generator - orchestrates recipe loading, rules engine, and cost calculation"""
+from kuchnie_core.decomposer import decompose
+
 from .schemas import BOMAssembly, BOMPart
 from .recipe_loader import get_recipe, eval_formula
 from .rules_engine import RulesEngine
 from .models import Cabinet, ProjectDefaults
+from .domain_adapter import to_kuchnie_core, quantities_from_decomposition
 
 
 class BOMGenerator:
@@ -48,57 +51,74 @@ class BOMGenerator:
             "depth_mm": self.cabinet.depth_mm
         }
         
-        # 1. Add corpus materials based on formulas
+        # 1. Panel quantities. ADR-011 phase 2: when the domain hub has a
+        # construction method for this module kind, panel geometry comes from
+        # kuchnie_core.decompose(); recipe formulas remain the fallback for
+        # module kinds the hub cannot build yet (appliances, fillers, panels).
         formulas = recipe.get("formulas", {})
         corpus_m2 = 0
         back_m2 = 0
         front_m2 = 0
 
+        domain_inst = to_kuchnie_core(self.cabinet, self.defaults)
+        if domain_inst is not None:
+            q = quantities_from_decomposition(decompose(domain_inst))
+            corpus_m2 = q.corpus_m2
+            back_m2 = q.back_m2
+            front_m2 = q.front_m2
+            front_edge_m = q.front_edge_lm
+            corpus_edge_m = q.corpus_edge_lm
+        else:
+            if "corpus_m2" in formulas:
+                corpus_m2 = eval_formula(formulas["corpus_m2"], dims)
+            if "back_m2" in formulas:
+                back_m2 = eval_formula(formulas["back_m2"], dims)
+            if "front_m2" in formulas:
+                front_m2 = eval_formula(formulas["front_m2"], dims)
+            # Legacy edging estimates (no real panels to measure)
+            front_edge_m = 2 * (dims["width_mm"] + dims["height_mm"]) / 1000 if front_m2 > 0 else 0
+            corpus_edge_m = (2 * dims["height_mm"] + 3 * dims["width_mm"]) / 1000 if corpus_m2 > 0 else 0
+
         # 1. Materiały płytowe
-        if "corpus_m2" in formulas:
-            corpus_m2 = eval_formula(formulas["corpus_m2"], dims)
-            if corpus_m2 > 0:
-                root.add_child(BOMPart(
-                    name=f"Corpus: {self.defaults.corpus_mat.name}",
-                    material_id=self.defaults.corpus_mat.id,
-                    quantity_net=corpus_m2,
-                    unit="m2",
-                    unit_price=self.defaults.corpus_mat.price_per_unit
-                ))
-        
-        if "back_m2" in formulas:
-            back_m2 = eval_formula(formulas["back_m2"], dims)
-            if back_m2 > 0:
-                root.add_child(BOMPart(
-                    name=f"Back panel: {self.defaults.back_mat.name}",
-                    material_id=self.defaults.back_mat.id,
-                    quantity_net=back_m2,
-                    unit="m2",
-                    unit_price=self.defaults.back_mat.price_per_unit
-                ))
-        
-        if "front_m2" in formulas:
-            front_m2 = eval_formula(formulas["front_m2"], dims)
+        if corpus_m2 > 0:
+            root.add_child(BOMPart(
+                name=f"Corpus: {self.defaults.corpus_mat.name}",
+                material_id=self.defaults.corpus_mat.id,
+                quantity_net=corpus_m2,
+                unit="m2",
+                unit_price=self.defaults.corpus_mat.price_per_unit
+            ))
 
-            # Szafka dostaje materiał na front TYLKO jeśli:
-            # 1. Przepis na to pozwala (front_m2 > 0) ORAZ
-            # 2. Użytkownik dodał drzwi/szuflady LUB jest to moduł będący samym frontem (Zmywarka, Panel)
-            has_physical_fronts = self.cabinet.door_count > 0 or self.cabinet.drawer_count > 0
-            is_front_only_module = self.cabinet.module_kind in ["DISHWASHER", "SIDE_PANEL"]
+        if back_m2 > 0:
+            root.add_child(BOMPart(
+                name=f"Back panel: {self.defaults.back_mat.name}",
+                material_id=self.defaults.back_mat.id,
+                quantity_net=back_m2,
+                unit="m2",
+                unit_price=self.defaults.back_mat.price_per_unit
+            ))
 
-            if front_m2 > 0 and (has_physical_fronts or is_front_only_module):
-                front_mat = self.cabinet.override_front_mat or self.defaults.front_mat
-                root.add_child(BOMPart(
-                    name=f"Front: {front_mat.name}",
-                    material_id=front_mat.id,
-                    quantity_net=front_m2,
-                    unit="m2",
-                    unit_price=front_mat.price_per_unit
-                ))
-        
+        # Szafka dostaje materiał na front TYLKO jeśli:
+        # 1. Geometria/przepis na to pozwala (front_m2 > 0) ORAZ
+        # 2. Użytkownik dodał drzwi/szuflady LUB jest to moduł będący samym frontem (Zmywarka, Panel)
+        has_physical_fronts = self.cabinet.door_count > 0 or self.cabinet.drawer_count > 0
+        is_front_only_module = self.cabinet.module_kind in ["DISHWASHER", "SIDE_PANEL"]
+
+        if front_m2 > 0 and (has_physical_fronts or is_front_only_module):
+            front_mat = self.cabinet.override_front_mat or self.defaults.front_mat
+            root.add_child(BOMPart(
+                name=f"Front: {front_mat.name}",
+                material_id=front_mat.id,
+                quantity_net=front_m2,
+                unit="m2",
+                unit_price=front_mat.price_per_unit
+            ))
+        else:
+            # Gated-off front carries no edging either
+            front_m2 = 0
+            front_edge_m = 0
+
         # 2. Okleinowanie (Front + Korpus)
-        front_edge_m = 2 * (dims["width_mm"] + dims["height_mm"]) / 1000 if front_m2 > 0 else 0
-        corpus_edge_m = (2 * dims["height_mm"] + 3 * dims["width_mm"]) / 1000 if corpus_m2 > 0 else 0
         total_edge_m = front_edge_m + corpus_edge_m
 
         if total_edge_m > 0:

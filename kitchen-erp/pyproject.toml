@@ -8,7 +8,11 @@ dependencies = [
     "pydantic>=2.13.4",
     "reflex>=0.9.2",
     "sqlmodel>=0.0.38",
+    "kuchnie-core",
 ]
+
+[tool.uv.sources]
+kuchnie-core = { path = "../kuchnie-core", editable = true }
 
 [tool.pytest.ini_options]
 pythonpath = "."

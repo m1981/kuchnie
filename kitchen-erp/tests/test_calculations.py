@@ -1,8 +1,10 @@
 # tests/test_calculations.py
-"""Deterministic pricing math for the canonical BOM path (ADR-011).
+"""Deterministic pricing math for the canonical BOM path (ADR-011 phase 2).
 
-Expected values are HAND-COMPUTED from the WALL_CABINET recipe formulas and
-the default hardware rules — never re-derived with the code under test.
+Panel quantities come from kuchnie_core construction methods (gorna_drzwiowa);
+expected values are HAND-COMPUTED from the documented construction (18mm
+board, 8mm groove, 3mm gaps) and the default hardware rules — never
+re-derived with the code under test.
 """
 import pytest
 from kitchen_erp.core.models import Material, HardwareSet, ProjectDefaults, Cabinet
@@ -51,25 +53,26 @@ def test_wall_cabinet_bom_pricing():
     tree = BOMGenerator(cabinet, defaults).generate()
     parts = {p.name: p for p in tree.get_all_parts()}
 
-    # Recipe: corpus_m2 = (2*H*D + 2*W*D + W*D)/1e6
-    #        = (2*500*300 + 2*1000*300 + 1000*300)/1e6 = 1.2 m2 @ $10 = $12.00
-    assert parts["Corpus: Corpus"].quantity_net == pytest.approx(1.2)
-    assert parts["Corpus: Corpus"].cost == pytest.approx(12.0)
+    # Panels per gorna_drzwiowa construction (18mm board, 8mm groove):
+    # corpus = sides 2x(300x500) + top/bottom 2x(964x300)
+    #        = 0.30 + 0.5784 = 0.8784 m2 @ $10 = $8.784
+    assert parts["Corpus: Corpus"].quantity_net == pytest.approx(0.8784)
+    assert parts["Corpus: Corpus"].cost == pytest.approx(8.784)
 
-    # back_m2 = H*W/1e6 = 0.5 m2 @ $5 = $2.50
-    assert parts["Back panel: Back"].cost == pytest.approx(2.5)
+    # back = 980x480 (in groove: 1000-36+16 x 500-36+16) = 0.4704 m2 @ $5 = $2.352
+    assert parts["Back panel: Back"].cost == pytest.approx(2.352)
 
-    # front_m2 = H*W/1e6 = 0.5 m2 @ $20 = $10.00 (1 door -> front present)
-    assert parts["Front: Front"].cost == pytest.approx(10.0)
+    # door = 994x494 (3mm gaps) = 0.491036 m2 @ $20 = $9.82072
+    assert parts["Front: Front"].cost == pytest.approx(9.82072)
 
-    # Edging: front 2*(W+H)/1000 = 3.0 lm; corpus (2*H + 3*W)/1000 = 4.0 lm
-    # total 7.0 lm @ $0.80 = $5.60
-    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(7.0)
-    assert parts["Edge banding: Generic ABS"].cost == pytest.approx(5.6)
+    # Edging from real banded edges: corpus 2x500 + 2x964 = 2.928 lm;
+    # door all 4 edges 2x994 + 2x494 = 2.976 lm; total 5.904 lm @ $0.80 = $4.7232
+    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(5.904)
+    assert parts["Edge banding: Generic ABS"].cost == pytest.approx(4.7232)
 
-    # CNC: cutting 2.2 m2 @ $15 = $33.00; edgebanding 7.0 lm @ $4.50 = $31.50
-    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(33.0)
-    assert parts["CNC Service: Edgebanding PUR"].cost == pytest.approx(31.5)
+    # CNC: cutting 1.839836 m2 @ $15 = $27.59754; edgebanding 5.904 lm @ $4.50 = $26.568
+    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.59754)
+    assert parts["CNC Service: Edgebanding PUR"].cost == pytest.approx(26.568)
 
     # Hardware (default rules): is_wall -> 2 brackets @ $3 = $6.00
     # has_doors x1 -> 2 hinges @ $15 = $30.00, 1 bumper @ $0.20, 1 handle @ $25
@@ -81,5 +84,35 @@ def test_wall_cabinet_bom_pricing():
     # No plinth on a WALL cabinet.
     assert not any("Plinth" in n for n in parts)
 
-    # Grand total, by hand: 12 + 2.5 + 10 + 5.6 + 33 + 31.5 + 6 + 30 + 0.2 + 25
-    assert tree.cost == pytest.approx(155.80)
+    # Grand total, by hand:
+    # 8.784 + 2.352 + 9.82072 + 4.7232 + 27.59754 + 26.568 + 6 + 30 + 0.2 + 25
+    assert tree.cost == pytest.approx(141.04546)
+
+
+def test_gated_front_carries_no_ghost_costs():
+    """A doorless, drawerless BASE cabinet gets NO front material — and no
+    front edging or front CNC either (the old recipe path charged edging and
+    cutting for a front it never added)."""
+    corpus_mat = Material(id=1, name="Corpus", price_per_unit=10.0, unit="m2")
+    front_mat = Material(id=2, name="Front", price_per_unit=20.0, unit="m2")
+    back_mat = Material(id=3, name="Back", price_per_unit=5.0, unit="m2")
+    edge_mat = Material(id=4, name="Edge", price_per_unit=1.0, unit="lm")
+    defaults = ProjectDefaults(
+        corpus_mat=corpus_mat, front_mat=front_mat, back_mat=back_mat,
+        edge_band_mat=edge_mat,
+        hinge_sys=HardwareSet(id=1, name="H", price_per_set=2.0),
+        drawer_sys=HardwareSet(id=2, name="D", price_per_set=30.0),
+    )
+    cabinet = Cabinet(
+        name="Open base", module_kind="BASE_CABINET", type="BASE",
+        width_mm=600.0, height_mm=720.0, depth_mm=510.0,
+        door_count=0, drawer_count=0,
+    )
+    tree = BOMGenerator(cabinet, defaults).generate()
+    parts = {p.name: p for p in tree.get_all_parts()}
+
+    assert not any(n.startswith("Front:") for n in parts)
+    # Edging is corpus-only: sides 2x620 + bottom 564 = 1.804 lm
+    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(1.804)
+    # CNC cutting covers corpus + back only: 0.92004 + 0.36424 = 1.28428 m2
+    assert parts["CNC Service: Cutting & Nesting"].quantity_net == pytest.approx(1.28428)
