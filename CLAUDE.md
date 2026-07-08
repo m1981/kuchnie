@@ -2,6 +2,11 @@
 
 This file provides instructions and context for AI coding agents working on this project.
 
+> **Read `AGENTS.md` first — it is the canonical agent guide for this repo.**
+> **Work-finding precedence:** use `scripts/truth ready`, not `bd ready`. It is
+> `bd ready` filtered by the truth ledger's premise validity — issues standing
+> on stale/diverged facts are HELD. See `docs/beads-integration-guide.md`.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker
 

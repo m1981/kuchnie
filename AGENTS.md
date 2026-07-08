@@ -21,6 +21,11 @@ Facts about the world outside the repo: add `--ttl-days N` instead of `--paths`.
 Never edit `.truth/claims.jsonl` directly; status changes are new records.
 Full documentation: `.truth/README.md`.
 
+**Beads precedence:** this repo also runs Beads (`bd`, section below). To find
+work, use `scripts/truth ready` — NOT `bd ready` — it is `bd ready` filtered by
+premise validity; issues standing on stale/diverged facts are HELD. Full loop:
+`docs/beads-integration-guide.md`.
+
 ---
 
 ## Component roster (monorepo)
