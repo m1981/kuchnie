@@ -229,3 +229,46 @@ fired / 1 fact actually changed.
    the catalog service (claims `tr-d7dd1870`, `tr-88dc0d9a` watch these).
 3. Human decision queued: retract `tr-6e83eb77` (`TRUTH_HUMAN=1`).
 4. Cold-review minors from session 1 remain unaddressed (list above).
+
+---
+
+# Continuation — 2026-07-08 (session 3: ADR-011 phase 2 executed)
+
+Item 3 done: Michal retracted `tr-6e83eb77` himself (first human tombstone).
+Item 1 done in commit `c9fd86c`:
+
+- **`kitchen_erp/core/domain_adapter.py` (new):** `to_kuchnie_core()` maps
+  `Cabinet` → `CabinetInstance` (`BASE_CABINET→dolna_drzwiowa`,
+  `WALL_CABINET→gorna_drzwiowa`, `DRAWER_BASE→dolna_szufladowa`; other
+  kinds → `None`). Doors/drawers synthesize `fronts`/`drawers` dicts
+  (drawer front height = (side_h − 3·(n+1))/n). `quantities_from_decomposition()`
+  folds panels by `PanelRole` into corpus/back/front m2 + corpus/front
+  edging lm (real `banded_edges` lengths, back never banded).
+- **`BOMGenerator.generate()`:** domain quantities when the adapter returns
+  an instance; recipe formulas only as fallback (appliances, fillers,
+  panels). Pricing, rules engine, plinth logic unchanged — pricing stays
+  in erp. Fixed on the way: gated-off fronts no longer charge ghost
+  edging/CNC (the old path did).
+- **Packaging:** kitchen-erp depends on `kuchnie-core` via editable path
+  source (`[tool.uv.sources]`); uv resolves it transparently in `uv run`.
+- **Suite 66 → 76** (9 adapter tests + ghost-cost pinning test). Reference
+  wall-cabinet price hand-computed from the construction: **$141.05**
+  (sides 2×300×500, top/bottom 2×964×300, back 980×480, door 994×494,
+  edging 5.904 lm) — replaces the $155.80 formula estimate.
+
+Ledger: mini-round verifier **diverged** on `tr-65e723dd` (my successor
+claim from session 2) — text said "no calculate_cost or use_new_bom
+ANYWHERE" while the evidence grep matched the pinning tests; scope
+overstatement by the author, caught by an isolated verifier. Replaced by
+`tr-b270996f` (correctly scoped to `kitchen_erp/` production package).
+Phase-2 commit tripped `tr-50764deb` (zero kuchnie_core imports) —
+diverged, replaced by `tr-b485d74c`. Tripwire precision this event: 1/1.
+
+## Open items after session 3
+
+1. **Material mirror (next):** item 2 above, unchanged.
+2. Human decisions queued: retract `tr-65e723dd` and `tr-50764deb`
+   (`TRUTH_HUMAN=1`; successors already live-filed).
+3. Verify successors `tr-b485d74c`/`tr-b270996f` in the next verification
+   round.
+4. Cold-review minors from session 1 remain unaddressed.

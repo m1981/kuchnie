@@ -5,6 +5,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-08 — ADR-011 phase 2: BOM geometry from kuchnie_core
+
+### Added
+- `kitchen-erp/kitchen_erp/core/domain_adapter.py` — `to_kuchnie_core()`
+  maps `Cabinet` rows onto `kuchnie_core.CabinetInstance`;
+  `quantities_from_decomposition()` folds panels back into the m2/lm
+  quantities the BOM prices. `BASE_CABINET`/`WALL_CABINET`/`DRAWER_BASE`
+  route to `dolna_drzwiowa`/`gorna_drzwiowa`/`dolna_szufladowa`.
+- `kitchen-erp` now depends on `kuchnie-core` (editable path source).
+- `tests/test_domain_adapter.py` (9 tests) — mapping contracts + panel
+  quantities hand-computed from the construction method.
+
+### Changed
+- `BOMGenerator.generate()`: panel quantities and banded-edge lengths come
+  from `kuchnie_core.decompose()` for supported module kinds; recipe
+  formulas remain the fallback for kinds the hub cannot build yet
+  (appliances, fillers, panels). Reference wall-cabinet price is now
+  $141.05 (real panels) instead of $155.80 (formula estimates).
+
+### Fixed
+- Ghost front costs: a doorless/drawerless cabinet no longer pays front
+  edging and front CNC cutting for a front part that was never added.
+
+---
+
 ## [Unreleased] — 2026-07-08 — ADR-011: old BOM path deleted (kitchen-erp)
 
 ### Removed
