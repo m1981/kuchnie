@@ -1,2 +1,3 @@
 #!/usr/bin/env sh
 sh scripts/check-governance.sh || exit 1
+bash scripts/check-truth.sh || exit 1
