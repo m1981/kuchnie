@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Solo/trunk: every commit can invalidate ledger facts; there are no merges to hook.
+python3 scripts/truth invalidate-scan

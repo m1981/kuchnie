@@ -24,3 +24,9 @@ catalog/dist/
 catalog/db/catalog.db
 catalog/db/catalog.db-shm
 catalog/db/catalog.db-wal
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
