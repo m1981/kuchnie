@@ -3,7 +3,6 @@ import pytest
 from sqlmodel import Session, create_engine, SQLModel, select
 from kitchen_erp.core.models import Cabinet, Material, HardwareSet, ProjectDefaults, Project
 from kitchen_erp.core.bom_generator import BOMGenerator
-from kitchen_erp.core.schemas import CabinetCostResult
 
 
 @pytest.fixture(name="engine")
@@ -28,20 +27,29 @@ def test_project_fixture(session: Session):
     corpus_mat = Material(
         name="Egger W1000 Premium White",
         category="Board",
-        price_per_unit=12.50
+        price_per_unit=12.50,
+        unit="m2"
     )
     back_mat = Material(
         name="Generic HDF White 3mm",
         category="Panel",
-        price_per_unit=4.50
+        price_per_unit=4.50,
+        unit="m2"
     )
     front_mat = Material(
         name="Egger W1000 Premium White",
         category="Board",
-        price_per_unit=12.50
+        price_per_unit=12.50,
+        unit="m2"
     )
     
-    session.add_all([corpus_mat, back_mat, front_mat])
+    edge_mat = Material(
+        name="ABS White 1mm",
+        category="Edgebanding",
+        price_per_unit=0.80,
+        unit="lm"
+    )
+    session.add_all([corpus_mat, back_mat, front_mat, edge_mat])
     session.commit()
     
     # Create hardware
@@ -52,7 +60,7 @@ def test_project_fixture(session: Session):
     session.commit()
     
     # Create project
-    project = Project(name="Test Kitchen")
+    project = Project(customer_name="Test Kitchen")
     session.add(project)
     session.commit()
     
@@ -62,6 +70,7 @@ def test_project_fixture(session: Session):
         corpus_mat_id=corpus_mat.id,
         back_mat_id=back_mat.id,
         front_mat_id=front_mat.id,
+        edge_band_mat_id=edge_mat.id,
         hinge_sys_id=hinge_sys.id,
         drawer_sys_id=drawer_sys.id,
         waste_factor=1.20
@@ -74,6 +83,7 @@ def test_project_fixture(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="WALL_CABINET",
+            type="WALL",
             name="Wall 400",
             width_mm=400,
             height_mm=720,
@@ -85,6 +95,7 @@ def test_project_fixture(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="DRAWER_BASE",
+            type="BASE",
             name="Drawer Base 800",
             width_mm=800,
             height_mm=802,
@@ -96,6 +107,7 @@ def test_project_fixture(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="SINK_BASE",
+            type="BASE",
             name="Sink Base 800",
             width_mm=800,
             height_mm=802,
@@ -113,44 +125,37 @@ def test_project_fixture(session: Session):
     return project
 
 
-def test_backward_compatibility_old_vs_new(session: Session, test_project: Project):
-    """Test that new BOM generator produces similar results to old calculate_cost()"""
+def test_canonical_bom_covers_all_cabinets(session: Session, test_project: Project):
+    """ADR-011: BOMGenerator is the only cost path and must handle every
+    cabinet in a project with a positive, materialized cost."""
     defaults = session.exec(
         select(ProjectDefaults).where(ProjectDefaults.project_id == test_project.id)
     ).first()
-    
+
     for cabinet in test_project.cabinets:
-        # OLD WAY
-        old_result: CabinetCostResult = cabinet.calculate_cost(defaults, waste_factor=1.20)
-        
-        # NEW WAY
-        generator = BOMGenerator(cabinet, defaults)
-        bom_tree = generator.generate()
-        
-        # Costs should be similar (may differ slightly due to improved calculations)
-        # Allow 10% tolerance for now
-        assert bom_tree.cost == pytest.approx(old_result.total_cost, rel=0.1)
+        bom_tree = BOMGenerator(cabinet, defaults).generate()
+        assert bom_tree.cost > 0
+        parts = bom_tree.get_all_parts()
+        assert any(p.material_id for p in parts), f"{cabinet.name}: no material parts"
 
 
-def test_new_bom_has_more_detail_than_old(session: Session, test_project: Project):
-    """Test that new BOM provides more detailed breakdown than old system"""
+def test_canonical_bom_detail_breakdown(session: Session, test_project: Project):
+    """The recipe-based BOM itemizes materials, edge banding, CNC services
+    and hardware as separate priced lines."""
     defaults = session.exec(
         select(ProjectDefaults).where(ProjectDefaults.project_id == test_project.id)
     ).first()
-    
-    cabinet = test_project.cabinets[0]  # Wall cabinet
-    
-    # OLD WAY
-    old_result = cabinet.calculate_cost(defaults, waste_factor=1.20)
-    old_line_count = len(old_result.trace_lines)
-    
-    # NEW WAY
-    generator = BOMGenerator(cabinet, defaults)
-    bom_tree = generator.generate()
-    new_parts = bom_tree.get_all_parts()
-    
-    # New system should have at least as many items (likely more due to hardware rules)
-    assert len(new_parts) >= old_line_count
+
+    cabinet = test_project.cabinets[0]  # Wall cabinet with a door
+    parts = BOMGenerator(cabinet, defaults).generate().get_all_parts()
+    names = [p.name for p in parts]
+
+    assert len(parts) >= 5
+    assert any(n.startswith("Corpus:") for n in names)
+    assert any("Edge banding" in n for n in names)
+    assert any("CNC Service" in n for n in names)
+    assert any("hinges" in n.lower() for n in names)
+    assert all(p.cost >= 0 for p in parts)
 
 
 def test_project_level_aggregation(session: Session, test_project: Project):
@@ -207,17 +212,18 @@ def test_recipe_driven_hardware_addition(session: Session, test_project: Project
 def test_no_back_panel_for_oven_cabinet(session: Session):
     """Test that oven cabinet recipe correctly omits back panel"""
     # Create minimal setup for oven cabinet
-    project = Project(name="Oven Test")
+    project = Project(customer_name="Oven Test")
     session.add(project)
     session.commit()
     
-    corpus_mat = Material(name="Test Board", category="Board", price_per_unit=10.0)
-    back_mat = Material(name="Test Back", category="Panel", price_per_unit=5.0)
-    front_mat = Material(name="Test Front", category="Board", price_per_unit=10.0)
+    corpus_mat = Material(name="Test Board", category="Board", price_per_unit=10.0, unit="m2")
+    back_mat = Material(name="Test Back", category="Panel", price_per_unit=5.0, unit="m2")
+    front_mat = Material(name="Test Front", category="Board", price_per_unit=10.0, unit="m2")
+    edge_mat = Material(name="Test Edge", category="Edgebanding", price_per_unit=0.8, unit="lm")
     hinge = HardwareSet(name="Test Hinge", price_per_set=2.0)
     drawer = HardwareSet(name="Test Drawer", price_per_set=30.0)
     
-    session.add_all([corpus_mat, back_mat, front_mat, hinge, drawer])
+    session.add_all([corpus_mat, back_mat, front_mat, edge_mat, hinge, drawer])
     session.commit()
     
     defaults = ProjectDefaults(
@@ -225,6 +231,7 @@ def test_no_back_panel_for_oven_cabinet(session: Session):
         corpus_mat_id=corpus_mat.id,
         back_mat_id=back_mat.id,
         front_mat_id=front_mat.id,
+        edge_band_mat_id=edge_mat.id,
         hinge_sys_id=hinge.id,
         drawer_sys_id=drawer.id,
         waste_factor=1.20
@@ -235,6 +242,7 @@ def test_no_back_panel_for_oven_cabinet(session: Session):
     oven_cabinet = Cabinet(
         project_id=project.id,
         module_kind="OVEN_BASE",
+        type="BASE",
         name="Oven Cabinet",
         width_mm=600,
         height_mm=802,

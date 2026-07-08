@@ -71,8 +71,8 @@ def test_complete_kitchen_workflow(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="WALL_CABINET",
-            name="Wall 400",
             type="WALL",
+            name="Wall 400",
             width_mm=400,
             height_mm=720,
             depth_mm=320,
@@ -82,8 +82,8 @@ def test_complete_kitchen_workflow(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="DRAWER_BASE",
-            name="Drawer Base 800",
             type="BASE",
+            name="Drawer Base 800",
             width_mm=800,
             height_mm=802,
             depth_mm=560,
@@ -93,8 +93,8 @@ def test_complete_kitchen_workflow(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="SINK_BASE",
-            name="Sink Base 800",
             type="BASE",
+            name="Sink Base 800",
             width_mm=800,
             height_mm=802,
             depth_mm=560,
@@ -263,7 +263,7 @@ def test_recipe_driven_cabinet_creation(session: Session):
 def test_tag_based_hardware_addition(session: Session):
     """Test that tags automatically add correct hardware"""
     from kitchen_erp.core.recipe_loader import get_recipe_tags
-    from kitchen_erp.core.rules_engine import RulesEngine
+    from kitchen_erp.core.rules_engine import RulesEngine, get_default_hardware_rules
     from kitchen_erp.core.schemas import BOMAssembly
     
     # Get tags for drawer base
@@ -272,8 +272,8 @@ def test_tag_based_hardware_addition(session: Session):
     assert "is_base" in tags
     assert "has_drawers" in tags
     
-    # Apply rules
-    engine = RulesEngine()
+    # Apply rules (pinned defaults: unit test must not depend on app DB)
+    engine = RulesEngine(rules=get_default_hardware_rules())
     assembly = BOMAssembly(name="Test")
     
     engine.apply_rules(tags, assembly, multipliers={"has_drawers": 4})
@@ -284,9 +284,9 @@ def test_tag_based_hardware_addition(session: Session):
     # Should have legs (from is_base tag)
     assert any("Cabinet legs" in name for name in part_names)
     
-    # Should have drawer slides (from has_drawers tag)
-    slides = next((p for p in parts if "Drawer slides" in p.name), None)
-    assert slides is not None
-    assert slides.quantity_net == 4  # 4 drawers
+    # Should have the drawer system (from has_drawers tag)
+    drawer_system = next((p for p in parts if "Drawer System" in p.name), None)
+    assert drawer_system is not None
+    assert drawer_system.quantity_net == 4  # 1 set per drawer * 4 drawers
     
     print("✅ Tag-based hardware addition works!")

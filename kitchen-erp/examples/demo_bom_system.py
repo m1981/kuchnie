@@ -316,16 +316,8 @@ def demo_old_vs_new_comparison(engine, cabinet_id):
             )
         ).first()
         
-        # OLD WAY
-        print("\nOLD SYSTEM (Cabinet.calculate_cost):")
-        old_result = cabinet.calculate_cost(defaults, waste_factor=1.20)
-        print(f"  Total Cost: ${old_result.total_cost:.2f}")
-        print(f"  Material Cost: ${old_result.material_cost:.2f}")
-        print(f"  Hardware Cost: ${old_result.hardware_cost:.2f}")
-        print(f"  Number of line items: {len(old_result.trace_lines)}")
-        
-        # NEW WAY
-        print("\nNEW SYSTEM (BOMGenerator):")
+        # Canonical path (ADR-011): recipe-based BOMGenerator
+        print("\nBOM (BOMGenerator):")
         generator = BOMGenerator(cabinet, defaults)
         bom_tree = generator.generate()
         print(f"  Total Cost: ${bom_tree.cost:.2f}")

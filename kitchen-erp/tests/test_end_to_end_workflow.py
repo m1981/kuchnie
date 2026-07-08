@@ -155,8 +155,8 @@ def test_complete_workflow_with_documentation(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="WALL_CABINET",
-            name="Wall Cabinet 800",
             type="WALL",
+            name="Wall Cabinet 800",
             width_mm=800,
             height_mm=720,
             depth_mm=320,
@@ -166,8 +166,8 @@ def test_complete_workflow_with_documentation(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="DRAWER_BASE",
-            name="Drawer Base 400",
             type="BASE",
+            name="Drawer Base 400",
             width_mm=400,
             height_mm=802,
             depth_mm=560,
@@ -177,8 +177,8 @@ def test_complete_workflow_with_documentation(session: Session):
         Cabinet(
             project_id=project.id,
             module_kind="SINK_BASE",
-            name="Sink Base 800",
             type="BASE",
+            name="Sink Base 800",
             width_mm=800,
             height_mm=802,
             depth_mm=560,
@@ -383,13 +383,9 @@ def test_complete_workflow_with_documentation(session: Session):
     print("="*80 + "\n")
 
 
-def test_backward_compatibility_verification(session: Session):
-    """
-    Verify that new BOM system is backward compatible with old system.
-    
-    This ensures migration can happen gradually without breaking existing code.
-    """
-    print("\n[BACKWARD COMPATIBILITY TEST]")
+def test_canonical_bom_end_to_end(session: Session):
+    """ADR-011 smoke: the canonical BOM path prices a cabinet end to end."""
+    print("\n[CANONICAL BOM TEST]")
     
     # Create minimal setup
     corpus = Material(name="Test Board", category="Board", price_per_unit=10.0, unit="m2")
@@ -422,8 +418,8 @@ def test_backward_compatibility_verification(session: Session):
     cabinet = Cabinet(
         project_id=project.id,
         module_kind="DRAWER_BASE",
-        name="Test Cabinet",
         type="BASE",
+        name="Test Cabinet",
         width_mm=400,
         height_mm=802,
         depth_mm=560,
@@ -434,18 +430,9 @@ def test_backward_compatibility_verification(session: Session):
     session.commit()
     session.refresh(cabinet)
     
-    # OLD WAY (still works)
-    old_result = cabinet.calculate_cost(defaults, waste_factor=1.20)
-    
-    # NEW WAY
-    generator = BOMGenerator(cabinet, defaults)
-    bom_tree = generator.generate()
-    
-    print(f"  Old system total: ${old_result.total_cost:.2f}")
-    print(f"  New system total: ${bom_tree.cost:.2f}")
-    
-    # Costs should be similar (within 20% tolerance due to improved calculations)
-    assert bom_tree.cost == pytest.approx(old_result.total_cost, rel=0.2)
-    
-    print("  ✓ Backward compatibility verified!")
-    print("  ✓ Both systems can coexist during migration")
+    bom_tree = BOMGenerator(cabinet, defaults).generate()
+    assert bom_tree.cost > 0
+    parts = bom_tree.get_all_parts()
+    assert any(p.material_id for p in parts)
+    assert any(p.material_id is None for p in parts)  # hardware lines present
+    print(f"  Canonical BOM: {len(parts)} parts, total ${bom_tree.cost:.2f}")

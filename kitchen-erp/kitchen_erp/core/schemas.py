@@ -52,7 +52,7 @@ class BOMAssembly(BOMNode):
         return parts
 
 
-# Legacy cost trace structures (kept for backward compatibility)
+# Cost trace line consumed by the UI (produced by BOMGenerator.generate_cost_trace_lines)
 class CostTraceLine(BaseModel):
     category: str
     label: str
@@ -63,9 +63,3 @@ class CostTraceLine(BaseModel):
     formula: str
     waste_factor: float | None = None
 
-
-class CabinetCostResult(BaseModel):
-    material_cost: float
-    hardware_cost: float
-    total_cost: float
-    trace_lines: list[CostTraceLine] = Field(default_factory=list)

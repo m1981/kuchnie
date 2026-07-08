@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-08 — ADR-011: old BOM path deleted (kitchen-erp)
+
+### Removed
+- `kitchen-erp`: `Cabinet.calculate_cost()` (the pre-recipe direct cost path),
+  the `use_new_bom` runtime toggle + UI switch, and the `*_new` method
+  suffixes — the recipe-based `BOMGenerator` is now the only cost path.
+  `CabinetCostResult` deleted (orphaned). `scripts/validate_migration.py`
+  retired to `attic/` (its old-vs-new comparison job is done).
+
+### Fixed
+- `kitchen-erp` test suite repaired from 38 pass / 15 broken to 66 pass:
+  fixtures updated for schema drift (`Material.unit`,
+  `ProjectDefaults.edge_band_mat_id`, `Cabinet.type`,
+  `Project.customer_name`), rules tests pinned to
+  `get_default_hardware_rules()` instead of the app database, hardware
+  names updated (`Drawer slides` → `Drawer System (Blum/Hettich)`).
+
+### Added
+- `kitchen-erp/tests/test_adr011_canonical_bom.py` — pins the deletion.
+- `kitchen-erp/tests/test_calculations.py` — deterministic hand-computed
+  pricing math for the canonical path (WALL_CABINET recipe, $155.80).
+
+---
+
 ## [Unreleased] — 2026-07-03 — Trust audit freeze actions
 
 ### Changed

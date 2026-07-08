@@ -105,7 +105,6 @@ class KitchenState(rx.State):
     global_front_mat_name: str = ""
     local_front_mat_name: str = ""
     field_warnings: dict[str, str] = {}
-    use_new_bom: bool = True  # Toggle for new BOM system (default: ON)
     cost_trace_open: bool = False
     cost_trace_title: str = ""
     cost_trace_lines: list[CostTraceLineUI] = []
@@ -409,45 +408,12 @@ class KitchenState(rx.State):
         self.close_sidebar()
         self.load_mock_data()
 
-    def set_use_new_bom(self, value: bool):
-        """Toggle between old and new BOM system."""
-        self.use_new_bom = value
-    
     def close_cost_trace(self):
         self.cost_trace_open = False
 
     def open_selected_cabinet_cost_trace(self):
-        """
-        Open cost trace for selected cabinet.
-        Routes to old or new system based on use_new_bom toggle.
-        """
-        if self.use_new_bom:
-            return self.open_selected_cabinet_cost_trace_new()
-        
-        # OLD SYSTEM
-        if self.selected_cabinet_id is None:
-            return
-
-        with next(get_session()) as session:
-            project = session.exec(select(Project)).first()
-            cab = session.get(Cabinet, self.selected_cabinet_id)
-            if not project or not project.defaults or not cab:
-                return
-
-            cost_result = cab.calculate_cost(project.defaults, project.waste_factor)
-            self.cost_trace_title = f"{cab.name} cost trace"
-            self.cost_trace_lines = [self._format_cost_trace_line(line) for line in cost_result.trace_lines]
-            self.cost_trace_total = cost_result.total_cost
-            self.cost_trace_summary = (
-                f"Material {cost_result.material_cost:,.2f} zł + "
-                f"hardware {cost_result.hardware_cost:,.2f} zł"
-            )
-            self.cost_trace_open = True
-    
-    def open_selected_cabinet_cost_trace_new(self):
-        """
-        NEW: Open cost trace for selected cabinet using BOM generator system.
-        """
+        """Open cost trace for selected cabinet (recipe-based BOMGenerator,
+        the only cost path per ADR-011)."""
         from ..core.bom_generator import BOMGenerator
         
         if self.selected_cabinet_id is None:
@@ -471,65 +437,16 @@ class KitchenState(rx.State):
             trace_lines = generator.generate_cost_trace_lines()
             
             # Convert to UI format
-            self.cost_trace_title = f"{cabinet.name} cost trace (NEW BOM)"
+            self.cost_trace_title = f"{cabinet.name} cost trace"
             self.cost_trace_lines = [self._format_cost_trace_line(line) for line in trace_lines]
             self.cost_trace_total = sum(line.subtotal for line in trace_lines)
             self.cost_trace_summary = "Nowy system BOM z automatycznym doborem okuć"
             self.cost_trace_open = True
 
     def open_project_cost_trace(self):
-        """
-        Open cost trace for entire project.
-        Routes to old or new system based on use_new_bom toggle.
-        """
-        if self.use_new_bom:
-            return self.open_project_cost_trace_new()
-        
-        # OLD SYSTEM
-        with next(get_session()) as session:
-            project = session.exec(select(Project)).first()
-            if not project or not project.defaults:
-                return
-
-            cabs = sorted(project.cabinets, key=lambda c: (0 if c.type == "WALL" else 1, c.order_index))
-            trace_rows: list[CostTraceLineUI] = []
-            raw_total = 0.0
-
-            for cab in cabs:
-                cost_result = cab.calculate_cost(project.defaults, project.waste_factor)
-                raw_total += cost_result.total_cost
-                for line in cost_result.trace_lines:
-                    prefixed = line.model_copy(update={"label": f"{cab.name}: {line.label}"})
-                    trace_rows.append(self._format_cost_trace_line(prefixed))
-
-            markup_cost = raw_total * (project.labor_markup - 1)
-            final_total = raw_total * project.labor_markup
-            trace_rows.append(
-                CostTraceLineUI(
-                    category="Project",
-                    label="Robocizna / narzut",
-                    quantity_label=f"{raw_total:,.2f} zł podstawa".replace(',', "'"),
-                    unit_price_label=f"{project.labor_markup:.2f}x",
-                    waste_label="-",
-                    formula=f"{raw_total:,.2f} x ({project.labor_markup:.2f} - 1)".replace(',', "'"),
-                    subtotal_label=f"{markup_cost:,.2f} zł".replace(',', "'"),
-                )
-            )
-
-            self.cost_trace_title = "Project cost trace"
-            self.cost_trace_lines = trace_rows
-            self.cost_trace_total = round(final_total, 2)
-            self.cost_trace_summary = (
-                f"{len(cabs)} szafek, materiały {raw_total:,.2f} zł, "
-                f"narzut {project.labor_markup:.2f}x"
-            )
-            self.cost_trace_open = True
-    
-    def open_project_cost_trace_new(self):
-        """
-        NEW: Open cost trace for entire project using BOM generator system.
-        Shows material aggregation and purchasing strategies.
-        """
+        """Open cost trace for entire project (recipe-based BOMGenerator,
+        the only cost path per ADR-011). Shows material aggregation and
+        purchasing strategies."""
         from ..core.bom_generator import BOMGenerator
         from ..core.purchasing import get_strategy_for_material
         
@@ -649,7 +566,7 @@ class KitchenState(rx.State):
                 )
             )
 
-            self.cost_trace_title = "Kosztorys projektu (NOWY BOM)"
+            self.cost_trace_title = "Kosztorys projektu"
             self.cost_trace_lines = trace_rows
             self.cost_trace_total = round(final_total, 2)
             self.cost_trace_summary = (
