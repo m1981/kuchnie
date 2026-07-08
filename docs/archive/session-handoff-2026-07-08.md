@@ -163,3 +163,69 @@ catalog as material truth — RESUME menu items 2, 3, 5. Item 4 is DONE.
 - ADRs and `docs/freeze/` are immutable; `RESUME.md` is the single living
   status doc.
 - Model fields English, YAML keys Polish; docstring + test = documentation.
+
+---
+
+# Continuation — 2026-07-08 (session 2: ADR-011 old-BOM deletion)
+
+**Note on status docs:** `RESUME.md` was deleted (`be3964a`) — current
+migration state now lives in the truth ledger (`scripts/truth list --live`)
+and this doc. `docs/freeze/MIGRATION-STATUS-2026-07.md` remains an immutable
+(and partially superseded) snapshot.
+
+## What happened
+
+Picked up the "larger agreed direction" (wire kitchen-erp to canonical
+domain/material truth). Executed the first ADR-011 chunk **test-first** in
+one commit:
+
+| Commit | What |
+|---|---|
+| `f819da9` | feat(kitchen-erp): delete old BOM path — recipe BOMGenerator is the only cost path (16 files, +341/−490) |
+
+- **Deleted:** `Cabinet.calculate_cost()`, `use_new_bom` toggle + UI switch,
+  `*_new` suffixes (canonical names kept), orphaned `CabinetCostResult`;
+  `scripts/validate_migration.py` → `attic/` (its comparison job is done).
+- **Suite repaired first: 38 pass / 15 broken → 66 pass.** kitchen-erp had
+  no recorded baseline and had rotted along four axes: fixtures missing
+  `Material.unit`, `ProjectDefaults.edge_band_mat_id`, `Cabinet.type`,
+  `Project.customer_name`; `test_rules_engine` importing the deleted
+  `HARDWARE_RULES`; expectations naming renamed hardware ("Drawer slides" →
+  "Drawer System (Blum/Hettich)"); old-vs-new comparison tests pinned to the
+  deleted path.
+- **Doctrine additions (extends the six rules above):**
+  7. Unit tests must not depend on the app database — pin rules with
+     `RulesEngine(get_default_hardware_rules())`; a no-arg `RulesEngine()`
+     reads `database.db` via a class-level cache.
+  8. Deletions get pinning tests (`tests/test_adr011_canonical_bom.py`)
+     so the deleted path cannot quietly grow back.
+- New deterministic pricing test: `tests/test_calculations.py` hand-computes
+  a WALL_CABINET BOM to **$155.80** from recipe formulas + default rules
+  (doctrine rule 3 applied to the canonical path).
+- Front-material semantics stated in tests: `has_custom_front` only selects
+  the MATERIAL; any cabinet with doors/drawers gets a front part (defaults
+  when no override), zero-front cabinets get none.
+- Run suite via `uv run --with pytest --with pytest-asyncio -- python -m
+  pytest tests/ -q` in `kitchen-erp/` (pytest is a dev dep; root `.venv`
+  lacks sqlmodel).
+
+## Truth-ledger integration (first live decay event)
+
+The post-commit scan staled 3 claims; handled per protocol: `tr-6e83eb77`
+(old path present) → **diverged**, queued for human retraction;
+`tr-50764deb` (zero kuchnie_core imports) and `tr-d7dd1870` (Material still
+independent) re-verified **live** with advanced anchors; successor claim
+`tr-65e723dd` (old path deleted) filed. Tripwire precision this event: 3
+fired / 1 fact actually changed.
+
+## Open items after this session
+
+1. **ADR-011 phase 2 (next):** wire `BOMGenerator.generate()` →
+   `kuchnie_core.decompose()` via `to_kuchnie_core(cabinet_sqlmodel) ->
+   CabinetInstance` adapter; panels from the domain hub, pricing stays in
+   erp.
+2. **Material mirror:** `kitchen_erp.Material` becomes a cache/mirror of
+   `catalog/` (ADR-008/011); then krono's hardcoded `CATALOG` dict routes to
+   the catalog service (claims `tr-d7dd1870`, `tr-88dc0d9a` watch these).
+3. Human decision queued: retract `tr-6e83eb77` (`TRUTH_HUMAN=1`).
+4. Cold-review minors from session 1 remain unaddressed (list above).
