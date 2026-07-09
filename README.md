@@ -39,7 +39,7 @@ No cycles. `kuchnie_core` imports only stdlib + Pydantic + PyYAML.
 ## Read order for new sessions
 
 1. [`AGENTS.md`](AGENTS.md) — operational rules, architecture constraints, file map
-2. [`RESUME.md`](RESUME.md) — living status doc: what to do next, priority order, DO-NOT list
+2. `scripts/truth ready` — current actionable work, gated by the truth ledger (see `.truth/README.md`)
 3. [`docs/freeze/DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) — which `.md` files to trust
 4. The ADR of your workstream (in `docs/adr/`)
 
@@ -55,4 +55,3 @@ All freeze documentation lives in `docs/freeze/`:
 | [`TEST-BASELINE-2026-07.md`](docs/freeze/TEST-BASELINE-2026-07.md) | Per-component test results at freeze |
 | [`MIGRATION-STATUS-2026-07.md`](docs/freeze/MIGRATION-STATUS-2026-07.md) | ADR-008–012 execution status snapshot at freeze (immutable) |
 | [`DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) | Trust audit of all 109 tracked `.md` files |
-| [`RESUME.md`](RESUME.md) | Living status doc + resume checklist (repo root) |

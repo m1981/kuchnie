@@ -1,3 +1,5 @@
+> Archived 2026-07-09 — describes models.py / panel_calculator.py / csv_generator.py, all deleted in the ADR-010/012 migration; current doc is kitchen-cam/docs/architecture.md.
+
 # kitchen-cam — dokumentacja projektowa
 
 > **Wersja:** 2.0

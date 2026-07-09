@@ -19,7 +19,7 @@ idea to help user take smarter expensive decision.
 12. Egger boards are more expensive than KronoSwiss. 
 13. So  I thought system could roughly generate BOM with costs estimation.  
 
-## kitchen_plugin proof of concept and new discovery  home_builder_5
+## Plugin proof of concept (pre-ADR-009) and new discovery  home_builder_5
 14. When customer settles on core decisions I move to the next stage. 
 15. I have to layout kitchen and add all cabinets to match space constraints and customer decisions, 
 16. Add table tops with proper locks, 

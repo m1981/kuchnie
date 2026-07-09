@@ -62,7 +62,7 @@ These are convention across the industry. Keep them.
 
 | Current | Should Be | Project |
 |---------|-----------|---------|
-| `DESIGN.md` | `design.md` | kitchen-cad |
+| `DESIGN.md` | `design.md` | kitchen-cam |
 | `GLOSSARY.md` | `GLOSSARY.md` | root (keep, it's special) |
 | `DOC_ROUTING.md` | `doc-routing.md` | root |
 | `REORGANIZATION_PLAN.md` | `reorganization-plan.md` | root |
@@ -71,10 +71,10 @@ These are convention across the industry. Keep them.
 | `blaty_kolekcje_porownanie.md` | `blaty-kolekcje-porownanie.md` | catalog/materials |
 | `global-collection-decory.yaml` | `global-collection-decory.yaml` | catalog/materials (OK) |
 | `materialy.md` | `materials-overview.md` | catalog/materials |
-| `poradnik-kompleksowy.md` | `comprehensive-guide.md` | kitchen-cad |
-| `analiza_konfiguratora_formatek.md` | `configurator-analysis.md` | kitchen-cad |
-| `01-overview.md` | `user-context.md` | kitchen-cad (not an overview) |
-| `overview.md` | `overview.md` | kitchen-cad (keep, it's the real overview) |
+| `poradnik-kompleksowy.md` | `comprehensive-guide.md` | kitchen-cam |
+| `analiza_konfiguratora_formatek.md` | `configurator-analysis.md` | kitchen-cam |
+| `01-overview.md` | `user-context.md` | kitchen-cam (not an overview) |
+| `overview.md` | `overview.md` | kitchen-cam (keep, it's the real overview) |
 
 ## Directory Structure
 

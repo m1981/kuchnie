@@ -46,7 +46,7 @@ Never import downward.
 
 ## What was deleted (per ADR-009)
 
-The following files were in the former `kitchen-plugin/` and were either
+The following files were in the pre-rename component (ADR-009) and were either
 moved to `kuchnie_core` or deleted:
 
 | File | Action | Destination |

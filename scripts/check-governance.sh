@@ -104,5 +104,18 @@ if [ -n "$spec_staged" ]; then
   fi
 fi
 
+# ── Check 6: live-doc health (dead names + broken links, corpus-wide) ─
+# Any staged .md must leave the whole live corpus clean — same shape as 5c.
+# Complements Check 1: that gates added lines; this gates the standing state
+# (catches files that arrived by merge/rename and pre-existing rot).
+md_staged=$(printf '%s\n' "$STAGED" | grep '\.md$' || true)
+if [ -n "$md_staged" ]; then
+  if ! doc_out=$(bash scripts/doc-health.sh 2>&1); then
+    say "✗ doc-health failed (live corpus carries a dead name or broken link):"
+    say "$doc_out"
+    fail=1
+  fi
+fi
+
 [ $fail -eq 0 ] || { say ""; say "governance checks failed — see above."; exit 1; }
 exit 0

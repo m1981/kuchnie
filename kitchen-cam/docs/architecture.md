@@ -6,8 +6,8 @@
 > For domain specifications, see:
 >
 > - [LEGRABOX Specification](specs/legrabox-spec.md)
-> - [Poradnik Kompleksowy](archive/comprehensive-guide.md)
-> - [Panel Configurator Analysis](archive/configurator-analysis.md)
+> - [Poradnik Kompleksowy](archive/poradnik-kompleksowy.md) (archived)
+> - [Panel Configurator Analysis](archive/analiza_konfiguratora_formatek.md) (archived)
 
 ---
 
@@ -867,7 +867,7 @@ kitchen-cam/
 
 ```mermaid
 gantt
-    title Kitchen-CAD Development Roadmap
+    title kitchen-cam Development Roadmap
     dateFormat  YYYY-MM-DD
     section Phase 1 - Core
     Runner Registry (runners.py)        :a1, 2026-06-17, 2d

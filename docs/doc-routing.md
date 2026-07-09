@@ -50,7 +50,7 @@ What changed?
 | Schema change | `catalog/docs/specs/`, ADR, `CHANGELOG.md` | `vision/` |
 | New material data | `catalog/docs/materials/`, `CHANGELOG.md` | `specs/` |
 | Blender geometry fix | `krono-compositor-mvp/docs/specs/`, `CHANGELOG.md` | `architecture/` |
-| Config syntax change | `home-builder-adapter/docs/config-syntax.md`, `CHANGELOG.md` | `vision/` |
+| Config syntax change | n/a — JSON config input retired per ADR-009 (historical doc: `home-builder-adapter/docs/archive/config-syntax.md`) | `vision/` |
 | Formula correction | Relevant spec + test + `CHANGELOG.md` | `architecture/` |
 | Dependency update | `CHANGELOG.md` only | Everything else |
 | Test addition | Nothing (tests ARE the doc) | Everything |
@@ -116,15 +116,16 @@ What becomes easier or harder?
 |------|------|
 | `AGENTS.md` | Architecture constraints changed |
 | `docs/adr/NNN-*.md` | New decision made |
+| `docs/GLOSSARY.md` | Domain term added, renamed, or re-homed |
 | `CHANGELOG.md` | Always |
 
 ### catalog/
 | File | When |
 |------|------|
-| `catalog/AGENTS.md` | Architecture constraints changed |
+| `catalog/AGENTS.md` *(todo — not yet created; use root `AGENTS.md`)* | Architecture constraints changed |
 | `catalog/docs/specs/configurator-api.md` | API endpoint changed |
 | `catalog/docs/specs/builder-gui.md` | GUI behavior changed |
-| `catalog/docs/specs/scenarios-edge-cases.md` | New edge case discovered |
+| `catalog/docs/scenarios-edge-cases.md` | New edge case discovered |
 | `catalog/docs/architecture/configurator-design.md` | Design pattern changed |
 | `catalog/docs/materials/*.md` | Material data changed |
 | `catalog/docs/adr/NNN-*.md` | New decision made |
@@ -137,6 +138,7 @@ What becomes easier or harder?
 | `kitchen-cam/docs/architecture.md` | Pipeline structure changed |
 | `kitchen-cam/docs/specs/legrabox-spec.md` | LEGRABOX formula changed |
 | `kitchen-cam/docs/specs/cabinet-variants.md` | New cabinet type added |
+| `kitchen-cam/ROADMAP.md` | Milestone shipped or scope changed |
 | `kitchen-cam/CHANGELOG.md` | Always |
 
 ### home-builder-adapter/
@@ -148,7 +150,8 @@ What becomes easier or harder?
 ### kitchen-erp/
 | File | When |
 |------|------|
-| `kitchen-erp/CHANGELOG.md` | Always |
+| `kitchen-erp/docs/specs/*.md` | Feature behavior/facts changed (ledger-wired — see `docs/spec-convention.md`; current: `material-mirror.md`) |
+| `CHANGELOG.md` (root) | Always — kitchen-erp has no own changelog yet |
 
 ### krono-compositor-mvp/
 | File | When |

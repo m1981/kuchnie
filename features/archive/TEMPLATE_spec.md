@@ -1,3 +1,5 @@
+> Archived 2026-07-09 — spec template of the retired F-system; superseded by docs/spec-convention.md (ledger-wired specs).
+
 # F00X — <slug>
 
 > One-page spec. If it doesn't fit on one page, the feature is too big.

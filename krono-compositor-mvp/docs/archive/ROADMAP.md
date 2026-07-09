@@ -1,3 +1,5 @@
+> Archived 2026-07-09 — every step referenced docs/archive/rendering-improvements.md, itself already archived; active work is tracked in the truth ledger (scripts/truth ready).
+
 # Roadmap
 
 ## Rendering Quality (Remaining)

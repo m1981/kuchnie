@@ -1,6 +1,6 @@
 > Type: D | Status: frozen 2026-07 (see /docs/freeze/MIGRATION-STATUS-2026-07.md) | Role: BOM, cost estimation, purchasing, rules admin, ops UI | ADRs: 011
 
-# Kitchen App - Professional BOM System
+# kitchen-erp — Professional BOM System
 
 A professional-grade Bill of Materials (BOM) generation system for kitchen cabinet design and costing.
 
@@ -41,7 +41,7 @@ The BOM system implements 4 professional design patterns:
 
 ### 1. Recipe Pattern (Data-Driven Design)
 
-Cabinet definitions in `kitchen_erp/recipes.json` - add new types without code changes.
+Cabinet definitions in `kitchen_erp/core/recipes.json` - add new types without code changes.
 
 ### 2. Composite Pattern (BOM Tree)
 
@@ -57,10 +57,8 @@ Realistic procurement: full sheets, rolls, standard lengths.
 
 ## 📖 Documentation
 
-- **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)** - Complete implementation overview
-- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Step-by-step migration from old system
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - API reference and common patterns
-- **[INTEGRATION_EXAMPLE.md](INTEGRATION_EXAMPLE.md)** - Practical integration examples
+- **[docs/specs/](docs/specs/)** — feature specs, ledger-wired per `docs/spec-convention.md` (start here: [material-mirror.md](docs/specs/material-mirror.md))
+- Historical deep-dives (pre-freeze, kept for reference): [ARCHITECTURE_SUMMARY.md](docs/archive/ARCHITECTURE_SUMMARY.md), [MIGRATION_GUIDE.md](docs/archive/MIGRATION_GUIDE.md), [QUICK_REFERENCE.md](docs/archive/QUICK_REFERENCE.md), [INTEGRATION_EXAMPLE.md](docs/archive/INTEGRATION_EXAMPLE.md)
 
 ## 🎯 Key Features
 
@@ -130,14 +128,14 @@ uv run pytest tests/test_purchasing.py -v
 - ⏳ Phase 2: UI Integration (next)
 - ⏳ Phase 3: Cleanup & Optimization
 
-See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for details.
+See [MIGRATION_GUIDE.md](docs/archive/MIGRATION_GUIDE.md) (archived) for details.
 
 ## 🎓 Learn More
 
 1. Run the demo: `uv run python examples/demo_bom_system.py`
-2. Read the architecture summary: [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)
+2. Read the architecture summary: [ARCHITECTURE_SUMMARY.md](docs/archive/ARCHITECTURE_SUMMARY.md) (archived)
 3. Review test examples: `tests/test_end_to_end_workflow.py`
-4. Check the quick reference: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+4. Check the quick reference: [QUICK_REFERENCE.md](docs/archive/QUICK_REFERENCE.md) (archived)
 
 ## 🤝 Contributing
 

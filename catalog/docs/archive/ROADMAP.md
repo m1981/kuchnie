@@ -1,3 +1,5 @@
+> Archived 2026-07-09 — phases 1–4 complete; only unfinished row is price calculation (variant_prices, deferred ❄️). New work is tracked in the truth ledger.
+
 # ROADMAP — catalog
 
 ## Phase 1: Configurator API (MVP) ✅

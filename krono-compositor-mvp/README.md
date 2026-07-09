@@ -138,7 +138,7 @@ assets/              # Textures and rendered scene passes
 | [Architecture](docs/architecture.md)                       | Architectural decisions, layered design, and key implementation choices               |
 | [Blender Scene Reference](docs/specs/blender-scene-ref.md) | Camera, lighting, geometry, and render pass settings for `gen_kitchen.py`             |
 | [Pipeline Rules](docs/specs/pipeline-rules.md)                   | Strict rules for separating Art passes from Math passes in the 3D→2D pipeline         |
-| [Conflicting Paradigms](docs/archive/conflicting-paradigms.md)     | Why Blender's visual approximation and OpenCV's exact math require careful separation |
+| [Conflicting Paradigms](docs/archive/conflicting_paradigms.md)     | Why Blender's visual approximation and OpenCV's exact math require careful separation |
 | [Rendering Improvements](docs/archive/rendering-improvements.md)   | Phased plan and status for improving render quality                                   |
 
 ### Reference Materials

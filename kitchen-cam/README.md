@@ -62,6 +62,12 @@ kitchen-cam/
 │   ├── test_drill_engine.py      # Machining ops: System32, hinges, handles
 │   └── test_compare.py           # CSV/DXF comparison utilities
 │
+├── docs/
+│   ├── architecture.md           # Authoritative architecture doc
+│   ├── specs/                    # Domain specs: legrabox, cabinet variants, overview
+│   └── archive/                  # Superseded docs
+│
+├── ROADMAP.md                    # What's next
 └── CHANGELOG.md
 ```
 

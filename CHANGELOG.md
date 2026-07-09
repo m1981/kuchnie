@@ -5,6 +5,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-09 — Doc cleanup: pre-ledger prose archived, doc-health gate
+
+### Added
+- `scripts/doc-health.sh` — corpus-wide tripwire for the two measured decay
+  modes: dead component names (ADR-009/010/011) and broken relative links in
+  live (non-archive) markdown. Fault-injection tested both checks.
+- `check-governance.sh` Check 6 — any staged `.md` must leave the whole live
+  corpus doc-health-clean (complements Check 1, which only gates added lines).
+
+### Changed
+- Entry-point repairs from the 2-detector sweep (dead links + routing
+  coverage over 105 live docs): kitchen-erp/README (title, archived-doc
+  links, now routes `docs/specs/`), root README (dead RESUME.md refs →
+  `scripts/truth ready`), doc-routing.md (5 dead rows fixed; now routes
+  GLOSSARY, kitchen-cam ROADMAP, kitchen-erp specs), kitchen-cam README
+  (docs/ tree added), kitchen-cam architecture (Polish archive filenames),
+  krono README (underscore link), catalog configurator-design (spec path).
+- Dead component names reworded to ADR citations in 7 live docs
+  (AGENTS.md roster, file-naming-convention, vision/01-user-journeys,
+  home-builder-adapter AGENTS+README, kitchen-cam architecture, GLOSSARY).
+- `docs/GLOSSARY.md` — ~25 stale file references repaired against disk.
+
+### Removed (archived, tombstoned in place)
+- → `docs/archive/`: 00-brief-understanding.md, home-build-5-external-plugin.md
+- → `features/archive/TEMPLATE_spec.md` (F-system template; superseded by
+  spec-convention) — `features/` is now archive-only
+- → `catalog/docs/archive/ROADMAP.md` (phases 1–4 complete; ❄️ price calc noted)
+- → `krono-compositor-mvp/docs/archive/ROADMAP.md` (all steps referenced an
+  already-archived doc)
+- → `kitchen-cam/docs/archive/design.md` (described modules deleted by ADR-010/012)
+
+---
+
 ## [Unreleased] — 2026-07-09 — Feature-spec convention: ledger-wired specs
 
 ### Added

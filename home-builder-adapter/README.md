@@ -7,7 +7,7 @@ produces a `kuchnie_core.Kitchen`.
 
 **Role:** Anti-Corruption Layer between the external, licensed `home_builder_5`
 Blender addon and the pure-Python `kuchnie_core` domain model.
-See [ADR-009](../docs/adr/009-kitchen-plugin-becomes-home-builder-adapter.md).
+See ADR-009 (`../docs/adr/009-*.md`).
 
 ---
 
@@ -36,7 +36,7 @@ home-builder-adapter/
 ├── ROADMAP.md             What's next
 ├── CHANGELOG.md           What changed
 └── docs/
-    ├── archive/           Historical docs from the old kitchen-plugin scope
+    ├── archive/           Historical docs from the pre-rename scope (ADR-009)
     └── reference/         Cheatsheets (SketchUp, etc.)
 ```
 
@@ -64,14 +64,13 @@ Outputs `kuchnie_core.Kitchen` JSON to stdout.
 | Cabinet geometry, panels, standards, validator | `kuchnie-core/src/kuchnie_core/` |
 | CAM output — cut list CSV, drilling DXF | `kitchen-cam/` |
 | Rendering, decor swap, sales screenshot | `krono-compositor-mvp/` |
-| BOM, cost, purchasing | `kitchen-erp/` (formerly `kitchen-app/`) |
+| BOM, cost, purchasing | `kitchen-erp/` (renamed per ADR-011) |
 
-See [ADR-009](../docs/adr/009-kitchen-plugin-becomes-home-builder-adapter.md)
-for the full boundary rationale.
+See ADR-009 (`../docs/adr/009-*.md`) for the full boundary rationale.
 
 ## History
 
-This project was previously `kitchen-plugin/` — a full generator that built
+This project began as the pre-ADR-009 plugin — a full generator that built
 geometry, walls, layouts, materials, and rendered `.blend` files from a JSON
 config. That scope moved elsewhere (`home_builder_5` now owns geometry,
 `kuchnie_core` owns the domain model, `krono-compositor-mvp` owns rendering).

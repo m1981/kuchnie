@@ -1,3 +1,5 @@
+> Archived 2026-07-09 — describes the pre-rename component layout (ADR-009/010/011); superseded by home-builder-adapter/ docs.
+
 # Home Builder 5 — External Blender Plugin Analysis
 
 > Assessment of the third-party `home_builder_5` Blender addon against the

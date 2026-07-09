@@ -64,9 +64,9 @@ This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; ever
 | `kuchnie-core/` | **Domain hub** — Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. Imported by everyone. | this file | 001, 002, 003 |
 | `catalog/` | Material catalog service — Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | `catalog/AGENTS.md` *(todo)* | 008 |
 | `krono-compositor-mvp/` | **Sales tool (Stage 1)** — first-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | `krono-compositor-mvp/AGENTS.md` *(todo)* | 011 |
-| `kitchen-erp/` *(was `kitchen-app/`)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
+| `kitchen-erp/` *(renamed per ADR-011)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
 | `kitchen-cam/` *(renamed per ADR-010)* | **CAM enrichment** — machining ops (System32, hinges, handles), DXF for CNC shop. Downstream consumer of `kuchnie_core`. | `kitchen-cam/AGENTS.md` | 010 |
-| `home-builder-adapter/` *(was `kitchen-plugin/`)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
+| `home-builder-adapter/` *(renamed per ADR-009)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
 
 **External (not in this repo):**
 
