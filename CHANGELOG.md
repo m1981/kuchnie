@@ -5,6 +5,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-09 — ADR-011 phase 3: Material mirror (kitchen-erp ← catalog)
+
+### Added
+- `kitchen-erp/kitchen_erp/core/catalog_client.py` — stdlib-only read
+  client for the catalog service's paginated `/catalog/decors` endpoint
+  (flat decor-variant rows, v_decors_full shape); typed
+  `CatalogUnavailable` failure contract.
+- `kitchen-erp/kitchen_erp/core/material_mirror.py` —
+  `refresh_material_mirror()` converges Material rows onto catalog
+  identity, keyed by new `Material.catalog_variant_id`. Identity (name,
+  brand, category, sheet size, `has_woodgrain` from the catalog's
+  `wood_grain` structure type) is catalog-owned; `price_per_unit` is
+  ERP-owned — never touched on existing rows, new rows arrive at 0.0.
+  Local-born rows (NULL key: admin-created, utility) are never touched.
+- `tests/test_material_mirror.py` — 6 tests against a faked catalog
+  client: populate, price preservation, idempotency, local-row isolation,
+  role/discontinued filtering, typed offline failure. Live smoke against
+  the real service: 134 variants mirrored, 24 woodgrain, second pass
+  0 added / 134 unchanged.
+- `AdminState.refresh_from_catalog()` + `mirror_status` — manual mirror
+  refresh from the Admin panel.
+
+### Changed
+- `kitchen_erp/ui/state.py` seed: the ~25-row hand-seeded board catalog is
+  gone; boards arrive via the mirror (populated once when empty; offline
+  catalog degrades with a warning, never blocks boot). Demo project picks
+  its default board from the mirror and is skipped gracefully when no
+  boards exist yet. Named survivors: 3 utility materials (HDF back, 2 ABS
+  edges) that catalog/ does not model.
+- `Material` schema: `catalog_variant_id` column (indexed, nullable;
+  ALTER-TABLE migration for existing databases).
+
+---
+
 ## [Unreleased] — 2026-07-09 — truth-ledger v0.5.2: doc-health upstreamed
 
 ### Changed

@@ -79,7 +79,31 @@ class AdminState(rx.State):
     show_hardware_form: bool = False
     show_rule_form: bool = False
     is_editing: bool = False
-    
+
+    # Material mirror (ADR-011 phase 3)
+    mirror_status: str = ""
+
+    def refresh_from_catalog(self):
+        """Converge board identity onto the catalog service (material mirror).
+
+        Prices are never touched: pricing is the ERP's domain; new mirrored
+        rows arrive at 0.0 and are priced here in Admin.
+        """
+        from ..core.catalog_client import CatalogUnavailable, HttpCatalogClient
+        from ..core.material_mirror import refresh_material_mirror
+
+        with next(get_session()) as session:
+            try:
+                stats = refresh_material_mirror(session, HttpCatalogClient())
+            except CatalogUnavailable as e:
+                self.mirror_status = f"Catalog unavailable: {e}"
+                return
+        self.mirror_status = (
+            f"Mirror refreshed: {stats.added} added, "
+            f"{stats.updated} updated, {stats.unchanged} unchanged"
+        )
+        self.load_materials()
+
     def load_materials(self):
         """Load all materials from database"""
         with next(get_session()) as session:

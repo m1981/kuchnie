@@ -11,6 +11,10 @@ class Material(SQLModel, table=True):
     unit: str
     sheet_size_m2: float = Field(default=5.796) # Domyślnie format 2800x2070
     has_woodgrain: bool = Field(default=False)  # Czy ma usłojenie (wymusza większy odpad na CNC)
+    # Mirror key (ADR-011 phase 3): set = identity owned by the catalog
+    # service (material_mirror converges it); NULL = local-born row
+    # (admin UI / utility), never touched by the mirror.
+    catalog_variant_id: str | None = Field(default=None, index=True)
 
 class HardwareSet(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)

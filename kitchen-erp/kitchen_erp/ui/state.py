@@ -7,6 +7,8 @@ from sqlmodel import select
 from ..core.database import get_session, engine, SQLModel
 from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule
 from ..core.schemas import CostTraceLine
+from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
+from ..core.material_mirror import refresh_material_mirror
 
 MODULE_LABELS = {
     "BASE_CABINET": "Base cabinet",
@@ -127,6 +129,12 @@ class KitchenState(rx.State):
         for column_name, statement in migrations.items():
             if column_name not in columns:
                 session.exec(text(statement))
+        session.commit()
+
+    def _ensure_material_schema(self, session):
+        columns = {row[1] for row in session.exec(text("PRAGMA table_info(material)")).all()}
+        if "catalog_variant_id" not in columns:
+            session.exec(text("ALTER TABLE material ADD COLUMN catalog_variant_id VARCHAR"))
         session.commit()
 
     @rx.var
@@ -848,7 +856,23 @@ class KitchenState(rx.State):
         SQLModel.metadata.create_all(engine)
         with next(get_session()) as session:
             self._ensure_cabinet_schema(session)
+            self._ensure_material_schema(session)
             existing = session.exec(select(Project)).first()
+
+            # Board identity comes from the catalog service via the
+            # material mirror (docs/specs/material-mirror.md) — boards are
+            # no longer hand-seeded. Populate once when the mirror is
+            # empty; Admin can refresh any time. An offline catalog
+            # degrades boot, never blocks it.
+            mirror_empty = session.exec(
+                select(Material).where(Material.catalog_variant_id.is_not(None))
+            ).first() is None
+            if mirror_empty:
+                try:
+                    stats = refresh_material_mirror(session, HttpCatalogClient())
+                    print(f"material mirror populated from catalog: {stats.added} added")
+                except CatalogUnavailable as e:
+                    print(f"⚠️ catalog service unavailable — material mirror empty: {e}")
 
             if not existing:
                 # ==========================================
@@ -870,51 +894,30 @@ class KitchenState(rx.State):
                     Material(category="Edge", brand="Generic", name="ABS Color 1mm", price_per_unit=1.20, unit="lm"),
                 ]
 
-                # 3. MDF / Particle Boards (The Brands)
-                board_catalog = [
-                    # EGGER (Standard & Premium)
-                    Material(category="Board", brand="Egger", name="W1000 Premium White", price_per_unit=12.50,
-                             unit="m2"),
-                    Material(category="Board", brand="Egger", name="U999 Black", price_per_unit=14.00, unit="m2"),
-                    Material(category="Board", brand="Egger", name="H3131 Davos Oak", price_per_unit=18.50, unit="m2"),
-                    Material(category="Board", brand="Egger", name="U708 Light Grey", price_per_unit=43.00, unit="m2"),
-                    Material(category="Board", brand="Egger", name="F204 Marmara Marble", price_per_unit=22.00, unit="m2"),
-
-                    # KRONOSPAN (Budget & Standard)
-                    Material(category="Board", brand="Krono", name="K101 Front White", price_per_unit=9.50, unit="m2"),
-                    Material(category="Board", brand="Krono", name="0190 Black", price_per_unit=11.00, unit="m2"),
-                    Material(category="Board", brand="Krono", name="D1811 Walnut", price_per_unit=14.50, unit="m2"),
-                    Material(category="Board", brand="Krono", name="0171 Slate Grey", price_per_unit=10.50, unit="m2"),
-                    Material(category="Board", brand="Krono", name="8685 Snow White", price_per_unit=9.00, unit="m2"),
-
-                    # FORNER (Premium Supermattes & Gloss)
-                    Material(category="Board", brand="Forner", name="Velvet Ultramatte Black", price_per_unit=38.00,
-                             unit="m2"),
-                    Material(category="Board", brand="Forner", name="Velvet Ultramatte White", price_per_unit=38.00,
-                             unit="m2"),
-                    Material(category="Board", brand="Forner", name="Pearl Gloss", price_per_unit=35.00, unit="m2"),
-                    Material(category="Board", brand="Forner", name="Cashmere Matte", price_per_unit=36.50, unit="m2"),
-                    Material(category="Board", brand="Forner", name="Navy Blue Matte", price_per_unit=36.50, unit="m2"),
-
-                    # CLEAF (Deep Textures)
-                    Material(category="Board", brand="Cleaf", name="Ares Beton", price_per_unit=42.00, unit="m2"),
-                    Material(category="Board", brand="Cleaf", name="Pembroke Oak", price_per_unit=45.00, unit="m2"),
-                    Material(category="Board", brand="Cleaf", name="Nadir Linen", price_per_unit=40.00, unit="m2"),
-                    Material(category="Board", brand="Cleaf", name="Piombo Matte", price_per_unit=48.00, unit="m2"),
-                    Material(category="Board", brand="Cleaf", name="Sherwood Dark", price_per_unit=45.00, unit="m2"),
-                ]
-
-                # Insert everything into the database
-                session.add_all(hw_catalog + utility_catalog + board_catalog)
+                # Boards are NOT seeded here — board identity belongs to the
+                # catalog service and arrives via the material mirror above.
+                # Only hardware and the utility materials catalog/ does not
+                # model (back panels, edge banding) stay local-born.
+                session.add_all(hw_catalog + utility_catalog)
                 session.commit()
 
                 # ==========================================
                 # Create the Default Project
                 # ==========================================
-                project = Project(customer_name="Smith Family Kitchen")
+                # Defaults: boards come from the mirror; utility materials
+                # stay local. No boards = catalog/ was offline at first
+                # boot — skip the demo project; refresh the mirror from the
+                # Admin page once the service is up.
+                def_corpus = session.exec(
+                    select(Material).where(Material.category == "Board").order_by(Material.name)
+                ).first()
+                if def_corpus is None:
+                    print("⚠️ no board materials yet — demo project skipped; refresh the material mirror once catalog/ is up")
+                    self.materials = []
+                    self.global_front_mat_name = ""
+                    return
 
-                # Fetch defaults from the newly created catalog
-                def_corpus = session.exec(select(Material).where(Material.name == "W1000 Premium White")).first()
+                project = Project(customer_name="Smith Family Kitchen")
                 def_back = session.exec(select(Material).where(Material.name == "HDF White 3mm")).first()
                 def_edge = session.exec(select(Material).where(Material.name == "ABS White 1mm")).first()
                 def_hinge = session.exec(select(HardwareSet).where(HardwareSet.name == "Clip Top Hinge")).first()
