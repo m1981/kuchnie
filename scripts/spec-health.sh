@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # spec-health: judge every feature spec by the ledger status of the ids it cites.
-# Convention: docs/spec-convention.md. A fact appears in a spec only as an id;
-# this script is the tripwire that makes that rule pay rent.
+# Convention: .truth/README.md § Feature specs. A fact appears in a spec only
+# as an id; this script is the tripwire that makes that rule pay rent.
 #
 # Judges cited claims by the ADR-001 matrix: live ok; unverified warns;
 # cannot_verify fails P0 / warns otherwise; stale/diverged/retracted/missing
@@ -46,7 +46,7 @@ for path in specs:
         ids = sorted(set(ID_RE.findall(f.read())))
     print(f"{path}")
     if not ids:
-        print("  WARN  no ledger ids cited (unwired prose -- wire per docs/spec-convention.md when next touched)")
+        print("  WARN  no ledger ids cited (unwired prose -- wire per the spec convention, .truth/README.md § Feature specs)")
         warnings += 1
         continue
     spec_trs = [i for i in ids if i.startswith("tr-")]
