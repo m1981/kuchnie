@@ -108,3 +108,8 @@ into real `tr-` claims via `done --claim`; the spec then stops being a plan
 and becomes documentation whose every load-bearing fact is still under live
 decay-tracking. Specs are never deleted — a superseded spec gets a one-line
 pointer to its successor at the top, like ADRs.
+
+**Ordering note:** commit the work FIRST, then `done --claim`. A completion
+claim filed before the shipping commit trips its own path tripwire the
+moment that commit lands (observed live on tr-fd1bbb24) — not wrong, just
+noise costing one re-verification.
