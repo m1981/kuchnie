@@ -25,37 +25,38 @@ routing (wk-03434168, deliberately dep-blocked behind this work).
 
 ## Ground truths
 
-- `tr-d7dd1870` — Material is still an independent store, mirror not started
-  (**the fact this spec exists to kill** — expect it to go stale/diverged
-  the moment the work lands; that firing is correct behavior, and the
-  completion claim below is its successor).
 - `tr-e3c86dfd` — catalog schema is 1.5.0: pairing_types is a data lookup
   table, variants carry `producer_sku` (the shape the mirror consumes).
 - `tr-b485d74c` — kitchen-erp already consumes `kuchnie_core` via
   `domain_adapter.py` (precedent for how kitchen-erp wraps an upstream
   contract behind an adapter seam).
+- The pre-mirror claim "Material is still an independent store" (referred
+  to by title, not id — it diverged the moment the work landed, exactly as
+  this spec predicted, and was retired through the human queue; its
+  successors are the Acceptance claims below).
 
 ## Work
 
-- `wk-d5df7e30` (Beads twin: `kuchnie-8gc`) — this spec's implementation.
+- `wk-d5df7e30` (Beads twin: `kuchnie-8gc`) — this spec's implementation
+  (**closed 2026-07-09** via claim-at-death).
 - `wk-03434168` (Beads twin: `kuchnie-9vz`) — krono CATALOG dict routing;
-  dep-blocked behind `wk-d5df7e30` (absent from `ready` until the mirror
-  closes).
+  was dep-blocked behind `wk-d5df7e30`, unblocked by its closure.
 
-## Acceptance
+## Acceptance (final — filed 2026-07-09)
 
-Draft `done --claim` texts — to be finalized (and possibly split) at
-completion, each scoped to what its evidence command actually sweeps:
+- `tr-fff10d41` (claim-at-death of `wk-d5df7e30`) — board materials are
+  born in the catalog service: `state.py` seeds via `catalog_client` +
+  `refresh_material_mirror`; the only `Material()` constructions in
+  production code are the mirror's own upsert, the admin form, and three
+  named utility survivors (HDF back, two ABS edges) that catalog/ does
+  not model. Evidence: construction-site grep over
+  `kitchen-erp/kitchen_erp/`, verified by a fresh session.
+- `tr-9f989a83` — mirror refresh is exercised by tests: faked catalog
+  client; populate, price preservation, idempotency, local-row isolation,
+  role/discontinued filtering, typed offline failure. Evidence: targeted
+  pytest (6 passed), verified by a fresh session.
 
-1. "kitchen-erp Material rows are populated from the catalog service, not
-   hand-seeded: the seeding path imports the catalog client and no
-   production module under kitchen_erp/ inserts Material rows from
-   literals" — evidence: grep for the catalog client import plus absence
-   of literal-insert patterns, both scoped to `kitchen-erp/kitchen_erp/`.
-2. "Material mirror refresh is exercised by tests: a test fakes the catalog
-   service and asserts the mirror converges" — evidence: targeted pytest
-   run, scoped to the new test file.
-
-When these are filed via `truth done wk-d5df7e30 --claim ...`, retire
-`tr-d7dd1870` through the human queue (it will have diverged — that is the
-lifecycle working, not an error).
+Design boundary the claims encode: **identity is catalog-owned, pricing is
+ERP-owned** — the mirror never writes `price_per_unit` on existing rows;
+new rows arrive at 0.0 and are priced in Admin (catalog's variant_prices
+table is deferred).
