@@ -39,6 +39,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-09 — truth-ledger v0.5.3: issue-fold first-wins hardening (ADR-006)
+
+### Changed
+- `scripts/truth`'s `fold_issues` is now first-wins on duplicate `wk-`
+  issue ids, matching `fold()`'s claim handling (the F6 fix). Closes a
+  gap found during a documentation-accuracy audit of the template: the
+  prior last-wins rule protected an "update-by-refile" verb the CLI never
+  actually implements (`truth issue` always mints a fresh id), so it was
+  pure attack surface — a raw appended duplicate carrying `premises: []`
+  could silently strip an open issue's ADR-001 protection, no backdated
+  timestamp needed. This repo had three open issues with live premise
+  links (`wk-03434168`, `wk-6716e9c8`, `wk-c67ffaa1`) exposed to it before
+  this sync. Canary 48→49 (`FAULT R9`).
+- `scripts/truth-canary.sh`, `scripts/test-truth-core.py` upstreamed via
+  `copier update` (byte-identical pre-align, zero-conflict).
+- `docs/adr/002-native-work-kernel.md` — canary-requirement wording
+  correction (stale vs. diverged premise) carried in from the template.
+- `docs/adr/003–006-*.md` added: satellite-placement doctrine,
+  tracker-adapter seam, pre-edit whisper (Proposed, unimplemented),
+  issue-fold first-wins.
+- Standing claim filed as tr-e1b14049, citing the version and the fix.
+
+---
+
 ## [Unreleased] — 2026-07-09 — truth-ledger v0.5.2: doc-health upstreamed
 
 ### Changed
