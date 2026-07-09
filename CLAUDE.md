@@ -6,6 +6,9 @@ This file provides instructions and context for AI coding agents working on this
 > **Work-finding precedence:** use `scripts/truth ready`, not `bd ready`. It is
 > `bd ready` filtered by the truth ledger's premise validity — issues standing
 > on stale/diverged facts are HELD. See `docs/beads-integration-guide.md`.
+> **New feature discussed?** Before designing or coding, follow AGENTS.md →
+> "Feature specs": find/create the spec per `docs/spec-convention.md`, wire
+> ledger ids, then gate with `bash scripts/spec-health.sh`.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
 ## Beads Issue Tracker

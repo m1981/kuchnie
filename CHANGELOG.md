@@ -5,6 +5,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-09 — Feature-spec convention: ledger-wired specs
+
+### Added
+- `docs/spec-convention.md` — specs cite truth-ledger ids instead of
+  restating facts; section contract, ADR-001 health semantics.
+- `scripts/spec-health.sh` — tripwire judging every `*/docs/specs/*.md`
+  by the ledger status of the ids it cites; wired into pre-commit
+  (`check-governance.sh` Check 5: no unwired new specs, no silent spec
+  deletion, staged spec changes must be healthy).
+- `kitchen-erp/docs/specs/material-mirror.md` — pilot spec (ADR-011
+  phase 3), fully wired (wk-d5df7e30 + 3 live ground-truth premises).
+- AGENTS.md "Feature specs" entry-point section + component
+  artifact-ownership routing; CLAUDE.md pointer.
+
+---
+
 ## [Unreleased] — 2026-07-08 — ADR-011 phase 2: BOM geometry from kuchnie_core
 
 ### Added

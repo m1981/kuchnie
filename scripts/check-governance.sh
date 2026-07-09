@@ -69,5 +69,40 @@ for f in $STAGED; do
   esac
 done
 
+# ── Check 5: feature-spec hygiene (docs/spec-convention.md) ──────────
+# 5a: deleting a spec needs an explicit override (specs are superseded, not
+#     deleted — mirror of the ADR-immutability rule).
+if [ "${SPEC_REMOVE:-0}" != "1" ]; then
+  spec_dels=$(git diff --cached --name-only --diff-filter=D \
+    | grep -E '(^|/)docs/specs/.*\.md$' || true)
+  if [ -n "$spec_dels" ]; then
+    say "✗ feature spec deleted (supersede with a pointer instead):"
+    say "$spec_dels"
+    say "  conscious removal: SPEC_REMOVE=1 git commit ..."
+    fail=1
+  fi
+fi
+# 5b: a NEW spec must cite at least one ledger id (tr-/wk-) — unwired prose
+#     is the decay mode the convention exists to kill. Legacy specs are
+#     grandfathered (spec-health WARNs on them).
+spec_news=$(git diff --cached --name-only --diff-filter=A \
+  | grep -E '(^|/)docs/specs/.*\.md$' || true)
+for f in $spec_news; do
+  if ! git show ":$f" | grep -Eq '(tr|wk)-[0-9a-f]{8}'; then
+    say "✗ new spec $f cites no ledger ids (docs/spec-convention.md):"
+    say "  facts -> tr- claims, work -> wk- issues; cite the ids, don't restate."
+    fail=1
+  fi
+done
+# 5c: any staged spec change must leave the whole spec surface healthy.
+spec_staged=$(printf '%s\n' "$STAGED" | grep -E '(^|/)docs/specs/.*\.md$' || true)
+if [ -n "$spec_staged" ]; then
+  if ! health_out=$(bash scripts/spec-health.sh 2>&1); then
+    say "✗ spec-health failed (a spec stands on a dead fact):"
+    say "$health_out"
+    fail=1
+  fi
+fi
+
 [ $fail -eq 0 ] || { say ""; say "governance checks failed — see above."; exit 1; }
 exit 0

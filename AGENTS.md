@@ -28,6 +28,33 @@ premise validity; issues standing on stale/diverged facts are HELD. Full loop:
 
 ---
 
+## Feature specs (start here when the user describes a new feature)
+
+When the user starts talking about a **new feature** — or any change bigger
+than a bug fix — do this BEFORE designing or writing code:
+
+1. **Find or create the spec.** Check `<component>/docs/specs/` (and root
+   `docs/specs/`); if none matches, draft one per `docs/spec-convention.md`
+   — section contract, and the one rule: *facts appear only as ledger ids,
+   never as prose*.
+2. **Verify the ground it stands on.** Facts the feature depends on →
+   verify each and file as `tr-` claims; cite the ids under Ground truths.
+   Facts already claimed → cite the existing id, don't re-file.
+3. **File the work.** `scripts/truth issue "<title>" --premise tr-...`
+   (+ Beads twin via `bd create` while the A/B trial runs); cite under Work.
+   `bd create` alone loses premise tracking — only the truth issue HOLDs
+   work when the facts under it die.
+4. **Write Acceptance now.** Draft the `done --claim` texts the finished
+   work will file — scoped to what an evidence command can show.
+5. **Gate on health.** `bash scripts/spec-health.sh` — a FAIL means the spec
+   stands on a dead fact: renegotiate the spec with the user, don't code.
+
+Resuming a discussed feature in a fresh session: read its spec, run
+spec-health, and `scripts/truth ready` — the three together restore the
+full picture (intent, fact validity, unblocked work).
+
+---
+
 ## Component roster (monorepo)
 
 This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; every other component depends on it, never the other way. Roles and boundaries are codified in ADRs 009–011.
@@ -35,15 +62,21 @@ This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; ever
 | Component | Role | AGENTS.md | Defining ADR |
 |---|---|---|---|
 | `kuchnie-core/` | **Domain hub** — Kitchen, Panel, decomposition, BOM, standards, validator. Pure Python. Imported by everyone. | this file | 001, 002, 003 |
-| `catalog/` | Material catalog service — Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | `catalog/AGENTS.md` | 008 |
+| `catalog/` | Material catalog service — Kronospan/Egger decors, worktops, pairings, availability. FastAPI + SQLite. | `catalog/AGENTS.md` *(todo)* | 008 |
 | `krono-compositor-mvp/` | **Sales tool (Stage 1)** — first-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | `krono-compositor-mvp/AGENTS.md` *(todo)* | 011 |
 | `kitchen-erp/` *(was `kitchen-app/`)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
-| `kitchen-cam/` *(was `kitchen-cad/`)* | **CAM enrichment** — machining ops (System32, hinges, handles), DXF for CNC shop. Downstream consumer of `kuchnie_core`. | `kitchen-cam/AGENTS.md` *(todo)* | 010 |
+| `kitchen-cam/` *(renamed per ADR-010)* | **CAM enrichment** — machining ops (System32, hinges, handles), DXF for CNC shop. Downstream consumer of `kuchnie_core`. | `kitchen-cam/AGENTS.md` | 010 |
 | `home-builder-adapter/` *(was `kitchen-plugin/`)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
 
 **External (not in this repo):**
 
 - `/Users/michal/PycharmProjects/home_builder_5` — third-party licensed Blender addon used for interactive kitchen layout (Stage 2). Untouched per F007 Rule 4. Its scene tree is the input to `home-builder-adapter/`.
+
+**Who owns what user-facing artifact** (route new feature specs by this):
+quotes, pricing, BOM, purchasing, ops UI → `kitchen-erp` · first-visit
+visuals & decor previews → `krono-compositor-mvp` · CNC/DXF outputs →
+`kitchen-cam` · material/decor/pairing data → `catalog` · scene extraction
+→ `home-builder-adapter` · decomposition/domain rules → `kuchnie-core`.
 
 **Dependency direction:** every peripheral component imports `kuchnie_core`. No cycles. `kuchnie_core` imports only stdlib + Pydantic + PyYAML.
 
@@ -96,13 +129,18 @@ Never import downward. `model.py` imports nothing from this package.
 
 ---
 
-## Adding a feature
+## Implementing a spec'd feature (TDD)
+
+The entry point for any new feature is § "Feature specs" above — arrive
+here with a spec and a claimed `wk-` issue, then:
 
 1. **Write the test first** (what should happen?)
 2. **Write the code** (make the test pass)
 3. **Check existing tests** still pass (`pytest -v`)
 4. **Document the decision** if it's non-obvious → `docs/adr/NNN-<slug>.md`
 5. **Append to CHANGELOG.md** under today's date
+6. **Close the work**: `scripts/truth done <wk-id> --basis "..." --claim ...`
+   using the spec's Acceptance texts (+ `bd close <twin>` while the A/B runs)
 
 ---
 
@@ -162,7 +200,8 @@ Never import downward. `model.py` imports nothing from this package.
 
 ## Documentation governance
 
-> Source: `docs/DOC-GOVERNANCE-KIT.md` Layer 0. Merged here at resume time.
+> Source: DOC-GOVERNANCE-KIT Layer 0 — historical; fully merged here, the
+> kit file itself no longer exists.
 
 1. **Evidence protocol.** Every repo-state claim in any doc or review is tagged
    `VERIFIED(cmd)` / `INFERRED(basis)` / `UNVERIFIED`. Hedging is not a
@@ -227,11 +266,11 @@ If a formula changes, update the function, the test, and the ADR (as a new ADR, 
 | Formula change | Spec + test + `CHANGELOG.md` | `architecture/` |
 | Schema change | Spec + ADR + `CHANGELOG.md` | `vision/` |
 | New decision | `docs/adr/NNN-*.md` | — |
-| Config change | `docs/config-syntax.md` + `CHANGELOG.md` | `vision/` |
+| Config change | `home-builder-adapter/docs/` config docs (currently archived) + `CHANGELOG.md` | `vision/` |
 
 **Max 3 doc files per change.** If more, you're over-documenting.
 
-Full routing: `docs/DOC_ROUTING.md`
+Full routing: `docs/doc-routing.md`
 
 ---
 

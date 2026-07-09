@@ -2,6 +2,9 @@
 
 When making changes, update the RIGHT files based on what changed.
 
+> Anywhere this file routes to `specs/`: feature specs are **ledger-wired**
+> — format, id-citing rule, and health gate live in `docs/spec-convention.md`.
+
 ---
 
 ## Decision Tree
