@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-09 — truth-ledger v0.5.2: doc-health upstreamed
+
+### Changed
+- `scripts/doc-health.sh` now the generic template version (byte-identical
+  pre-align, zero-conflict copier update): forbidden names config-driven
+  via `scripts/doc-health.patterns` (kitchen dead names live there),
+  exemptions generalized to path segments. Canary 45→48 (FAULT D1–D3).
+- `.truth/README.md` — doc-health section + "Claim discipline" earned
+  lessons (scope text to evidence; pin gate evidence output stable;
+  commit-first ordering).
+- Standing claim re-filed as tr-94a98135: tr-3591aae0's `--paths` were
+  space-separated (stored as one nonexistent literal → tripwire dead);
+  successor uses comma-separated paths + covers the patterns file.
+  tr-3591aae0 queued for human retraction.
+
+---
+
 ## [Unreleased] — 2026-07-09 — Doc cleanup: pre-ledger prose archived, doc-health gate
 
 ### Added
