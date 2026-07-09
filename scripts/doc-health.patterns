@@ -1,0 +1,3 @@
+# Dead component names — renamed per ADR-009/010/011.
+# Cite rename ADRs from live docs as docs/adr/NNN-*.md (never the full filename).
+kitchen[-_](cad|plugin|app)\b
