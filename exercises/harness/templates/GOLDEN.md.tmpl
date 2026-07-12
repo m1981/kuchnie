@@ -1,0 +1,46 @@
+# E2E {{NAME}} — golden design (wk-XXXXXXXX)
+
+> Reader: this file is the INDEPENDENT hand design, written BEFORE the hb5
+> build and BEFORE any pipeline run | Enables: measuring the pipeline's
+> distance from designer intent | Update-trigger: never — a golden is
+> immutable for its run; a new run gets a new golden
+
+Designed YYYY-MM-DD from first principles (Blum katalog, shop standards).
+
+## 1. The cabinet in one paragraph
+
+<!-- Polish carpenter narrative: type, drawers/doors, materials, joinery,
+     back attachment, plinth, worktop yes/no, handles. -->
+
+## 2. Geometry
+
+| Quantity | Value | Why |
+|---|---|---|
+| Total height | | |
+| Carcass W×H×D | | |
+| Front reveal | | shop standard: 2 mm/side, 3 mm between fronts |
+| HDF groove | 4 wide × 8 deep, near edge 10 mm from rear | |
+| Back panel | | (W−36+16−2) × (side_h−36+16−2), luz 2 |
+
+## 3. Part list
+
+Machine-readable twin: `golden/panels.csv` (the diff reads THAT file —
+keep both in sync).
+
+## 4. Connections (joinery)
+
+<!-- konfirmaty count + XY pattern, HDF attachment, cokół fixing -->
+
+## 5. Drillings (CNC, per bok — X od przodu, Y od dołu)
+
+<!-- runner pilots (Ø×depth, X positions, Y rows = zone floor + 37),
+     konfirmat positions, groove spec -->
+
+## 6. Hardware BOM (poza płytą)
+
+<!-- LEGRABOX kpl, konfirmaty, nóżki, klipsy, zszywki, obrzeże mb -->
+
+## 7. Deliberate differences vs current pipeline conventions
+
+<!-- list expected G-deltas (G9 naming, G11 edging, G12 margins, G13
+     hardware) so the diff reads clean -->

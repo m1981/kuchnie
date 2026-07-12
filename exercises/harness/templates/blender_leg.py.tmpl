@@ -1,0 +1,56 @@
+"""E2E {{NAME}} — Blender leg.
+
+Run:  /Applications/Blender.app/Contents/MacOS/Blender --background \
+          --enable-autoexec --python exercises/{{NAME}}/blender_leg.py
+
+Builds the scenario via hb5 type classes (headless, non-modal), applies the
+decor split, renders decor-check shots, dumps the cage hierarchy, runs
+adapter extraction as-is. Every workaround the harness cannot hide is a GAP.
+"""
+import sys
+from pathlib import Path
+
+HERE = Path("/Users/michal/PycharmProjects/kuchnie/exercises/{{NAME}}")
+REPO = HERE.parent.parent
+GEN = HERE / "generated"
+GEN.mkdir(exist_ok=True)
+sys.path.insert(0, str(REPO / "exercises"))
+
+from harness.gaps import GapLog  # noqa: E402
+from harness import hb5  # noqa: E402
+
+gaps = GapLog()
+bpy, hb = hb5.bootstrap(gaps)
+hb5.metric_shop_profile(bpy, hb, gaps)          # toe kick 100, top opening 140, 18mm
+hb5.build_room(bpy, hb)
+
+# ── the cabinet(s): name per the inspection discipline (B600-3DW-01 ...) ─
+cab = hb.frameless.BaseCabinet()
+cab.default_exterior = "3 Drawers"              # <- scenario-specific
+cab.width = hb.units.millimeter(600)
+cab.depth = hb.units.millimeter(560)
+cab.height = hb.units.millimeter(820)           # incl. toe kick
+cab.create("B600-3DW-01 {{NAME}}")
+cab.obj.location = (hb.units.millimeter(900), 0, 0)
+hb.utils.run_calc_fix(bpy.context, cab.obj, passes=3)
+gaps.log(f"cabinet created: {cab.obj.name}")
+
+forced = hb5.force_material_thickness(bpy, hb, cab.obj, 18)
+gaps.log(f"Material Thickness forced to 18mm on {forced} object(s)")
+hb5.apply_decor_split(bpy, hb, cab.obj, gaps)
+
+hb5.render_checks(bpy, GEN)
+bpy.ops.wm.save_as_mainfile(filepath=str(GEN / "{{NAME}}.blend"))
+n = hb5.dump_cage_hierarchy(bpy, GEN / "cage-hierarchy.json")
+gaps.log(f"hierarchy dump: {n} cage(s)")
+
+kitchen = hb5.extract_in_session(REPO, GEN / "extracted-kitchen.json", gaps)
+if kitchen:
+    for r in kitchen.rows:
+        for c in r.cabinets:
+            gaps.log(f"extracted: {c.type} {c.width_mm}x{c.height_mm}x"
+                     f"{c.depth_mm} plinth={c.plinth_height_mm} "
+                     f"drawers={c.drawers}")
+
+gaps.write(GEN / "blender-leg-log.txt")
+print("[e2e] DONE")

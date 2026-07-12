@@ -173,6 +173,9 @@ here with a spec and a claimed `wk-` issue, then:
 - **Assertions show the formula**: `assert back.width_mm == 700  # LW−38 = 738−38`
 - **Fixture YAMLs in `fixtures/`**: one per cabinet type, one per kitchen layout
 - **Run `pytest -v` before every commit**
+- **E2E exercises are golden-first**: see `docs/e2e-exercise-convention.md`;
+  scaffold a scenario with `.venv/bin/python exercises/harness/scaffold.py
+  <name>`, shared helpers live in `exercises/harness/`
 
 ---
 

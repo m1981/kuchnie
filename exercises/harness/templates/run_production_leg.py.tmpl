@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""E2E {{NAME}} — production leg.
+
+Input:  generated/extracted-kitchen.json (from blender_leg.py)
+Output: generated/rozrys.csv, bom.csv, cnc.txt, golden-diff.txt
+
+Every gaps.gap(...) is data the pipeline could not carry and a human had to
+re-enter — the ergonomics measurement this exercise exists for.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent.parent
+sys.path.insert(0, str(REPO / "kuchnie-core" / "src"))
+sys.path.insert(0, str(REPO / "exercises"))
+
+from kuchnie_core.model import CabinetInstance  # noqa: E402
+from kuchnie_core.decomposer import decompose  # noqa: E402
+from harness.gaps import GapLog  # noqa: E402
+from harness.golden import diff_panels, read_golden_panels  # noqa: E402
+from harness.writers import write_bom, write_cnc, write_rozrys  # noqa: E402
+
+GEN = HERE / "generated"
+gaps = GapLog()
+
+
+def build_instance() -> CabinetInstance:
+    p = GEN / "extracted-kitchen.json"
+    ext = None
+    if p.exists():
+        ext = json.loads(p.read_text())["rows"][0]["cabinets"][0]
+    else:
+        gaps.gap("no extracted JSON — dimensions hand-entered")
+
+    # GAP-log every field extraction lost and you re-enter by hand:
+    # type, drawer spec, materials, front heights ... (see the e2e-d60
+    # exercise for the canonical wording).
+    return CabinetInstance(
+        id="{{NAME}}",
+        type="dolna_legrabox",                      # <- scenario-specific
+        description="{{NAME}} (extracted envelope + hand re-entry)",
+        width_mm=ext["width_mm"] if ext else 600,
+        height_mm=ext["height_mm"] if ext else 820,
+        depth_mm=ext["depth_mm"] if ext else 560,
+        body_material="PLYTA_BIALA_18",
+        back_material="HDF_BIALA_3",
+        front_material="K5307_18",
+        thickness_back_mm=3,
+        plinth_height_mm=ext.get("plinth_height_mm", 100) if ext else 100,
+        drawers=[],                                 # <- scenario-specific
+        fronts=[],                                  # <- scenario-specific
+        edge_banding_type="abs",
+    )
+
+
+def main() -> None:
+    GEN.mkdir(exist_ok=True)
+    cab = build_instance()
+    errors = cab.validate()
+    if errors:
+        print("validate():", errors)
+    result = decompose(cab)
+    write_rozrys(result.panels, GEN / "rozrys.csv")
+    write_bom(result, GEN / "bom.csv")
+    write_cnc(result, GEN / "cnc.txt", title=cab.id)
+
+    golden = read_golden_panels(HERE / "golden" / "panels.csv")
+    diff = diff_panels(golden, result)
+    text = diff.text() + "\nhand re-entry gaps this run:\n" + \
+        "".join(f"  - {g}\n" for g in gaps.items)
+    (GEN / "golden-diff.txt").write_text(text, encoding="utf-8")
+    print(text)
+    print(f"panels={len(result.panels)} accessories={len(result.accessories)}")
+
+
+if __name__ == "__main__":
+    main()

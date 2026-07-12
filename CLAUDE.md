@@ -83,6 +83,10 @@ bash scripts/doc-health.sh       # live markdown corpus
 cd exercises/walking-skeleton-d60
 /Applications/Blender.app/Contents/MacOS/Blender --background --python blender_leg.py
 /path/to/repo/.venv/bin/python run_production_leg.py   # diff generated/ vs reference/
+
+# New e2e exercise (golden-first, docs/e2e-exercise-convention.md):
+.venv/bin/python exercises/harness/scaffold.py <scenario-name>
+.venv/bin/python -m pytest exercises/harness/tests -q   # harness self-tests
 ```
 
 Blender 5.1.2 lives at `/Applications/Blender.app`; home_builder_5 is driven
