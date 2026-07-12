@@ -1,0 +1,13 @@
+Lp;Element;Dlugosc [mm];Szerokosc [mm];Grubosc [mm];Ilosc;Material;Uslojenie;Okl. przod;Okl. tyl;Okl. lewa;Okl. prawa;Uwagi
+1;Bok lewy;720;560;18;1;PLYTA_BIALA_18;brak;ABS_08_BIALA;;;;wpust HDF 4x8 @10 od tylu; nawierty prowadnic wg CNC
+2;Bok prawy;720;560;18;1;PLYTA_BIALA_18;brak;ABS_08_BIALA;;;;lustro boku lewego
+3;Dno;564;560;18;1;PLYTA_BIALA_18;brak;ABS_08_BIALA;;;;wpust HDF 4x8 @10 od tylu
+4;Trawers gorny przedni;564;100;18;1;PLYTA_BIALA_18;brak;ABS_08_BIALA;;;;na plask, licowany z gora
+5;Trawers gorny tylny;564;100;18;1;PLYTA_BIALA_18;brak;;;;;na plask, wpust HDF 4x8 @10
+6;Plecy HDF;698;578;3;1;HDF_BIALA_3;brak;;;;;w wpust, luz 2 mm
+7;Front S1 (gorny);596;140;18;1;K5307_18;pion;ABS_2_K5307;ABS_2_K5307;ABS_2_K5307;ABS_2_K5307;LEGRABOX M
+8;Front S2/S3;596;287;18;2;K5307_18;pion;ABS_2_K5307;ABS_2_K5307;ABS_2_K5307;ABS_2_K5307;LEGRABOX C
+9;Szuflada dno;503;490;16;3;PLYTA_BIALA_16;brak;;;;;LEGRABOX NL500
+10;Szuflada tyl M;500;63;16;1;PLYTA_BIALA_16;brak;;;;;S1
+11;Szuflada tyl C;500;148;16;2;PLYTA_BIALA_16;brak;;;;;S2, S3
+12;Cokol front;596;97;18;1;PLYTA_BIALA_18;brak;ABS_08_BIALA;;;;na klipsy

@@ -1,0 +1,29 @@
+CNC — D60S3 LEGRABOX (referencja reczna)
+Uklad wspolrzednych: X od PRZEDNIEJ krawedzi elementu, Y od DOLNEJ krawedzi.
+Wiercenia od strony WEWNETRZNEJ boku.
+
+== BOK LEWY (720 x 560 x 18) ==
+NAWIERTY PROWADNIC (euro 6.3 -> otwor D5, gl. 12):
+  S3 (LEGRABOX C, dolna)  Y=55  : X=46, 78, 110, 398
+  S2 (LEGRABOX C)         Y=342 : X=46, 78, 110, 398
+  S1 (LEGRABOX M, gorna)  Y=629 : X=46, 78, 110, 398
+KONFIRMAT (D7 przelot + poglebienie stozkowe od zewnatrz):
+  do dna       Y=9   : X=50, 280, 510
+  do trawersow Y=711 : X=50 (przedni), 510 (tylny)
+FREZ WPUST HDF: szer. 4, gl. 8, krawedz wpustu 10 od TYLNEJ krawedzi,
+  przelot pelna wysokosc (720).
+
+== BOK PRAWY ==
+Lustrzane odbicie boku lewego (te same wspolrzedne, wiercenie od wewnatrz).
+
+== DNO (564 x 560 x 18) ==
+FREZ WPUST HDF: szer. 4, gl. 8, 10 od tylnej krawedzi, przelot (564).
+(Otwory pod konfirmat w krawedz — nawiert czolowy D5 gl. 34: X=50, 280, 510
+ na obu koncach — jesli wiercone maszynowo.)
+
+== TRAWERS TYLNY (564 x 100 x 18) ==
+FREZ WPUST HDF: szer. 4, gl. 8, 10 od dolnej krawedzi w pozycji montazowej
+  (spojny z wpustem bokow), przelot (564).
+
+UWAGA (zalozenie do weryfikacji w Blum planner): osie Y prowadnic przyjete
+jako dno otworu + 37 mm; pozycje X wg tabeli Blum dla NL500 (46/78/110/398).

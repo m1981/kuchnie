@@ -1,0 +1,14 @@
+﻿Lp;Element;Dlugosc [mm];Szerokosc [mm];Grubosc [mm];Ilosc;Material;Uslojenie;Okl. przod;Okl. tyl;Okl. lewa;Okl. prawa;Uwagi
+1;Lewy bok;720;560;18;1;PLYTA_BIALA_18;;abs_PLYTA_BIALA_18;;;;role=left_side
+2;Prawy bok;720;560;18;1;PLYTA_BIALA_18;;abs_PLYTA_BIALA_18;;;;role=right_side
+3;Dno;560;564;18;1;PLYTA_BIALA_18;;abs_PLYTA_BIALA_18;;;;role=bottom
+4;Plecy;728;580;3;1;HDF_BIALA_3;;;;;;role=back
+5;Szuflada S1 — tył;63;500;16;1;plyta_16mm;;;;;;role=drawer_back
+6;Szuflada S1 — dno;490;503;16;1;plyta_16mm;;;;;;role=drawer_base
+7;Szuflada S2 — tył;148;500;16;1;plyta_16mm;;;;;;role=drawer_back
+8;Szuflada S2 — dno;490;503;16;1;plyta_16mm;;;;;;role=drawer_base
+9;Szuflada S3 — tył;148;500;16;1;plyta_16mm;;;;;;role=drawer_back
+10;Szuflada S3 — dno;490;503;16;1;plyta_16mm;;;;;;role=drawer_base
+11;Front F1;140;594;18;1;K5307_18;;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
+12;Front F2;287;594;18;1;K5307_18;;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
+13;Front F3;287;594;18;1;K5307_18;;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer

@@ -1,0 +1,27 @@
+{
+  "cages": [
+    {
+      "name": "Base 600 3-Drawer",
+      "id_props": {
+        "IS_GEONODE_CAGE": "True",
+        "IS_FRAMELESS_CABINET_CAGE": "True",
+        "MENU_ID": "HOME_BUILDER_MT_cabinet_commands",
+        "Material Thickness": "0.019050000235438347",
+        "Toe Kick Height": "0.10000000149011612",
+        "Toe Kick Setback": "0.06350000202655792",
+        "Remove Bottom": "False",
+        "Toe Kick Type": "0",
+        "Leg Leveler Inset": "0.05079999938607216",
+        "Base Top Construction": "1",
+        "Stretcher Width": "0.1016",
+        "Sink Apron Width": "0.17779999999999999",
+        "CABINET_TYPE": "BASE"
+      },
+      "dimensions_bbox_m": [
+        0.6,
+        0.56,
+        0.82
+      ]
+    }
+  ]
+}

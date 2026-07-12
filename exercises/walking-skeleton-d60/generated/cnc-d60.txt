@@ -1,0 +1,32 @@
+CNC — D60S3 LEGRABOX (wygenerowane z decompose())
+X od przedniej krawedzi, Y od dolnej krawedzi.
+
+== LEWY BOK (720 x 560 x 18) ==
+  DRILL D5 gl.0 X=46 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=46 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=46 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+
+== PRAWY BOK (720 x 560 x 18) ==
+  DRILL D5 gl.0 X=46 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=18 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.0 X=46 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=158 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=46 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=78 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=110 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.0 X=398 Y=445 [runner_screw] LEGRABOX C runner screw (NL=500)
+
+UWAGA GAP: brak frezu wpustu HDF w decompozycji — wpust nie jest modelowany jako MachiningOp.
