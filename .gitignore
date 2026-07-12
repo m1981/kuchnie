@@ -30,3 +30,6 @@ catalog/db/catalog.db-wal
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Claude Code conversation exports
+export.html
