@@ -157,8 +157,8 @@ flowchart TB
     end
 
     subgraph battery ["On demand + weekly CI"]
-        G1["canary: 80 seeded faults<br/><i>each must be CAUGHT<br/>or the run fails</i>"]
-        G2["core suite: 102 tests<br/><i>drift detector ARMED</i>"]
+        G1["canary: seeded faults<br/><i>each must be CAUGHT or the<br/>run fails — it prints its own count</i>"]
+        G2["core + conformance suite<br/><i>drift detector ARMED</i>"]
         G3["truth doctor<br/><i>hooks wired? snippet present?<br/>queue aging?</i>"]
     end
 
