@@ -2,14 +2,25 @@
 name = "home-builder-adapter"
 version = "0.1.0"
 description = "Blender scene → kuchnie_core.Kitchen extractor (Anti-Corruption Layer for home_builder_5)"
-requires-python = ">=3.10"
+requires-python = ">=3.12"  # matches kuchnie-core
 # bpy is the host-provided heavy dependency (Blender interpreter). ADR-009.
 dependencies = [
     "kuchnie-core",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = [
+    "pytest>=7.0",
+    "jsonschema>=4",  # scripts/validate_manifest.py schema pass
+]
+
+# Not an installable package: code lives at src/ and is imported via
+# pytest pythonpath / Blender's script loader. uv manages deps only.
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+kuchnie-core = { path = "../kuchnie-core", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
