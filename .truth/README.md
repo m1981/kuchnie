@@ -1,4 +1,4 @@
-# .truth — append-only claims ledger (v0.5.2)
+# .truth — append-only claims ledger (v0.6.0)
 
 > Reader: any agent or human about to assert, trust, or re-verify a fact about this repository | Enables: filing a claim in one command, and knowing which claims are still live before acting on them | Update-trigger: the record schema, invariants, or CLI contract change
 
@@ -6,42 +6,127 @@ A plain-JSONL truth layer that lives beside a work tracker (e.g. Beads;
 optional — the ledger works standalone, see docs/adr/001). Work records
 answer *what to do*; this ledger answers *what is known and how*.
 
-The tracker coupling is an adapter seam (v0.4.1): `truth ready` consumes
-a JSON array of issues with `id` (+ `title`) from — in precedence order —
-a pipe (`<tracker-cmd> | truth ready --stdin`), the environment
-(`TRUTH_TRACKER_CMD="<cmd printing the array>"`), or the default Beads
-adapter (`bd ready --json`). No tracker? The ledger stands alone and you
-degrade from a gate to a dashboard (`truth queue`, `truth list --live`).
-A missing or failing tracker exits with guidance, never a traceback —
-all three source paths are canary-gated (FAULT J).
+The tracker coupling is an adapter seam (v0.4.1, ADR-004): `truth ready`
+consumes a JSON array of issues with `id` (+ `title`) from — in
+precedence order (ADR-002) — a pipe (`<tracker-cmd> | truth ready
+--stdin`), the environment (`TRUTH_TRACKER_CMD="<cmd printing the
+array>"`), the **native work kernel** whenever the ledger holds issue
+records (in which case the Beads default is never consulted — pipe or
+set the env var to keep an external tracker in the loop), or the default
+Beads adapter (`bd ready --json`). No tracker at all? The ledger stands
+alone and you degrade from a gate to a dashboard (`truth queue`, `truth
+list --live`). A missing or failing tracker exits with guidance, never a
+traceback — the three external source paths are canary-gated (FAULT J)
+and the native path separately (FAULT R3).
 
 v0.4 hardens the fold for confluence (order-independent under
 `merge=union`), enforces human-only retraction, makes re-verification
 durable, fixes glob path-matching to respect `/`, and closes a
-duplicate-claim-id resurrection path. See docs/adr/001 for the
-readiness-join semantics.
+duplicate-claim-id resurrection path. v0.5.3 closes the analogous
+issue-side path (duplicate `wk-` ids are first-wins, ADR-006). v0.5.4/
+v0.5.5 harden intake (see Record kinds & fold semantics below). See
+docs/adr/001 for the readiness-join semantics.
+
+## Record kinds & fold semantics (the CLI contract)
+
+Six record kinds share one envelope (`id`, `kind`, `actor`, `session`,
+`ts`, `payload`): **claim**, **verdict** (`agree` / `diverge` /
+`cannot_verify` / `retracted`, always with a `basis`), **invalidation**,
+**premise**, and the work kernel's **issue** / **issue_event** (ADR-002).
+The formal contract is `.truth/schema/claims.schema.json`; `truth
+validate` mirrors it in stdlib and the conformance corpus in
+`scripts/test-truth-core.py` keeps the two from drifting.
+
+Status is derived, never stored: a pure fold replays all events in
+`(ts, id)` order — a total order independent of file position, so
+union-merged branches derive identical status (confluence). Duplicate
+claim and issue ids are first-wins (F6, ADR-006): a later append bearing
+an existing id is inert. `retracted` (claims) and `cancelled` (issues)
+are terminal and human-gated (`TRUTH_HUMAN=1`); `closed` is not terminal
+(work is cyclical). An `agree` verdict on a path-anchored claim advances
+its effective anchor, so re-verified claims stay live across scans.
+
+Intake gates, in refusal order: empty claim text (v0.5.5); near-duplicate
+of an active claim (≥0.6 token overlap; `--duplicate-ok` overrides);
+quantifier–scope mismatch (ADR-007, v0.6) — a universally quantified
+claim text ("only", "no … anywhere", "the repo") over a scoped evidence
+command (`--include`, path arguments, `cd`) is refused unless
+`--scope-ok "<one sentence>"` states why the scope covers the
+quantifier (stored as `scope_basis`, attackable by verifiers);
+dead-tripwire paths — a whitespace-containing entry with no comma, or a
+literal path matching zero tracked files (INV-M, v0.5.4; explicit globs
+exempt; applies to every evidence class carrying paths); then, for
+VERIFIED: missing evidence command, neither paths nor TTL, no commit to
+anchor to, the evidence-command safety screen (ADR-009, v0.6 — quote-aware: every
+pipeline segment's program must be a bare name in
+`.truth/evidence-allow`; no command substitution; output redirection
+only to `/dev/null` or an fd dup (`2>&1`), so the pin-the-output
+convention keeps working;
+`--evidence-unsafe-ok` files anyway with `evidence.screened=false`, and
+recheck then refuses to execute the command, ever — verification becomes
+manual), and a nondeterministic evidence command (two intake runs must
+hash identically; `--single-run` overrides). INFERRED requires `--basis`.
+
+## v0.6 solo-regime hardening (docs/hardening-proposals-solo-regime.md)
+
+Beyond the two intake gates above: `validate` (and therefore the commit
+gate) fails on a backdated duplicate-id append — the canonical-order
+substitution the fold's first-wins dedup composed with timestamp forgery
+(ADR-008) — and warns on clock regression beyond 300s; identical
+duplicated lines (git union-merge shape) still pass. `verdict <id>
+agree` from the claim's own session is refused (ADR-010; self-diverge
+and self-cannot_verify stay allowed — they run against interest;
+`TRUTH_SELF_VERDICT=1` is the human override, self-attested like
+TRUTH_HUMAN). Tombstones (claim retraction, issue cancel) now require
+TRUTH_HUMAN=1 **plus** either an interactive typed-id confirmation at a
+real terminal or, for headless human use, `TRUTH_HUMAN_ACK=<exact-id>` —
+an acknowledgment that must name the specific record it kills, so a
+lingering export cannot authorize arbitrary tombstones (ADR-011).
+`verdict <id> diverge --mechanical` records that the measuring recipe
+changed rather than the fact (ADR-012; status unchanged, queue and
+stats display it). `truth stats [--json] [--since ts]` reports status/
+tier counts, verdict rates split by subtype, per-tier claim half-life
+(live→stale), and queue aging — the mechanical half of the monthly
+audit; once ≥5 half-life observations exist for a tier, filing a
+TTL'd claim prints the observed median beside the author's choice
+(suggestion only). `doctor` additionally checks the evidence allowlist
+exists and warns when load+fold exceeds 200ms (the FS-3 scale gate —
+the snapshot cache is deliberately unbuilt until that warning fires).
 
 ## Layout
 
     .truth/claims.jsonl                the ledger (append-only, event-sourced)
     .truth/schema/claims.schema.json   the formal contract (survives fires)
+    .truth/evidence-allow              ADR-009 allowlist: which programs may
+                                       re-run inside verifier sessions
+                                       (consumer policy; updates never revert it)
     scripts/truth                      the CLI: pure core over imperative shell
     scripts/test-truth-core.py         unit + schema-conformance tests (ms)
     scripts/test-truth-v04.py          v0.4 regression tests (confluence, anchors, globs)
     scripts/check-truth.sh             pre-commit/CI gate: strict append-only + schema
-    scripts/truth-canary.sh            19 seeded faults (run weekly)
+    scripts/truth-canary.sh            seeded-fault suite (run weekly; it
+                                       prints its own count — all CAUGHT, or stop)
     prompts/truth-verifier.md          fixed verifier prompt (use `truth dispatch`)
     docs/adr/                          decision records: 001 premise validity,
                                        002 work kernel, 003 satellite placement,
-                                       004 tracker seam, 005 pre-edit whisper (proposed)
+                                       004 tracker seam, 005 pre-edit whisper
+                                       (accepted in trial), 006 issue-fold
+                                       first-wins, and the v0.6 solo-regime
+                                       hardening set: 007 quantifier-scope
+                                       gate, 008 order coherence, 009
+                                       evidence-command screen, 010 session
+                                       separation, 011 tombstones-need-a-
+                                       terminal, 012 divergence subtype
 
 ## Install (day 1)
 
 1. `.gitattributes` already sets `.truth/claims.jsonl merge=union`.
-2. Hooks are wired in `.git/hooks/` after `git init`/`git clone` — see
-   `scripts/install-hooks.sh`, or use CI instead (one of the two MUST exist).
+2. Run `bash scripts/install-hooks.sh` after every `git init`/`git clone`
+   (local hooks do not survive clones), or use CI instead — one of the
+   two MUST exist.
 3. `AGENTS.md` already carries the discovery snippet — copy it into
-   `CLAUDE.md`, `.cursorrules`, `copilot-instructions.md`, etc. too.
+   `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`, etc.
+   too (those are the exact paths `truth doctor` checks).
 4. `pip install jsonschema` — required so the drift detector runs armed.
 5. `scripts/truth doctor` — installation must pass.
 6. `bash scripts/truth-canary.sh` — every fault CAUGHT, or stop.
@@ -106,6 +191,22 @@ live docs by wildcarding the filename (`docs/adr/NNN-*.md`) so the dead
 name never appears. Canary FAULT D1–D3 cover the semantics. Pairs well
 with a standing claim whose evidence is the gate itself (see Claim
 discipline below).
+
+## Pre-edit whisper (ADR-005, v0.5.7 — verb template-side, hook consumer-side)
+
+    scripts/truth impact <path>...      # what knowledge does editing endanger?
+
+Read-only fold query: for each repo-root-relative path, the
+live/unverified claims watching it (the same matcher `invalidate-scan`
+uses — one matcher, by decree) and the open work premised on them. Exit
+0 = silence (nothing watched; the fatigue budget is a canary-gated
+property, FAULT W2), exit 3 = report on stdout, `--json` for harnesses.
+Output is prediction, never judgment: the verb files nothing — appends
+remain the scan's and the verifiers' job. The whisper HOOK (PreToolUse
+in an agent harness; a deny list for frozen paths; per-session dedup) is
+consumer policy and deliberately not shipped (ADR-003 rule 2) — wire it
+per ADR-005's Decision, and watch its adoption gate: whispers that
+change agent behavior, without fatigue.
 
 ## Claim discipline (earned lessons)
 
