@@ -52,8 +52,11 @@ only if a real need appears — see pattern-conformance row 10).
 - tr-3ef7b607 — confirmat + groove ops emitted (stage 7 input exists).
 - tr-fc74bc2e — recipe engine unwired (stage 4 debt: two formula engines).
 - tr-00421995 — validation scattered (stage 4→7 gate debt).
-- tr-9054097f — Panel has no grain field (stage 6 blocker: Usłojenie column).
-- tr-484cf1df — back-panel formula oversize (stage 4 open defect).
+- tr-15d48651 — Panel.grain wired, Usłojenie emitted (stage 6 unblocked;
+  supersedes the diverged no-grain-field fact via wk-5dc557d6).
+- tr-8dfe366d — back-panel formula groove-seated with luz, 698×578 = reference
+  (stage 4 defect closed; supersedes the diverged oversize-back fact via
+  wk-090ed9f4).
 - tr-e3c86dfd — catalog schema 1.5.0 (stages 1, 5, 9 data home).
 
 ## Work
