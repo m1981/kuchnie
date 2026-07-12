@@ -18,6 +18,7 @@ from .model import (
     CabinetInstance,
     DecompositionResult,
     EdgeBand,
+    GrainAxis,
     HandleSpec,
     MachiningOp,
     Panel,
@@ -190,6 +191,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
                 "right": _front_eb(cab, front_h),
             },
             role=PanelRole.FRONT_DRAWER,
+            grain=GrainAxis.HEIGHT,
         ))
 
     # -- Drawer runners (accessories) --
@@ -258,7 +260,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
 
     # -- Back panel (in groove, no banding) --
     back_w = m.back_panel_width(cab.width_mm)
-    back_h = cab.height_mm - 2 * m.bottom_thickness_mm + 2 * m.back_groove_depth_mm
+    back_h = m.back_panel_height(cab.height_mm)  # sides run full height on wall cabinets
     r.panels.append(Panel(
         id=f"{cab.id}_back",
         name="Plecy",
@@ -306,6 +308,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
                 "right": _front_eb(cab, door_h),
             },
             role=PanelRole.FRONT_DOOR,
+            grain=GrainAxis.HEIGHT,
         ))
 
     # -- Hinges --
@@ -431,6 +434,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
                 "right": _front_eb(cab, door_h),
             },
             role=PanelRole.FRONT_DOOR,
+            grain=GrainAxis.HEIGHT,
         ))
 
     # -- Hinges --
@@ -669,6 +673,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
                 "right": _front_eb(cab, front_h),
             },
             role=PanelRole.FRONT_DRAWER,
+            grain=GrainAxis.HEIGHT,
         ))
 
     # -- Handles --

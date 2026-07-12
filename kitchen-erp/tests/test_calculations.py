@@ -59,8 +59,9 @@ def test_wall_cabinet_bom_pricing():
     assert parts["Corpus: Corpus"].quantity_net == pytest.approx(0.8784)
     assert parts["Corpus: Corpus"].cost == pytest.approx(8.784)
 
-    # back = 980x480 (in groove: 1000-36+16 x 500-36+16) = 0.4704 m2 @ $5 = $2.352
-    assert parts["Back panel: Back"].cost == pytest.approx(2.352)
+    # back = 978x478 (in groove, 2mm luz: 1000-36+16-2 x 500-36+16-2)
+    #      = 0.467484 m2 @ $5 = $2.33742
+    assert parts["Back panel: Back"].cost == pytest.approx(2.33742)
 
     # door = 994x494 (3mm gaps) = 0.491036 m2 @ $20 = $9.82072
     assert parts["Front: Front"].cost == pytest.approx(9.82072)
@@ -70,8 +71,8 @@ def test_wall_cabinet_bom_pricing():
     assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(5.904)
     assert parts["Edge banding: Generic ABS"].cost == pytest.approx(4.7232)
 
-    # CNC: cutting 1.839836 m2 @ $15 = $27.59754; edgebanding 5.904 lm @ $4.50 = $26.568
-    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.59754)
+    # CNC: cutting 1.83692 m2 @ $15 = $27.5538; edgebanding 5.904 lm @ $4.50 = $26.568
+    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.5538)
     assert parts["CNC Service: Edgebanding PUR"].cost == pytest.approx(26.568)
 
     # Hardware (default rules): is_wall -> 2 brackets @ $3 = $6.00
@@ -85,8 +86,8 @@ def test_wall_cabinet_bom_pricing():
     assert not any("Plinth" in n for n in parts)
 
     # Grand total, by hand:
-    # 8.784 + 2.352 + 9.82072 + 4.7232 + 27.59754 + 26.568 + 6 + 30 + 0.2 + 25
-    assert tree.cost == pytest.approx(141.04546)
+    # 8.784 + 2.33742 + 9.82072 + 4.7232 + 27.5538 + 26.568 + 6 + 30 + 0.2 + 25
+    assert tree.cost == pytest.approx(140.98714)
 
 
 def test_gated_front_carries_no_ghost_costs():
@@ -114,5 +115,5 @@ def test_gated_front_carries_no_ghost_costs():
     assert not any(n.startswith("Front:") for n in parts)
     # Edging is corpus-only: sides 2x620 + bottom 564 = 1.804 lm
     assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(1.804)
-    # CNC cutting covers corpus + back only: 0.92004 + 0.36424 = 1.28428 m2
-    assert parts["CNC Service: Cutting & Nesting"].quantity_net == pytest.approx(1.28428)
+    # CNC cutting covers corpus + back only: 0.92004 + 0.345644 = 1.265684 m2
+    assert parts["CNC Service: Cutting & Nesting"].quantity_net == pytest.approx(1.265684)

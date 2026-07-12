@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..kitchen import all_panels
-from ..model import Kitchen, Panel
+from ..model import GrainAxis, Kitchen, Panel
 
 
 # ── Aggregated row ──────────────────────────────────────────────
@@ -35,6 +35,7 @@ class CutPiece:
     edge_back: bool
     edge_left: bool
     edge_right: bool
+    grain: str | None    # GrainAxis value or None (no grain constraint)
     source: str          # cabinet ID(s) this piece came from
 
 
@@ -63,7 +64,7 @@ def aggregate_panels(panels: list[Panel]) -> list[CutPiece]:
         w = round(p.width_mm, 1)
         h = round(p.height_mm, 1)
         edges = _edge_key(p)
-        key = (p.material, p.thickness_mm, w, h, edges)
+        key = (p.material, p.thickness_mm, w, h, edges, p.grain)
 
         if key not in groups:
             groups[key] = {
@@ -77,7 +78,7 @@ def aggregate_panels(panels: list[Panel]) -> list[CutPiece]:
 
     pieces: list[CutPiece] = []
     for nr, (key, data) in enumerate(groups.items(), start=1):
-        mat, thick, w, h, edges = key
+        mat, thick, w, h, edges, grain = key
         pieces.append(CutPiece(
             nr=nr,
             name=data["name"],
@@ -90,6 +91,7 @@ def aggregate_panels(panels: list[Panel]) -> list[CutPiece]:
             edge_back=edges[1],
             edge_left=edges[2],
             edge_right=edges[3],
+            grain=grain,
             source=", ".join(sorted(set(data["sources"]))),
         ))
 
@@ -100,10 +102,15 @@ def aggregate_panels(panels: list[Panel]) -> list[CutPiece]:
 
 HEADER = [
     "Nr", "Nazwa", "Materiał", "Grubość",
-    "Długość", "Szerokość", "Ilość",
+    "Długość", "Szerokość", "Ilość", "Usłojenie",
     "Okle_P", "Okle_T", "Okle_L", "Okle_R",
     "Szafka", "Uwagi",
 ]
+
+
+# Usłojenie column values: grain along the cabinet-vertical axis is "pion",
+# along the horizontal axis "poziom", unconstrained (uni decors, HDF) "brak".
+_GRAIN_LABEL = {GrainAxis.HEIGHT: "pion", GrainAxis.WIDTH: "poziom", None: "brak"}
 
 
 def _yn(b: bool) -> str:
@@ -124,6 +131,7 @@ def pieces_to_csv(pieces: list[CutPiece]) -> str:
             f"{p.width_mm:.1f}",
             f"{p.height_mm:.1f}",
             p.quantity,
+            _GRAIN_LABEL.get(p.grain, p.grain),
             _yn(p.edge_front),
             _yn(p.edge_back),
             _yn(p.edge_left),

@@ -130,17 +130,28 @@ class TestConstructionMethodDerived:
         assert m.carcass_bottom_width(800) == 768  # 800 - 2*16
 
     def test_back_panel_width_formula(self):
-        """back_width = cabinet_width - 2*side + 2*groove_depth"""
+        """back_width = cabinet_width - 2*side + 2*groove_depth - clearance"""
         m = ConstructionMethod(
             id="test", name="Test",
             side_thickness_mm=18, back_groove_depth_mm=8
         )
-        assert m.back_panel_width(800) == 780  # 800 - 36 + 16
+        assert m.back_panel_width(800) == 778  # 800 - 36 + 16 - 2
 
     def test_back_panel_height_formula(self):
-        """back_height = side_height + groove_depth (extends into bottom groove)"""
+        """back_height = side_h - bottom - top + 2*groove_depth - clearance
+
+        Back sits in grooves in the bottom and the top (or rear stretcher
+        laid flat); it must never exceed the sides (G6, tr-484cf1df).
+        """
         m = ConstructionMethod(id="test", name="Test", back_groove_depth_mm=8)
-        assert m.back_panel_height(620) == 628  # 620 + 8
+        assert m.back_panel_height(620) == 598  # 620 - 36 + 16 - 2
+        assert m.back_panel_height(620) < 620   # never taller than the sides
+
+    def test_back_panel_d60_reference(self):
+        """Walking-skeleton D60 hand reference: Plecy HDF 698 x 578."""
+        m = ConstructionMethod(id="test", name="Test")
+        assert m.back_panel_height(720) == 698
+        assert m.back_panel_width(600) == 578
 
     def test_shelf_width_formula(self):
         """shelf_width = bottom_width - 2mm clearance"""

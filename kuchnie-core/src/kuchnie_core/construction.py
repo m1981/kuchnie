@@ -40,6 +40,7 @@ class ConstructionMethod:
     joinery_type: str = "dowel_confirmat"   # "dowel_confirmat" | "camlock" | "dado" | "glue"
     back_attachment: str = "groove"          # "groove" | "rabbet" | "stapled"
     back_groove_depth_mm: int = 8
+    back_clearance_mm: int = 2               # assembly clearance ("luz") per axis
 
     # Edge banding defaults
     edge_band_thickness_mm: float = 0.8      # 0.4 / 0.8 / 1.0 / 2.0
@@ -59,22 +60,33 @@ class ConstructionMethod:
         return cabinet_width_mm - 2 * self.side_thickness_mm
 
     def back_panel_width(self, cabinet_width_mm: int) -> int:
-        """Back panel width = cabinet_width - 2×side + 2×groove_depth.
+        """Back panel width = cabinet_width - 2×side + 2×groove_depth - clearance.
 
-        Back sits in groove, so it's wider than the internal space.
+        Back sits in grooves cut into both sides, so it's wider than the
+        internal space, minus assembly clearance so it can be slid in.
         """
         return (
             cabinet_width_mm
             - 2 * self.side_thickness_mm
             + 2 * self.back_groove_depth_mm
+            - self.back_clearance_mm
         )
 
     def back_panel_height(self, side_height_mm: int) -> int:
-        """Back panel height = side_height + groove_depth.
+        """Back panel height = side_h - bottom - top + 2×groove_depth - clearance.
 
-        Back extends into the bottom panel groove.
+        Back sits in grooves cut into the bottom panel and the top panel
+        (or rear top stretcher laid flat), so it spans the internal height
+        plus both groove depths, minus assembly clearance. Never exceeds
+        the sides.
         """
-        return side_height_mm + self.back_groove_depth_mm
+        return (
+            side_height_mm
+            - self.bottom_thickness_mm
+            - self.top_thickness_mm
+            + 2 * self.back_groove_depth_mm
+            - self.back_clearance_mm
+        )
 
     def shelf_width(self, cabinet_width_mm: int) -> int:
         """Shelf width = bottom_width - 2mm clearance (1mm per side)."""

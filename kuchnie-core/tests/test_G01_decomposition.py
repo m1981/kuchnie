@@ -7,7 +7,7 @@ Expected panels (9):
   right side  300 × 720 × 18
   top         764 × 300 × 18
   bottom      764 × 300 × 18
-  back        780 × 700 ×  3
+  back        778 × 698 ×  3
   shelf P1    762 × 295 × 18
   shelf P2    762 × 295 × 18
   door F1     395.5 × 714 × 18
@@ -85,8 +85,8 @@ def test_top_bottom_dimensions(g01_path):
 def test_back_dimensions(g01_path):
     result = decompose(load_cabinet(g01_path))
     back = next(p for p in result.panels if p.name == "Plecy")
-    assert back.width_mm == 780    # 800 - 36 + 16
-    assert back.height_mm == 700   # 720 - 36 + 16
+    assert back.width_mm == 778    # 800 - 36 + 16 - 2 luz
+    assert back.height_mm == 698   # 720 - 36 + 16 - 2 luz
     assert back.thickness_mm == 3
     assert back.banded_edges == {}
 

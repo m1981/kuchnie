@@ -6,7 +6,7 @@ Expected panels (6):
   left side   510 × 620 × 18
   right side  510 × 620 × 18
   bottom      764 × 510 × 18
-  back        780 × 628 ×  3
+  back        778 × 598 ×  3
   front S1    794 × 150 × 18
   front S2    794 × 300 × 18
 
@@ -82,8 +82,8 @@ def test_bottom_edge_banding(k01_path):
 def test_back_dimensions(k01_path):
     result = decompose(load_cabinet(k01_path))
     back = next(p for p in result.panels if p.name == "Plecy")
-    assert back.width_mm == 780     # 800 - 36 + 16 (groove)
-    assert back.height_mm == 628    # 620 + 8 (extends into bottom groove)
+    assert back.width_mm == 778     # 800 - 36 + 16 - 2 luz
+    assert back.height_mm == 598    # 620 - 36 + 16 - 2 luz (in grooves, never above sides)
     assert back.thickness_mm == 3
     assert back.banded_edges == {}  # HDF — never banded
 

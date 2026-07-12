@@ -17,7 +17,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 sys.path.insert(0, str(REPO / "kuchnie-core" / "src"))
 
-from kuchnie_core.model import CabinetInstance, Panel  # noqa: E402
+from kuchnie_core.model import CabinetInstance, GrainAxis, Panel  # noqa: E402
 from kuchnie_core.decomposer import decompose  # noqa: E402
 
 GEN = HERE / "generated"
@@ -86,6 +86,7 @@ def build_instance() -> CabinetInstance:
 
 
 def write_rozrys(panels: list[Panel]) -> None:
+    grain_label = {GrainAxis.HEIGHT: "pion", GrainAxis.WIDTH: "poziom", None: "brak"}
     rows = ["Lp;Element;Dlugosc [mm];Szerokosc [mm];Grubosc [mm];Ilosc;"
             "Material;Uslojenie;Okl. przod;Okl. tyl;Okl. lewa;Okl. prawa;Uwagi"]
     for i, p in enumerate(panels, 1):
@@ -93,7 +94,7 @@ def write_rozrys(panels: list[Panel]) -> None:
               for s in ("front", "back", "left", "right")}
         rows.append(
             f"{i};{p.name};{p.height_mm:g};{p.width_mm:g};{p.thickness_mm};"
-            f"{p.quantity};{p.material};;"
+            f"{p.quantity};{p.material};{grain_label.get(p.grain, p.grain)};"
             f"{eb['front']};{eb['back']};{eb['left']};{eb['right']};"
             f"role={p.role.value if p.role else 'brak'}"
         )

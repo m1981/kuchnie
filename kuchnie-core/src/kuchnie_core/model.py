@@ -109,6 +109,10 @@ class Panel:
     machining_ops: list[MachiningOp] = field(default_factory=list)
     quantity: int = 1
     role: PanelRole | None = None   # ADR-012 §1 — structural role for CAM filtering
+    grain: str | None = None        # GrainAxis.WIDTH | GrainAxis.HEIGHT | None
+                                    # None = no grain constraint (free rotation
+                                    # at nesting; "brak" in the rozrys Usłojenie
+                                    # column)
 
 
 @dataclass

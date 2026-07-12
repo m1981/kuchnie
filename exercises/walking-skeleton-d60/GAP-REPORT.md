@@ -81,6 +81,19 @@ and the report-only items above. Note the generated CNC still shows the
 M-drawer at the bottom — that is G8 (input order semantics), untouched
 by design.
 
+## Resolution round 2 (2026-07-12)
+
+Re-validated by re-running the production leg against the hand reference:
+
+| Gap | Fix | Work id |
+|---|---|---|
+| G6 (tr-484cf1df) | back formula fixed in ConstructionMethod: height = side_h − bottom − top + 2×groove − 2 mm luz, width gets the same luz; Plecy 698×578 = reference, HDF area 0.403 m² = reference; third inline formula in decompose_gorna_drzwiowa consolidated into the same method | wk-090ed9f4 |
+| G10 (tr-9054097f, successor of tr-4a2cd4e3) | `Panel.grain` added (GrainAxis); decomposers set HEIGHT on FRONT_DOOR/FRONT_DRAWER; cutlist aggregation keys on grain and emits Usłojenie (pion/poziom/brak); rozrys shows `pion` on K5307 fronts = reference | wk-5dc557d6 |
+
+After round 2 the remaining gaps are all report-only/L1-scoped: G8 order
+semantics, G9 box material field, G11 edge-band identity, G12 margin
+convention, G13 hardware BOM completeness, E1–E4.
+
 ## Reconciliations (not gaps)
 
 - 16 mm drawer-part areas: reference 0.919 m² = generated 0.919 m² — ADR-006
