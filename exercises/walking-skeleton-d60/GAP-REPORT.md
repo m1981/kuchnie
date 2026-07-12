@@ -45,7 +45,24 @@ hand after extraction.
 | E2 | **Extraction type map cannot express drawer cabinets** — `_TYPE_MAP` sends every BASE to `dolna_drzwiowa`; `dolna_legrabox`/`dolna_szufladowa` unreachable from a scene | must re-enter type by hand |
 | E3 | **Extraction loses the drawer system** — only opening heights survive; system/height-code/NL/capacity re-entered by hand | the whole M+C+C spec is manual |
 | E4 | **No material-resolution step** — adapter emits `unassigned` (ADR-008 by design) but nothing between adapter and decompose assigns decors; hand edit required | `kuchnie_core.materials` resolver exists but is unwired |
-| E5 | *(pending Blender leg)* home_builder_5 headless drive-ability | to be filled |
+| E5 | **hb5 headless: YES, via type classes** — `BaseCabinet`/`GeoNodeWall` build fine in `--background`; the modal placement operators are the only GUI-bound path. Room + cabinet built and saved (`d60-room.blend`) | resolved-positive |
+| E6/E7 | **Extraction contract dead on arrival** (`tr-e60f4fe0`) — `extract.py` reads `Dim X/Y/Z` + `opening_sizes` as ID props; the real cage stores dimensions on the evaluated bbox and no opening sizes at all (`raw-cage-dump.json`). As-is extraction returned 0×0×0 and no drawers; the exercise shim shows the fix is ~15 lines (bbox + `Toe Kick Height`) | pipeline-blocking |
+| E8 | **hb5 knows more than we extract** — the cage carries `Base Top Construction`, `Stretcher Width` (0.1016 m), `Material Thickness` (19 mm imperial default): stretcher data exists upstream while G1 shows it missing downstream | design input for G1 |
+
+## Filed ledger claims
+
+| Claim | Covers |
+|---|---|
+| tr-e60f4fe0 (P1) | E6/E7 extraction contract |
+| tr-3b4e0168 (P1) | G1 + G7 no stretchers / no plinth |
+| tr-72e29da5 (P1) | G2 + G3 machining = runner screws only |
+| tr-41acef99 (P1) | G4 + G5 runner depth/axis unbuildable |
+| tr-484cf1df (P1) | G6 back taller than sides, dual formula |
+| tr-4a2cd4e3 (P2) | G10 no grain axis on Panel |
+
+Report-only (await L1 scope decisions): G8 order semantics, G9 box material
+field, G11 edge-band identity (ties to catalog edge codes), G12 margin
+convention, G13 hardware BOM completeness, E1–E4.
 
 ## Reconciliations (not gaps)
 
@@ -60,6 +77,8 @@ hand after extraction.
 
 - [x] Reference authored
 - [x] Production leg run (fallback input)
-- [ ] Blender/home_builder_5 leg
-- [ ] Production leg re-run from extracted JSON
-- [ ] Gaps filed as ledger claims/beads
+- [x] Blender/home_builder_5 leg (headless, room + cabinet, .blend saved)
+- [x] Production leg re-run from extracted JSON (drawer spec re-entered by
+      hand — E3 demonstrated live)
+- [x] Gaps filed as ledger claims (6, table above); repair work items await
+      owner prioritization

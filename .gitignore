@@ -33,3 +33,4 @@ catalog/db/catalog.db-wal
 
 # Claude Code conversation exports
 export.html
+*.blend1
