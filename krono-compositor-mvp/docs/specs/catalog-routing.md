@@ -57,35 +57,39 @@ against the real service.
 
 ## Ground truths
 
-- tr-88dc0d9a — the compositor still ships the hardcoded CATALOG dict
-  (the fact this whole spec exists to kill).
-- tr-80b8e06f — `/render` reads `texture_width_mm` + `allowed_zone` from
-  CATALOG and loads textures from `assets/textures/<id>.jpg` on disk.
+- tr-89ff86d6 — presentation/ has no module-level CATALOG dict;
+  `/api/v1/catalog` is served by `CatalogSource` with an offline
+  snapshot fallback (completion claim of this spec's work).
+- tr-5fba4784 — the catalog source is tested against a faked catalog
+  client: mapping, zone derivation, discontinued filtering, renderable
+  flag, offline degradation, contract shape.
+- tr-2007bfcc — the frontend consumes the payload null-safely and greys
+  out non-renderable decors before they reach `/render`.
 - tr-0ba0f782 — catalog decor-variant models expose `img_url` but no
   `texture_width_mm` or `hex_color`; hence the local-override decisions
   above.
-- tr-ee966c4c — the frontend depends on the
-  `price_groups`/`materials`/`scenes` payload shape and per-material color
-  swatches.
 - tr-7e7a33cd — the catalog SQLite database exists (gitignored artifact);
   needed for the live smoke.
+
+The original premise set — "the hardcoded CATALOG dict still ships",
+"/render reads tiling width and zone from that dict", "the frontend
+depends on the dict's payload shape" — was killed by this work shipping
+(commit 870157e) and diverged by design; those pre-state facts are
+referred to here by title only so their deaths don't fail this spec.
 
 ## Work
 
 - wk-03434168 — Route krono-compositor CATALOG dict to catalog service
-  (ADR-008). Beads twin: kuchnie-9vz.
+  (ADR-008). Beads twin: kuchnie-9vz. **Closed 2026-07-12** (870157e).
 
 ## Acceptance
 
-Pre-written `done --claim` texts (file after the shipping commit lands,
-per the ordering note in the convention):
+Filed at close per the convention's ordering note (commit first, then
+`done --claim`):
 
-1. "krono-compositor-mvp/src/compositor/presentation/ contains no
-   module-level CATALOG dict; /api/v1/catalog is served from a
-   catalog-service-backed source with an offline snapshot fallback"
-   — evidence: `grep -rn "^CATALOG" krono-compositor-mvp/src/compositor/presentation/`
-   (empty) plus a grep for the source module wiring in `api.py`.
-2. "the compositor catalog source is tested against a faked catalog
-   client: decor-row mapping, allowed-zone derivation, offline
-   degradation to snapshot, and the /api/v1/catalog contract shape"
-   — evidence: `grep -n "def test" krono-compositor-mvp/tests/test_catalog_source.py`.
+1. tr-89ff86d6 — no module-level CATALOG dict in presentation/;
+   `/api/v1/catalog` served from the catalog-service-backed source with
+   offline snapshot fallback.
+2. tr-5fba4784 — catalog source tested against a faked catalog client
+   across mapping, zone derivation, offline degradation, and contract
+   shape.
