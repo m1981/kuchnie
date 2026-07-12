@@ -116,3 +116,26 @@ class TestQuantities:
         result = decompose(to_kuchnie_core(make_cabinet(), defaults))
         back = next(p for p in result.panels if p.name == "Plecy")
         assert back.banded_edges == {}
+
+    def test_drawer_box_panels_bucket_separately(self):
+        """Drawer-box board (DRAWER_BACK/DRAWER_BASE) must not be folded
+        into corpus_m2 (wk-c9e848a3): 462x160 back + 465x490 base =
+        0.07392 + 0.227850 m2 in drawer_box_m2, corpus untouched."""
+        from kuchnie_core.model import DecompositionResult, Panel, PanelRole
+        result = DecompositionResult(cabinet_id="t", cabinet_type="dolna_legrabox")
+        result.panels.append(Panel(
+            id="t_drawer_S1_back", name="Szuflada S1 — tył",
+            material="plyta_16mm", thickness_mm=16,
+            width_mm=462, height_mm=160, banded_edges={},
+            quantity=1, role=PanelRole.DRAWER_BACK,
+        ))
+        result.panels.append(Panel(
+            id="t_drawer_S1_base", name="Szuflada S1 — dno",
+            material="plyta_16mm", thickness_mm=16,
+            width_mm=465, height_mm=490, banded_edges={},
+            quantity=1, role=PanelRole.DRAWER_BASE,
+        ))
+        q = quantities_from_decomposition(result)
+        assert q.drawer_box_m2 == pytest.approx(0.07392 + 0.22785)
+        assert q.corpus_m2 == 0.0
+        assert q.corpus_edge_lm == 0.0

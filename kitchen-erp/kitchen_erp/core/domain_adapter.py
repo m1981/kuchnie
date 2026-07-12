@@ -71,11 +71,13 @@ class DomainQuantities:
     corpus_m2: float = 0.0
     back_m2: float = 0.0
     front_m2: float = 0.0
+    drawer_box_m2: float = 0.0
     corpus_edge_lm: float = 0.0
     front_edge_lm: float = 0.0
 
 
 _FRONT_ROLES = {PanelRole.FRONT_DOOR, PanelRole.FRONT_DRAWER}
+_DRAWER_BOX_ROLES = {PanelRole.DRAWER_BACK, PanelRole.DRAWER_BASE}
 
 
 def quantities_from_decomposition(result: DecompositionResult) -> DomainQuantities:
@@ -88,6 +90,10 @@ def quantities_from_decomposition(result: DecompositionResult) -> DomainQuantiti
         elif panel.role in _FRONT_ROLES:
             q.front_m2 += area_m2
             q.front_edge_lm += edge_lm
+        elif panel.role in _DRAWER_BOX_ROLES:
+            # drawer-box board is not corpus board; boxes are unbanded so
+            # their (zero) edging stays out of the corpus edge total too
+            q.drawer_box_m2 += area_m2
         else:
             q.corpus_m2 += area_m2
             q.corpus_edge_lm += edge_lm

@@ -21,7 +21,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from .model import Accessory, MachiningOp, Panel
+from .model import Accessory, MachiningOp, Panel, PanelRole
 
 
 # ── Abstract base ────────────────────────────────────────────────
@@ -133,6 +133,7 @@ class DrawerSystem(ABC):
                 height_mm=back_h,
                 banded_edges={},
                 quantity=1,
+                role=PanelRole.DRAWER_BACK,
             ),
             Panel(
                 id=f"{cabinet_id}_drawer_{drawer_id}_base",
@@ -143,6 +144,7 @@ class DrawerSystem(ABC):
                 height_mm=base_d,
                 banded_edges={},
                 quantity=1,
+                role=PanelRole.DRAWER_BASE,
             ),
         ]
 

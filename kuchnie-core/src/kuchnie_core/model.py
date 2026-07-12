@@ -24,12 +24,16 @@ class PanelRole(str, Enum):
     user-facing Polish names like "Lewy bok".
 
     English values keep the model layer English-only (AGENTS.md rule
-    "Model fields English, YAML keys Polish"). Non-carcass panels
-    (e.g. LEGRABOX drawer-box back/base) use ``role=None``.
+    "Model fields English, YAML keys Polish"). Drawer-box board parts
+    (back/base cut for LEGRABOX/TANDEMBOX boxes) carry DRAWER_BACK /
+    DRAWER_BASE so pricing can bucket them apart from carcass board
+    (they are often a different material than the corpus).
 
-    Value coverage in ``catalog.py`` decomposers (as of ADR-012 §1):
-      * emitted today: LEFT_SIDE, RIGHT_SIDE, TOP, BOTTOM, SHELF, BACK,
-        FRONT_DOOR, FRONT_DRAWER
+    Value coverage in decomposers (ADR-012 §1, extended by ADR-013):
+      * emitted by ``catalog.py``: LEFT_SIDE, RIGHT_SIDE, TOP, BOTTOM,
+        SHELF, BACK, FRONT_DOOR, FRONT_DRAWER
+      * emitted by ``legrabox.py`` / ``blum_drawers.py``: DRAWER_BACK,
+        DRAWER_BASE
       * aspirational (no decomposer emits yet): PLINTH — reserved for
         the future plinth-panel decomposition step. Locked in the enum
         so downstream CAM code can already ``match`` on it exhaustively
@@ -43,6 +47,8 @@ class PanelRole(str, Enum):
     BACK         = "back"
     FRONT_DOOR   = "front_door"
     FRONT_DRAWER = "front_drawer"
+    DRAWER_BACK  = "drawer_back"
+    DRAWER_BASE  = "drawer_base"
     PLINTH       = "plinth"  # aspirational; see class docstring
 
 

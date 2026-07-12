@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .model import Accessory, MachiningOp, Panel
+from .model import Accessory, MachiningOp, Panel, PanelRole
 
 
 # ── Height codes ────────────────────────────────────────────────
@@ -217,6 +217,7 @@ def decompose_drawer_box(
             height_mm=back_h,
             banded_edges={},
             quantity=1,
+            role=PanelRole.DRAWER_BACK,
         ),
         Panel(
             id=f"{cabinet_id}_drawer_{drawer_id}_base",
@@ -227,6 +228,7 @@ def decompose_drawer_box(
             height_mm=base_d,
             banded_edges={},
             quantity=1,
+            role=PanelRole.DRAWER_BASE,
         ),
     ]
 

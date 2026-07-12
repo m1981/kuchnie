@@ -59,6 +59,7 @@ class BOMGenerator:
         corpus_m2 = 0
         back_m2 = 0
         front_m2 = 0
+        drawer_box_m2 = 0
 
         domain_inst = to_kuchnie_core(self.cabinet, self.defaults)
         if domain_inst is not None:
@@ -66,6 +67,7 @@ class BOMGenerator:
             corpus_m2 = q.corpus_m2
             back_m2 = q.back_m2
             front_m2 = q.front_m2
+            drawer_box_m2 = q.drawer_box_m2
             front_edge_m = q.front_edge_lm
             corpus_edge_m = q.corpus_edge_lm
         else:
@@ -96,6 +98,19 @@ class BOMGenerator:
                 quantity_net=back_m2,
                 unit="m2",
                 unit_price=self.defaults.back_mat.price_per_unit
+            ))
+
+        if drawer_box_m2 > 0:
+            # ProjectDefaults has no dedicated drawer-box board yet, so the
+            # corpus board rate stands in — but as its own line, so the
+            # quantity is visible and repriceable, not silently folded into
+            # the corpus position (tr-6d3edb9e).
+            root.add_child(BOMPart(
+                name=f"Drawer box board: {self.defaults.corpus_mat.name}",
+                material_id=self.defaults.corpus_mat.id,
+                quantity_net=drawer_box_m2,
+                unit="m2",
+                unit_price=self.defaults.corpus_mat.price_per_unit
             ))
 
         # Szafka dostaje materiał na front TYLKO jeśli:
@@ -130,7 +145,7 @@ class BOMGenerator:
             ))
         
         # 3. USŁUGI CNC (Cięcie i Okleinowanie)
-        total_board_m2 = corpus_m2 + back_m2 + front_m2
+        total_board_m2 = corpus_m2 + back_m2 + front_m2 + drawer_box_m2
         if total_board_m2 > 0:
             root.add_child(BOMPart(
                 name="CNC Service: Cutting & Nesting",
@@ -212,7 +227,7 @@ class BOMGenerator:
         for part in parts:
             if "CNC Service" in part.name:
                 category = "Service"
-            elif "Corpus" in part.name or "Back panel" in part.name or "Front" in part.name or "Edge banding" in part.name:
+            elif "Corpus" in part.name or "Back panel" in part.name or "Front" in part.name or "Drawer box board" in part.name or "Edge banding" in part.name:
                 category = "Material"
             else:
                 category = "Hardware"

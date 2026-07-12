@@ -32,9 +32,11 @@ class TestPanelRoleEnum:
 
     def test_expected_members(self):
         # Frozen contract — new roles = new ADR + new test entry.
+        # DRAWER_BACK/DRAWER_BASE: ADR-013, wk-c9e848a3.
         assert {r.name for r in PanelRole} == {
             "LEFT_SIDE", "RIGHT_SIDE", "BOTTOM", "TOP",
-            "SHELF", "BACK", "FRONT_DOOR", "FRONT_DRAWER", "PLINTH",
+            "SHELF", "BACK", "FRONT_DOOR", "FRONT_DRAWER",
+            "DRAWER_BACK", "DRAWER_BASE", "PLINTH",
         }
 
     def test_values_are_english_snake_case(self):
@@ -172,11 +174,16 @@ class TestLegraboxRoles:
     def test_carcass_back(self, panels):
         assert _role_of(panels, "back") is PanelRole.BACK
 
-    def test_drawer_box_panels_have_no_role(self, panels):
-        # Drawer box back + base — intermediate parts, not carcass roles.
+    def test_drawer_box_panels_have_drawer_roles(self, panels):
+        # Drawer box back + base carry their own roles so pricing can
+        # bucket them apart from corpus board (wk-c9e848a3).
         drawer_parts = [p for p in panels if "_drawer_" in p.id]
         assert drawer_parts, "LEGRABOX fixture must produce drawer-box panels"
-        assert all(p.role is None for p in drawer_parts)
+        backs = [p for p in drawer_parts if p.id.endswith("_back")]
+        bases = [p for p in drawer_parts if p.id.endswith("_base")]
+        assert backs and bases
+        assert all(p.role is PanelRole.DRAWER_BACK for p in backs)
+        assert all(p.role is PanelRole.DRAWER_BASE for p in bases)
 
     def test_drawer_fronts_have_role(self, panels):
         # Drawer FRONTS (visible face panels) do get FRONT_DRAWER role.
