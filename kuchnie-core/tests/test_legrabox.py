@@ -173,38 +173,48 @@ def test_K02_loads():
 
 def test_K02_panel_count():
     """K02 with 2 LEGRABOX C-drawers:
-      2 sides + 1 bottom + 1 back + 2 drawer backs + 2 drawer bases + 2 fronts = 10
+      2 sides + 1 bottom + 2 stretchers + 1 back + 2 drawer backs
+      + 2 drawer bases + 2 fronts + 1 plinth = 13 (wk-c3d0a0f0)
     """
     cab = load_cabinet(FIXTURES / "K02_legrabox.yaml")
     result = decompose(cab)
-    assert len(result.panels) == 10
+    assert len(result.panels) == 13
 
 
 def test_K02_has_machining_ops():
-    """Carcass side panels must have runner drill ops."""
+    """Carcass side panels: runner drills first (stable indices), then
+    confirmats (3 bottom + 2 stretchers), then the HDF groove."""
     cab = load_cabinet(FIXTURES / "K02_legrabox.yaml")
     result = decompose(cab)
     sides = [p for p in result.panels if "bok" in p.name.lower()]
     assert len(sides) == 2
     for side in sides:
-        assert len(side.machining_ops) == 8   # 4 screws × 2 drawers
-        assert all(op.type == "drill" for op in side.machining_ops)
+        runners = [op for op in side.machining_ops
+                   if op.drill_type == "runner_screw"]
+        confirmats = [op for op in side.machining_ops
+                      if op.drill_type == "confirmat"]
+        grooves = [op for op in side.machining_ops if op.type == "groove"]
+        assert len(runners) == 8      # 4 screws × 2 drawers
+        assert len(confirmats) == 5   # 3 bottom + 2 stretchers
+        assert len(grooves) == 1
+        assert all(op.depth_mm > 0 for op in runners)  # blind, never through
+        assert side.machining_ops[:8] == runners       # runner indices stable
 
 
 def test_K02_runner_ops_positions():
-    """Screws at 46/78mm from the front edge (x); each drawer's runner at
-    its own stack height (y): S1 on the bottom panel (18), S2 one front
-    height up (18 + 177 = 195)."""
+    """Screws at 46/78mm from the front edge (x); each drawer's runner axis
+    RUNNER_AXIS_OFFSET_MM (37) above its zone floor (y): S1 on the bottom
+    panel (18 + 37 = 55), S2 one front height up (55 + 177 = 232)."""
     cab = load_cabinet(FIXTURES / "K02_legrabox.yaml")
     result = decompose(cab)
     side = next(p for p in result.panels if p.id.endswith("_left"))
     # First drawer screws
     assert side.machining_ops[0].x_mm == 46
     assert side.machining_ops[1].x_mm == 78
-    assert side.machining_ops[0].y_mm == 18
+    assert side.machining_ops[0].y_mm == 55
     # Second drawer screws (offset in list by 4)
     assert side.machining_ops[4].x_mm == 46
-    assert side.machining_ops[4].y_mm == 195
+    assert side.machining_ops[4].y_mm == 232
 
 
 def test_K02_accessories():

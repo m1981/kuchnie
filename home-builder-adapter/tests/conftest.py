@@ -26,11 +26,15 @@ sys.path.insert(0, str(REPO_ROOT / "kuchnie-core" / "src"))
 
 
 class FakeBlenderObject:
-    """Mimics a Blender Object: custom props via .get(), plus .children."""
+    """Mimics a Blender Object: custom props via .get(), .children, and the
+    evaluated bounding-box .dimensions (the real hb5 dimension carrier)."""
 
-    def __init__(self, props: dict | None = None, children: list | None = None):
+    def __init__(self, props: dict | None = None, children: list | None = None,
+                 dimensions: tuple | None = None):
         self._props = dict(props or {})
         self.children = list(children or [])
+        if dimensions is not None:
+            self.dimensions = dimensions
 
     def get(self, key, default=None):
         return self._props.get(key, default)

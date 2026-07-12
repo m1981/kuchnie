@@ -72,10 +72,23 @@ def _extract_cabinet(obj: Any) -> dict[str, Any] | None:
         return None
 
     cab_type = obj.get(_PROP_CABINET_TYPE, "BASE")
-    dim_x = obj.get(_PROP_DIM_X, 0.0)
-    dim_y = obj.get(_PROP_DIM_Y, 0.0)
-    dim_z = obj.get(_PROP_DIM_Z, 0.0)
+    # hb5 stores cabinet dimensions as geometry-node modifier inputs, NOT
+    # ID props (tr-e60f4fe0) — the evaluated cage bounding box is the
+    # reliable carrier. Legacy 'Dim X/Y/Z' ID props win when present.
+    dims = getattr(obj, "dimensions", None)
+
+    def _dim(prop: str, axis: int) -> float:
+        explicit = obj.get(prop)
+        if explicit:
+            return explicit
+        return float(dims[axis]) if dims is not None else 0.0
+
+    dim_x = _dim(_PROP_DIM_X, 0)
+    dim_y = _dim(_PROP_DIM_Y, 1)
+    dim_z = _dim(_PROP_DIM_Z, 2)
     toe_kick = obj.get(_PROP_TOE_KICK, 0.0)
+    # opening_sizes never persists on real hb5 cages (transient python
+    # attribute) — read stays for legacy/faked scenes; empty otherwise.
     opening_sizes = obj.get(_PROP_OPENING_SIZES, [])
 
     return {

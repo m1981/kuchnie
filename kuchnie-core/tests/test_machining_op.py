@@ -95,7 +95,8 @@ class TestLegraboxRunnerOpDefaults:
         side_panels = [p for p in result.panels if p.id.endswith("_left") or p.id.endswith("_right")]
         assert side_panels, "K02 LEGRABOX must produce side panels with runner ops"
 
-        all_ops = [op for p in side_panels for op in p.machining_ops]
+        all_ops = [op for p in side_panels for op in p.machining_ops
+                   if op.drill_type == "runner_screw"]
         assert all_ops, "LEGRABOX side panels must carry runner-mount drill ops"
 
         for op in all_ops:

@@ -30,14 +30,11 @@ class PanelRole(str, Enum):
     (they are often a different material than the corpus).
 
     Value coverage in decomposers (ADR-012 §1, extended by ADR-013):
-      * emitted by ``catalog.py``: LEFT_SIDE, RIGHT_SIDE, TOP, BOTTOM,
-        SHELF, BACK, FRONT_DOOR, FRONT_DRAWER
+      * emitted by ``catalog.py``: LEFT_SIDE, RIGHT_SIDE, TOP (wieniec and
+        trawersy), BOTTOM, SHELF, BACK, FRONT_DOOR, FRONT_DRAWER, PLINTH
+        (cokół — emitted by ``dolna_legrabox`` since wk-c3d0a0f0)
       * emitted by ``legrabox.py`` / ``blum_drawers.py``: DRAWER_BACK,
         DRAWER_BASE
-      * aspirational (no decomposer emits yet): PLINTH — reserved for
-        the future plinth-panel decomposition step. Locked in the enum
-        so downstream CAM code can already ``match`` on it exhaustively
-        without a follow-up model change.
     """
     LEFT_SIDE    = "left_side"
     RIGHT_SIDE   = "right_side"

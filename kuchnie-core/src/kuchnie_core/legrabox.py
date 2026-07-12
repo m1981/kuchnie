@@ -63,6 +63,15 @@ CAPACITY_NL: dict[int, list[int]] = {
 
 RUNNER_CLEARANCE_PER_SIDE_MM = 13  # LEGRABOX runner + clearance
 
+# Runner screw-axis height above the drawer zone's floor. Blum mounts the
+# LEGRABOX runner with its screw axis ~37 mm above the surface the drawer
+# zone starts on (wk-7341700c; verify against Blum planner per runner).
+RUNNER_AXIS_OFFSET_MM = 37
+
+# Euro screw 6.3x13 → blind pilot, NEVER a through-hole in the side panel.
+RUNNER_SCREW_PILOT_DIA_MM = 5
+RUNNER_SCREW_PILOT_DEPTH_MM = 12
+
 
 def lw(kb: int, side_thickness: int = 0) -> int:
     """Lichte Weite (clear width available for drawer box).
@@ -240,8 +249,8 @@ def decompose_drawer_box(
             type="drill",
             x_mm=x,             # distance from front edge of side panel
             y_mm=runner_y_mm,   # runner axis height above panel bottom
-            diameter_mm=5,
-            depth_mm=0,  # through-hole for Euro screw
+            diameter_mm=RUNNER_SCREW_PILOT_DIA_MM,
+            depth_mm=RUNNER_SCREW_PILOT_DEPTH_MM,  # blind — euro 6.3x13
             face="inside",
             drill_type="runner_screw",
             note=f"LEGRABOX {height_code} runner screw (NL={nl})",

@@ -164,8 +164,8 @@ class DrawerSystem(ABC):
                 type="drill",
                 x_mm=0,
                 y_mm=first_screw,
-                diameter_mm=5,
-                depth_mm=0,
+                diameter_mm=_legrabox.RUNNER_SCREW_PILOT_DIA_MM,
+                depth_mm=_legrabox.RUNNER_SCREW_PILOT_DEPTH_MM,  # blind
                 note=f"{self.__class__.__name__} runner screw (NL={nl})",
             ),
         ]

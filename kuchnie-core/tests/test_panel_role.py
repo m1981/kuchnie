@@ -148,13 +148,9 @@ class TestG01Roles:
 
 
 class TestLegraboxRoles:
-    """dolna_legrabox — carcass gets roles; drawer-box back/base stay None.
-
-    The LEGRABOX drawer box (back + base panels) is not part of the fixed
-    carcass role enum — those panels intentionally keep ``role=None``.
-    This test locks that in so a future contributor doesn't quietly extend
-    the enum without a new ADR.
-    """
+    """dolna_legrabox — every panel carries a role: carcass roles, drawer-box
+    DRAWER_BACK/DRAWER_BASE (ADR-013), TOP for the stretchers and PLINTH for
+    the cokół (wk-c3d0a0f0)."""
 
     @pytest.fixture
     def panels(self):

@@ -6,6 +6,5 @@ set hb_frameless.top_drawer_front_height
 cabinet created
 blend saved
 raw dump: 1 cage(s)
-GAP CONFIRMED: adapter extraction failed: ValueError: Invalid CabinetInstance 'cab_000': width_mm must be > 0, got 0; height_mm must be > 0, got 0; depth_mm must be > 0, got 0; Internal width would be -36mm. Increase width_mm or reduce thickness_side_mm.
-shim extraction: 1 cabinet(s) via bbox
+extraction OK (adapter as-is)
   extracted: dolna_drzwiowa 600x820x560 plinth=100 drawers=[]

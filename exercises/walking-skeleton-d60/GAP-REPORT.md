@@ -64,6 +64,23 @@ Report-only (await L1 scope decisions): G8 order semantics, G9 box material
 field, G11 edge-band identity (ties to catalog edge codes), G12 margin
 convention, G13 hardware BOM completeness, E1–E4.
 
+## Resolution round 1 (2026-07-12)
+
+Fixed and re-validated by re-running BOTH legs — extraction now succeeds
+with the unmodified adapter, and the generated rozrys carries 16 panels:
+
+| Gap | Fix | Work id |
+|---|---|---|
+| E6/E7 (tr-e60f4fe0) | extraction reads evaluated bbox + Toe Kick ID prop; legacy Dim-props still win when present | wk-ee28c3dd |
+| G1+G7 (tr-3b4e0168) | dolna_legrabox emits 2 trawersy (TOP) + cokół (PLINTH), 596×97 = reference | wk-c3d0a0f0 |
+| G4+G5 (tr-41acef99) | runner pilots blind Ø5×12; axis = zone floor + 37 (single-source constant in legrabox.py) | wk-7341700c |
+| G2+G3 (tr-72e29da5) | confirmat through-drills (3× dno, 2× trawersy — coordinates match reference exactly) gated on joinery_type; HDF groove ops on boki/dno/trawers tylny | wk-38c32190 |
+
+Still open: G6 back oversize (tr-484cf1df), G10 grain (tr-4a2cd4e3),
+and the report-only items above. Note the generated CNC still shows the
+M-drawer at the bottom — that is G8 (input order semantics), untouched
+by design.
+
 ## Reconciliations (not gaps)
 
 - 16 mm drawer-part areas: reference 0.919 m² = generated 0.919 m² — ADR-006

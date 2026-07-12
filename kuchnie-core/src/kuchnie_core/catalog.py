@@ -468,6 +468,49 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
 # dolna_legrabox — base cabinet with Blum LEGRABOX drawers
 # ---------------------------------------------------------------------------
 
+_STRETCHER_WIDTH_MM = 100        # trawers górny, na płask
+_CONFIRMAT_EDGE_OFFSET_MM = 50   # first/last confirmat from panel edge
+_PLINTH_SIDE_INSET_MM = 2        # cokół recessed 2 mm per side
+_PLINTH_FLOOR_GAP_MM = 3
+
+
+def _hdf_groove_op(depth_mm: float, length_mm: float) -> MachiningOp:
+    """HDF back groove. Coordinate exception: x_mm is the groove CENTRELINE
+    measured from the REAR edge (groove near-edge 10 mm off the rear)."""
+    return MachiningOp(
+        type="groove",
+        x_mm=12.0,
+        width_mm=4.0,
+        depth_mm=depth_mm,
+        length_mm=length_mm,
+        face="inside",
+        note="wpust HDF 4mm, krawedz 10mm od tylnej krawedzi",
+    )
+
+
+def _confirmat_side_ops(cab: CabinetInstance, m: ConstructionMethod,
+                        side_h: float) -> list[MachiningOp]:
+    """Through-drills in a side panel for confirmats into the bottom panel
+    and both top stretchers (Ø7 through + countersink, pilot in the mating
+    edge is drilled on assembly)."""
+    xs = [_CONFIRMAT_EDGE_OFFSET_MM, cab.depth_mm / 2,
+          cab.depth_mm - _CONFIRMAT_EDGE_OFFSET_MM]
+    ops = [MachiningOp(
+        type="drill", x_mm=x, y_mm=m.bottom_thickness_mm / 2,
+        diameter_mm=7, depth_mm=m.side_thickness_mm,
+        face="outside", drill_type="confirmat",
+        note="konfirmat 7x50 do dna (przelot)",
+    ) for x in xs]
+    for x, which in [(_STRETCHER_WIDTH_MM / 2, "przedniego"),
+                     (cab.depth_mm - _STRETCHER_WIDTH_MM / 2, "tylnego")]:
+        ops.append(MachiningOp(
+            type="drill", x_mm=x, y_mm=side_h - m.top_thickness_mm / 2,
+            diameter_mm=7, depth_mm=m.side_thickness_mm,
+            face="outside", drill_type="confirmat",
+            note=f"konfirmat 7x50 do trawersu {which} (przelot)",
+        ))
+    return ops
+
 def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     """Decompose a base cabinet with LEGRABOX drawer system.
 
@@ -478,6 +521,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     """
     from .legrabox import (
         HEIGHTS,
+        RUNNER_AXIS_OFFSET_MM,
         decompose_drawer_box,
         make_runner_accessory,
         validate_height_nl,
@@ -507,7 +551,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             role=_SIDE_ROLE[side],
         ))
 
-    # -- Bottom panel --
+    # -- Bottom panel (HDF groove milled 10mm off the rear edge) --
     bottom_w = m.carcass_bottom_width(cab.width_mm)
     r.panels.append(Panel(
         id=f"{cab.id}_bottom",
@@ -517,8 +561,28 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         width_mm=bottom_w,
         height_mm=cab.depth_mm,
         banded_edges={"front": _body_eb(cab, bottom_w)},
+        machining_ops=[_hdf_groove_op(m.back_groove_depth_mm, bottom_w)],
         role=PanelRole.BOTTOM,
     ))
+
+    # -- Top stretchers (trawersy) — drawer carcass has no full top; two
+    # flat rails keep it square (wk-c3d0a0f0). Rear one carries the groove.
+    for pos, label, banded in [("przedni", "Trawers przedni", True),
+                               ("tylny", "Trawers tylny", False)]:
+        r.panels.append(Panel(
+            id=f"{cab.id}_trawers_{pos}",
+            name=label,
+            material=cab.body_material,
+            thickness_mm=m.top_thickness_mm,
+            width_mm=bottom_w,
+            height_mm=_STRETCHER_WIDTH_MM,
+            banded_edges={"front": _body_eb(cab, bottom_w)} if banded else {},
+            machining_ops=(
+                [] if banded
+                else [_hdf_groove_op(m.back_groove_depth_mm, bottom_w)]
+            ),
+            role=PanelRole.TOP,
+        ))
 
     # -- Back panel --
     back_w = m.back_panel_width(cab.width_mm)
@@ -535,11 +599,10 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     ))
 
     # -- Drawer boxes + runner mounting ops --
-    # Drawers stack bottom-up: each runner's screw axis sits at the bottom
-    # of its drawer zone, the first zone starting on top of the bottom panel.
-    # TODO: add the exact Blum screw-axis offset within the zone once the
-    # Montageanleitung chart is transcribed (see legrabox.RUNNER_SCREW_POSITIONS).
-    runner_y = float(m.bottom_thickness_mm)
+    # Drawers stack bottom-up: each zone starts on top of the bottom panel
+    # and the runner screw axis sits RUNNER_AXIS_OFFSET_MM above the zone
+    # floor (wk-7341700c; per-runner value to confirm in Blum planner).
+    runner_y = float(m.bottom_thickness_mm) + RUNNER_AXIS_OFFSET_MM
     for drawer in cab.drawers:
         did = drawer["id"]
         height_code = drawer.get("height_code", "C")
@@ -571,6 +634,13 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             nl=nl,
             capacity_kg=capacity,
         ))
+
+    # -- Joinery + groove on the side panels (after runner ops so the
+    # runner drill indices stay stable for downstream consumers) --
+    for ops_list in (left_ops, right_ops):
+        if "confirmat" in m.joinery_type:
+            ops_list.extend(_confirmat_side_ops(cab, m, side_h))
+        ops_list.append(_hdf_groove_op(m.back_groove_depth_mm, side_h))
 
     # -- Drawer fronts --
     for front in cab.fronts:
@@ -609,6 +679,20 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             name=_handle_accessory_name(cab.handles),
             type="handle",
             quantity=n,
+        ))
+
+    # -- Plinth (cokół, clip-on) --
+    if cab.plinth_height_mm > 0:
+        plinth_w = cab.width_mm - 2 * _PLINTH_SIDE_INSET_MM
+        r.panels.append(Panel(
+            id=f"{cab.id}_cokol",
+            name="Cokół",
+            material=cab.body_material,
+            thickness_mm=m.side_thickness_mm,
+            width_mm=plinth_w,
+            height_mm=cab.plinth_height_mm - _PLINTH_FLOOR_GAP_MM,
+            banded_edges={"front": _body_eb(cab, plinth_w)},
+            role=PanelRole.PLINTH,
         ))
 
     return r

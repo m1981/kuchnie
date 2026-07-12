@@ -35,6 +35,22 @@ class TestSceneExtraction:
         assert cab["toe_kick_mm"] == 100
         assert cab["drawers"] == [176, 320]
 
+    def test_real_hb5_cage_uses_bbox(self, fake_bpy):
+        """The real hb5 cage (see walking-skeleton raw-cage-dump.json,
+        tr-e60f4fe0) has NO Dim X/Y/Z or opening_sizes ID props — dimensions
+        come from the evaluated bounding box, toe kick from its ID prop."""
+        cage = FakeBlenderObject(
+            props={"IS_FRAMELESS_CABINET_CAGE": True, "CABINET_TYPE": "BASE",
+                   "Toe Kick Height": 0.1},
+            dimensions=(0.6, 0.56, 0.82),
+        )
+        fake_bpy.data.objects = [cage]
+        cab = extract_cabinets_from_scene()[0]
+        assert (cab["width_mm"], cab["depth_mm"], cab["height_mm"]) == \
+            (600, 560, 820)
+        assert cab["toe_kick_mm"] == 100
+        assert cab["drawers"] == []
+
     def test_non_cage_objects_are_ignored(self, fake_bpy, base_cabinet_cage):
         fake_bpy.data.objects = [
             FakeBlenderObject(props={"IS_FRAMELESS_INTERIOR_PART": True}),

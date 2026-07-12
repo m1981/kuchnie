@@ -137,9 +137,11 @@ class TestLegraboxRunnerOps:
 
     Reference data (never derived from code under test):
       * Blum NL500 screw chart: 46, 78, 110, 398 mm from front edge.
-      * Fixture geometry: bottom panel 18 mm, drawer front heights 177 mm
-        → runner axes at 18 mm (S1) and 18 + 177 = 195 mm (S2) above the
-        side panel's bottom edge.
+      * Fixture geometry: bottom panel 18 mm, drawer front heights 177 mm,
+        Blum axis offset 37 mm → runner axes at 18 + 37 = 55 mm (S1) and
+        55 + 177 = 232 mm (S2) above the side panel's bottom edge.
+      * Sides also carry confirmat drills + the HDF groove (wk-38c32190);
+        runner assertions filter by drill_type per ADR-012 §2.
       * Side panel: width 510 (= cabinet depth), height 620 (720 − 100).
 
     Axis convention (kitchen-cam, the op consumer):
@@ -147,7 +149,7 @@ class TestLegraboxRunnerOps:
     """
 
     BLUM_NL500_SCREW_X = {46.0, 78.0, 110.0, 398.0}
-    RUNNER_Y = {18.0, 195.0}
+    RUNNER_Y = {55.0, 232.0}
 
     @pytest.fixture()
     def sides(self):
@@ -166,16 +168,22 @@ class TestLegraboxRunnerOps:
 
     def test_screw_x_positions_match_blum_nl500_chart(self, sides):
         left, _ = sides
-        assert {op.x_mm for op in left.machining_ops} == self.BLUM_NL500_SCREW_X
+        runners = [op for op in left.machining_ops
+                   if op.drill_type == "runner_screw"]
+        assert {op.x_mm for op in runners} == self.BLUM_NL500_SCREW_X
 
     def test_each_drawer_has_its_own_runner_height(self, sides):
         left, right = sides
         for side in (left, right):
-            assert {op.y_mm for op in side.machining_ops} == self.RUNNER_Y
+            runners = [op for op in side.machining_ops
+                       if op.drill_type == "runner_screw"]
+            assert {op.y_mm for op in runners} == self.RUNNER_Y
 
     def test_op_count_is_drawers_times_screws(self, sides):
         left, right = sides
-        assert len(left.machining_ops) == len(right.machining_ops) == 2 * 4
+        n = lambda p: len([op for op in p.machining_ops
+                           if op.drill_type == "runner_screw"])
+        assert n(left) == n(right) == 2 * 4
 
     def test_all_ops_inside_panel_bounds(self, sides):
         """Physical invariant: a drilling outside the board is scrap."""
@@ -188,4 +196,5 @@ class TestLegraboxRunnerOps:
     def test_ops_are_routable_by_drill_type(self, sides):
         """ADR-012 §2: downstream CAM filters by drill_type, not note text."""
         left, _ = sides
-        assert all(op.drill_type == "runner_screw" for op in left.machining_ops)
+        assert {op.drill_type for op in left.machining_ops
+                if op.type == "drill"} == {"runner_screw", "confirmat"}
