@@ -18,11 +18,13 @@ import json
 import sys
 from pathlib import Path
 
-# Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from manifest_validator import validate_manifest, print_validation_report
+try:
+    from kuchnie_core.validator import validate_manifest, print_validation_report
+except ImportError:  # bare checkout without install — use the monorepo layout
+    sys.path.insert(0, str(PROJECT_ROOT.parent / "kuchnie-core" / "src"))
+    from kuchnie_core.validator import validate_manifest, print_validation_report
 
 
 def main():
@@ -70,16 +72,18 @@ def main():
     if schema_path.exists():
         try:
             import jsonschema
-            schema = json.loads(schema_path.read_text())
-            jsonschema.validate(manifest, schema)
-            print("\n✓ Schema validation passed")
-        except jsonschema.ValidationError as e:
-            print(f"\n❌ Schema validation failed: {e.message}")
-            if strict:
-                sys.exit(1)
         except ImportError:
             print("\n⚠️  jsonschema not installed — skipping schema validation")
             print("   Install with: pip install jsonschema")
+        else:
+            schema = json.loads(schema_path.read_text())
+            try:
+                jsonschema.validate(manifest, schema)
+                print("\n✓ Schema validation passed")
+            except jsonschema.ValidationError as e:
+                print(f"\n❌ Schema validation failed: {e.message}")
+                if strict:
+                    sys.exit(1)
 
     # Exit code
     if not result.is_valid:
