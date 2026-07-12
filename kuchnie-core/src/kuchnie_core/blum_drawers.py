@@ -22,6 +22,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from .model import Accessory, MachiningOp, Panel, PanelRole
+from . import legrabox as _legrabox
 
 
 # ── Abstract base ────────────────────────────────────────────────
@@ -290,53 +291,43 @@ class Merivobox(DrawerSystem):
 
 # ── LEGRABOX ─────────────────────────────────────────────────────
 
-_LEGRABOX_HEIGHTS: dict[str, _TandemboxHeight] = {
-    "N": _TandemboxHeight("N", 66.5, 39, 50),
-    "M": _TandemboxHeight("M", 90.5, 63, 68),
-    "K": _TandemboxHeight("K", 128.5, 101, 106),
-    "C": _TandemboxHeight("C", 177, 148, 155),
-    "F": _TandemboxHeight("F", 241, 212, 220),
-}
-
-_LEGRABOX_NL_MATRIX: dict[str, dict[int, bool]] = {
-    "N": {270: False, 300: False, 350: False, 400: True, 450: True,
-          500: True, 550: True, 600: False, 650: False},
-    "M": {270: True, 300: True, 350: True, 400: True, 450: True,
-          500: True, 550: True, 600: True, 650: True},
-    "K": {270: False, 300: True, 350: True, 400: True, 450: True,
-          500: True, 550: True, 600: True, 650: False},
-    "C": {270: True, 300: True, 350: True, 400: True, 450: True,
-          500: True, 550: True, 600: True, 650: True},
-    "F": {270: False, 300: False, 350: False, 400: True, 450: True,
-          500: True, 550: True, 600: True, 650: True},
-}
-
 
 class Legrabox(DrawerSystem):
-    """Blum LEGRABOX drawer system."""
+    """Blum LEGRABOX drawer system.
 
-    _RUNNER_CLEARANCE = 13
+    Thin adapter over the ``legrabox`` module — the single LEGRABOX
+    data/formula source per ADR-006. No LEGRABOX constant lives in this
+    file: heights, NL availability, runner clearance, and panel-width
+    formulas all resolve through the module.
+    """
 
     @property
     def height_codes(self) -> list[str]:
-        return list(_LEGRABOX_HEIGHTS.keys())
+        return list(_legrabox.HEIGHTS.keys())
 
     def side_height(self, code: str) -> float:
-        return _LEGRABOX_HEIGHTS[code].side_height_mm
+        return _legrabox.HEIGHTS[code].side_height_mm
 
     def back_panel_height(self, code: str) -> float:
-        return _LEGRABOX_HEIGHTS[code].back_panel_height_mm
+        return _legrabox.HEIGHTS[code].back_panel_height_mm
 
     def runner_clearance_per_side_mm(self) -> float:
-        return self._RUNNER_CLEARANCE
+        return _legrabox.RUNNER_CLEARANCE_PER_SIDE_MM
 
     def valid_nl(self) -> list[int]:
-        return [270, 300, 350, 400, 450, 500, 550, 600, 650]
+        return list(_legrabox.VALID_NL)
 
     def is_valid_combo(self, code: str, nl: int) -> bool:
-        if code not in _LEGRABOX_NL_MATRIX:
-            return False
-        return _LEGRABOX_NL_MATRIX[code].get(nl, False)
+        return _legrabox.NL_MATRIX.get(code, {}).get(nl, False)
+
+    def base_panel_width(self, lw: int) -> int:
+        return _legrabox.base_panel_width(lw)
+
+    def back_panel_width(self, lw: int) -> int:
+        return _legrabox.back_panel_width(lw)
+
+    def base_panel_depth(self, nl: int) -> int:
+        return _legrabox.base_panel_depth(nl)
 
 
 # ── Factory ──────────────────────────────────────────────────────
