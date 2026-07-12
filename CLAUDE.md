@@ -68,18 +68,34 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## Build & Test
 
-_Add your build and test commands here_
-
 ```bash
-# Example:
-# npm install
-# npm test
+# Suites (run from the component dir; root .venv covers core/cam/adapter):
+cd kuchnie-core          && ../.venv/bin/python -m pytest tests/ -q   # ~700 tests
+cd kitchen-cam           && ../.venv/bin/python -m pytest tests/ -q
+cd home-builder-adapter  && .venv/bin/python -m pytest tests/ -q      # own venv (uv sync --extra dev)
+cd kitchen-erp           && .venv/bin/python -m pytest tests/ -q      # own venv
+
+# Quality gates (repo root):
+bash scripts/spec-health.sh      # specs vs ledger — must be 0 failures
+bash scripts/doc-health.sh       # live markdown corpus
+
+# Pipeline regression harness (after any decomposer/extraction change):
+cd exercises/walking-skeleton-d60
+/Applications/Blender.app/Contents/MacOS/Blender --background --python blender_leg.py
+/path/to/repo/.venv/bin/python run_production_leg.py   # diff generated/ vs reference/
 ```
+
+Blender 5.1.2 lives at `/Applications/Blender.app`; home_builder_5 is driven
+headless via `addon_utils.enable` + its type classes, never the modal
+operators (see `home-builder-adapter/docs/hb5-headless-scripting.md`).
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+See `AGENTS.md` (canonical) — six components around the `kuchnie_core`
+domain hub; scope authority is `docs/specs/process-coverage.md` (L1 map).
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+See `docs/spec-convention.md` (ledger-wired specs), `docs/adr/` (decisions;
+accepted ADRs are immutable — write a superseding ADR), and
+`docs/file-naming-convention.md`.
