@@ -1,0 +1,315 @@
+{
+  "overall_mm": {
+    "width": 600.0,
+    "depth": 560.0,
+    "height": 820.0
+  },
+  "carcass_parts": [
+    {
+      "name": "Back",
+      "size_mm": [
+        564.0,
+        18.0,
+        702.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Back Stretcher",
+      "size_mm": [
+        564.0,
+        101.6,
+        18.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Vertical Splitter 1",
+      "size_mm": [
+        564.0,
+        542.0,
+        18.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Vertical Splitter 2",
+      "size_mm": [
+        564.0,
+        542.0,
+        18.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Bottom",
+      "size_mm": [
+        564.0,
+        560.0,
+        18.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Front Stretcher",
+      "size_mm": [
+        564.0,
+        101.6,
+        18.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Left Side",
+      "size_mm": [
+        18.0,
+        560.0,
+        820.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Right Side",
+      "size_mm": [
+        18.0,
+        560.0,
+        820.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Sink Apron",
+      "size_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "suppressed": true
+    },
+    {
+      "name": "Toe Kick",
+      "size_mm": [
+        564.0,
+        18.0,
+        100.0
+      ],
+      "suppressed": false
+    },
+    {
+      "name": "Top",
+      "size_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "suppressed": true
+    }
+  ],
+  "drawer_fronts": [
+    {
+      "position": 1,
+      "height_mm": 163.83,
+      "z_top_mm": 818.41,
+      "z_bottom_mm": 654.59
+    },
+    {
+      "position": 2,
+      "height_mm": 268.83,
+      "z_top_mm": 651.41,
+      "z_bottom_mm": 382.59,
+      "reveal_above_mm": 3.18
+    },
+    {
+      "position": 3,
+      "height_mm": 279.41,
+      "z_top_mm": 379.41,
+      "z_bottom_mm": 100.0,
+      "reveal_above_mm": 3.17
+    }
+  ],
+  "drawer_boxes": [
+    {
+      "name": "Drawer Box",
+      "size_mm": {
+        "width": 538.6,
+        "depth": 516.6,
+        "height": 108.25
+      },
+      "opening_mm": {
+        "width": 564.0,
+        "depth": 542.0,
+        "height": 140.0
+      },
+      "side_clearance_total_mm": 25.4,
+      "top_clearance_mm": 19.05,
+      "legrabox": {
+        "suggested_side": "M",
+        "suggested_side_height_mm": 90.5,
+        "suggested_NL_mm": 500
+      }
+    },
+    {
+      "name": "Drawer Box.001",
+      "size_mm": {
+        "width": 538.6,
+        "depth": 516.6,
+        "height": 222.25
+      },
+      "opening_mm": {
+        "width": 564.0,
+        "depth": 542.0,
+        "height": 254.0
+      },
+      "side_clearance_total_mm": 25.4,
+      "top_clearance_mm": 19.05,
+      "legrabox": {
+        "suggested_side": "C",
+        "suggested_side_height_mm": 177.0,
+        "suggested_NL_mm": 500
+      }
+    },
+    {
+      "name": "Drawer Box.002",
+      "size_mm": {
+        "width": 538.6,
+        "depth": 516.6,
+        "height": 222.25
+      },
+      "opening_mm": {
+        "width": 564.0,
+        "depth": 542.0,
+        "height": 254.0
+      },
+      "side_clearance_total_mm": 25.4,
+      "top_clearance_mm": 19.05,
+      "legrabox": {
+        "suggested_side": "C",
+        "suggested_side_height_mm": 177.0,
+        "suggested_NL_mm": 500
+      }
+    }
+  ],
+  "object_counts": {
+    "drawer_fronts": 3,
+    "door_fronts": 0,
+    "boxes": 3,
+    "pulls": 3,
+    "parts": 11,
+    "openings": 6,
+    "legs": 0,
+    "cages": 2,
+    "other": 4
+  },
+  "name": {
+    "raw": "B600-3DW-01 D60 Legrabox",
+    "parsed": {
+      "type_code": "B",
+      "width_mm": 600,
+      "exterior": "3DW",
+      "seq": 1,
+      "label": "D60 Legrabox"
+    },
+    "violations": [],
+    "suggested": "B600-3DW"
+  },
+  "checks": [
+    {
+      "id": "name_parses",
+      "status": "PASS",
+      "detail": "'B600-3DW-01 D60 Legrabox' vs grammar <TYPE><WIDTH>-<EXTERIOR>[-<SEQ>][ <label>]"
+    },
+    {
+      "id": "name_no_dup_suffix",
+      "status": "PASS",
+      "detail": "no Blender duplicate suffix"
+    },
+    {
+      "id": "name_width",
+      "status": "PASS",
+      "detail": "name says 600mm, measured 600.0mm"
+    },
+    {
+      "id": "name_type",
+      "status": "PASS",
+      "detail": "name says B, CABINET_TYPE=BASE"
+    },
+    {
+      "id": "name_exterior",
+      "status": "PASS",
+      "detail": "name says 3DW, counted configuration is 3DW"
+    },
+    {
+      "id": "carcass_complete",
+      "status": "PASS",
+      "detail": "panels present: ['Back', 'Back Stretcher', 'Bottom', 'Front Stretcher', 'Left Side', 'Right Side', 'Sink Apron', 'Toe Kick', 'Top', 'Vertical Splitter 1', 'Vertical Splitter 2']"
+    },
+    {
+      "id": "reveal_front_2",
+      "status": "PASS",
+      "detail": "gap 3.18mm vs target 3.0mm"
+    },
+    {
+      "id": "reveal_front_3",
+      "status": "PASS",
+      "detail": "gap 3.17mm vs target 3.0mm"
+    },
+    {
+      "id": "fronts_cover_carcass",
+      "status": "PASS",
+      "detail": "fronts span 718.41mm vs carcass face 720.0mm (full overlay; small delta = top/bottom overlay choice)"
+    },
+    {
+      "id": "box_fits:Drawer Box",
+      "status": "PASS",
+      "detail": "box [538.6, 516.6, 108.25] vs opening [564.0, 542.0, 140.0] (mm)"
+    },
+    {
+      "id": "legrabox_side:Drawer Box",
+      "status": "PASS",
+      "detail": "opening height 140.0mm -> LEGRABOX side M"
+    },
+    {
+      "id": "legrabox_NL:Drawer Box",
+      "status": "PASS",
+      "detail": "box depth 516.6mm -> nominal length 500"
+    },
+    {
+      "id": "box_fits:Drawer Box.001",
+      "status": "PASS",
+      "detail": "box [538.6, 516.6, 222.25] vs opening [564.0, 542.0, 254.0] (mm)"
+    },
+    {
+      "id": "legrabox_side:Drawer Box.001",
+      "status": "PASS",
+      "detail": "opening height 254.0mm -> LEGRABOX side C"
+    },
+    {
+      "id": "legrabox_NL:Drawer Box.001",
+      "status": "PASS",
+      "detail": "box depth 516.6mm -> nominal length 500"
+    },
+    {
+      "id": "box_fits:Drawer Box.002",
+      "status": "PASS",
+      "detail": "box [538.6, 516.6, 222.25] vs opening [564.0, 542.0, 254.0] (mm)"
+    },
+    {
+      "id": "legrabox_side:Drawer Box.002",
+      "status": "PASS",
+      "detail": "opening height 254.0mm -> LEGRABOX side C"
+    },
+    {
+      "id": "legrabox_NL:Drawer Box.002",
+      "status": "PASS",
+      "detail": "box depth 516.6mm -> nominal length 500"
+    }
+  ],
+  "renders": [
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/front.png",
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/side.png",
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/top.png",
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/iso.png",
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/iso_open.png",
+    "/Users/michal/PycharmProjects/kuchnie/exercises/e2e-d60-legrabox/generated/inspection/d60-room/b600-3dw-01_d60_legrabox/front_open.png"
+  ]
+}

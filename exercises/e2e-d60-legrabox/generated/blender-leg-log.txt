@@ -1,0 +1,17 @@
+addon enabled
+set hb_frameless.default_toe_kick_height
+set hb_frameless.equal_drawer_stack_heights
+set hb_frameless.top_drawer_front_height
+set hb_frameless.default_carcass_part_thickness
+GAP-headless: finish_colors user-data path broken (ValueError: The "package" does not name an extension) — patching custom colors to empty
+4 walls built
+cabinet created: B600-3DW-01 D60 Legrabox
+GAP-metric: Material Thickness forced to 18mm on 2 object(s)
+style applied: OAK + stain 'Special Walnut' on fronts; finish mat = Default Style Finish
+GAP-semantics: carcass Finish flags forced off on 9 part(s) so decor stays on fronts only
+decor check rendered (BLENDER_EEVEE)
+front check rendered
+blend saved
+hierarchy dump: 1 cage(s)
+extraction OK (adapter as-is)
+  extracted: dolna_drzwiowa 600x820x560 plinth=100 drawers=[] body=unassigned front=unassigned

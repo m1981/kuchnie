@@ -1,0 +1,49 @@
+CNC — D60S3 LEGRABOX (wygenerowane z decompose())
+X od przedniej krawedzi, Y od dolnej krawedzi.
+
+== LEWY BOK (720 x 560 x 18) ==
+  DRILL D5 gl.12 X=46 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=46 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=46 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D7 gl.18 X=50 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=280 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=510 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=50 Y=711 [confirmat] konfirmat 7x50 do trawersu przedniego (przelot)
+  DRILL D7 gl.18 X=510 Y=711 [confirmat] konfirmat 7x50 do trawersu tylnego (przelot)
+  GROOVE szer.4 gl.8 os X=12 dl.720 wpust HDF 4mm, krawedz 10mm od tylnej krawedzi
+
+== PRAWY BOK (720 x 560 x 18) ==
+  DRILL D5 gl.12 X=46 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=55 [runner_screw] LEGRABOX M runner screw (NL=500)
+  DRILL D5 gl.12 X=46 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=195 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=46 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=78 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=110 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D5 gl.12 X=398 Y=482 [runner_screw] LEGRABOX C runner screw (NL=500)
+  DRILL D7 gl.18 X=50 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=280 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=510 Y=9 [confirmat] konfirmat 7x50 do dna (przelot)
+  DRILL D7 gl.18 X=50 Y=711 [confirmat] konfirmat 7x50 do trawersu przedniego (przelot)
+  DRILL D7 gl.18 X=510 Y=711 [confirmat] konfirmat 7x50 do trawersu tylnego (przelot)
+  GROOVE szer.4 gl.8 os X=12 dl.720 wpust HDF 4mm, krawedz 10mm od tylnej krawedzi
+
+== DNO (560 x 564 x 18) ==
+  GROOVE szer.4 gl.8 os X=12 dl.564 wpust HDF 4mm, krawedz 10mm od tylnej krawedzi
+
+== TRAWERS TYLNY (100 x 564 x 18) ==
+  GROOVE szer.4 gl.8 os X=12 dl.564 wpust HDF 4mm, krawedz 10mm od tylnej krawedzi
+

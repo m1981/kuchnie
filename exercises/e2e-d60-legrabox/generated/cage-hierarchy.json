@@ -1,0 +1,783 @@
+{
+  "cages": [
+    {
+      "name": "B600-3DW-01 D60 Legrabox",
+      "depth": 0,
+      "id_props": {
+        "IS_GEONODE_CAGE": "True",
+        "IS_FRAMELESS_CABINET_CAGE": "True",
+        "MENU_ID": "HOME_BUILDER_MT_cabinet_commands",
+        "Material Thickness": "0.018000000000000002",
+        "Toe Kick Height": "0.10000000149011612",
+        "Toe Kick Setback": "0.06350000202655792",
+        "Remove Bottom": "False",
+        "Toe Kick Type": "0",
+        "Leg Leveler Inset": "0.05079999938607216",
+        "Base Top Construction": "1",
+        "Stretcher Width": "0.1016",
+        "Sink Apron Width": "0.17779999999999999",
+        "CABINET_TYPE": "BASE"
+      },
+      "children": [
+        {
+          "name": "Back",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.702000081539154",
+            "Width": "0.5640000104904175",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "False",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Back Stretcher",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.10159999877214432",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "False",
+            "Mirror Z": "True",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Bay",
+          "depth": 1,
+          "id_props": {
+            "IS_GEONODE_CAGE": "True",
+            "IS_FRAMELESS_BAY_CAGE": "True",
+            "MENU_ID": "HOME_BUILDER_MT_bay_commands"
+          },
+          "children": [
+            {
+              "name": "Splitter Vertical",
+              "depth": 2,
+              "id_props": {
+                "IS_GEONODE_CAGE": "True",
+                "IS_FRAMELESS_SPLITTER_VERTICAL_CAGE": "True",
+                "Shelf Quantity": "1",
+                "Material Thickness": "0.018000000000000002"
+              },
+              "children": [
+                {
+                  "name": "Calc Object",
+                  "depth": 3,
+                  "id_props": {},
+                  "children": []
+                },
+                {
+                  "name": "Opening 1",
+                  "depth": 3,
+                  "id_props": {
+                    "IS_GEONODE_CAGE": "True",
+                    "IS_FRAMELESS_OPENING_CAGE": "True",
+                    "MENU_ID": "HOME_BUILDER_MT_opening_commands"
+                  },
+                  "children": [
+                    {
+                      "name": "Drawers",
+                      "depth": 4,
+                      "id_props": {
+                        "IS_GEONODE_CAGE": "True",
+                        "IS_FRAMELESS_OPENING_CAGE": "True",
+                        "MENU_ID": "HOME_BUILDER_MT_opening_commands",
+                        "Front Thickness": "0.019049999999999997",
+                        "Left Thickness": "0.017999999225139618",
+                        "Right Thickness": "0.017999999225139618",
+                        "Top Thickness": "0.017999999225139618",
+                        "Bottom Thickness": "0.017999999225139618",
+                        "Inset Front": "False",
+                        "Door to Cabinet Gap": "0.003175",
+                        "Half Overlay Top": "False",
+                        "Half Overlay Bottom": "True",
+                        "Half Overlay Left": "False",
+                        "Half Overlay Right": "False",
+                        "Inset Reveal": "0.003175",
+                        "Top Reveal": "0.0015875",
+                        "Bottom Reveal": "0.0",
+                        "Left Reveal": "0.0015875",
+                        "Right Reveal": "0.0015875",
+                        "Vertical Gap": "0.003175",
+                        "Horizontal Gap": "0.003175",
+                        "FORCE_HALF_OVERLAY_BOTTOM": "True"
+                      },
+                      "children": [
+                        {
+                          "name": "Drawer Front",
+                          "depth": 5,
+                          "id_props": {
+                            "CABINET_PART": "True",
+                            "Finish Top": "True",
+                            "Finish Bottom": "True",
+                            "IS_CABINET_FRONT": "True",
+                            "MENU_ID": "HOME_BUILDER_MT_door_front_commands",
+                            "Top Overlay": "0.01641249842941761",
+                            "Bottom Overlay": "0.007412499748170376",
+                            "Left Overlay": "0.01641249842941761",
+                            "Right Overlay": "0.01641249842941761",
+                            "IS_DRAWER_FRONT": "True",
+                            "False Front": "False",
+                            "Center Pull": "True",
+                            "Handle Horizontal Location": "0.038100000470876694",
+                            "Pull Length": "0.10157687962055206",
+                            "Drawer Box Side Clearance": "0.0127",
+                            "Drawer Box Top Clearance": "0.019049999999999997",
+                            "Drawer Box Rear Clearance": "0.0254",
+                            "Drawer Box Bottom Clearance": "0.0127"
+                          },
+                          "children": [
+                            {
+                              "name": "Drawer Box",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_DRAWER_BOX": "True",
+                                "IS_FRAMELESS_INTERIOR_PART": "True",
+                                "MENU_ID": "HOME_BUILDER_MT_interior_part_commands"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Dim X": "0.5386000275611877",
+                                "Dim Y": "0.5166000127792358",
+                                "Dim Z": "0.10825000703334808",
+                                "Material Thickness": "0.01269999984651804",
+                                "Bottom Thickness": "0.00634999992325902",
+                                "Drawer Bottom Z Location": "0.01269999984651804",
+                                "Remove Subfront": "False",
+                                "Material": "None"
+                              }
+                            },
+                            {
+                              "name": "Pull",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_CABINET_PULL": "True"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Object": "<bpy_struct, Object(\"Pull 4in (102mm) Bar\") at 0xb22e5c620>"
+                              }
+                            }
+                          ],
+                          "gn_inputs": {
+                            "Length": "0.16382500529289246",
+                            "Width": "0.5968250036239624",
+                            "Thickness": "0.019050000235438347",
+                            "Mirror X": "False",
+                            "Mirror Y": "True",
+                            "Mirror Z": "False",
+                            "Top Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Bottom Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+                          }
+                        },
+                        {
+                          "name": "Overlay Prompt Obj",
+                          "depth": 5,
+                          "id_props": {
+                            "Overlay Top": "0.01641249842941761",
+                            "Overlay Bottom": "0.007412499748170376",
+                            "Overlay Left": "0.01641249842941761",
+                            "Overlay Right": "0.01641249842941761"
+                          },
+                          "children": []
+                        }
+                      ],
+                      "gn_inputs": {
+                        "Dim X": "0.5640000104904175",
+                        "Dim Y": "0.5419999957084656",
+                        "Dim Z": "0.14000000059604645",
+                        "Mirror X": "False",
+                        "Mirror Y": "False",
+                        "Mirror Z": "False",
+                        "Show Cage": "True"
+                      }
+                    }
+                  ],
+                  "gn_inputs": {
+                    "Dim X": "0.5640000104904175",
+                    "Dim Y": "0.5419999957084656",
+                    "Dim Z": "0.14000000059604645",
+                    "Mirror X": "False",
+                    "Mirror Y": "False",
+                    "Mirror Z": "False",
+                    "Show Cage": "True"
+                  }
+                },
+                {
+                  "name": "Opening 2",
+                  "depth": 3,
+                  "id_props": {
+                    "IS_GEONODE_CAGE": "True",
+                    "IS_FRAMELESS_OPENING_CAGE": "True",
+                    "MENU_ID": "HOME_BUILDER_MT_opening_commands"
+                  },
+                  "children": [
+                    {
+                      "name": "Drawers.001",
+                      "depth": 4,
+                      "id_props": {
+                        "IS_GEONODE_CAGE": "True",
+                        "IS_FRAMELESS_OPENING_CAGE": "True",
+                        "MENU_ID": "HOME_BUILDER_MT_opening_commands",
+                        "Front Thickness": "0.019049999999999997",
+                        "Left Thickness": "0.017999999225139618",
+                        "Right Thickness": "0.017999999225139618",
+                        "Top Thickness": "0.017999999225139618",
+                        "Bottom Thickness": "0.017999999225139618",
+                        "Inset Front": "False",
+                        "Door to Cabinet Gap": "0.003175",
+                        "Half Overlay Top": "True",
+                        "Half Overlay Bottom": "True",
+                        "Half Overlay Left": "False",
+                        "Half Overlay Right": "False",
+                        "Inset Reveal": "0.003175",
+                        "Top Reveal": "0.0015875",
+                        "Bottom Reveal": "0.0",
+                        "Left Reveal": "0.0015875",
+                        "Right Reveal": "0.0015875",
+                        "Vertical Gap": "0.003175",
+                        "Horizontal Gap": "0.003175",
+                        "FORCE_HALF_OVERLAY_TOP": "True",
+                        "FORCE_HALF_OVERLAY_BOTTOM": "True"
+                      },
+                      "children": [
+                        {
+                          "name": "Drawer Front.001",
+                          "depth": 5,
+                          "id_props": {
+                            "CABINET_PART": "True",
+                            "Finish Top": "True",
+                            "Finish Bottom": "True",
+                            "IS_CABINET_FRONT": "True",
+                            "MENU_ID": "HOME_BUILDER_MT_door_front_commands",
+                            "Top Overlay": "0.007412499748170376",
+                            "Bottom Overlay": "0.007412499748170376",
+                            "Left Overlay": "0.01641249842941761",
+                            "Right Overlay": "0.01641249842941761",
+                            "IS_DRAWER_FRONT": "True",
+                            "False Front": "False",
+                            "Center Pull": "True",
+                            "Handle Horizontal Location": "0.038100000470876694",
+                            "Pull Length": "0.10157687962055206",
+                            "Drawer Box Side Clearance": "0.0127",
+                            "Drawer Box Top Clearance": "0.019049999999999997",
+                            "Drawer Box Rear Clearance": "0.0254",
+                            "Drawer Box Bottom Clearance": "0.0127"
+                          },
+                          "children": [
+                            {
+                              "name": "Drawer Box.001",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_DRAWER_BOX": "True",
+                                "IS_FRAMELESS_INTERIOR_PART": "True",
+                                "MENU_ID": "HOME_BUILDER_MT_interior_part_commands"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Dim X": "0.5386000275611877",
+                                "Dim Y": "0.5166000127792358",
+                                "Dim Z": "0.2222500890493393",
+                                "Material Thickness": "0.01269999984651804",
+                                "Bottom Thickness": "0.00634999992325902",
+                                "Drawer Bottom Z Location": "0.01269999984651804",
+                                "Remove Subfront": "False",
+                                "Material": "None"
+                              }
+                            },
+                            {
+                              "name": "Pull.001",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_CABINET_PULL": "True"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Object": "<bpy_struct, Object(\"Pull 4in (102mm) Bar\") at 0xb22e5c620>"
+                              }
+                            }
+                          ],
+                          "gn_inputs": {
+                            "Length": "0.26882508397102356",
+                            "Width": "0.5968250036239624",
+                            "Thickness": "0.019050000235438347",
+                            "Mirror X": "False",
+                            "Mirror Y": "True",
+                            "Mirror Z": "False",
+                            "Top Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Bottom Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+                          }
+                        },
+                        {
+                          "name": "Overlay Prompt Obj.001",
+                          "depth": 5,
+                          "id_props": {
+                            "Overlay Top": "0.007412499748170376",
+                            "Overlay Bottom": "0.007412499748170376",
+                            "Overlay Left": "0.01641249842941761",
+                            "Overlay Right": "0.01641249842941761"
+                          },
+                          "children": []
+                        }
+                      ],
+                      "gn_inputs": {
+                        "Dim X": "0.5640000104904175",
+                        "Dim Y": "0.5419999957084656",
+                        "Dim Z": "0.25400009751319885",
+                        "Mirror X": "False",
+                        "Mirror Y": "False",
+                        "Mirror Z": "False",
+                        "Show Cage": "True"
+                      }
+                    }
+                  ],
+                  "gn_inputs": {
+                    "Dim X": "0.5640000104904175",
+                    "Dim Y": "0.5419999957084656",
+                    "Dim Z": "0.25400009751319885",
+                    "Mirror X": "False",
+                    "Mirror Y": "False",
+                    "Mirror Z": "False",
+                    "Show Cage": "True"
+                  }
+                },
+                {
+                  "name": "Opening 3",
+                  "depth": 3,
+                  "id_props": {
+                    "IS_GEONODE_CAGE": "True",
+                    "IS_FRAMELESS_OPENING_CAGE": "True",
+                    "MENU_ID": "HOME_BUILDER_MT_opening_commands"
+                  },
+                  "children": [
+                    {
+                      "name": "Drawers.002",
+                      "depth": 4,
+                      "id_props": {
+                        "IS_GEONODE_CAGE": "True",
+                        "IS_FRAMELESS_OPENING_CAGE": "True",
+                        "MENU_ID": "HOME_BUILDER_MT_opening_commands",
+                        "Front Thickness": "0.019049999999999997",
+                        "Left Thickness": "0.017999999225139618",
+                        "Right Thickness": "0.017999999225139618",
+                        "Top Thickness": "0.017999999225139618",
+                        "Bottom Thickness": "0.017999999225139618",
+                        "Inset Front": "False",
+                        "Door to Cabinet Gap": "0.003175",
+                        "Half Overlay Top": "True",
+                        "Half Overlay Bottom": "False",
+                        "Half Overlay Left": "False",
+                        "Half Overlay Right": "False",
+                        "Inset Reveal": "0.003175",
+                        "Top Reveal": "0.0015875",
+                        "Bottom Reveal": "0.0",
+                        "Left Reveal": "0.0015875",
+                        "Right Reveal": "0.0015875",
+                        "Vertical Gap": "0.003175",
+                        "Horizontal Gap": "0.003175",
+                        "FORCE_HALF_OVERLAY_TOP": "True"
+                      },
+                      "children": [
+                        {
+                          "name": "Drawer Front.002",
+                          "depth": 5,
+                          "id_props": {
+                            "CABINET_PART": "True",
+                            "Finish Top": "True",
+                            "Finish Bottom": "True",
+                            "IS_CABINET_FRONT": "True",
+                            "MENU_ID": "HOME_BUILDER_MT_door_front_commands",
+                            "Top Overlay": "0.007412499748170376",
+                            "Bottom Overlay": "0.017999999225139618",
+                            "Left Overlay": "0.01641249842941761",
+                            "Right Overlay": "0.01641249842941761",
+                            "IS_DRAWER_FRONT": "True",
+                            "False Front": "False",
+                            "Center Pull": "True",
+                            "Handle Horizontal Location": "0.038100000470876694",
+                            "Pull Length": "0.10157687962055206",
+                            "Drawer Box Side Clearance": "0.0127",
+                            "Drawer Box Top Clearance": "0.019049999999999997",
+                            "Drawer Box Rear Clearance": "0.0254",
+                            "Drawer Box Bottom Clearance": "0.0127"
+                          },
+                          "children": [
+                            {
+                              "name": "Drawer Box.002",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_DRAWER_BOX": "True",
+                                "IS_FRAMELESS_INTERIOR_PART": "True",
+                                "MENU_ID": "HOME_BUILDER_MT_interior_part_commands"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Dim X": "0.5386000275611877",
+                                "Dim Y": "0.5166000127792358",
+                                "Dim Z": "0.2222501039505005",
+                                "Material Thickness": "0.01269999984651804",
+                                "Bottom Thickness": "0.00634999992325902",
+                                "Drawer Bottom Z Location": "0.01269999984651804",
+                                "Remove Subfront": "False",
+                                "Material": "None"
+                              }
+                            },
+                            {
+                              "name": "Pull.002",
+                              "depth": 6,
+                              "id_props": {
+                                "IS_CABINET_PULL": "True"
+                              },
+                              "children": [],
+                              "gn_inputs": {
+                                "Object": "<bpy_struct, Object(\"Pull 4in (102mm) Bar\") at 0xb22e5c620>"
+                              }
+                            }
+                          ],
+                          "gn_inputs": {
+                            "Length": "0.2794125974178314",
+                            "Width": "0.5968250036239624",
+                            "Thickness": "0.019050000235438347",
+                            "Mirror X": "False",
+                            "Mirror Y": "True",
+                            "Mirror Z": "False",
+                            "Top Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Bottom Surface": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>",
+                            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+                          }
+                        },
+                        {
+                          "name": "Overlay Prompt Obj.002",
+                          "depth": 5,
+                          "id_props": {
+                            "Overlay Top": "0.007412499748170376",
+                            "Overlay Bottom": "0.017999999225139618",
+                            "Overlay Left": "0.01641249842941761",
+                            "Overlay Right": "0.01641249842941761"
+                          },
+                          "children": []
+                        }
+                      ],
+                      "gn_inputs": {
+                        "Dim X": "0.5640000104904175",
+                        "Dim Y": "0.5419999957084656",
+                        "Dim Z": "0.25400009751319885",
+                        "Mirror X": "False",
+                        "Mirror Y": "False",
+                        "Mirror Z": "False",
+                        "Show Cage": "True"
+                      }
+                    }
+                  ],
+                  "gn_inputs": {
+                    "Dim X": "0.5640000104904175",
+                    "Dim Y": "0.5419999957084656",
+                    "Dim Z": "0.25400009751319885",
+                    "Mirror X": "False",
+                    "Mirror Y": "False",
+                    "Mirror Z": "False",
+                    "Show Cage": "True"
+                  }
+                },
+                {
+                  "name": "Vertical Splitter 1",
+                  "depth": 3,
+                  "id_props": {
+                    "CABINET_PART": "True",
+                    "Finish Top": "False",
+                    "Finish Bottom": "False"
+                  },
+                  "children": [],
+                  "gn_inputs": {
+                    "Length": "0.5640000104904175",
+                    "Width": "0.5419999957084656",
+                    "Thickness": "0.017999999225139618",
+                    "Mirror X": "False",
+                    "Mirror Y": "False",
+                    "Mirror Z": "False",
+                    "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+                    "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+                    "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+                  }
+                },
+                {
+                  "name": "Vertical Splitter 2",
+                  "depth": 3,
+                  "id_props": {
+                    "CABINET_PART": "True",
+                    "Finish Top": "False",
+                    "Finish Bottom": "False"
+                  },
+                  "children": [],
+                  "gn_inputs": {
+                    "Length": "0.5640000104904175",
+                    "Width": "0.5419999957084656",
+                    "Thickness": "0.017999999225139618",
+                    "Mirror X": "False",
+                    "Mirror Y": "False",
+                    "Mirror Z": "False",
+                    "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+                    "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+                    "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+                    "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+                  }
+                }
+              ],
+              "gn_inputs": {
+                "Dim X": "0.5640000104904175",
+                "Dim Y": "0.5419999957084656",
+                "Dim Z": "0.6840001344680786",
+                "Mirror X": "False",
+                "Mirror Y": "False",
+                "Mirror Z": "False",
+                "Show Cage": "True"
+              }
+            }
+          ],
+          "gn_inputs": {
+            "Dim X": "0.5640000104904175",
+            "Dim Y": "0.5419999957084656",
+            "Dim Z": "0.6840000748634338",
+            "Mirror X": "False",
+            "Mirror Y": "False",
+            "Mirror Z": "False",
+            "Show Cage": "True"
+          }
+        },
+        {
+          "name": "Bottom",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.5600000023841858",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "False",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Front Stretcher",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.10159999877214432",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "False",
+            "Mirror Z": "True",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Left Side",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.8199999928474426",
+            "Width": "0.5600000023841858",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "True",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "X": "0.10000000149011612",
+            "Y": "0.06350000202655792",
+            "Route Depth": "0.017999999225139618",
+            "Flip X": "False",
+            "Flip Y": "True",
+            "Flip Z": "False",
+            "Material": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>"
+          }
+        },
+        {
+          "name": "Right Side",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.8199999928474426",
+            "Width": "0.5600000023841858",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "False",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "X": "0.10000000149011612",
+            "Y": "0.06350000202655792",
+            "Route Depth": "0.017999999225139618",
+            "Flip X": "False",
+            "Flip Y": "True",
+            "Flip Z": "False",
+            "Material": "<bpy_struct, Material(\"Default Style Finish\") at 0xb1fc8aaa0>"
+          }
+        },
+        {
+          "name": "Sink Apron",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.1777999997138977",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "False",
+            "Mirror Z": "False",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Toe Kick",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.10000000149011612",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "False",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        },
+        {
+          "name": "Top",
+          "depth": 1,
+          "id_props": {
+            "CABINET_PART": "True",
+            "Finish Top": "False",
+            "Finish Bottom": "False"
+          },
+          "children": [],
+          "gn_inputs": {
+            "Length": "0.5640000104904175",
+            "Width": "0.5419999957084656",
+            "Thickness": "0.017999999225139618",
+            "Mirror X": "False",
+            "Mirror Y": "True",
+            "Mirror Z": "True",
+            "Top Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Bottom Surface": "<bpy_struct, Material(\"Default Style Interior\") at 0xb1ef08020>",
+            "Edge W1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge W2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L1": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>",
+            "Edge L2": "<bpy_struct, Material(\"Default Style Finish ROTATED\") at 0xb1f128c88>"
+          }
+        }
+      ],
+      "gn_inputs": {
+        "Dim X": "0.6000000238418579",
+        "Dim Y": "0.5600000023841858",
+        "Dim Z": "0.8199999928474426",
+        "Mirror X": "False",
+        "Mirror Y": "True",
+        "Mirror Z": "False",
+        "Show Cage": "True"
+      }
+    }
+  ]
+}

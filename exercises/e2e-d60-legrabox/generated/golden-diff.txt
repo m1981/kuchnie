@@ -1,0 +1,27 @@
+golden vs generated — panel-by-panel (dims h x w x th)
+
+  MATCH                                         Bok lewy 720x560x18
+  MATCH                                         Bok prawy 720x560x18
+  DELTA  golden Dno 564x560x18 -> generated Dno 560x564x18
+  MISSING in generated: Trawers przedni 564x100x18 PLYTA_BIALA_18
+  MISSING in generated: Trawers tylny 564x100x18 PLYTA_BIALA_18
+  MATCH                                         Plecy 698x578x3
+  DELTA  golden Front M 140x596x18 -> generated Front F1 140x594x18
+  DELTA  golden Front C 287x596x18 -> generated Front F2 287x594x18
+  DELTA  golden Front C 287x596x18 -> generated Front F3 287x594x18
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada tyl M 63x500x16
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada tyl C 148x500x16
+  MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada tyl C 148x500x16
+  MATCH                                         Cokol 97x596x18
+  EXTRA in generated: Trawers przedni 100x564x18 PLYTA_BIALA_18
+  EXTRA in generated: Trawers tylny 100x564x18 PLYTA_BIALA_18
+
+hand re-entry gaps this run:
+  - extraction dropped the 3-drawer stack (openings ARE stored in the scene: Splitter Vertical/Opening N cages, Dim Z 140/254/254 — adapter does not read them; wk-81a47ab8)
+  - cabinet type re-entered by hand: extraction maps BASE -> dolna_drzwiowa; dolna_legrabox unreachable from a scene (E2)
+  - LEGRABOX spec re-entered by hand: system, height codes M/C/C, NL500, 40kg (E3)
+  - materials re-entered by hand: extraction emits 'unassigned' (ADR-008 by design, E4) — hb5 scene DID carry the decor split (fronts walnut finish vs ply interior) but no resolver maps hb5 materials to catalog decors
+  - front heights re-entered by hand as designed (140/287/287): hb5 stores OPENING sizes and its US overlay model produced fronts 163.8/268.8/279.4 — designer front-height intent is not expressible via hb5 knobs (needs front->opening translation in the adapter write path)
