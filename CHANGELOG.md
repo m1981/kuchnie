@@ -5,6 +5,44 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-12 — Compositor catalog routed to catalog service (ADR-008, wk-03434168)
+
+### Added
+- `krono-compositor-mvp/src/compositor/presentation/catalog_source.py` —
+  stdlib-only catalog source replacing the hardcoded CATALOG dict: pages
+  `GET /catalog/decors`, folds variant rows into one material per decor
+  (allowed_zone from the role union, swatch hex from `/catalog/full`'s
+  color-family approximations, `img_url` from decor miniatures), caches
+  in memory and to a disk snapshot for offline sales visits. Local
+  presentation-owned tables: texture tiling widths and price grouping
+  (spec: `krono-compositor-mvp/docs/specs/catalog-routing.md`).
+- `krono-compositor-mvp/tests/test_catalog_source.py` — 16 tests against
+  a faked catalog client: row mapping, zone derivation, discontinued
+  filtering, contract shape, offline degradation to snapshot / to empty.
+  Live smoke: 145 real decors served, render 200 with K5307/K552,
+  worktop-only decor correctly refused on a FRONT zone.
+
+### Changed
+- `presentation/api.py`: `/api/v1/catalog` and `/render` material lookup
+  go through `CatalogSource`; response shape unchanged.
+- `assets/textures/*.jpg` renamed from invented slugs to real decor codes
+  (K5307, K9103, K552, K190, K7031, K9561); `static/index.html` default
+  zone materials updated to match.
+
+### Fixed
+- `static/index.html`: Alpine crash on first paint — `catalog.price_groups`
+  evaluated while `catalog` was still null (`x-show` hides, it does not
+  stop evaluation); now null-safe. Latent pre-existing bug.
+- Materials without a tileable texture on disk no longer 500 on click:
+  the payload carries an additive `renderable` flag (server checks
+  `assets/textures/<id>.jpg`), the sidebar greys those decors out, and
+  the click is guarded with a message instead of a failed render.
+
+### Removed
+- `presentation/catalog_db.py` (the hardcoded CATALOG dict, tr-88dc0d9a).
+
+---
+
 ## [Unreleased] — 2026-07-09 — ADR-011 phase 3: Material mirror (kitchen-erp ← catalog)
 
 ### Added

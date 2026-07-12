@@ -29,6 +29,7 @@ warning, never crash the app). `presentation/catalog_db.py` is deleted;
 | `texture_width_mm` | **local override table** in the compositor, keyed by decor id | the catalog does not model it yet; promoting it into the catalog is a follow-up decision, not part of this work |
 | `price_group` | **local mapping** in the compositor | prices are ERP-owned; the sales-UI grouping stays a presentation concern until a real pricing decision is made |
 | `scenes` | stays local | scenes are compositor render assets, not materials |
+| `renderable` *(additive)* | server-side check for `assets/textures/<id>.jpg` | lets the frontend grey out decors whose tileable texture is not yet acquired instead of 500-ing on render |
 
 **Non-goals:**
 - No texture acquisition: `/render` still requires a tileable JPG on disk

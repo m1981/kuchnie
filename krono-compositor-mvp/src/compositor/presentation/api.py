@@ -12,7 +12,9 @@ from compositor.infrastructure.opencv_impl import (
     OpenCVMaskExtractor, OpenCVImageBlender
 )
 from compositor.presentation.schemas import RenderRequest, ZoneType, AllowedZone
-from compositor.presentation.catalog_db import CATALOG
+from compositor.presentation.catalog_source import CatalogSource, HttpCatalogClient
+
+catalog_source = CatalogSource(HttpCatalogClient())
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api_logger")
@@ -31,7 +33,7 @@ def get_compositor() -> SceneCompositor:
 @router.get("/catalog")
 def get_catalog():
     """Returns the full catalog of materials, price groups, and scenes."""
-    return CATALOG
+    return catalog_source.get_catalog()
 
 
 @router.post("/render")
@@ -66,7 +68,7 @@ def render_image(request: RenderRequest, compositor: SceneCompositor = Depends(g
 
     for zone_req in request.zones:
         # Find material in catalog
-        material = next((m for m in CATALOG["materials"] if m["id"] == zone_req.texture_id), None)
+        material = catalog_source.find_material(zone_req.texture_id)
         if not material:
             raise HTTPException(status_code=404, detail=f"Material '{zone_req.texture_id}' not found in catalog.")
 

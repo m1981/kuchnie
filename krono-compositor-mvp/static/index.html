@@ -156,7 +156,7 @@
                             2. Grupa Cenowa
                         </h2>
                         <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg">
-                            <template x-for="group in catalog.price_groups" :key="group.id">
+                            <template x-for="group in catalog?.price_groups ?? []" :key="group.id">
                                 <button
                                     @click="activePriceGroup = group.id"
                                     class="flex-1 py-1.5 text-sm font-medium rounded-md transition-all"
@@ -185,7 +185,8 @@
                                 <button
                                     @click="applyMaterial(mat.id)"
                                     class="group relative aspect-square rounded-xl border-2 overflow-hidden transition-all duration-200"
-                                    :class="isMaterialActive(mat.id) ? 'border-blue-500 shadow-md' : 'border-slate-200 hover:border-slate-300'"
+                                    :class="[isMaterialActive(mat.id) ? 'border-blue-500 shadow-md' : 'border-slate-200 hover:border-slate-300', mat.renderable === false ? 'opacity-40' : '']"
+                                    :title="mat.renderable === false ? 'Brak tekstury — podgląd wkrótce' : mat.name"
                                 >
                                     <div
                                         class="absolute inset-0 w-full h-full"
@@ -249,28 +250,28 @@
                             name: 'Szafa Wysoka (Lewa)',
                             type: 'FRONT',
                             mask_color_hex: '#FF0000',
-                            texture_id: 'dab_szlachetny'
+                            texture_id: 'K5307'
                         },
                         {
                             id: 'base_mid',
                             name: 'Szafka Środkowa',
                             type: 'FRONT',
                             mask_color_hex: '#00FF00',
-                            texture_id: 'dab_szlachetny'
+                            texture_id: 'K5307'
                         },
                         {
                             id: 'base_right',
                             name: 'Szafka Prawa',
                             type: 'FRONT',
                             mask_color_hex: '#0000FF',
-                            texture_id: 'dab_szlachetny'
+                            texture_id: 'K5307'
                         },
                         {
                             id: 'counter',
                             name: 'Blat Roboczy',
                             type: 'COUNTERTOP',
                             mask_color_hex: '#FFFF00',
-                            texture_id: 'marmur_bianco'
+                            texture_id: 'K552'
                         }
                     ],
 
@@ -330,6 +331,11 @@
                     // --- ACTIONS ---
                     applyMaterial(materialId) {
                         if (this.isMaterialActive(materialId)) return;
+                        const mat = this.catalog?.materials.find((m) => m.id === materialId);
+                        if (mat && mat.renderable === false) {
+                            alert('Ten dekor nie ma jeszcze pliku tekstury — podgląd będzie dostępny po pozyskaniu zdjęć dekorów.');
+                            return;
+                        }
                         const zoneIndex = this.zones.findIndex((z) => z.id === this.activeZoneId);
                         this.zones[zoneIndex].texture_id = materialId;
                         this.renderKitchen();
