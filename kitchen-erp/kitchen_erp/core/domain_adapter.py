@@ -76,7 +76,10 @@ class DomainQuantities:
     front_edge_lm: float = 0.0
 
 
-_FRONT_ROLES = {PanelRole.FRONT_DOOR, PanelRole.FRONT_DRAWER}
+# FRONT_BLIND (fixed corner blende) and FILLER (listwa) are cut from front
+# material, so they price as front board even though they never move.
+_FRONT_ROLES = {PanelRole.FRONT_DOOR, PanelRole.FRONT_DRAWER,
+                PanelRole.FRONT_BLIND, PanelRole.FILLER}
 _DRAWER_BOX_ROLES = {PanelRole.DRAWER_BACK, PanelRole.DRAWER_BASE}
 
 

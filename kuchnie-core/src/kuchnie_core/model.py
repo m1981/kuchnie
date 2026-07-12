@@ -32,7 +32,10 @@ class PanelRole(str, Enum):
     Value coverage in decomposers (ADR-012 §1, extended by ADR-013):
       * emitted by ``catalog.py``: LEFT_SIDE, RIGHT_SIDE, TOP (wieniec and
         trawersy), BOTTOM, SHELF, BACK, FRONT_DOOR, FRONT_DRAWER, PLINTH
-        (cokół — emitted by ``dolna_legrabox`` since wk-c3d0a0f0)
+        (cokół — emitted by ``dolna_legrabox`` since wk-c3d0a0f0),
+        FRONT_BLIND + FILLER (corner-blind cabinets since wk-31467921 —
+        both cut from front material, but FRONT_BLIND is FIXED: hinge cups
+        and handle drilling must never target it)
       * emitted by ``legrabox.py`` / ``blum_drawers.py``: DRAWER_BACK,
         DRAWER_BASE
     """
@@ -44,6 +47,8 @@ class PanelRole(str, Enum):
     BACK         = "back"
     FRONT_DOOR   = "front_door"
     FRONT_DRAWER = "front_drawer"
+    FRONT_BLIND  = "front_blind"   # fixed blind front (zaślepka) at a corner
+    FILLER       = "filler"        # listwa maskująca at the internal corner
     DRAWER_BACK  = "drawer_back"
     DRAWER_BASE  = "drawer_base"
     PLINTH       = "plinth"  # aspirational; see class docstring
@@ -218,6 +223,7 @@ class CornerBlindConfig:
     """Corner cabinet with a blind front (L-shaped body)."""
     corner_side: str = "left"        # "left" | "right"
     second_width_mm: float = 0.0     # perpendicular width of the corner leg
+    filler_width_mm: float = 50.0    # listwa at the internal corner (50–100)
     shelves: list[float] = field(default_factory=list)
     doors: list[int] = field(default_factory=list)
 

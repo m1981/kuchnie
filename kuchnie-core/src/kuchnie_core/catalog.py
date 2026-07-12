@@ -16,6 +16,7 @@ from .construction import ConstructionMethod
 from .model import (
     Accessory,
     CabinetInstance,
+    CornerBlindConfig,
     DecompositionResult,
     EdgeBand,
     GrainAxis,
@@ -704,12 +705,235 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
 
 
 # ---------------------------------------------------------------------------
+# dolna_narozna_slepa — blind base corner cabinet
+# ---------------------------------------------------------------------------
+
+_CORNER_FILLER_WIDTH_MM = 50.0   # playbook phase 3: 50–100 mm at the corner
+_CORNER_MIN_OPENING_MM = 250     # narrower than this and the door is unusable
+
+
+def decompose_dolna_narozna_slepa(cab: CabinetInstance) -> DecompositionResult:
+    """Decompose a blind base corner cabinet (dolna narożna ślepa).
+
+    Front layout along the cabinet width, corner end first:
+
+        [ blind front (hidden behind the perpendicular run) | filler | door(s) ]
+
+    * blind zone width = ``CornerBlindConfig.second_width_mm`` — the depth of
+      the perpendicular run whose body stands in front of it (the loader
+      defaults it to this cabinet's own depth);
+    * filler = ``CornerBlindConfig.filler_width_mm`` strip (playbook phase 3
+      mandate: without it handles collide at the internal corner);
+    * door(s) share the remaining visible opening via the standard gap
+      formula.
+
+    Carcass matches the dolna_legrabox reference emission: two trawersy
+    (rear one carries the HDF groove), groove-seated reduced back, cokół,
+    and joinery-gated confirmat drills + HDF grooves on the sides.
+    The blind front is FIXED (PanelRole.FRONT_BLIND) — no hinges, no
+    handle; only its filler-facing vertical edge is banded.
+    """
+    m = _method_from_cab(cab)
+    r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
+    side_h = cab.height_mm - cab.plinth_height_mm
+
+    cfg = cab.config if isinstance(cab.config, CornerBlindConfig) else None
+    corner_side = cfg.corner_side if cfg else "left"
+    blind_w = (cfg.second_width_mm if cfg and cfg.second_width_mm > 0
+               else cab.depth_mm)
+    filler_w = cfg.filler_width_mm if cfg else _CORNER_FILLER_WIDTH_MM
+
+    visible_w = cab.width_mm - blind_w - filler_w
+    if visible_w < _CORNER_MIN_OPENING_MM:
+        raise ValueError(
+            f"Corner-blind opening {visible_w}mm too narrow "
+            f"(width {cab.width_mm} - blind {blind_w} - filler {filler_w}); "
+            f"minimum {_CORNER_MIN_OPENING_MM}mm"
+        )
+
+    # -- Side panels (confirmats + HDF groove, joinery-gated) --
+    for side, label in [("left", "Lewy bok"), ("right", "Prawy bok")]:
+        ops: list[MachiningOp] = []
+        if "confirmat" in m.joinery_type:
+            ops.extend(_confirmat_side_ops(cab, m, side_h))
+        ops.append(_hdf_groove_op(m.back_groove_depth_mm, side_h))
+        r.panels.append(Panel(
+            id=f"{cab.id}_{side}",
+            name=label,
+            material=cab.body_material,
+            thickness_mm=m.side_thickness_mm,
+            width_mm=cab.depth_mm,
+            height_mm=side_h,
+            banded_edges={"front": _body_eb(cab, side_h)},
+            machining_ops=ops,
+            role=_SIDE_ROLE[side],
+        ))
+
+    # -- Bottom panel --
+    bottom_w = m.carcass_bottom_width(cab.width_mm)
+    r.panels.append(Panel(
+        id=f"{cab.id}_bottom",
+        name="Dno",
+        material=cab.body_material,
+        thickness_mm=m.bottom_thickness_mm,
+        width_mm=bottom_w,
+        height_mm=cab.depth_mm,
+        banded_edges={"front": _body_eb(cab, bottom_w)},
+        machining_ops=[_hdf_groove_op(m.back_groove_depth_mm, bottom_w)],
+        role=PanelRole.BOTTOM,
+    ))
+
+    # -- Top stretchers (rear one carries the groove) --
+    for pos, label, banded in [("przedni", "Trawers przedni", True),
+                               ("tylny", "Trawers tylny", False)]:
+        r.panels.append(Panel(
+            id=f"{cab.id}_trawers_{pos}",
+            name=label,
+            material=cab.body_material,
+            thickness_mm=m.top_thickness_mm,
+            width_mm=bottom_w,
+            height_mm=_STRETCHER_WIDTH_MM,
+            banded_edges={"front": _body_eb(cab, bottom_w)} if banded else {},
+            machining_ops=(
+                [] if banded
+                else [_hdf_groove_op(m.back_groove_depth_mm, bottom_w)]
+            ),
+            role=PanelRole.TOP,
+        ))
+
+    # -- Back panel (groove-seated, reduced) --
+    back_w = m.back_panel_width(cab.width_mm)
+    back_h = m.back_panel_height(side_h)
+    r.panels.append(Panel(
+        id=f"{cab.id}_back",
+        name="Plecy",
+        material=cab.back_material,
+        thickness_mm=m.back_thickness_mm,
+        width_mm=back_w,
+        height_mm=back_h,
+        banded_edges={},
+        role=PanelRole.BACK,
+    ))
+
+    # -- Shelves (span the full internal width, blind zone included) --
+    shelf_w = m.shelf_width(cab.width_mm)
+    shelf_d = cab.depth_mm - 5
+    for shelf in cab.shelves:
+        r.panels.append(Panel(
+            id=f"{cab.id}_shelf_{shelf['id']}",
+            name=f"Półka {shelf['id']}",
+            material=cab.body_material,
+            thickness_mm=m.shelf_thickness_mm,
+            width_mm=shelf_w,
+            height_mm=shelf_d,
+            banded_edges={"front": _body_eb(cab, shelf_w)},
+            role=PanelRole.SHELF,
+        ))
+
+    door_h = m.door_height(side_h)
+
+    # -- Blind front (zaślepka) — fixed, hidden except the filler-side sliver --
+    blind_visible_edge = "right" if corner_side == "left" else "left"
+    r.panels.append(Panel(
+        id=f"{cab.id}_front_slepy",
+        name="Front ślepy",
+        material=cab.front_material,
+        thickness_mm=m.front_thickness_mm,
+        width_mm=blind_w,
+        height_mm=door_h,
+        banded_edges={blind_visible_edge: _front_eb(cab, door_h)},
+        role=PanelRole.FRONT_BLIND,
+        grain=GrainAxis.HEIGHT,
+    ))
+
+    # -- Filler (listwa maskująca) --
+    r.panels.append(Panel(
+        id=f"{cab.id}_listwa",
+        name="Listwa narożna",
+        material=cab.front_material,
+        thickness_mm=m.front_thickness_mm,
+        width_mm=filler_w,
+        height_mm=door_h,
+        banded_edges={
+            "front": _front_eb(cab, filler_w),
+            "back":  _front_eb(cab, filler_w),
+            "left":  _front_eb(cab, door_h),
+            "right": _front_eb(cab, door_h),
+        },
+        role=PanelRole.FILLER,
+        grain=GrainAxis.HEIGHT,
+    ))
+
+    # -- Door fronts (share the visible opening) --
+    door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
+    n_doors = len(door_fronts) or 1
+    door_w = m.door_width(visible_w, n_doors)
+    for front in door_fronts:
+        r.panels.append(Panel(
+            id=f"{cab.id}_front_{front['id']}",
+            name=f"Front {front['id']}",
+            material=cab.front_material,
+            thickness_mm=m.front_thickness_mm,
+            width_mm=door_w,
+            height_mm=door_h,
+            banded_edges={
+                "front": _front_eb(cab, door_w),
+                "back":  _front_eb(cab, door_w),
+                "left":  _front_eb(cab, door_h),
+                "right": _front_eb(cab, door_h),
+            },
+            role=PanelRole.FRONT_DOOR,
+            grain=GrainAxis.HEIGHT,
+        ))
+
+    # -- Hinges + shelf pins + handles --
+    for front in door_fronts:
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_hinge_{front['id']}",
+            name=f"Zawias {front.get('zawias', 'standard')}",
+            type="hinge",
+            quantity=front.get("ilosc_zawiasow", 2),
+        ))
+    if cab.shelves:
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_shelf_pins",
+            name=f"Kołek półkowy {int(cab.shelf_pins.diameter_mm)} mm",
+            type="shelf_pin",
+            quantity=len(cab.shelves) * 4,
+        ))
+    if cab.handles is not None and door_fronts:
+        r.accessories.append(Accessory(
+            id=f"{cab.id}_handles",
+            name=_handle_accessory_name(cab.handles),
+            type="handle",
+            quantity=len(door_fronts),
+        ))
+
+    # -- Plinth (full width; the perpendicular run's plinth butts into it) --
+    if cab.plinth_height_mm > 0:
+        plinth_w = cab.width_mm - 2 * _PLINTH_SIDE_INSET_MM
+        r.panels.append(Panel(
+            id=f"{cab.id}_cokol",
+            name="Cokół",
+            material=cab.body_material,
+            thickness_mm=m.side_thickness_mm,
+            width_mm=plinth_w,
+            height_mm=cab.plinth_height_mm - _PLINTH_FLOOR_GAP_MM,
+            banded_edges={"front": _body_eb(cab, plinth_w)},
+            role=PanelRole.PLINTH,
+        ))
+
+    return r
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
 TYPE_REGISTRY: dict[str, callable] = {
-    "dolna_szufladowa": decompose_dolna_szufladowa,
-    "dolna_drzwiowa":   decompose_dolna_drzwiowa,
-    "dolna_legrabox":   decompose_dolna_legrabox,
-    "gorna_drzwiowa":   decompose_gorna_drzwiowa,
+    "dolna_szufladowa":    decompose_dolna_szufladowa,
+    "dolna_drzwiowa":      decompose_dolna_drzwiowa,
+    "dolna_legrabox":      decompose_dolna_legrabox,
+    "dolna_narozna_slepa": decompose_dolna_narozna_slepa,
+    "gorna_drzwiowa":      decompose_gorna_drzwiowa,
 }

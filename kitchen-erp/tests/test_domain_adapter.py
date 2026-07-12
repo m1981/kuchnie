@@ -139,3 +139,29 @@ class TestQuantities:
         assert q.drawer_box_m2 == pytest.approx(0.07392 + 0.22785)
         assert q.corpus_m2 == 0.0
         assert q.corpus_edge_lm == 0.0
+
+    def test_corner_blind_front_parts_price_as_front(self):
+        """FRONT_BLIND and FILLER (ADR-014) are front material — they bucket
+        into front_m2/front_edge_lm, never corpus: blind 560x614 + filler
+        50x614 = 0.34384 + 0.0307 m2."""
+        from kuchnie_core.model import DecompositionResult, EdgeBand, Panel, PanelRole
+        result = DecompositionResult(cabinet_id="t", cabinet_type="dolna_narozna_slepa")
+        result.panels.append(Panel(
+            id="t_front_slepy", name="Front ślepy",
+            material="K5307_18", thickness_mm=18,
+            width_mm=560, height_mm=614,
+            banded_edges={"right": EdgeBand(material="abs", thickness_mm=2, length_mm=614)},
+            quantity=1, role=PanelRole.FRONT_BLIND,
+        ))
+        result.panels.append(Panel(
+            id="t_listwa", name="Listwa narożna",
+            material="K5307_18", thickness_mm=18,
+            width_mm=50, height_mm=614,
+            banded_edges={"left": EdgeBand(material="abs", thickness_mm=2, length_mm=614)},
+            quantity=1, role=PanelRole.FILLER,
+        ))
+        q = quantities_from_decomposition(result)
+        assert q.front_m2 == pytest.approx(0.34384 + 0.0307)
+        assert q.front_edge_lm == pytest.approx(1.228)
+        assert q.corpus_m2 == 0.0
+        assert q.corpus_edge_lm == 0.0

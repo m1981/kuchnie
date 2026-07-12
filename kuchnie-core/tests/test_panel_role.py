@@ -33,9 +33,11 @@ class TestPanelRoleEnum:
     def test_expected_members(self):
         # Frozen contract — new roles = new ADR + new test entry.
         # DRAWER_BACK/DRAWER_BASE: ADR-013, wk-c9e848a3.
+        # FRONT_BLIND/FILLER: ADR-014, wk-31467921.
         assert {r.name for r in PanelRole} == {
             "LEFT_SIDE", "RIGHT_SIDE", "BOTTOM", "TOP",
             "SHELF", "BACK", "FRONT_DOOR", "FRONT_DRAWER",
+            "FRONT_BLIND", "FILLER",
             "DRAWER_BACK", "DRAWER_BASE", "PLINTH",
         }
 
