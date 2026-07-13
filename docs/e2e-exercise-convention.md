@@ -130,3 +130,132 @@ of the contract.
 Cabinets in scenes follow the inspection naming discipline
 (`B600-3DW-01 <label>` — see `dev_tools/inspection/naming.py`), so kitchen
 mode can address them by name and audit the name against measured geometry.
+
+## Architecture
+
+### Components & dependency direction
+
+The dependency rule points inward: scenario legs depend on the harness, the
+harness depends on the domain (`kuchnie_core`), and nothing in the domain
+knows the harness exists. `hb5.py` is the only module touching Blender; the
+inspector shares **no code** with the builder (principle 4) — it reads the
+saved `.blend` and nothing else.
+
+```mermaid
+flowchart LR
+    subgraph scenario ["exercises/&lt;scenario&gt;/ — one per golden"]
+        BL[blender_leg.py]
+        PL[run_production_leg.py]
+        GLD[("GOLDEN.md +<br/>golden/panels.csv<br/>(immutable per run)")]
+        GEN[("generated/*<br/>committed artifacts")]
+    end
+
+    subgraph harness ["exercises/harness — shared, tested"]
+        HB["hb5.py<br/>Blender-only adapter<br/>(workarounds encoded)"]
+        GO["golden.py<br/>parse + grain-aware diff"]
+        WR["writers.py<br/>rozrys / BOM / CNC"]
+        GA["gaps.py — GapLog"]
+        SC["scaffold.py + templates"]
+    end
+
+    subgraph domain ["domain hub"]
+        KC["kuchnie_core<br/>decompose / Panel / GrainAxis"]
+    end
+
+    subgraph ext ["external tools — no shared code with harness"]
+        B5["Blender + home_builder_5"]
+        ADP["home-builder-adapter<br/>extract.py"]
+        INS["hb5 dev_tools/inspection<br/>independent verifier"]
+    end
+
+    SC -- "creates" --> scenario
+    BL --> HB
+    BL --> GA
+    PL --> GO
+    PL --> WR
+    PL --> GA
+    PL --> KC
+    HB --> B5
+    HB -- "extract_in_session" --> ADP
+    ADP --> KC
+    WR --> KC
+    GO -. "duck-typed<br/>DecompositionResult" .-> KC
+    BL -- "writes" --> GEN
+    PL -- "reads json / writes outputs" --> GEN
+    PL -- "reads" --> GLD
+    INS -. "reads .blend only" .-> GEN
+```
+
+### Collaboration — one exercise run, artifact by artifact
+
+```mermaid
+flowchart TD
+    P0["Phase 0 — ledger<br/>wk issue + premises, bd twin"]
+    P1["Phase 1 — GOLDEN (human)<br/>GOLDEN.md + golden/panels.csv<br/>from Blum katalog + shop standards"]
+    P2["Phase 2 — build (hb5 headless)<br/>blender_leg.py"]
+    A2[("d60.blend · cage-hierarchy.json ·<br/>decor-check renders ·<br/>extracted-kitchen.json · leg log")]
+    P3["Phase 3 — verify (independent)<br/>inspect_cabinet.py --open"]
+    A3[("report.json (checks) ·<br/>6 angle renders")]
+    U["unobservables section<br/>(what no camera can verify)"]
+    P4["Phase 4 — produce & diff<br/>run_production_leg.py"]
+    A4[("rozrys.csv · bom.csv · cnc.txt ·<br/>golden-diff.txt + GAP tally")]
+    P5["Phase 5 — close<br/>GAP-REPORT.md · claims filed+verified ·<br/>pinned tests for fixed gaps · commit"]
+
+    P0 --> P1 --> P2 --> A2 --> P3 --> A3 --> U --> P4 --> A4 --> P5
+    P1 -. "golden never edited after this point" .-> P4
+    P5 -. "fixes pinned in component suites;<br/>rerun exercise after decomposer/extraction changes" .-> P2
+```
+
+### Sequence — build & verify legs
+
+```mermaid
+sequenceDiagram
+    actor D as Designer (golden author)
+    participant BL as blender_leg.py
+    participant H as harness.hb5
+    participant HB5 as home_builder_5 (bpy)
+    participant EX as adapter extract.py
+    participant INS as dev_tools inspector
+
+    Note over D: Phase 1 — GOLDEN.md + panels.csv<br/>authored BEFORE any tool runs
+    BL->>H: bootstrap(gaps)
+    H->>HB5: enable addon, ensure_main_scene,<br/>ensure_default_style, metric units
+    H-->>BL: bpy, hb (finish_colors patched if broken → GAP)
+    BL->>H: metric_shop_profile(toe kick, top opening, 18mm)
+    BL->>H: build_room()
+    BL->>HB5: BaseCabinet.create + run_calc_fix (Blender #133392)
+    BL->>H: force_material_thickness(18)  — scene default does not propagate
+    BL->>H: apply_decor_split() — style + Finish-flag surgery (US semantics → GAP)
+    BL->>H: render_checks() — own EEVEE eyes for decor
+    BL->>HB5: save .blend
+    BL->>H: dump_cage_hierarchy() — extraction probe
+    BL->>H: extract_in_session()
+    H->>EX: extract_kitchen_from_blend()
+    EX-->>BL: extracted-kitchen.json (losses → GAP lines)
+    D->>INS: inspect_cabinet.py --open <blend> --name B600…
+    INS-->>D: report.json checks + 6 angle renders
+    Note over D,INS: Designer reads renders and writes the<br/>UNOBSERVABLES section — blind spots stated, not assumed
+```
+
+### Sequence — production leg & golden diff
+
+```mermaid
+sequenceDiagram
+    participant PL as run_production_leg.py
+    participant GA as GapLog
+    participant KC as kuchnie_core.decompose
+    participant WR as harness.writers
+    participant GO as harness.golden
+
+    PL->>PL: read generated/extracted-kitchen.json
+    PL->>GA: gap(…) per hand re-entry<br/>(type, drawer spec, materials, front heights…)
+    PL->>KC: decompose(CabinetInstance)
+    KC-->>PL: DecompositionResult (panels, machining ops, accessories)
+    PL->>WR: write_rozrys / write_bom / write_cnc
+    PL->>GO: read_golden_panels(golden/panels.csv)
+    PL->>GO: diff_panels(golden, result)
+    Note over GO: grain-aware — 'brak' rotates free,<br/>'pion'/'poziom' pin orientation;<br/>±4mm near-miss → DELTA not MISSING
+    GO-->>PL: DiffResult (match / delta / missing / extra)
+    PL->>PL: golden-diff.txt + GAP tally
+    Note over PL: → GAP-REPORT.md → ledger claims<br/>→ pinned tests for every fixed gap
+```
