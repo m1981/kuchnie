@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# truth-canary.sh v0.6.2 -- seeded-fault acceptance suite (seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6).
+# truth-canary.sh v0.6.4 -- seeded-fault acceptance suite (v0.6.4 ADR-013 R10 premise supersede +seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6 + v0.6.3 TL-2 work-kernel discovery warn).
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PASS=0; FAIL=0
@@ -7,8 +7,8 @@ say()  { printf '%s\n' "$*"; }
 ok()   { PASS=$((PASS+1)); say "  CAUGHT: $*"; }
 miss() { FAIL=$((FAIL+1)); say "  MISSED: $*"; }
 
-TMP1="$(mktemp -d)"; TMP2="$(mktemp -d)"; TMP3="$(mktemp -d)"
-cleanup() { rm -rf "$TMP1" "$TMP2" "$TMP3"; }
+TMP1="$(mktemp -d)"; TMP2="$(mktemp -d)"; TMP3="$(mktemp -d)"; TMP4="$(mktemp -d)"
+cleanup() { rm -rf "$TMP1" "$TMP2" "$TMP3" "$TMP4"; }
 trap cleanup EXIT
 
 mkrepo() {
@@ -902,6 +902,58 @@ if $T list --stale --json | grep -q "$CID_E" && \
   ok "claim $CID_E stale with reason 'anchor unreachable'"
 else
   miss "history rewrite left $CID_E trusted or unexplained"
+fi
+
+# =========================== sandbox 4 (TL-2: work-kernel discovery, v0.6.3)
+# Own sandbox on purpose: sandbox 1's adapter-seam checks (FAULT J) depend
+# on the ledger holding NO native issue records, and an issue record is a
+# permanent append.
+mkrepo "$TMP4"
+git add -A && git commit -qm "canary: init tl2"
+
+say "TL-2 (wk-968bc087): wk- records with no discovery of 'truth ready' must WARN"
+$T issue "tl2 canary work item" >/dev/null 2>&1
+if $T doctor 2>/dev/null | grep -q "WARN  work-kernel discovery"; then
+  ok "doctor warned: work kernel in use but invisible in discovery files"
+else
+  miss "doctor silent while the work kernel is invisible to agents"
+fi
+printf '# Agents\nTruth ledger: use scripts/truth; pick work with scripts/truth ready.\n' > AGENTS.md
+if $T doctor 2>/dev/null | grep -q "WARN  work-kernel discovery"; then
+  miss "doctor still warned though AGENTS.md names truth ready"
+else
+  ok "doctor quiet once a discovery file names truth ready"
+fi
+
+say "FAULT R10 (ADR-013): supersede releases HELD work; passing premises refused"
+echo "r10" > r10.txt
+git add -A && git commit -qm "canary: r10 watched file"
+CID_R10A=$($T claim "r10 fact alpha" --class VERIFIED \
+           --evidence-cmd "cat r10.txt" --paths "r10.txt" --tier P1)
+WK_R10=$($T issue "r10 premised work" --premise "$CID_R10A")
+CID_R10B=$($T claim "r10 corrected statement beta" --class UNVERIFIED --tier P1)
+if $T premise "$WK_R10" "$CID_R10B" --supersedes "$CID_R10A" >/dev/null 2>&1; then
+  miss "supersede accepted an unverified premise that passes ready as-is"
+else
+  ok "supersede refused while the old premise still passes ready"
+fi
+echo "changed" >> r10.txt
+git add r10.txt && git commit -qm "canary: touch r10 watched path"
+$T invalidate-scan --quiet
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_R10"; then
+  miss "issue $WK_R10 ready despite a stale premise (pre-supersede)"
+else
+  ok "issue $WK_R10 HELD on the stale premise"
+fi
+if $T premise "$WK_R10" "$CID_R10B" --supersedes "$CID_R10A" >/dev/null 2>&1; then
+  ok "supersede accepted for the stale premise"
+else
+  miss "supersede refused for a stale premise"
+fi
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_R10"; then
+  ok "supersede released the HELD issue (redirect honored by ready)"
+else
+  miss "issue $WK_R10 still HELD after supersede"; PATH="/usr/bin:/bin" $T ready || true
 fi
 
 say ""
