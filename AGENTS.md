@@ -175,7 +175,8 @@ here with a spec and a claimed `wk-` issue, then:
 - **Run `pytest -v` before every commit**
 - **E2E exercises are golden-first**: see `docs/e2e-exercise-convention.md`;
   scaffold a scenario with `.venv/bin/python exercises/harness/scaffold.py
-  <name>`, shared helpers live in `exercises/harness/`
+  <name>`, run it with `.venv/bin/python exercises/harness/runner.py <name>`
+  (writes a toolchain manifest); shared helpers live in `exercises/harness/`
 
 ---
 

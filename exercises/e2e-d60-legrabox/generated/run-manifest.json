@@ -1,0 +1,29 @@
+{
+  "scenario": "e2e-d60-legrabox",
+  "started_utc": "2026-07-13T14:38:15+00:00",
+  "repo_sha": "7c42aed1b9ceec0d55b47afc2e8eb04b89c53f92",
+  "repo_dirty": true,
+  "blender_bin": "/Applications/Blender.app/Contents/MacOS/Blender",
+  "blender_version": "Blender 5.1.2",
+  "hb5_path": "/Users/michal/PycharmProjects/home_builder_5",
+  "hb5_sha": "1428e55307c65f752c8136be9a5ab56bf7d7a525",
+  "python": "3.13.7",
+  "strict": false,
+  "steps": [
+    {
+      "name": "blender-leg",
+      "skipped": true
+    },
+    {
+      "name": "inspect",
+      "skipped": true
+    },
+    {
+      "name": "production-leg",
+      "exit": 0,
+      "seconds": 0.0
+    }
+  ],
+  "finished_utc": "2026-07-13T14:38:16+00:00",
+  "failed_steps": 0
+}

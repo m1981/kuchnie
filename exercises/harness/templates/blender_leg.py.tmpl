@@ -10,8 +10,8 @@ adapter extraction as-is. Every workaround the harness cannot hide is a GAP.
 import sys
 from pathlib import Path
 
-HERE = Path("/Users/michal/PycharmProjects/kuchnie/exercises/{{NAME}}")
-REPO = HERE.parent.parent
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 GEN = HERE / "generated"
 GEN.mkdir(exist_ok=True)
 sys.path.insert(0, str(REPO / "exercises"))

@@ -148,3 +148,191 @@ def test_gap_log_counts_and_persists(tmp_path):
     assert g.gap_count == 2
     g.write(tmp_path / "log.txt")
     assert "hand re-entry two" in (tmp_path / "log.txt").read_text()
+
+
+def test_gap_log_fail_modes():
+    from harness.gaps import HarnessFailure
+    g = GapLog(strict=False)
+    g.fail("tolerated in exploration")
+    assert g.fail_count == 1 and g.gap_count == 0
+    with pytest.raises(HarnessFailure, match="escalated"):
+        GapLog(strict=True).fail("escalated in strict mode")
+
+
+def test_gap_log_strict_from_env(monkeypatch):
+    monkeypatch.setenv("KUCHNIE_STRICT", "1")
+    assert GapLog().strict
+    monkeypatch.delenv("KUCHNIE_STRICT")
+    assert not GapLog().strict
+
+
+# ── labels: single source ────────────────────────────────────────
+
+def test_grain_label_single_source():
+    from kuchnie_core.model import GrainAxis
+    from harness.labels import grain_label
+    assert grain_label(GrainAxis.HEIGHT) == "pion"
+    assert grain_label(GrainAxis.WIDTH) == "poziom"
+    assert grain_label(None) == "brak"
+    # unknown values surface verbatim instead of masquerading as 'brak'
+    assert grain_label("diagonal") == "diagonal"
+
+
+# ── config: env-overridable paths ────────────────────────────────
+
+def test_config_env_overrides(monkeypatch):
+    from harness import config
+    monkeypatch.setenv("KUCHNIE_HB5_PATH", "/opt/hb5")
+    monkeypatch.setenv("BLENDER_BIN", "/opt/blender")
+    assert str(config.hb5_path()) == "/opt/hb5"
+    assert str(config.hb5_parent()) == "/opt"
+    assert str(config.blender_bin()) == "/opt/blender"
+    assert config.repo_root().name == "kuchnie"
+
+
+# ── distance-sorted near-miss matching ───────────────────────────
+
+def test_near_miss_prefers_closest_pair():
+    """Two goldens 760 and 764 vs generated 762 and 764: greedy first-fit
+    would give 760->762 and 764->764 or mispair; distance-first must pair
+    764 exactly (pass 1) and 760->762 as the only delta."""
+    from kuchnie_core.model import Panel
+    from kuchnie_core.model import DecompositionResult
+    result = DecompositionResult(cabinet_id="t", cabinet_type="x")
+    for i, w in enumerate((762, 764)):
+        result.panels.append(Panel(
+            id=f"p{i}", name=f"Polka {w}", material="M", thickness_mm=18,
+            width_mm=w, height_mm=300))
+    golden = [
+        GoldenPanel("Polka A", 300, 760, 18, 1, "M", "brak"),
+        GoldenPanel("Polka B", 300, 764, 18, 1, "M", "brak"),
+    ]
+    diff = diff_panels(golden, result)
+    assert diff.matched == 1 and diff.deltas == 1
+    delta_line = next(l for l in diff.lines if "DELTA" in l)
+    assert "Polka A" in delta_line and "762" in delta_line
+
+
+# ── machining-ops oracle (the G8 catcher) ────────────────────────
+
+def _golden_ops_d60_correct():
+    """Runner rows as DESIGNED (C bottom, C middle, M top): Y = 55/342/629."""
+    from harness.ops import GoldenOp
+    ops = []
+    for side in ("Bok lewy", "Bok prawy"):
+        for y in (55, 342, 629):
+            for x in (46, 78, 110, 398):
+                ops.append(GoldenOp(side, "drill", x=x, y=y, srednica=5,
+                                    glebokosc=12, drill_type="runner_screw"))
+        for x, y in ((50, 9), (280, 9), (510, 9), (50, 711), (510, 711)):
+            ops.append(GoldenOp(side, "drill", x=x, y=y, srednica=7,
+                                glebokosc=18, drill_type="confirmat"))
+        ops.append(GoldenOp(side, "groove", x=12, glebokosc=8,
+                            szerokosc=4, dlugosc=720))
+    for elem, length in (("Dno", 564), ("Trawers tylny", 564)):
+        ops.append(GoldenOp(elem, "groove", x=12, glebokosc=8,
+                            szerokosc=4, dlugosc=length))
+    return ops
+
+
+def test_ops_diff_catches_g8_drawer_order():
+    """The M-first input (G8) drills runner rows at Y=195/482 instead of
+    342/629 — the ops oracle must flag exactly those 16 wrong drills,
+    while confirmats and grooves match."""
+    from harness.ops import diff_ops
+    diff = diff_ops(_golden_ops_d60_correct(), decompose(d60()))
+    assert not diff.clean
+    assert diff.missing == 16 and diff.extra == 16  # 2 rows x 4 holes x 2 sides
+    assert diff.matched == 10 + 4 + 8               # confirmats + grooves + Y=55 row
+    assert any("MISSING" in l and ",342)" in l for l in diff.lines)
+    assert any("EXTRA" in l and ",195)" in l for l in diff.lines)
+
+
+def test_ops_diff_clean_when_golden_matches_behavior():
+    """Golden authored bottom-up (M rows at 55, C at 195/482) diffs clean —
+    proving the 16/16 above is G8, not harness noise."""
+    from harness.ops import GoldenOp, diff_ops
+    ops = []
+    for side in ("Bok lewy", "Bok prawy"):
+        for y in (55, 195, 482):
+            for x in (46, 78, 110, 398):
+                ops.append(GoldenOp(side, "drill", x=x, y=y, srednica=5,
+                                    glebokosc=12, drill_type="runner_screw"))
+        for x, y in ((50, 9), (280, 9), (510, 9), (50, 711), (510, 711)):
+            ops.append(GoldenOp(side, "drill", x=x, y=y, srednica=7,
+                                glebokosc=18, drill_type="confirmat"))
+        ops.append(GoldenOp(side, "groove", x=12, glebokosc=8,
+                            szerokosc=4, dlugosc=720))
+    for elem, length in (("Dno", 564), ("Trawers tylny", 564)):
+        ops.append(GoldenOp(elem, "groove", x=12, glebokosc=8,
+                            szerokosc=4, dlugosc=length))
+    diff = diff_ops(ops, decompose(d60()))
+    assert diff.clean, diff.text()
+
+
+def test_ops_csv_roundtrip(tmp_path):
+    from harness.ops import read_golden_ops
+    p = tmp_path / "ops.csv"
+    p.write_text("Element;Typ;X;Y;Srednica;Glebokosc;Szerokosc;Dlugosc;DrillType\n"
+                 "Bok lewy;drill;46;55;5;12;;;runner_screw\n"
+                 "Bok lewy;groove;12;;;8;4;720;\n", encoding="utf-8")
+    ops = read_golden_ops(p)
+    assert len(ops) == 2
+    assert ops[0].drill_type == "runner_screw" and ops[0].y == 55
+    assert ops[1].typ == "groove" and ops[1].y is None
+
+
+# ── hardware oracle (the G13 meter) ──────────────────────────────
+
+def test_hardware_diff_measures_g13():
+    """Golden lists the full hardware; the pipeline emits runners only —
+    the diff must report the missing types, and match the runners."""
+    from harness.hardware import GoldenHardware, diff_hardware
+    golden = [
+        GoldenHardware("runner", "LEGRABOX kpl. NL500 40kg", 3),
+        GoldenHardware("confirmat", "Konfirmat 7x50", 10),
+        GoldenHardware("leg", "Nozka regulowana 100", 4),
+        GoldenHardware("plinth_clip", "Klips cokolowy", 2),
+    ]
+    diff = diff_hardware(golden, decompose(d60()))
+    assert diff.matched >= 1          # runners
+    assert diff.missing == 3          # confirmat, leg, plinth_clip (G13)
+    assert any("confirmat" in l and "MISSING" in l for l in diff.lines)
+
+
+# ── scaffold (pinned, generates into tmp and runs the leg) ───────
+
+def test_scaffold_creates_runnable_exercise(tmp_path):
+    import subprocess
+    from harness.scaffold import create_exercise
+    target = create_exercise("smoke", tmp_path)
+    expected = {"GOLDEN.md", "GAP-REPORT.md", "blender_leg.py",
+                "run_production_leg.py"}
+    assert expected <= {f.name for f in target.iterdir()}
+    assert (target / "golden" / "panels.csv").exists()
+    assert (target / "golden" / "ops.csv").exists()
+    assert (target / "golden" / "hardware.csv").exists()
+    # the generated production leg must run out of the box...
+    proc = subprocess.run([sys.executable, str(target / "run_production_leg.py")],
+                          capture_output=True, text=True, timeout=60)
+    # ...but it lives outside the repo (tmp), so REPO derivation fails —
+    # that is expected; run it with cwd + PYTHONPATH help instead:
+    if proc.returncode != 0:
+        env = {"PYTHONPATH": f"{REPO / 'kuchnie-core' / 'src'}:{REPO / 'exercises'}"}
+        import os
+        proc = subprocess.run(
+            [sys.executable, str(target / "run_production_leg.py")],
+            capture_output=True, text=True, timeout=60,
+            env={**os.environ, **env})
+    assert proc.returncode == 0, proc.stderr
+    assert (target / "generated" / "golden-diff.txt").exists()
+    assert "summary:" in (target / "generated" / "golden-diff.txt").read_text()
+
+
+def test_scaffold_guards(tmp_path):
+    from harness.scaffold import create_exercise
+    create_exercise("dup", tmp_path)
+    with pytest.raises(FileExistsError):
+        create_exercise("dup", tmp_path)
+    with pytest.raises(ValueError, match="kebab-case"):
+        create_exercise("Bad Name", tmp_path)

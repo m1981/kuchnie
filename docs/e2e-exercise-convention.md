@@ -111,9 +111,26 @@ exercises/<scenario-name>/
 5. **Close** — GAP-REPORT.md, claims filed + verified, pinned tests for
    fixed gaps, commit, `done --claim`.
 
-## golden/panels.csv schema
+## Running an exercise
 
-Semicolon-separated, header row, mirroring the pinned rozrys contract:
+```bash
+.venv/bin/python exercises/harness/runner.py <scenario> [--strict]
+                 [--skip-blender] [--skip-inspect]
+```
+
+One command chains blender leg → inspection → production leg and writes
+`generated/run-manifest.json` (repo SHA + dirty flag, Blender version, hb5
+SHA, per-step exit codes) — rules 6–7 made mechanical. `--strict` turns
+tolerated failures (GapLog `fail`) into hard stops for regression/CI runs;
+default is exploration mode. Paths are env-overridable: `KUCHNIE_HB5_PATH`,
+`BLENDER_BIN` (see `exercises/harness/config.py`).
+
+## Golden CSV schemas (three oracles)
+
+All semicolon-separated with a header row. Panels are mandatory; ops and
+hardware diffs run whenever their CSV exists (scaffold ships starters).
+
+**`golden/panels.csv`** — mirrors the pinned rozrys contract:
 
 ```
 Element;Dlugosc;Szerokosc;Grubosc;Ilosc;Material;Uslojenie
@@ -123,7 +140,31 @@ Front M;140;596;18;1;K5307_18;pion
 
 `Uslojenie` ∈ {`brak`, `pion`, `poziom`}. For `brak` the diff treats
 Dlugosc/Szerokosc as rotatable; for `pion`/`poziom` the orientation is part
-of the contract.
+of the contract. Near-misses within ±4 mm pair closest-first and report as
+DELTA.
+
+**`golden/ops.csv`** — machining coordinates, where scrap-risk lives (this
+oracle catches G8-class wrong-row drilling mechanically):
+
+```
+Element;Typ;X;Y;Srednica;Glebokosc;Szerokosc;Dlugosc;DrillType
+Bok lewy;drill;46;55;5;12;;;runner_screw
+Bok lewy;groove;12;;;8;4;720;
+```
+
+Ops match per element (names normalized, Polish diacritics folded) with a
+global fallback pool for naming drift; coordinates within ±0.5 mm.
+
+**`golden/hardware.csv`** — accessory completeness (the G13 meter):
+
+```
+Typ;Pozycja;Ilosc
+runner;LEGRABOX kpl. NL500 40kg;3
+confirmat;Konfirmat 7x50;10
+```
+
+Matching is by accessory `Typ` with summed quantities; golden types the
+pipeline does not emit yet report as MISSING — that IS the measurement.
 
 ## Naming
 
@@ -151,10 +192,13 @@ flowchart LR
     end
 
     subgraph harness ["exercises/harness — shared, tested"]
+        RU["runner.py<br/>one-command run + manifest"]
         HB["hb5.py<br/>Blender-only adapter<br/>(workarounds encoded)"]
-        GO["golden.py<br/>parse + grain-aware diff"]
+        GO["golden.py<br/>panels oracle (grain-aware)"]
+        OPS["ops.py — machining oracle<br/>hardware.py — accessory oracle"]
         WR["writers.py<br/>rozrys / BOM / CNC"]
-        GA["gaps.py — GapLog"]
+        GA["gaps.py — GapLog<br/>(gap vs strict-escalatable fail)"]
+        CFG["config.py — env paths<br/>labels.py — single-source labels"]
         SC["scaffold.py + templates"]
     end
 
@@ -169,20 +213,26 @@ flowchart LR
     end
 
     SC -- "creates" --> scenario
+    RU -- "orchestrates legs +<br/>inspector, writes manifest" --> scenario
     BL --> HB
     BL --> GA
     PL --> GO
+    PL --> OPS
     PL --> WR
     PL --> GA
     PL --> KC
     HB --> B5
+    HB --> CFG
+    RU --> CFG
     HB -- "extract_in_session" --> ADP
     ADP --> KC
+    WR --> CFG
+    GO --> CFG
     WR --> KC
-    GO -. "duck-typed<br/>DecompositionResult" .-> KC
+    CFG -- "labels.py imports GrainAxis" --> KC
     BL -- "writes" --> GEN
     PL -- "reads json / writes outputs" --> GEN
-    PL -- "reads" --> GLD
+    PL -- "reads panels/ops/hardware" --> GLD
     INS -. "reads .blend only" .-> GEN
 ```
 

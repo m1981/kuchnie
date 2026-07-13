@@ -16,6 +16,8 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
+from .labels import grain_label as _grain_label
+
 GRAIN_VALUES = ("brak", "pion", "poziom")
 
 
@@ -55,8 +57,6 @@ def read_golden_panels(path: str | Path) -> list[GoldenPanel]:
 # One physical piece: (dl, sz, th, material, grain, label)
 _Piece = tuple[float, float, float, str, str, str]
 
-_GRAIN_LABEL = {"height": "pion", "width": "poziom", None: "brak"}
-
 
 def pieces_from_decomposition(result) -> list[_Piece]:
     """Expand a DecompositionResult into per-piece tuples.
@@ -65,7 +65,7 @@ def pieces_from_decomposition(result) -> list[_Piece]:
     """
     out: list[_Piece] = []
     for p in result.panels:
-        grain = _GRAIN_LABEL.get(p.grain, p.grain or "brak")
+        grain = _grain_label(p.grain)
         for _ in range(p.quantity):
             out.append((round(p.height_mm, 1), round(p.width_mm, 1),
                         round(float(p.thickness_mm), 1),
@@ -117,8 +117,21 @@ class DiffResult:
         return "\n".join([*self.lines, "", summary]) + "\n"
 
 
+def _distance(golden: _Piece, gen: _Piece) -> float:
+    a = sorted((golden[0], golden[1]))
+    b = sorted((gen[0], gen[1]))
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
 def diff_panels(golden: list[GoldenPanel], result, tol_mm: float = 4.0) -> DiffResult:
-    """Compare a decomposition against the golden, piece by piece."""
+    """Compare a decomposition against the golden, piece by piece.
+
+    Matching is two-pass, deterministic: (1) exact dims claim their piece
+    first, so a near-miss can never steal an exact partner; (2) remaining
+    pairs within tol_mm are matched globally in ascending-distance order —
+    closest pairs pair first, avoiding the greedy first-fit mispairing of
+    same-thickness panels that sit within tolerance of each other.
+    """
     gold = pieces_from_golden(golden)
     gen = pieces_from_decomposition(result)
     d = DiffResult(lines=[
@@ -126,7 +139,11 @@ def diff_panels(golden: list[GoldenPanel], result, tol_mm: float = 4.0) -> DiffR
         "",
     ])
     remaining = list(gen)
-    for g in gold:
+    unresolved: list[_Piece] = []
+
+    # pass 1 — exact dims (grain-aware rotation)
+    outcome: dict[int, str] = {}
+    for gi, g in enumerate(gold):
         hit = next((x for x in remaining if _dims_equal(g, x)), None)
         if hit:
             remaining.remove(hit)
@@ -136,20 +153,35 @@ def diff_panels(golden: list[GoldenPanel], result, tol_mm: float = 4.0) -> DiffR
             if hit[4] != g[4]:
                 notes.append(f"grain {hit[4]} != {g[4]}")
             status = "MATCH" if not notes else f"MATCH-dims ({'; '.join(notes)})"
-            d.lines.append(f"  {status:<48} {g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g}")
+            outcome[gi] = f"  {status:<48} {g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g}"
             d.matched += 1
-            continue
-        near = next((x for x in remaining if _dims_near(g, x, tol_mm)), None)
-        if near:
-            remaining.remove(near)
-            d.lines.append(
-                f"  DELTA  golden {g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g} -> "
-                f"generated {near[5]} {near[0]:g}x{near[1]:g}x{near[2]:g}")
-            d.deltas += 1
         else:
-            d.lines.append(
-                f"  MISSING in generated: {g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g} {g[3]}")
+            unresolved.append(g)
+            outcome[gi] = ""  # filled by pass 2 / missing
+
+    # pass 2 — near misses, globally closest-first
+    pairs = sorted(
+        ((_distance(g, x), gi, g, x)
+         for gi, g in enumerate(gold) if outcome[gi] == ""
+         for x in remaining if _dims_near(g, x, tol_mm)),
+        key=lambda t: t[0],
+    )
+    taken_g: set[int] = set()
+    for dist, gi, g, x in pairs:
+        if gi in taken_g or x not in remaining:
+            continue
+        remaining.remove(x)
+        taken_g.add(gi)
+        outcome[gi] = (f"  DELTA  golden {g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g} -> "
+                       f"generated {x[5]} {x[0]:g}x{x[1]:g}x{x[2]:g}")
+        d.deltas += 1
+
+    for gi, g in enumerate(gold):
+        if outcome[gi] == "":
+            outcome[gi] = (f"  MISSING in generated: "
+                           f"{g[5]} {g[0]:g}x{g[1]:g}x{g[2]:g} {g[3]}")
             d.missing += 1
+        d.lines.append(outcome[gi])
     for x in remaining:
         d.lines.append(f"  EXTRA in generated: {x[5]} {x[0]:g}x{x[1]:g}x{x[2]:g} {x[3]}")
         d.extra += 1

@@ -23,7 +23,7 @@ import math
 import sys
 from pathlib import Path
 
-HB5_PARENT = "/Users/michal/PycharmProjects"
+from .config import hb5_parent
 
 
 def bootstrap(gaps=None):
@@ -35,8 +35,9 @@ def bootstrap(gaps=None):
     import addon_utils
     import bpy
 
-    if HB5_PARENT not in sys.path:
-        sys.path.append(HB5_PARENT)
+    parent = str(hb5_parent())
+    if parent not in sys.path:
+        sys.path.append(parent)
     addon_utils.enable("home_builder_5", default_set=True, persistent=True)
 
     from home_builder_5 import hb_project, hb_types, hb_utils, units
@@ -236,8 +237,9 @@ def extract_in_session(repo: str | Path, out_json: str | Path, gaps=None):
     try:
         kitchen = extract.extract_kitchen_from_blend()
     except Exception as e:  # noqa: BLE001
+        # A failure the exploration run tolerates; strict mode escalates.
         if gaps:
-            gaps.gap(f"adapter extraction failed: {type(e).__name__}: {e}")
+            gaps.fail(f"adapter extraction failed: {type(e).__name__}: {e}")
         return None
     kitchen_to_json(kitchen, out_json)
     return kitchen

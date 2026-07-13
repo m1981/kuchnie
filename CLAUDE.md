@@ -86,6 +86,7 @@ cd exercises/walking-skeleton-d60
 
 # New e2e exercise (golden-first, docs/e2e-exercise-convention.md):
 .venv/bin/python exercises/harness/scaffold.py <scenario-name>
+.venv/bin/python exercises/harness/runner.py <scenario-name> [--strict]  # one-command run
 .venv/bin/python -m pytest exercises/harness/tests -q   # harness self-tests
 ```
 

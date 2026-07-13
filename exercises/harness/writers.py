@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from kuchnie_core.model import GrainAxis
-
-_GRAIN_LABEL = {GrainAxis.HEIGHT: "pion", GrainAxis.WIDTH: "poziom", None: "brak"}
+from .labels import grain_label
 
 ROZRYS_HEADER = ("Lp;Element;Dlugosc [mm];Szerokosc [mm];Grubosc [mm];Ilosc;"
                  "Material;Uslojenie;Okl. przod;Okl. tyl;Okl. lewa;Okl. prawa;Uwagi")
@@ -23,7 +21,7 @@ def write_rozrys(panels, path: str | Path) -> Path:
               for s in ("front", "back", "left", "right")}
         rows.append(
             f"{i};{p.name};{p.height_mm:g};{p.width_mm:g};{p.thickness_mm};"
-            f"{p.quantity};{p.material};{_GRAIN_LABEL.get(p.grain, p.grain)};"
+            f"{p.quantity};{p.material};{grain_label(p.grain)};"
             f"{eb['front']};{eb['back']};{eb['left']};{eb['right']};"
             f"role={p.role.value if p.role else 'brak'}"
         )

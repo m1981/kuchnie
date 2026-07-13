@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parent.parent
+REPO = HERE.parents[1]
 sys.path.insert(0, str(REPO / "kuchnie-core" / "src"))
 sys.path.insert(0, str(REPO / "exercises"))
 
@@ -22,10 +22,13 @@ from kuchnie_core.model import CabinetInstance  # noqa: E402
 from kuchnie_core.decomposer import decompose  # noqa: E402
 from harness.gaps import GapLog  # noqa: E402
 from harness.golden import diff_panels, read_golden_panels  # noqa: E402
+from harness.hardware import diff_hardware, read_golden_hardware  # noqa: E402
+from harness.ops import diff_ops, read_golden_ops  # noqa: E402
 from harness.writers import write_bom, write_cnc, write_rozrys  # noqa: E402
 
 GEN = HERE / "generated"
-gaps = GapLog()
+GOLD = HERE / "golden"
+gaps = GapLog()  # strict via KUCHNIE_STRICT=1 (runner --strict)
 
 
 def build_instance() -> CabinetInstance:
@@ -68,9 +71,16 @@ def main() -> None:
     write_bom(result, GEN / "bom.csv")
     write_cnc(result, GEN / "cnc.txt", title=cab.id)
 
-    golden = read_golden_panels(HERE / "golden" / "panels.csv")
-    diff = diff_panels(golden, result)
-    text = diff.text() + "\nhand re-entry gaps this run:\n" + \
+    # Three oracles: panels always; ops + hardware when the golden CSV
+    # exists (delete the starter file only if the scenario truly has none).
+    sections = [diff_panels(read_golden_panels(GOLD / "panels.csv"), result).text()]
+    if (GOLD / "ops.csv").exists():
+        sections.append(diff_ops(read_golden_ops(GOLD / "ops.csv"), result).text())
+    if (GOLD / "hardware.csv").exists():
+        sections.append(diff_hardware(
+            read_golden_hardware(GOLD / "hardware.csv"), result).text())
+
+    text = "\n".join(sections) + "\nhand re-entry gaps this run:\n" + \
         "".join(f"  - {g}\n" for g in gaps.items)
     (GEN / "golden-diff.txt").write_text(text, encoding="utf-8")
     print(text)
