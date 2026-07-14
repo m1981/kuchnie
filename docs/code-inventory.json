@@ -1,0 +1,1031 @@
+{
+  "catalog/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog",
+    "functions": []
+  },
+  "catalog/api/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api",
+    "functions": []
+  },
+  "catalog/api/deps.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.deps",
+    "functions": [
+      "get_db",
+      "set_db"
+    ]
+  },
+  "catalog/api/main.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.main",
+    "functions": [
+      "lifespan"
+    ]
+  },
+  "catalog/api/routers/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers",
+    "functions": []
+  },
+  "catalog/api/routers/admin.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.admin",
+    "functions": [
+      "get_full_catalog",
+      "get_stats"
+    ]
+  },
+  "catalog/api/routers/availability.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.availability",
+    "functions": [
+      "list_availability"
+    ]
+  },
+  "catalog/api/routers/configurator.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.configurator",
+    "functions": [
+      "_next_step_or_done",
+      "compare_variants",
+      "create_session",
+      "from_template",
+      "get_bom",
+      "get_options",
+      "get_session",
+      "list_templates",
+      "select"
+    ]
+  },
+  "catalog/api/routers/decors.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.decors",
+    "functions": [
+      "get_decor",
+      "get_decor_pairings",
+      "get_decor_variants",
+      "list_decors"
+    ]
+  },
+  "catalog/api/routers/producers.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.producers",
+    "functions": [
+      "list_producers"
+    ]
+  },
+  "catalog/api/routers/worktops.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.api.routers.worktops",
+    "functions": [
+      "list_worktops"
+    ]
+  },
+  "catalog/db/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.db",
+    "functions": []
+  },
+  "catalog/db/engine.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.db.engine",
+    "functions": [
+      "_migrate_if_needed",
+      "get_connection",
+      "init_schema"
+    ]
+  },
+  "catalog/models/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.models",
+    "functions": []
+  },
+  "catalog/models/domain.py": {
+    "classes": [
+      "AvailabilityOut",
+      "BOMItem",
+      "BOMOut",
+      "ConfiguratorOption",
+      "ConfiguratorStepOut",
+      "DecorSummary",
+      "DecorWithVariants",
+      "FromTemplateRequest",
+      "PaginatedResponse",
+      "PairingOut",
+      "ProducerOut",
+      "SelectRequest",
+      "SessionOut",
+      "StatsOut",
+      "TemplateOut",
+      "VariantOut",
+      "WorktopOut"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.models.domain",
+    "functions": []
+  },
+  "catalog/repositories/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.repositories",
+    "functions": []
+  },
+  "catalog/repositories/availability_repo.py": {
+    "classes": [
+      "AvailabilityRepository"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.repositories.availability_repo",
+    "functions": []
+  },
+  "catalog/repositories/configurator.py": {
+    "classes": [
+      "ConfiguratorRepository"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.repositories.configurator",
+    "functions": [
+      "_next_step",
+      "_variant_step_column"
+    ]
+  },
+  "catalog/repositories/decor_repo.py": {
+    "classes": [
+      "DecorRepository"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.repositories.decor_repo",
+    "functions": []
+  },
+  "catalog/repositories/pairing_repo.py": {
+    "classes": [
+      "PairingRepository"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.repositories.pairing_repo",
+    "functions": []
+  },
+  "catalog/repositories/worktop_repo.py": {
+    "classes": [
+      "WorktopRepository"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.repositories.worktop_repo",
+    "functions": []
+  },
+  "catalog/scripts/__init__.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts",
+    "functions": []
+  },
+  "catalog/scripts/build_image_map.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.build_image_map",
+    "functions": [
+      "_extract_digits",
+      "_find_image",
+      "_load_yaml",
+      "_save_yaml",
+      "apply_mapping",
+      "build_mapping",
+      "main"
+    ]
+  },
+  "catalog/scripts/generate_kronospan_yaml.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.generate_kronospan_yaml",
+    "functions": [
+      "_build_decor_structures",
+      "_build_variants",
+      "generate_kronospan_yaml",
+      "write_yaml"
+    ]
+  },
+  "catalog/scripts/generate_kronoswiss_yaml.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.generate_kronoswiss_yaml",
+    "functions": [
+      "_build_swiss_decor_structures",
+      "_build_swiss_variants",
+      "generate_kronoswiss_yaml"
+    ]
+  },
+  "catalog/scripts/generate_variants.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.generate_variants",
+    "functions": [
+      "main"
+    ]
+  },
+  "catalog/scripts/importer.py": {
+    "classes": [
+      "CatalogImporter",
+      "ImportStats"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.scripts.importer",
+    "functions": [
+      "_require",
+      "load_yaml"
+    ]
+  },
+  "catalog/scripts/merge_global_collection.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.merge_global_collection",
+    "functions": [
+      "_find_image",
+      "_group_to_color_family",
+      "_infer_color_family",
+      "main"
+    ]
+  },
+  "catalog/scripts/migrate_1_5_0.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.migrate_1_5_0",
+    "functions": [
+      "_columns",
+      "main",
+      "migrate"
+    ]
+  },
+  "catalog/scripts/seed.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed",
+    "functions": [
+      "main"
+    ]
+  },
+  "catalog/scripts/seed_curated_kitchens.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed_curated_kitchens",
+    "functions": [
+      "get_db",
+      "main",
+      "seed_curated_kitchens",
+      "seed_style_tags"
+    ]
+  },
+  "catalog/scripts/seed_decor_style_tags.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed_decor_style_tags",
+    "functions": [
+      "get_db",
+      "main",
+      "seed_decor_style_tags"
+    ]
+  },
+  "catalog/scripts/seed_pairings_edges.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed_pairings_edges",
+    "functions": [
+      "get_db",
+      "main",
+      "seed_carcass_pairings",
+      "seed_edges"
+    ]
+  },
+  "catalog/scripts/seed_worktop_compat.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed_worktop_compat",
+    "functions": [
+      "get_db",
+      "main",
+      "seed_worktop_compatibility"
+    ]
+  },
+  "home-builder-adapter/src/__init__.py": {
+    "classes": [],
+    "component": "home-builder-adapter",
+    "dotted": "src",
+    "functions": []
+  },
+  "home-builder-adapter/src/cli.py": {
+    "classes": [],
+    "component": "home-builder-adapter",
+    "dotted": "src.cli",
+    "functions": [
+      "main"
+    ]
+  },
+  "home-builder-adapter/src/extract.py": {
+    "classes": [],
+    "component": "home-builder-adapter",
+    "dotted": "src.extract",
+    "functions": [
+      "_count_shelves",
+      "_extract_cabinet",
+      "_m_to_mm",
+      "cabinets_to_kitchen",
+      "extract_cabinets_from_scene",
+      "extract_kitchen_from_blend"
+    ]
+  },
+  "kitchen-cam/src/kitchen_cam/__init__.py": {
+    "classes": [],
+    "component": "kitchen-cam",
+    "dotted": "kitchen_cam",
+    "functions": []
+  },
+  "kitchen-cam/src/kitchen_cam/dxf/__init__.py": {
+    "classes": [],
+    "component": "kitchen-cam",
+    "dotted": "kitchen_cam.dxf",
+    "functions": []
+  },
+  "kitchen-cam/src/kitchen_cam/dxf/legrabox_side_panel.py": {
+    "classes": [],
+    "component": "kitchen-cam",
+    "dotted": "kitchen_cam.dxf.legrabox_side_panel",
+    "functions": [
+      "add_circle",
+      "add_dimensions_and_notes",
+      "add_dowel_holes",
+      "add_edgebanding_marks",
+      "add_legarabox_profile_holes",
+      "add_outline",
+      "add_system32_holes",
+      "calculate_drawer_openings",
+      "create_dxf_layers",
+      "generate_side_panel_dxf",
+      "main"
+    ]
+  },
+  "kitchen-cam/src/kitchen_cam/dxf/panel_dxf.py": {
+    "classes": [],
+    "component": "kitchen-cam",
+    "dotted": "kitchen_cam.dxf.panel_dxf",
+    "functions": [
+      "_layer_for",
+      "panel_to_dxf"
+    ]
+  },
+  "kitchen-cam/src/kitchen_cam/machining.py": {
+    "classes": [],
+    "component": "kitchen-cam",
+    "dotted": "kitchen_cam.machining",
+    "functions": [
+      "_get_door_hinge_counts",
+      "_get_shelf_positions",
+      "_hinge_positions",
+      "_shelf_pin_offsets",
+      "apply_all_drilling",
+      "apply_handles",
+      "apply_hinges",
+      "apply_system32",
+      "system32_y_positions"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/__init__.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/__init__.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/bom_generator.py": {
+    "classes": [
+      "BOMGenerator"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.bom_generator",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/catalog_client.py": {
+    "classes": [
+      "CatalogClient",
+      "CatalogUnavailable",
+      "HttpCatalogClient"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.catalog_client",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/database.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.database",
+    "functions": [
+      "create_db_and_tables",
+      "get_session"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/domain_adapter.py": {
+    "classes": [
+      "DomainQuantities"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.domain_adapter",
+    "functions": [
+      "quantities_from_decomposition",
+      "to_kuchnie_core"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/material_mirror.py": {
+    "classes": [
+      "MirrorStats"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.material_mirror",
+    "functions": [
+      "_identity_fields",
+      "_qualifies",
+      "refresh_material_mirror"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/models.py": {
+    "classes": [
+      "Cabinet",
+      "HardwareRule",
+      "HardwareSet",
+      "Material",
+      "Project",
+      "ProjectDefaults"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.models",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/purchasing.py": {
+    "classes": [
+      "CountertopStrategy",
+      "ExactQuantityStrategy",
+      "LinearMaterialStrategy",
+      "PurchasingStrategy",
+      "SheetMaterialStrategy"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.purchasing",
+    "functions": [
+      "get_strategy_for_material"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/recipe_loader.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.recipe_loader",
+    "functions": [
+      "clear_recipe_cache",
+      "eval_formula",
+      "get_recipe",
+      "get_recipe_tags",
+      "load_recipes"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/rules_engine.py": {
+    "classes": [
+      "RulesEngine"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.rules_engine",
+    "functions": [
+      "get_default_hardware_rules",
+      "load_hardware_rules_from_db"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/schemas.py": {
+    "classes": [
+      "BOMAssembly",
+      "BOMNode",
+      "BOMPart",
+      "CostTraceLine"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.schemas",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/kitchen_erp.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.kitchen_erp",
+    "functions": [
+      "action_bar",
+      "cabinet_2d_box",
+      "cost_trace_panel",
+      "cost_trace_row",
+      "form_input_group",
+      "index",
+      "main_canvas",
+      "module_front",
+      "plan_module_box",
+      "sidebar",
+      "top_bar"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/ui/__init__.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.ui",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/ui/admin_state.py": {
+    "classes": [
+      "AdminState",
+      "HardwareRuleUI",
+      "HardwareUI",
+      "MaterialUI"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.ui.admin_state",
+    "functions": []
+  },
+  "kitchen-erp/kitchen_erp/ui/admin_ui.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.ui.admin_ui",
+    "functions": [
+      "admin_page",
+      "hardware_form",
+      "hardware_row",
+      "hardware_rule_form",
+      "hardware_rule_row",
+      "material_form",
+      "material_row"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/ui/state.py": {
+    "classes": [
+      "CabinetUI",
+      "CostTraceLineUI",
+      "KitchenState"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.ui.state",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/__init__.py": {
+    "classes": [],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/application/__init__.py": {
+    "classes": [],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.application",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/application/scene_compositor.py": {
+    "classes": [
+      "SceneCompositor"
+    ],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.application.scene_compositor",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/domain/__init__.py": {
+    "classes": [],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.domain",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/domain/interfaces.py": {
+    "classes": [
+      "ImageBlender",
+      "ImageReader",
+      "ImageWriter",
+      "MaskExtractor",
+      "TextureTiler",
+      "UVWarper",
+      "ZoneConfig"
+    ],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.domain.interfaces",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/infrastructure/__init__.py": {
+    "classes": [],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.infrastructure",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/infrastructure/opencv_impl.py": {
+    "classes": [
+      "OpenCVImageBlender",
+      "OpenCVImageIO",
+      "OpenCVMaskExtractor",
+      "OpenCVTextureTiler",
+      "OpenCVUVWarper"
+    ],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.infrastructure.opencv_impl",
+    "functions": []
+  },
+  "krono-compositor-mvp/src/compositor/presentation/api.py": {
+    "classes": [],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.presentation.api",
+    "functions": [
+      "get_catalog",
+      "get_compositor",
+      "render_image"
+    ]
+  },
+  "krono-compositor-mvp/src/compositor/presentation/catalog_source.py": {
+    "classes": [
+      "CatalogClient",
+      "CatalogSource",
+      "CatalogUnavailable",
+      "HttpCatalogClient"
+    ],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.presentation.catalog_source",
+    "functions": [
+      "_derive_allowed_zone",
+      "_img_url",
+      "build_materials"
+    ]
+  },
+  "krono-compositor-mvp/src/compositor/presentation/schemas.py": {
+    "classes": [
+      "AllowedZone",
+      "RenderRequest",
+      "ZoneRequest",
+      "ZoneType"
+    ],
+    "component": "krono-compositor-mvp",
+    "dotted": "compositor.presentation.schemas",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/__init__.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/blum_drawers.py": {
+    "classes": [
+      "DrawerSystem",
+      "DrawerSystemFactory",
+      "Legrabox",
+      "Merivobox",
+      "TandemboxAntaro",
+      "_TandemboxHeight"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.blum_drawers",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/blum_hinges.py": {
+    "classes": [
+      "BlumClipTop110",
+      "BlumClipTop155",
+      "BlumClipTop95",
+      "BlumHinge",
+      "HingeFactory",
+      "HingeGeometry"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.blum_hinges",
+    "functions": [
+      "calculate_hinge_count"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/bom.py": {
+    "classes": [
+      "BOM",
+      "BOMItem"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.bom",
+    "functions": [
+      "calculate_bom"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/catalog.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.catalog",
+    "functions": [
+      "_body_eb",
+      "_confirmat_side_ops",
+      "_front_eb",
+      "_handle_accessory_name",
+      "_hdf_groove_op",
+      "_method_from_cab",
+      "_normalize_edge_material",
+      "decompose_dolna_drzwiowa",
+      "decompose_dolna_legrabox",
+      "decompose_dolna_narozna_slepa",
+      "decompose_dolna_szufladowa",
+      "decompose_gorna_drzwiowa"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/construction.py": {
+    "classes": [
+      "CabinetGeometry",
+      "ConstructionMethod",
+      "ConstructionMethodRegistry"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.construction",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/decomposer.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.decomposer",
+    "functions": [
+      "decompose"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/export/__init__.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.export",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/export/cutlist_csv.py": {
+    "classes": [
+      "CutPiece"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.export.cutlist_csv",
+    "functions": [
+      "_edge_key",
+      "_yn",
+      "aggregate_panels",
+      "export_cutlist_csv",
+      "pieces_to_csv"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/export/edging_csv.py": {
+    "classes": [
+      "EdgingRow"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.export.edging_csv",
+    "functions": [
+      "_edge_length_mm",
+      "collect_edging_rows",
+      "export_edging_csv",
+      "rows_to_csv"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/geometry.py": {
+    "classes": [
+      "BoundingBox",
+      "Transform2D",
+      "Vector2D",
+      "Vector3D"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.geometry",
+    "functions": [
+      "mm_to_m"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/kitchen.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.kitchen",
+    "functions": [
+      "all_accessories",
+      "all_panels",
+      "decompose_kitchen",
+      "kitchen_bom",
+      "validate_rows"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/legrabox.py": {
+    "classes": [
+      "LegraboxHeight"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.legrabox",
+    "functions": [
+      "back_panel_width",
+      "base_panel_depth",
+      "base_panel_width",
+      "decompose_drawer_box",
+      "drawer_internal_depth",
+      "drawer_internal_width",
+      "lw",
+      "make_runner_accessory",
+      "runner_screw_first_offset",
+      "validate_capacity",
+      "validate_height_nl"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/loader.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.loader",
+    "functions": [
+      "_apply_synthesised_config",
+      "_cabinet_from_schema",
+      "_door_hinge_counts",
+      "_drawer_slot_from_dict",
+      "_handle_spec_from_polish",
+      "_handle_spec_from_schema",
+      "_load_schema_format",
+      "_normalize_drawer_order",
+      "_shelf_pins_from_polish",
+      "_shelf_pins_from_schema",
+      "_shelf_positions",
+      "_synthesise_config",
+      "load_cabinet",
+      "load_kitchen",
+      "load_kitchen_from_schema"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/materials/__init__.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/materials/exceptions.py": {
+    "classes": [
+      "CatalogUnavailableError",
+      "EdgeNotFoundError",
+      "MaterialCatalogError",
+      "MaterialNotFoundError"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials.exceptions",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/materials/models.py": {
+    "classes": [
+      "AvailabilityInfo",
+      "EdgeInfo",
+      "PropertyFlag",
+      "VariantInfo",
+      "WorktopInfo"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials.models",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/materials/protocol.py": {
+    "classes": [
+      "MaterialCatalog"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials.protocol",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/materials/resolver.py": {
+    "classes": [
+      "MaterialResolver"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials.resolver",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/materials/sqlite_repository.py": {
+    "classes": [
+      "SqliteMaterialCatalog"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.materials.sqlite_repository",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/model.py": {
+    "classes": [
+      "Accessory",
+      "BaseDoorConfig",
+      "BaseDrawerConfig",
+      "CabinetInstance",
+      "CargoConfig",
+      "CornerBlindConfig",
+      "CornerInternalConfig",
+      "DecompositionResult",
+      "DrawerSlot",
+      "EdgeBand",
+      "GrainAxis",
+      "HandleSpec",
+      "Kitchen",
+      "MachiningOp",
+      "OvenConfig",
+      "Panel",
+      "PanelRole",
+      "Row",
+      "ShelfPinSpec",
+      "SinkConfig",
+      "WorktopSegment"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.model",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/recipe.py": {
+    "classes": [
+      "PanelRecipe",
+      "RecipeSchema",
+      "RecipeValidationError"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.recipe",
+    "functions": [
+      "_eval_node",
+      "evaluate_formula"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/schema.py": {
+    "classes": [
+      "CabinetSpec",
+      "DrawerSpec",
+      "FrontSpec",
+      "HandleSpec",
+      "KitchenSchema",
+      "MaterialSpec",
+      "RowSpec",
+      "SettingsSpec",
+      "ShelfSpec",
+      "WorktopSpec"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.schema",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/serialize.py": {
+    "classes": [],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.serialize",
+    "functions": [
+      "_build_cabinet",
+      "_build_row",
+      "_build_worktop",
+      "kitchen_from_dict",
+      "kitchen_from_json",
+      "kitchen_from_json_str",
+      "kitchen_to_dict",
+      "kitchen_to_json",
+      "kitchen_to_json_str"
+    ]
+  },
+  "kuchnie-core/src/kuchnie_core/standards.py": {
+    "classes": [
+      "KitchenStandards"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.standards",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/types.py": {
+    "classes": [
+      "CabinetLevel",
+      "CabinetType",
+      "Dimensions",
+      "Direction",
+      "DoorSide",
+      "HandleType"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.types",
+    "functions": []
+  },
+  "kuchnie-core/src/kuchnie_core/validator.py": {
+    "classes": [
+      "Issue",
+      "ValidationResult"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.validator",
+    "functions": [
+      "_compute_overlap",
+      "check_construction",
+      "check_dimensions",
+      "check_overlaps",
+      "check_run_continuity",
+      "check_standard_widths",
+      "check_vertex_face_counts",
+      "print_validation_report",
+      "validate_manifest"
+    ]
+  }
+}

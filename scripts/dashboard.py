@@ -293,6 +293,11 @@ def render() -> str:
     claims_line = " · ".join(f"{k} {v}" for k, v in sorted(by_status.items()))
     a(f"| claims | {claims_line} |")
     a(f"| verdict queue | {queue_n} awaiting triage |")
+    r2 = run(["python3", "scripts/coverage-audit.py", "--counts"]).strip()
+    if r2:
+        pretty = " · ".join(p.replace("=", " ") for p in r2.split())
+        a(f"| backward trace (R2) | {pretty} "
+          f"(`scripts/coverage-audit.py`; DARK triage = product-owner verb) |")
     if man:
         a(f"| last exercise run | {man.get('started_utc', '?')} · "
           f"{man.get('blender_version', '?')} · repo "

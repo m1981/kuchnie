@@ -86,6 +86,8 @@ commit-with-id before walking away.
 | **`exercise-gate.sh`** | per decomposer/extraction change + close | flagship outputs differing from the committed baseline — a formula drift fails at commit time, not at the saw. Intended change? Commit the new baseline WITH the code and a claim |
 | **`session-close.sh`** | end of session | knowledge still in flight (see §2); project checks plug in as `scripts/session-gates.d/*.sh` (template-aligned — upstreamed to truth-ledger) |
 | **`dashboard.py --check`** (session-gates.d/30) | end of session | a stale `STATUS.md` — the dashboard is GENERATED from ledger/bd/gates (`scripts/dashboard.py`, sources `docs/capability-map.csv` + `docs/roadmap-map.csv`) and its freshness is gated so it cannot lie |
+| **`test-health.sh`** (session-gates.d/40) | on demand + close | a test citing a tr-/wk- id that does not exist in the ledger; WARNs on retracted/diverged pins and on recent closes with no citing test (R4 — `docs/specs/conformance-join.md`) |
+| **`session-gates.d/50-new-dark.sh`** | end of session | nothing yet — WARN-only: a module absent from the committed `docs/code-inventory.json` arriving DARK per `scripts/coverage-audit.py` (R2-lite; promotion to FAIL is Michał's call) |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
