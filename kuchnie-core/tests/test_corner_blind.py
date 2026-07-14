@@ -10,7 +10,7 @@ Hand-computed reference, cabinet 1050 × 720 × 560, plinth 100, blind zone
   back     1028 × 598 × 3                  (1050−36+16−2 × 620−36+16−2)
   blind    560 × 614 × 18                  (door height 620 − 6)
   filler   50 × 614 × 18
-  door     (440 − 6) / 1 = 434 × 614 × 18  (visible 1050−560−50 = 440)
+  door     (440 − 4) / 1 = 436 × 614 × 18  (visible 1050−560−50 = 440; G12 2mm)
   cokół    1046 × 97 × 18
 """
 
@@ -84,9 +84,9 @@ def test_front_split_hand_computed():
     door = _panel(result, PanelRole.FRONT_DOOR)[0]
     assert (blind.width_mm, blind.height_mm) == (560, 614)
     assert (filler.width_mm, filler.height_mm) == (50, 614)
-    assert (door.width_mm, door.height_mm) == (434, 614)
+    assert (door.width_mm, door.height_mm) == (436, 614)  # G12: 2mm reveal
     # blind + filler + door + door gaps fill the cabinet width exactly
-    assert blind.width_mm + filler.width_mm + door.width_mm + 6 == 1050
+    assert blind.width_mm + filler.width_mm + door.width_mm + 4 == 1050
 
 
 def test_front_parts_are_front_material_with_vertical_grain():

@@ -11,7 +11,7 @@
 10;Szuflada S2 — dno;490;503;16;1;plyta_16mm;brak;;;;;role=drawer_base
 11;Szuflada S3 — tył;148;500;16;1;plyta_16mm;brak;;;;;role=drawer_back
 12;Szuflada S3 — dno;490;503;16;1;plyta_16mm;brak;;;;;role=drawer_base
-13;Front F1;140;594;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
-14;Front F2;287;594;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
-15;Front F3;287;594;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
+13;Front F1;140;596;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
+14;Front F2;287;596;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
+15;Front F3;287;596;18;1;K5307_18;pion;abs_K5307_18;abs_K5307_18;abs_K5307_18;abs_K5307_18;role=front_drawer
 16;Cokół;97;596;18;1;PLYTA_BIALA_18;brak;abs_PLYTA_BIALA_18;;;;role=plinth

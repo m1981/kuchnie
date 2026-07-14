@@ -39,6 +39,7 @@ _HANDLE_TYPE_EN_TO_PL: dict[str, str] = {
     "knob":     "kulisty",
     "profile":  "profilowy",
     "recessed": "wpuszczany",
+    "edge_pull": "krawędziowy",
 }
 
 
@@ -174,8 +175,9 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
             None,
         )
         front_h = drawer["wysokosc"] if drawer else 150
-        margin_l = front.get("margines_lewo", 3)
-        margin_r = front.get("margines_prawo", 3)
+        reveal = m.front_reveal(cab.handles.type if cab.handles else None)
+        margin_l = front.get("margines_lewo", reveal)
+        margin_r = front.get("margines_prawo", reveal)
         front_w = cab.width_mm - margin_l - margin_r
 
         r.panels.append(Panel(
@@ -291,7 +293,8 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
     # -- Doors --
     door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
     n_doors = len(door_fronts) or 1
-    door_w = m.door_width(cab.width_mm, n_doors)
+    door_w = m.door_width(cab.width_mm, n_doors,
+                          m.front_reveal(cab.handles.type if cab.handles else None))
     door_h = m.door_height(cab.height_mm)
 
     for front in door_fronts:
@@ -417,7 +420,8 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
     # -- Door fronts --
     door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
     n_doors = len(door_fronts) or 1
-    door_w = m.door_width(cab.width_mm, n_doors)
+    door_w = m.door_width(cab.width_mm, n_doors,
+                          m.front_reveal(cab.handles.type if cab.handles else None))
     door_h = m.door_height(side_h)
 
     for front in door_fronts:
@@ -656,8 +660,9 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
             None,
         )
         front_h = drawer["wysokosc"] if drawer else 150
-        margin_l = front.get("margines_lewo", 3)
-        margin_r = front.get("margines_prawo", 3)
+        reveal = m.front_reveal(cab.handles.type if cab.handles else None)
+        margin_l = front.get("margines_lewo", reveal)
+        margin_r = front.get("margines_prawo", reveal)
         front_w = cab.width_mm - margin_l - margin_r
 
         r.panels.append(Panel(
@@ -867,7 +872,8 @@ def decompose_dolna_narozna_slepa(cab: CabinetInstance) -> DecompositionResult:
     # -- Door fronts (share the visible opening) --
     door_fronts = [f for f in cab.fronts if f.get("typ", "").startswith("drzwiowy")]
     n_doors = len(door_fronts) or 1
-    door_w = m.door_width(visible_w, n_doors)
+    door_w = m.door_width(visible_w, n_doors,
+                          m.front_reveal(cab.handles.type if cab.handles else None))
     for front in door_fronts:
         r.panels.append(Panel(
             id=f"{cab.id}_front_{front['id']}",

@@ -89,28 +89,28 @@ class TestQuantities:
     def test_wall_cabinet_quantities_hand_computed(self, defaults):
         """Wall 1000W x 500H x 300D, 1 door, gorna_drzwiowa construction:
         sides 2x(300x500), top+bottom 2x(964x300), back 978x478,
-        door 994x494. Corpus edging: 2x500 + 2x964 = 2928mm.
-        Front edging: 2x994 + 2x494 = 2976mm."""
+        door 996x494 (G12 2mm reveal). Corpus edging: 2x500 + 2x964 =
+        2928mm. Front edging: 2x996 + 2x494 = 2980mm."""
         cab = make_cabinet(module_kind="WALL_CABINET", type="WALL",
                            width_mm=1000.0, height_mm=500.0, depth_mm=300.0)
         q = quantities_from_decomposition(decompose(to_kuchnie_core(cab, defaults)))
         assert q.corpus_m2 == pytest.approx(0.30 + 0.5784)
         assert q.back_m2 == pytest.approx(0.467484)
-        assert q.front_m2 == pytest.approx(0.491036)
+        assert q.front_m2 == pytest.approx(0.492024)
         assert q.corpus_edge_lm == pytest.approx(2.928)
-        assert q.front_edge_lm == pytest.approx(2.976)
+        assert q.front_edge_lm == pytest.approx(2.980)
 
     def test_base_cabinet_quantities_hand_computed(self, defaults):
         """Base 600W x 720H x 510D, 1 door, dolna_drzwiowa construction:
         side height 720-100(plinth)=620; sides 2x(510x620), bottom 564x510
-        (no top panel), back 578x598, door 594x614.
-        Corpus edging: 2x620 + 564 = 1804mm. Front: 2x594 + 2x614 = 2416mm."""
+        (no top panel), back 578x598, door 596x614 (G12 2mm reveal).
+        Corpus edging: 2x620 + 564 = 1804mm. Front: 2x596 + 2x614 = 2420mm."""
         q = quantities_from_decomposition(decompose(to_kuchnie_core(make_cabinet(), defaults)))
         assert q.corpus_m2 == pytest.approx(0.6324 + 0.28764)
         assert q.back_m2 == pytest.approx(0.345644)
-        assert q.front_m2 == pytest.approx(0.364716)
+        assert q.front_m2 == pytest.approx(0.365944)
         assert q.corpus_edge_lm == pytest.approx(1.804)
-        assert q.front_edge_lm == pytest.approx(2.416)
+        assert q.front_edge_lm == pytest.approx(2.420)
 
     def test_back_panel_never_banded(self, defaults):
         result = decompose(to_kuchnie_core(make_cabinet(), defaults))

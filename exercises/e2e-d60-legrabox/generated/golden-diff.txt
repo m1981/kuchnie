@@ -6,9 +6,9 @@ golden vs generated — panel-by-panel (dims h x w x th)
   MISSING in generated: Trawers przedni 564x100x18 PLYTA_BIALA_18
   MISSING in generated: Trawers tylny 564x100x18 PLYTA_BIALA_18
   MATCH                                         Plecy 698x578x3
-  DELTA  golden Front M 140x596x18 -> generated Front F1 140x594x18
-  DELTA  golden Front C 287x596x18 -> generated Front F2 287x594x18
-  DELTA  golden Front C 287x596x18 -> generated Front F3 287x594x18
+  MATCH-dims (grain height != pion)             Front M 140x596x18
+  MATCH-dims (grain height != pion)             Front C 287x596x18
+  MATCH-dims (grain height != pion)             Front C 287x596x18
   MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16
   MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16
   MATCH-dims (material plyta_16mm != PLYTA_BIALA_16) Szuflada dno 490x503x16

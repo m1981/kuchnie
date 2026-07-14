@@ -158,6 +158,8 @@ class HandleSpec:
 
     Fields:
       * ``type``             — ``"bar"`` | ``"knob"`` | ``"profile"`` | ``"recessed"``
+        | ``"edge_pull"`` (uchwyt krawędziowy — widens the front side-reveal
+        to ConstructionMethod.front_reveal_edge_pull_mm, G12)
       * ``spacing_mm``       — centre-to-centre distance between the two
         mounting screws ("rozstaw" in Polish).
       * ``hole_diameter_mm`` — pilot hole diameter for the mounting screws.

@@ -10,8 +10,8 @@ Expected panels (9):
   back        778 × 698 ×  3
   shelf P1    762 × 295 × 18
   shelf P2    762 × 295 × 18
-  door F1     395.5 × 714 × 18
-  door F2     395.5 × 714 × 18
+  door F1     397 × 714 × 18
+  door F2     397 × 714 × 18
 
 Expected accessories (4):
   hinge F1 ×2 (blum_clip_35)
@@ -126,8 +126,8 @@ def test_door_dimensions(g01_path):
     result = decompose(load_cabinet(g01_path))
     doors = [p for p in result.panels if "front" in p.id]
     for d in doors:
-        # (800 - 3 - 3 - 3) / 2 = 395.5
-        assert d.width_mm == pytest.approx(395.5, abs=0.1)
+        # (800 - 2 - 2 - 2) / 2 = 397 (G12: 2mm reveal)
+        assert d.width_mm == pytest.approx(397, abs=0.1)
         assert d.height_mm == 714    # 720 - 3 - 3
         assert d.thickness_mm == 18
 
@@ -137,8 +137,8 @@ def test_door_edge_banding(g01_path):
     doors = [p for p in result.panels if "front" in p.id]
     for d in doors:
         assert len(d.banded_edges) == 4
-        assert d.banded_edges["front"].length_mm == pytest.approx(395.5, abs=0.1)
-        assert d.banded_edges["back"].length_mm == pytest.approx(395.5, abs=0.1)
+        assert d.banded_edges["front"].length_mm == pytest.approx(397, abs=0.1)
+        assert d.banded_edges["back"].length_mm == pytest.approx(397, abs=0.1)
         assert d.banded_edges["left"].length_mm == 714
         assert d.banded_edges["right"].length_mm == 714
 

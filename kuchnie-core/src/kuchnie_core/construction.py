@@ -12,9 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-# ── Door gap constant ────────────────────────────────────────────
+# ── Front gap constants ──────────────────────────────────────────
 
-_DOOR_GAP_MM = 3  # standard gap per side for doors/drawers
+_FRONT_GAP_VERTICAL_MM = 3   # vertical gap between stacked fronts and at
+                             # top/bottom — unchanged by the G12 decision
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,14 @@ class ConstructionMethod:
     back_attachment: str = "groove"          # "groove" | "rabbet" | "stapled"
     back_groove_depth_mm: int = 8
     back_clearance_mm: int = 2               # assembly clearance ("luz") per axis
+
+    # Front side-reveal (G12, PO decision 2026-07-14): horizontal margin
+    # per side. Shop standard 2mm; edge-pull handles (uchwyt krawędziowy)
+    # need 3mm — front_reveal() picks by handle type. Change the shop
+    # standard HERE (or per registered method); per-front margines_lewo/
+    # margines_prawo overrides in the YAML still win.
+    front_reveal_mm: float = 2.0
+    front_reveal_edge_pull_mm: float = 3.0
 
     # Edge banding defaults
     edge_band_thickness_mm: float = 0.8      # 0.4 / 0.8 / 1.0 / 2.0
@@ -92,21 +101,36 @@ class ConstructionMethod:
         """Shelf width = bottom_width - 2mm clearance (1mm per side)."""
         return self.carcass_bottom_width(cabinet_width_mm) - 2
 
-    def door_width(self, cabinet_width_mm: int, door_count: int = 1) -> float:
-        """Door width = (cabinet_width - gap_total) / door_count.
+    def front_reveal(self, handle_type: str | None = None) -> float:
+        """Horizontal side-reveal for fronts (G12 shop setting).
 
-        Gap: 3mm on each side + 3mm between doors.
+        Edge-pull handles (type 'edge_pull') get the wider reveal; every
+        other handle type — and handleless fronts — get the shop standard.
         """
-        gap_total = _DOOR_GAP_MM * (door_count + 1)
+        if handle_type == "edge_pull":
+            return self.front_reveal_edge_pull_mm
+        return self.front_reveal_mm
+
+    def door_width(self, cabinet_width_mm: int, door_count: int = 1,
+                   reveal_mm: float | None = None) -> float:
+        """Door width = (cabinet_width - reveal_total) / door_count.
+
+        Horizontal reveal on each side + between doors (front_reveal();
+        pass reveal_mm to apply a handle-dependent value).
+        """
+        reveal = self.front_reveal_mm if reveal_mm is None else reveal_mm
+        gap_total = reveal * (door_count + 1)
         return (cabinet_width_mm - gap_total) / door_count
 
     def door_height(self, cabinet_height_mm: int) -> int:
-        """Door height = cabinet_height - 6mm (3mm top + 3mm bottom gap)."""
-        return cabinet_height_mm - 2 * _DOOR_GAP_MM
+        """Door height = cabinet_height - 2 × 3mm (vertical gaps, fixed)."""
+        return cabinet_height_mm - 2 * _FRONT_GAP_VERTICAL_MM
 
-    def drawer_front_width(self, cabinet_width_mm: int, margin_mm: int = 3) -> int:
-        """Drawer front width = cabinet_width - 2 × margin."""
-        return cabinet_width_mm - 2 * margin_mm
+    def drawer_front_width(self, cabinet_width_mm: int,
+                           margin_mm: float | None = None) -> float:
+        """Drawer front width = cabinet_width - 2 × side reveal."""
+        margin = self.front_reveal_mm if margin_mm is None else margin_mm
+        return cabinet_width_mm - 2 * margin
 
     def validate_cabinet_width(self, cabinet_width_mm: int) -> list[str]:
         """Check that cabinet width is large enough for this construction.

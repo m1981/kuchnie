@@ -159,17 +159,27 @@ class TestConstructionMethodDerived:
         assert m.shelf_width(800) == 762  # (800 - 36) - 2
 
     def test_door_width_single(self):
-        """single_door = cabinet_width - 2*gap"""
+        """single_door = cabinet_width - 2*reveal (G12 shop standard 2mm)"""
         m = ConstructionMethod(id="test", name="Test")
-        assert m.door_width(800, door_count=1) == 794  # 800 - 6
+        assert m.door_width(800, door_count=1) == 796  # 800 - 4
 
     def test_door_width_double(self):
-        """double_door = (cabinet_width - 3*gap) / 2.
-        gap_total = 3 * (door_count + 1) = 3 * 3 = 9
-        door_w = (800 - 9) / 2 = 395.5
+        """double_door = (cabinet_width - 3*reveal) / 2.
+        reveal_total = 2 * (door_count + 1) = 2 * 3 = 6
+        door_w = (800 - 6) / 2 = 397
         """
         m = ConstructionMethod(id="test", name="Test")
-        assert m.door_width(800, door_count=2) == 395.5
+        assert m.door_width(800, door_count=2) == 397
+
+    def test_front_reveal_g12_decision(self):
+        """G12 (PO 2026-07-14): 2mm shop standard; edge-pull handles 3mm."""
+        m = ConstructionMethod(id="test", name="Test")
+        assert m.front_reveal() == 2.0
+        assert m.front_reveal("bar") == 2.0
+        assert m.front_reveal("edge_pull") == 3.0
+        assert m.door_width(600, 1, m.front_reveal("edge_pull")) == 594
+        assert m.drawer_front_width(600) == 596       # golden D60 value
+        assert m.drawer_front_width(600, margin_mm=3) == 594  # override wins
 
     def test_door_height_formula(self):
         """door_height = cabinet_height - 6 (3mm top + 3mm bottom gap)"""

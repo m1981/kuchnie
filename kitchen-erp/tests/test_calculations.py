@@ -63,17 +63,17 @@ def test_wall_cabinet_bom_pricing():
     #      = 0.467484 m2 @ $5 = $2.33742
     assert parts["Back panel: Back"].cost == pytest.approx(2.33742)
 
-    # door = 994x494 (3mm gaps) = 0.491036 m2 @ $20 = $9.82072
-    assert parts["Front: Front"].cost == pytest.approx(9.82072)
+    # door = 996x494 (G12 2mm side reveal) = 0.492024 m2 @ $20 = $9.84048
+    assert parts["Front: Front"].cost == pytest.approx(9.84048)
 
     # Edging from real banded edges: corpus 2x500 + 2x964 = 2.928 lm;
-    # door all 4 edges 2x994 + 2x494 = 2.976 lm; total 5.904 lm @ $0.80 = $4.7232
-    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(5.904)
-    assert parts["Edge banding: Generic ABS"].cost == pytest.approx(4.7232)
+    # door all 4 edges 2x996 + 2x494 = 2.980 lm; total 5.908 lm @ $0.80 = $4.7264
+    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(5.908)
+    assert parts["Edge banding: Generic ABS"].cost == pytest.approx(4.7264)
 
-    # CNC: cutting 1.83692 m2 @ $15 = $27.5538; edgebanding 5.904 lm @ $4.50 = $26.568
-    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.5538)
-    assert parts["CNC Service: Edgebanding PUR"].cost == pytest.approx(26.568)
+    # CNC: cutting 1.837908 m2 @ $15 = $27.56862; edgebanding 5.908 lm @ $4.50 = $26.586
+    assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.56862)
+    assert parts["CNC Service: Edgebanding PUR"].cost == pytest.approx(26.586)
 
     # Hardware (default rules): is_wall -> 2 brackets @ $3 = $6.00
     # has_doors x1 -> 2 hinges @ $15 = $30.00, 1 bumper @ $0.20, 1 handle @ $25
@@ -86,8 +86,8 @@ def test_wall_cabinet_bom_pricing():
     assert not any("Plinth" in n for n in parts)
 
     # Grand total, by hand:
-    # 8.784 + 2.33742 + 9.82072 + 4.7232 + 27.5538 + 26.568 + 6 + 30 + 0.2 + 25
-    assert tree.cost == pytest.approx(140.98714)
+    # 8.784 + 2.33742 + 9.84048 + 4.7264 + 27.56862 + 26.586 + 6 + 30 + 0.2 + 25
+    assert tree.cost == pytest.approx(141.04292)
 
 
 def test_gated_front_carries_no_ghost_costs():

@@ -56,7 +56,7 @@ six drawer-box parts MATCH the golden exactly. Remaining deltas:
 
 | # | Delta | Classification |
 |---|---|---|
-| P1 | Fronts 594 vs golden 596 | G12 margin convention (settable, still open) |
+| P1 | Fronts 594 vs golden 596 | G12 — RESOLVED 2026-07-14 (wk-f3ce63bf): 2mm shop reveal is the ConstructionMethod default, 3mm auto for edge_pull handles; baseline regenerated, fronts now 596 = golden |
 | P2 | Drawer-box material `plyta_16mm` vs `PLYTA_BIALA_16` | G9 (no box-material field) |
 | P3 | Dno/trawersy listed 560×564 / 100×564 vs golden 564×560 / 564×100 | rozrys writes height_mm into Długość unconditionally; carpenter convention puts the long/grain axis in Długość — free-rotation panels are unaffected at the saw, but the contract column semantics deserve a decision |
 | P4 | **Runner rows Y = 55/195/482 vs golden 55/342/629** | G8: drawer list consumed bottom-up, entered top-down (M first) → M-drawer drillings at the BOTTOM. Scrap-risk demonstrated live |

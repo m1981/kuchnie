@@ -41,6 +41,8 @@ _HANDLE_TYPE_PL_TO_EN = {
     "profilowy": "profile",
     "profil":    "profile",
     "wpuszczany": "recessed",
+    "krawedziowy": "edge_pull",
+    "krawędziowy": "edge_pull",
     "frezowany":  "recessed",
 }
 
