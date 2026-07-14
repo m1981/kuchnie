@@ -155,6 +155,76 @@ def uc_goals() -> dict[str, str]:
     return goals
 
 
+def claims_json() -> list[dict]:
+    """Full claim records (id, status, text, ...) from `truth list --json`."""
+    try:
+        return json.loads(run(["scripts/truth", "list", "--json"]) or "[]")
+    except json.JSONDecodeError:
+        return []
+
+
+def acceptance_items(text: str) -> list[dict]:
+    """Parse the '## Acceptance' section of a spec into pre-written items.
+
+    Each bullet holds one quoted done-claim text; the UC ids the bullet
+    mentions attribute it to use cases (empty list = spec-wide).
+    Pure function — R7 classifier input (docs/specs/conformance-join.md,
+    wk-9d77de94).
+    """
+    m = re.search(r"^## Acceptance$(.*?)(?=^## |\Z)", text, re.M | re.S)
+    if not m:
+        return []
+    items: list[dict] = []
+    bullet: list[str] = []
+    for line in m.group(1).splitlines() + ["- "]:
+        if line.startswith("- "):
+            if bullet:
+                whole = " ".join(l.strip() for l in bullet).strip()
+                q = re.search(r'"(.*)"', whole)
+                items.append({
+                    "text": q.group(1) if q else whole.lstrip("- ").strip(),
+                    "ucs": sorted(set(re.findall(r"UC-\d+", whole))),
+                })
+            bullet = [line[2:]]
+        elif bullet and line.strip():
+            bullet.append(line)
+        elif bullet and not line.strip():
+            pass
+    return items
+
+
+def _sig_tokens(text: str) -> set[str]:
+    """Significant-word signature for the lexical R7 match (no NLP)."""
+    return {t for t in re.findall(r"[a-z0-9][a-z0-9_.\-/]{3,}", text.lower())}
+
+
+def classify_acceptance(items: list[dict], claims: list[dict],
+                        threshold: float = 0.5) -> list[dict]:
+    """Classify each pre-written acceptance item against the ledger.
+
+    PRE-WRITTEN — no claim covers >= threshold of the item's tokens;
+    FILED — best-covering claim exists but is not live;
+    LIVE — best-covering claim is live.
+    Deterministic: ties resolve live-first, then lexicographic claim id.
+    """
+    out: list[dict] = []
+    for it in items:
+        sig = _sig_tokens(it["text"])
+        best_id, best_status, best_cov = "", "", 0.0
+        for c in sorted(claims, key=lambda c: (c["status"] != "live", c["id"])):
+            cov = len(sig & _sig_tokens(c.get("text", ""))) / len(sig) if sig else 0.0
+            if cov > best_cov:
+                best_id, best_status, best_cov = c["id"], c["status"], cov
+        if best_cov >= threshold:
+            state = "LIVE" if best_status == "live" else "FILED"
+            out.append({**it, "state": state, "claim": best_id,
+                        "status": best_status})
+        else:
+            out.append({**it, "state": "PRE-WRITTEN", "claim": "",
+                        "status": ""})
+    return out
+
+
 def closed_recently(days: int = 14) -> list[dict]:
     titles: dict[str, str] = {}
     closed: list[dict] = []
@@ -228,6 +298,33 @@ def render() -> str:
           f"{man.get('blender_version', '?')} · repo "
           f"`{man.get('repo_sha', '')[:7]}` · hb5 "
           f"`{man.get('hb5_sha', '')[:7]}` |")
+    a("")
+
+    # R7 — completeness view (proto-R1/R7, docs/specs/conformance-join.md)
+    a("## Completeness (R7) — use-cases Acceptance vs ledger")
+    a("")
+    a("Pre-written acceptance items of `docs/specs/use-cases.md` classified "
+      "against claim texts (lexical match, no NLP): PRE-WRITTEN = no claim "
+      "yet · FILED = claim exists, not live · LIVE = claim live.")
+    a("")
+    try:
+        uc_text = (REPO / "docs/specs/use-cases.md").read_text(encoding="utf-8")
+    except OSError:
+        uc_text = ""
+    acc = classify_acceptance(acceptance_items(uc_text), claims_json())
+    a("| UC | Acceptance item | State | Claim |")
+    a("|---|---|---|---|")
+    for it in acc:
+        uc = ", ".join(it["ucs"]) if it["ucs"] else "(spec-wide)"
+        short = it["text"][:90] + ("…" if len(it["text"]) > 90 else "")
+        claim = f"{it['claim']} ({it['status']})" if it["claim"] else "—"
+        a(f"| {uc} | {short} | {it['state']} | {claim} |")
+    n_live = sum(1 for it in acc if it["state"] == "LIVE")
+    a("")
+    a(f"**Gauge: {n_live}/{len(acc)} acceptance items LIVE.** "
+      "The denominator is intent (pre-written claims), the numerator is "
+      "demonstrated fact — the gauge can go down when a commit stales a "
+      "completion claim.")
     a("")
 
     # V2 — ready lane
