@@ -78,6 +78,8 @@ cd kitchen-erp           && .venv/bin/python -m pytest tests/ -q      # own venv
 # Quality gates (repo root):
 bash scripts/spec-health.sh      # specs vs ledger — must be 0 failures
 bash scripts/doc-health.sh       # live markdown corpus
+bash scripts/exercise-gate.sh    # flagship e2e outputs == committed baseline
+bash scripts/session-close.sh    # end-of-session survival gate (docs/development-process.md)
 
 # Pipeline regression harness (after any decomposer/extraction change):
 cd exercises/walking-skeleton-d60

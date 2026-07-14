@@ -177,6 +177,11 @@ here with a spec and a claimed `wk-` issue, then:
   scaffold a scenario with `.venv/bin/python exercises/harness/scaffold.py
   <name>`, run it with `.venv/bin/python exercises/harness/runner.py <name>`
   (writes a toolchain manifest); shared helpers live in `exercises/harness/`
+- **Session lifecycle is gated**: `docs/development-process.md` — end every
+  session with `bash scripts/session-close.sh` (refuses on dirty tree,
+  claimed work, gate failures); `bash scripts/exercise-gate.sh` guards the
+  flagship exercise baseline after decomposer/extraction changes; priorities
+  are bd data, never handoff prose
 
 ---
 
