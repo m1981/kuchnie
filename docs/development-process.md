@@ -84,7 +84,7 @@ commit-with-id before walking away.
 | `doc-health.sh` | commit + close | dead component names, broken links |
 | Component suites (core/cam/erp/adapter) | per change | regression on pinned behavior |
 | **`exercise-gate.sh`** | per decomposer/extraction change + close | flagship outputs differing from the committed baseline — a formula drift fails at commit time, not at the saw. Intended change? Commit the new baseline WITH the code and a claim |
-| **`session-close.sh`** | end of session | knowledge still in flight (see §2) |
+| **`session-close.sh`** | end of session | knowledge still in flight (see §2); project checks plug in as `scripts/session-gates.d/*.sh` (template-aligned — upstreamed to truth-ledger) |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
