@@ -190,7 +190,7 @@ flowchart TD
 |---|---|
 | Phase 0/7 decor selection | `krono-compositor-mvp` (first-visit previews), `catalog` (decors, pairings) |
 | Phase 2–5 layout | `home_builder_5` (external Blender addon) → `home-builder-adapter` extraction |
-| Phase 8 mechanical checks | `kuchnie_core.validator` / `validate_rows` (candidates to encode the gate) |
+| Phase 8 mechanical checks | `kuchnie_core.validator` / `validate_rows` — G1 (worktop line), G6 (plinth line) and the standard-width advisory are ENCODED in `validate_rows` (wk-bae72832, tests in `test_validate_gates.py`); remaining gates G2/G3/G4/G5/G7 tracked under wk-89a668a2 |
 | Production handoff | `kuchnie_core.decompose()` → cut list / edging CSV → `kitchen-erp` BOM + cost → `kitchen-cam` drilling DXF |
 
 The gate numbers in this playbook (heights, clearances, filler widths) are

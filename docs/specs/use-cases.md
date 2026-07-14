@@ -64,6 +64,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 | UC-8 | AI agent / Purchaser | Refresh the material mirror from the catalog | casual — already spec'd (`kitchen-erp/docs/specs/material-mirror.md`) | 5 | — |
 | UC-9 | Salesperson | Maintain the decor catalog (images, families, pairings) | casual | 1 | wk-6716e9c8, wk-c67ffaa1 |
 | UC-10 | all hats | Archive a handover (project record references kitchen JSON + cut lists + decor set) | casual | 11 | — |
+| UC-11 | Designer | Design an L-kitchen (heights → zones → corner → widths), governed by `docs/l-kitchen-design-playbook.md`, executed mostly in hb5 | casual | 2–4 | — |
 
 Worktop BOM position (wk-4c37f4ee) is a subfunction of UC-1/UC-4, not a
 goal. The catalog **configurator** flow (sessions/steps/templates in
@@ -174,7 +175,11 @@ business's central flow.
 - wk-4c37f4ee — worktop per-lm BOM (UC-1/UC-4 subfunction)
 - wk-6716e9c8, wk-c67ffaa1 — decor images + family audit (UC-3/UC-9)
 - wk-89a668a2 — buildability verdict gate runner (UC-2 step 5, filed by
-  this dressing)
+  this dressing). Covers TWO rule families: mechanical (panel dims,
+  overlaps — validator.py) and design-legality (playbook Phase-8 gate
+  G1–G7). First slice shipped: G1/G6/width rules in validate_rows
+  (wk-bae72832); G2/G3/G4/G5/G7 parked pending model support
+  (L-adjacency, appliance positions, cutout positions)
 - wk-33342f9e — this spec (migration step 1)
 
 ## Acceptance
