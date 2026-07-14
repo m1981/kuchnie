@@ -71,16 +71,17 @@ def test_brak_panels_match_rotated():
 
 def test_pion_panels_do_not_rotate():
     """Grain-constrained panels must match orientation exactly."""
-    golden = [GoldenPanel("Front F1", 594, 140, 18, 1, "K5307_18", "pion")]
+    golden = [GoldenPanel("Front F1", 596, 140, 18, 1, "K5307_18", "pion")]
     result = decompose(d60())
     result.panels = [p for p in result.panels if p.name == "Front F1"]
-    diff = diff_panels(golden, result)  # generated is 140x594 — swapped
+    diff = diff_panels(golden, result)  # generated is 140x596 — swapped
     assert diff.matched == 0
 
 
 def test_full_d60_diff_against_expected_golden():
     """The whole scenario: golden mirroring GOLDEN.md of e2e-d60-legrabox
-    with pipeline-convention fronts (594) and material names — clean diff."""
+    with pipeline-convention fronts (596 — G12 2mm shop reveal, wk-f3ce63bf)
+    and material names — clean diff."""
     golden = [
         GoldenPanel("Bok lewy", 720, 560, 18, 1, "PLYTA_BIALA_18", "brak"),
         GoldenPanel("Bok prawy", 720, 560, 18, 1, "PLYTA_BIALA_18", "brak"),
@@ -88,8 +89,8 @@ def test_full_d60_diff_against_expected_golden():
         GoldenPanel("Trawers przedni", 564, 100, 18, 1, "PLYTA_BIALA_18", "brak"),
         GoldenPanel("Trawers tylny", 564, 100, 18, 1, "PLYTA_BIALA_18", "brak"),
         GoldenPanel("Plecy", 698, 578, 3, 1, "HDF_BIALA_3", "brak"),
-        GoldenPanel("Front M", 140, 594, 18, 1, "K5307_18", "pion"),
-        GoldenPanel("Front C", 287, 594, 18, 2, "K5307_18", "pion"),
+        GoldenPanel("Front M", 140, 596, 18, 1, "K5307_18", "pion"),
+        GoldenPanel("Front C", 287, 596, 18, 2, "K5307_18", "pion"),
         GoldenPanel("Szuflada dno", 490, 503, 16, 3, "plyta_16mm", "brak"),
         GoldenPanel("Szuflada tyl M", 63, 500, 16, 1, "plyta_16mm", "brak"),
         GoldenPanel("Szuflada tyl C", 148, 500, 16, 2, "plyta_16mm", "brak"),
@@ -109,8 +110,9 @@ def test_diff_reports_missing_and_extra():
 
 
 def test_diff_near_miss_is_delta():
-    """596 vs generated 594 fronts (G12) land as DELTA, not MISSING."""
-    golden = [GoldenPanel("Front M", 140, 596, 18, 1, "K5307_18", "pion")]
+    """A 2mm-off golden (authored under the pre-G12 594 convention) lands
+    as DELTA against today's 596 fronts — not MISSING."""
+    golden = [GoldenPanel("Front M", 140, 594, 18, 1, "K5307_18", "pion")]
     result = decompose(d60())
     result.panels = [p for p in result.panels if p.name == "Front F1"]
     diff = diff_panels(golden, result)
