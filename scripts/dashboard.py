@@ -5,6 +5,8 @@ Views (docs/development-process.md; design: five moments, one question each):
   V4 health strip   — gates, claims by state, verdict queue, toolchain
   V2 ready lane     — truth ready joined with bd priorities
   V3 roadmap        — L1-stage swimlanes + bd dependency arrows (mermaid)
+  V3b by-goal       — same items grouped by use case (`uc` column of
+                      docs/roadmap-map.csv; goals from docs/specs/use-cases.md)
   V1 capability     — docs/capability-map.csv, evidence ids checked live
   V5 delta log      — work closed in the last 14 days (from claims.jsonl)
 
@@ -140,6 +142,19 @@ def manifest() -> dict:
         return {}
 
 
+def uc_goals() -> dict[str, str]:
+    """UC-N -> goal, parsed from the use-cases spec inventory table."""
+    goals: dict[str, str] = {}
+    try:
+        text = (REPO / "docs/specs/use-cases.md").read_text(encoding="utf-8")
+    except OSError:
+        return goals
+    for m in re.finditer(r"^\| (UC-\d+) \| [^|]* \| ([^|]*) \|", text, re.M):
+        goal = re.sub(r"\s*\([^)]*\)", "", m.group(2)).strip()
+        goals[m.group(1)] = goal
+    return goals
+
+
 def closed_recently(days: int = 14) -> list[dict]:
     titles: dict[str, str] = {}
     closed: list[dict] = []
@@ -255,6 +270,39 @@ def render() -> str:
             for dep in bd_deps(bd_id):
                 if dep in node_of:
                     a(f"    {node_of[dep]} --> {node_of[bd_id]}")
+    a("```")
+    a("")
+
+    # V3b — roadmap by use case (goal)
+    a("## Roadmap by use case (order = bd priority; goals from "
+      "`docs/specs/use-cases.md`)")
+    a("")
+    a("```mermaid")
+    a("flowchart LR")
+    goals = uc_goals()
+    by_uc: dict[str, list[dict]] = {}
+    for r in rmap:
+        if r["bd_id"] in bd:  # open items only
+            by_uc.setdefault((r.get("uc") or "").strip(), []).append(r)
+    uc_node: dict[str, str] = {}
+    for uc in sorted(by_uc, key=lambda u: (u == "", int(u.split("-")[1]) if u else 0)):
+        if uc:
+            gid = "g" + uc.replace("-", "_")
+            label = f"{uc} — {goals[uc]}" if uc in goals else uc
+        else:
+            gid, label = "g_none", "no UC (process/infra — route or leave)"
+        a(f'    subgraph {gid} ["{label}"]')
+        for r in sorted(by_uc[uc], key=lambda r: bd[r["bd_id"]]["priority"]):
+            nid = "u_" + r["bd_id"].replace("-", "_")
+            uc_node[r["bd_id"]] = nid
+            prio = bd[r["bd_id"]]["priority"]
+            a(f'        {nid}["P{prio} {r["bd_id"]}<br/>{r["label"]}"]')
+        a("    end")
+    for bd_id, info in bd.items():
+        if info.get("dependency_count", 0) > 0 and bd_id in uc_node:
+            for dep in bd_deps(bd_id):
+                if dep in uc_node:
+                    a(f"    {uc_node[dep]} --> {uc_node[bd_id]}")
     a("```")
     a("")
     unmapped = [i for i in bd if i not in {r['bd_id'] for r in rmap}]

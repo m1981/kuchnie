@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-07-14 — Dashboard increment 1: by-goal roadmap + Serves: UC- warn (wk-a9212b40)
+
+### Added
+- `docs/roadmap-map.csv` gains a `uc` column mapping work items to use
+  cases (assignments from the `docs/specs/use-cases.md` inventory).
+- `scripts/dashboard.py` renders a second roadmap view grouped by use
+  case (V3b) beside the by-stage view; UC goal labels parsed from the
+  use-cases inventory table; unrouted items land in a visible "no UC"
+  bucket.
+- `scripts/spec-health.sh` warns (never fails) on specs lacking a
+  `Serves: UC-` line — upward trace to a user goal (upstream-candidate;
+  the check is generic, the UC- id pattern is this repo's).
+
+---
+
 ## [Unreleased] — 2026-07-12 — Compositor catalog routed to catalog service (ADR-008, wk-03434168)
 
 ### Added

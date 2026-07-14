@@ -43,8 +43,15 @@ if not specs:
 
 for path in specs:
     with open(path, encoding="utf-8") as f:
-        ids = sorted(set(ID_RE.findall(f.read())))
+        text = f.read()
+    ids = sorted(set(ID_RE.findall(text)))
     print(f"{path}")
+    # upstream-candidate: upward-trace warn — a spec that names no use case
+    # has no stated user goal. The "Serves: <goal-id>" line is the generic
+    # shape; the UC- id pattern is this repo's (docs/specs/use-cases.md).
+    if not re.search(r"Serves:.*\bUC-\d", text):
+        print("  WARN  no 'Serves: UC-' line -- upward trace to a use case missing (inventory: docs/specs/use-cases.md)")
+        warnings += 1
     if not ids:
         print("  WARN  no ledger ids cited (unwired prose -- wire per the spec convention, .truth/README.md § Feature specs)")
         warnings += 1

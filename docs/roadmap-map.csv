@@ -1,18 +1,18 @@
-bd_id;wk_id;stage;label
-kuchnie-58o;wk-6716e9c8;1;Decor miniature images (90/148 missing)
-kuchnie-7pc;wk-c67ffaa1;1;Color-family audit (K522)
-kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11)
-kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks)
-kuchnie-djb;wk-99b51e00;3;bpy roster contradiction
-kuchnie-2bw;;3;Manifest schema drift (48 errors)
-kuchnie-92j;;4;G8 drawer-order semantics (scrap-risk)
-kuchnie-6sm;;4;Drawer-box material field (G9)
-kuchnie-8vv;;4;Front margin shop setting (G12)
-kuchnie-33g;;4;Blum runner geometry vs Montageanleitung
-kuchnie-no6;wk-5cb8c45e;4;Dead CabinetGeometry
-kuchnie-a48;wk-39ed9155;5;Supplier price-file import
-kuchnie-ubc;wk-593a317b;5;Purchasing artifacts (board + hardware orders)
-kuchnie-uz1;wk-4c37f4ee;9;Worktop per-lm BOM
-kuchnie-zw2;wk-985a7dc2;0;Generated dashboard (this)
-kuchnie-tai;wk-89a668a2;4;Buildability verdict (UC-2 step 5)
-kuchnie-q83;wk-a9212b40;0;Dashboard increment 1 (by-goal view)
+bd_id;wk_id;stage;label;uc
+kuchnie-58o;wk-6716e9c8;1;Decor miniature images (90/148 missing);UC-3
+kuchnie-7pc;wk-c67ffaa1;1;Color-family audit (K522);UC-3
+kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11);UC-6
+kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks);UC-2
+kuchnie-djb;wk-99b51e00;3;bpy roster contradiction;
+kuchnie-2bw;;3;Manifest schema drift (48 errors);
+kuchnie-92j;;4;G8 drawer-order semantics (scrap-risk);UC-2
+kuchnie-6sm;;4;Drawer-box material field (G9);
+kuchnie-8vv;;4;Front margin shop setting (G12);
+kuchnie-33g;;4;Blum runner geometry vs Montageanleitung;
+kuchnie-no6;wk-5cb8c45e;4;Dead CabinetGeometry;
+kuchnie-a48;wk-39ed9155;5;Supplier price-file import;UC-7
+kuchnie-ubc;wk-593a317b;5;Purchasing artifacts (board + hardware orders);UC-4
+kuchnie-uz1;wk-4c37f4ee;9;Worktop per-lm BOM;UC-4
+kuchnie-zw2;wk-985a7dc2;0;Generated dashboard (this);
+kuchnie-tai;wk-89a668a2;4;Buildability verdict (UC-2 step 5);UC-2
+kuchnie-q83;wk-a9212b40;0;Dashboard increment 1 (by-goal view);

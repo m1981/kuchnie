@@ -93,9 +93,10 @@ adapter/hb5 changes: `exercises/harness/runner.py <scenario> --strict`.
 
 **Dashboard** (`STATUS.md`, repo root): five moment-views — health strip,
 ready lane (premise health × bd priority), roadmap by L1 stage with bd
-dependency arrows, capability board (cells cite tr- ids; non-live ids are
-flagged in-page), and a 14-day delta log. Hand-maintained inputs are only
-the two CSVs; everything else is derived.
+dependency arrows (plus a by-use-case rendering of the same items, from
+the `uc` column of `docs/roadmap-map.csv`), capability board (cells cite
+tr- ids; non-live ids are flagged in-page), and a 14-day delta log.
+Hand-maintained inputs are only the two CSVs; everything else is derived.
 
 ## 4. Traceability — the "undoubtable" chain
 
