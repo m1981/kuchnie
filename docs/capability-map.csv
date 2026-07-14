@@ -1,0 +1,7 @@
+type;rozrys;drills;dxf;bom;extract3d;note;evidence
+dolna_legrabox;ok;ok;ok;ok;partial;flagship — walking-skeleton validated, 3D carries envelope only;tr-8dfe366d tr-15d48651 tr-3ef7b607 tr-b485d74c tr-3bb325f8
+dolna_narozna_slepa;ok;ok;ok;ok;none;new (ADR-014) — no e2e golden yet, unreachable from a scene;tr-591aa208
+dolna_drzwiowa;partial;none;none;partial;partial;no top stretchers, no machining ops;features-current-state.md
+dolna_szufladowa;partial;none;none;partial;none;runner accessories only, box parts not decomposed;features-current-state.md
+gorna_drzwiowa;ok;partial;partial;ok;partial;cam appliers (system32/hinges) exist, decomposer emits no ops;tr-3ef7b607
+sink/cargo/oven/karuzela;none;none;none;none;none;typed configs model-only, no decomposers;

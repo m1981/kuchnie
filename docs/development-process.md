@@ -85,10 +85,17 @@ commit-with-id before walking away.
 | Component suites (core/cam/erp/adapter) | per change | regression on pinned behavior |
 | **`exercise-gate.sh`** | per decomposer/extraction change + close | flagship outputs differing from the committed baseline — a formula drift fails at commit time, not at the saw. Intended change? Commit the new baseline WITH the code and a claim |
 | **`session-close.sh`** | end of session | knowledge still in flight (see §2); project checks plug in as `scripts/session-gates.d/*.sh` (template-aligned — upstreamed to truth-ledger) |
+| **`dashboard.py --check`** (session-gates.d/30) | end of session | a stale `STATUS.md` — the dashboard is GENERATED from ledger/bd/gates (`scripts/dashboard.py`, sources `docs/capability-map.csv` + `docs/roadmap-map.csv`) and its freshness is gated so it cannot lie |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
 adapter/hb5 changes: `exercises/harness/runner.py <scenario> --strict`.
+
+**Dashboard** (`STATUS.md`, repo root): five moment-views — health strip,
+ready lane (premise health × bd priority), roadmap by L1 stage with bd
+dependency arrows, capability board (cells cite tr- ids; non-live ids are
+flagged in-page), and a 14-day delta log. Hand-maintained inputs are only
+the two CSVs; everything else is derived.
 
 ## 4. Traceability — the "undoubtable" chain
 
