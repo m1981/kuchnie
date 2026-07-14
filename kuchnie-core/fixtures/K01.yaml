@@ -31,6 +31,7 @@ korpus:
         nut: 8 # mm głębokości rowka
 
     wnetrze:
+        kolejnosc_szuflad: 'od_dolu'   # S1 na dole (G8: jawna kolejnosc)
         szuflady:
             - id: 'S1'
               typ: 'blum_metabox'

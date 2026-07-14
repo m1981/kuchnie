@@ -13,3 +13,8 @@ def k01_path():
 @pytest.fixture
 def g01_path():
     return FIXTURES / "G01.yaml"
+
+
+@pytest.fixture
+def k02_path():
+    return FIXTURES / "K02_legrabox.yaml"

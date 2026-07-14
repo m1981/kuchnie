@@ -108,9 +108,10 @@ the requirement's tracker):
 2. System identifies each cabinet's type and configuration from the scene
    — **⚠ wk-81a47ab8** (the scene stores the drawer stack: tr-097ded37;
    the adapter does not read it yet).
-3. Michał reviews/completes parameters; system normalizes drawer order
-   regardless of entry direction — **⚠ kuchnie-92j** (G8, demonstrated
-   scrap-risk).
+3. Michał reviews/completes parameters; loaders normalize a declared
+   top-down drawer stack and REJECT an ambiguous unequal one — supported
+   (wk-844f5a9f closed G8 at loader/schema; hand-built instances follow
+   the documented bottom-up contract).
 4. System decomposes each cabinet to panels (dims, edging, grain,
    machining ops) — flagship types full (tr-591aa208, tr-3ef7b607,
    tr-8dfe366d); door/wall types partial (`capability-map.csv`).

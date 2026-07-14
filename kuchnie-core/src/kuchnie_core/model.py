@@ -321,6 +321,11 @@ class CabinetInstance:
     plinth_height_mm: int = 100
 
     # Interior elements
+    # CONTRACT: drawers are listed BOTTOM-UP — decomposers accumulate the
+    # runner axis from the bottom panel upward (G8). Loaders normalize
+    # declared top-down input and reject ambiguous unequal stacks
+    # (loader._normalize_drawer_order); hand-built instances must honor
+    # the bottom-up order themselves.
     drawers: list[dict] = field(default_factory=list)
     shelves: list[dict] = field(default_factory=list)
     fronts: list[dict] = field(default_factory=list)

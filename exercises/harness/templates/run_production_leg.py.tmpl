@@ -54,7 +54,9 @@ def build_instance() -> CabinetInstance:
         front_material="K5307_18",
         thickness_back_mm=3,
         plinth_height_mm=ext.get("plinth_height_mm", 100) if ext else 100,
-        drawers=[],                                 # <- scenario-specific
+        drawers=[],   # <- scenario-specific — BOTTOM-UP order! (G8:
+                      #    decomposers accumulate runner rows from the
+                      #    bottom; loaders validate, hand-built lists must)
         fronts=[],                                  # <- scenario-specific
         edge_banding_type="abs",
     )

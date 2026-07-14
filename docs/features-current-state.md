@@ -47,9 +47,11 @@ cutting sizes, runner pilot drills (Ø5×12 at the Blum X positions), 40 kg
 runner accessories. Single-sourced in `legrabox.py` (ADR-006).
 **TANDEMBOX / MERIVOBOX: data tables only** (heights, back panel heights) —
 no base-cabinet decomposer consumes them yet.
-**Caveat that will scrap a side panel:** the drawer list is consumed
-bottom-up; enter fronts top-down and the M drawer's drillings land at the
-bottom (G8 — demonstrated live in the e2e exercise, still open).
+**Order contract (G8, closed at loader/schema):** the drawer list is
+consumed bottom-up; YAML input may declare `kolejnosc_szuflad: od_gory`
+(normalized by reversal) and an ambiguous unequal stack without a
+declaration is rejected at load. Hand-built `CabinetInstance` lists must
+honor bottom-up themselves (documented on the model).
 
 ### Materials & decor — Partial
 

@@ -212,7 +212,16 @@ class CabinetSpec(BaseModel):
     
     drawers: list[DrawerSpec] = Field(
         default_factory=list,
-        description="Drawer configurations"
+        description="Drawer configurations (see drawer_order for stacking)"
+    )
+    drawer_order: Optional[str] = Field(
+        default=None,
+        description="How the drawers list is stacked: 'bottom_up' (model "
+                    "contract) or 'top_down' (normalized by reversal at "
+                    "load). Required when 2+ drawers have unequal heights "
+                    "— ambiguous order puts runner drillings on the wrong "
+                    "rows (G8, scrap-risk).",
+        pattern="^(bottom_up|top_down)$",
     )
     shelves: list[ShelfSpec] = Field(
         default_factory=list,

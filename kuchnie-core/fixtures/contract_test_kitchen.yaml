@@ -32,6 +32,7 @@ rows:
         body_material: "swiss_krono.U119_VL"
         back_material: "HDF_3mm"
         front_material: "swiss_krono.U119_EM"
+        drawer_order: "bottom_up"   # G8: explicit order (S1 at the bottom)
         drawers:
           - id: "S1"
             height_mm: 150

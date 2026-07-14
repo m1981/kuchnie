@@ -254,6 +254,39 @@ def _apply_synthesised_config(cab: CabinetInstance) -> CabinetInstance:
     return cab
 
 
+def _normalize_drawer_order(drawers: list, order: str | None,
+                            cabinet_id: str) -> list:
+    """Enforce the model contract: CabinetInstance.drawers is BOTTOM-UP.
+
+    G8 (UC-2 extension 3a): a multi-drawer stack with unequal heights and
+    no explicit order declaration is AMBIGUOUS — entering fronts top-down
+    puts the top drawer's runner drillings at the floor (demonstrated
+    scrap-risk, tr-0958807f). Ambiguity is rejected at load; declared
+    top-down input is normalized by reversal.
+
+    order: 'od_dolu'/'bottom_up' | 'od_gory'/'top_down' | None
+    """
+    if not drawers or len(drawers) < 2:
+        return drawers
+    if order in ("od_gory", "top_down"):
+        return list(reversed(drawers))
+    if order in ("od_dolu", "bottom_up"):
+        return drawers
+    if order is not None:
+        raise ValueError(
+            f"{cabinet_id}: unknown drawer order '{order}' "
+            f"(use od_dolu/od_gory or bottom_up/top_down)")
+    heights = {d.get("wysokosc") for d in drawers if isinstance(d, dict)}
+    if len(heights) > 1:
+        raise ValueError(
+            f"{cabinet_id}: drawer stack order is ambiguous — {len(drawers)} "
+            f"drawers with unequal heights and no order declaration. Add "
+            f"'kolejnosc_szuflad: od_dolu|od_gory' (Polish YAML) or "
+            f"'drawer_order: bottom_up|top_down' (schema YAML). The model "
+            f"consumes drawers BOTTOM-UP.")
+    return drawers
+
+
 def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
     """Load a single cabinet definition from a YAML file."""
     data = yaml.safe_load(Path(yaml_path).read_text())
@@ -282,8 +315,11 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         # Edge banding
         edge_banding_type=k["oklejanie"]["typ"],
         edge_banding_thickness_mm=k["oklejanie"]["grubosc"],
-        # Interior
-        drawers=k["wnetrze"].get("szuflady", []),
+        # Interior (drawer list normalized to the bottom-up model contract)
+        drawers=_normalize_drawer_order(
+            k["wnetrze"].get("szuflady", []),
+            k["wnetrze"].get("kolejnosc_szuflad"),
+            k["id"]),
         shelves=k["wnetrze"].get("polki", []),
         fronts=k.get("fronty", []),
         handles=_handle_spec_from_polish(k.get("uchwyty")),
@@ -313,7 +349,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
         thickness_front_mm=cab_data.get("thickness_front_mm", 18),
         groove_depth_mm=cab_data.get("groove_depth_mm", 8),
         plinth_height_mm=cab_data.get("plinth_height_mm", 100),
-        drawers=[
+        drawers=_normalize_drawer_order([
             {
                 "id": d["id"],
                 "typ": d.get("system", "tandembox_antaro"),
@@ -323,7 +359,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
                 "capacity_kg": d.get("capacity_kg", 40),
             }
             for d in cab_data.get("drawers", [])
-        ],
+        ], cab_data.get("drawer_order"), cab_data["id"]),
         shelves=[{"id": s["id"]} for s in cab_data.get("shelves", [])],
         fronts=[
             {
