@@ -53,6 +53,20 @@ there" machine.
 | I.8 | 26262/61508 lens | Canary suite is a legitimate tool-qualification argument (seeded fault injection, fail-if-uncaught) | Correctly disclosed limit: filer≠verifier separates *sessions*, not *people* — never to be read as the standards' independent assessment (paper §8 item 1) |
 | I.9 | 10007 single status account (cross-cutting) | — | The kuchnie regime runs BOTH native wk- issues and bd twins — dual status accounting for one item class, the guide's own §2 warns "choose one home or pin explicitly." Held together by convention + session gate; decide by ADR: kernel-only, or bd-only with `TRUTH_TRACKER_CMD` pinned |
 
+**Post-review correction to I.7 (2026-07-15, same day):** the reviewed
+copies in `~/Downloads` turned out to be byte-identical exports of
+governed originals in the meta-repo
+(`/Users/michal/PycharmProjects/truth-ledger/docs/`) — the review's
+factual basis is intact and the "move them under a repo" recommendation
+was already satisfied. What stands of I.7, verified against the
+meta-repo's own ledger: the loophole map is claim-watched there (7 path
+references in its `claims.jsonl`), but `truth-ledger-paper-v2.md` — the
+largest contract document, and the one that *invented* the doc-coverage
+mechanism (§5) — appears in zero claims: it is untripwired in its own
+repo. Residual actions: file a doc-coverage claim for the paper in the
+meta-repo, and delete read-only exports after use (one home per fact —
+identical today is drift tomorrow).
+
 ---
 
 ## Part II — The Two-Ledger Architecture: Truth, Intent, and the Conformance Join
