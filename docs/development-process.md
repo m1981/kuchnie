@@ -131,6 +131,13 @@ text — the id is authoritative (spec convention).
 7. **Immutable things stay immutable** — accepted ADRs (supersede),
    goldens (new run, new directory), ledger history (append-only fold,
    machinery §1/§6).
+8. **Watch sources, never generated artifacts** — `--paths` on a claim
+   must name the files that cause a fact to change, not the outputs a
+   script writes from them (STATUS.md, code-inventory.json); a claim that
+   watches an output restales every time the generator runs. Likewise,
+   never embed a volatile foreign-tracker field (a bd priority, status,
+   or assignment) inside claim text — it drifts out from under the claim
+   without touching any watched path (wk-ea10d199).
 
 ## 6. Agile mapping, for the avoidance of ceremony
 
