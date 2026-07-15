@@ -25,14 +25,55 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "kuchnie-core" / "src"))
 
 
+class FakeMaterial:
+    """A bpy Material stand-in: only .name is read by the adapter."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+
+class _FakeGNSocket:
+    """One INPUT socket in a geo-nodes group interface (items_tree entry)."""
+
+    item_type = "SOCKET"
+    in_out = "INPUT"
+
+    def __init__(self, name: str):
+        self.name = name
+        self.identifier = f"Socket_{name}"
+
+
+class FakeGNModifier:
+    """A NODES modifier whose inputs are laid out exactly the way
+    exercises/harness/hb5.py::dump_cage_hierarchy reads the real thing:
+    node_group.interface.items_tree -> socket.identifier -> mod[ident]."""
+
+    type = "NODES"
+
+    def __init__(self, inputs: dict):
+        sockets = [_FakeGNSocket(n) for n in inputs]
+        self.node_group = types.SimpleNamespace(
+            interface=types.SimpleNamespace(items_tree=sockets)
+        )
+        self._values = {s.identifier: inputs[s.name] for s in sockets}
+
+    def __getitem__(self, identifier):
+        return self._values[identifier]
+
+
 class FakeBlenderObject:
-    """Mimics a Blender Object: custom props via .get(), .children, and the
-    evaluated bounding-box .dimensions (the real hb5 dimension carrier)."""
+    """Mimics a Blender Object: custom props via .get(), .children, the
+    evaluated bounding-box .dimensions (the real hb5 dimension carrier),
+    .name, and geo-node modifier inputs via ``gn_inputs`` (hb5 stores
+    opening Dim Z and part materials there, not as ID props)."""
 
     def __init__(self, props: dict | None = None, children: list | None = None,
-                 dimensions: tuple | None = None):
+                 dimensions: tuple | None = None, name: str = "Fake",
+                 gn_inputs: dict | None = None):
         self._props = dict(props or {})
         self.children = list(children or [])
+        self.name = name
+        self.modifiers = [FakeGNModifier(gn_inputs)] if gn_inputs else []
         if dimensions is not None:
             self.dimensions = dimensions
 
