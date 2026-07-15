@@ -1,5 +1,7 @@
 # DRAFT upstream design RFC — the `nd-` record kind + `satisfies` edge
 
+> **POSTED 2026-07-16:** https://github.com/m1981/truth-ledger/issues/6
+
 > Reader: Michał deciding whether to post this to the truth-ledger template
 > repo | Enables: pasting the body below into `gh issue create` unchanged
 > (label it RFC) | Update-trigger: posted upstream (add the issue URL

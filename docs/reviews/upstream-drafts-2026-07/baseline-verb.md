@@ -1,5 +1,7 @@
 # DRAFT upstream issue — `truth baseline <ref>`: set-level status accounting
 
+> **POSTED 2026-07-16:** https://github.com/m1981/truth-ledger/issues/3
+
 > Reader: Michał deciding whether to post this to the truth-ledger template
 > repo | Enables: pasting the body below into `gh issue create` unchanged |
 > Update-trigger: posted upstream (add the issue URL here), rejected, or

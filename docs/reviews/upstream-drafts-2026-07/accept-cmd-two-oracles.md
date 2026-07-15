@@ -1,5 +1,7 @@
 # DRAFT upstream issue — accept-cmd: two-oracle shape + its own allowlist
 
+> **POSTED 2026-07-16:** https://github.com/m1981/truth-ledger/issues/2
+
 > Reader: Michał deciding whether to post this to the truth-ledger template
 > repo (extends truth-ledger#1) | Enables: pasting the body below into
 > `gh issue create` unchanged | Update-trigger: posted upstream (add the
