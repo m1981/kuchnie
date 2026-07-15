@@ -105,7 +105,7 @@ passed.
 the requirement's tracker):
 
 1. Michał points the system at the .blend; the adapter extracts cabinet
-   envelopes (W×H×D, toe kick, per wall) — tr-3bb325f8.
+   envelopes (W×H×D, toe kick, per wall) — tr-239065a8.
 2. System identifies each cabinet's type and configuration from the scene
    — supported: extraction reads the persisted drawer stack (type, count,
    opening heights bottom-up per G8) — tr-ef90fea5.
@@ -153,7 +153,7 @@ business's central flow.
 
 ## Ground truths
 
-- tr-3bb325f8 — extraction reads bbox + toe kick (UC-2 step 1 works).
+- tr-239065a8 — extraction reads bbox + toe kick (UC-2 step 1 works).
 - tr-ef90fea5 — extraction reads the persisted hb5 drawer stack (cabinet
   type, drawer count, opening heights bottom-up); UC-2 step 2 supported.
   Supersedes the earlier reading-gap fact (diverged by design 2026-07-16

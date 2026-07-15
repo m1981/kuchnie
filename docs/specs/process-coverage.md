@@ -47,7 +47,7 @@ only if a real need appears — see pattern-conformance row 10).
 ## Ground truths
 
 - tr-8ed0a7ff — home_builder_5 present (stage 3 input exists).
-- tr-3bb325f8 — extraction reads bbox + toe kick (stage 3 contract works).
+- tr-239065a8 — extraction reads bbox + toe kick (stage 3 contract works; successor of the pre-rule-8 claim that watched a generated log).
 - tr-b2e3dbff — dolna_legrabox emits stretchers + plinth (stage 4 buildable).
 - tr-3ef7b607 — confirmat + groove ops emitted (stage 7 input exists).
 - tr-fc74bc2e — recipe engine unwired (stage 4 debt: two formula engines).
