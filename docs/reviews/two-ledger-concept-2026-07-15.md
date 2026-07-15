@@ -7,11 +7,13 @@
 > on paper v3 timing | Update-trigger: a phase-1 mechanism ships, an upstream
 > issue closes, or the v3 trigger conditions (§C) are met
 
-Reviewed artifacts: the paper v2 (`truth-ledger-paper-v2.md`, template
-meta-repo — a copy was read from `~/Downloads`, see finding I.7), the
-loophole map (same provenance), [docs/truth-ledger-machinery.md]
-(../truth-ledger-machinery.md), [docs/beads-integration-guide.md]
-(../beads-integration-guide.md). Cockburn-side companion:
+Reviewed artifacts: the paper v2 and the loophole map — canonical at
+`/Users/michal/PycharmProjects/truth-ledger/docs/truth-ledger-paper-v2.md`
+and `…/docs/truth-ledger-loophole-map.md` in the template meta-repo (the
+review was performed on exported copies later verified byte-identical to
+those canonical files, so no finding is affected — see I.7),
+[docs/truth-ledger-machinery.md](../truth-ledger-machinery.md),
+[docs/beads-integration-guide.md](../beads-integration-guide.md). Cockburn-side companion:
 [requirements-assessment-2026-07-14.md](requirements-assessment-2026-07-14.md).
 Session: 2026-07-15.
 
@@ -49,7 +51,7 @@ there" machine.
 | I.4 | 12207/15288 V&V | Verification mechanized (recheck, hash, filer≠verifier ADR-010, screened re-execution ADR-009) | **Validation on the honor system**: `truth done` takes the agent's word (loophole map item C). `--accept-cmd` (upstream truth-ledger#1) is the fix — but must accept validation oracles (golden diffs), not only verification checks, and needs its own allowlist distinct from the ADR-009 evidence screen, or every real oracle needs an unsafe override and the gate teaches its own bypass (the paper's own confused-deputy lesson) |
 | I.5 | 25010/25023 functional completeness | `truth stats` measures the knowledge base's quality (half-life, divergence rates — 25023-style metrics about the ledger itself) | Cannot measure the *product's* completeness: user objectives are not enumerable from the ledger. Same denominator fix as I.3 |
 | I.6 | 29119 requirement-based testing | Pinned-test convention (test cites the tr-/wk- id it pins) is conformant | **The only convention in the regime with no gate.** Missing satellite: test-health.sh — sweep test files for cited ids (exist? not retracted/diverged?), inverse-check closed wk items for a citing test. Completes the spec-health/doc-health family |
-| I.7 | 42010 correspondence rules | Satellites are correspondence rules; the paper's audit instrument #1 caught representation drift twice (F1, F8) | Meta-finding: the paper and loophole map were read from `~/Downloads` — outside any repo, invisible to doc-health and to the doc-coverage mechanism the paper itself invented (§5). The loophole map pins "current: CLI v0.6.4" with no tripwire able to fire on it. They belong in the template meta-repo under doc-coverage claims; ungoverned copies get deleted (the regime's own one-home rule) |
+| I.7 | 42010 correspondence rules | Satellites are correspondence rules; the paper's audit instrument #1 caught representation drift twice (F1, F8) | **CORRECTED 2026-07-15** — see the post-review correction below this table: the reviewed files were byte-identical exports of governed meta-repo originals (loophole map claim-watched there, e.g. live tr-b9e1be35 on its gate-status statements), so the "outside any repo" finding was wrong; what stands is the sharper residual that `truth-ledger-paper-v2.md` itself appears in zero meta-repo claims — untripwired in its own repo |
 | I.8 | 26262/61508 lens | Canary suite is a legitimate tool-qualification argument (seeded fault injection, fail-if-uncaught) | Correctly disclosed limit: filer≠verifier separates *sessions*, not *people* — never to be read as the standards' independent assessment (paper §8 item 1) |
 | I.9 | 10007 single status account (cross-cutting) | — | The kuchnie regime runs BOTH native wk- issues and bd twins — dual status accounting for one item class, the guide's own §2 warns "choose one home or pin explicitly." Held together by convention + session gate; decide by ADR: kernel-only, or bd-only with `TRUTH_TRACKER_CMD` pinned |
 
