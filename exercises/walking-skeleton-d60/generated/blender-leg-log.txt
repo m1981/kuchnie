@@ -7,4 +7,4 @@ cabinet created
 blend saved
 raw dump: 1 cage(s)
 extraction OK (adapter as-is)
-  extracted: dolna_drzwiowa 600x820x560 plinth=100 drawers=[]
+  extracted: dolna_legrabox 600x820x560 plinth=100 drawers=[{'id': 'S1', 'wysokosc': 252}, {'id': 'S2', 'wysokosc': 252}, {'id': 'S3', 'wysokosc': 140}]

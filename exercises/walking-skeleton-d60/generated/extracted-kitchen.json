@@ -11,8 +11,8 @@
       "cabinets": [
         {
           "id": "cab_000",
-          "type": "dolna_drzwiowa",
-          "description": "Extracted from Blender (dolna_drzwiowa)",
+          "type": "dolna_legrabox",
+          "description": "Extracted from Blender (dolna_legrabox)",
           "width_mm": 600,
           "height_mm": 820,
           "depth_mm": 560,
@@ -29,7 +29,20 @@
           "edge_banding_type": "ABS",
           "edge_banding_thickness_mm": 0.8,
           "plinth_height_mm": 100,
-          "drawers": [],
+          "drawers": [
+            {
+              "id": "S1",
+              "wysokosc": 252
+            },
+            {
+              "id": "S2",
+              "wysokosc": 252
+            },
+            {
+              "id": "S3",
+              "wysokosc": 140
+            }
+          ],
           "shelves": [],
           "fronts": [],
           "handles": null,
