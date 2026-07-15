@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import select
 from ..core.database import get_session, engine, SQLModel
-from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule
+from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule, STAGE_LABELS, DEFAULT_STAGE
 from ..core.schemas import CostTraceLine
 from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
@@ -100,6 +100,10 @@ class KitchenState(rx.State):
     canvas_css_width: str = "800px"
     canvas_css_height: str = "480px"
 
+    # Project/Order spine (wk-02a62298): read-only stage + lifecycle dates
+    project_stage_label: str = ""
+    project_dates_summary: str = ""
+
     selected_cabinet_id: int | None = None
     selected_cabinet: CabinetUI | None = None
 
@@ -136,6 +140,31 @@ class KitchenState(rx.State):
         if "catalog_variant_id" not in columns:
             session.exec(text("ALTER TABLE material ADD COLUMN catalog_variant_id VARCHAR"))
         session.commit()
+
+    def _ensure_project_schema(self, session):
+        """Project/Order spine (wk-02a62298): additive columns for stage,
+        customer contact, lifecycle dates. Existing local database.db files
+        predate these columns; ALTER them in like the cabinet/material
+        migrations above."""
+        columns = {row[1] for row in session.exec(text("PRAGMA table_info(project)")).all()}
+        migrations = {
+            "stage": f"ALTER TABLE project ADD COLUMN stage VARCHAR DEFAULT '{DEFAULT_STAGE}'",
+            "customer_email": "ALTER TABLE project ADD COLUMN customer_email VARCHAR",
+            "customer_phone": "ALTER TABLE project ADD COLUMN customer_phone VARCHAR",
+            "customer_address": "ALTER TABLE project ADD COLUMN customer_address VARCHAR",
+            "created_at": "ALTER TABLE project ADD COLUMN created_at DATETIME",
+            "quoted_at": "ALTER TABLE project ADD COLUMN quoted_at DATETIME",
+            "ordered_at": "ALTER TABLE project ADD COLUMN ordered_at DATETIME",
+            "production_at": "ALTER TABLE project ADD COLUMN production_at DATETIME",
+            "installed_at": "ALTER TABLE project ADD COLUMN installed_at DATETIME",
+        }
+        for column_name, statement in migrations.items():
+            if column_name not in columns:
+                session.exec(text(statement))
+        session.commit()
+
+    def _format_project_date(self, value) -> str:
+        return value.strftime("%Y-%m-%d") if value else "—"
 
     @rx.var
     def local_material_options(self) -> list[str]:
@@ -857,6 +886,7 @@ class KitchenState(rx.State):
         with next(get_session()) as session:
             self._ensure_cabinet_schema(session)
             self._ensure_material_schema(session)
+            self._ensure_project_schema(session)
             existing = session.exec(select(Project)).first()
 
             # Board identity comes from the catalog service via the
@@ -964,6 +994,14 @@ class KitchenState(rx.State):
             self.global_front_mat_name = f"{global_mat.brand} - {global_mat.name}" if global_mat else ""
 
             self.project_name = existing.customer_name
+            self.project_stage_label = STAGE_LABELS.get(existing.stage, existing.stage)
+            self.project_dates_summary = (
+                f"Created {self._format_project_date(existing.created_at)} · "
+                f"Quoted {self._format_project_date(existing.quoted_at)} · "
+                f"Ordered {self._format_project_date(existing.ordered_at)} · "
+                f"Production {self._format_project_date(existing.production_at)} · "
+                f"Installed {self._format_project_date(existing.installed_at)}"
+            )
             total_price = 0.0
 
             self._relayout_project(existing)

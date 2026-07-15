@@ -15,6 +15,15 @@ def top_bar() -> rx.Component:
             rx.heading(KitchenState.project_name, size="6", color="#0f172a"),
             spacing="0",
         ),
+
+        # Project/Order spine (wk-02a62298): read-only stage + lifecycle dates.
+        rx.vstack(
+            rx.text("STAGE", font_size="0.6rem", font_weight="bold", color="#64748b", letter_spacing="0.05em"),
+            rx.text(KitchenState.project_stage_label, font_size="0.8rem", color="#0f172a"),
+            rx.text(KitchenState.project_dates_summary, font_size="0.65rem", color="#64748b"),
+            spacing="0",
+            margin_left="1.5rem",
+        ),
         rx.spacer(),
 
         # Global Material Switcher

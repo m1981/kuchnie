@@ -1,5 +1,45 @@
 # kitchen_erp/core/models.py
+from datetime import datetime
+
 from sqlmodel import SQLModel, Field, Relationship
+
+# Project/Order spine (wk-02a62298): stage vocabulary is the L1 process
+# stage list in docs/specs/process-coverage.md, in pipeline order. Stage 10
+# (Delivery & installation) is "out, permanent" per that spec, so it is not
+# a stage a Project can occupy — the sequence skips 9 -> 11.
+STAGE_SEQUENCE: list[str] = [
+    "1_first_visit",       # First visit (decors) -- krono-compositor-mvp + catalog
+    "2_pomiar",             # Pomiar -- kitchen-erp project record, attachments only
+    "3_layout_design",      # Layout & design -- home_builder_5 / home-builder-adapter
+    "4_decomposition",      # Decomposition -- kuchnie-core
+    "5_purchasing",         # Purchasing -- kitchen-erp (rozrys CSV, board/hardware orders)
+    "6_cutting_edging",     # Cutting & edging -- external service
+    "7_cam_drilling",       # CAM / drilling -- kitchen-cam
+    "8_assembly_outputs",   # Assembly outputs -- kitchen-cam
+    "9_worktops",           # Worktops -- kuchnie-core BOM + catalog
+    "11_handover_archive",  # Handover archive -- kitchen-erp project record
+]
+
+STAGE_LABELS: dict[str, str] = {
+    "1_first_visit": "First visit (decors)",
+    "2_pomiar": "Pomiar",
+    "3_layout_design": "Layout & design",
+    "4_decomposition": "Decomposition",
+    "5_purchasing": "Purchasing",
+    "6_cutting_edging": "Cutting & edging",
+    "7_cam_drilling": "CAM / drilling",
+    "8_assembly_outputs": "Assembly outputs",
+    "9_worktops": "Worktops",
+    "11_handover_archive": "Handover archive",
+}
+
+DEFAULT_STAGE = STAGE_SEQUENCE[0]
+
+
+class StageTransitionError(ValueError):
+    """Raised by Project.transition_stage for an unknown stage or a
+    backward/no-op move. This is the only sanctioned way to change
+    Project.stage -- nothing else should assign it directly."""
 
 
 class Material(SQLModel, table=True):
@@ -106,17 +146,72 @@ class Cabinet(SQLModel, table=True):
         """
         return self.override_front_mat
 
+class ArtifactRef(SQLModel, table=True):
+    """A reference to an artifact produced along the spine (stages 1-11):
+    rozrys CSV, BOM export, CNC program, offer PDF, etc. `path` holds a
+    filesystem path or an external id/URL -- this table never stores the
+    artifact bytes themselves."""
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
+    kind: str  # e.g. "rozrys_csv", "bom", "cnc_program", "offer_pdf"
+    path: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    project: "Project" = Relationship(back_populates="artifact_refs")
+
+
 class Project(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     customer_name: str
     waste_factor: float = 1.20
     labor_markup: float = 1.50
 
+    # Project/Order spine (wk-02a62298)
+    stage: str = Field(default=DEFAULT_STAGE)
+
+    # Customer contact, beyond the bare customer_name
+    customer_email: str | None = None
+    customer_phone: str | None = None
+    customer_address: str | None = None
+
+    # Lifecycle dates -- all nullable; created_at auto-stamps at creation,
+    # the rest are set explicitly as the project moves through the spine.
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    quoted_at: datetime | None = None
+    ordered_at: datetime | None = None
+    production_at: datetime | None = None
+    installed_at: datetime | None = None
+
     # Relationships
     # cascade_delete=True ensures if we delete a project, its cabinets and defaults vanish too.
     cabinets: list[Cabinet] = Relationship(back_populates="project", cascade_delete=True)
     defaults: ProjectDefaults | None = Relationship(back_populates="project", cascade_delete=True)
-    
+    artifact_refs: list[ArtifactRef] = Relationship(back_populates="project", cascade_delete=True)
+
+    def transition_stage(self, new_stage: str) -> None:
+        """Move the project forward to `new_stage` in STAGE_SEQUENCE order.
+
+        Raises StageTransitionError for an unknown stage id or any
+        backward/no-op move -- stage only ever advances, and only through
+        this method (no UI or caller may assign .stage directly).
+        """
+        if new_stage not in STAGE_SEQUENCE:
+            raise StageTransitionError(f"unknown stage: {new_stage!r}")
+        current_idx = STAGE_SEQUENCE.index(self.stage)
+        new_idx = STAGE_SEQUENCE.index(new_stage)
+        if new_idx <= current_idx:
+            raise StageTransitionError(
+                f"cannot move from {self.stage!r} to {new_stage!r}: "
+                "stage only advances forward"
+            )
+        self.stage = new_stage
+
+    def add_artifact(self, kind: str, path: str) -> ArtifactRef:
+        """Record an artifact reference for this project (rozrys CSV, BOM,
+        CNC program, offer PDF, ...). Caller is responsible for
+        session.add()/commit() when persistence is desired."""
+        return ArtifactRef(project=self, kind=kind, path=path)
+
     def generate_project_bom(self):
         """
         Generate complete BOM for entire project using new BOM generator system.
