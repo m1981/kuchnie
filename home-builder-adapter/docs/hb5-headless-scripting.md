@@ -63,9 +63,21 @@ Verified via `exercises/walking-skeleton-d60/generated/raw-cage-dump.json`:
   default), `Base Top Construction`, `Stretcher Width`.
 - **NOT ID props:** `Dim X/Y/Z` (geometry-node modifier inputs — read the
   evaluated `obj.dimensions` bbox instead) and `opening_sizes` (transient
-  Python attribute on the SplitterVertical wrapper; never persisted —
-  drawer stacks are currently unextractable from a saved scene, see
-  wk-81a47ab8 extraction fidelity round 2).
+  Python attribute on the SplitterVertical wrapper; never persisted).
+- **Drawer stacks ARE persisted** as a cage hierarchy (proof:
+  `exercises/e2e-d60-legrabox/generated/cage-hierarchy.json`): `Bay →
+  Splitter Vertical (IS_FRAMELESS_SPLITTER_VERTICAL_CAGE) → Opening N
+  (IS_FRAMELESS_OPENING_CAGE, per-opening geo-node `Dim Z`) → Drawers
+  insert → Drawer Front (IS_DRAWER_FRONT) → Drawer Box (IS_DRAWER_BOX +
+  clearance props)`. `src/extract.py` walks it since extraction r2
+  (wk-81a47ab8). CAUTION: `Opening 1..N` enumerate TOP-DOWN
+  (SplitterVertical adds them top to bottom) while
+  `CabinetInstance.drawers` is BOTTOM-UP (G8, tr-00330365) — the adapter
+  reverses; anything else reading openings must do the same.
+- Part materials are geo-node inputs too (`Top Surface` on CabinetPart
+  panels, `Material` on drawer boxes) holding style materials like
+  `Default Style Finish` — hb5 names, not catalog decor codes (no
+  resolver yet; ADR-008 keeps CabinetInstance materials unassigned).
 - Cabinets are generated procedurally — there is no "3 drawer base" .blend
   asset to append; `.blend` assets are geo-node groups + materials only.
 
