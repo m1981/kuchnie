@@ -1,3 +1,11 @@
+# TOMBSTONE (2026-07-16): atticized by owner decision after the divergence
+# audit docs/reviews/legrabox-side-panel-audit-2026-07-15.md — this standalone
+# generator re-derived LEGRABOX math that diverged from kuchnie_core (ADR-006
+# single source) on System32 offsets, runner holes, opening sizing and joinery
+# diameters. DO NOT RUN for production. Its DXF annotation layers (title
+# block, dimensions, edgebanding marks) are being ported into
+# kitchen_cam.dxf.panel_dxf reading from Panel/MachiningOp — see the wk item
+# cited in the audit doc.
 #!/usr/bin/env python3
 """
 LEGRABOX Side Panel DXF Generator

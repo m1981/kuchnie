@@ -80,5 +80,7 @@ and unimported since, while core and panel_dxf kept evolving.
 4. Standing risk if kept: a hand-run DXF silently disagreeing with the
    real pipeline — the exact ADR-006/ADR-010 violation, latent.
 
-**Decision (Michał, dark-triage):** ______ (adopt / attic / delete) —
-pending.
+**Decision (Michał, 2026-07-16): ATTIC.** Moved to
+`attic/legrabox_side_panel.py` with tombstone header; annotation-layer
+port filed as its own work item (see repo tracker: "Port DXF annotation
+layers into panel_dxf").
