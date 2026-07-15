@@ -342,7 +342,14 @@
     "functions": [
       "_count_shelves",
       "_extract_cabinet",
+      "_extract_drawer_stack",
+      "_gn_input",
+      "_iter_subtree",
       "_m_to_mm",
+      "_opening_height_m",
+      "_opening_top_down_index",
+      "_part_materials",
+      "_subtree_has",
       "cabinets_to_kitchen",
       "extract_cabinets_from_scene",
       "extract_kitchen_from_blend"
@@ -467,12 +474,14 @@
   },
   "kitchen-erp/kitchen_erp/core/models.py": {
     "classes": [
+      "ArtifactRef",
       "Cabinet",
       "HardwareRule",
       "HardwareSet",
       "Material",
       "Project",
-      "ProjectDefaults"
+      "ProjectDefaults",
+      "StageTransitionError"
     ],
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.models",

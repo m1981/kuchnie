@@ -107,8 +107,8 @@ the requirement's tracker):
 1. Michał points the system at the .blend; the adapter extracts cabinet
    envelopes (W×H×D, toe kick, per wall) — tr-3bb325f8.
 2. System identifies each cabinet's type and configuration from the scene
-   — **⚠ wk-81a47ab8** (the scene stores the drawer stack: tr-097ded37;
-   the adapter does not read it yet).
+   — supported: extraction reads the persisted drawer stack (type, count,
+   opening heights bottom-up per G8) — tr-ef90fea5.
 3. Michał reviews/completes parameters; loaders normalize a declared
    top-down drawer stack and REJECT an ambiguous unequal one — supported
    (wk-844f5a9f closed G8 at loader/schema; hand-built instances follow
@@ -154,8 +154,11 @@ business's central flow.
 ## Ground truths
 
 - tr-3bb325f8 — extraction reads bbox + toe kick (UC-2 step 1 works).
-- tr-097ded37 — hb5 scene stores the drawer stack headless-readable; the
-  adapter reads none of it (UC-2 step 2 is recoverable, not blocked).
+- tr-ef90fea5 — extraction reads the persisted hb5 drawer stack (cabinet
+  type, drawer count, opening heights bottom-up); UC-2 step 2 supported.
+  Supersedes the earlier reading-gap fact (diverged by design 2026-07-16
+  when wk-81a47ab8's r2 slice landed; see that claim's diverge verdict in
+  the ledger for the lineage).
 - tr-00421995 — validation gates scattered, no orchestrator (UC-2 step 5
   missing).
 - tr-15d48651 — Panel.grain wired, Usłojenie emitted (UC-2 step 6 / ext 6a).
