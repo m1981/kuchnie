@@ -65,9 +65,11 @@ meta-repo's own ledger: the loophole map is claim-watched there (7 path
 references in its `claims.jsonl`), but `truth-ledger-paper-v2.md` — the
 largest contract document, and the one that *invented* the doc-coverage
 mechanism (§5) — appears in zero claims: it is untripwired in its own
-repo. Residual actions: file a doc-coverage claim for the paper in the
-meta-repo, and delete read-only exports after use (one home per fact —
-identical today is drift tomorrow).
+repo. Residual actions: ~~file a doc-coverage claim for the paper in the
+meta-repo~~ — DONE 2026-07-15, meta-repo tr-8b1f4727 (unverified, watching
+the paper + template CLI + template schema; awaiting an independent
+meta-repo session's verdict) — and delete read-only exports after use
+(one home per fact — identical today is drift tomorrow; still Michał's).
 
 ---
 
