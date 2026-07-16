@@ -18,9 +18,11 @@ the hook text is courtesy. Verified 2026-07-12 against source.
 | 5 | Object-in-room (PaletteCAD) | Delegated to plugin | ADR-009 — placement/room stays in hb5 | none (by design) |
 | 6 | Panel formula engine | Built, unwired | tr-fc74bc2e — `recipe.py` has no decomposer consumer; erp runs its own JSON recipes | wire decomposers or retire one engine |
 | 7 | Material ≠ Construction | Clean | tr-9b296c35 — construction.py material-free; MaterialCatalog Protocol | none |
-| 8 | Validation gates | Scattered | tr-00421995 — validate fns in 5+ modules, no ordered gate runner | pipeline-organize (candidate: L-playbook Phase-8 gate) |
+| 8 | Validation gates | Built 2026-07-16 | tr-65aa5969 — `buildability.evaluate_buildability` runs the scattered checks (premise tr-00421995) as ordered gates M1–M5 + FIT/WSTD/G1/G6, parked gates explicit skips | emission not gated on the verdict yet (wk-cb6a17c8); parked gates need model support |
 | 9 | File structure | Flat, pragmatic | directly observable: `kuchnie_core/` flat modules + `export/`, `materials/` subpackages | none worth acting on |
 | 10 | Plugin extension IO | Extraction only | tr-50c8f148 — no writer back into hb5 scenes | bidirectional IO is a scope decision (L1 Q10) |
 
-Rows 6, 8 and 10 are the actionable ones; 6 and 8 are engineering debt,
-10 is the Stage-2 investment fork already posed in the L1 questionnaire.
+Rows 6 and 10 are the actionable ones; 6 is engineering debt, 10 is the
+Stage-2 investment fork already posed in the L1 questionnaire. Row 8
+closed 2026-07-16 with the buildability gate runner (residual wiring:
+wk-cb6a17c8).
