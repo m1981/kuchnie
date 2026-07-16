@@ -14,11 +14,11 @@ if [ ! -f docs/architecture-signatures.txt ]; then
     exit 0
 fi
 fresh="$(python3 scripts/signature-summary.py)"
-if diff <(printf '%s' "$fresh") docs/architecture-signatures.txt >/dev/null 2>&1; then
+if diff <(printf '%s\n' "$fresh") docs/architecture-signatures.txt >/dev/null 2>&1; then
     echo "signature-drift: surface matches the reviewed baseline"
     exit 0
 fi
-changed="$(diff <(printf '%s' "$fresh") docs/architecture-signatures.txt \
+changed="$(diff <(printf '%s\n' "$fresh") docs/architecture-signatures.txt \
     | grep -E '^[<>]' | awk '{print $2}' | sort -u)"
 count="$(printf '%s\n' "$changed" | grep -c . || true)"
 echo "signature-drift: WARN architecture surface drifted since the last" \
