@@ -1,5 +1,5 @@
 # kitchen_erp/core/models.py
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -96,6 +96,25 @@ class Material(SQLModel, table=True):
     # service (material_mirror converges it); NULL = local-born row
     # (admin UI / utility), never touched by the mirror.
     catalog_variant_id: str | None = Field(default=None, index=True)
+
+class SupplierPrice(SQLModel, table=True):
+    """One accepted landing-schema price row (wk-39ed9155, spec:
+    docs/specs/purchasing-variants.md § price ingestion). The latest row per
+    item_code is the "last known" price for the ±tolerance gate, and its
+    valid_from drives freshness grading (stale price → estimate-grade quote).
+    Rows are append-only history; Material.price_per_unit is the derived
+    convenience copy, updated by price_import for mirrored rows."""
+    id: int | None = Field(default=None, primary_key=True)
+    supplier: str
+    item_code: str = Field(index=True)  # joins Material.catalog_variant_id
+    description: str = ""
+    unit: str
+    price_net: float
+    currency: str
+    valid_from: date
+    source_ref: str  # path to the verbatim archived source
+    imported_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class HardwareSet(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
