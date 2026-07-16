@@ -132,12 +132,17 @@ and the end-of-session verifier caught the filer's own basis error).
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
 adapter/hb5 changes: `exercises/harness/runner.py <scenario> --strict`.
 
-**Dashboard** (`STATUS.md`, repo root): five moment-views — health strip,
-ready lane (premise health × bd priority), roadmap by L1 stage with bd
-dependency arrows (plus a by-use-case rendering of the same items, from
-the `uc` column of `docs/roadmap-map.csv`), capability board (cells cite
-tr- ids; non-live ids are flagged in-page), and a 14-day delta log.
-Hand-maintained inputs are only the two CSVs; everything else is derived.
+**Dashboard** (`STATUS.md`, repo root, v2 — design:
+`docs/reviews/dashboard-pm-review-2026-07-17.md`): five sections = five
+PM questions, each carrying the command that moves its needle — 1 can I
+sell it (UC progress bars from spec markers, all-specs R7 acceptance
+gauge, capability board), 2 blocked on the owner (paste-ready retraction
+batch, undressed-UC dressing prompts), 3 what's next (ready lane split
+product|process via the `axis` column of `docs/roadmap-map.csv`, with
+the closed-7d proportion stat), 4 where's the mass (per-stage counts,
+L1/UC mermaid swimlanes, gap register from `docs/gap-register.csv`), and
+5 machine health (gates, claims, R-rules, delta top-5). Hand-maintained
+inputs are only the three CSVs; everything else is derived.
 
 ## 4. Traceability — the "undoubtable" chain
 

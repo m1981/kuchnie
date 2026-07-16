@@ -399,7 +399,10 @@
       "Material",
       "Project",
       "ProjectDefaults",
-      "StageTransitionError"
+      "StageTransitionError",
+      "Variant",
+      "VariantLockedError",
+      "VariantStateError"
     ],
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.models",
@@ -452,6 +455,22 @@
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.schemas",
     "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/variant_derivation.py": {
+    "classes": [
+      "BomLine",
+      "DerivedArtifacts",
+      "VariantParameters"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.variant_derivation",
+    "functions": [
+      "_apply_parameters",
+      "_attach_drawer_boxes",
+      "_bom_lines",
+      "derive_variant",
+      "resolve_parameters"
+    ]
   },
   "kitchen-erp/kitchen_erp/kitchen_erp.py": {
     "classes": [],
@@ -651,6 +670,28 @@
       "calculate_bom"
     ]
   },
+  "kuchnie-core/src/kuchnie_core/buildability.py": {
+    "classes": [
+      "BuildabilityVerdict",
+      "Finding",
+      "GateResult",
+      "GateStatus"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.buildability",
+    "functions": [
+      "_gate_cabinet_sanity",
+      "_gate_construction_fit",
+      "_gate_decomposable",
+      "_gate_drawer_systems",
+      "_gate_manifest",
+      "_ran",
+      "_row_gate_buckets",
+      "_row_ref",
+      "_skipped",
+      "evaluate_buildability"
+    ]
+  },
   "kuchnie-core/src/kuchnie_core/catalog.py": {
     "classes": [],
     "component": "kuchnie-core",
@@ -661,18 +702,17 @@
       "_front_eb",
       "_handle_accessory_name",
       "_hdf_groove_op",
-      "_method_from_cab",
       "_normalize_edge_material",
       "decompose_dolna_drzwiowa",
       "decompose_dolna_legrabox",
       "decompose_dolna_narozna_slepa",
       "decompose_dolna_szufladowa",
-      "decompose_gorna_drzwiowa"
+      "decompose_gorna_drzwiowa",
+      "method_from_cab"
     ]
   },
   "kuchnie-core/src/kuchnie_core/construction.py": {
     "classes": [
-      "CabinetGeometry",
       "ConstructionMethod",
       "ConstructionMethodRegistry"
     ],
@@ -771,7 +811,6 @@
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.loader",
     "functions": [
-      "_apply_synthesised_config",
       "_cabinet_from_schema",
       "_door_hinge_counts",
       "_drawer_slot_from_dict",
@@ -783,6 +822,7 @@
       "_shelf_pins_from_schema",
       "_shelf_positions",
       "_synthesise_config",
+      "apply_synthesised_config",
       "load_cabinet",
       "load_kitchen",
       "load_kitchen_from_schema"
@@ -925,12 +965,7 @@
   },
   "kuchnie-core/src/kuchnie_core/types.py": {
     "classes": [
-      "CabinetLevel",
-      "CabinetType",
-      "Dimensions",
-      "Direction",
-      "DoorSide",
-      "HandleType"
+      "Dimensions"
     ],
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.types",

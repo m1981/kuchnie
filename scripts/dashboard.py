@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Generate STATUS.md — the project dashboard. NEVER hand-edit STATUS.md.
 
-Views (docs/development-process.md; design: five moments, one question each):
-  V4 health strip   — gates, claims by state, verdict queue, toolchain
-  V2 ready lane     — truth ready joined with bd priorities
-  V3 roadmap        — L1-stage swimlanes + bd dependency arrows (mermaid)
-  V3b by-goal       — same items grouped by use case (`uc` column of
-                      docs/roadmap-map.csv; goals from docs/specs/use-cases.md)
-  V1 capability     — docs/capability-map.csv, evidence ids checked live
-  V5 delta log      — work closed in the last 14 days (from claims.jsonl)
+v2 (wk-f6d3d2f1; design: docs/reviews/dashboard-pm-review-2026-07-17.md):
+five sections = five PM questions, each with needle-moving commands:
+  1 CAN I SELL IT     — UC progress bars (spec markers), all-specs
+                        acceptance gauge (R7), capability board
+  2 BLOCKED ON OWNER  — human-only retractions (paste-ready batch),
+                        undressed UCs with dressing prompts
+  3 WHAT'S NEXT       — ready lane split product|process (axis column of
+                        docs/roadmap-map.csv) + proportion stat
+  4 WHERE'S THE MASS  — per-stage counts, L1/UC mermaid swimlanes,
+                        gap register G1-G13 (docs/gap-register.csv)
+  5 MACHINE OK        — health strip, R-rule lines, delta count + top 5
+Format stays MARKDOWN (dev-process §4: every status one grep from proof).
 
 Usage:
   .venv/bin/python scripts/dashboard.py           # (re)generate STATUS.md
@@ -251,6 +255,83 @@ def closed_recently(days: int = 14) -> list[dict]:
     return closed
 
 
+def all_acceptance() -> list[dict]:
+    """Acceptance items swept over EVERY spec, tagged with its file."""
+    items: list[dict] = []
+    for path in sorted(REPO.glob("docs/specs/*.md")) + \
+            sorted(REPO.glob("*/docs/specs/*.md")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for it in acceptance_items(text):
+            items.append({**it, "spec": path.stem})
+    return items
+
+
+def uc_progress() -> tuple[list[dict], list[dict]]:
+    """(dressed, undressed) use cases from the spec's own markers.
+
+    A dressed UC's numbered steps classify by the spec convention:
+    '⚠' = open (its wk-/tr- ids collected), 'out of system' = excluded,
+    else supported. Extensions likewise. Undressed = inventory rows
+    marked 'full — to write'.
+    """
+    try:
+        text = (REPO / "docs/specs/use-cases.md").read_text(encoding="utf-8")
+    except OSError:
+        return [], []
+    goals = uc_goals()
+    undressed = [{"uc": m.group(1), "goal": goals.get(m.group(1), "")}
+                 for m in re.finditer(
+                     r"^\| (UC-\d+) \|.*full — to write", text, re.M)]
+    dressed: list[dict] = []
+    for m in re.finditer(r"^## (UC-\d+) — .*?fully dressed.*?$(.*?)(?=^## |\Z)",
+                         text, re.M | re.S):
+        uc, body = m.group(1), m.group(2)
+        main = re.search(r"\*\*Main success scenario\*\*.*?$(.*?)(?=\*\*Extensions)",
+                         body, re.M | re.S)
+        steps = re.split(r"^\d+\. ", main.group(1), flags=re.M)[1:] if main else []
+        ext_m = re.search(r"\*\*Extensions:\*\*$(.*?)(?=^[A-Z*#]|\Z)",
+                          body, re.M | re.S)
+        exts = re.findall(r"^- (\d+[a-z]\..*?)(?=^- \d|\Z)",
+                          ext_m.group(1), re.M | re.S) if ext_m else []
+        def _cls(chunks: list[str]) -> tuple[int, int, int, list[str]]:
+            done = excl = 0
+            open_ids: list[str] = []
+            for c in chunks:
+                if "out of system" in c:
+                    excl += 1
+                elif "⚠" in c:
+                    open_ids += re.findall(r"(?:wk|kuchnie)-[0-9a-z]+", c)
+                else:
+                    done += 1
+            return done, len(chunks) - excl, excl, sorted(set(open_ids))
+        s_done, s_total, _, s_ids = _cls(steps)
+        e_done, e_total, _, e_ids = _cls(exts)
+        dressed.append({"uc": uc, "goal": goals.get(uc, ""),
+                        "steps_done": s_done, "steps_total": s_total,
+                        "ext_done": e_done, "ext_total": e_total,
+                        "open_ids": sorted(set(s_ids + e_ids))})
+    return dressed, undressed
+
+
+def queue_split() -> tuple[list[str], list[str]]:
+    """(diverged ids → human retraction, other ids → verifier sweep)."""
+    human, verifier = [], []
+    for line in run(["scripts/truth", "queue"]).splitlines():
+        m = re.match(r"(tr-[0-9a-f]+)\s+\S+\s+(\S+)", line)
+        if not m:
+            continue
+        (human if m.group(2) == "diverged" else verifier).append(m.group(1))
+    return human, verifier
+
+
+def bar(done: int, total: int, width: int = 12) -> str:
+    filled = round(width * done / total) if total else 0
+    return "█" * filled + "░" * (width - filled)
+
+
 # ── rendering ────────────────────────────────────────────────────
 
 _SYM = {"ok": "✅", "partial": "◐", "none": "✗", "model-only": "✗"}
@@ -262,104 +343,188 @@ def render() -> str:
     for _, st in claims:
         by_status[st] = by_status.get(st, 0) + 1
     live_ids = {i for i, st in claims if st == "live"}
-    queue_n = len([l for l in run(["scripts/truth", "queue"]).splitlines() if l.strip()])
     spec_ok, spec_tail = gate_tail("spec-health.sh")
     doc_ok, doc_tail = gate_tail("doc-health.sh")
     man = manifest()
     bd = bd_open()
     rmap = read_csv(REPO / "docs/roadmap-map.csv")
     wk2bd = {r["wk_id"]: r["bd_id"] for r in rmap if r["wk_id"]}
+    wk2axis = {r["wk_id"]: r.get("axis", "") for r in rmap if r["wk_id"]}
+    bd2axis = {r["bd_id"]: r.get("axis", "") for r in rmap}
     ready = truth_ready()
+    dressed, undressed = uc_progress()
+    human_q, verifier_q = queue_split()
 
     L: list[str] = []
     a = L.append
-    a("# STATUS — generated dashboard")
+    a("# STATUS — generated dashboard (v2)")
     a("")
-    a("> Reader: Michał in any of his five moments (client call, session "
-      "start, grooming, quality glance, retro) | Enables: answering each "
-      "moment's question from one page instead of five commands | "
-      "Update-trigger: GENERATED by `scripts/dashboard.py` — never "
-      "hand-edit; freshness gated by `session-gates.d/30-dashboard-fresh.sh`")
+    a("> Reader: Michał asking one of five PM questions (can I sell it / "
+      "what's on me / what's next / where's the mass / machine ok) | "
+      "Enables: each section answers its question AND carries the command "
+      "that moves the needle | Update-trigger: GENERATED by "
+      "`scripts/dashboard.py` — never hand-edit; freshness gated by "
+      "`session-gates.d/30-dashboard-fresh.sh`")
     a("")
     a(f"{VOLATILE} {datetime.now(timezone.utc).isoformat(timespec='seconds')}")
     a("")
 
-    # V4 — health strip
-    a("## Health")
+    # ── 1 · CAN I SELL IT ────────────────────────────────────────
+    a("## 1 · Can I sell it? — capability & feature progress")
     a("")
-    a("| Signal | State |")
-    a("|---|---|")
-    a(f"| spec-health | {'🟢' if spec_ok else '🔴'} {spec_tail} |")
-    a(f"| doc-health | {'🟢' if doc_ok else '🔴'} {doc_tail} |")
-    a("| flagship baseline | guarded by `scripts/exercise-gate.sh` "
-      "(runs at session-close) |")
-    claims_line = " · ".join(f"{k} {v}" for k, v in sorted(by_status.items()))
-    a(f"| claims | {claims_line} |")
-    a(f"| verdict queue | {queue_n} awaiting triage |")
-    r2 = run(["python3", "scripts/coverage-audit.py", "--counts"]).strip()
-    if r2:
-        pretty = " · ".join(p.replace("=", " ") for p in r2.split())
-        a(f"| backward trace (R2) | {pretty} "
-          f"(`scripts/coverage-audit.py`; DARK triage = product-owner verb) |")
-    if man:
-        a(f"| last exercise run | {man.get('started_utc', '?')} · "
-          f"{man.get('blender_version', '?')} · repo "
-          f"`{man.get('repo_sha', '')[:7]}` · hb5 "
-          f"`{man.get('hb5_sha', '')[:7]}` |")
+    for d in dressed:
+        ids = " ".join(f"`{i}`" for i in d["open_ids"][:3])
+        a(f"- **{d['uc']}** {bar(d['steps_done'], d['steps_total'])} "
+          f"{d['steps_done']}/{d['steps_total']} steps · "
+          f"{d['ext_done']}/{d['ext_total']} extensions — open: {ids or '—'}")
+    for u in undressed:
+        a(f"- **{u['uc']}** ░░░░░░░░░░░░ not dressed — {u['goal']} (see § 2)")
     a("")
-
-    # R7 — completeness view (proto-R1/R7, docs/specs/conformance-join.md)
-    a("## Completeness (R7) — use-cases Acceptance vs ledger")
-    a("")
-    a("Pre-written acceptance items of `docs/specs/use-cases.md` classified "
-      "against claim texts (lexical match, no NLP): PRE-WRITTEN = no claim "
-      "yet · FILED = claim exists, not live · LIVE = claim live.")
-    a("")
-    try:
-        uc_text = (REPO / "docs/specs/use-cases.md").read_text(encoding="utf-8")
-    except OSError:
-        uc_text = ""
-    acc = classify_acceptance(acceptance_items(uc_text), claims_json())
-    a("| UC | Acceptance item | State | Claim |")
-    a("|---|---|---|---|")
-    for it in acc:
-        uc = ", ".join(it["ucs"]) if it["ucs"] else "(spec-wide)"
-        short = it["text"][:90] + ("…" if len(it["text"]) > 90 else "")
-        claim = f"{it['claim']} ({it['status']})" if it["claim"] else "—"
-        a(f"| {uc} | {short} | {it['state']} | {claim} |")
+    acc = classify_acceptance(all_acceptance(), claims_json())
     n_live = sum(1 for it in acc if it["state"] == "LIVE")
+    a(f"**Acceptance gauge (R7, all specs): {n_live}/{len(acc)} LIVE.** "
+      "Denominator = pre-written intent, numerator = demonstrated fact; "
+      "it can go DOWN when a commit stales a completion claim.")
     a("")
-    a(f"**Gauge: {n_live}/{len(acc)} acceptance items LIVE.** "
-      "The denominator is intent (pre-written claims), the numerator is "
-      "demonstrated fact — the gauge can go down when a commit stales a "
-      "completion claim.")
+    a("| Spec | UC | Acceptance item | State | Claim |")
+    a("|---|---|---|---|---|")
+    for it in acc:
+        uc = ", ".join(it["ucs"]) if it["ucs"] else "—"
+        short = it["text"][:70] + ("…" if len(it["text"]) > 70 else "")
+        claim = f"{it['claim']} ({it['status']})" if it["claim"] else "—"
+        a(f"| {it['spec']} | {uc} | {short} | {it['state']} | {claim} |")
+    a("")
+    a("| Type | rozrys | drills | DXF | BOM | 3D | Note |")
+    a("|---|---|---|---|---|---|---|")
+    cap = read_csv(REPO / "docs/capability-map.csv")
+    dead: list[str] = []
+    for r in cap:
+        cells = [_SYM.get(r[c], r[c]) for c in
+                 ("rozrys", "drills", "dxf", "bom", "extract3d")]
+        a(f"| `{r['type']}` | {' | '.join(cells)} | {r['note']} |")
+        for tid in re.findall(r"tr-[0-9a-f]+", r.get("evidence", "")):
+            if tid not in live_ids:
+                dead.append(f"{r['type']}: {tid}")
+    a("")
+    a("Legend: ✅ trusted (id-cited) · ◐ works with caveats · ✗ absent "
+      "(`docs/capability-map.csv`).")
+    if dead:
+        a("")
+        a("**⚠ cells citing non-live facts:** " + ", ".join(dead)
+          + " — move the needle: `scripts/truth queue` then re-verify or "
+            "re-map the cell.")
     a("")
 
-    # V2 — ready lane
-    a("## Ready lane (`truth ready` × bd priority)")
+    # ── 2 · BLOCKED ON MICHAŁ ────────────────────────────────────
+    a("## 2 · Blocked on Michał — the owner lane")
     a("")
-    a("| P | Work | Title | Premise health |")
-    a("|---|---|---|---|")
+    if human_q:
+        a(f"- **{len(human_q)} retraction(s) ready** (human-only; every "
+          "diverged claim's verdict names its live successor). Paste:")
+        a("")
+        ids = " ".join(human_q)
+        a("  ```")
+        a(f"  for id in {ids}; do TRUTH_HUMAN=1 TRUTH_HUMAN_ACK=$id "
+          "scripts/truth verdict $id retracted --basis "
+          '"superseded; successor in verdict trail"; done')
+        a("  ```")
+    else:
+        a("- retractions: none pending ✅")
+    for u in undressed:
+        a(f"- **{u['uc']} needs dressing** — {u['goal']}. "
+          f"Move the needle: say *“Dress {u['uc']} with me”* "
+          "(interview per docs/spec-convention.md).")
+    if verifier_q or by_status.get("unverified") or by_status.get("stale"):
+        n = len(verifier_q) + by_status.get("unverified", 0)
+        a(f"- **{n} claim(s) for an agent verifier** (not you — but only "
+          "you start sessions). Move the needle: say "
+          "*“dispatch a verifier sweep”*.")
+    a("")
+
+    # ── 3 · WHAT'S NEXT ──────────────────────────────────────────
+    a("## 3 · What's next — ready lane, product | process")
+    a("")
     rows = []
     for it in ready:
         bd_id = wk2bd.get(it["wk"], "")
         prio = bd[bd_id]["priority"] if bd_id in bd else 9
-        rows.append((it["held"], prio, it, bd_id))
-    for held, prio, it, bd_id in sorted(rows, key=lambda r: (r[0], r[1])):
-        p = f"P{prio}" if prio != 9 else "—"
-        a(f"| {p} | {it['wk']}{' / ' + bd_id if bd_id else ''} | "
-          f"{it['title']} | {it['note'] or 'live'} |")
+        axis = wk2axis.get(it["wk"], "") or "?"
+        rows.append((it["held"], prio, it, bd_id, axis))
+    prod = [r for r in rows if r[4] == "product"]
+    proc = [r for r in rows if r[4] != "product"]
+    closed = closed_recently(7)
+    PRODUCT_HINT = re.compile(
+        r"UC-\d|G\d+\b|decompos|extract|drawer|rozrys|worktop|decor|"
+        r"purchas|offer|variant|panel|runner|plinth|hinge|corner|price|"
+        r"buildab|spine|catalog", re.I)
+    def _axis_of(c: dict) -> str:
+        mapped = wk2axis.get(c["wk"], "")
+        if mapped:
+            return mapped
+        return "product" if PRODUCT_HINT.search(c["title"]) else "process"
+    c_prod = sum(1 for c in closed if _axis_of(c) == "product")
+    c_proc = len(closed) - c_prod
+    n_guessed = sum(1 for c in closed if not wk2axis.get(c["wk"]))
+    warn7 = " ⚠ swing back to product" if c_proc > c_prod else ""
+    a(f"**Open {len(prod)} product / {len(proc)} process · closed 7d "
+      f"{c_prod} product / {c_proc} process"
+      + (f" ({n_guessed} classified by keyword)" if n_guessed else "")
+      + f"{warn7}**")
     a("")
+    for label, lane in (("PRODUCT", prod), ("PROCESS", proc)):
+        a(f"### {label}")
+        a("")
+        a("| P | Work | Title | Premise health |")
+        a("|---|---|---|---|")
+        for held, prio, it, bd_id, _ in sorted(lane, key=lambda r: (r[0], r[1])):
+            p = f"P{prio}" if prio != 9 else "—"
+            a(f"| {p} | {it['wk']}{' / ' + bd_id if bd_id else ''} | "
+              f"{it['title']} | {it['note'] or 'live'} |")
+        top = sorted(lane, key=lambda r: (r[0], r[1]))
+        if top:
+            held, _, it, bd_id, _ = top[0]
+            if held:
+                a("")
+                a(f"Move the needle: unblock `{it['wk']}` — re-premise onto "
+                  f"the live successor: `scripts/truth premise {it['wk']} "
+                  "<live-tr>` (successor named in the dead claim's last "
+                  "verdict).")
+            else:
+                a("")
+                a(f"Move the needle: `scripts/truth start {it['wk']}`"
+                  + (f" · `bd update {bd_id} --claim`" if bd_id else "")
+                  + f" — then say *“continue {it['title'][:40].rstrip()}…”*")
+        a("")
 
-    # V3 — roadmap swimlanes + deps
-    a("## Roadmap by L1 stage (order = bd priority; arrows = bd deps)")
+    # ── 4 · WHERE'S THE MASS ─────────────────────────────────────
+    a("## 4 · Where's the mass — concentration & won ground")
     a("")
-    a("```mermaid")
-    a("flowchart LR")
     stages: dict[str, list[dict]] = {}
     for r in rmap:
         if r["bd_id"] in bd:  # open items only
             stages.setdefault(r["stage"], []).append(r)
+    a("| L1 stage | open | weight |")
+    a("|---|---|---|")
+    for stage in sorted(stages, key=lambda s: (s == "0", int(s))):
+        name = STAGE_NAMES.get(stage, f"Stage {stage}")
+        n = len(stages[stage])
+        a(f"| {stage} · {name} | {n} | {'█' * (2 * n)} |")
+    a("")
+    reg = read_csv(REPO / "docs/gap-register.csv")
+    n_closed = sum(1 for g in reg if g["state"] == "closed")
+    cells = " ".join(
+        f"{g['gap']}{'✅' if g['state'] == 'closed' else '⚠(' + g['ref'] + ')'}"
+        for g in reg)
+    a(f"**Gap register (walking skeleton): {n_closed}/{len(reg)} closed** — "
+      + cells)
+    a("")
+    a("Buildability's parked design gates (playbook G2–G5, G7) count inside "
+      "the UC-2 bar in § 1, not here.")
+    a("")
+    a("### Roadmap by L1 stage (order = bd priority; arrows = bd deps)")
+    a("")
+    a("```mermaid")
+    a("flowchart LR")
     node_of: dict[str, str] = {}
     for stage in sorted(stages, key=lambda s: int(s)):
         name = STAGE_NAMES.get(stage, f"Stage {stage}")
@@ -377,10 +542,7 @@ def render() -> str:
                     a(f"    {node_of[dep]} --> {node_of[bd_id]}")
     a("```")
     a("")
-
-    # V3b — roadmap by use case (goal)
-    a("## Roadmap by use case (order = bd priority; goals from "
-      "`docs/specs/use-cases.md`)")
+    a("### Roadmap by use case (goals from `docs/specs/use-cases.md`)")
     a("")
     a("```mermaid")
     a("flowchart LR")
@@ -395,7 +557,7 @@ def render() -> str:
             gid = "g" + uc.replace("-", "_")
             label = f"{uc} — {goals[uc]}" if uc in goals else uc
         else:
-            gid, label = "g_none", "no UC (process/infra — route or leave)"
+            gid, label = "g_none", "process (axis column of roadmap-map.csv)"
         a(f'    subgraph {gid} ["{label}"]')
         for r in sorted(by_uc[uc], key=lambda r: bd[r["bd_id"]]["priority"]):
             nid = "u_" + r["bd_id"].replace("-", "_")
@@ -412,42 +574,46 @@ def render() -> str:
     a("")
     unmapped = [i for i in bd if i not in {r['bd_id'] for r in rmap}]
     if unmapped:
-        a(f"Unmapped open bd issues (add to `docs/roadmap-map.csv`): "
-          f"{', '.join(sorted(unmapped))}")
+        a(f"**⚠ unmapped open bd issues** (both views above lie by "
+          f"omission until mapped): {', '.join(sorted(unmapped))} — "
+          "move the needle: add a row with stage+uc+axis to "
+          "`docs/roadmap-map.csv`.")
         a("")
 
-    # V1 — capability board
-    a("## Capability board (what you can promise a client)")
+    # ── 5 · IS THE MACHINE OK ────────────────────────────────────
+    a("## 5 · Is the machine OK? — regime health")
     a("")
-    cap = read_csv(REPO / "docs/capability-map.csv")
-    a("| Type | rozrys | drills | DXF | BOM | 3D | Note |")
-    a("|---|---|---|---|---|---|---|")
-    dead: list[str] = []
-    for r in cap:
-        cells = [_SYM.get(r[c], r[c]) for c in
-                 ("rozrys", "drills", "dxf", "bom", "extract3d")]
-        a(f"| `{r['type']}` | {' | '.join(cells)} | {r['note']} |")
-        for tid in re.findall(r"tr-[0-9a-f]+", r.get("evidence", "")):
-            if tid not in live_ids:
-                dead.append(f"{r['type']}: {tid}")
-    if dead:
-        a("")
-        a("**⚠ capability cells citing non-live facts (re-verify or re-map):** "
-          + ", ".join(dead))
-    a("")
-    a("Legend: ✅ trusted (id-cited) · ◐ works with caveats · ✗ absent. "
-      "Source: `docs/capability-map.csv` (each row cites its evidence).")
-    a("")
-
-    # V5 — delta log
-    a("## Closed in the last 14 days")
+    a("| Signal | State |")
+    a("|---|---|")
+    a(f"| spec-health | {'🟢' if spec_ok else '🔴'} {spec_tail} |")
+    a(f"| doc-health | {'🟢' if doc_ok else '🔴'} {doc_tail} |")
+    a("| flagship baseline | guarded by `scripts/exercise-gate.sh` "
+      "(runs at session-close) |")
+    claims_line = " · ".join(f"{k} {v}" for k, v in sorted(by_status.items()))
+    a(f"| claims | {claims_line} |")
+    a(f"| verdict queue | {len(human_q)} human (§ 2) + "
+      f"{len(verifier_q)} verifier |")
+    r2 = run(["python3", "scripts/coverage-audit.py", "--counts"]).strip()
+    if r2:
+        pretty = " · ".join(p.replace("=", " ") for p in r2.split())
+        a(f"| backward trace (R2) | {pretty} |")
+    a("| R4 tests | `scripts/test-health.sh` — cited ids swept at close |")
+    a(f"| R7 acceptance | {n_live}/{len(acc)} LIVE (§ 1) |")
+    if man:
+        a(f"| last exercise run | {man.get('started_utc', '?')} · "
+          f"{man.get('blender_version', '?')} · repo "
+          f"`{man.get('repo_sha', '')[:7]}` · hb5 "
+          f"`{man.get('hb5_sha', '')[:7]}` |")
     a("")
     recent = closed_recently()
-    if not recent:
-        a("(nothing closed in the window)")
-    for c in sorted(recent, key=lambda c: c["ts"], reverse=True):
-        basis = (c["basis"][:100] + "…") if len(c["basis"]) > 100 else c["basis"]
-        a(f"- **{c['ts']}** {c['wk']} — {c['title']}  \n  {basis}")
+    a(f"**Closed in 14 days: {len(recent)}** — latest:")
+    a("")
+    for c in sorted(recent, key=lambda c: c["ts"], reverse=True)[:5]:
+        title = c["title"][:80] + ("…" if len(c["title"]) > 80 else "")
+        a(f"- {c['ts']} `{c['wk']}` {title}")
+    a("")
+    a("Full log: `git log --grep wk-` · every id above is one grep from "
+      "its proof (dev-process §4).")
     a("")
     return "\n".join(L) + "\n"
 

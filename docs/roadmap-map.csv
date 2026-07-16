@@ -1,23 +1,31 @@
-bd_id;wk_id;stage;label;uc
-kuchnie-58o;wk-6716e9c8;1;Decor miniature images (90/148 missing);UC-3
-kuchnie-7pc;wk-c67ffaa1;1;Color-family audit (K522);UC-3
-kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11);UC-6
-kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks);UC-2
-kuchnie-djb;wk-99b51e00;3;bpy roster contradiction;
-kuchnie-2bw;;3;Manifest schema drift (48 errors);
-kuchnie-92j;;4;G8 drawer-order semantics (scrap-risk);UC-2
-kuchnie-6sm;;4;Drawer-box material field (G9);
-kuchnie-8vv;;4;Front margin shop setting (G12);
-kuchnie-33g;;4;Blum runner geometry vs Montageanleitung;
-kuchnie-no6;wk-5cb8c45e;4;Dead CabinetGeometry;
-kuchnie-a48;wk-39ed9155;5;Supplier price-file import;UC-7
-kuchnie-ubc;wk-593a317b;5;Purchasing artifacts (board + hardware orders);UC-4
-kuchnie-uz1;wk-4c37f4ee;9;Worktop per-lm BOM;UC-4
-kuchnie-zw2;wk-985a7dc2;0;Generated dashboard (this);
-kuchnie-tai;wk-89a668a2;4;Buildability verdict (UC-2 step 5);UC-2
-kuchnie-q83;wk-a9212b40;0;Dashboard increment 1 (by-goal view);
-kuchnie-gfy;wk-382ddd32;0;Conformance-join spec (Phase 1 inc 0);
-kuchnie-xdc;wk-0d7a80d2;0;test-health satellite R4 (inc 1);
-kuchnie-7ai;wk-9d77de94;0;Dashboard Completeness R7 (inc 2);
-kuchnie-31x;wk-9fb28a32;0;Backward-trace R2-lite (inc 3);
-kuchnie-82w;wk-3894b44c;0;Upstream drafts, draft-only (inc 4);
+bd_id;wk_id;stage;label;uc;axis
+kuchnie-58o;wk-6716e9c8;1;Decor miniature images (90/148 missing);UC-3;product
+kuchnie-7pc;wk-c67ffaa1;1;Color-family audit (K522);UC-3;product
+kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11);UC-6;product
+kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks);UC-2;product
+kuchnie-el6;wk-cd815fba;3;Extraction r3 (front heights, NL derivation);UC-2;product
+kuchnie-djb;wk-99b51e00;3;bpy roster contradiction;;process
+kuchnie-2bw;;3;Manifest schema drift (48 errors);UC-2;product
+kuchnie-92j;;4;G8 drawer-order semantics (scrap-risk);UC-2;product
+kuchnie-6sm;;4;Drawer-box material field (G9);UC-2;product
+kuchnie-8vv;;4;Front margin shop setting (G12);UC-2;product
+kuchnie-33g;;4;Blum runner geometry vs Montageanleitung;UC-2;product
+kuchnie-no6;wk-5cb8c45e;4;Dead CabinetGeometry;;process
+kuchnie-9yz;wk-cb6a17c8;4;Emission gated on buildability verdict (ext 5a);UC-2;product
+kuchnie-a48;wk-39ed9155;5;Supplier price-file import;UC-7;product
+kuchnie-ubc;wk-593a317b;5;Purchasing artifacts (offer loop, hardware CSVs);UC-4;product
+kuchnie-oqu;wk-6011d8bf;7;DXF annotation layers port;UC-2;product
+kuchnie-uz1;wk-4c37f4ee;9;Worktop per-lm BOM;UC-4;product
+kuchnie-zw2;wk-985a7dc2;0;Generated dashboard (this);;process
+kuchnie-tai;wk-89a668a2;4;Buildability verdict (UC-2 step 5);UC-2;product
+kuchnie-q83;wk-a9212b40;0;Dashboard increment 1 (by-goal view);;process
+kuchnie-gfy;wk-382ddd32;0;Conformance-join spec (Phase 1 inc 0);;process
+kuchnie-xdc;wk-0d7a80d2;0;test-health satellite R4 (inc 1);;process
+kuchnie-7ai;wk-9d77de94;0;Dashboard Completeness R7 (inc 2);;process
+kuchnie-31x;wk-9fb28a32;0;Backward-trace R2-lite (inc 3);;process
+kuchnie-82w;wk-3894b44c;0;Upstream drafts, draft-only (inc 4);;process
+kuchnie-5nm;wk-b29f670a;0;Glossary burn-down (41 domain-surface gaps);;process
+kuchnie-8mw;wk-64266e86;0;Consolidate three BOM folds to one source;;process
+kuchnie-b30;wk-a898481e;0;DrawerBoxSpec parameter object;;process
+kuchnie-hij;wk-b669f4f5;0;Split ERP god-states;;process
+kuchnie-yvm;wk-acc8e094;0;Structured findings from validate_rows;;process

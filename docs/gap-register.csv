@@ -1,0 +1,14 @@
+gap;label;state;ref
+G1;top stretchers (trawersy);closed;tr-b2e3dbff
+G2;confirmat ops;closed;tr-3ef7b607
+G3;HDF groove ops;closed;tr-3ef7b607
+G4;runner screw blind depth;closed;tr-ee15599a
+G5;runner axis Blum offset;closed;tr-ee15599a
+G6;back panel formula (groove-seated);closed;tr-8dfe366d
+G7;plinth panel (cokol);closed;tr-b2e3dbff
+G8;drawer-stack order semantics;closed;tr-00330365
+G9;drawer-box material field;open;kuchnie-6sm
+G10;grain axis / Uslojenie;closed;tr-15d48651
+G11;edge-band identity by thickness;open;wk-593a317b
+G12;front margin shop setting;closed;tr-2faf70f7
+G13;hardware BOM completeness;open;wk-593a317b
