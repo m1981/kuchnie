@@ -38,11 +38,20 @@ lives at three regime layers:
    its offending files, so the commit that fixes (or worsens) it stales
    the claim and the verdict queue re-opens exactly that question.
 2. **Mechanical smells run at session close** —
-   `scripts/session-gates.d/60-arch-smells.sh` (WARN-only) detects
-   import cycles, cross-module `_underscore` imports and repeated
-   deferred imports without needing the full review.
-3. **The judgment pass is re-run by hand** when a component gains a
-   module family, an epic closes, or a pattern row's status changes:
+   `scripts/session-gates.d/60-arch-smells.sh` (WARN-only) detects six
+   smell classes: import cycles (deferred included), cross-module
+   `_underscore` imports, repeated deferred imports, dormant classes
+   (≥3 methods, zero production references repo-wide), god classes
+   (≥25 methods), and duplicate module-level def names (ADR-006
+   dual-source risk).
+3. **The judgment pass is TRIGGERED mechanically, performed by an
+   architect.** `scripts/session-gates.d/61-signature-drift.sh` diffs
+   the live surface (`scripts/signature-summary.py`, stdlib-ast,
+   deterministic) against the committed baseline
+   `docs/architecture-signatures.txt`. Drift → WARN naming the changed
+   modules and demanding the review. The re-committed baseline is the
+   RECEIPT that the review happened — same discipline as
+   exercise-gate baselines. Run the review with:
 
 ```bash
 find kuchnie-core/src kitchen-erp/kitchen_erp/ -type f -name "*.py" \
