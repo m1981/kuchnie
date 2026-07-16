@@ -57,7 +57,7 @@ def _handle_accessory_name(spec: HandleSpec) -> str:
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _method_from_cab(cab: CabinetInstance) -> ConstructionMethod:
+def method_from_cab(cab: CabinetInstance) -> ConstructionMethod:
     """Derive ConstructionMethod from CabinetInstance's thickness fields.
 
     This bridges the existing YAML-based config with the new ConstructionMethod
@@ -121,7 +121,7 @@ def decompose_dolna_szufladowa(cab: CabinetInstance) -> DecompositionResult:
       1× left side, 1× right side, 1× bottom, 1× back,
       N× drawer fronts (one per drawer)
     """
-    m = _method_from_cab(cab)
+    m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
 
     side_h = cab.height_mm - cab.plinth_height_mm  # 720 - 100 = 620
@@ -230,7 +230,7 @@ def decompose_gorna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
       1× left side, 1× right side, 1× top, 1× bottom, 1× back,
       N× shelves, N× door fronts
     """
-    m = _method_from_cab(cab)
+    m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
 
     # -- Side panels --
@@ -357,7 +357,7 @@ def decompose_dolna_drzwiowa(cab: CabinetInstance) -> DecompositionResult:
       1× left side, 1× right side, 1× bottom, 1× back,
       N× shelves, N× door fronts
     """
-    m = _method_from_cab(cab)
+    m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
 
     side_h = cab.height_mm - cab.plinth_height_mm
@@ -535,7 +535,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         make_runner_accessory,
     )
 
-    m = _method_from_cab(cab)
+    m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
     side_h = cab.height_mm - cab.plinth_height_mm
 
@@ -737,7 +737,7 @@ def decompose_dolna_narozna_slepa(cab: CabinetInstance) -> DecompositionResult:
     The blind front is FIXED (PanelRole.FRONT_BLIND) — no hinges, no
     handle; only its filler-facing vertical edge is banded.
     """
-    m = _method_from_cab(cab)
+    m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
     side_h = cab.height_mm - cab.plinth_height_mm
 

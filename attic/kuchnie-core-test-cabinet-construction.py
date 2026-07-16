@@ -1,3 +1,6 @@
+# ATTIC TOMBSTONE — tests for atticized CabinetGeometry (2026-07-17, wk-0eb2781f)
+# See attic/kuchnie-core-cabinet-geometry.py for the class and rationale.
+
 """Cabinet Construction Tests.
 
 Tests for realistic European cabinet construction geometry.

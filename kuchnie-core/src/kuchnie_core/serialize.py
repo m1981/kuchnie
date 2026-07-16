@@ -72,8 +72,8 @@ def _build_cabinet(d: dict) -> CabinetInstance:
 
     cab = CabinetInstance(**filtered)
 
-    from .loader import _apply_synthesised_config
-    return _apply_synthesised_config(cab)
+    from .loader import apply_synthesised_config
+    return apply_synthesised_config(cab)
 
 
 def _build_row(d: dict) -> Row:

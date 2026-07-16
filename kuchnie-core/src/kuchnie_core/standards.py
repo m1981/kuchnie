@@ -74,9 +74,9 @@ class KitchenStandards:
         """Standard cabinet widths."""
         return STANDARD_WIDTHS
 
-    def is_standard_width(self, width: float) -> bool:
+    def is_standard_width(self, width_mm: float) -> bool:
         """Check if width is a standard size."""
-        return any(abs(width - sw) < self.dimension_tolerance
+        return any(abs(width_mm - sw) < self.dimension_tolerance
                    for sw in STANDARD_WIDTHS)
 
     def get_dimensions(self, level: str) -> Dimensions:

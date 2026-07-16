@@ -27,8 +27,9 @@
 #      as a raw literal without referencing the enum — vocabulary bypass
 #      (shared-literal DRIFT is separate: gate 62-vocab-drift.sh)
 cd "$(git rev-parse --show-toplevel)"
-python3 - <<'PY'
+python3 - "$@" <<'PY'
 import ast
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -52,9 +53,18 @@ for pkg, root in PACKAGES.items():
         except SyntaxError:
             continue
         mod = path.stem
+        # TYPE_CHECKING-guarded imports are the sanctioned cycle-breaking
+        # idiom — exclude them from cycle detection
+        type_checking_imports = {
+            id(n) for stmt in tree.body
+            if isinstance(stmt, ast.If) and isinstance(stmt.test, ast.Name)
+            and stmt.test.id == "TYPE_CHECKING"
+            for n in ast.walk(stmt) if isinstance(n, ast.ImportFrom)}
         sibs, repeated = set(), Counter()
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom) or node.module is None:
+                continue
+            if id(node) in type_checking_imports:
                 continue
             target = node.module.split(".")[-1]
             is_sibling = (node.level >= 1 or node.module.startswith(pkg)) \
@@ -229,12 +239,29 @@ for pkg, path, name in dormant_candidates:
             f"no production reference outside its file repo-wide "
             f"(dead twin candidate)")
 
-if warnings:
-    print(f"arch-smells: WARN {len(warnings)} finding(s) "
-          "(mechanical layer of the signature review):")
-    for w in warnings:
+# Accepted-findings baseline (deliberate deferrals carry a wk- id in
+# docs/arch-smells-baseline.txt comments). Regenerate after a review:
+#   bash scripts/session-gates.d/60-arch-smells.sh --write-baseline
+BASELINE = Path("docs/arch-smells-baseline.txt")
+if "--write-baseline" in sys.argv:
+    BASELINE.write_text("\n".join(sorted(warnings)) + "\n", encoding="utf-8")
+    print(f"wrote {BASELINE} ({len(warnings)} accepted finding(s))")
+    raise SystemExit(0)
+accepted = set()
+if BASELINE.exists():
+    accepted = {l.strip() for l in BASELINE.read_text(encoding="utf-8").splitlines()
+                if l.strip() and not l.startswith("#")}
+new = [w for w in warnings if w not in accepted]
+gone = accepted - set(warnings)
+if new:
+    print(f"arch-smells: WARN {len(new)} NEW finding(s) "
+          f"({len(accepted)} accepted in baseline):")
+    for w in new:
         print(f"  WARN  {w}")
 else:
-    print("arch-smells: 0 findings")
+    print(f"arch-smells: 0 new findings ({len(accepted)} accepted in baseline)")
+if gone:
+    print(f"  note: {len(gone)} baseline finding(s) fixed — regenerate the "
+          f"baseline with --write-baseline to shrink the accepted set")
 raise SystemExit(0)
 PY

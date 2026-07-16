@@ -9,6 +9,7 @@ from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaul
 from ..core.schemas import CostTraceLine
 from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
+from ..core.bom_generator import BOMGenerator
 
 MODULE_LABELS = {
     "BASE_CABINET": "Base cabinet",
@@ -451,7 +452,6 @@ class KitchenState(rx.State):
     def open_selected_cabinet_cost_trace(self):
         """Open cost trace for selected cabinet (recipe-based BOMGenerator,
         the only cost path per ADR-011)."""
-        from ..core.bom_generator import BOMGenerator
         
         if self.selected_cabinet_id is None:
             return
@@ -484,7 +484,6 @@ class KitchenState(rx.State):
         """Open cost trace for entire project (recipe-based BOMGenerator,
         the only cost path per ADR-011). Shows material aggregation and
         purchasing strategies."""
-        from ..core.bom_generator import BOMGenerator
         from ..core.purchasing import get_strategy_for_material
         
         with next(get_session()) as session:
@@ -1018,7 +1017,6 @@ class KitchenState(rx.State):
             wall_width, base_width = 0.0, 0.0
 
             # Use new BOM system for total price calculation
-            from ..core.bom_generator import BOMGenerator
             
             for cab in wall_cabs + base_cabs + decor_cabs:
                 # Generate cost using new BOM system

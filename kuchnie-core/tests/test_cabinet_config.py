@@ -37,7 +37,7 @@ from kuchnie_core import (
     SinkConfig,
 )
 from kuchnie_core.loader import (
-    _apply_synthesised_config,
+    apply_synthesised_config,
     _door_hinge_counts,
     _drawer_slot_from_dict,
     _shelf_positions,
@@ -283,20 +283,20 @@ class TestSynthesiseConfig:
         assert _synthesise_config(cab) is None
 
 
-# ── 6. _apply_synthesised_config: guard around existing config ──
+# ── 6. apply_synthesised_config: guard around existing config ──
 
 class TestApplySynthesisedConfig:
 
     def test_populates_when_none(self):
         cab = _make_cab(type="gorna_drzwiowa")
         assert cab.config is None
-        _apply_synthesised_config(cab)
+        apply_synthesised_config(cab)
         assert isinstance(cab.config, BaseDoorConfig)
 
     def test_preserves_explicit_config(self):
         explicit = OvenConfig(cavity_height_mm=999.0)
         cab = _make_cab(type="gorna_drzwiowa", config=explicit)
-        _apply_synthesised_config(cab)
+        apply_synthesised_config(cab)
         assert cab.config is explicit  # untouched
 
 

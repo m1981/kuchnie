@@ -1,0 +1,10 @@
+# arch-smells accepted findings — deliberate deferrals, each with a work item:
+# param-bloat drawer-box family -> wk-a898481e (kuchnie-b30, DrawerBoxSpec)
+# god-class + add_module -> wk-b669f4f5 (kuchnie-hij, ERP state split)
+# Regenerate: bash scripts/session-gates.d/60-arch-smells.sh --write-baseline
+god-class       kitchen_erp/admin_state.py: AdminState has 36 methods (split responsibilities)
+god-class       kitchen_erp/state.py: KitchenState has 32 methods (split responsibilities)
+param-bloat     kitchen_erp/state.py: add_module() takes 12 parameters (parameter-object candidate)
+param-bloat     kuchnie_core/blum_drawers.py: decompose_drawer_box() takes 10 parameters (parameter-object candidate)
+param-bloat     kuchnie_core/blum_drawers.py: make_runner_accessory() takes 8 parameters (parameter-object candidate)
+param-bloat     kuchnie_core/legrabox.py: decompose_drawer_box() takes 11 parameters (parameter-object candidate)

@@ -44,12 +44,18 @@ lives at three regime layers:
    (≥3 methods, zero production references repo-wide), god classes
    (≥25 methods), duplicate module-level def names (ADR-006 dual-source
    risk), dimension parameters without a unit suffix (kuchnie_core only
-   — unit ambiguity is scrap risk), param bloat (≥8 parameters),
+   — unit ambiguity is scrap risk), param bloat (≥8 parameters;
+   TYPE_CHECKING-guarded imports are exempt from cycle detection — they
+   are the sanctioned idiom),
    SQLModel entities importing sibling services inside methods
    (active-record leak), layer rules (kuchnie_core never imports
    reflex/sqlmodel/sqlalchemy/kitchen_erp; kitchen_erp core/ never
    imports reflex or ui), and stringly-enum (distinctive enum values
    used as raw literals by modules that never reference the enum).
+   Deliberate deferrals live in `docs/arch-smells-baseline.txt` (each
+   annotated with its work item); the gate WARNs only on NEW findings
+   and notes when baseline entries get fixed — regenerate with
+   `--write-baseline` as part of the fixing commit.
    Vocabulary DRIFT has its own gate:
    `scripts/session-gates.d/62-vocab-drift.sh` warns when a new
    identifier-like literal starts being shared across ≥3 modules,

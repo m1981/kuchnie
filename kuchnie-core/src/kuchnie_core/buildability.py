@@ -204,12 +204,12 @@ def _gate_cabinet_sanity(kitchen: Kitchen) -> list[Finding]:
 
 def _gate_construction_fit(kitchen: Kitchen) -> list[Finding]:
     """M2 — construction.ConstructionMethod.validate_cabinet_width."""
-    from .catalog import _method_from_cab
+    from .catalog import method_from_cab
 
     findings = []
     for row in kitchen.rows:
         for cab in row.cabinets:
-            method = _method_from_cab(cab)
+            method = method_from_cab(cab)
             for err in method.validate_cabinet_width(cab.width_mm):
                 findings.append(Finding("M2", BLOCKING, err, cab.id))
     return findings

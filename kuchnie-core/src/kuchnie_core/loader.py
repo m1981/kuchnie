@@ -246,7 +246,7 @@ def _synthesise_config(cab: CabinetInstance) -> CabinetConfig | None:
     return None
 
 
-def _apply_synthesised_config(cab: CabinetInstance) -> CabinetInstance:
+def apply_synthesised_config(cab: CabinetInstance) -> CabinetInstance:
     """Populate ``cab.config`` from legacy loose fields when caller left it ``None``.
 
     Kept as a tiny helper so both load paths share the same guard.
@@ -329,7 +329,7 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         # Plinth (0 for wall cabinets)
         plinth_height_mm=k.get("nozki", {}).get("wysokosc", 0),
     )
-    return _apply_synthesised_config(cab)
+    return apply_synthesised_config(cab)
 
 
 def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
@@ -378,7 +378,7 @@ def _cabinet_from_schema(cab_data: dict) -> CabinetInstance:
         handles=_handle_spec_from_schema(cab_data.get("handles")),
         shelf_pins=_shelf_pins_from_schema(cab_data.get("shelf_pins")),
     )
-    return _apply_synthesised_config(cab)
+    return apply_synthesised_config(cab)
 
 
 def load_kitchen(yaml_path: str | Path) -> Kitchen:
