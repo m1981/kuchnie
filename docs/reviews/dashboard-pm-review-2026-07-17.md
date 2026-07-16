@@ -80,6 +80,17 @@ axis: where it lands for the carpenter). Demote the rest:
 5. **IS THE MACHINE OK?** Health strip as today + R-rule lines; delta
    log becomes count + top 5.
 
+## Format — markdown, reconfirmed 2026-07-17
+
+STATUS.md stays MARKDOWN. This is not taste: development-process.md §4
+makes "every status is one grep from its proof" a regime property, and
+the audit chain (truth list | grep, git log --grep) requires plain text.
+The HTML mock (claude.ai artifact, 2026-07-17) previewed only the
+information architecture; every v2 element has a grep-safe markdown
+form — text progress bars (█░ + n/m), uppercase state words, one-row
+gap register, fenced owner commands, two tables for the product/process
+split.
+
 ## Mechanics (all incremental; R7 classifier and ready-join untouched)
 
 - `docs/roadmap-map.csv` gains an `axis` column (product|process);
