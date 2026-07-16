@@ -136,10 +136,13 @@ present, not runners alone. Stock is a small on-hand table, not a WMS.
 
 Pre-written `done --claim` texts:
 
-- (variant model) "kitchen-erp Variants hold parameter overrides on a
-  project and re-derive rozrys, CNC and BOM from one decomposition per
-  variant; a drawer-system substitution changes the emitted drilling
-  ops, pinned by test"
+- (variant model) SHIPPED 2026-07-16 as tr-6692cbe7: "kitchen-erp
+  Variants hold parameter overrides on a project and re-derive rozrys,
+  CNC and BOM from one decomposition per variant; a drawer-system
+  substitution changes the emitted drilling ops, pinned by test"
+  (`kitchen_erp/core/models.py` Variant + `variant_derivation.py`;
+  corner-mechanism/hinge/worktop axes resolve into VariantParameters
+  provenance, their cascades land with the later increments)
 - (offer loop) "Offers record against variants with optional line
   itemization, archive the source verbatim as an ArtifactRef, and an
   ACCEPT locks the variant so later edits require an explicit
