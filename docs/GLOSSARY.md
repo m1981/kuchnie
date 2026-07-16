@@ -285,7 +285,7 @@
 ## Recipe
 - **Context:** Core
 - **Definition:** A YAML declaration of how to decompose a `CabinetTemplate` into panels — list of panels, each with dimension formulas, edge assignments, drill patterns, and material role references. Evaluated by the CAD-side `RecipeEngine`.
-- **File of record:** `recipes/*.json` (data) + `kuchnie-core/src/kuchnie_core/recipe.py` (model)
+- **File of record:** `kitchen-erp/kitchen_erp/core/recipes.json` (data) + `kuchnie-core/src/kuchnie_core/recipe.py` (model)
 - **Introduced by:** F002
 - **Related ADR:** `features/archive/F002-recipe-engine/adr.md`
 
@@ -378,6 +378,25 @@
 
 ---
 
+## BOMItem
+- **Context:** Core **and** Catalog — two different meanings, deliberately disambiguated here (2026-07-17 glossary-check).
+- **Definition (Core):** one production line of a cut/order list — description, category (panel/edge_band/accessory), material, quantity, unit (szt/mb).
+- **Definition (Catalog):** one decor-resolution row for the curated-kitchen browsing surface — role, variant/edge reference, decor name; no quantities.
+- **Not to be confused with:** each other; also `BomLine` (kitchen-erp variant_derivation — purchasing line with float qty) and `BOMPart` (kitchen-erp composite node with pricing).
+- **File of record:** `kuchnie-core/src/kuchnie_core/bom.py::BOMItem` / `catalog/models/domain.py::BOMItem`
+- **Introduced by:** (pre-existing; collision recorded by wk-e5cdd733-era glossary check)
+
+---
+
+## CatalogClient / HttpCatalogClient / CatalogUnavailable
+- **Context:** Web (kitchen-erp) **and** Compositor — copy-paste twins, one concept implemented twice.
+- **Definition:** the read-only HTTP consumer of the catalog service's API (Protocol + urllib implementation + its unavailability error). The ERP one feeds `material_mirror`; the compositor one feeds `CatalogSource` for rendering.
+- **Not to be confused with:** each other — same names, sibling modules, no shared code. Unifying them would require a shared home (The One Rule says via `kuchnie_core`); accepted as duplication for now, this entry is the disambiguation.
+- **File of record:** `kitchen-erp/kitchen_erp/core/catalog_client.py` / `krono-compositor-mvp/...catalog_source.py`
+- **Introduced by:** (pre-existing; collision recorded 2026-07-17)
+
+---
+
 ## Letter-code families (added 2026-07-17 at Michał's request)
 
 Numbered short codes used across specs, ledger and dashboards — each is a
@@ -416,3 +435,11 @@ When you introduce a new domain class or concept in code:
 5. If the term replaces a legacy one, mark the old entry as `Status: ⚠️ legacy` and link to the new term.
 
 When you read code and find a term **not in this glossary**: stop. Add it before continuing, or flag it to the user.
+
+Since 2026-07-17 this protocol is machine-watched:
+`scripts/session-gates.d/63-glossary-drift.sh` (WARN-only) runs
+`scripts/glossary-check.py` at session close — a new domain-surface
+class (kuchnie_core export, ERP entity, or cross-context collision)
+without an entry, a dead File-of-record, or a collision lacking
+"Not to be confused with" surfaces against the accepted
+`docs/glossary-baseline.txt`.
