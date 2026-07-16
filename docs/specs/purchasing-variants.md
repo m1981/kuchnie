@@ -151,7 +151,10 @@ Pre-written `done --claim` texts:
   quantities (required minus on-hand plus buffer) keyed by producer
   codes and include the G13 accessory families; pinned by test against a
   hand-computed golden order"
-- (price ingestion) "Supplier price rows enter through the landing
-  schema with verbatim source archived and validation refusing
-  schema-incomplete or out-of-tolerance rows; a stale price renders
-  estimate-grade in any quote that uses it; pinned by test"
+- (price ingestion) SHIPPED 2026-07-17 as tr-747adf10: "Supplier price
+  rows enter through the landing schema with verbatim source archived
+  and validation refusing schema-incomplete or out-of-tolerance rows; a
+  stale price renders estimate-grade in any quote that uses it; pinned
+  by test" (`kitchen_erp/core/price_import.py` — capture → normalize →
+  validate → land; canonical + column-map CSV adapters; XLS/PDF adapters
+  are follow-ups, re-save XLS as CSV meanwhile)

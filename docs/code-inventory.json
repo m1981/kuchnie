@@ -400,6 +400,7 @@
       "Project",
       "ProjectDefaults",
       "StageTransitionError",
+      "SupplierPrice",
       "Variant",
       "VariantLockedError",
       "VariantStateError"
@@ -407,6 +408,25 @@
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.models",
     "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/price_import.py": {
+    "classes": [
+      "ImportReport",
+      "LandingSchemaError",
+      "PriceFreshness",
+      "QuoteFreshness",
+      "Refusal"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.price_import",
+    "functions": [
+      "_last_known_price",
+      "archive_source",
+      "assess_quote_freshness",
+      "import_price_file",
+      "read_source_rows",
+      "validate_landing_rows"
+    ]
   },
   "kitchen-erp/kitchen_erp/core/purchasing.py": {
     "classes": [

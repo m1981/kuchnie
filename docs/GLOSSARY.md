@@ -170,6 +170,12 @@
 - **Definition:** Which sides of a panel receive edge banding — `front`, `back`, `left`, `right`.
 - **File of record:** `kuchnie-core/src/kuchnie_core/model.py::Panel.banded_edges` (dict keys today, not yet a formal enum)
 
+## Estimate-grade
+- **Context:** Web / Purchasing
+- **Definition:** The quality label a quote carries when any price it stands on is stale (older than `PRICE_TTL_DAYS` past its `valid_from`) or has no supplier provenance. Estimate ≠ offer, everywhere, forever — only a cutting service's recorded offer is offer-grade. Per-line age stays visible.
+- **File of record:** `kitchen-erp/kitchen_erp/core/price_import.py::assess_quote_freshness`
+- **Introduced by:** wk-39ed9155 (spec: `docs/specs/purchasing-variants.md` § Price ingestion)
+
 # F
 
 ## Feature (project sense)
@@ -214,6 +220,14 @@
 - **Definition:** The stable, versioned YAML schema used to serialize a `Kitchen`. The interchange format between Core, CAD, Web, and the render adapter.
 - **File of record:** `kuchnie-core/src/kuchnie_core/schema.py::KitchenSchema` (the schema is published as Pydantic models, not a standalone `.yaml` file)
 - **Introduced by:** F001
+
+# L
+
+## Landing schema (price ingestion)
+- **Context:** Web / Purchasing
+- **Definition:** The ONE canonical row format every supplier price source is normalized onto before validation and import: `supplier;item_code;description;unit;price_net;currency;valid_from;source_ref` (semicolon CSV). Adapters per source (column-map CSV today, XLS/PDF later — kuchnie-h9h); rows failing validation are refused, never coerced.
+- **File of record:** `kitchen-erp/kitchen_erp/core/price_import.py::LANDING_FIELDS`
+- **Introduced by:** wk-39ed9155 (spec: `docs/specs/purchasing-variants.md` § Price ingestion)
 
 # M
 
@@ -325,6 +339,12 @@
 - **Definition:** A composable group inside a `CabinetInstance` — a drawer box, a door pair, a shelf bank, a cargo unit. Holds its own panels and accessories. Borrowed pattern from Winner Flex.
 - **File of record:** `kuchnie-core/src/kuchnie_core/model.py::SubAssembly`
 - **Introduced by:** F001 (refactored into existing model)
+
+## SupplierPrice
+- **Context:** Web / Purchasing
+- **Definition:** One accepted landing-schema price row, append-only history keyed by `item_code` (joins `Material.catalog_variant_id`). The latest row per code is the "last known" price for the ±tolerance gate and drives freshness grading; `source_ref` points at the verbatim archived source file.
+- **File of record:** `kitchen-erp/kitchen_erp/core/models.py::SupplierPrice`
+- **Introduced by:** wk-39ed9155
 
 # T
 
