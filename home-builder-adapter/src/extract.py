@@ -32,11 +32,11 @@ from typing import Any, Iterator
 
 try:
     import bpy
-except ImportError:
+except ImportError as err:
     raise ImportError(
         "home-builder-adapter requires bpy (Blender Python API). "
         "Install with: pip install bpy"
-    )
+    ) from err
 
 from kuchnie_core.model import CabinetInstance, Kitchen, Row
 

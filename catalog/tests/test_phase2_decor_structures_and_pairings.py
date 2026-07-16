@@ -418,7 +418,7 @@ class TestKronospanGlobalMultiStructures:
     ):
         db = db_with_kronospan
         cur = db.cursor()
-        producer_id = lookup("producers", "slug", "kronospan")
+        lookup("producers", "slug", "kronospan")  # existence check only
         k8685_id = lookup("decors", "business_id", "K8685")
         sm_id = lookup("structures", "code", "SM")
         bs_id = lookup("structures", "code", "BS")

@@ -176,7 +176,6 @@ class TestConstraints:
 class TestKronospanImport:
     @pytest.fixture(autouse=True)
     def do_import(self, db):
-        from pathlib import Path
 
         data = load_yaml(DATA_DIR / "kronospan_full.yaml")
         self.db = db

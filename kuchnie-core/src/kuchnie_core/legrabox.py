@@ -271,7 +271,11 @@ def make_runner_accessory(
     motion: str = "BLUMOTION S",
 ) -> Accessory:
     """Create an Accessory entry for a LEGRABOX runner set."""
-    ht = HEIGHTS[height_code]
+    if height_code not in HEIGHTS:
+        raise KeyError(
+            f"unknown LEGRABOX height code: {height_code!r} "
+            f"(valid: {sorted(HEIGHTS)})"
+        )
     part_nr = f"LEGRABOX {height_code} NL{nl} {capacity_kg}kg {colour}"
     return Accessory(
         id=f"{cabinet_id}_runner_{drawer_id}",

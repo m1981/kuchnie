@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlmodel import select
 from ..core.database import get_session, engine, SQLModel
-from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, HardwareRule, STAGE_LABELS, DEFAULT_STAGE
+from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, STAGE_LABELS, DEFAULT_STAGE
 from ..core.schemas import CostTraceLine
 from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
@@ -581,7 +581,7 @@ class KitchenState(rx.State):
                         quantity_label=f"{equipment_total:,.2f} zł".replace(',', "'"),
                         unit_price_label="1.00x",
                         waste_label="-",
-                        formula=f"Zagregowane koszty wyposażenia",
+                        formula="Zagregowane koszty wyposażenia",
                         subtotal_label=f"{equipment_total:,.2f} zł".replace(',', "'"),
                     )
                 )

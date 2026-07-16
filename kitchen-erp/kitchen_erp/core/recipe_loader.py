@@ -62,7 +62,7 @@ def eval_formula(formula: str, cabinet_dims: dict[str, float]) -> float:
         result = eval(formula, safe_namespace)
         return float(result)
     except Exception as e:
-        raise ValueError(f"Error evaluating formula '{formula}': {e}")
+        raise ValueError(f"Error evaluating formula '{formula}': {e}") from e
 
 
 def clear_recipe_cache():

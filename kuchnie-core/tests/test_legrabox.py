@@ -241,3 +241,13 @@ def test_K02_drawer_box_panel_dimensions():
     assert drawer_backs[0].height_mm == 148
     assert drawer_bases[0].width_mm == 703
     assert drawer_bases[0].height_mm == 490
+
+
+def test_runner_accessory_rejects_unknown_height_code():
+    """The HEIGHTS lookup used to be an implicit guard (unused `ht`
+    assignment); wk-a6c3acfb made it an explicit KeyError. Pin it so a
+    future lint sweep cannot silently delete the validation."""
+    from kuchnie_core.legrabox import make_runner_accessory
+
+    with pytest.raises(KeyError, match="unknown LEGRABOX height code"):
+        make_runner_accessory("D60", "s1", height_code="X", nl=500)

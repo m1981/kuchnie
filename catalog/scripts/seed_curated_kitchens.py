@@ -200,7 +200,7 @@ def main() -> None:
     featured = db.execute(
         "SELECT COUNT(*) FROM curated_kitchens WHERE featured = 1"
     ).fetchone()[0]
-    print(f"\nDatabase totals:")
+    print("\nDatabase totals:")
     print(f"  Curated kitchens: {total} ({featured} featured)")
     print(f"  Style tags: {db.execute('SELECT COUNT(*) FROM style_tags').fetchone()[0]}")
 

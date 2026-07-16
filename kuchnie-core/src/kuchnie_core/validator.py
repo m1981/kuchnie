@@ -14,7 +14,6 @@ Can run standalone or as part of the build pipeline.
 
 from dataclasses import dataclass, field
 from typing import List, Optional
-import math
 
 
 # Validation tolerances (mm)

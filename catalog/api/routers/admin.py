@@ -202,11 +202,6 @@ def get_full_catalog(
                     "countertop": vrow["countertop"] or "",
                 })
 
-            # Multi-structures string for this decor (from first variant)
-            multi_str = ""
-            if variants:
-                multi_str = variants[0].get("multi_structures", "")
-
             decors.append({
                 "id": drow["business_id"],
                 "name": drow["name"],

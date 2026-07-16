@@ -533,7 +533,6 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         RUNNER_AXIS_OFFSET_MM,
         decompose_drawer_box,
         make_runner_accessory,
-        validate_height_nl,
     )
 
     m = _method_from_cab(cab)

@@ -150,7 +150,7 @@ def main() -> None:
     total_pairings = db.execute("SELECT COUNT(*) FROM pairings").fetchone()[0]
     total_edges = db.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
     total_links = db.execute("SELECT COUNT(*) FROM variant_edges").fetchone()[0]
-    print(f"\nDatabase totals:")
+    print("\nDatabase totals:")
     print(f"  Pairings:       {total_pairings}")
     print(f"  Edges:          {total_edges}")
     print(f"  Variant-edges:  {total_links}")

@@ -6,17 +6,14 @@ collects DecompositionResults, and provides kitchen-wide views.
 
 from __future__ import annotations
 
-from collections import defaultdict
 
 from .bom import BOM, calculate_bom
 from .decomposer import decompose
 from .model import (
     Accessory,
-    CabinetInstance,
     DecompositionResult,
     Kitchen,
     Panel,
-    Row,
 )
 
 

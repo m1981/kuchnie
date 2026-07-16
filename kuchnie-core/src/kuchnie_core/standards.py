@@ -7,7 +7,7 @@ This module depends only on src/core/.
 """
 
 from dataclasses import dataclass
-from typing import List, Set
+from typing import Set
 
 from kuchnie_core.types import Dimensions
 

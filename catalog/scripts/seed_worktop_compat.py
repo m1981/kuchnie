@@ -98,7 +98,7 @@ def main() -> None:
         "SELECT match_quality, COUNT(*) as cnt "
         "FROM worktop_compatibility GROUP BY match_quality"
     ).fetchall()
-    print(f"\nDatabase totals:")
+    print("\nDatabase totals:")
     print(f"  Total: {total}")
     for row in by_quality:
         print(f"    {row['match_quality']}: {row['cnt']}")

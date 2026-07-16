@@ -18,7 +18,6 @@ from pathlib import Path
 
 from .exceptions import CatalogUnavailableError
 from .models import EdgeInfo, VariantInfo, WorktopInfo
-from .protocol import MaterialCatalog
 
 
 class SqliteMaterialCatalog:

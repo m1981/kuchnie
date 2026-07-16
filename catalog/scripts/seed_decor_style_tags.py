@@ -96,13 +96,14 @@ def main() -> None:
     print(f"  → {added} decor-style associations")
 
     total = db.execute("SELECT COUNT(*) FROM decor_style_tags").fetchone()[0]
+    print(f"  → {total} associations total in table")
     by_tag = db.execute(
         "SELECT st.slug, COUNT(*) as cnt "
         "FROM decor_style_tags dst "
         "JOIN style_tags st ON st.id = dst.style_tag_id "
         "GROUP BY st.slug ORDER BY cnt DESC"
     ).fetchall()
-    print(f"\nBy style tag:")
+    print("\nBy style tag:")
     for row in by_tag:
         print(f"  {row['slug']:15s} {row['cnt']} decors")
 

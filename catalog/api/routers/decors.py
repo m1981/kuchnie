@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from catalog.api.deps import get_db
 from catalog.models.domain import (
-    DecorSummary,
     DecorWithVariants,
     PaginatedResponse,
     PairingOut,

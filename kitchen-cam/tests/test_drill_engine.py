@@ -8,11 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from kuchnie_core.model import CabinetInstance, HandleSpec, PanelRole
+from kuchnie_core.model import CabinetInstance, PanelRole
 from kuchnie_core.decomposer import decompose
 from kitchen_cam.machining import (
-    SYSTEM32_OFFSET,
-    SYSTEM32_SPACING,
     apply_handles,
     apply_hinges,
     apply_system32,

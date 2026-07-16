@@ -5,7 +5,6 @@ All types are immutable value objects or enums.
 
 from enum import Enum
 from dataclasses import dataclass
-from typing import Optional
 
 
 class Direction(Enum):

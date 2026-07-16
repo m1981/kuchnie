@@ -8,7 +8,7 @@ All fields use mm units (suffix _mm) per project convention.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
