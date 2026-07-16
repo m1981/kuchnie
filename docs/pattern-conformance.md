@@ -46,9 +46,15 @@ lives at three regime layers:
    risk), dimension parameters without a unit suffix (kuchnie_core only
    — unit ambiguity is scrap risk), param bloat (≥8 parameters),
    SQLModel entities importing sibling services inside methods
-   (active-record leak), and layer rules (kuchnie_core never imports
+   (active-record leak), layer rules (kuchnie_core never imports
    reflex/sqlmodel/sqlalchemy/kitchen_erp; kitchen_erp core/ never
-   imports reflex or ui).
+   imports reflex or ui), and stringly-enum (distinctive enum values
+   used as raw literals by modules that never reference the enum).
+   Vocabulary DRIFT has its own gate:
+   `scripts/session-gates.d/62-vocab-drift.sh` warns when a new
+   identifier-like literal starts being shared across ≥3 modules,
+   against the committed `docs/shared-literals-baseline.txt`
+   (regenerate deliberately with `scripts/shared-literals.py --write`).
 3. **The judgment pass is TRIGGERED mechanically, performed by an
    architect.** `scripts/session-gates.d/61-signature-drift.sh` diffs
    the live surface (`scripts/signature-summary.py`, stdlib-ast,

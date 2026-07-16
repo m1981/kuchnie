@@ -23,6 +23,9 @@
 #  10. layer rules: kuchnie_core must not import reflex/sqlmodel/
 #      sqlalchemy/kitchen_erp; kitchen_erp core/ must not import reflex
 #      or ui (model layer stays UI-free)
+#  11. stringly-enum: a module uses a distinctive (>= 7 chars) enum value
+#      as a raw literal without referencing the enum — vocabulary bypass
+#      (shared-literal DRIFT is separate: gate 62-vocab-drift.sh)
 cd "$(git rev-parse --show-toplevel)"
 python3 - <<'PY'
 import ast
@@ -166,6 +169,41 @@ for pkg, root in PACKAGES.items():
             warnings.append(
                 f"dup-def         {pkg}: def {name}() defined at module level "
                 f"in {', '.join(sorted(mods))} (dual-source formula risk, ADR-006)")
+
+    # 11: enum values used as raw literals by modules that never mention
+    # the enum — the vocabulary exists but callers bypass it
+    enums: list[tuple[Path, str, set]] = []
+    consts: dict[Path, set] = {}
+    for path in files:
+        try:
+            tree = ast.parse(texts[path])
+        except SyntaxError:
+            continue
+        consts[path] = {n.value for n in ast.walk(tree)
+                        if isinstance(n, ast.Constant)
+                        and isinstance(n.value, str) and len(n.value) >= 7}
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and any(
+                    (isinstance(b, ast.Name) and b.id == "Enum") or
+                    (isinstance(b, ast.Attribute) and b.attr == "Enum")
+                    for b in node.bases):
+                vals = {s.value.value for s in node.body
+                        if isinstance(s, ast.Assign)
+                        and isinstance(s.value, ast.Constant)
+                        and isinstance(s.value.value, str)
+                        and len(s.value.value) >= 7}
+                if vals:
+                    enums.append((path, node.name, vals))
+    for epath, ename, vals in enums:
+        for opath, oconsts in consts.items():
+            if opath == epath:
+                continue
+            hits = vals & oconsts
+            if hits and ename not in texts[opath]:
+                warnings.append(
+                    f"stringly-enum   {pkg}/{opath.stem}.py uses "
+                    f"{sorted(hits)} as raw literal(s) without referencing "
+                    f"enum {ename} ({epath.stem}.py) — vocabulary bypass")
 
 # dormant-class needs the repo-wide production corpus (a class consumed by
 # another component, a subpackage __init__, or kitchen-cam is not dormant)
