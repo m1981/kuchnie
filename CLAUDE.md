@@ -3,6 +3,11 @@
 This file provides instructions and context for AI coding agents working on this project.
 
 > **Read `AGENTS.md` first — it is the canonical agent guide for this repo.**
+> **Session start:** open `STATUS.md` (generated dashboard, five PM
+> questions — §3 names the next work and its start commands), then
+> `scripts/truth ready`. **Vocabulary:** any unknown term or letter code
+> (L/G/M/R/UC/P families) → `docs/GLOSSARY.md`; if it's not there, ask —
+> never invent a meaning.
 > **Work-finding precedence:** use `scripts/truth ready`, not `bd ready`. It is
 > `bd ready` filtered by the truth ledger's premise validity — issues standing
 > on stale/diverged facts are HELD. See `docs/beads-integration-guide.md`.

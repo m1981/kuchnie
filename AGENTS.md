@@ -2,6 +2,12 @@
 
 Read this before making changes. It's short on purpose.
 
+> **Session start:** open `STATUS.md` (generated dashboard, five PM
+> questions — §3 names the next work and its start commands), then
+> `scripts/truth ready`. **Vocabulary:** any unknown term or letter code
+> (L/G/M/R/UC/P families) → `docs/GLOSSARY.md`; if it's not there, ask —
+> never invent a meaning.
+
 ---
 
 ## Project at a glance
