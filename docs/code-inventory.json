@@ -195,49 +195,6 @@
     "dotted": "catalog.scripts",
     "functions": []
   },
-  "catalog/scripts/build_image_map.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.build_image_map",
-    "functions": [
-      "_extract_digits",
-      "_find_image",
-      "_load_yaml",
-      "_save_yaml",
-      "apply_mapping",
-      "build_mapping",
-      "main"
-    ]
-  },
-  "catalog/scripts/generate_kronospan_yaml.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.generate_kronospan_yaml",
-    "functions": [
-      "_build_decor_structures",
-      "_build_variants",
-      "generate_kronospan_yaml",
-      "write_yaml"
-    ]
-  },
-  "catalog/scripts/generate_kronoswiss_yaml.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.generate_kronoswiss_yaml",
-    "functions": [
-      "_build_swiss_decor_structures",
-      "_build_swiss_variants",
-      "generate_kronoswiss_yaml"
-    ]
-  },
-  "catalog/scripts/generate_variants.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.generate_variants",
-    "functions": [
-      "main"
-    ]
-  },
   "catalog/scripts/importer.py": {
     "classes": [
       "CatalogImporter",
@@ -248,27 +205,6 @@
     "functions": [
       "_require",
       "load_yaml"
-    ]
-  },
-  "catalog/scripts/merge_global_collection.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.merge_global_collection",
-    "functions": [
-      "_find_image",
-      "_group_to_color_family",
-      "_infer_color_family",
-      "main"
-    ]
-  },
-  "catalog/scripts/migrate_1_5_0.py": {
-    "classes": [],
-    "component": "catalog",
-    "dotted": "catalog.scripts.migrate_1_5_0",
-    "functions": [
-      "_columns",
-      "main",
-      "migrate"
     ]
   },
   "catalog/scripts/seed.py": {
