@@ -378,6 +378,33 @@
 
 ---
 
+## Letter-code families (added 2026-07-17 at Michał's request)
+
+Numbered short codes used across specs, ledger and dashboards — each is a
+FAMILY, the number is an index within it:
+
+| Family | Range | Meaning | File of record |
+|---|---|---|---|
+| **L*n*** | L1 | Process-map level; L1 = the 11-stage sales→CNC pipeline whose stages the ERP `stage` vocabulary encodes | `docs/specs/process-coverage.md` |
+| **G*n*** | G1–G13 | Walking-skeleton gap numbers (G8 drawer order, G10 grain, G11 edge-band orderability, G12 front reveal, G13 hardware completeness); G1–G7 double as the playbook design-legality gates in `buildability.py` | `exercises/walking-skeleton-d60/GAP-REPORT.md`, `docs/l-kitchen-design-playbook.md` |
+| **M*n*** | M1–M5 | Mechanical buildability gates (dimensional sanity, width fit, drawer system, decomposability, geometry manifest) | `kuchnie_core/buildability.py` |
+| **R*n*** | R1–R7 | Two-ledger conformance rules; implemented: R2 backward trace, R4 test citation, R7 acceptance completeness (dashboard matcher) | `docs/specs/conformance-join.md` |
+| **E*n*** | E1–E4 | Walking-skeleton environment gaps (hb5/Blender workarounds) | `exercises/walking-skeleton-d60/GAP-REPORT.md` |
+| **UC-*n*** | UC-1… | Use cases | `docs/specs/use-cases.md` |
+| **ADR-*nnn*** | 001… | Architecture decision records (accepted = immutable) | `docs/adr/` |
+| **P*n*** | P0–P4 | THREE contexts — bd issue priority (0 critical → 4 backlog); truth-ledger claim tier (P0–P2 re-verification urgency); material shorthand in fixtures (P18 = płyta 18 mm, F18 = front, HDF3 = back) | bd, `.truth/`, test fixtures |
+| **K/EG/SK-*nnnn*** | K8685… | Producer decor business ids (K = Kronospan); `K5307_18` = decor on 18 mm board | `catalog/data/*.yaml` |
+| **D/G-*nn* (cabinets)** | D60… | Cabinet naming: dolna/górna + width in cm | fixtures, exercises |
+| **S*n*** | S1–S3 | Drawer ids within a cabinet (szuflada, bottom-up) | fixtures, CNC notes |
+| **B*nnn*** | B006… | Ruff flake8-bugbear lint rules (three digits — a bare "B5" is not a project code) | `ruff.toml` |
+| **tr-/wk-*hex8*** | — | Truth-ledger claim / work-item ids; bd twins are `kuchnie-*xxx*` | `.truth/claims.jsonl` |
+
+Blum letters without numbers: NL (nominal runner length), KB (carcass
+internal width), LW (LEGRABOX calculated width), M/K/C/F (drawer side
+height codes).
+
+---
+
 ## Update Protocol
 
 When you introduce a new domain class or concept in code:
