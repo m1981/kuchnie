@@ -203,19 +203,22 @@ def classify_acceptance(items: list[dict], claims: list[dict],
     """Classify each pre-written acceptance item against the ledger.
 
     PRE-WRITTEN — no claim covers >= threshold of the item's tokens;
-    FILED — best-covering claim exists but is not live;
-    LIVE — best-covering claim is live.
-    Deterministic: ties resolve live-first, then lexicographic claim id.
+    FILED — best candidate exists but is not live;
+    LIVE — best candidate is live.
+    Ranking among candidates >= threshold: live-first, then coverage,
+    then lexicographic claim id — so a live successor beats a dead
+    original even at lower overlap (wk-eb7164f1).
     """
     out: list[dict] = []
     for it in items:
         sig = _sig_tokens(it["text"])
-        best_id, best_status, best_cov = "", "", 0.0
-        for c in sorted(claims, key=lambda c: (c["status"] != "live", c["id"])):
+        candidates = []
+        for c in claims:
             cov = len(sig & _sig_tokens(c.get("text", ""))) / len(sig) if sig else 0.0
-            if cov > best_cov:
-                best_id, best_status, best_cov = c["id"], c["status"], cov
-        if best_cov >= threshold:
+            if cov >= threshold:
+                candidates.append((c["status"] != "live", -cov, c["id"], c["status"]))
+        if candidates:
+            _, neg_cov, best_id, best_status = min(candidates)
             state = "LIVE" if best_status == "live" else "FILED"
             out.append({**it, "state": state, "claim": best_id,
                         "status": best_status})

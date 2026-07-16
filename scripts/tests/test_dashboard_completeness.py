@@ -73,3 +73,23 @@ def test_real_use_cases_spec_parses() -> None:
     items = dashboard.acceptance_items(text)
     assert len(items) >= 3  # the three migration-step items exist today
     assert any("roadmap-map.csv" in it["text"] for it in items)
+
+
+def test_live_successor_beats_dead_original(  # pins wk-eb7164f1
+) -> None:
+    """A retracted/diverged original with near-perfect overlap must lose
+    to a live successor that still clears the threshold."""
+    items = [{"text": "alpha beta gamma delta epsilon zeta", "ucs": []}]
+    claims = [
+        # dead original: verbatim overlap (6/6)
+        {"id": "c-dead", "status": "retracted",
+         "text": "alpha beta gamma delta epsilon zeta"},
+        # live successor: 4/6 coverage, above the 0.5 threshold
+        {"id": "c-live", "status": "live",
+         "text": "alpha beta gamma delta reworded differently"},
+    ]
+    out = dashboard.classify_acceptance(items, claims)
+    assert out[0]["state"] == "LIVE" and out[0]["claim"] == "c-live"
+    # and with NO live candidate above threshold, the dead one still shows
+    out2 = dashboard.classify_acceptance(items, [claims[0]])
+    assert out2[0]["state"] == "FILED" and out2[0]["claim"] == "c-dead"
