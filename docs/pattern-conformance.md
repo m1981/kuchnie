@@ -38,13 +38,17 @@ lives at three regime layers:
    its offending files, so the commit that fixes (or worsens) it stales
    the claim and the verdict queue re-opens exactly that question.
 2. **Mechanical smells run at session close** —
-   `scripts/session-gates.d/60-arch-smells.sh` (WARN-only) detects eight
+   `scripts/session-gates.d/60-arch-smells.sh` (WARN-only) detects ten
    smell classes: import cycles (deferred included), cross-module
    `_underscore` imports, repeated deferred imports, dormant classes
    (≥3 methods, zero production references repo-wide), god classes
    (≥25 methods), duplicate module-level def names (ADR-006 dual-source
    risk), dimension parameters without a unit suffix (kuchnie_core only
-   — unit ambiguity is scrap risk), and param bloat (≥8 parameters).
+   — unit ambiguity is scrap risk), param bloat (≥8 parameters),
+   SQLModel entities importing sibling services inside methods
+   (active-record leak), and layer rules (kuchnie_core never imports
+   reflex/sqlmodel/sqlalchemy/kitchen_erp; kitchen_erp core/ never
+   imports reflex or ui).
 3. **The judgment pass is TRIGGERED mechanically, performed by an
    architect.** `scripts/session-gates.d/61-signature-drift.sh` diffs
    the live surface (`scripts/signature-summary.py`, stdlib-ast,

@@ -17,6 +17,12 @@
 #      without a unit suffix — unit ambiguity is how CAM scraps boards
 #   8. param bloat: functions taking >= 8 parameters (parameter-object
 #      candidates)
+#   9. entity-service imports: deferred sibling import inside a SQLModel
+#      entity method (active-record leak, the Project.generate_project_bom
+#      family)
+#  10. layer rules: kuchnie_core must not import reflex/sqlmodel/
+#      sqlalchemy/kitchen_erp; kitchen_erp core/ must not import reflex
+#      or ui (model layer stays UI-free)
 cd "$(git rev-parse --show-toplevel)"
 python3 - <<'PY'
 import ast
@@ -94,6 +100,43 @@ for pkg, root in PACKAGES.items():
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if not node.name.startswith("_") and len(node.args.args) > 0:
                     toplevel_defs.setdefault(node.name, []).append(path.stem)
+        # 9: SQLModel entity methods deferring imports of sibling service
+        # modules — orchestration living on the data model
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and any(
+                    isinstance(b, ast.Name) and b.id == "SQLModel"
+                    for b in node.bases):
+                for sub in ast.walk(node):
+                    if isinstance(sub, ast.ImportFrom) and sub.level >= 1:
+                        warnings.append(
+                            f"entity-import   {pkg}/{path.stem}.py: entity "
+                            f"{node.name} imports .{sub.module} inside a method "
+                            f"(service call on the data model — active record)")
+
+        # 10: layer rules — forbidden import prefixes per layer
+        LAYER_RULES = {
+            "kuchnie_core": ("reflex", "sqlmodel", "sqlalchemy", "kitchen_erp"),
+            "kitchen_erp/core": ("reflex", "kitchen_erp.ui"),
+        }
+        layer = pkg
+        if pkg == "kitchen_erp" and path.parent.name == "core":
+            layer = "kitchen_erp/core"
+        forbidden = LAYER_RULES.get(layer, ())
+        for node in ast.walk(tree):
+            mods = []
+            if isinstance(node, ast.Import):
+                mods = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                mods = [node.module]
+                if node.level >= 2 and node.module.split(".")[0] == "ui":
+                    mods.append("kitchen_erp.ui")
+            for m in mods:
+                for f in forbidden:
+                    if m == f or m.startswith(f + "."):
+                        warnings.append(
+                            f"layer-rule      {layer}/{path.stem}.py imports "
+                            f"{m} — forbidden for this layer")
+
         # 7-8: signature hygiene over EVERY def, nested included
         DIM = {"width", "height", "depth", "length", "offset",
                "thickness", "clearance", "radius", "diameter"}
