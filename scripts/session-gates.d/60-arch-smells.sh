@@ -13,6 +13,10 @@
 #   5. god classes: >= 25 methods (the KitchenState family)
 #   6. duplicate module-level def names across modules (the dual-LW
 #      formula family, ADR-006)
+#   7. unit-suffix lint (kuchnie_core only): dimension-named parameters
+#      without a unit suffix — unit ambiguity is how CAM scraps boards
+#   8. param bloat: functions taking >= 8 parameters (parameter-object
+#      candidates)
 cd "$(git rev-parse --show-toplevel)"
 python3 - <<'PY'
 import ast
@@ -90,6 +94,30 @@ for pkg, root in PACKAGES.items():
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 if not node.name.startswith("_") and len(node.args.args) > 0:
                     toplevel_defs.setdefault(node.name, []).append(path.stem)
+        # 7-8: signature hygiene over EVERY def, nested included
+        DIM = {"width", "height", "depth", "length", "offset",
+               "thickness", "clearance", "radius", "diameter"}
+        UNIT_SUFFIX = ("_mm", "_m", "_m2", "_lm", "_deg", "_rad", "_kg")
+        NON_DIM_SUFFIX = ("_code", "_count", "_id", "_key", "_name")
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            nparams = len(node.args.posonlyargs) + len(node.args.args) \
+                + len(node.args.kwonlyargs)
+            if nparams >= 8:
+                warnings.append(
+                    f"param-bloat     {pkg}/{path.stem}.py: {node.name}() takes "
+                    f"{nparams} parameters (parameter-object candidate)")
+            if pkg != "kuchnie_core":
+                continue
+            for a in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+                base = a.arg.split("_")[0]
+                if base in DIM and not a.arg.endswith(UNIT_SUFFIX) \
+                        and not a.arg.endswith(NON_DIM_SUFFIX):
+                    warnings.append(
+                        f"unit-suffix     {pkg}/{path.stem}.py: "
+                        f"{node.name}({a.arg}) — dimension parameter without "
+                        f"a unit suffix (mm? m? scrap risk)")
     for name, mods in sorted(toplevel_defs.items()):
         if len(mods) > 1:
             warnings.append(
