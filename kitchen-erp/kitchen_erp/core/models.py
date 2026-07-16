@@ -42,6 +42,47 @@ class StageTransitionError(ValueError):
     Project.stage -- nothing else should assign it directly."""
 
 
+# Variant lifecycle (wk-593a317b increment 1): the state machine from
+# docs/specs/purchasing-variants.md § "The variant lifecycle", attached to
+# the Project spine above. Forward-only exactly like transition_stage.
+# ACCEPTED locks the variant: later edits are explicit change-orders (a
+# later increment) -- this increment only enforces the lock.
+VARIANT_STATE_SEQUENCE: list[str] = [
+    "draft",           # parameters still moving; the only mutable state
+    "frozen",          # artifacts derived from ONE decomposition, pinned
+    "sent",            # rozrys+DXF out to the cutting service (ArtifactRefs)
+    "offer_received",  # verbatim archive + recorded amount (later increment)
+    "accepted",        # LOCK -- client accepted at the comparison board
+    "ordered",         # hardware CSVs out (later increment)
+]
+
+DEFAULT_VARIANT_STATE = VARIANT_STATE_SEQUENCE[0]
+
+# Typed override vocabularies -- the substitution-registry axes of
+# purchasing-variants.md § "Substitution registry". Drawer-system ids are
+# validated against kuchnie_core.DrawerSystemFactory (the authority),
+# lazily imported in Variant.set_overrides.
+CORNER_MECHANISMS: list[str] = ["plain_shelves", "half_carousel", "magic_corner"]
+HINGE_CLASSES: list[str] = ["standard", "soft_close"]
+
+# Sentinel distinguishing "axis not passed" from "clear back to baseline"
+# (None) in Variant.set_overrides.
+_UNSET = object()
+
+
+class VariantStateError(ValueError):
+    """Raised by Variant.advance_state for an unknown state or a
+    backward/no-op move, and by Variant.set_overrides outside draft.
+    advance_state is the only sanctioned way to change Variant.state --
+    nothing else should assign it directly."""
+
+
+class VariantLockedError(VariantStateError):
+    """The ACCEPT lock: raised when mutating a variant at or after
+    ACCEPTED. Post-accept edits are explicit change-orders (later
+    increment); until then they are simply refused."""
+
+
 class Material(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
@@ -160,6 +201,141 @@ class ArtifactRef(SQLModel, table=True):
     project: "Project" = Relationship(back_populates="artifact_refs")
 
 
+class Variant(SQLModel, table=True):
+    """A purchasing variant on a Project (wk-593a317b increment 1).
+
+    Killer feature 1 of docs/specs/purchasing-variants.md: "Variants are
+    parameters, not copies". A Variant is the project's baseline design
+    plus a typed override set over the substitution-registry axes (front
+    decor, drawer-system tier, corner mechanism, hinge class, worktop),
+    plus provenance -- NEVER a copied artifact set. Derived artifacts
+    (rozrys rows, CNC ops, BOM) are re-derived from ONE decomposition by
+    ``kitchen_erp.core.variant_derivation.derive_variant`` on every call;
+    nothing derived is stored here, so nothing can go stale against an
+    override change.
+
+    Override fields are None when the variant inherits the baseline
+    (project defaults) on that axis. Mutate them only through
+    ``set_overrides`` -- direct assignment bypasses the draft-only rule
+    and the ACCEPT lock, same convention as Project.stage.
+    """
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
+
+    name: str
+    state: str = Field(default=DEFAULT_VARIANT_STATE)
+
+    # Provenance
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    baseline_ref: str | None = None  # which design snapshot this varies
+
+    # Typed overrides (substitution-registry axes); None = baseline
+    front_decor_id: int | None = Field(default=None, foreign_key="material.id")
+    drawer_system: str | None = None    # kuchnie_core DrawerSystemFactory id
+    corner_mechanism: str | None = None  # one of CORNER_MECHANISMS
+    hinge_class: str | None = None       # one of HINGE_CLASSES
+    worktop: str | None = None           # per-lm worktop code (wk-4c37f4ee axis)
+
+    # Relationships
+    project: "Project" = Relationship(back_populates="variants")
+    front_decor: Material | None = Relationship(
+        sa_relationship_kwargs={"foreign_keys": "[Variant.front_decor_id]"}
+    )
+
+    @property
+    def is_locked(self) -> bool:
+        """True from ACCEPTED onward -- the ACCEPT lock of UC-4 step 5."""
+        return (VARIANT_STATE_SEQUENCE.index(self.state)
+                >= VARIANT_STATE_SEQUENCE.index("accepted"))
+
+    def advance_state(self, new_state: str) -> None:
+        """Move the variant forward in VARIANT_STATE_SEQUENCE order.
+
+        Raises VariantStateError for an unknown state id or any
+        backward/no-op move -- state only ever advances, and only through
+        this method (mirrors Project.transition_stage).
+        """
+        if new_state not in VARIANT_STATE_SEQUENCE:
+            raise VariantStateError(f"unknown variant state: {new_state!r}")
+        current_idx = VARIANT_STATE_SEQUENCE.index(self.state)
+        new_idx = VARIANT_STATE_SEQUENCE.index(new_state)
+        if new_idx <= current_idx:
+            raise VariantStateError(
+                f"cannot move from {self.state!r} to {new_state!r}: "
+                "variant state only advances forward"
+            )
+        self.state = new_state
+
+    def set_overrides(
+        self,
+        *,
+        front_decor: Material | None = _UNSET,  # type: ignore[assignment]
+        drawer_system: str | None = _UNSET,  # type: ignore[assignment]
+        corner_mechanism: str | None = _UNSET,  # type: ignore[assignment]
+        hinge_class: str | None = _UNSET,  # type: ignore[assignment]
+        worktop: str | None = _UNSET,  # type: ignore[assignment]
+    ) -> None:
+        """Change override axes -- the only sanctioned parameter mutation.
+
+        Passing None clears an axis back to the baseline; an axis not
+        passed is left untouched. Only a DRAFT variant may change: from
+        ACCEPTED onward this raises VariantLockedError (the ACCEPT lock);
+        frozen/sent/offer_received raise VariantStateError -- a sent
+        variant is never mutated, you loop back to a sibling draft
+        (purchasing-variants.md lifecycle).
+        """
+        if self.is_locked:
+            raise VariantLockedError(
+                f"variant {self.name!r} is {self.state}: ACCEPTED variants "
+                "are locked; edits require an explicit change-order"
+            )
+        if self.state != "draft":
+            raise VariantStateError(
+                f"variant {self.name!r} is {self.state}: parameters only "
+                "change in draft -- loop back to a sibling draft variant"
+            )
+        if drawer_system is not _UNSET and drawer_system is not None:
+            from kuchnie_core import DrawerSystemFactory
+            if drawer_system not in DrawerSystemFactory.list_ids():
+                raise ValueError(
+                    f"unknown drawer system: {drawer_system!r}. "
+                    f"Valid: {DrawerSystemFactory.list_ids()}"
+                )
+        if (corner_mechanism is not _UNSET and corner_mechanism is not None
+                and corner_mechanism not in CORNER_MECHANISMS):
+            raise ValueError(
+                f"unknown corner mechanism: {corner_mechanism!r}. "
+                f"Valid: {CORNER_MECHANISMS}"
+            )
+        if (hinge_class is not _UNSET and hinge_class is not None
+                and hinge_class not in HINGE_CLASSES):
+            raise ValueError(
+                f"unknown hinge class: {hinge_class!r}. Valid: {HINGE_CLASSES}"
+            )
+        if front_decor is not _UNSET:
+            self.front_decor = front_decor
+            self.front_decor_id = front_decor.id if front_decor else None
+        if drawer_system is not _UNSET:
+            self.drawer_system = drawer_system
+        if corner_mechanism is not _UNSET:
+            self.corner_mechanism = corner_mechanism
+        if hinge_class is not _UNSET:
+            self.hinge_class = hinge_class
+        if worktop is not _UNSET:
+            self.worktop = worktop
+
+    def overrides(self) -> dict[str, object]:
+        """The axes this variant actually overrides (provenance view)."""
+        out: dict[str, object] = {}
+        if self.front_decor is not None:
+            out["front_decor"] = self.front_decor.name
+        for axis in ("drawer_system", "corner_mechanism", "hinge_class", "worktop"):
+            value = getattr(self, axis)
+            if value is not None:
+                out[axis] = value
+        return out
+
+
 class Project(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     customer_name: str
@@ -187,6 +363,7 @@ class Project(SQLModel, table=True):
     cabinets: list[Cabinet] = Relationship(back_populates="project", cascade_delete=True)
     defaults: ProjectDefaults | None = Relationship(back_populates="project", cascade_delete=True)
     artifact_refs: list[ArtifactRef] = Relationship(back_populates="project", cascade_delete=True)
+    variants: list[Variant] = Relationship(back_populates="project", cascade_delete=True)
 
     def transition_stage(self, new_stage: str) -> None:
         """Move the project forward to `new_stage` in STAGE_SEQUENCE order.
