@@ -57,7 +57,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 | UC-1 | Salesperson/Designer | Quote a kitchen (estimate-grade; ERP canvas + estimate lines for unsupported types) | **full — to write** | 2–5 | — |
 | UC-2 | Production engineer | Produce the production pack | **full — below** | 3–8 | wk-81a47ab8 |
 | UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — to write** | 1 | wk-6716e9c8, wk-c67ffaa1 |
-| UC-4 | Purchaser | Order materials for a job (board + hardware orders to the single supplier) | **full — write BEFORE the purchasing epic** | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
+| UC-4 | Purchaser | Order materials for a job (cutting-service package + hardware CSVs to dealers) | **full — below** (dressed 2026-07-16) | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
 | UC-5 | Assembler | Assemble a cabinet from its per-cabinet sheet | casual (defer until stage-8 milestone) | 8 | — |
 | UC-6 | all hats | Open a project and thread its artifacts through stages 1→11 | **full — to write** | 1–11 | wk-02a62298 |
 | UC-7 | Purchaser | Import a supplier price file into the ERP material mirror | casual | 5 | wk-39ed9155 |
@@ -150,6 +150,94 @@ Reading: steps 2, 3, 5 and extensions 2a/5a/8a are the open backlog. This
 use case adds no work — it gives the existing work its requirement, and
 places the buildability verdict ON the main success scenario of the
 business's central flow.
+
+## UC-4 — Order materials for a job (fully dressed)
+
+**Primary actor:** Michał as Purchaser
+**Scope:** kuchnie system (kitchen-erp + catalog). The cutting service and
+hardware dealers are external actors. **Level:** sea (user goal)
+**Goal in context:** the client accepted a variant within budget; Michał
+must place the orders that get the job built — ONE package to the cutting
+service (they supply board, cut, edge and drill from his files: single
+hop, no raw-board purchase exists) and hardware top-up CSVs to dealers —
+without hand-deriving a single line. Design record for the mechanisms:
+`purchasing-variants.md`.
+
+**Stakeholders & interests:**
+- Michał/owner — margin survives the offer round-trip; every local
+  iteration is minutes, not a 1–3 day service round-trip
+- Client — the accepted budget is the delivered price; trade-offs happen
+  WITH them at the comparison board, not behind their back
+- Cutting service — parsable e-rozrys per the stage-6 contract, decor and
+  edging codes verbatim from producer catalogs, DXF in the same package
+- Hardware dealers — clean CSV keyed by producer (Blum) codes
+- Assembler-Michał — hardware arrives complete (G13 understatement is a
+  stakeholder wound, not a rounding error)
+
+**Preconditions:** an ACCEPTED variant exists (UC-1/UC-2 loop); its
+rozrys CSV + DXF derive from ONE decomposition; catalog resolves the
+variant's decor/edging codes; price book present (any age, age visible).
+**Minimal guarantees:** no order leaves with stale-price estimates
+unmarked; every sent/received document is archived verbatim and attached
+to the project spine (ArtifactRef); estimates and binding offers are
+never displayed as the same kind of number.
+**Success guarantees:** service package sent and its binding offer
+recorded against the estimate (calibration datapoint stored); ACCEPT
+recorded and the variant locked; per-dealer hardware CSVs emitted with
+net quantities (required − stock + buffer); project stage advances.
+**Trigger:** client accepts a variant (budget agreed).
+
+**Main success scenario** (⚠ = the id IS the requirement's tracker):
+
+1. Michał selects the accepted variant; system re-derives rozrys + DXF
+   from the frozen decomposition — **⚠ wk-593a317b** (variant model:
+   `purchasing-variants.md`).
+2. System validates every material line against the catalog: decor
+   variant exists in the needed thickness, matching edge-band exists —
+   catalog data supports it (tr-44356ef4); the check itself **⚠
+   wk-593a317b**.
+3. Michał sends the package (rozrys CSV + DXF, one email) — out of
+   system by design; system records Sent + artifacts on the spine —
+   supported (tr-e51ef4fd ArtifactRef).
+4. Offer arrives; Michał records it (bare total OR itemized — the schema
+   tolerates both, no granularity lock-in); system shows offer vs
+   estimate and stores the calibration datapoint — **⚠ wk-593a317b**.
+5. Michał ACCEPTS; the variant locks; later edits become explicit
+   change-orders — **⚠ wk-593a317b** (state machine on the spine).
+6. System computes hardware needs per dealer (required from the variant's
+   accessories − on-hand + buffer) and emits per-dealer CSVs keyed by
+   producer codes — **⚠ wk-593a317b**; quantities must include the G13
+   families (konfirmaty, nóżki, klipsy, zszywki), not runners alone.
+7. Deliveries arrive; stock updated; stage advances 5→6 — supported
+   (tr-e51ef4fd transition_stage).
+
+**Extensions** (where the money lives):
+
+- 1a. Prices in the book older than their TTL → estimate rendered
+  stale-grade with age shown; Michał refreshes the price book first
+  (wk-39ed9155) or proceeds eyes-open.
+- 2a. **Decor unavailable in needed thickness, or no matching edge-band
+  (G11's class)** → substitution registry proposes catalog-verified
+  alternatives → back to the variant comparison board; edging is ordered
+  BY thickness and decor (0.8 carcass vs 2.0 front), never as one
+  generic line — **⚠ wk-593a317b**.
+- 2b. **Unknown/unmapped supplier SKU** (a code the catalog cannot
+  resolve) → line flagged, never silently passed through; resolution is
+  a catalog fix or an explicit manual-code marker in Uwagi.
+- 4a. Offer exceeds estimate beyond tolerance → back to the comparison
+  board with the client (decor/hardware-tier substitutions) or conscious
+  margin decision; never silent absorption.
+- 4b. Offer arrives as one bare total → calibration degrades gracefully
+  to total-per-job learning; itemized offers enrich it — neither format
+  is required (no supplier lock-in).
+- 5a. Client changes mind AFTER accept → formal change-order; the system
+  shows the point-of-no-return boundary and the redo cost explicitly.
+- 6a. Hardware partially in stock or dealer backorders → split order,
+  delivery risk flagged against the install date.
+- 6b. Hardware tier substitution (e.g. LEGRABOX→Tandembox) after
+  drilling artifacts exist → system re-derives CNC/DXF from the new
+  decomposition — a substitution is geometry, not a price line
+  (`purchasing-variants.md` cascade rule).
 
 ## Ground truths
 

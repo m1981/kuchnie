@@ -20,7 +20,7 @@ subcontracting.**
 | 2. Pomiar | `kitchen-erp` (project record) | in, v1 | attachments only (photos, appliance sheets, dimension PDF); geometry stays in Blender |
 | 3. Layout & design | external `home_builder_5` → `home-builder-adapter` | in, committed | hb5 is THE layout tool; ERP canvas stays a quick-estimate sketchpad; investment goes to extraction fidelity |
 | 4. Decomposition | `kuchnie-core` | in, live | v1 types: dolna drzwiowa/szufladowa/legrabox, górna drzwiowa + **corner blind (new)**; other types stay ERP estimates |
-| 5. Purchasing | `kitchen-erp` | in, v1 | artifacts: rozrys CSV (contract below), board order + hardware order to the single supplier; prices via periodic supplier price-file import — catalog stays price-free |
+| 5. Purchasing | `kitchen-erp` | in, v1 | artifacts: cutting-service package (rozrys CSV per the contract below + DXF, single hop — the service supplies board, cuts, edges, drills; offer/ACCEPT loop) + per-dealer hardware CSVs (producer codes, min-stock top-up); prices via multi-source ingestion to one landing schema — catalog stays price-free. Renegotiated 2026-07-16 at the UC-4 dressing (was: board order to a single supplier — no raw-board purchase exists) |
 | 6. Cutting & edging | external service | boundary | rozrys CSV `Lp;Element;Długość;Szerokość;Grubość;Ilość;Materiał;Usłojenie;Okleina×4;Uwagi`, one-time column mapping at the e-rozkrój-class service; **nesting is a permanent non-goal** |
 | 7. CAM / drilling | `kitchen-cam` | in, live | ops from core decomposition → DXF |
 | 8. Assembly outputs | `kitchen-cam` | in, later milestone | panel labels + per-cabinet sheets, after decomposition earns trust |
