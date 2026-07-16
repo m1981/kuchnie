@@ -30,6 +30,15 @@ from .decomposer import decompose
 from .bom import BOM, BOMItem, calculate_bom
 from .loader import load_cabinet, load_kitchen
 from .kitchen import all_panels, all_accessories, kitchen_bom, validate_rows
+from .buildability import (
+    ADVISORY,
+    BLOCKING,
+    BuildabilityVerdict,
+    Finding,
+    GateResult,
+    GateStatus,
+    evaluate_buildability,
+)
 from .serialize import (
     kitchen_to_dict,
     kitchen_to_json,
@@ -69,6 +78,9 @@ __all__ = [
     "load_cabinet", "load_kitchen",
     # Kitchen-level
     "all_panels", "all_accessories", "kitchen_bom", "validate_rows",
+    # Buildability verdict (UC-2 step 5, wk-89a668a2)
+    "ADVISORY", "BLOCKING", "BuildabilityVerdict", "Finding",
+    "GateResult", "GateStatus", "evaluate_buildability",
     # Serialization (intermediate format)
     "kitchen_to_dict", "kitchen_to_json", "kitchen_to_json_str",
     "kitchen_from_dict", "kitchen_from_json", "kitchen_from_json_str",
