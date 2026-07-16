@@ -1,3 +1,7 @@
+# TOMBSTONE (2026-07-16): atticized by owner dark-triage decision. One-shot
+# generator/migration whose output is already committed (catalog/data/*.yaml,
+# schema 1.5.0). The living data pipeline is documented in
+# docs/specs/catalog-service.md; rebuild = catalog.scripts.seed + seed_* extras.
 """Merge Global Collection decors into kronospan_full.yaml.
 
 Reads the full 174-decor list from global-collection-decory.yaml,

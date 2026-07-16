@@ -1,3 +1,7 @@
+# TOMBSTONE (2026-07-16): atticized by owner dark-triage decision. One-shot
+# generator/migration whose output is already committed (catalog/data/*.yaml,
+# schema 1.5.0). The living data pipeline is documented in
+# docs/specs/catalog-service.md; rebuild = catalog.scripts.seed + seed_* extras.
 """Migrate an existing catalog.db from schema 1.4.0 to 1.5.0 (ADR-004).
 
 Changes:

@@ -1,3 +1,7 @@
+# TOMBSTONE (2026-07-16): atticized by owner dark-triage decision. One-shot
+# generator/migration whose output is already committed (catalog/data/*.yaml,
+# schema 1.5.0). The living data pipeline is documented in
+# docs/specs/catalog-service.md; rebuild = catalog.scripts.seed + seed_* extras.
 """Generate catalog YAML files from markdown spec documents.
 
 Reads the structured markdown tables (created in earlier analysis phases)

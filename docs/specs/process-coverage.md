@@ -30,7 +30,9 @@ subcontracting.**
 
 **Project spine (cross-cutting):** minimal Project/Order entity in
 `kitchen-erp` — customer, status, dates, artifact references — threading
-stages 1→11.
+stages 1→11. The ERP's Reflex app entry point is
+`kitchen-erp/kitchen_erp/kitchen_erp.py` (required by `rxconfig.py`;
+adopted at the 2026-07-16 dark-triage).
 
 **Non-goals (tripwire-free by intent, refer by title):** nesting;
 lacquer/PVC front workflows; stone worktop computation; installation

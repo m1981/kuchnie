@@ -1,3 +1,7 @@
+# TOMBSTONE (2026-07-16): atticized by owner dark-triage decision. One-shot
+# generator/migration whose output is already committed (catalog/data/*.yaml,
+# schema 1.5.0). The living data pipeline is documented in
+# docs/specs/catalog-service.md; rebuild = catalog.scripts.seed + seed_* extras.
 """Generate KronoSwiss catalog YAML from kronoswiss_spec.md.
 
 Produces catalog/data/kronoswiss_full.yaml consumable by CatalogImporter.
