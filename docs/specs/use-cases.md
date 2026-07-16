@@ -117,8 +117,10 @@ the requirement's tracker):
    machining ops) — flagship types full (tr-591aa208, tr-3ef7b607,
    tr-8dfe366d); door/wall types partial (`capability-map.csv`).
 5. System validates the kitchen and issues a single buildability verdict —
-   **⚠ wk-89a668a2** (checks scattered across five modules, no gate
-   runner: tr-00421995).
+   supported: `kuchnie_core.buildability.evaluate_buildability` runs the
+   formerly scattered checks (premise tr-00421995) as ordered gates
+   M1–M5 + FIT/WSTD/G1/G6, parked gates reported as explicit skips —
+   tr-65aa5969.
 6. System emits rozrys CSV per the stage-6 contract, grain included —
    tr-15d48651; one contract decision open (Długość orientation for lying
    panels).
@@ -140,13 +142,16 @@ the requirement's tracker):
 - 4a. Scene decor cannot be resolved to a catalog variant → hand
   assignment, gap-logged — current reality; no resolver wired.
 - 5a. Buildability verdict FAIL → no artifacts emitted; findings listed by
-  scrap-severity — **⚠ depends on step 5**.
+  scrap-severity — half supported: the verdict orders findings
+  blocking-first (tr-65aa5969); **⚠ wk-cb6a17c8** (emission paths do not
+  consult the verdict yet).
 - 6a. Wood-grain front would need rotation for yield → forbidden; grain
   pins orientation — supported (tr-15d48651).
 - 8a. Material has no local price → BOM flags unpriced lines instead of
   silently under-quoting — **⚠ rows exist at 0.0 but nothing flags them**.
 
-Reading: steps 2, 3, 5 and extensions 2a/5a/8a are the open backlog. This
+Reading: extensions 2a/5a/8a and step 8's G11/G13 qualifiers
+(wk-593a317b) are the open backlog; the main scenario's steps all run. This
 use case adds no work — it gives the existing work its requirement, and
 places the buildability verdict ON the main success scenario of the
 business's central flow.
@@ -247,8 +252,12 @@ net quantities (required − stock + buffer); project stage advances.
   Supersedes the earlier reading-gap fact (diverged by design 2026-07-16
   when wk-81a47ab8's r2 slice landed; see that claim's diverge verdict in
   the ledger for the lineage).
-- tr-00421995 — validation gates scattered, no orchestrator (UC-2 step 5
-  missing).
+- tr-00421995 — validation gates scattered, no orchestrator (the premise
+  wk-89a668a2 stood on; the orchestrator now delegates to those same
+  scattered homes — tr-65aa5969).
+- tr-65aa5969 — evaluate_buildability issues the single ordered-gate
+  verdict (UC-2 step 5 supported; ext 5a emission gating still open,
+  wk-cb6a17c8).
 - tr-15d48651 — Panel.grain wired, Usłojenie emitted (UC-2 step 6 / ext 6a).
 - tr-8dfe366d — back formula groove-seated, matches carpenter reference
   (UC-2 step 4 trustworthy for flagship types).
@@ -265,12 +274,13 @@ net quantities (required − stock + buffer); project stage advances.
 - wk-39ed9155 — supplier price-file import (UC-7 / UC-4)
 - wk-4c37f4ee — worktop per-lm BOM (UC-1/UC-4 subfunction)
 - wk-6716e9c8, wk-c67ffaa1 — decor images + family audit (UC-3/UC-9)
-- wk-89a668a2 — buildability verdict gate runner (UC-2 step 5, filed by
-  this dressing). Covers TWO rule families: mechanical (panel dims,
-  overlaps — validator.py) and design-legality (playbook Phase-8 gate
-  G1–G7). First slice shipped: G1/G6/width rules in validate_rows
-  (wk-bae72832); G2/G3/G4/G5/G7 parked pending model support
-  (L-adjacency, appliance positions, cutout positions)
+- wk-89a668a2 — CLOSED 2026-07-16 (tr-65aa5969): buildability verdict
+  gate runner shipped, both rule families delegated (mechanical M1–M5,
+  design-legality FIT/WSTD/G1/G6 via validate_rows); G2/G3/G4/G5/G7
+  stay parked pending model support (L-adjacency, appliance positions,
+  cutout positions) and surface as explicit SKIPPED gates
+- wk-cb6a17c8 — gate artifact emission on the verdict (UC-2 ext 5a
+  wiring, filed at the wk-89a668a2 close)
 - wk-33342f9e — this spec (migration step 1)
 
 ## Acceptance
