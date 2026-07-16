@@ -1,0 +1,24 @@
+# Ruff — correctness-only lint (regime gate 70-ruff.sh, WARN posture).
+# Style/formatting rules are deliberately EXCLUDED: a repo-wide reformat
+# would stale dozens of path-watched ledger claims; adopting `ruff format`
+# is a separate, one-time decision with a verifier sweep budgeted after.
+# Architecture smells (cycles, layers, dormancy) stay in
+# scripts/session-gates.d/60-arch-smells.sh — one source per smell class,
+# so Ruff's overlapping rules (e.g. PLR0913 too-many-args) stay off.
+
+[lint]
+select = [
+    "F",    # pyflakes: unused imports/vars, undefined names, f-strings
+    "E9",   # syntax/io errors
+    "B006", # mutable default argument
+    "B008", # function call in default argument
+    "B023", # function defined in loop captures loop variable
+    "B904", # raise without `from` inside except
+]
+
+[lint.per-file-ignores]
+"**/__init__.py" = ["F401"]  # re-export is the public-API idiom here
+
+[lint.flake8-bugbear]
+# FastAPI dependency injection is call-in-default by design
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]

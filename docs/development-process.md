@@ -124,6 +124,7 @@ and the end-of-session verifier caught the filer's own basis error).
 | **`session-gates.d/50-new-dark.sh`** | end of session | nothing yet — WARN-only: a module absent from the committed `docs/code-inventory.json` arriving DARK per `scripts/coverage-audit.py` (R2-lite; promotion to FAIL is Michał's call) |
 | **`session-gates.d/60-arch-smells.sh`** | end of session | nothing yet — WARN-only: ten smell classes (import cycles incl. deferred, cross-module `_underscore` imports, repeated deferred imports, dormant classes, god classes, duplicate module-level defs, unit-suffix lint, param bloat, entity-service imports, layer rules) — the mechanical layer of the signature review (`docs/pattern-conformance.md` § Re-running this review) |
 | **`session-gates.d/61-signature-drift.sh`** | end of session | nothing yet — WARN-only: the architecture surface (per `scripts/signature-summary.py`) drifting from the committed `docs/architecture-signatures.txt` baseline; the baseline is re-committed only WITH a judgment review — its freshness is the receipt that the review happened |
+| **`session-gates.d/70-ruff.sh`** | end of session | nothing yet — WARN-only: Ruff with the correctness-focused rule set in root `ruff.toml` (pyflakes, syntax, bugbear traps; style rules deliberately excluded — a reformat would stale path-watched claims) |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
