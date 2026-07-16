@@ -14,7 +14,7 @@ the hook text is courtesy. Verified 2026-07-12 against source.
 | 1 | Cabinet macros (PRO100) | Delegated to plugin | ADR-009 — hb5 owns parametric cabinets; adapter is the ACL | none (by design) |
 | 2 | Construction Method (Polyboard) | Mostly built | tr-56212df8 — first-class registry entity; joinery is one flat string | no per-joint `JoinerySpec` |
 | 3 | Sub-product hierarchy (Winner Flex) | Deliberately flatter | tr-0e4f1897 — zero bay/opening/splitter entities; ADR-001 panel-is-atom | intentional; revisit only if openings become first-class |
-| 4 | Feature operations (TopSolid) | Mostly built | tr-168bad10 — MachiningOp + face/drill_type, cam appliers, legrabox runner/confirmat/groove | groove in `dolna_legrabox` only; no drill-list export |
+| 4 | Feature operations (TopSolid) | Mostly built | tr-eaeed5fe — MachiningOp + face/drill_type, cam appliers, runner/confirmat/groove from the legrabox AND corner-blind decomposers | no standalone drill-list export (DXF only) |
 | 5 | Object-in-room (PaletteCAD) | Delegated to plugin | ADR-009 — placement/room stays in hb5 | none (by design) |
 | 6 | Panel formula engine | Built, unwired | tr-fc74bc2e — `recipe.py` has no decomposer consumer; erp runs its own JSON recipes | wire decomposers or retire one engine |
 | 7 | Material ≠ Construction | Clean | tr-9b296c35 — construction.py material-free; MaterialCatalog Protocol | none |
@@ -30,7 +30,7 @@ wk-cb6a17c8).
 ## Re-running this review (the signature exercise)
 
 The 2026-07-16 review that closed row 8 and found the antipattern set
-(tr-72b4e836 import cycle, tr-88fb2941 stringly gates, tr-847d40f8
+(the import cycle — fixed 2026-07-17, tr-cad8d45a; tr-88fb2941 stringly gates; tr-847d40f8
 triple BOM fold) ran on a signature summary, not full source. The review
 lives at three regime layers:
 
