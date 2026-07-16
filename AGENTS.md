@@ -66,7 +66,7 @@ This repo hosts 6 components. `kuchnie_core` is the pure-Python domain hub; ever
 | `krono-compositor-mvp/` | **Sales tool (Stage 1)** — first-visit 2.5D previews + decor picker + screenshots. FastAPI + OpenCV + Alpine.js. | `krono-compositor-mvp/AGENTS.md` *(todo)* | 011 |
 | `kitchen-erp/` *(renamed per ADR-011)* | **BOM · cost · purchasing · rules admin · ops UI.** Reflex + SQLModel. Consumes `kuchnie_core` for domain computations. | `kitchen-erp/AGENTS.md` *(todo)* | 011 |
 | `kitchen-cam/` *(renamed per ADR-010)* | **CAM enrichment** — machining ops (System32, hinges, handles), DXF for CNC shop. Downstream consumer of `kuchnie_core`. | `kitchen-cam/AGENTS.md` | 010 |
-| `home-builder-adapter/` *(renamed per ADR-009)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. Only `bpy`-dependent component. | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
+| `home-builder-adapter/` *(renamed per ADR-009)* | **Blender scene extractor** — walks `home_builder_5` `.blend` tree → `kuchnie_core.Kitchen`. The pipeline's `bpy`-dependent component (krono-compositor's standalone `gen_kitchen.py` renderer also imports `bpy`). | `home-builder-adapter/AGENTS.md` *(todo)* | 009 |
 
 **External (not in this repo):**
 
