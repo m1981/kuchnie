@@ -26,3 +26,31 @@ Rows 6 and 10 are the actionable ones; 6 is engineering debt, 10 is the
 Stage-2 investment fork already posed in the L1 questionnaire. Row 8
 closed 2026-07-16 with the buildability gate runner (residual wiring:
 wk-cb6a17c8).
+
+## Re-running this review (the signature exercise)
+
+The 2026-07-16 review that closed row 8 and found the antipattern set
+(tr-72b4e836 import cycle, tr-88fb2941 stringly gates, tr-847d40f8
+triple BOM fold) ran on a signature summary, not full source. The review
+lives at three regime layers:
+
+1. **Findings are path-watched claims** — each antipattern claim watches
+   its offending files, so the commit that fixes (or worsens) it stales
+   the claim and the verdict queue re-opens exactly that question.
+2. **Mechanical smells run at session close** —
+   `scripts/session-gates.d/60-arch-smells.sh` (WARN-only) detects
+   import cycles, cross-module `_underscore` imports and repeated
+   deferred imports without needing the full review.
+3. **The judgment pass is re-run by hand** when a component gains a
+   module family, an epic closes, or a pattern row's status changes:
+
+```bash
+find kuchnie-core/src kitchen-erp/kitchen_erp/ -type f -name "*.py" \
+    ! -name "test*.py" | pysum --pipe
+```
+
+Feed the summary to an architect (human or agent) against the table
+above; new findings become claims (layer 1) and, when grep-able,
+detectors (layer 2). `pysum` is a user-local tool
+(`~/.local/bin/pysum`) — the gate layer deliberately does not depend
+on it.

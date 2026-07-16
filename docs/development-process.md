@@ -122,6 +122,7 @@ and the end-of-session verifier caught the filer's own basis error).
 | **`dashboard.py --check`** (session-gates.d/30) | end of session | a stale `STATUS.md` — the dashboard is GENERATED from ledger/bd/gates (`scripts/dashboard.py`, sources `docs/capability-map.csv` + `docs/roadmap-map.csv`) and its freshness is gated so it cannot lie |
 | **`test-health.sh`** (session-gates.d/40) | on demand + close | a test citing a tr-/wk- id that does not exist in the ledger; WARNs on retracted/diverged pins and on recent closes with no citing test (R4 — `docs/specs/conformance-join.md`) |
 | **`session-gates.d/50-new-dark.sh`** | end of session | nothing yet — WARN-only: a module absent from the committed `docs/code-inventory.json` arriving DARK per `scripts/coverage-audit.py` (R2-lite; promotion to FAIL is Michał's call) |
+| **`session-gates.d/60-arch-smells.sh`** | end of session | nothing yet — WARN-only: mutual-import cycles (deferred included), cross-module `_underscore` imports, 3×-repeated deferred imports — the mechanical layer of the signature review (`docs/pattern-conformance.md` § Re-running this review) |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
