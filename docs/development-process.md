@@ -74,6 +74,40 @@ regression. WARNs on triage debt (unverified claims, queue size). A
 session that ends red has left gold in flight — finish, `--release`, or
 commit-with-id before walking away.
 
+### 2a. Multi-agent sessions — supervision doctrine
+
+Promoted 2026-07-16 after two supervised groups confirmed every
+candidate (evidence:
+[multi-agent-supervision-retro-2026-07-16.md](reviews/multi-agent-supervision-retro-2026-07-16.md);
+Group 2: both worktrees arrived 22 commits stale and the check below
+caught both, one agent stalled and resumed from its milestone commit,
+and the end-of-session verifier caught the filer's own basis error).
+
+1. **Task shapes by value/risk:** fan out read-only investigations and
+   small fenced main-tree tasks freely; implementations run in
+   worktrees, at most one per component at a time (Group 2's pair was
+   safe because kuchnie-core and kitchen-erp are disjoint).
+2. **Step-0 merge-base check is mandatory:** an implementation agent's
+   first act is verifying its worktree tip matches main's; on mismatch
+   it stops and reports. Distrust any baseline statement from an agent
+   whose base was stale. Auto-created worktrees are not exempt — both of
+   Group 2's arrived stale; when in doubt the agent cuts its own fresh
+   worktree off main.
+3. **Commit per milestone:** stalls are routine, resumable via message;
+   a lost handoff is recoverable from commits, lost uncommitted work is
+   not.
+4. **Division of labor is hard-fenced:** worktree agents never run
+   bd/dashboard/truth/session-close; the supervising reviewer merges,
+   re-verifies on main (merge-time invalidate-scan outranks worktree
+   re-affirmations), files acceptance claims, and closes twins.
+5. **Every claims-heavy session ends with a verifier dispatch:**
+   filer≠verifier makes it structural — a claim filed and path-staled in
+   the same session cannot be repaired by its own filer, and independent
+   re-runs catch the filer's basis errors.
+6. **Supervisor watches proportion** (product vs process hours) — no
+   gate does; expect roughly half the supervision effort to be ledger
+   bookkeeping and say so to anyone adopting the regime.
+
 ## 3. Gates inventory — what refuses what
 
 | Gate | Runs | Refuses |

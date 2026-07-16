@@ -47,7 +47,21 @@ evidence for the ledger paper lives in the meta-repo
    UC dressing). Correct place for the limit; plan owner decision
    sessions as first-class work.
 
-## Doctrine candidates (promote after Group 2 confirms, else delete)
+## Doctrine candidates — PROMOTED 2026-07-16
+
+Group 2 (buildability orchestrator + purchasing variant model, two
+worktree implementations run in parallel on disjoint components)
+confirmed every candidate: both auto-created worktrees arrived 22
+commits stale and the merge-base check stopped both agents before they
+built on a pre-spine baseline; one agent stalled mid-run and resumed
+losslessly from its milestone commit; merge-time invalidate-scans staled
+12 claims that were re-judged on main; and the end-of-session verifier
+independently re-ran every pinned test and caught the filer's own
+miscounted verdict basis. One refinement earned by the run: parallel
+implementations are safe when their components are disjoint — the
+serial rule applies per component, not globally. The promoted doctrine
+now lives in [development-process.md §2a](../development-process.md);
+the list below stays as the original candidates for lineage.
 
 - Fan out **investigations and small fenced tasks**; run **large
   implementations serially** with review.
