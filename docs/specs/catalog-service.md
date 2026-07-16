@@ -57,8 +57,11 @@ are atticized with tombstones (`attic/catalog-*.py`) — their output is the
 committed data itself.
 
 Known roughness, accepted for now: the four `seed_*` extras hardcode the
-canonical DB path in their `get_db()`; a shared `--db` flag is a
-nice-to-have, filed only if a real rebuild ever needs it.
+canonical DB path — and, sharper (2026-07-17 verifier observation): they
+ACCEPT a `--db` argument and silently ignore it, so a naive
+`--db scratch` run targets the canonical DB (idempotently). Rebuilding
+to another target means patching `DB_PATH` in-process; a real shared
+`--db` flag is filed only if a real rebuild ever needs it.
 
 ## Ground truths
 
