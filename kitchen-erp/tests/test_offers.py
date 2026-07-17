@@ -110,6 +110,10 @@ def test_malformed_offer_refused_whole(session, tmp_path, sent_variant, kwargs, 
         record_offer(session, sent_variant, **{**base, **kwargs})
     assert session.exec(select(Offer)).all() == []
     assert sent_variant.state == "sent"  # refused offers advance nothing
+    # refusal is atomic: no ArtifactRef row and no archive copy may leak
+    # (validation must run BEFORE archive_source — pinned against reorder)
+    assert session.exec(select(ArtifactRef)).all() == []
+    assert not (tmp_path / "a").exists()
 
 
 def test_competing_offer_while_offer_received_is_allowed(session, tmp_path, sent_variant):
