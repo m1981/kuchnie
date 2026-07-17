@@ -248,9 +248,10 @@ the requirement's tracker):
 - 4a. Scene decor cannot be resolved to a catalog variant → hand
   assignment, gap-logged — current reality; no resolver wired.
 - 5a. Buildability verdict FAIL → no artifacts emitted; findings listed by
-  scrap-severity — half supported: the verdict orders findings
-  blocking-first (tr-65aa5969); **⚠ wk-cb6a17c8** (emission paths do not
-  consult the verdict yet).
+  scrap-severity — supported: the verdict orders findings blocking-first
+  (tr-65aa5969) and the core emission doorways (cutlist, edging,
+  kitchen_bom) refuse a FAILED verdict via require_buildable /
+  BuildabilityError (tr-409f4aab, wk-cb6a17c8).
 - 6a. Wood-grain front would need rotation for yield → forbidden; grain
   pins orientation — supported (tr-15d48651).
 - 8a. Material has no local price → BOM flags unpriced lines instead of
@@ -362,8 +363,8 @@ net quantities (required − stock + buffer); project stage advances.
   wk-89a668a2 stood on; the orchestrator now delegates to those same
   scattered homes — tr-65aa5969).
 - tr-65aa5969 — evaluate_buildability issues the single ordered-gate
-  verdict (UC-2 step 5 supported; ext 5a emission gating still open,
-  wk-cb6a17c8).
+  verdict (UC-2 step 5 supported; ext 5a emission gating shipped as
+  tr-409f4aab, structured findings underneath as tr-cb1dec8a).
 - tr-15d48651 — Panel.grain wired, Usłojenie emitted (UC-2 step 6 / ext 6a).
 - tr-8dfe366d — back formula groove-seated, matches carpenter reference
   (UC-2 step 4 trustworthy for flagship types).
@@ -385,8 +386,9 @@ net quantities (required − stock + buffer); project stage advances.
   design-legality FIT/WSTD/G1/G6 via validate_rows); G2/G3/G4/G5/G7
   stay parked pending model support (L-adjacency, appliance positions,
   cutout positions) and surface as explicit SKIPPED gates
-- wk-cb6a17c8 — gate artifact emission on the verdict (UC-2 ext 5a
-  wiring, filed at the wk-89a668a2 close)
+- wk-cb6a17c8 — CLOSED 2026-07-18 (tr-409f4aab): emission doorways gated
+  on the verdict, no override flag; wk-acc8e094 closed with it
+  (tr-cb1dec8a — structured findings replace the string protocol)
 - wk-33342f9e — this spec (migration step 1)
 
 ## Acceptance
