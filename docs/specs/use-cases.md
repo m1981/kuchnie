@@ -54,7 +54,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 
 | UC | Actor | Goal | Dress | Stages | Work today |
 |---|---|---|---|---|---|
-| UC-1 | Salesperson/Designer | Quote a kitchen (estimate-grade; ERP canvas + estimate lines for unsupported types) | **full — to write** | 2–5 | — |
+| UC-1 | Salesperson/Designer | Quote a kitchen (two thresholds: iPad canvas widelek → hb5 comparison board; estimate-grade always) | **full — below** (dressed 2026-07-18) | 2–5 | wk-224f3712, wk-59b943b1, wk-593a317b, wk-4c37f4ee |
 | UC-2 | Production engineer | Produce the production pack | **full — below** | 3–8 | wk-81a47ab8 |
 | UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — to write** | 1 | wk-6716e9c8, wk-c67ffaa1 |
 | UC-4 | Purchaser | Order materials for a job (cutting-service package + hardware CSVs to dealers) | **full — below** (dressed 2026-07-16) | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
@@ -70,6 +70,105 @@ Worktop BOM position (wk-4c37f4ee) is a subfunction of UC-1/UC-4, not a
 goal. The catalog **configurator** flow (sessions/steps/templates in
 `catalog/`) is an implementation candidate for UC-3 — adopting or atticing
 it is decided when UC-3 gets dressed, not before.
+
+## UC-1 — Quote a kitchen (fully dressed, interview 2026-07-18)
+
+**Primary actor:** Michał as Salesperson (threshold 1) / Designer
+(threshold 2)
+**Scope:** kitchen-erp (canvas, variants, prices) + kuchnie-core
+(decomposition) + hb5 (threshold 2 only). The client is an external
+actor sitting at the same table. **Level:** sea (user goal)
+**Goal in context:** the client needs a number they can decide on, at two
+moments with two precisions: a same-evening RANGE at the first visit
+(iPad with ERP only — hb5 happens later at the office), then per-variant
+prices at the comparison board after the design exists. Both are
+ESTIMATE-grade; only a cutting service's recorded offer is offer-grade
+(purchasing-variants.md, permanent display rule).
+
+**Stakeholders & interests:**
+- Michał/owner — never quotes below cost unknowingly: a private
+  cost-without-labor view shows the margin room at the table
+  (wk-59b943b1); the widelek from the first visit converges on reality
+  via the calibration loop
+- Client — a decidable number the same evening; the range they said yes
+  to is the range the design lands in; trade-offs happen WITH them at
+  the comparison board
+- Cutting service — uninvolved at this stage; their eventual offer is
+  the calibration ground truth
+- Assembler-Michał — the quote's labor component reflects real per-type
+  effort (drawer > corner > door), not a flat multiplier
+
+**Preconditions:** material prices present (any age — age visible,
+tr-4afef6fb freshness machinery); flat-rate estimate-line price book per
+module type for non-decomposable modules (⚠ wk-224f3712); per-type labor
+weights (⚠ wk-59b943b1). Threshold 2 additionally: pomiar done, kitchen
+laid out in hb5.
+**Minimal guarantees:** every displayed figure carries its grade —
+SZACUNEK badge with per-line price ages (tr-4afef6fb); an estimate is
+never displayed as an offer; unpriced (0.0) lines are flagged, never
+silently under-quoted (shared with UC-2 ext 8a — ⚠ open); the client
+never sees the materials-vs-labor split (owner-only view, wk-59b943b1).
+**Success guarantees:** the client leaves threshold 1 with an od–do
+range and threshold 2 with per-variant prices; the widelek and the
+chosen variant's estimate are stored on the project spine as
+calibration datapoints; ACCEPT hands over to UC-4 with the variant
+locked (tr-c87a68f9).
+**Trigger:** first client conversation with dimensions on the table
+(threshold 1); design ready in hb5 (threshold 2).
+
+**Main success scenario** (⚠ = the id IS the requirement's tracker):
+
+1. At the client's table Michał lays out modules on the ERP canvas
+   (iPad): types + rough W×H×D from the client's tape — canvas exists
+   (KitchenState rows), sizing survives today.
+2. Non-decomposable modules (cargo, karuzela, sink, oven) enter as
+   estimate lines from the flat-rate per-type price book, TTL-aged like
+   every price — **⚠ wk-224f3712**.
+3. System prices the canvas twice — tier "standard" (melamine,
+   Tandembox, standard hinges) and tier "komfort" (upper decors,
+   LEGRABOX, soft-close) — widens by the pre-pomiar uncertainty margin,
+   and shows the od–do widelek with the SZACUNEK badge — **⚠
+   wk-224f3712** (badge machinery live: tr-4afef6fb).
+4. Client agrees to the range; the widelek is stored on the project
+   spine as the first calibration datapoint — **⚠ wk-224f3712**
+   (spine: tr-e51ef4fd).
+5. After pomiar Michał designs in hb5; decomposition prices the real
+   kitchen through the single BOM fold — supported (tr-ff8a5110,
+   tr-b485d74c); worktop enters per-lm — **⚠ wk-4c37f4ee**.
+6. System presents the comparison board: 2–3 variants of the same
+   kitchen side by side (decor/drawer-system/hinge/worktop axes), each
+   re-derived and re-priced from one decomposition — variants live
+   (tr-6692cbe7); the board itself **⚠ wk-593a317b**; labor per module
+   type, owner-only split view — **⚠ wk-59b943b1**.
+7. Client picks a variant (possibly after axis tweaks recomputed in
+   minutes); Michał records ACCEPT; the variant locks and UC-4 takes
+   over — supported (tr-c87a68f9).
+
+**Extensions** (where the margin lives):
+
+- 1a. Client's budget is below "od" → walk down the substitution axes
+  live at the board (cheaper decor tier, Tandembox, shorter run) until
+  it fits — re-derivation is minutes (tr-6692cbe7); margin concession is
+  Michał's call, informed by the private cost-without-labor view (⚠
+  wk-59b943b1).
+- 2a. A module type has no entry in the estimate-line price book → line
+  flagged unpriced, widelek marked incomplete — never silently omitted
+  (⚠ wk-224f3712).
+- 3a. Prices older than TTL → the range renders estimate-grade with
+  ages visible and widens instead of faking precision — badge live
+  (tr-4afef6fb), widening ⚠ wk-224f3712.
+- 5a. Post-pomiar design lands outside the quoted widelek → the client
+  hears it from Michał with the board open, not from a surprise final
+  number — process rule, no mechanism owed.
+- 7a. Client walks away → project stays at the quote stage with the
+  widelek archived; no artifacts were promised (stage spine
+  tr-e51ef4fd).
+
+Reading: threshold 2 stands almost entirely on shipped machinery
+(variants, single BOM fold, freshness badge, offer/ACCEPT); the genuinely
+new work is threshold 1 (wk-224f3712) and the labor model (wk-59b943b1).
+The comparison board (wk-593a317b) is the quoting surface — UC-1 and
+UC-4 meet at ACCEPT.
 
 ## UC-2 — Produce the production pack (fully dressed)
 
