@@ -54,7 +54,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 
 | UC | Actor | Goal | Dress | Stages | Work today |
 |---|---|---|---|---|---|
-| UC-1 | Salesperson/Designer | Quote a kitchen (two thresholds: iPad canvas widelek → hb5 comparison board; estimate-grade always) | **full — below** (dressed 2026-07-18) | 2–5 | wk-224f3712, wk-59b943b1, wk-593a317b, wk-4c37f4ee |
+| UC-1 | Salesperson/Designer | Quote a kitchen (two thresholds: iPad canvas widelek → hb5 comparison board; estimate-grade always) | **full — below** (dressed 2026-07-18) | 2–5 | wk-224f3712, wk-59b943b1, wk-593a317b |
 | UC-2 | Production engineer | Produce the production pack | **full — below** | 3–8 | wk-81a47ab8 |
 | UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — to write** | 1 | wk-6716e9c8, wk-c67ffaa1 |
 | UC-4 | Purchaser | Order materials for a job (cutting-service package + hardware CSVs to dealers) | **full — below** (dressed 2026-07-16) | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
@@ -134,15 +134,20 @@ locked (tr-c87a68f9).
    (spine: tr-e51ef4fd).
 5. After pomiar Michał designs in hb5; decomposition prices the real
    kitchen through the single BOM fold — supported (tr-ff8a5110,
-   tr-b485d74c); worktop enters per-lm — **⚠ wk-4c37f4ee**.
+   tr-b485d74c); worktop enters per-lm with priced cutouts — supported
+   (tr-17905dae).
 6. System presents the comparison board: 2–3 variants of the same
    kitchen side by side (decor/drawer-system/hinge/worktop axes), each
    re-derived and re-priced from one decomposition — variants live
    (tr-6692cbe7); the board itself **⚠ wk-593a317b**; labor per module
    type, owner-only split view — **⚠ wk-59b943b1**.
 7. Client picks a variant (possibly after axis tweaks recomputed in
-   minutes); Michał records ACCEPT; the variant locks and UC-4 takes
-   over — supported (tr-c87a68f9).
+   minutes). The client's YES at the board chooses the finalist and
+   triggers UC-4 (send the package, get the binding offer); the recorded
+   ACCEPT that locks the variant happens once that offer confirms the
+   price — the state machine refuses an ACCEPT with no recorded offer by
+   design (tr-c87a68f9), so an estimate can never be locked in as if it
+   were the price.
 
 **Extensions** (where the margin lives):
 
@@ -165,10 +170,12 @@ locked (tr-c87a68f9).
   tr-e51ef4fd).
 
 Reading: threshold 2 stands almost entirely on shipped machinery
-(variants, single BOM fold, freshness badge, offer/ACCEPT); the genuinely
-new work is threshold 1 (wk-224f3712) and the labor model (wk-59b943b1).
-The comparison board (wk-593a317b) is the quoting surface — UC-1 and
-UC-4 meet at ACCEPT.
+(variants, single BOM fold, worktop per-lm, freshness badge,
+offer/ACCEPT); the genuinely new work is threshold 1 (wk-224f3712) and
+the labor model (wk-59b943b1). The comparison board (wk-593a317b) is the
+quoting surface. Handoff: the client's board-YES is UC-4's trigger; the
+locking ACCEPT is UC-4 step 5, after the binding offer — one decision,
+two recorded moments.
 
 ## UC-2 — Produce the production pack (fully dressed)
 
