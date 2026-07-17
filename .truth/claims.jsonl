@@ -865,3 +865,4 @@
 {"actor": "michal", "id": "tr-62fc8bec", "kind": "issue_event", "payload": {"basis": "", "event": "released", "issue": "wk-593a317b"}, "session": "s-63923-20260717", "ts": "2026-07-17T00:04:15.061239+00:00"}
 {"actor": "michal", "id": "tr-7b4d69f4", "kind": "issue_event", "payload": {"basis": "", "event": "claimed", "issue": "wk-64266e86"}, "session": "s-65264-20260717", "ts": "2026-07-17T00:09:02.330024+00:00"}
 {"actor": "michal", "id": "tr-a541b65e", "kind": "verdict", "payload": {"basis": "superseded; successor in verdict trail", "claim": "tr-747adf10", "verdict": "retracted"}, "session": "s-65737-20260717", "ts": "2026-07-17T00:09:29.626100+00:00"}
+{"actor": "michal", "id": "tr-a54c9334", "kind": "issue_event", "payload": {"basis": "", "event": "released", "issue": "wk-64266e86"}, "session": "s-66836-20260717", "ts": "2026-07-17T00:11:13.257113+00:00"}
