@@ -122,8 +122,9 @@ def test_gated_front_carries_no_ghost_costs():
 
 def test_corpus_override_prices_corpus_and_drawer_box_lines():
     """wk-aa3e159c: Cabinet.override_corpus_mat reaches cost (it was gathered
-    for price freshness but dead in the BOM); the corpus and stand-in
-    drawer-box lines both reprice under the override."""
+    for price freshness but dead in the BOM). Only the corpus line is
+    exercised here — the stand-in drawer-box line shares the same override
+    variable but stays latent in this path (see comment below)."""
     corpus_mat = Material(id=1, name="Corpus", price_per_unit=10.0, unit="m2")
     front_mat = Material(id=2, name="Front", price_per_unit=20.0, unit="m2")
     back_mat = Material(id=3, name="Back", price_per_unit=5.0, unit="m2")
