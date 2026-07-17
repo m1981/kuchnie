@@ -151,13 +151,13 @@ Pre-written `done --claim` texts:
   quantities (required minus on-hand plus buffer) keyed by producer
   codes and include the G13 accessory families; pinned by test against a
   hand-computed golden order"
-- (price ingestion) SHIPPED 2026-07-17 as tr-d0610cb4 (successor to a
-  first filing the verifier diverged on its any-quote clause — lineage
-  in the successor claim's text): "Supplier
+- (price ingestion) SHIPPED 2026-07-17 as tr-4afef6fb (third filing;
+  the diverge lineage lives in the successor claims' texts): "Supplier
   price rows enter through the landing schema with verbatim source
   archived and validation refusing schema-incomplete or out-of-tolerance
   rows; assess_quote_freshness grades estimate-grade with age visible;
   pinned by test" (`kitchen_erp/core/price_import.py` — capture →
   normalize → validate → land; canonical + column-map CSV adapters;
   XLS/PDF adapters are follow-ups, re-save XLS as CSV meanwhile; the UI
-  quote path does not call the grading doorway yet — wk-68b32f3b)
+  wiring landed 2026-07-17 as tr-4afef6fb — the quote header's
+  estimate-grade badge with per-line price ages, wk-68b32f3b)
