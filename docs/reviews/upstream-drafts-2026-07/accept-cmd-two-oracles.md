@@ -1,6 +1,9 @@
 # DRAFT upstream issue — accept-cmd: two-oracle shape + its own allowlist
 
 > **POSTED 2026-07-16:** https://github.com/m1981/truth-ledger/issues/2
+> **SHIPPED 2026-07-17** as truth-ledger v0.7.0 (ADR-014, meta-ledger
+> claim tr-512be881); issues #1+#2 closed; consumed here via copier the
+> same day — `.truth/accept-allow` carries the kuchnie policy.
 
 > Reader: Michał deciding whether to post this to the truth-ledger template
 > repo (extends truth-ledger#1) | Enables: pasting the body below into
