@@ -703,7 +703,8 @@
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.bom",
     "functions": [
-      "calculate_bom"
+      "calculate_bom",
+      "worktop_bom_items"
     ]
   },
   "kuchnie-core/src/kuchnie_core/buildability.py": {
