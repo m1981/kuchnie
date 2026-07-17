@@ -28,6 +28,7 @@ import copy
 from dataclasses import dataclass, replace
 
 from kuchnie_core import DrawerSystemFactory
+from kuchnie_core.bom import calculate_bom
 from kuchnie_core.decomposer import decompose
 from kuchnie_core.export.cutlist_csv import CutPiece, aggregate_panels
 from kuchnie_core.export.edging_csv import EdgingRow, collect_edging_rows
@@ -39,7 +40,7 @@ from kuchnie_core.model import (
     PanelRole,
 )
 
-from .domain_adapter import quantities_from_decomposition, to_kuchnie_core
+from .domain_adapter import role_bucket, to_kuchnie_core
 from .models import ProjectDefaults, Variant
 
 # Baseline values when neither the variant nor the project pins an axis.
@@ -136,7 +137,7 @@ def derive_variant(variant: Variant) -> DerivedArtifacts:
         rozrys_rows=aggregate_panels(panels),
         edging_rows=collect_edging_rows(panels),
         cnc_ops=[(p.id, op) for p in panels for op in p.machining_ops],
-        bom_lines=_bom_lines(results, params, defaults),
+        bom_lines=_bom_lines(results),
     )
 
 
@@ -197,52 +198,39 @@ def _attach_drawer_boxes(
                      or system.side_height(drawer.get("height_code", DRAWER_BOX_HEIGHT_CODE)))
 
 
-def _bom_lines(
-    results: list[DecompositionResult],
-    params: VariantParameters,
-    defaults: ProjectDefaults,
-) -> list[BomLine]:
-    """Fold the decomposition results into purchasing lines.
+def _bom_lines(results: list[DecompositionResult]) -> list[BomLine]:
+    """Purchasing views over the canonical BOM fold (ADR-015).
 
-    Board via the ADR-011 quantity buckets, edging per band material,
+    Board grouped by (pricing bucket, actual panel material) -- so a
+    per-cabinet front override prices under its own decor instead of
+    being lumped into the variant's; edging per band material;
     accessories verbatim from the decomposers (runner lines carry the
-    variant's drawer system in their name).
+    variant's drawer system in their name). No panel arithmetic here:
+    every quantity is a BOMItem.measure from kuchnie_core.calculate_bom.
     """
-    corpus_m2 = back_m2 = front_m2 = box_m2 = 0.0
-    for r in results:
-        q = quantities_from_decomposition(r)
-        corpus_m2 += q.corpus_m2
-        back_m2 += q.back_m2
-        front_m2 += q.front_m2
-        box_m2 += q.drawer_box_m2
+    items = [item for r in results for item in calculate_bom(r).items]
+
+    board: dict[tuple[str, str], float] = {}
+    for item in items:
+        if item.category == "panel":
+            key = (role_bucket(item.role), item.material)
+            board[key] = board.get(key, 0.0) + item.measure
 
     lines: list[BomLine] = []
-    if corpus_m2:
-        lines.append(BomLine(defaults.corpus_mat.name, round(corpus_m2, 3), "m2"))
-    if front_m2:
-        lines.append(BomLine(params.front_decor, round(front_m2, 3), "m2"))
-    if back_m2:
-        lines.append(BomLine(defaults.back_mat.name, round(back_m2, 3), "m2"))
-    if box_m2:
-        # drawer-box board prices apart from corpus (PanelRole contract)
-        box_material = next(
-            p.material for r in results for p in r.panels
-            if p.role in (PanelRole.DRAWER_BACK, PanelRole.DRAWER_BASE)
-        )
-        lines.append(BomLine(box_material, round(box_m2, 3), "m2"))
+    for bucket in ("corpus", "front", "back", "box"):
+        for material, m2 in sorted(
+            (mat, m2) for (b, mat), m2 in board.items() if b == bucket and m2
+        ):
+            lines.append(BomLine(material, round(m2, 3), "m2"))
 
     edging_lm: dict[str, float] = {}
-    for r in results:
-        for panel in r.panels:
-            for band in panel.banded_edges.values():
-                edging_lm[band.material] = (
-                    edging_lm.get(band.material, 0.0)
-                    + band.length_mm / 1000 * panel.quantity
-                )
+    for item in items:
+        if item.category == "edge_band":
+            edging_lm[item.material] = edging_lm.get(item.material, 0.0) + item.measure
     for material, lm in sorted(edging_lm.items()):
         lines.append(BomLine(f"obrzeze {material}", round(lm, 3), "lm"))
 
-    for r in results:
-        for acc in r.accessories:
-            lines.append(BomLine(acc.name, acc.quantity, "szt"))
+    for item in items:
+        if item.category == "accessory":
+            lines.append(BomLine(item.description, item.quantity, "szt"))
     return lines

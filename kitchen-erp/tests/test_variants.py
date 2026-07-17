@@ -379,6 +379,22 @@ class TestDecorSubstitution:
         assert door_fronts == {"Lacquered"}
         assert drawer_fronts == {"Dab Sonoma"}
 
+    def test_override_front_board_prices_under_its_own_decor(self, project):
+        """ADR-015 payoff: board lines group by actual panel material, so a
+        per-cabinet front override's m² lands on its own purchasing line
+        instead of inflating the variant decor's order quantity."""
+        special = Material(id=8, name="Lacquered", price_per_unit=50.0, unit="m2")
+        project.cabinets[1].override_front_mat = special
+        decor = Material(id=9, name="Dab Sonoma", price_per_unit=45.0, unit="m2")
+        v = Variant(name="sonoma", project=project)
+        v.set_overrides(front_decor=decor)
+
+        art = derive_variant(v)
+        board = {l.name: l.qty for l in art.bom_lines if l.unit == "m2"}
+        assert "Lacquered" in board and "Dab Sonoma" in board
+        # the two front positions are disjoint quantities, both non-zero
+        assert board["Lacquered"] > 0 and board["Dab Sonoma"] > 0
+
 
 class TestNoStaleArtifacts:
     def test_every_derivation_is_fresh_no_caching_across_override_changes(self, project):

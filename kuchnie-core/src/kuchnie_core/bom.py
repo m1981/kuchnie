@@ -6,7 +6,7 @@ not on every keystroke.
 
 from dataclasses import dataclass, field
 
-from .model import DecompositionResult
+from .model import DecompositionResult, PanelRole
 
 
 @dataclass
@@ -18,6 +18,11 @@ class BOMItem:
     unit: str            # "szt", "mb"
     unit_price: float = 0.0
     total: float = 0.0
+    # ADR-015: calculate_bom is the ONE geometry→quantity fold; downstream
+    # views (kitchen-erp buckets, variant purchasing lines) aggregate these
+    # two fields instead of re-walking panels.
+    role: PanelRole | None = None   # parent panel's role; None for accessories
+    measure: float = 0.0            # trade quantity: m² (panel), lm (edge_band), szt (accessory)
 
 
 @dataclass
@@ -58,6 +63,8 @@ def calculate_bom(
             unit="szt",
             unit_price=round(price_m2 * area_m2, 2),
             total=panel_cost,
+            role=panel.role,
+            measure=area_m2 * panel.quantity,
         ))
 
         # Edge banding (band.length_mm already set by catalog)
@@ -74,6 +81,8 @@ def calculate_bom(
                 unit="mb",
                 unit_price=round(price_m * length_m, 2),
                 total=edge_cost,
+                role=panel.role,
+                measure=length_m * panel.quantity,
             ))
 
     # --- Accessories ---
@@ -86,6 +95,7 @@ def calculate_bom(
             unit="szt",
             unit_price=acc.unit_price,
             total=round(acc.unit_price * acc.quantity, 2),
+            measure=float(acc.quantity),
         ))
 
     bom.total_cost = round(sum(i.total for i in bom.items), 2)

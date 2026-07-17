@@ -10,6 +10,7 @@ panels) return None and `BOMGenerator` falls back to the recipe formulas.
 """
 from dataclasses import dataclass
 
+from kuchnie_core.bom import calculate_bom
 from kuchnie_core.model import CabinetInstance, DecompositionResult, PanelRole
 
 from .models import Cabinet, ProjectDefaults
@@ -83,21 +84,38 @@ _FRONT_ROLES = {PanelRole.FRONT_DOOR, PanelRole.FRONT_DRAWER,
 _DRAWER_BOX_ROLES = {PanelRole.DRAWER_BACK, PanelRole.DRAWER_BASE}
 
 
+def role_bucket(role: PanelRole | None) -> str:
+    """Pricing bucket for a panel role: corpus | front | back | box."""
+    if role is PanelRole.BACK:
+        return "back"
+    if role in _FRONT_ROLES:
+        return "front"
+    if role in _DRAWER_BOX_ROLES:
+        return "box"
+    return "corpus"
+
+
 def quantities_from_decomposition(result: DecompositionResult) -> DomainQuantities:
+    """Bucket the canonical BOM fold's items by role (ADR-015: a view over
+    kuchnie_core.calculate_bom, never a second walk of the panels)."""
     q = DomainQuantities()
-    for panel in result.panels:
-        area_m2 = panel.width_mm * panel.height_mm / 1e6 * panel.quantity
-        edge_lm = sum(eb.length_mm for eb in panel.banded_edges.values()) / 1000 * panel.quantity
-        if panel.role is PanelRole.BACK:
-            q.back_m2 += area_m2
-        elif panel.role in _FRONT_ROLES:
-            q.front_m2 += area_m2
-            q.front_edge_lm += edge_lm
-        elif panel.role in _DRAWER_BOX_ROLES:
-            # drawer-box board is not corpus board; boxes are unbanded so
-            # their (zero) edging stays out of the corpus edge total too
-            q.drawer_box_m2 += area_m2
-        else:
-            q.corpus_m2 += area_m2
-            q.corpus_edge_lm += edge_lm
+    for item in calculate_bom(result).items:
+        bucket = role_bucket(item.role)
+        if item.category == "panel":
+            if bucket == "back":
+                q.back_m2 += item.measure
+            elif bucket == "front":
+                q.front_m2 += item.measure
+            elif bucket == "box":
+                # drawer-box board is not corpus board (ADR-013)
+                q.drawer_box_m2 += item.measure
+            else:
+                q.corpus_m2 += item.measure
+        elif item.category == "edge_band":
+            # backs are never banded and boxes are unbanded by contract, so
+            # only front and corpus edging buckets exist
+            if bucket == "front":
+                q.front_edge_lm += item.measure
+            elif bucket == "corpus":
+                q.corpus_edge_lm += item.measure
     return q

@@ -161,3 +161,23 @@ def test_bom_total_is_sum(k01_path):
     bom = calculate_bom(result)
     expected = round(sum(i.total for i in bom.items), 2)
     assert bom.total_cost == expected
+
+def test_bom_items_carry_role_and_measure(k01_path):
+    """ADR-015: downstream views (erp buckets, variant purchasing lines)
+    aggregate BOMItem.role/measure instead of re-walking panels, so every
+    item must carry them."""
+    result = decompose(load_cabinet(k01_path))
+    bom = calculate_bom(result)
+    for item in bom.items:
+        if item.category == "panel":
+            assert item.role is not None
+            panel = next(p for r in [result] for p in r.panels
+                         if item.description.startswith(p.name))
+            assert item.measure == pytest.approx(
+                panel.width_mm * panel.height_mm / 1e6 * panel.quantity)
+        elif item.category == "edge_band":
+            assert item.role is not None
+            assert item.measure > 0
+        else:  # accessory
+            assert item.role is None
+            assert item.measure == item.quantity
