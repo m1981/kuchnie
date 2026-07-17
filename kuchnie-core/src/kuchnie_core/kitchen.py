@@ -56,10 +56,20 @@ def kitchen_bom(
     edge_prices: dict[str, float] | None = None,
     worktop_prices: dict[str, float] | None = None,
     cutout_prices: dict[str, float] | None = None,
+    verdict: "BuildabilityVerdict | None" = None,
 ) -> BOM:
     """One BOM for the entire kitchen (all cabinets summed), plus the
     worktop positions: per-lm laminate lines with per-piece cutout charges
-    (wk-4c37f4ee; stone worktops are quoted externally)."""
+    (wk-4c37f4ee; stone worktops are quoted externally).
+
+    Emission is gated on the buildability verdict (UC-2 ext 5a): a FAILED
+    verdict raises BuildabilityError — no purchase list for a kitchen that
+    would scrap board. Pass a precomputed ``verdict`` to skip re-running
+    the gates.
+    """
+    from .buildability import require_buildable
+
+    require_buildable(kitchen, verdict=verdict)
     all_items = []
     for row in kitchen.rows:
         for cab in row.cabinets:
@@ -77,65 +87,84 @@ def kitchen_bom(
 
 # ── Row validation ──────────────────────────────────────────────
 
-def validate_rows(kitchen: Kitchen) -> list[str]:
-    """Check that all cabinets fit in their rows.  Returns list of errors.
+def row_findings(kitchen: Kitchen) -> list["Finding"]:
+    """The design-legality slice of the buildability gate, structured
+    (wk-acc8e094): each rule emits a Finding with its gate id, severity
+    and offending ref — buildability buckets these directly, no string
+    parsing. ``validate_rows`` renders the same findings as strings.
 
-    Extended with the today-feasible slice of the playbook Phase-8 gate
-    (docs/l-kitchen-design-playbook.md §6; first design-legality rules of
-    the buildability verdict, wk-89a668a2):
+    Rules (today-feasible playbook Phase-8 slice, wk-89a668a2):
 
-    * G1 — one worktop line per run: base cabinets (plinth > 0) in a row
-      must share total height_mm.
-    * G6 — plinth line unbroken: base cabinets in a row must share
-      plinth_height_mm.
-    * width advisory — run composition uses standard widths
-      (KitchenStandards; corner cabinets exempt — they follow their own
-      1000–1300 rule; wall irregularity is absorbed by one filler at the
-      wall end). Prefixed "advisory:" — it flags, it does not fail.
+    * FIT  — cabinets fit their rows (blocking).
+    * G1   — one worktop line per run: base cabinets (plinth > 0) in a
+      row must share total height_mm (blocking).
+    * G6   — plinth line unbroken: base cabinets in a row must share
+      plinth_height_mm (blocking).
+    * WSTD — run composition uses standard widths (KitchenStandards;
+      corner cabinets exempt — they follow their own 1000–1300 rule;
+      wall irregularity is absorbed by one filler at the wall end).
+      Advisory — it flags, it does not fail.
 
     G2/G3/G4/G5/G7 of the gate need model support the Row does not carry
     yet (L-adjacency, appliance positions, cutout positions) and stay
     with wk-89a668a2.
     """
+    from .buildability import ADVISORY, BLOCKING, Finding
     from .standards import KitchenStandards
 
-    errors: list[str] = []
+    findings: list[Finding] = []
     std = KitchenStandards()
     for row in kitchen.rows:
         used = row.used_width_mm()
         if used > row.wall_width_mm:
-            errors.append(
+            findings.append(Finding(
+                "FIT", BLOCKING,
                 f"Row '{row.label}': cabinets use {used}mm "
-                f"but wall is only {row.wall_width_mm}mm"
-            )
+                f"but wall is only {row.wall_width_mm}mm",
+                row.label,
+            ))
         remaining = row.remaining_mm()
         if remaining < 0:
-            errors.append(
-                f"Row '{row.label}': {-remaining}mm overflows the wall"
-            )
+            findings.append(Finding(
+                "FIT", BLOCKING,
+                f"Row '{row.label}': {-remaining}mm overflows the wall",
+                row.label,
+            ))
 
         base = [c for c in row.cabinets if c.plinth_height_mm > 0]
         heights = {c.height_mm for c in base}
         if len(heights) > 1:
-            errors.append(
+            findings.append(Finding(
+                "G1", BLOCKING,
                 f"Row '{row.label}': G1 — worktop line broken, base cabinet "
                 f"heights differ {sorted(heights)}mm (playbook Phase 1: one "
-                f"height line per run)"
-            )
+                f"height line per run)",
+                row.label,
+            ))
         plinths = {c.plinth_height_mm for c in base}
         if len(plinths) > 1:
-            errors.append(
+            findings.append(Finding(
+                "G6", BLOCKING,
                 f"Row '{row.label}': G6 — plinth line broken, plinth heights "
-                f"differ {sorted(plinths)}mm"
-            )
+                f"differ {sorted(plinths)}mm",
+                row.label,
+            ))
         for c in row.cabinets:
             if "narozna" in c.type:
                 continue
             if not std.is_standard_width(c.width_mm):
-                errors.append(
+                findings.append(Finding(
+                    "WSTD", ADVISORY,
                     f"advisory: Row '{row.label}': cabinet {c.id} width "
                     f"{c.width_mm}mm is non-standard (playbook Phase 4: "
                     f"standard widths only; absorb wall irregularity with "
-                    f"one filler at the wall end)"
-                )
-    return errors
+                    f"one filler at the wall end)",
+                    c.id,
+                ))
+    return findings
+
+
+def validate_rows(kitchen: Kitchen) -> list[str]:
+    """Display layer over ``row_findings`` — same rules, rendered as the
+    flat strings the UI and older callers expect (wk-acc8e094)."""
+    return [f.message for f in row_findings(kitchen)]

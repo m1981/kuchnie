@@ -29,15 +29,17 @@ from .recipe import PanelRecipe, RecipeSchema, evaluate_formula, RecipeValidatio
 from .decomposer import decompose
 from .bom import BOM, BOMItem, calculate_bom, worktop_bom_items
 from .loader import load_cabinet, load_kitchen
-from .kitchen import all_panels, all_accessories, kitchen_bom, validate_rows
+from .kitchen import all_panels, all_accessories, kitchen_bom, row_findings, validate_rows
 from .buildability import (
     ADVISORY,
     BLOCKING,
+    BuildabilityError,
     BuildabilityVerdict,
     Finding,
     GateResult,
     GateStatus,
     evaluate_buildability,
+    require_buildable,
 )
 from .serialize import (
     kitchen_to_dict,
@@ -77,10 +79,10 @@ __all__ = [
     # Loaders
     "load_cabinet", "load_kitchen",
     # Kitchen-level
-    "all_panels", "all_accessories", "kitchen_bom", "validate_rows",
+    "all_panels", "all_accessories", "kitchen_bom", "row_findings", "validate_rows",
     # Buildability verdict (UC-2 step 5, wk-89a668a2)
-    "ADVISORY", "BLOCKING", "BuildabilityVerdict", "Finding",
-    "GateResult", "GateStatus", "evaluate_buildability",
+    "ADVISORY", "BLOCKING", "BuildabilityError", "BuildabilityVerdict", "Finding",
+    "GateResult", "GateStatus", "evaluate_buildability", "require_buildable",
     # Serialization (intermediate format)
     "kitchen_to_dict", "kitchen_to_json", "kitchen_to_json_str",
     "kitchen_from_dict", "kitchen_from_json", "kitchen_from_json_str",

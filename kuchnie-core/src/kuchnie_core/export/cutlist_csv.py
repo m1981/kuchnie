@@ -142,8 +142,20 @@ def pieces_to_csv(pieces: list[CutPiece]) -> str:
     return buf.getvalue()
 
 
-def export_cutlist_csv(kitchen: Kitchen, path: str | Path) -> Path:
-    """Aggregate all panels in the kitchen and write a cut-list CSV."""
+def export_cutlist_csv(
+    kitchen: Kitchen,
+    path: str | Path,
+    verdict: "BuildabilityVerdict | None" = None,
+) -> Path:
+    """Aggregate all panels in the kitchen and write a cut-list CSV.
+
+    Emission is gated on the buildability verdict (UC-2 ext 5a): a FAILED
+    verdict raises BuildabilityError and nothing is written. Pass a
+    precomputed ``verdict`` to skip re-running the gates.
+    """
+    from ..buildability import require_buildable
+
+    require_buildable(kitchen, verdict=verdict)
     panels = all_panels(kitchen)
     pieces = aggregate_panels(panels)
     csv_text = pieces_to_csv(pieces)

@@ -115,11 +115,20 @@ def rows_to_csv(rows: list[EdgingRow]) -> str:
     return buf.getvalue()
 
 
-def export_edging_csv(kitchen: Kitchen, path: str | Path) -> Path:
+def export_edging_csv(
+    kitchen: Kitchen,
+    path: str | Path,
+    verdict: "BuildabilityVerdict | None" = None,
+) -> Path:
     """Enumerate all banded edges across ``kitchen`` and write CSV.
 
     Returns the written path (matches ``export_cutlist_csv`` signature).
+    Emission is gated on the buildability verdict (UC-2 ext 5a): a FAILED
+    verdict raises BuildabilityError and nothing is written.
     """
+    from ..buildability import require_buildable
+
+    require_buildable(kitchen, verdict=verdict)
     rows = collect_edging_rows(all_panels(kitchen))
     csv_text = rows_to_csv(rows)
     out = Path(path)
