@@ -158,6 +158,12 @@ def _row_gate_buckets(kitchen: Kitchen) -> dict[str, list[Finding]]:
         "FIT": [], "WSTD": [], "G1": [], "G6": [],
     }
     for finding in row_findings(kitchen):
+        if finding.gate_id not in buckets:
+            raise ValueError(
+                f"row_findings emitted unknown gate id {finding.gate_id!r} — "
+                f"add it to _row_gate_buckets AND a gates.append in "
+                f"evaluate_buildability, or the finding would be dropped"
+            )
         buckets[finding.gate_id].append(finding)
     return buckets
 
