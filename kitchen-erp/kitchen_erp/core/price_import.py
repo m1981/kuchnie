@@ -301,3 +301,48 @@ def assess_quote_freshness(
         lines.append(PriceFreshness(material.id, material.name, latest.valid_from, age, status))
     grade = "current" if lines and all(l.status == "fresh" for l in lines) else "estimate"
     return QuoteFreshness(grade=grade, lines=lines)
+
+
+def quote_freshness_for_project(
+    session: Session,
+    project,
+    *,
+    as_of: date | None = None,
+    ttl_days: int = PRICE_TTL_DAYS,
+) -> QuoteFreshness:
+    """Gather every material the project's quote stands on — the four
+    ProjectDefaults boards plus per-cabinet overrides — and grade it.
+    The UI quote path calls this next to total_price (wk-68b32f3b)."""
+    materials: dict[int | None, Material] = {}
+    defaults = project.defaults
+    if defaults is not None:
+        for m in (defaults.corpus_mat, defaults.front_mat,
+                  defaults.back_mat, defaults.edge_band_mat):
+            if m is not None:
+                materials[m.id] = m
+    for cab in project.cabinets:
+        for m in (cab.override_front_mat, cab.override_corpus_mat):
+            if m is not None:
+                materials[m.id] = m
+    return assess_quote_freshness(
+        session, list(materials.values()), as_of=as_of, ttl_days=ttl_days
+    )
+
+
+def freshness_display(freshness: QuoteFreshness) -> tuple[str, list[str]]:
+    """(badge, lines) for the quote header: the badge names the grade,
+    every line carries the price's age. Estimate ≠ offer — the stale/
+    no-provenance wording must never look like a binding price."""
+    lines: list[str] = []
+    for line in freshness.lines:
+        if line.status == "fresh":
+            lines.append(f"{line.material_name}: cena z {line.valid_from.isoformat()} "
+                         f"({line.age_days} dni)")
+        elif line.status == "stale":
+            lines.append(f"{line.material_name}: cena NIEŚWIEŻA — {line.age_days} dni "
+                         f"(z {line.valid_from.isoformat()})")
+        else:
+            lines.append(f"{line.material_name}: brak pochodzenia ceny (wpisana ręcznie)")
+    badge = ("SZACUNEK — ceny do weryfikacji" if freshness.grade == "estimate"
+             else "ceny aktualne")
+    return badge, lines

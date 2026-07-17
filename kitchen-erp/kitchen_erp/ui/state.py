@@ -10,6 +10,7 @@ from ..core.schemas import CostTraceLine
 from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
 from ..core.bom_generator import BOMGenerator
+from ..core.price_import import freshness_display, quote_freshness_for_project
 
 MODULE_LABELS = {
     "BASE_CABINET": "Base cabinet",
@@ -89,6 +90,11 @@ class KitchenState(rx.State):
     """The reactive state for our UI."""
     project_name: str = "Loading..."
     total_price: float = 0.0
+    # Estimate-grade marker (wk-68b32f3b): the quote figure never renders
+    # without its price-freshness verdict. Estimate ≠ offer, everywhere.
+    quote_grade: str = "estimate"          # "current" | "estimate"
+    quote_grade_badge: str = ""
+    quote_freshness_lines: list[str] = []  # per-material age, display-ready
 
     wall_cabinets: list[CabinetUI] = []
     base_cabinets: list[CabinetUI] = []
@@ -1045,5 +1051,9 @@ class KitchenState(rx.State):
             self.total_wall_width = wall_width
             self.total_base_width = base_width
             self.total_price = round(total_price * existing.labor_markup, 2)
+
+            freshness = quote_freshness_for_project(session, existing)
+            self.quote_grade = freshness.grade
+            self.quote_grade_badge, self.quote_freshness_lines = freshness_display(freshness)
 
             self._update_selected_cabinet_ui()

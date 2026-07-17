@@ -70,10 +70,25 @@ def top_bar() -> rx.Component:
                     f"{KitchenState.total_price:,.0f} zł".replace(',', "'"),
                     f"{KitchenState.total_price:.2f} zł"
                 ),
-                font_size="2.5rem", 
-                font_weight="900", 
-                color="#16a34a", 
+                font_size="2.5rem",
+                font_weight="900",
+                color="#16a34a",
                 font_family="monospace"
+            ),
+            # Estimate-grade marker (wk-68b32f3b): stale/hand-entered prices
+            # must be visible next to the figure, ages in the hover list.
+            rx.cond(
+                KitchenState.quote_grade_badge != "",
+                rx.tooltip(
+                    rx.badge(
+                        KitchenState.quote_grade_badge,
+                        color_scheme=rx.cond(
+                            KitchenState.quote_grade == "estimate", "amber", "green"
+                        ),
+                        variant="soft",
+                    ),
+                    content=KitchenState.quote_freshness_lines.join("\n"),
+                ),
             ),
             spacing="0",
             align_items="flex-end"
