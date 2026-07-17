@@ -12,10 +12,13 @@ from .model import DecompositionResult, PanelRole, WorktopSegment
 @dataclass
 class BOMItem:
     description: str
-    category: str        # "panel", "edge_band", "accessory"
+    category: str        # "panel", "edge_band", "accessory", "worktop", "worktop_cutout"
     material: str
     quantity: int
     unit: str            # "szt", "mb"
+    # unit_price is the per-LINE price (a panel's area×rate, an edge run's
+    # or worktop segment's length×rate), NOT a rate per `unit` — total is
+    # unit_price × quantity, never × measure as well.
     unit_price: float = 0.0
     total: float = 0.0
     # ADR-015: calculate_bom is the ONE geometry→quantity fold; downstream
