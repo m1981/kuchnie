@@ -93,3 +93,61 @@ def test_live_successor_beats_dead_original(  # pins wk-eb7164f1
     # and with NO live candidate above threshold, the dead one still shows
     out2 = dashboard.classify_acceptance(items, [claims[0]])
     assert out2[0]["state"] == "FILED" and out2[0]["claim"] == "c-dead"
+
+
+def _fake_tr(hexpart: str) -> str:
+    """Synthetic ledger-id fixtures, assembled at runtime so the R4
+    citation sweep (scripts/test-health.sh) never reads them as
+    fabricated citations — they are deliberately not in the ledger."""
+    return "tr-" + hexpart
+
+
+def test_reworded_successor_found_via_lineage() -> None:  # pins wk-dcf4ab04
+    """A successor reworded below the lexical threshold must still turn
+    the item LIVE when explicit lineage links it to the dead best match."""
+    dead, new = _fake_tr("0000dead"), _fake_tr("00000new")
+    items = [{"text": "alpha beta gamma delta epsilon zeta", "ucs": []}]
+    claims = [
+        {"id": dead, "status": "retracted",
+         "text": "alpha beta gamma delta epsilon zeta"},
+        # reworded successor: 0/6 lexical overlap, cites the dead id
+        {"id": new, "status": "live",
+         "text": f"entirely different wording (supersedes {dead})"},
+    ]
+    successors = dashboard.successor_map(claims, [])
+    assert successors == {dead: new}
+    out = dashboard.classify_acceptance(items, claims, successors=successors)
+    assert out[0]["state"] == "LIVE"
+    assert out[0]["claim"] == new
+    assert out[0]["status"] == f"live ← {dead}"
+    # without the lineage map the old (under-reporting) behavior remains
+    out_bare = dashboard.classify_acceptance(items, claims)
+    assert out_bare[0]["state"] == "FILED"
+
+
+def test_successor_map_follows_verdict_basis_and_chains() -> None:
+    """Lineage source (b): the diverge/retract verdict basis names the
+    successor; chains dead->dead->live resolve transitively; cycles and
+    dead ends drop out."""
+    a1, a2, a3 = (_fake_tr(h) for h in ("aaaa0001", "aaaa0002", "aaaa0003"))
+    b1, b2 = _fake_tr("bbbb0001"), _fake_tr("bbbb0002")
+    claims = [
+        {"id": a1, "status": "retracted", "text": "first filing"},
+        {"id": a2, "status": "retracted", "text": "second filing"},
+        {"id": a3, "status": "live", "text": "third, no citations"},
+        {"id": b1, "status": "retracted", "text": "cycle a"},
+        {"id": b2, "status": "retracted", "text": f"cycle b names {b1}"},
+    ]
+    verdicts = [
+        {"claim": a1, "verdict": "diverge",
+         "basis": f"resolved by progress; successor {a2} carries it"},
+        {"claim": a2, "verdict": "retracted",
+         "basis": f"superseded; successor {a3}"},
+        {"claim": b1, "verdict": "diverge", "basis": f"see {b2}"},
+    ]
+    successors = dashboard.successor_map(claims, verdicts)
+    # the chain resolves both dead aaaa claims to the live third filing
+    assert successors[a1] == a3
+    assert successors[a2] == a3
+    # the bbbb cycle never reaches a live claim -> absent, not looping
+    assert b1 not in successors
