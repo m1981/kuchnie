@@ -67,9 +67,10 @@ def test_wall_cabinet_bom_pricing():
     assert parts["Front: Front"].cost == pytest.approx(9.84048)
 
     # Edging from real banded edges: corpus 2x500 + 2x964 = 2.928 lm;
-    # door all 4 edges 2x996 + 2x494 = 2.980 lm; total 5.908 lm @ $0.80 = $4.7264
-    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(5.908)
-    assert parts["Edge banding: Generic ABS"].cost == pytest.approx(4.7264)
+    # door all 4 edges 2x996 + 2x494 = 2.980 lm; total 5.908 lm priced at
+    # the project's edge_band_mat ($1.00/lm), not a hardcode (wk-aa3e159c)
+    assert parts["Edge banding: Edge"].quantity_net == pytest.approx(5.908)
+    assert parts["Edge banding: Edge"].cost == pytest.approx(5.908)
 
     # CNC: cutting 1.837908 m2 @ $15 = $27.56862; edgebanding 5.908 lm @ $4.50 = $26.586
     assert parts["CNC Service: Cutting & Nesting"].cost == pytest.approx(27.56862)
@@ -86,8 +87,8 @@ def test_wall_cabinet_bom_pricing():
     assert not any("Plinth" in n for n in parts)
 
     # Grand total, by hand:
-    # 8.784 + 2.33742 + 9.84048 + 4.7264 + 27.56862 + 26.586 + 6 + 30 + 0.2 + 25
-    assert tree.cost == pytest.approx(141.04292)
+    # 8.784 + 2.33742 + 9.84048 + 5.908 + 27.56862 + 26.586 + 6 + 30 + 0.2 + 25
+    assert tree.cost == pytest.approx(142.22452)
 
 
 def test_gated_front_carries_no_ghost_costs():
@@ -114,6 +115,38 @@ def test_gated_front_carries_no_ghost_costs():
 
     assert not any(n.startswith("Front:") for n in parts)
     # Edging is corpus-only: sides 2x620 + bottom 564 = 1.804 lm
-    assert parts["Edge banding: Generic ABS"].quantity_net == pytest.approx(1.804)
+    assert parts["Edge banding: Edge"].quantity_net == pytest.approx(1.804)
     # CNC cutting covers corpus + back only: 0.92004 + 0.345644 = 1.265684 m2
     assert parts["CNC Service: Cutting & Nesting"].quantity_net == pytest.approx(1.265684)
+
+
+def test_corpus_override_prices_corpus_and_drawer_box_lines():
+    """wk-aa3e159c: Cabinet.override_corpus_mat reaches cost (it was gathered
+    for price freshness but dead in the BOM); the corpus and stand-in
+    drawer-box lines both reprice under the override."""
+    corpus_mat = Material(id=1, name="Corpus", price_per_unit=10.0, unit="m2")
+    front_mat = Material(id=2, name="Front", price_per_unit=20.0, unit="m2")
+    back_mat = Material(id=3, name="Back", price_per_unit=5.0, unit="m2")
+    edge_mat = Material(id=4, name="Edge", price_per_unit=1.0, unit="lm")
+    defaults = ProjectDefaults(
+        corpus_mat=corpus_mat, front_mat=front_mat, back_mat=back_mat,
+        edge_band_mat=edge_mat,
+        hinge_sys=HardwareSet(id=1, name="H", price_per_set=2.0),
+        drawer_sys=HardwareSet(id=2, name="D", price_per_set=30.0),
+    )
+    cabinet = Cabinet(
+        name="Wet zone", module_kind="DRAWER_BASE", type="BASE",
+        width_mm=600.0, height_mm=820.0, depth_mm=560.0,
+        door_count=0, drawer_count=2,
+    )
+    cabinet.override_corpus_mat = Material(
+        id=9, name="MDF Wilgocioodporna", price_per_unit=15.0, unit="m2")
+
+    tree = BOMGenerator(cabinet, defaults).generate()
+    parts = {p.name: p for p in tree.get_all_parts()}
+
+    # (No drawer-box line here: dolna_szufladowa decomposes no box parts in
+    # the BOMGenerator path — boxes attach only in variant derivation.)
+    assert "Corpus: MDF Wilgocioodporna" in parts
+    assert parts["Corpus: MDF Wilgocioodporna"].unit_price == 15.0
+    assert not any(n == "Corpus: Corpus" for n in parts)

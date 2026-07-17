@@ -69,6 +69,15 @@ class TestMapping:
         inst = to_kuchnie_core(cab, defaults)
         assert inst.front_material == "Lacquered"
 
+    def test_corpus_override_wins(self, defaults):
+        """wk-aa3e159c: override_corpus_mat reaches the domain instance, so
+        rozrys/edging/purchasing name the actual board, mirroring the front."""
+        override = Material(id=9, name="MDF Wilgocioodporna", price_per_unit=55.0, unit="m2")
+        cab = make_cabinet()
+        cab.override_corpus_mat = override
+        inst = to_kuchnie_core(cab, defaults)
+        assert inst.body_material == "MDF Wilgocioodporna"
+
     def test_drawer_base_synthesizes_linked_drawer_fronts(self, defaults):
         cab = make_cabinet(module_kind="DRAWER_BASE", drawer_count=3, door_count=0)
         inst = to_kuchnie_core(cab, defaults)
