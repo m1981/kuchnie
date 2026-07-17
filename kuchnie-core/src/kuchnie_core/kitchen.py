@@ -7,7 +7,7 @@ collects DecompositionResults, and provides kitchen-wide views.
 from __future__ import annotations
 
 
-from .bom import BOM, calculate_bom
+from .bom import BOM, calculate_bom, worktop_bom_items
 from .decomposer import decompose
 from .model import (
     Accessory,
@@ -54,14 +54,20 @@ def kitchen_bom(
     kitchen: Kitchen,
     board_prices: dict[str, float] | None = None,
     edge_prices: dict[str, float] | None = None,
+    worktop_prices: dict[str, float] | None = None,
+    cutout_prices: dict[str, float] | None = None,
 ) -> BOM:
-    """One BOM for the entire kitchen (all cabinets summed)."""
+    """One BOM for the entire kitchen (all cabinets summed), plus the
+    worktop positions: per-lm laminate lines with per-piece cutout charges
+    (wk-4c37f4ee; stone worktops are quoted externally)."""
     all_items = []
     for row in kitchen.rows:
         for cab in row.cabinets:
             result = decompose(cab)
             cab_bom = calculate_bom(result, board_prices, edge_prices)
             all_items.extend(cab_bom.items)
+
+    all_items.extend(worktop_bom_items(kitchen.worktops, worktop_prices, cutout_prices))
 
     bom = BOM(cabinet_id=kitchen.project_name or "kitchen")
     bom.items = all_items

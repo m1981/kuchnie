@@ -27,7 +27,7 @@ from .blum_drawers import DrawerSystem, DrawerSystemFactory, TandemboxAntaro, Me
 from .blum_hinges import BlumHinge, BlumClipTop110, BlumClipTop95, BlumClipTop155, HingeFactory, HingeGeometry, calculate_hinge_count
 from .recipe import PanelRecipe, RecipeSchema, evaluate_formula, RecipeValidationError
 from .decomposer import decompose
-from .bom import BOM, BOMItem, calculate_bom
+from .bom import BOM, BOMItem, calculate_bom, worktop_bom_items
 from .loader import load_cabinet, load_kitchen
 from .kitchen import all_panels, all_accessories, kitchen_bom, validate_rows
 from .buildability import (
@@ -73,7 +73,7 @@ __all__ = [
     "PanelRecipe", "RecipeSchema", "evaluate_formula", "RecipeValidationError",
     # Engine
     "decompose",
-    "BOM", "BOMItem", "calculate_bom",
+    "BOM", "BOMItem", "calculate_bom", "worktop_bom_items",
     # Loaders
     "load_cabinet", "load_kitchen",
     # Kitchen-level

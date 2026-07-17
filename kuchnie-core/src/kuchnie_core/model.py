@@ -409,13 +409,16 @@ class GrainAxis:
 class WorktopSegment:
     """A worktop segment covering one row.
 
-    Simple rectangle for now.  L-shapes and cutouts come in CAM stage.
+    Simple rectangle for now.  L-shape geometry comes in CAM stage;
+    cutouts are carried here by name only (zlew, plyta, ...) — enough to
+    count and price them per piece, machining comes later.
     """
     row_id: str
     length_mm: float
     depth_mm: float = 600
     thickness_mm: int = 40
     material: str = ""
+    cutouts: list[str] = field(default_factory=list)
 
 
 @dataclass
