@@ -24,7 +24,8 @@
         "invalidation",
         "premise",
         "issue",
-        "issue_event"
+        "issue_event",
+        "contradicts"
       ]
     },
     "actor": {
@@ -37,7 +38,8 @@
     },
     "ts": {
       "type": "string",
-      "format": "date-time"
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}\\+00:00$"
     },
     "payload": {
       "type": "object"
@@ -114,7 +116,7 @@
                   "type": "string",
                   "pattern": "^tr-[0-9a-f]{8}$"
                 },
-                "description": "MEDIUM-1: the active claim ids a --duplicate-ok override declared this claim distinct from"
+                "description": "MEDIUM-1: the active claim ids a --duplicate-ok override declared this claim distinct from -- the auditable trace of the near-duplicate (G8) bypass"
               },
               "evidence": {
                 "type": "object",
@@ -331,7 +333,8 @@
               "verdict",
               "invalidation",
               "premise",
-              "issue_event"
+              "issue_event",
+              "contradicts"
             ]
           }
         }
@@ -340,6 +343,41 @@
         "properties": {
           "id": {
             "pattern": "^tr-[0-9a-f]{8}$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "contradicts"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "a",
+              "b",
+              "basis"
+            ],
+            "properties": {
+              "a": {
+                "type": "string",
+                "pattern": "^tr-[0-9a-f]{8}$"
+              },
+              "b": {
+                "type": "string",
+                "pattern": "^tr-[0-9a-f]{8}$"
+              },
+              "basis": {
+                "type": "string",
+                "minLength": 1,
+                "description": "issue #4: why the two claims cannot both hold -- the attackable record; while both endpoints would otherwise be live, both derive DISPUTED"
+              }
+            }
           }
         }
       }
@@ -486,6 +524,25 @@
                       "required": [
                         "returncode"
                       ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "properties": {
+                        "executed": {
+                          "const": false
+                        }
+                      },
+                      "required": [
+                        "executed"
+                      ]
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "returncode"
+                        ]
+                      }
                     }
                   }
                 ]

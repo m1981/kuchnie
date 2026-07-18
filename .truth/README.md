@@ -1,4 +1,4 @@
-# .truth — append-only claims ledger (v0.7.1)
+# .truth — append-only claims ledger (v0.9.0)
 
 > Reader: any agent or human about to assert, trust, or re-verify a fact about this repository | Enables: filing a claim in one command, and knowing which claims are still live before acting on them | Update-trigger: the record schema, invariants, or CLI contract change
 
@@ -39,7 +39,11 @@ validate` mirrors it in stdlib and the conformance corpus in
 
 Status is derived, never stored: a pure fold replays all events in
 `(ts, id)` order — a total order independent of file position, so
-union-merged branches derive identical status (confluence). Duplicate
+union-merged branches derive identical status (confluence). The fold
+sorts the raw `ts` string, so `ts` must be the canonical profile
+`YYYY-MM-DDTHH:MM:SS.ssssss+00:00` — fixed-width UTC microseconds,
+exactly what the CLI mints; any other offset, `Z` suffix, or precision
+fails `validate` (ADR-015: string order must equal time order). Duplicate
 claim and issue ids are first-wins (F6, ADR-006): a later append bearing
 an existing id is inert. `retracted` (claims) and `cancelled` (issues)
 are terminal and human-gated (ADR-011; the full requirement is stated
@@ -63,9 +67,14 @@ pipeline segment's program must be a bare name in
 `.truth/evidence-allow`; no command substitution; output redirection
 only to `/dev/null` or an fd dup (`2>&1`), so the pin-the-output
 convention keeps working;
-`--evidence-unsafe-ok` files anyway with `evidence.screened=false`, and
-recheck then refuses to execute the command, ever — verification becomes
-manual), and a nondeterministic evidence command (two intake runs must
+`--evidence-unsafe-ok` files a *screen failure* anyway with
+`evidence.screened=false`, and recheck then refuses to execute the
+command, ever — verification becomes manual; but a **missing** allowlist
+fails closed *even under* the override (a repo with no `evidence-allow`
+cannot file a VERIFIED evidence command at all — the F1 fail-closed
+lesson), so the override covers a screened-out program, not the absence
+of a policy to screen against), and a nondeterministic evidence command
+(two intake runs must
 hash identically; `--single-run` overrides). INFERRED requires `--basis`.
 
 ## v0.6 solo-regime hardening (docs/hardening-proposals-solo-regime.md)
@@ -143,7 +152,8 @@ the snapshot cache is deliberately unbuilt until that warning fires).
 Issues can live in the same ledger as facts — no external tracker needed:
 
     scripts/truth issue "title" --premise tr-xxxx   # premise-at-birth
-    scripts/truth start wk-xxxx                     # claim it
+    scripts/truth start wk-xxxx                     # claim it (files 'claimed')
+    scripts/truth start wk-xxxx --release           # give it back: claimed -> open
     scripts/truth done wk-xxxx --basis "..." \
       --claim "<what the work made true>" --class VERIFIED \
       --evidence-cmd "..." --paths "..."            # claim-at-death
@@ -154,7 +164,10 @@ Issues can live in the same ledger as facts — no external tracker needed:
                                                     # corrected claim (ADR-013) — refused
                                                     # while the old one still passes ready
 
-`closed` can be reopened (`done --reopen`); `cancelled` is terminal and
+Issue states form `open ⇄ claimed → closed`: `start` files `claimed`,
+`start --release` returns a claimed item to `open` (valid only from
+`claimed`, basis optional, not human-gated), `closed` can be reopened
+(`done --reopen`); `cancelled` is terminal and
 human-gated per ADR-011 — at your own terminal,
 `TRUTH_HUMAN=1 truth done wk-x --cancel --basis "..."` then type the id
 back when prompted; headless,
@@ -238,6 +251,40 @@ in an agent harness; a deny list for frozen paths; per-session dedup) is
 consumer policy and deliberately not shipped (ADR-003 rule 2) — wire it
 per ADR-005's Decision, and watch its adoption gate: whispers that
 change agent behavior, without fatigue.
+
+**Contradictions (issue #4, v0.9.0 — 29148 set consistency, rule R5).**
+
+    scripts/truth contradicts <tr-a> <tr-b> --basis "<why not both>"
+
+A DECLARED edge, mirroring premise — no NLP: the moment a gate needs a
+model to fire, it is a review, not a refusal. While an edge connects
+two claims whose statuses would otherwise both be live, BOTH derive
+**DISPUTED** — which behaves like diverged everywhere: premised work
+HOLDs, spec-health fails citers, both sides queue naming their
+counterpart. Any other endpoint state leaves the edge dormant. There is
+no arbitration verb: retract, supersede, or re-file one side and the
+edge stops firing. Intake refuses self-edges, unknown or retracted
+endpoints, and duplicate edges in either direction; note that a claim
+CONTRADICTING an existing one is usually also its near-duplicate, so
+filing the second side legitimately takes `--duplicate-ok` — that is
+the flag's honest use, not a bypass. Canary FAULTS C1–C5.
+
+**Baselines (issue #3, v0.8.0 — ISO 10007 set-level status accounting).**
+
+    scripts/truth baseline <ref> [--json]      # the frozen status account
+    scripts/truth baseline <a> --diff <b>      # release-notes delta
+
+`baseline <ref>` folds the ledger as it stood at any git ref (tag, sha,
+HEAD) into a deterministic snapshot — claims by status/tier, issues by
+state, sorted id lists; `--json` redirected to a file and committed IS
+the persisted baseline artifact (the CLI deliberately persists
+nothing). `--diff` folds two refs and prints born records, status
+transitions grouped `from->to`, and **DISAPPEARED** records — a record
+present at the older ref and absent at the newer is impossible between
+ancestor and descendant of an append-only file, so it means rewritten
+or divergent history: 10007's omission, caught by exactly the
+comparison the standard prescribes, exit 5 (gateable). Exit 2 =
+unreadable ref. Canary FAULTS BL1–BL4.
 
 **The backward slice (issue #5, v0.7.1).**
 
