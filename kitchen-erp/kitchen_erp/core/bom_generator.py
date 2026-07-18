@@ -81,14 +81,16 @@ class BOMGenerator:
             front_edge_m = 2 * (dims["width_mm"] + dims["height_mm"]) / 1000 if front_m2 > 0 else 0
             corpus_edge_m = (2 * dims["height_mm"] + 3 * dims["width_mm"]) / 1000 if corpus_m2 > 0 else 0
 
-        # 1. Materiały płytowe
+        # 1. Materiały płytowe (wk-aa3e159c: per-cabinet corpus override wins,
+        # mirroring the front override below)
+        corpus_mat = self.cabinet.override_corpus_mat or self.defaults.corpus_mat
         if corpus_m2 > 0:
             root.add_child(BOMPart(
-                name=f"Corpus: {self.defaults.corpus_mat.name}",
-                material_id=self.defaults.corpus_mat.id,
+                name=f"Corpus: {corpus_mat.name}",
+                material_id=corpus_mat.id,
                 quantity_net=corpus_m2,
                 unit="m2",
-                unit_price=self.defaults.corpus_mat.price_per_unit
+                unit_price=corpus_mat.price_per_unit
             ))
 
         if back_m2 > 0:
@@ -106,11 +108,11 @@ class BOMGenerator:
             # quantity is visible and repriceable, not silently folded into
             # the corpus position (tr-6d3edb9e).
             root.add_child(BOMPart(
-                name=f"Drawer box board: {self.defaults.corpus_mat.name}",
-                material_id=self.defaults.corpus_mat.id,
+                name=f"Drawer box board: {corpus_mat.name}",
+                material_id=corpus_mat.id,
                 quantity_net=drawer_box_m2,
                 unit="m2",
-                unit_price=self.defaults.corpus_mat.price_per_unit
+                unit_price=corpus_mat.price_per_unit
             ))
 
         # Szafka dostaje materiał na front TYLKO jeśli:
@@ -137,11 +139,13 @@ class BOMGenerator:
         total_edge_m = front_edge_m + corpus_edge_m
 
         if total_edge_m > 0:
+            edge_mat = self.defaults.edge_band_mat
             root.add_child(BOMPart(
-            name="Edge banding: Generic ABS",
+                name=f"Edge banding: {edge_mat.name}",
+                material_id=edge_mat.id,
                 quantity_net=total_edge_m,
-            unit="lm",
-            unit_price=0.80
+                unit="lm",
+                unit_price=edge_mat.price_per_unit
             ))
         
         # 3. USŁUGI CNC (Cięcie i Okleinowanie)

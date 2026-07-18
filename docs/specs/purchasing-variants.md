@@ -143,10 +143,13 @@ Pre-written `done --claim` texts:
   (`kitchen_erp/core/models.py` Variant + `variant_derivation.py`;
   corner-mechanism/hinge/worktop axes resolve into VariantParameters
   provenance, their cascades land with the later increments)
-- (offer loop) "Offers record against variants with optional line
-  itemization, archive the source verbatim as an ArtifactRef, and an
-  ACCEPT locks the variant so later edits require an explicit
-  change-order; pinned by test"
+- (offer loop) SHIPPED 2026-07-17 as tr-c87a68f9: "Offers record
+  against variants with optional line itemization, archive the source
+  verbatim as an ArtifactRef, and an ACCEPT locks the variant so later
+  edits require an explicit change-order; pinned by test"
+  (`kitchen_erp/core/offers.py` — record_offer reuses the price-import
+  capture idiom; accept_variant refuses without a recorded offer;
+  rejection stays a no-op by design: loop back to a sibling draft)
 - (hardware CSV) "Per-dealer hardware order CSVs emit net top-up
   quantities (required minus on-hand plus buffer) keyed by producer
   codes and include the G13 accessory families; pinned by test against a

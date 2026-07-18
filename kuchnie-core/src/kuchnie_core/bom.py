@@ -6,16 +6,19 @@ not on every keystroke.
 
 from dataclasses import dataclass, field
 
-from .model import DecompositionResult, PanelRole
+from .model import DecompositionResult, PanelRole, WorktopSegment
 
 
 @dataclass
 class BOMItem:
     description: str
-    category: str        # "panel", "edge_band", "accessory"
+    category: str        # "panel", "edge_band", "accessory", "worktop", "worktop_cutout"
     material: str
     quantity: int
     unit: str            # "szt", "mb"
+    # unit_price is the per-LINE price (a panel's area×rate, an edge run's
+    # or worktop segment's length×rate), NOT a rate per `unit` — total is
+    # unit_price × quantity, never × measure as well.
     unit_price: float = 0.0
     total: float = 0.0
     # ADR-015: calculate_bom is the ONE geometry→quantity fold; downstream
@@ -100,3 +103,54 @@ def calculate_bom(
 
     bom.total_cost = round(sum(i.total for i in bom.items), 2)
     return bom
+
+
+def worktop_bom_items(
+    worktops: list[WorktopSegment],
+    worktop_prices: dict[str, float] | None = None,
+    cutout_prices: dict[str, float] | None = None,
+) -> list[BOMItem]:
+    """Fold worktop segments into BOM items (wk-4c37f4ee).
+
+    Laminate pricing model: length × PLN-per-lm rate for the segment's
+    material, plus a per-piece charge for each named cutout (zlew, plyta,
+    ...). Stone worktops are quoted externally and never pass through
+    here — a material missing from worktop_prices simply prices at 0,
+    same convention as boards in calculate_bom.
+
+    worktop_prices:  { "egger.F2060_ST87": 120.00 }  (PLN per lm)
+    cutout_prices:   { "zlew": 80.00, "plyta": 60.00 }  (PLN per piece)
+    """
+    worktop_prices = worktop_prices or {}
+    cutout_prices = cutout_prices or {}
+
+    items: list[BOMItem] = []
+    for seg in worktops:
+        length_m = seg.length_mm / 1000
+        price_lm = worktop_prices.get(seg.material, 0.0)
+        items.append(BOMItem(
+            description=(
+                f"Blat {seg.row_id} "
+                f"({seg.length_mm:.0f}×{seg.depth_mm:.0f}×{seg.thickness_mm})"
+            ),
+            category="worktop",
+            material=seg.material,
+            quantity=1,
+            unit="mb",
+            unit_price=round(price_lm * length_m, 2),
+            total=round(price_lm * length_m, 2),
+            measure=length_m,
+        ))
+        for cutout in seg.cutouts:
+            price = cutout_prices.get(cutout, 0.0)
+            items.append(BOMItem(
+                description=f"Wycięcie {cutout} → blat {seg.row_id}",
+                category="worktop_cutout",
+                material=cutout,
+                quantity=1,
+                unit="szt",
+                unit_price=price,
+                total=round(price, 2),
+                measure=1.0,
+            ))
+    return items

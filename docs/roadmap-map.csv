@@ -29,3 +29,9 @@ kuchnie-8mw;wk-64266e86;0;Consolidate three BOM folds to one source;;process
 kuchnie-b30;wk-a898481e;0;DrawerBoxSpec parameter object;;process
 kuchnie-hij;wk-b669f4f5;0;Split ERP god-states;;process
 kuchnie-yvm;wk-acc8e094;0;Structured findings from validate_rows;;process
+kuchnie-b2u;wk-b440d8bb;0;Hardware-source consolidation (rules engine vs accessories);;process
+kuchnie-bl4;;5;Service prices materialized (CNC, plinth rates);UC-7;product
+kuchnie-h9h;;5;XLS adapter for price ingestion;UC-7;product
+kuchnie-nu0;;5;Cost-trace Suma freshness marker;UC-7;product
+kuchnie-a3y;wk-3141488c;9;Variant worktop axis into purchasing lines;UC-4;product
+kuchnie-7mh;;5;Variant derivation gated on buildability (ext-5a in ERP);UC-4;product

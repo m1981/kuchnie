@@ -36,6 +36,7 @@ def to_kuchnie_core(cabinet: Cabinet, defaults: ProjectDefaults) -> CabinetInsta
         return None
 
     front_mat = cabinet.override_front_mat or defaults.front_mat
+    corpus_mat = cabinet.override_corpus_mat or defaults.corpus_mat
 
     fronts: list[dict] = []
     drawers: list[dict] = []
@@ -58,7 +59,7 @@ def to_kuchnie_core(cabinet: Cabinet, defaults: ProjectDefaults) -> CabinetInsta
         width_mm=round(cabinet.width_mm),
         height_mm=round(cabinet.height_mm),
         depth_mm=round(cabinet.depth_mm),
-        body_material=defaults.corpus_mat.name,
+        body_material=corpus_mat.name,
         back_material=defaults.back_mat.name,
         front_material=front_mat.name,
         fronts=fronts,

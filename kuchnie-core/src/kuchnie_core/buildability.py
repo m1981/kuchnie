@@ -37,7 +37,6 @@ Findings order by scrap severity (UC-2 ext 5a): blocking before advisory.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -148,41 +147,24 @@ def _ran(gate_id: str, name: str, findings: list[Finding]) -> GateResult:
 
 
 # ── Row-derived gates (FIT / WSTD / G1 / G6) ────────────────────
-# kitchen.validate_rows owns these rules; it returns flat strings with
-# stable markers ("advisory:" prefix, "G1 —", "G6 —"). We classify,
-# not re-check.
-
-_ROW_RE = re.compile(r"Row '([^']+)'")
-_CAB_RE = re.compile(r"cabinet (\S+) width")
-
-
-def _row_ref(message: str) -> str:
-    cab = _CAB_RE.search(message)
-    if cab:
-        return cab.group(1)
-    row = _ROW_RE.search(message)
-    return row.group(1) if row else ""
+# kitchen.row_findings owns these rules and emits Finding objects with
+# gate ids attached (wk-acc8e094) — we bucket, never parse strings.
 
 
 def _row_gate_buckets(kitchen: Kitchen) -> dict[str, list[Finding]]:
-    from .kitchen import validate_rows
+    from .kitchen import row_findings
 
     buckets: dict[str, list[Finding]] = {
         "FIT": [], "WSTD": [], "G1": [], "G6": [],
     }
-    for message in validate_rows(kitchen):
-        if message.startswith("advisory:"):
-            buckets["WSTD"].append(
-                Finding("WSTD", ADVISORY, message, _row_ref(message)))
-        elif "G1 —" in message:
-            buckets["G1"].append(
-                Finding("G1", BLOCKING, message, _row_ref(message)))
-        elif "G6 —" in message:
-            buckets["G6"].append(
-                Finding("G6", BLOCKING, message, _row_ref(message)))
-        else:
-            buckets["FIT"].append(
-                Finding("FIT", BLOCKING, message, _row_ref(message)))
+    for finding in row_findings(kitchen):
+        if finding.gate_id not in buckets:
+            raise ValueError(
+                f"row_findings emitted unknown gate id {finding.gate_id!r} — "
+                f"add it to _row_gate_buckets AND a gates.append in "
+                f"evaluate_buildability, or the finding would be dropped"
+            )
+        buckets[finding.gate_id].append(finding)
     return buckets
 
 
@@ -329,3 +311,44 @@ def evaluate_buildability(
 
     buildable = not any(g.status is GateStatus.FAILED for g in gates)
     return BuildabilityVerdict(buildable=buildable, gates=gates)
+
+
+# ── Emission gating (UC-2 ext 5a, wk-cb6a17c8) ──────────────────
+
+class BuildabilityError(ValueError):
+    """Raised by emission doorways when the verdict is FAILED.
+
+    Carries the full verdict so callers can list findings by scrap
+    severity instead of re-running the gates.
+    """
+
+    def __init__(self, verdict: BuildabilityVerdict):
+        self.verdict = verdict
+        blocking = [f for f in verdict.findings if f.severity == BLOCKING]
+        lines = "; ".join(
+            f"[{f.gate_id}] {f.message}" for f in blocking[:5])
+        more = f" (+{len(blocking) - 5} more)" if len(blocking) > 5 else ""
+        super().__init__(
+            f"kitchen is not buildable — {len(blocking)} blocking "
+            f"finding(s): {lines}{more}"
+        )
+
+
+def require_buildable(
+    kitchen: Kitchen,
+    manifest: dict | None = None,
+    verdict: BuildabilityVerdict | None = None,
+) -> BuildabilityVerdict:
+    """The emission doorway: no production artifact may be written for a
+    kitchen whose verdict FAILED (UC-2 ext 5a — no override flag by
+    design). Pass a precomputed ``verdict`` to avoid re-running gates;
+    otherwise one is evaluated here.
+
+    Returns the (passing) verdict so emitters can attach it to output.
+    Raises BuildabilityError when the verdict is FAILED.
+    """
+    if verdict is None:
+        verdict = evaluate_buildability(kitchen, manifest)
+    if not verdict.buildable:
+        raise BuildabilityError(verdict)
+    return verdict

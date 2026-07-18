@@ -1,5 +1,38 @@
 #!/usr/bin/env python3
-"""truth v0.7.0 -- append-only claims ledger with a native work kernel.
+"""truth v0.7.2 -- append-only claims ledger with a native work kernel.
+
+v0.7.2 (issue #7, wk-75aa9735, owner decision 2026-07-17): path-form
+  accept-allow entries. First-consumer dogfood found the gap the same
+  day ADR-014 shipped: the repo's REAL suite interpreter is often
+  repo-local (.venv/bin/python, ./gradlew, node_modules/.bin/*), and
+  the screen's bare-name rule forced either a bash -c wrapper (which
+  launders the path past the screen) or the broadest interpreter entry.
+  Now an acceptance oracle's program may be a path IFF it exactly
+  equals a committed .truth/accept-allow entry, is repo-relative (no
+  leading /), and has no `..` segment -- an allowlisted exact path is
+  the opposite of arbitrary, and STRONGER than an interpreter bare-name
+  (it bounds which executable runs, not which language). The evidence
+  screen (ADR-009) keeps its unconditional path refusal: recheck is a
+  different trust seam and read-only stays the rule there. Canary
+  FAULT AC8.
+
+v0.7.1 (issue #5, wk-bd379821): `impact --inverse` -- the backward
+  trace (ISO/IEC/IEEE 24765 bidirectional traceability). Forward impact
+  answers "what knowledge does editing these paths endanger?"; inverse
+  answers "which tracked files does the ledger know nothing about?" --
+  the question a curation-only ledger cannot ask itself (field audit:
+  8 of 9 sampled modules untraced, invisible by construction). Joins
+  `git ls-files` against the union of evidence_paths globs of ACTIVE
+  claims -- every status except retracted: a stale claim still names
+  its paths (it needs re-verification, the file is not dark); only
+  retraction kills the watch. Same match_paths matcher as the scan and
+  forward impact (ADR-005: a second matcher implementation is
+  forbidden). Read-only, no fold change, no new record kind. Scoping:
+  --under <dir> plus repeatable --exclude <prefix>; anything smarter
+  (inventories, verdict classes) is a downstream satellite's job. Exit
+  0 when the scope is fully watched / 4 when dark files exist --
+  distinct from forward impact's 3 so satellites can gate on each
+  separately. Canary FAULTS W5-W8.
 
 v0.7.0 (ADR-014, wk-eb59c649, upstream issues #1+#2): acceptance oracles.
   `truth issue --accept-cmd <cmd> [--accept-kind verification|validation]`
@@ -292,6 +325,25 @@ HALF_LIFE_MIN_OBS = 5  # FS-1: below this, intake suggests nothing (noise)
 
 # ------------------------------------------------------------ primitives
 
+def canon(ev):
+    """ADR-016 backport (C1): the canonical serialization of a record --
+    a deterministic function of content, identical for byte-identical
+    records, distinct for any field difference."""
+    return json.dumps(ev, sort_keys=True)
+
+def fold_key(ne):
+    """ADR-016 backport (C1): the fold's TOTAL order. (ts, id) alone is
+    not total -- a duplicate id carrying a copied (equal) ts ties both
+    keys, and a stable sort then resolves the tie by file position,
+    breaking confluence (INV-I). canon() is a content-derived third key,
+    so distinct records never tie and every event order -- including the
+    two a union merge can produce -- folds identically. Byte-identical
+    union-merge duplicates tie on all three and coincide. order_check
+    separately refuses a NON-identical equal-ts duplicate id at the gate.
+    Forwarded from the template (truth-ledger ADR-016, v0.9.1)."""
+    ev = ne[1]
+    return (ev.get("ts") or "", ev.get("id") or "", canon(ev))
+
 def tokens(text):
     return set(re.findall(r"[a-z0-9]+", text.lower()))
 
@@ -368,8 +420,7 @@ def fold(events):
         across subsequent invalidate-scans instead of re-staling forever.
     `retracted` remains terminal (G12).
     """
-    ordered = sorted(events, key=lambda ne: (ne[1].get("ts") or "",
-                                             ne[1].get("id") or ""))
+    ordered = sorted(events, key=fold_key)  # ADR-016 backport (C1): total order
     claims, premises = {}, {}
     def set_status(cid, status, ts):
         if claims[cid]["status"] == "retracted":
@@ -430,8 +481,7 @@ def fold_issues(events):
     while `closed` is not (work is cyclical; closing asserts completion,
     not falsity) -- that rule, unlike first-wins, does differ from claim
     folding and is decided in ADR-002."""
-    ordered = sorted(events, key=lambda ne: (ne[1].get("ts") or "",
-                                             ne[1].get("id") or ""))
+    ordered = sorted(events, key=fold_key)  # ADR-016 backport (C1): total order
     issues = {}
     for _, ev in ordered:
         kind, p = ev.get("kind"), ev.get("payload", {})
@@ -486,8 +536,7 @@ def fold_supersedes(events):
     last-wins in the same confluent (ts, id) total order every other
     fold uses. A redirect is scoped to ONE issue: superseding a claim
     for wk-A never touches wk-B's link to the same claim."""
-    ordered = sorted(events, key=lambda ne: (ne[1].get("ts") or "",
-                                             ne[1].get("id") or ""))
+    ordered = sorted(events, key=fold_key)  # ADR-016 backport (C1): total order
     out = {}
     for _, ev in ordered:
         p = ev.get("payload", {})
@@ -628,7 +677,8 @@ _SCREEN_SEPARATORS = frozenset((";", "|", "||", "&&", "&"))
 _SCREEN_PUNCT = frozenset("();<>|&")
 
 def screen_evidence_command(cmd, allowlist, allow_rel=EVIDENCE_ALLOW_REL,
-                            missing_tail=None, unlisted_hint=None):
+                            missing_tail=None, unlisted_hint=None,
+                            allow_paths=False):
     """ADR-009: evidence commands re-execute later in a *verifier's*
     session (recheck) -- deferred code execution across the trust seam
     G11 protects. Static screen over a QUOTE-AWARE token stream (shlex
@@ -687,9 +737,26 @@ def screen_evidence_command(cmd, allowlist, allow_rel=EVIDENCE_ALLOW_REL,
             continue
         if expecting_program:
             if "/" in tok:
+                # Issue #7 (v0.7.2, accept screen only): an ALLOWLISTED
+                # exact repo-relative path may run as an oracle -- the
+                # committed entry bounds precisely which executable, which
+                # is stronger than an interpreter bare-name. Absolute
+                # paths and `..` segments never pass; the evidence screen
+                # (allow_paths=False) keeps ADR-009's blanket refusal.
+                if allow_paths and tok in allowlist \
+                        and not tok.startswith("/") \
+                        and ".." not in tok.split("/"):
+                    expecting_program = False
+                    program = tok
+                    continue
                 return (f"program {tok!r} is a path, not a bare command "
-                        "name -- repo-local executables are not "
-                        "screenable (ADR-009)")
+                        "name -- " +
+                        ("add the exact repo-relative path to "
+                         f"{allow_rel} to admit it as an oracle; absolute "
+                         "paths and '..' never pass (issue #7, ADR-014)"
+                         if allow_paths else
+                         "repo-local executables are not screenable "
+                         "(ADR-009)"))
             if tok not in allowlist:
                 return (f"'{tok}' is not in {allow_rel}. " +
                         (unlisted_hint or "Add it there if it is read-only "
@@ -730,7 +797,8 @@ def screen_accept_command(cmd, allowlist):
         unlisted_hint=("Add it there if you accept it executing at `done` "
                        "time inside the closing session, or file the issue "
                        "with --accept-unsafe-ok (`done` will then refuse "
-                       "to execute the oracle) (ADR-014)."))
+                       "to execute the oracle) (ADR-014)."),
+        allow_paths=True)
 
 def order_check(events):
     """ADR-008: within one repository's history, file order is append
@@ -756,22 +824,30 @@ def order_check(events):
         ts_raw = ev.get("ts") or ""
         ts = parse_ts(ts_raw)
         if eid in first_seen:
-            f_ts_raw, f_line = first_seen[eid]
+            f_ts_raw, f_line, f_canon = first_seen[eid]
             # fold() orders by the raw ts STRING then id (a duplicate id
             # ties on id, so the ts string alone decides the winner). Test
             # substitution exactly as fold sorts -- string-comparing, not
             # parsing -- so a tz-naive or non-ISO forged ts cannot slip
             # past a parsed comparison the way it did before v0.6.2 (F2).
-            # Equal strings = the union-merge shape; stable sort keeps the
-            # genuine first-appended record, so it stays legal.
             if ts_raw < f_ts_raw:
                 errors.append(
                     f"line {n}: duplicate id {eid} with ts sorting before "
                     f"line {f_line}'s -- canonical-order substitution "
                     "(ADR-008): a later append may not sort before the "
                     "record it duplicates")
+            # ADR-016 backport (C1): an EQUAL ts + duplicate id is legal
+            # ONLY for the byte-identical union-merge shape; a copied ts
+            # with different content is the equal-ts substitution forgery.
+            elif ts_raw == f_ts_raw and canon(ev) != f_canon:
+                errors.append(
+                    f"line {n}: duplicate id {eid} with an EQUAL ts but "
+                    f"different content from line {f_line} -- equal-ts "
+                    "substitution (ADR-016): a copied timestamp ties the "
+                    "fold's order, so only a byte-identical union-merge "
+                    "duplicate may share both id and ts")
         elif eid:
-            first_seen[eid] = (ts_raw, n)
+            first_seen[eid] = (ts_raw, n, canon(ev))
         if ts and max_ts and cmp_ok(ts, max_ts) \
                 and (max_ts - ts).total_seconds() > SKEW_TOLERANCE_SECONDS:
             warnings.append(
@@ -791,8 +867,7 @@ def half_life_observations(events):
     order and the same status rules as fold(); fold stays authoritative
     for status, and test-truth-core cross-checks the two never disagree
     on final state. Returns a list of (tier, days_live) tuples."""
-    ordered = sorted(events, key=lambda ne: (ne[1].get("ts") or "",
-                                             ne[1].get("id") or ""))
+    ordered = sorted(events, key=fold_key)  # ADR-016 backport (C1): total order
     state = {}   # cid -> {"tier", "status", "since": datetime|None}
     obs = []
     verdict_map = {"agree": "live", "diverge": "diverged",
@@ -987,6 +1062,36 @@ def impact_report(query_paths, claims, issues, premises):
                      "holds": holds})
     rows.sort(key=lambda r: (r["tier"] or "P9", r["claim"]))
     return rows
+
+def inverse_report(tracked, claims, under=None, excludes=()):
+    """Issue #5: the backward trace (24765). Returns {"dark": [paths],
+    "considered": n} -- the tracked files (optionally scoped to --under,
+    minus --exclude prefixes) matched by NO evidence_path glob of any
+    active claim. Active = every status except retracted: stale and
+    diverged claims still name their paths (knowledge needing re-check,
+    not absence of knowledge); a retracted claim's watch died with it.
+    Reuses match_paths -- the scan, forward impact, and this verb must
+    agree on what "watched" means or the three will drift apart
+    (ADR-005). Enumeration only: no module awareness, no auto-filing --
+    what to DO about a dark file (adopt/attic/delete) is a human verb
+    downstream."""
+    def scoped(path):
+        if under:
+            u = under.rstrip("/")
+            if path != u and not path.startswith(u + "/"):
+                return False
+        for ex in excludes:
+            e = ex.rstrip("/")
+            if path == e or path.startswith(e + "/"):
+                return False
+        return True
+    patterns = sorted({p for e in claims.values()
+                       if e["status"] != "retracted"
+                       for p in (e["claim"]["payload"].get("evidence_paths")
+                                 or [])})
+    considered = [p for p in tracked if scoped(p)]
+    dark = [p for p in considered if not match_paths(p, patterns)]
+    return {"dark": sorted(dark), "considered": len(considered)}
 
 def premise_check(status, tier):
     """ADR-001 matrix. Returns (passes, warning-or-None)."""
@@ -1821,6 +1926,39 @@ def cmd_ready(a):
                       f"{', '.join(i['_truth']['broken_premises'])}")
 
 def cmd_impact(a):
+    if a.inverse:
+        # Issue #5: the backward slice. Positional paths make no sense
+        # here -- the verb enumerates the whole tracked universe; --under
+        # is the scoping surface.
+        if a.paths:
+            sys.exit("truth: --inverse takes no positional paths (it "
+                     "enumerates every tracked file; scope with --under)")
+        claims, _ = fold(load_events())
+        rep = inverse_report(tracked_files(), claims, a.under,
+                             a.exclude or [])
+        if rep["considered"] == 0:
+            # An audit over an empty universe is a misconfiguration
+            # (typo'd --under, over-broad --exclude), not a clean pass --
+            # exit 0 here would be a permanent false green for any
+            # satellite gating on this verb.
+            print("truth: --inverse scope matched no tracked files -- "
+                  "check --under/--exclude (exit 2: usage, not a clean "
+                  "audit)", file=sys.stderr)
+            sys.exit(2)
+        if a.json:
+            print(json.dumps(rep, indent=2))
+        else:
+            for p in rep["dark"]:
+                print(p)
+            print(f"impact --inverse: {len(rep['dark'])} of "
+                  f"{rep['considered']} tracked file(s) watched by no "
+                  "active claim", file=sys.stderr)
+        sys.exit(4 if rep["dark"] else 0)
+    if a.under or a.exclude:
+        sys.exit("truth: --under/--exclude only accompany --inverse")
+    if not a.paths:
+        sys.exit("truth: give paths to query, or --inverse for the "
+                 "backward slice")
     events = load_events()
     claims, premises = fold(events)
     issues = fold_issues(events)
@@ -2212,9 +2350,22 @@ def main():
 
     im = sub.add_parser("impact", help="what knowledge does editing these "
                         "paths endanger? (ADR-005; read-only prediction; "
-                        "exit 0 silent / 3 watched)")
-    im.add_argument("paths", nargs="+",
-                    help="repo-root-relative paths about to be edited")
+                        "exit 0 silent / 3 watched). --inverse flips the "
+                        "question: which tracked files does no active "
+                        "claim watch? (issue #5; exit 0 clean / 4 dark)")
+    im.add_argument("paths", nargs="*",
+                    help="repo-root-relative paths about to be edited "
+                         "(forward mode; forbidden with --inverse)")
+    im.add_argument("--inverse", action="store_true",
+                    help="list tracked files watched by NO active "
+                         "(non-retracted) claim -- the 24765 backward "
+                         "trace; exit 4 when dark files exist")
+    im.add_argument("--under", metavar="DIR",
+                    help="restrict --inverse to files under this "
+                         "repo-root-relative directory")
+    im.add_argument("--exclude", metavar="PREFIX", action="append",
+                    help="drop files under this path prefix from "
+                         "--inverse (repeatable; lockfiles, assets)")
     im.add_argument("--json", action="store_true")
     im.set_defaults(fn=cmd_impact)
 

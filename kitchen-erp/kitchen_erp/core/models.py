@@ -220,6 +220,48 @@ class ArtifactRef(SQLModel, table=True):
     project: "Project" = Relationship(back_populates="artifact_refs")
 
 
+# Offer line kinds (spec: purchasing-variants.md § Offer recording).
+# "other" is the escape hatch: no service's paperwork style may block the flow.
+OFFER_LINE_KINDS: list[str] = ["board", "cut", "edge", "drill", "other"]
+
+
+class Offer(SQLModel, table=True):
+    """A cutting-service offer recorded against a SENT variant
+    (wk-593a317b increment 2; spec: purchasing-variants.md § Offer
+    recording — no-granularity-lock-in). A bare total is a complete,
+    valid offer; lines enrich calibration but are never required.
+    source_ref points at the verbatim archived paperwork, which is also
+    registered as a project ArtifactRef (kind='offer_source'). Offers are
+    append-only: a rejected offer loops back to a sibling draft variant,
+    it never mutates this row."""
+    id: int | None = Field(default=None, primary_key=True)
+    variant_id: int = Field(foreign_key="variant.id", ondelete="CASCADE")
+    supplier: str
+    received_at: datetime = Field(default_factory=datetime.utcnow)
+    currency: str
+    total_net: float
+    source_ref: str  # path to the verbatim archived source document
+
+    variant: "Variant" = Relationship(back_populates="offers")
+    lines: list["OfferLine"] = Relationship(
+        back_populates="offer", cascade_delete=True
+    )
+
+
+class OfferLine(SQLModel, table=True):
+    """Optional itemization of an Offer. qty/unit may be absent — the
+    service's granularity is recorded as-is, never reconciled or coerced."""
+    id: int | None = Field(default=None, primary_key=True)
+    offer_id: int = Field(foreign_key="offer.id", ondelete="CASCADE")
+    kind: str  # one of OFFER_LINE_KINDS
+    description: str = ""
+    qty: float | None = None
+    unit: str | None = None
+    amount: float
+
+    offer: Offer = Relationship(back_populates="lines")
+
+
 class Variant(SQLModel, table=True):
     """A purchasing variant on a Project (wk-593a317b increment 1).
 
@@ -260,6 +302,7 @@ class Variant(SQLModel, table=True):
     front_decor: Material | None = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[Variant.front_decor_id]"}
     )
+    offers: list[Offer] = Relationship(back_populates="variant", cascade_delete=True)
 
     @property
     def is_locked(self) -> bool:

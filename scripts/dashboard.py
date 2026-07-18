@@ -202,17 +202,86 @@ def _sig_tokens(text: str) -> set[str]:
     return {t for t in re.findall(r"[a-z0-9][a-z0-9_.\-/]{3,}", text.lower())}
 
 
+_TR_ID = re.compile(r"tr-[0-9a-f]{8}")
+
+
+def verdict_events() -> list[dict]:
+    """Verdict records (claim, verdict, basis) from the ledger — the
+    trail successor_map follows when a successor was reworded."""
+    out: list[dict] = []
+    for line in (REPO / ".truth/claims.jsonl").read_text().splitlines():
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if ev.get("kind") == "verdict":
+            out.append(ev["payload"])
+    return out
+
+
+def successor_map(claims: list[dict], verdicts: list[dict]) -> dict[str, str]:
+    """Map each dead claim id to its LIVE successor via explicit lineage
+    (wk-dcf4ab04). Lexical overlap cannot follow a reworded successor —
+    lineage can. Edges, deterministic order:
+
+    (a) a live claim whose text cites the dead id supersedes it;
+    (b) tr- ids named in the basis of verdicts filed ON the dead claim
+        (diverge/retract trails name their successor).
+
+    Chains resolve transitively (dead -> dead -> live); cycles and dead
+    ends drop out. Candidates are sorted, first live resolution wins.
+    """
+    by_id = {c["id"]: c for c in claims}
+    edges: dict[str, list[str]] = {}
+    for c in claims:
+        if c.get("status") == "live":
+            for cited in _TR_ID.findall(c.get("text", "")):
+                if (cited != c["id"] and cited in by_id
+                        and by_id[cited].get("status") != "live"):
+                    edges.setdefault(cited, []).append(c["id"])
+    for v in verdicts:
+        dead = v.get("claim", "")
+        if dead in by_id and by_id[dead].get("status") != "live":
+            for named in _TR_ID.findall(v.get("basis") or ""):
+                if named != dead:
+                    edges.setdefault(dead, []).append(named)
+    for k in edges:
+        edges[k] = sorted(set(edges[k]))
+
+    def resolve(dead: str, seen: frozenset[str]) -> str | None:
+        for cand in edges.get(dead, []):
+            if cand in seen or cand not in by_id:
+                continue
+            if by_id[cand].get("status") == "live":
+                return cand
+            deeper = resolve(cand, seen | {cand})
+            if deeper:
+                return deeper
+        return None
+
+    out: dict[str, str] = {}
+    for dead in edges:
+        live = resolve(dead, frozenset({dead}))
+        if live:
+            out[dead] = live
+    return out
+
+
 def classify_acceptance(items: list[dict], claims: list[dict],
-                        threshold: float = 0.5) -> list[dict]:
+                        threshold: float = 0.5,
+                        successors: dict[str, str] | None = None) -> list[dict]:
     """Classify each pre-written acceptance item against the ledger.
 
     PRE-WRITTEN — no claim covers >= threshold of the item's tokens;
     FILED — best candidate exists but is not live;
-    LIVE — best candidate is live.
+    LIVE — best candidate is live, OR the best candidate is dead but a
+    live successor exists in the lineage map (wk-dcf4ab04: a reworded
+    successor is lexically invisible, so lineage outranks overlap).
     Ranking among candidates >= threshold: live-first, then coverage,
     then lexicographic claim id — so a live successor beats a dead
     original even at lower overlap (wk-eb7164f1).
     """
+    successors = successors or {}
     out: list[dict] = []
     for it in items:
         sig = _sig_tokens(it["text"])
@@ -223,9 +292,13 @@ def classify_acceptance(items: list[dict], claims: list[dict],
                 candidates.append((c["status"] != "live", -cov, c["id"], c["status"]))
         if candidates:
             _, neg_cov, best_id, best_status = min(candidates)
-            state = "LIVE" if best_status == "live" else "FILED"
-            out.append({**it, "state": state, "claim": best_id,
-                        "status": best_status})
+            if best_status != "live" and best_id in successors:
+                out.append({**it, "state": "LIVE", "claim": successors[best_id],
+                            "status": f"live ← {best_id}"})
+            else:
+                state = "LIVE" if best_status == "live" else "FILED"
+                out.append({**it, "state": state, "claim": best_id,
+                            "status": best_status})
         else:
             out.append({**it, "state": "PRE-WRITTEN", "claim": "",
                         "status": ""})
@@ -380,7 +453,9 @@ def render() -> str:
     for u in undressed:
         a(f"- **{u['uc']}** ░░░░░░░░░░░░ not dressed — {u['goal']} (see § 2)")
     a("")
-    acc = classify_acceptance(all_acceptance(), claims_json())
+    _claims = claims_json()
+    acc = classify_acceptance(all_acceptance(), _claims,
+                              successors=successor_map(_claims, verdict_events()))
     n_live = sum(1 for it in acc if it["state"] == "LIVE")
     a(f"**Acceptance gauge (R7, all specs): {n_live}/{len(acc)} LIVE.** "
       "Denominator = pre-written intent, numerator = demonstrated fact; "
