@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# truth-canary.sh v0.7.1 -- seeded-fault acceptance suite (SC session-close survival gate + v0.7.1 issue #5 W5-W8 impact --inverse + v0.7.0 ADR-014 AC1-AC7 acceptance oracles + v0.6.4 ADR-013 R10 premise supersede +seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6 + v0.6.3 TL-2 work-kernel discovery warn).
+# truth-canary.sh v0.9.0 -- seeded-fault acceptance suite (v0.9.0 issue #4 C1-C5 contradicts/DISPUTED + SC session-close survival gate + v0.7.1 issue #5 W5-W8 impact --inverse + v0.7.0 ADR-014 AC1-AC7 acceptance oracles + v0.6.4 ADR-013 R10 premise supersede +seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6 + v0.6.3 TL-2 work-kernel discovery warn).
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PASS=0; FAIL=0
@@ -398,7 +398,7 @@ say "FAULT K (INV-G'): appending a duplicate claim id must not reset status"
 python3 - "$CID_H" <<'PYEOF'
 import json, sys
 rec={"id":sys.argv[1],"kind":"claim","actor":"agent-x","session":"s-evil",
-     "ts":"2099-01-01T00:00:00+00:00",
+     "ts":"2099-01-01T00:00:00.000000+00:00",
      "payload":{"text":"resurrection via duplicate id","evidence_class":"UNVERIFIED",
                 "cost_tier":"P0","ttl_days":None,"evidence_paths":[]}}
 open(".truth/claims.jsonl","a").write(json.dumps(rec,sort_keys=True)+"\n")
@@ -480,6 +480,107 @@ else
   ok "validate failed the junk-ts backdated duplicate (F2 closed)"
 fi
 mv claims.b4.bak .truth/claims.jsonl
+
+say "FAULT B5 (ADR-016, C1): an EQUAL-ts duplicate id with different content must fail validate"
+cp .truth/claims.jsonl claims.b5.bak
+python3 - "$CID_H" <<'PYEOF'
+import json, sys
+cid = sys.argv[1]
+# copy the genuine record's ts byte-for-byte -- NOT backdated. It ties
+# (ts, id) with the genuine claim, so file order alone would decide the
+# fold winner and two union-merge directions could disagree (INV-I).
+# ADR-008's strictly-earlier rule passed this; ADR-016 refuses it.
+genuine = next(json.loads(l) for l in open(".truth/claims.jsonl")
+               if json.loads(l).get("id") == cid)
+rec = {"id": cid, "kind": "claim", "actor": "agent-x", "session": "s-evil",
+       "ts": genuine["ts"],
+       "payload": {"text": "substitution via equal-ts copied-timestamp duplicate",
+                   "evidence_class": "UNVERIFIED", "cost_tier": "P0",
+                   "ttl_days": None, "evidence_paths": []}}
+open(".truth/claims.jsonl", "a").write(json.dumps(rec, sort_keys=True) + "\n")
+PYEOF
+if ! grep -q "equal-ts copied-timestamp" .truth/claims.jsonl; then
+  miss "fault injection failed: equal-ts duplicate was never appended"
+elif $T validate >/dev/null 2>&1; then
+  miss "validate passed an equal-ts substitution duplicate (C1 open -- INV-I falsifiable)"
+else
+  ok "validate failed the equal-ts substitution duplicate (C1 closed at the gate)"
+fi
+mv claims.b5.bak .truth/claims.jsonl
+
+say "FAULT B6 (ADR-016, C1): the fold's order is total -- a tied pair folds identically both ways"
+B6_OUT=$(python3 - <<'PYEOF'
+import json
+from importlib.machinery import SourceFileLoader
+tm = SourceFileLoader("truth", "scripts/truth").load_module()
+# two DISTINCT records tied on (ts, id): the fold must not depend on
+# which one the file lists first (canon() is the total third key)
+a = {"id":"tr-aaaaaaaa","kind":"claim","actor":"x","session":"s1",
+     "ts":"2026-07-01T00:00:00.000000+00:00",
+     "payload":{"text":"alpha","evidence_class":"UNVERIFIED","cost_tier":"P2",
+                "ttl_days":None,"evidence_paths":[]}}
+b = dict(a); b = json.loads(json.dumps(a)); b["payload"] = dict(a["payload"], text="beta")
+def winner(evs):
+    c = tm.fold([(i,e) for i,e in enumerate(evs)])[0]["tr-aaaaaaaa"]["claim"]
+    return c.get("text") or c.get("payload",{}).get("text")
+print("SAME" if winner([a,b]) == winner([b,a]) else "DIVERGED")
+PYEOF
+)
+if [ "$B6_OUT" = "SAME" ]; then
+  ok "fold is confluent on a tied (ts,id) pair -- file order does not decide the winner"
+else
+  miss "fold picked different winners by file order ($B6_OUT) -- (ts,id) not total"
+fi
+
+# ---- FAULTS TS1-TS3 (ADR-015): canonical timestamp profile ---------------
+say "FAULT TS1 (ADR-015): a fresh-id record with a Z-suffix ts must fail validate"
+cp .truth/claims.jsonl claims.ts1.bak
+python3 - <<'PYEOF'
+import json
+# Z is valid ISO 8601 UTC, but ASCII 'Z' > '+' -- the raw-string fold
+# would order this record inconsistently against +00:00 records at the
+# same instant, so the profile refuses the form outright
+rec={"id":"tr-00000ad5","kind":"claim","actor":"agent-x","session":"s-evil",
+     "ts":"2026-01-01T00:00:00.000000Z",
+     "payload":{"text":"honest fact in a Z-suffix timestamp","evidence_class":"UNVERIFIED",
+                "cost_tier":"P2","ttl_days":None,"evidence_paths":[]}}
+open(".truth/claims.jsonl","a").write(json.dumps(rec,sort_keys=True)+"\n")
+PYEOF
+if ! grep -q "Z-suffix timestamp" .truth/claims.jsonl; then
+  miss "fault injection failed: Z-suffix record was never appended"
+elif $T validate >/dev/null 2>&1; then
+  miss "validate passed a Z-suffix ts (non-canonical form breaks raw-string order)"
+else
+  ok "validate failed the Z-suffix ts (canonical profile enforced)"
+fi
+mv claims.ts1.bak .truth/claims.jsonl
+
+say "FAULT TS2 (ADR-015): a naive TRUTH_NOW override must still mint a canonical ts"
+TS2_OUT=$(TRUTH_NOW="2026-06-30T12:00:00" $T claim \
+  "canary ts2 canonical mint probe fact" --class UNVERIFIED --tier P2 \
+  --duplicate-ok 2>/dev/null)
+TS2_TS=$(tail -1 .truth/claims.jsonl | python3 -c "import json,sys; print(json.load(sys.stdin)['ts'])")
+if [ "$TS2_TS" = "2026-06-30T12:00:00.000000+00:00" ] && $T validate >/dev/null 2>&1; then
+  ok "naive override normalized to canonical UTC microseconds; validate green"
+else
+  miss "naive TRUTH_NOW minted '$TS2_TS' (expected 2026-06-30T12:00:00.000000+00:00)"
+fi
+
+say "FAULT TS3 (ADR-015): a real-clock append must not sort before the ledger tail (clock-push)"
+TS3_FUTURE=$(python3 -c "from datetime import datetime,timedelta,timezone; print((datetime.now(timezone.utc)+timedelta(seconds=120)).isoformat(timespec='microseconds'))")
+TRUTH_NOW="$TS3_FUTURE" $T claim "canary ts3 future tail fact" \
+  --class UNVERIFIED --tier P2 --duplicate-ok >/dev/null 2>&1
+$T claim "canary ts3 real clock follower fact" \
+  --class UNVERIFIED --tier P2 --duplicate-ok >/dev/null 2>&1
+TS3_ORDER=$(tail -2 .truth/claims.jsonl | python3 -c "
+import json,sys
+a,b=[json.loads(l)['ts'] for l in sys.stdin]
+print('PUSHED' if b > a else 'INVERTED')")
+if [ "$TS3_ORDER" = "PUSHED" ] && $T validate >/dev/null 2>&1; then
+  ok "real-clock record bumped past the future tail; file order stays sort order"
+else
+  miss "real-clock append sorted before the ledger tail ($TS3_ORDER) -- clock-push inert"
+fi
 
 # ---- FAULT L (v0.4): re-verification must survive the next scan ----------
 say "FAULT L: re-verified claim must stay live across a subsequent scan"
@@ -597,6 +698,23 @@ else
   miss "$WK_DEP still blocked after dep closed"
 fi
 
+say "FAULT RL (ADR-002, HIGH-3): start --release returns a claimed item to open; refused from open"
+WK_REL=$($T issue "kernel issue for release probe" 2>/dev/null)
+$T start "$WK_REL" >/dev/null 2>&1                     # -> claimed
+# releasing a claimed item must put it back in ready (open, deps ok)
+$T start "$WK_REL" --release >/dev/null 2>&1
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_REL"; then
+  ok "start --release returned $WK_REL to the ready pool (claimed -> open)"
+else
+  miss "start --release did not return $WK_REL to open"
+fi
+# released is valid ONLY from claimed: a second release (now open) must refuse
+if $T start "$WK_REL" --release >/dev/null 2>&1; then
+  miss "start --release accepted from open state (transition guard missing)"
+else
+  ok "start --release refused from open -- released is valid only from claimed"
+fi
+
 say "FAULT R5 (ADR-002): kernel-as-tracker seam must join identically to native"
 NATIVE_OUT=$(PATH="/usr/bin:/bin" $T ready)
 SEAM_OUT=$($T issues --ready-json | $T ready --stdin)
@@ -683,7 +801,7 @@ python3 - "$WK_STALE" <<'PYEOF'
 import json, sys
 wid = sys.argv[1]
 rec = {"id": wid, "kind": "issue", "actor": "agent-x", "session": "s-evil",
-       "ts": "2099-01-01T00:00:00+00:00",
+       "ts": "2099-01-01T00:00:00.000000+00:00",
        "payload": {"title": "kernel issue on stale premise", "text": "",
                    "deps": [], "premises": []}}
 open(".truth/claims.jsonl", "a").write(json.dumps(rec, sort_keys=True) + "\n")
@@ -1190,6 +1308,141 @@ if bash scripts/session-close.sh >/dev/null 2>&1; then
   miss "failing project gate did not block the close"
 else
   ok "failing scripts/session-gates.d/ gate refused the close"
+fi
+
+say "FAULT BL1 (issue #3): baseline at an older ref excludes later records; HEAD includes them"
+git add .truth/claims.jsonl
+git commit -qm "canary: bl ref point" --no-verify >/dev/null 2>&1 || true
+REF_BL=$(git rev-parse HEAD)
+CID_BL=$($T claim "bl canary fact" --class UNVERIFIED --tier P2)
+TRUTH_SESSION=s-canary-verifier $T verdict "$CID_BL" agree --basis "canary bl" >/dev/null
+git add .truth/claims.jsonl && git commit -qm "canary: bl new claim" --no-verify
+if $T baseline "$REF_BL" --json 2>/dev/null | grep -q "$CID_BL"; then
+  miss "older baseline contains a claim filed after it"
+else
+  ok "older baseline excludes the later claim"
+fi
+if $T baseline HEAD --json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); sys.exit(0 if '$CID_BL' in d['claims']['ids'].get('live',[]) else 1)"; then
+  ok "HEAD baseline shows the new claim live"
+else
+  miss "HEAD baseline missing the new live claim"
+fi
+
+say "FAULT BL2 (issue #3): diff shows the born claim, exit 0"
+BL_DIFF=$($T baseline "$REF_BL" --diff HEAD 2>/dev/null); BL_RC=$?
+if [ "$BL_RC" -eq 0 ] && printf '%s\n' "$BL_DIFF" | grep -q "+ $CID_BL"; then
+  ok "diff lists $CID_BL as born, exit 0"
+else
+  miss "diff missed the born claim or wrong exit ($BL_RC)"
+fi
+
+say "FAULT BL3 (issue #3): a record vanishing between refs must alarm (exit 5, 10007 omission)"
+git checkout -qb bl-rewrite
+# drop the last TWO lines (CID_BL's claim AND its verdict) -- deleting
+# only the verdict would be a status transition, not a disappearance
+sed -i.bak '$d' .truth/claims.jsonl && sed -i.bak '$d' .truth/claims.jsonl
+rm -f .truth/claims.jsonl.bak
+git add .truth/claims.jsonl && git commit -qm "canary: rewritten ledger" --no-verify
+git checkout -q main
+$T baseline main --diff bl-rewrite >/dev/null 2>&1; BL3_RC=$?
+if [ "$BL3_RC" -eq 5 ]; then
+  ok "disappeared record raised exit 5"
+else
+  miss "rewritten-history diff exited $BL3_RC instead of 5"
+fi
+if $T baseline main --diff bl-rewrite 2>/dev/null | grep -q "DISAPPEARED"; then
+  ok "diff names the DISAPPEARED record"
+else
+  miss "diff silent about the disappeared record"
+fi
+
+say "FAULT BL4 (issue #3): unreadable ref exits 2"
+$T baseline no-such-ref >/dev/null 2>&1; BL4_RC=$?
+if [ "$BL4_RC" -eq 2 ]; then
+  ok "bad ref exits 2 (usage)"
+else
+  miss "bad ref exited $BL4_RC instead of 2"
+fi
+
+say "FAULT C1 (issue #4): contradicts edge on two live claims folds both to DISPUTED and HOLDs premised work"
+CID_C1=$($T claim "c-fixture formula alpha" --class UNVERIFIED --tier P1)
+CID_C2=$($T claim "c-fixture formula beta variant disagreeing" --class UNVERIFIED --tier P1 --duplicate-ok)  # contradicting claims are inherently near-dups: G8 fires, --duplicate-ok is the honest path
+TRUTH_SESSION=s-canary-verifier $T verdict "$CID_C1" agree --basis "canary c" >/dev/null
+TRUTH_SESSION=s-canary-verifier $T verdict "$CID_C2" agree --basis "canary c" >/dev/null
+WK_C1=$($T issue "work standing on alpha" --premise "$CID_C1")
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_C1"; then
+  ok "premised work READY while both claims live"
+else
+  miss "issue $WK_C1 not ready before the dispute"
+fi
+$T contradicts "$CID_C1" "$CID_C2" --basis "canary: the two formulas cannot both hold" >/dev/null
+if $T list --disputed | grep -q "$CID_C1" && $T list --disputed | grep -q "$CID_C2"; then
+  ok "both sides derive DISPUTED"
+else
+  miss "DISPUTED not derived for both sides"; $T list --disputed || true
+fi
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_C1"; then
+  miss "issue $WK_C1 still READY on a disputed premise"
+else
+  ok "premised work HELD by the dispute"
+fi
+if $T queue | grep "$CID_C1" | grep -q "$CID_C2"; then
+  ok "queue names the counterpart on the disputed row"
+else
+  miss "queue row missing the counterpart"; $T queue || true
+fi
+
+say "FAULT C2 (issue #4): retracting one side resolves the dispute -- the other returns live"
+TRUTH_HUMAN=1 TRUTH_HUMAN_ACK="$CID_C2" $T verdict "$CID_C2" retracted \
+  --basis "canary: beta loses" >/dev/null 2>&1
+if $T list --live | grep -q "$CID_C1" && ! $T list --disputed | grep -q "$CID_C1"; then
+  ok "surviving side live again after the retraction"
+else
+  miss "dispute did not resolve on retraction"
+fi
+if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_C1"; then
+  ok "premised work released after resolution"
+else
+  miss "issue $WK_C1 still HELD after resolution"
+fi
+
+say "FAULT C3 (issue #4): intake refusals -- self-edge, unknown id, duplicate either direction"
+if $T contradicts "$CID_C1" "$CID_C1" --basis "x" >/dev/null 2>&1; then
+  miss "self-edge accepted"
+else
+  ok "self-edge refused"
+fi
+if $T contradicts "$CID_C1" tr-00000bad --basis "x" >/dev/null 2>&1; then
+  miss "unknown claim accepted"
+else
+  ok "unknown claim refused"
+fi
+CID_C3=$($T claim "c-fixture formula gamma third contender" --class UNVERIFIED --tier P2 --duplicate-ok)
+$T contradicts "$CID_C1" "$CID_C3" --basis "canary dup seed" >/dev/null
+if $T contradicts "$CID_C3" "$CID_C1" --basis "reversed dup" >/dev/null 2>&1; then
+  miss "duplicate edge accepted in reverse direction"
+else
+  ok "duplicate edge refused either direction"
+fi
+
+say "FAULT C4 (issue #4): edge with a non-live side files DORMANT -- no status change"
+if $T list --live | grep -q "$CID_C1"; then
+  ok "live side untouched by the dormant edge (gamma is unverified)"
+else
+  miss "dormant edge changed a status"
+fi
+if $T contradicts "$CID_C2" "$CID_C3" --basis "x" >/dev/null 2>&1; then
+  miss "edge to a RETRACTED claim accepted (dispute already resolved)"
+else
+  ok "edge to a retracted claim refused"
+fi
+
+say "FAULT C5 (issue #4): contradicts records survive validate and the commit gate"
+git add .truth/claims.jsonl && git commit -qm "canary: c-edges" --no-verify
+if $T validate >/dev/null 2>&1; then
+  ok "ledger with contradicts records validates (mirror+schema in sync)"
+else
+  miss "contradicts records fail validate"; $T validate || true
 fi
 
 say ""
