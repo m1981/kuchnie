@@ -1,4 +1,4 @@
-# .truth — append-only claims ledger (v0.9.9)
+# .truth — append-only claims ledger (v0.9.14)
 
 > Reader: any agent or human about to assert, trust, or re-verify a fact about this repository | Enables: filing a claim in one command, and knowing which claims are still live before acting on them | Update-trigger: the record schema, invariants, or CLI contract change
 
@@ -80,7 +80,13 @@ quantifier–scope mismatch (ADR-007, v0.6) — a universally quantified
 claim text ("only", "no … anywhere", "the repo") over a scoped evidence
 command (`--include`, path arguments, `cd`) is refused unless
 `--scope-ok "<one sentence>"` states why the scope covers the
-quantifier (stored as `scope_basis`, attackable by verifiers);
+quantifier (stored as `scope_basis`, attackable by verifiers). A
+`--scope-ok` override filed with **no** `--ttl-days` is stamped a default
+30-day expiry (`ttl_default: true`, ADR-032) and prints a notice — so the
+scope judgment cannot rot silently: when it lapses the ADR-019 scan stales
+the claim, `reaffirm` routes it to re-file, and re-filing re-fires this
+gate. An explicit `--ttl-days` (a large value is the visible opt-out) is
+kept unflagged;
 statically dead-tripwire paths — a whitespace-containing entry with no
 comma, a **literal** path matching zero tracked files, or a **glob** over
 a statically-unreachable namespace (INV-M, v0.5.4; ADR-024). A glob over a
@@ -128,10 +134,12 @@ hash identically; `--single-run` overrides). INFERRED requires `--basis`.
 ## v0.6 solo-regime hardening (docs/hardening-proposals-solo-regime.md)
 
 Beyond the two intake gates above: `validate` (and therefore the commit
-gate) fails on a backdated duplicate-id append — the canonical-order
-substitution the fold's first-wins dedup composed with timestamp forgery
-(ADR-008) — and warns on clock regression beyond 300s; identical
-duplicated lines (git union-merge shape) still pass. `verdict <id>
+gate) fails on ANY duplicate-id append whose content differs from the
+first-seen record, regardless of timestamp — one rule (ADR-031, v0.9.13)
+subsuming the backdated (ADR-008) and equal-ts (ADR-016) substitution
+cases; corrections file under fresh ids, so only the byte-identical git
+union-merge duplicate may share an id and still passes. `validate` also
+warns on clock regression beyond 300s (ADR-008, unchanged). `verdict <id>
 agree` from the claim's own session is refused (ADR-010; self-diverge
 and self-cannot_verify stay allowed — they run against interest;
 `TRUTH_SELF_VERDICT=1` is the human override, self-attested like
@@ -190,7 +198,7 @@ the snapshot cache is deliberately unbuilt until that warning fires).
 2. Run `bash scripts/install-hooks.sh` after every `git init`/`git clone`
    (local hooks do not survive clones), or use CI instead — one of the
    two MUST exist. This is the *commit gate* (`check-truth`); without it
-   INV-A/INV-B/INV-G/INV-N and the ADR-008 order detections do not run and
+   INV-A/INV-B/INV-G/INV-N and the ADR-008/031 order detections do not run and
    the ledger's append-only guarantee is unenforced. For CI, name the gate
    scripts (`check-truth`, `invalidate-scan`) in a workflow `doctor` greps
    (`.github/workflows/*`, `.gitlab-ci.yml`, `.circleci/config.yml`,
@@ -385,7 +393,21 @@ satellites' work, not this verb's. Canary FAULTS W5–W8.
 ## Daily operation
 
 Daily (~2 min): `scripts/truth queue` — empty means carry on.
+When stale claims pile up, from a fresh session: `scripts/truth reaffirm`
+— re-runs each stale claim's screened evidence command; a hash-match
+auto-files `agree` (the anchor advances), a mismatch files NOTHING and is
+listed for dispatch; TTL-staled (re-file, ADR-019), unscreened,
+never-agreed, and same-session claims are skipped with the reason
+(ADR-030). `--dry-run` reports without filing. A `--scope-ok` override
+you file without `--ttl-days` gets a default 30-day expiry (ADR-032), so
+expect scope overrides to surface for re-file about a month out — a
+re-file that re-fires the ADR-007 gate, not a silent renewal.
 Weekly (~30 s): `scripts/truth-canary.sh`.
+`scripts/truth stats` carries an `overrides` section (ADR-033): scope-ok
+filings, override-decay expiries, dup-overrides, unscreened filings, the
+max scope TTL, and a non-blocking advisory when a scope justification is
+re-filed verbatim after expiry (review whether that scope judgment was
+ever real).
 After repo surgery (rebase spree, hook changes, new agent runtime):
 `scripts/truth doctor`.
 Monthly: re-audit a few fresh sessions' claims by hand against your day-0
