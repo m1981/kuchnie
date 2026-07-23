@@ -40,9 +40,12 @@ When the user starts talking about a **new feature** — or any change bigger
 than a bug fix — do this BEFORE designing or writing code:
 
 1. **Find or create the spec.** Check `<component>/docs/specs/` (and root
-   `docs/specs/`); if none matches, draft one per `docs/spec-convention.md`
-   — section contract, and the one rule: *facts appear only as ledger ids,
-   never as prose*.
+   `docs/specs/`); if none matches, classify the component against
+   `docs/templates/spec-archetypes.md` (six recurring types — domain
+   library, data service, interactive GUI, integration adapter, pipeline,
+   cross-cutting) and start from the matching blank in `docs/templates/`,
+   then draft per `docs/spec-convention.md` — section contract, and the
+   one rule: *facts appear only as ledger ids, never as prose*.
 2. **Verify the ground it stands on.** Facts the feature depends on →
    verify each and file as `tr-` claims; cite the ids under Ground truths.
    Facts already claimed → cite the existing id, don't re-file.
