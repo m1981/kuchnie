@@ -81,10 +81,13 @@ test_select_returns_400_for_nonexistent_variant
 
 - [ ] All 23 tests pass
 - [ ] Existing 30 tests still pass (no regressions)
-- [ ] Session persisted in SQLite (survives restart)
+- [ ] [SC-cfgapi-001] POST /configurator/sessions returns 201 with a session token and current_step=front
+- [ ] [SC-cfgapi-002] Session persisted in SQLite (survives restart)
 - [ ] Front step returns ≥10 variants for Kronospan
-- [ ] Carcass step returns pairing results (or fallback)
-- [ ] BOM endpoint returns all made selections
+- [ ] [SC-cfgapi-003] Selecting a nonexistent variant returns 400
+- [ ] [SC-cfgapi-004] Selecting for a step other than the current step returns 400
+- [ ] [SC-cfgapi-005] Carcass step returns pairing results (or fallback)
+- [ ] [SC-cfgapi-006] BOM endpoint returns all made selections
 - [ ] Endpoint response time < 100ms (single session, local SQLite)
 
 ## File Inventory

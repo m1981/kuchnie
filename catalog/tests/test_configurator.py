@@ -13,6 +13,7 @@ class TestCreateSession:
     """POST /configurator/sessions"""
 
     def test_returns_token_and_step_front(self, client):
+        """SC-cfgapi-001"""
         resp = client.post("/configurator/sessions")
         assert resp.status_code == 201
         body = resp.json()
@@ -21,6 +22,7 @@ class TestCreateSession:
         assert body["current_step"] == "front"
 
     def test_session_persists_in_db(self, client):
+        """SC-cfgapi-002"""
         resp = client.post("/configurator/sessions")
         token = resp.json()["session_token"]
         # Verify it exists by fetching options (would 404 if not persisted)
@@ -68,6 +70,7 @@ class TestSelectFront:
         assert body["current_step"] == "carcass"
 
     def test_invalid_variant_returns_400(self, client):
+        """SC-cfgapi-003"""
         token = _create_session(client)
         resp = client.patch(
             f"/configurator/sessions/{token}/select",
@@ -76,6 +79,7 @@ class TestSelectFront:
         assert resp.status_code == 400
 
     def test_wrong_step_returns_400(self, client):
+        """SC-cfgapi-004"""
         token = _create_session(client)
         resp = client.patch(
             f"/configurator/sessions/{token}/select",
@@ -95,6 +99,7 @@ class TestCarcassOptions:
     """GET /configurator/sessions/{token}/options (step=carcass)"""
 
     def test_returns_pairing_results_for_chosen_front(self, client):
+        """SC-cfgapi-005"""
         token = _select_front(client, "K8685-CH-18-SM")
         resp = client.get(f"/configurator/sessions/{token}/options")
         assert resp.status_code == 200
@@ -106,7 +111,10 @@ class TestCarcassOptions:
         assert len(default_opts) >= 1
 
     def test_returns_default_when_no_pairings(self, client):
-        """When no explicit carcass pairings exist, fallback to all carcass variants."""
+        """SC-cfgapi-005
+
+        When no explicit carcass pairings exist, fallback to all carcass variants.
+        """
         token = _select_front(client, "K190-CH-18-PE")
         resp = client.get(f"/configurator/sessions/{token}/options")
         assert resp.status_code == 200
@@ -198,6 +206,7 @@ class TestBOM:
     """GET /configurator/sessions/{token}/bom"""
 
     def test_returns_all_selections(self, client):
+        """SC-cfgapi-006"""
         token = _select_to_done(client)
         resp = client.get(f"/configurator/sessions/{token}/bom")
         assert resp.status_code == 200
@@ -209,6 +218,7 @@ class TestBOM:
         assert "carcass" in roles
 
     def test_partial_session_returns_partial_bom(self, client):
+        """SC-cfgapi-006"""
         token = _select_front(client, "K8685-CH-18-SM")
         resp = client.get(f"/configurator/sessions/{token}/bom")
         assert resp.status_code == 200
