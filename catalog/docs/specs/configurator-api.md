@@ -108,3 +108,18 @@ test_select_returns_400_for_nonexistent_variant
 - [x] Implementation complete
 - [x] Docs updated (ADR-002, CHANGELOG, ROADMAP)
 - [x] Marked ✅ in ROADMAP.md
+
+## Verification & Validation
+
+Verification: endpoint contract tests — the catalog configurator pytest
+suite is the acceptance oracle, carried by `wk-e7a2992d` (ADR-014
+`--accept-cmd`, kind verification; ran green at that item's close).
+
+Validation: operator walkthrough of the BOM endpoint output against a
+real production sheet — attestation pending; when the operator files it
+(UNVERIFIED, `--ttl-days 90`), edit this line to cite the id. Until
+then this spec is verified at the endpoint-contract level, not yet
+validated.
+
+Residual (accepted, not closable): "the pairings data drifting from the
+showroom's actual pairing advice under a passing suite"
