@@ -37,7 +37,7 @@ inventory note), and this spec's update-trigger fires then.
 Re-verified 2026-07-27 against a scratch database: the sequence below
 reproduces production counts exactly (2 producers, 148 decors, 222
 variants, 145 pairings, 123 variant-edge links, 87 edge rows) —
-tr-44356ef4.
+tr-0dda200b (successor to the 2026-07-16 four-extras verification).
 
 ```bash
 # 1. Core catalog from committed YAML (schema + import):
@@ -73,8 +73,9 @@ rules; the pinned rebuild counts deliberately exclude that table.
 
 ## Ground truths
 
-- tr-44356ef4 — the rebuild sequence reproduces production counts on a
-  scratch database (verified 2026-07-16).
+- tr-0dda200b — the five-extras rebuild sequence reproduces production
+  counts on a scratch database (re-verified 2026-07-27; supersedes the
+  2026-07-16 pre-U-U four-extras verification).
 
 ## Work
 
