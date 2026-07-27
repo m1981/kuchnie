@@ -128,6 +128,7 @@ and the end-of-session verifier caught the filer's own basis error).
 | **`session-gates.d/63-glossary-drift.sh`** | end of session | nothing yet — WARN-only: ubiquitous-language drift vs `docs/GLOSSARY.md` (new domain-surface class without an entry, dead File-of-record, cross-context collision without disambiguation) against the accepted `docs/glossary-baseline.txt` |
 | **`session-gates.d/70-ruff.sh`** | end of session | nothing yet — WARN-only: Ruff with the correctness-focused rule set in root `ruff.toml` (pyflakes, syntax, bugbear traps; style rules deliberately excluded — a reformat would stale path-watched claims) |
 | Ledger intake gates | at filing | quantifier/scope mismatch (ADR-007), unsafe evidence cmds (ADR-009), duplicates, backdating (machinery §7) |
+| **Incident-to-gap ritual** ([docs/incident-to-gap.md](incident-to-gap.md)) | any surprise: bug, falsified assumption, diverge-with-lesson | silently emptying the surprise queue — an incident closes only as a spec assertion, ledger claim/sentinel, wk- issue, recorded rejection, or expiring deferral, and each births a `docs/question-bank.md` entry (practice, not a hook) |
 
 Full-fat exercise reruns (Blender leg + inspection) stay on-demand after
 adapter/hb5 changes: `exercises/harness/runner.py <scenario> --strict`.
