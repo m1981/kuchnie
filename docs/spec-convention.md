@@ -70,6 +70,15 @@ what an evidence command can actually show. These become the
 `truth done <wk-id> --claim ...` texts at completion (claim-at-death,
 pre-written). Lesson from verification rounds 3 & 4: never a repo-wide
 clause backed by a package-scoped grep.
+
+## Verification & Validation
+The archetype's V&V pairing (template v0.9.16 blanks pre-fill it).
+Verification: the technique + the id that CARRIES its oracle (a wk- with
+--accept-cmd, or a standing sentinel tr-) — never the command text.
+Validation: the human instrument + its TTL'd attestation id (UNVERIFIED
+class, --ttl-days; expiry = re-walkthrough + re-file + edit this line).
+Residual (accepted, not closable): named by TITLE only — an id here is a
+live tripwire that fails this spec when it dies.
 ```
 
 ## Health tripwire
