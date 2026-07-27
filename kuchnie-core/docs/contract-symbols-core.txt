@@ -1,0 +1,16 @@
+back_panel_height
+carcass_bottom_width
+decompose
+decompose_dolna_drzwiowa
+decompose_dolna_legrabox
+decompose_dolna_narozna_slepa
+decompose_dolna_szufladowa
+decompose_drawer_box
+decompose_gorna_drzwiowa
+decompose_kitchen
+door_height
+door_width
+drawer_front_width
+front_reveal
+lw
+runner_clearance_per_side_mm
