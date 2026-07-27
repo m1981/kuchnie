@@ -79,7 +79,7 @@ Mechanism notes fixed here so implementations cannot drift:
 
 - tr-7e0b27d6 — the concept doc records the design (axes, R1–R7, nd-,
   two-oracle accept-cmd, baseline, migration path).
-- tr-767c1632 — spec-health gate live: the satellite family (spec-health /
+- tr-1a4b870d — spec-health gate live: the satellite family (spec-health /
   doc-health) that test-health completes exists and passes.
 - tr-c440ff7a — use-cases.md defines the actors and dressed UCs and
   carries the Acceptance section increment 2 parses (third in the
