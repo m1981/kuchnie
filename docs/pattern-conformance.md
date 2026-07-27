@@ -30,8 +30,10 @@ wk-cb6a17c8).
 ## Re-running this review (the signature exercise)
 
 The 2026-07-16 review that closed row 8 and found the antipattern set
-(the import cycle — fixed 2026-07-17, tr-cad8d45a; tr-88fb2941 stringly gates; tr-847d40f8
-triple BOM fold) ran on a signature summary, not full source. The review
+(the import cycle — fixed 2026-07-17, tr-cad8d45a; the stringly gate
+protocol — fixed 2026-07-17 by 872547f, finding superseded by
+tr-cb1dec8a; tr-847d40f8 triple BOM fold) ran on a signature summary,
+not full source. The review
 lives at three regime layers:
 
 1. **Findings are path-watched claims** — each antipattern claim watches
