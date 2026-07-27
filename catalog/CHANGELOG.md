@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- U-U (island) postformed worktop variants seeded per
+  `docs/specs/worktop-uu-seeding.md`: `catalog/scripts/seed_worktop_uu.py`
+  — 36 variants (18 decors × 4100×900/4100×1200, 38mm), 18 HPL edge
+  rolls materialised on the source `PF-U-600` variants (edge code =
+  decor code per the manufacturer table), 54 variant-edge links; seven
+  tests in `catalog/tests/test_worktop_uu_seeding.py` (spec-coverage
+  ids SC-wtuu-001..007). Known gaps tracked: structure-code fidelity
+  for ten decors (wk-4fc28a19), `worktop_specs` representation
+  (wk-bca0a74b)
+
 - Builder GUI: sidebar gaps closed per ADR-005 (all advisory, none blocking)
   - Slot focus soft-filters the grid by role; clearing a slot re-filters (S5);
     role mismatch shows a ⚠ line but the assignment stands

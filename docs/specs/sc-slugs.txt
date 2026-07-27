@@ -1,1 +1,2 @@
 cfgapi catalog/docs/specs/configurator-api.md
+wtuu catalog/docs/specs/worktop-uu-seeding.md

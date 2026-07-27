@@ -34,34 +34,42 @@ inventory note), and this spec's update-trigger fires then.
 ## Data pipeline — the verified rebuild path
 
 `catalog/db/catalog.db` is fully rebuildable from committed sources.
-Verified 2026-07-16 against a scratch database: the sequence below
-reproduces production counts exactly (2 producers, 148 decors, 186
-variants, 145 pairings, 69 edges) — tr-44356ef4.
+Re-verified 2026-07-27 against a scratch database: the sequence below
+reproduces production counts exactly (2 producers, 148 decors, 222
+variants, 145 pairings, 123 variant-edge links, 87 edge rows) —
+tr-44356ef4.
 
 ```bash
 # 1. Core catalog from committed YAML (schema + import):
 .venv/bin/python -m catalog.scripts.seed --db <target> \
     catalog/data/kronospan_full.yaml catalog/data/kronoswiss_full.yaml
-# 2. Curated extras, in any order (their get_db() targets the canonical
-#    DB; pass a connection with row_factory=sqlite3.Row for other targets):
-#    seed_pairings_edges, seed_decor_style_tags, seed_curated_kitchens,
-#    seed_worktop_compat
+# 2. Curated extras. ORDER MATTERS in one place: seed_curated_kitchens
+#    creates the style_tags rows that seed_decor_style_tags links to, so
+#    it must run first (falsified "in any order" 2026-07-27 — a wrong
+#    order yields 0 style associations, silently):
+#    seed_pairings_edges, seed_curated_kitchens, seed_decor_style_tags,
+#    seed_worktop_compat, seed_worktop_uu
 ```
 
 Living modules: `catalog/scripts/seed.py` (accepts `--db` since the
 verification), `catalog/scripts/importer.py`, `catalog/scripts/seed_pairings_edges.py`,
 `catalog/scripts/seed_decor_style_tags.py`, `catalog/scripts/seed_curated_kitchens.py`,
-`catalog/scripts/seed_worktop_compat.py`, `catalog/db/engine.py` (schema +
-in-place migration). The one-shot YAML generators and the 1.5.0 migration
-are atticized with tombstones (`attic/catalog-*.py`) — their output is the
-committed data itself.
+`catalog/scripts/seed_worktop_compat.py`, `catalog/scripts/seed_worktop_uu.py`
+(U-U postformed worktops — see `catalog/docs/specs/worktop-uu-seeding.md`),
+`catalog/db/engine.py` (schema + in-place migration). The one-shot YAML
+generators and the 1.5.0 migration are atticized with tombstones
+(`attic/catalog-*.py`) — their output is the committed data itself.
 
-Known roughness, accepted for now: the four `seed_*` extras hardcode the
+Known roughness, accepted for now: the five `seed_*` extras hardcode the
 canonical DB path — and, sharper (2026-07-17 verifier observation): they
 ACCEPT a `--db` argument and silently ignore it, so a naive
 `--db scratch` run targets the canonical DB (idempotently). Rebuilding
 to another target means patching `DB_PATH` in-process; a real shared
-`--db` flag is filed only if a real rebuild ever needs it.
+`--db` flag is filed only if a real rebuild ever needs it. Residual
+found at the 2026-07-27 re-verification: production carries 6
+`decor_style_tags` rows the tagger does not regenerate (decors
+0514/0515 × modern/stone/matte) — hand-era tags outside the committed
+rules; the pinned rebuild counts deliberately exclude that table.
 
 ## Ground truths
 
