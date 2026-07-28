@@ -258,8 +258,9 @@ the requirement's tracker):
 - 8a. Material has no local price → BOM flags unpriced lines instead of
   silently under-quoting — **⚠ rows exist at 0.0 but nothing flags them**.
 
-Reading: extensions 2a/5a/8a and step 8's G11/G13 qualifiers
-(wk-593a317b) are the open backlog; the main scenario's steps all run. This
+Reading: extensions 2a/8a and step 8's G11/G13 qualifiers
+(wk-593a317b) are the open backlog (5a closed in d28e833 — emission
+doorways gated); the main scenario's steps all run. This
 use case adds no work — it gives the existing work its requirement, and
 places the buildability verdict ON the main success scenario of the
 business's central flow.
