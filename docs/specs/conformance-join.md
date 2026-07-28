@@ -81,11 +81,11 @@ Mechanism notes fixed here so implementations cannot drift:
   two-oracle accept-cmd, baseline, migration path).
 - tr-1a4b870d — spec-health gate live: the satellite family (spec-health /
   doc-health) that test-health completes exists and passes.
-- use-cases.md defines the actors and dressed UCs and carries the
-  Acceptance section increment 2 parses (fourth in the dressing-claim
-  lineage — predecessors diverged by design as work shipped, most
-  recently ext 5a closing; successor claim id re-cited at its
-  verification, see the ledger).
+- tr-6ccd4a63 — use-cases.md defines the actors and dressed UCs and
+  carries the Acceptance section increment 2 parses (fourth in the
+  dressing-claim lineage: predecessors diverged by design as work
+  shipped — extraction r2, UC-2 step 5, most recently ext 5a closing;
+  the ledger records every verdict).
 - tr-076ed1ea — the six component source trees and pyprojects sit where
   increment 3's inventory walker expects them.
 
