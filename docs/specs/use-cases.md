@@ -1,4 +1,4 @@
-# Spec: Use cases — actors, goals, and the five dressed flows
+# Spec: Use cases — actors, goals, and the dressed flows
 
 > Reader: anyone (human or agent) deciding where a feature belongs or what
 > a piece of work is FOR | Enables: routing every feature discussion
@@ -20,7 +20,7 @@ finding: G8 was an extension clause nobody wrote). **Non-goals:** no
 separate SRS document (the union of this file + L1 + feature-spec
 Acceptance sections + capability-map IS the requirements specification);
 no bd epic hierarchy (the feature spec plays the epic role — two homes
-fork); no full dress beyond the five flows whose extensions carry real
+fork); no full dress beyond the flows whose extensions carry real
 money/scrap risk.
 
 ## Decisions
@@ -64,7 +64,8 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 | UC-8 | AI agent / Purchaser | Refresh the material mirror from the catalog | casual — already spec'd (`kitchen-erp/docs/specs/material-mirror.md`) | 5 | — |
 | UC-9 | Salesperson | Maintain the decor catalog (images, families, pairings) | casual | 1 | wk-6716e9c8, wk-c67ffaa1 |
 | UC-10 | all hats | Archive a handover (project record references kitchen JSON + cut lists + decor set) | casual | 11 | — |
-| UC-11 | Designer | Design an L-kitchen (heights → zones → corner → widths), governed by `docs/l-kitchen-design-playbook.md`, executed mostly in hb5 | casual | 2–4 | — |
+| UC-11 | Designer | Design an L-kitchen (heights → zones → corner → widths), governed by `docs/l-kitchen-design-playbook.md`, executed mostly in hb5 | **full — below** (dressed 2026-07-28) | 2–4 | — |
+| UC-12 | Surveyor | Capture a measurement visit into a structured survey pack on the project spine | **full — below** (dressed 2026-07-28) | 2 | — |
 
 Worktop BOM position (wk-4c37f4ee) is a subfunction of UC-1/UC-4, not a
 goal. The catalog **configurator** flow (sessions/steps/templates in
@@ -306,7 +307,7 @@ net quantities (required − stock + buffer); project stage advances.
    `purchasing-variants.md`).
 2. System validates every material line against the catalog: decor
    variant exists in the needed thickness, matching edge-band exists —
-   catalog data supports it (tr-44356ef4); the check itself **⚠
+   catalog data supports it (tr-0dda200b); the check itself **⚠
    wk-593a317b**.
 3. Michał sends the package (rozrys CSV + DXF, one email) — out of
    system by design; system records Sent + artifacts on the spine —
@@ -350,6 +351,174 @@ net quantities (required − stock + buffer); project stage advances.
   drilling artifacts exist → system re-derives CNC/DXF from the new
   decomposition — a substitution is geometry, not a price line
   (`purchasing-variants.md` cascade rule).
+
+## UC-11 — Design an L-kitchen (fully dressed, dressed 2026-07-28)
+
+**Primary actor:** Michał as Designer
+**Scope:** hb5 (external layout editor per ADR-009) + kuchnie system
+(home-builder-adapter, kuchnie-core, kitchen-erp, krono-compositor).
+Governed phase-for-phase by `docs/l-kitchen-design-playbook.md`; gap map
+per `docs/reviews/domain-pm-review-2026-07-28.md` §A. **Level:** sea
+(user goal)
+**Goal in context:** turn a measured room into an approved L-kitchen
+design by the playbook's discipline — heights → zones → corner → widths,
+never cabinets-first — so the Phase-8 gate passes on real data and
+production handoff (UC-2) starts from a validated layout, with two
+designs made months apart coming out consistent.
+
+**Stakeholders & interests:**
+- Michał/owner — a gate failure is caught at design time, not at the
+  saw; the playbook holds even under time pressure
+- Client — the kitchen fits their body (elbow-derived heights), habits
+  (handedness, zones) and budget bracket
+- Assembler-Michał — corner fillers and clearances decided on paper mean
+  no on-site improvisation
+- Production engineer (UC-2) — receives a frozen design whose
+  buildability verdict is already green
+
+**Preconditions:** survey pack on the project spine (UC-12); decors
+browsable in the catalog; hb5 available for placement (ADR-009).
+**Minimal guarantees:** a design that failed the Phase-8 gate never
+reaches production artifacts — emission refuses a FAILED verdict
+(tr-409f4aab); a phase without its input artifact does not start
+(playbook Phase-0 rule).
+**Success guarantees:** approved design whose cabinet list either
+decomposes or is explicitly excluded; rozrys, CNC/DXF and priced BOM all
+derive from ONE decomposition (handoff to UC-2).
+**Trigger:** survey pack complete; project enters stage 3.
+
+**Main success scenario** (one step per playbook phase; ⚠ = phase the
+system cannot carry yet, per the review's §A gap map):
+
+1. Phase 0 — Michał confirms the survey pack (wall dims + diagonals,
+   media points, appliance model sheets, user height/handedness, budget
+   bracket) sits on the project spine — attachment machinery supported
+   (tr-e51ef4fd ArtifactRef); the structured pack and its 2→3 gate are
+   UC-12's goal.
+2. Phase 1 — Michał fixes the working heights (worktop = elbow −
+   100..150 mm, wall-unit line, tall line) as a project-level height
+   parameter set — **⚠** no such entity; ConstructionMethod owns the
+   carcass math but nothing stores per-project lines for layout or
+   G1-across-legs.
+3. Phase 2 — Michał draws the zone plan (supplies > cleaning > prep >
+   cooking; sink leg vs hob leg, fridge column at the open end) with
+   appliance positions — **⚠** no zone, appliance or position model
+   exists in the live domain.
+4. Phase 3 — Michał decides the corner strategy (blind + filler /
+   diagonal / dead, mechanism, filler widths on BOTH runs) before any
+   widths — **⚠** no corner decision artifact; the corner-blind
+   production side is solved (tr-591aa208) but unreachable from a scene.
+5. Phase 4 — Michał composes the base runs in hb5: appliances first,
+   standard widths, one filler per run at the wall end, two legs sharing
+   the corner — **⚠** the extracted Kitchen is a flat Row list with no
+   positions or leg adjacency; the adapter collapses a scene into one
+   Row.
+6. Phase 5 — Michał adds wall and tall units (mirror the base line,
+   hood on the duct route, one continuous top line) — **⚠** no
+   tall/column type exists; the wall-unit decomposer is partial.
+7. Phase 6 — Michał specifies the worktop (two segments + corner joint,
+   cutout positions with ≥50 mm web) and annotates services — **⚠**
+   WorktopSegment prices per-lm with cutout count (tr-17905dae) but
+   carries no cutout positions and no joint.
+8. Phase 7 — Michał fixes one decor set, 3 mm reveals and a global
+   handle system, previewing decor swaps with the client — **⚠** krono
+   renders a linear strip only (no L preset) and 90/148 decor images are
+   missing; the catalog data itself is live (tr-0dda200b).
+9. Phase 8 — Michał runs the validation gate G1–G7 — **⚠** the
+   ordered-gate verdict runs and emission refuses FAIL (tr-65aa5969,
+   tr-409f4aab), but design gates G2/G3/G4/G5/G7 sit SKIPPED for want of
+   the layout model; only G1/G6 and the mechanical checks fire.
+10. Phase 9 — Michał hands the approved design to production: decompose
+    → rozrys CSV with grain, CNC drilling + per-panel DXF, priced BOM,
+    all from one decomposition — supported for covered types
+    (tr-15d48651, tr-b485d74c, tr-591aa208, tr-3ef7b607, tr-8dfe366d).
+
+**Extensions:**
+
+- 9a. G1 fails — heights inconsistent across legs → back to Phase 1
+  (step 2) — the worktop-line check is encoded in validate_rows and
+  fires inside the verdict (tr-65aa5969); the across-legs form waits on
+  the height parameter set (step 2).
+- 9b. G2 fails — corner fillers missing on either run → back to Phase 3
+  (step 4) — **⚠** parked SKIP: the model carries no L-run adjacency.
+- 9c. G3 fails — door/drawer collision at the corner or room door →
+  back to Phase 3 or 4 (steps 4–5) — **⚠** parked SKIP.
+- 9d. G4 fails — appliance cutouts do not match the actual model sheets
+  → back to Phase 0 inputs (step 1; the sheets live in UC-12's pack) —
+  **⚠** parked SKIP: no appliance model.
+- 9e. G5 fails — work triangle or landings illegal after width changes
+  → back to Phase 2 (step 3) — **⚠** parked SKIP: no positions.
+- 9f. G6 fails — plinth line broken or top line discontinuous → back to
+  Phase 4 or 5 (steps 5–6) — encoded in validate_rows, fires inside the
+  verdict (tr-65aa5969).
+- 9g. G7 fails — worktop joint lands on a cutout, or gas/hood distances
+  illegal → back to Phase 6 (step 7) — **⚠** parked SKIP: no cutout
+  positions.
+
+Reading: the back half stands (step 10 and the gate machinery of step
+9); the front half — phases 1–7 — has no data model, which is the one
+hole the review's roadmap closes (L-layout model first: runs + corner +
+positions unpark the design gates). Roadmap rows carrying uc=UC-11 in
+`docs/roadmap-map.csv` are this use case's open backlog; they gain wk-
+twins when each piece of work starts.
+
+## UC-12 — Capture a measurement visit into a survey pack (fully dressed, dressed 2026-07-28)
+
+**Primary actor:** Michał as Surveyor
+**Scope:** kitchen-erp (project spine, ArtifactRef). The room and the
+client are external. **Level:** sea (user goal)
+**Goal in context:** one visit to the room yields the structured survey
+pack the playbook's Phase 0 demands — wall dims + diagonals, media
+points, appliance model sheets, user height/handedness, budget bracket —
+attached to the project spine, and the 2→3 stage transition cannot
+proceed without it, so design (UC-11) never starts on missing inputs.
+
+**Stakeholders & interests:**
+- Michał/owner — no second visit to re-measure; no redesign born from a
+  missing input (playbook Phase-0 rule: missing input = redesign later)
+- Client — measured once; budget bracket captured explicitly, not
+  remembered
+- Designer-Michał (UC-11) — starts Phase 1 from a complete pack, not
+  from memory
+- Production engineer (UC-2) — appliance cutouts trace to actual model
+  sheets (gate G4's ground truth)
+
+**Preconditions:** project exists on the spine at stage 2_pomiar
+(tr-e51ef4fd).
+**Minimal guarantees:** an incomplete pack is never silently promoted —
+the 2→3 transition refuses and names the missing items; every captured
+artifact is archived verbatim on the spine.
+**Success guarantees:** complete survey pack attached to the spine;
+stage advances 2→3; UC-11's Phase-0 precondition is satisfied.
+**Trigger:** measurement visit, scheduled after the first-visit decor
+session (UC-3) and quote range (UC-1).
+
+**Main success scenario** (⚠ = the system cannot do it yet — review §A
+Phase 0):
+
+1. Michał opens the project at stage 2_pomiar and attaches the raw
+   visit artifacts (photos, notes) to the spine — supported
+   (tr-e51ef4fd ArtifactRef).
+2. Michał records wall dims + diagonals and media points (water, drain,
+   gas, duct, sockets) as a structured wall sheet — **⚠** no survey
+   artifact kinds exist; today an attachment is a bare file.
+3. Michał captures the appliance model sheets (model + cutout dims per
+   appliance) — **⚠** no named artifact kind; gate G4 has nothing to
+   check against.
+4. Michał records user height/handedness (the elbow-formula input) and
+   the budget bracket — **⚠** no home for them on the spine.
+5. System evaluates pack completeness against the required-kind
+   checklist and shows what is still missing — **⚠** no checklist
+   exists.
+6. Michał advances the project 2→3; the transition verifies the pack —
+   transition machinery supported (tr-e51ef4fd transition_stage), but
+   the pack-completeness gate is **⚠** open.
+
+**Extensions:**
+
+- 6a. Pack incomplete at the 2→3 attempt → transition refuses and lists
+  the named missing items; the stage stays 2_pomiar — **⚠** the refusal
+  rule is the survey-pack spec's core assertion (review §D spec 1).
 
 ## Ground truths
 

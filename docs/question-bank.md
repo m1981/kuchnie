@@ -43,3 +43,8 @@ birthing incident are recorded inline in the entry.
 **Q:** Which production tables hold rows no committed script can regenerate, and is each disclosed?
 **Born:** 2026-07-27 — production carries 6 decor_style_tags rows (0514/0515 × modern/stone/matte) no committed script regenerates — found only because a scratch rebuild was diffed against production.
 **Rejection-with-reason (incident, not the question):** accepted as hand-era residue; disclosed in catalog-service.md's roughness note; pinned counts exclude that table. The question stays live.
+
+## QB-008 <category: retraction-hygiene>
+**Q:** Before a retraction is recommended or executed, was the id's citation set swept corpus-wide (specs, docs, use-cases) — not just the file that prompted the check?
+**Born:** 2026-07-28 — the tr-44356ef4 retraction was recommended as "trips nothing" after checking only catalog-service.md; the id was also cited in use-cases.md and purchasing-variants.md, and spec-health went red until both citations were swapped to the live successor tr-0dda200b.
+**Gap closed by:** citation swaps in both files (this commit); the recommending agent's own sweep habit corrected.

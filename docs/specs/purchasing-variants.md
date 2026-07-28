@@ -29,7 +29,7 @@ finalist for a binding offer**. Three features carry that:
    LEGRABOX→Tandembox moves runner pilots and drawer-box parts; a decor
    swap changes edging lines and may fail thickness/edge-band existence
    (checked against the catalog: variants, pairings, edges tables —
-   tr-44356ef4's rebuilt-verified dataset). Every substitution re-derives
+   tr-0dda200b's rebuilt-verified dataset). Every substitution re-derives
    the artifact set; no artifact is ever hand-patched to match a swap.
 3. **The calibration loop.** Every received offer is stored against the
    estimate it answers. Bare total → the estimator learns total-per-job
@@ -118,7 +118,7 @@ present, not runners alone. Stock is a small on-hand table, not a WMS.
 
 ## Ground truths
 
-- tr-44356ef4 — catalog data (decors, variants, pairings, edges) is
+- tr-0dda200b — catalog data (decors, variants, pairings, edges) is
   complete and rebuildable; the substitution/validation checks stand on it.
 - tr-e51ef4fd — Project spine with stage transitions and ArtifactRef
   exists; the variant lifecycle attaches to it.
