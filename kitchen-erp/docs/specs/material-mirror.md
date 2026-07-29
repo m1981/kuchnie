@@ -27,7 +27,7 @@ routing (wk-03434168, deliberately dep-blocked behind this work).
 
 - `tr-e3c86dfd` — catalog schema is 1.5.0: pairing_types is a data lookup
   table, variants carry `producer_sku` (the shape the mirror consumes).
-- `tr-b485d74c` — kitchen-erp already consumes `kuchnie_core` via
+- `tr-b93c22bf` — kitchen-erp already consumes `kuchnie_core` via
   `domain_adapter.py` (precedent for how kitchen-erp wraps an upstream
   contract behind an adapter seam).
 - The pre-mirror claim "Material is still an independent store" (referred
@@ -44,7 +44,7 @@ routing (wk-03434168, deliberately dep-blocked behind this work).
 
 ## Acceptance (final — filed 2026-07-09)
 
-- `tr-fff10d41` (claim-at-death of `wk-d5df7e30`) — board materials are
+- `tr-95802048` (claim-at-death of `wk-d5df7e30`) — board materials are
   born in the catalog service: `state.py` seeds via `catalog_client` +
   `refresh_material_mirror`; the only `Material()` constructions in
   production code are the mirror's own upsert, the admin form, and three

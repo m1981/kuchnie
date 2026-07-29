@@ -135,7 +135,7 @@ locked (tr-c87a68f9).
    (spine: tr-e51ef4fd).
 5. After pomiar Michał designs in hb5; decomposition prices the real
    kitchen through the single BOM fold — supported (tr-ff8a5110,
-   tr-b485d74c); worktop enters per-lm with priced cutouts — supported
+   tr-b93c22bf); worktop enters per-lm with priced cutouts — supported
    (tr-17905dae).
 6. System presents the comparison board: 2–3 variants of the same
    kitchen side by side (decor/drawer-system/hinge/worktop axes), each
@@ -234,7 +234,7 @@ the requirement's tracker):
 7. System emits the CNC drilling list and per-panel DXF (layers by drill
    type) — supported for flagship types.
 8. System computes the priced BOM: board m² by panel role, edging lm,
-   hardware from the rules engine — tr-b485d74c; **⚠** hardware
+   hardware from the rules engine — tr-b93c22bf; **⚠** hardware
    understated (G13) and edging not orderable by thickness (G11) —
    wk-593a317b.
 9. Michał uploads the rozrys to the e-rozkrój service and sends DXF to the
@@ -432,7 +432,7 @@ system cannot carry yet, per the review's §A gap map):
 10. Phase 9 — Michał hands the approved design to production: decompose
     → rozrys CSV with grain, CNC drilling + per-panel DXF, priced BOM,
     all from one decomposition — supported for covered types
-    (tr-15d48651, tr-b485d74c, tr-591aa208, tr-3ef7b607, tr-8dfe366d).
+    (tr-15d48651, tr-b93c22bf, tr-591aa208, tr-3ef7b607, tr-8dfe366d).
 
 **Extensions:**
 
@@ -541,7 +541,7 @@ Phase 0):
 - tr-591aa208 — corner-blind decomposer with filler + blind front (UC-2
   step 4 coverage).
 - tr-3ef7b607 — confirmat + HDF-groove ops emitted (UC-2 step 7 input).
-- tr-b485d74c — ERP BOM quantities come from core decompose() (UC-2 step 8).
+- tr-b93c22bf — ERP BOM quantities come from core decompose() (UC-2 step 8).
 
 ## Work
 
