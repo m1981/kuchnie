@@ -37,7 +37,7 @@ The queue cannot be silently emptied. An incident leaves it ONLY as:
    entry, never merely spoken;
 5. **an expiring deferral** — `deferred until YYYY-MM-DD by <owner>`,
    recorded inline in the bank entry. On expiry the incident re-enters
-   the queue. (TTL'd ledger claims per `docs/adr/019-*.md` are the
+   the queue. (TTL'd ledger claims per `docs/adr/truth/019-*.md` are the
    mechanized big brother; here a date in the bank plus the monthly audit
    sweep is enough.)
 
