@@ -48,3 +48,13 @@ birthing incident are recorded inline in the entry.
 **Q:** Before a retraction is recommended or executed, was the id's citation set swept corpus-wide (specs, docs, use-cases) — not just the file that prompted the check?
 **Born:** 2026-07-28 — the tr-44356ef4 retraction was recommended as "trips nothing" after checking only catalog-service.md; the id was also cited in use-cases.md and purchasing-variants.md, and spec-health went red until both citations were swapped to the live successor tr-0dda200b.
 **Gap closed by:** citation swaps in both files (this commit); the recommending agent's own sweep habit corrected.
+
+## QB-009 <category: namespace-ownership>
+**Q:** For artifacts a template ships into a consumer repo, who owns the number/name space they land in — and is the boundary tested before the two series collide?
+**Born:** 2026-07-29 — the truth-ledger template ships its 33 machinery ADRs into the consumer's shared `docs/adr/`, overlapping kuchnie's domain series (~15 duplicate numbers; "ADR-009" ambiguous between evidence-screen and a rename decision; the next meta ADR number would collide with kuchnie's fresh ADR-034).
+**Gap closed by:** template release v0.9.18 — machinery ADRs move to the `docs/adr/truth/` namespace; interim rule: cite machinery ADRs by full title, never bare number.
+
+## QB-010 <category: lesson-routing>
+**Q:** Where does a cross-cutting, project-agnostic lesson go — agent session memory, the consumer's question bank, or the template harness — and what forces that routing decision to be made?
+**Born:** 2026-07-29 — the operator noticed a session-compaction brief carrying seven agent-agnostic rules (retraction citation sweep, doc↔claim two-commit dance, mechanical pre-scan of claim batches, version-pin divergences are genuine, copier-managed-file upstreaming, argv-array drivers, post-merge reaffirm commits) that lived ONLY in one agent's session memory and would die with it.
+**Gap closed by:** the seven rules promoted into the template harness (machinery.md "Filing hygiene & aftermath" + a verifier-prompt line) in v0.9.18; this question stands as the standing router for the next lesson.
