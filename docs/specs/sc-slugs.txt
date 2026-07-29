@@ -1,2 +1,3 @@
 cfgapi catalog/docs/specs/configurator-api.md
+svpk kitchen-erp/docs/specs/survey-pack.md
 wtuu catalog/docs/specs/worktop-uu-seeding.md

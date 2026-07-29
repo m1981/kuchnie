@@ -39,3 +39,8 @@ python3
 # issue #7 (v0.7.2): exact repo-relative interpreter -- the armed suite
 # (jsonschema drift detector) lives here, not in bare python3.
 .venv/bin/python
+# 2026-07-29: kitchen-erp keeps its own venv (sqlmodel stack, separate
+# from the root catalog venv) -- its suites are valid oracles only via
+# this exact interpreter path. Same conscious-exact-path policy as the
+# .venv/bin/python entry above.
+kitchen-erp/.venv/bin/python

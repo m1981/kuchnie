@@ -42,6 +42,13 @@ class TestStageTransitions:
         project.transition_stage("2_pomiar")
         assert project.stage == "2_pomiar"
 
+        # The 2->3 edge additionally requires a complete survey pack
+        # (docs/specs/survey-pack.md; gated behavior owned by
+        # test_survey_pack.py) -- attach the five required kinds so this
+        # test keeps exercising the plain forward-walk contract.
+        for kind in ("survey_dims", "survey_media", "survey_appliance_sheet",
+                     "survey_user_profile", "survey_budget"):
+            project.add_artifact(kind, f"/survey/{kind}.pdf")
         project.transition_stage("3_layout_design")
         assert project.stage == "3_layout_design"
 

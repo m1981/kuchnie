@@ -443,6 +443,19 @@ class Project(SQLModel, table=True):
                 f"cannot move from {self.stage!r} to {new_stage!r}: "
                 "stage only advances forward"
             )
+        if self.stage == "2_pomiar" and new_stage == "3_layout_design":
+            # Survey-pack gate (wk-3fd0fac4, spec: kitchen-erp/docs/specs/survey-pack.md):
+            # design must not start on missing Phase-0 inputs, so THIS edge
+            # -- and only this edge -- refuses an incomplete pack and names
+            # the gap. Lazy import: survey.py imports this module at load.
+            from kitchen_erp.core.survey import survey_pack_missing
+            missing = survey_pack_missing(self)
+            if missing:
+                raise StageTransitionError(
+                    f"cannot move from {self.stage!r} to {new_stage!r}: "
+                    f"survey pack incomplete -- missing kinds: "
+                    f"{', '.join(missing)}"
+                )
         self.stage = new_stage
 
     def add_artifact(self, kind: str, path: str) -> ArtifactRef:

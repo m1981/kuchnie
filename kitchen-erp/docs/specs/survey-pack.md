@@ -96,8 +96,31 @@ retroactively blocked).
 `kitchen-erp/tests/test_survey_pack.py`: fixture project — transition
 refusal while incomplete (missing kinds named), then pass once the five
 kinds are attached; `survey_pack_missing` covered for empty/partial/full
-packs. SC wiring at implementation (SC- markers and the .sc.txt manifest
-are minted when the tests exist, per the wtuu precedent).
+packs. SC wiring is live (wtuu precedent): the markers below mirror
+`kitchen-erp/docs/specs/survey-pack.sc.txt` and are cited in
+`test_survey_pack.py` docstrings; slug `svpk` is registered in
+`docs/specs/sc-slugs.txt`.
+
+Success criteria:
+
+- [x] [SC-svpk-001] `REQUIRED_SURVEY_KINDS` enumerates exactly the five
+  kinds of the Data-model table: `survey_dims`, `survey_media`,
+  `survey_appliance_sheet`, `survey_user_profile`, `survey_budget`
+- [x] [SC-svpk-002] empty pack: `survey_pack_missing` reports all five
+  required kinds (sorted); non-survey artifact kinds do not count
+- [x] [SC-svpk-003] partial pack: exactly the absent kinds are reported —
+  attached kinds never appear in the result
+- [x] [SC-svpk-004] repeated `survey_appliance_sheet` refs count the kind
+  as covered from the first sheet (per-appliance coverage stays with G4)
+- [x] [SC-svpk-005] complete pack: `survey_pack_missing` returns an empty
+  list, for in-memory and persisted projects alike
+- [x] [SC-svpk-006] `transition_stage("3_layout_design")` at `2_pomiar`
+  with an incomplete pack raises `StageTransitionError` naming the missing
+  kinds; the stage stays `2_pomiar`
+- [x] [SC-svpk-007] the guard is scoped to the 2→3 edge: a complete pack
+  passes, every other forward move ignores pack state, existing
+  unknown/backward/no-op refusals are unchanged, and a project already at
+  stage ≥3 is not retroactively blocked
 
 ## Decisions
 
@@ -112,7 +135,9 @@ are minted when the tests exist, per the wtuu precedent).
 
 ## Work
 
-- wk-cc39b1b0 — Survey pack: named ArtifactRef kinds + completeness checklist, 2→3 transition refuses an incomplete pack (Stage 1, review §C)
+- wk-3fd0fac4 — Survey pack: named ArtifactRef kinds + completeness checklist, 2→3 transition refuses an incomplete pack (Stage 1, review §C)
+- wk-fc3aba75 — widen the design-entry guard: forward skips crossing into
+  stage 3+ check the pack (closes the 1→3 bypass found in red-team)
 
 ## Acceptance
 
@@ -121,18 +146,18 @@ Pre-written `done --claim` texts, scoped to evidence commands:
 - "kitchen-erp defines REQUIRED_SURVEY_KINDS (survey_dims, survey_media,
   survey_appliance_sheet, survey_user_profile, survey_budget) and
   survey_pack_missing reports which required kinds a project still lacks;
-  pinned by kitchen-erp/tests/test_survey_pack.py" (`wk-cc39b1b0`)
+  pinned by kitchen-erp/tests/test_survey_pack.py" (`wk-3fd0fac4`)
 - "Project.transition_stage from 2_pomiar to 3_layout_design raises
   StageTransitionError naming the missing survey kinds for an incomplete
   pack and advances once the pack is complete; pinned by refusal-then-pass
-  fixtures in kitchen-erp/tests/test_survey_pack.py" (`wk-cc39b1b0`)
+  fixtures in kitchen-erp/tests/test_survey_pack.py" (`wk-3fd0fac4`)
 
 ## Verification & Validation
 
 Verification: fixture-driven contract tests for the refusal and the
-checklist, per the API contract table — oracle carried by `wk-cc39b1b0`
+checklist, per the API contract table — oracle carried by `wk-3fd0fac4`
 (`--accept-cmd`); intended accept command:
-`.venv/bin/python -m pytest kitchen-erp/tests/test_survey_pack.py -q`.
+`kitchen-erp/.venv/bin/python -m pytest kitchen-erp/tests/test_survey_pack.py -q`.
 
 Validation: the pack's field usefulness is judged on project P1's real
 measurement visit (does the checklist match what the room actually

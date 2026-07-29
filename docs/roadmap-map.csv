@@ -35,7 +35,7 @@ kuchnie-h9h;;5;XLS adapter for price ingestion;UC-7;product
 kuchnie-nu0;;5;Cost-trace Suma freshness marker;UC-7;product
 kuchnie-a3y;wk-3141488c;9;Variant worktop axis into purchasing lines;UC-4;product
 kuchnie-7mh;;5;Variant derivation gated on buildability (ext-5a in ERP);UC-4;product
-kuchnie-45l;wk-cc39b1b0;2;Survey pack (artifact kinds + 2->3 gate);UC-12;product
+kuchnie-45l;wk-3fd0fac4;2;Survey pack (artifact kinds + 2->3 gate);UC-12;product
 kuchnie-8yk;wk-29bb6401;3;L-layout model (runs+corner+positions);UC-11;product
 kuchnie-456;wk-cc0daf81;3;Adapter position extraction r4 (two-leg scene);UC-2;product
 kuchnie-lzl;wk-0bc4d5c4;3;Height parameter set (ProjectDefaults);UC-11;product
