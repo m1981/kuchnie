@@ -58,3 +58,8 @@ birthing incident are recorded inline in the entry.
 **Q:** Where does a cross-cutting, project-agnostic lesson go — agent session memory, the consumer's question bank, or the template harness — and what forces that routing decision to be made?
 **Born:** 2026-07-29 — the operator noticed a session-compaction brief carrying seven agent-agnostic rules (retraction citation sweep, doc↔claim two-commit dance, mechanical pre-scan of claim batches, version-pin divergences are genuine, copier-managed-file upstreaming, argv-array drivers, post-merge reaffirm commits) that lived ONLY in one agent's session memory and would die with it.
 **Gap closed by:** the seven rules promoted into the template harness (machinery.md "Filing hygiene & aftermath" + a verifier-prompt line) in v0.9.18; this question stands as the standing router for the next lesson.
+
+## QB-011 <category: intake-warnings>
+**Q:** When a CLI verb prints a warning above its final output line (evidence exit-1, unprotected premise, screen notes), did the operator or agent actually read it — or did a `tail -1` style capture swallow it?
+**Born:** 2026-07-29 — the v0.9.19 consume claim tr-0e884e02 was filed with its evidence chain already failing (returncode 1: the machinery.md authoring-loop section never landed after a botched stash-pop conflict resolution took the pre-copier HEAD version); the intake warning was piped away by tail -1 and the hollow claim died only at its independent verification.
+**Gap closed by:** machinery.md restored from the template, successor claim filed with passing evidence; batch drivers now surface full CLI output on nonzero-warning paths.
