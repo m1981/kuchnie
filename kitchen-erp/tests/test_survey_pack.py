@@ -133,8 +133,9 @@ class TestSurveyGateTwoToThree:
 
 class TestOtherTransitionsUntouched:
     def test_earlier_and_later_edges_ignore_the_pack(self):
-        """SC-svpk-007 -- the guard is scoped to the 2->3 edge; every
-        other forward move works with an empty pack."""
+        """SC-svpk-007 -- the guard fires on forward moves crossing into
+        3_layout_design or beyond; moves below the design boundary or
+        starting at/after it work with an empty pack."""
         project = Project(customer_name="Kowalski")
         project.transition_stage("2_pomiar")  # 1->2: not gated
         assert project.stage == "2_pomiar"
@@ -165,6 +166,64 @@ class TestOtherTransitionsUntouched:
         project.stage = "3_layout_design"  # legacy row, set directly
         project.transition_stage("4_decomposition")
         assert project.stage == "4_decomposition"
+
+
+class TestSurveyGateSkipBypass:
+    """wk-fc3aba75 -- forward skips crossing into 3_layout_design or
+    beyond meet the same pack gate as the direct 2->3 edge."""
+
+    def test_skip_1_to_3_with_incomplete_pack_is_refused(self):
+        """SC-svpk-008 -- 1_first_visit -> 3_layout_design skips 2_pomiar
+        but still crosses into design: refused, missing kinds named,
+        stage unchanged."""
+        project = Project(customer_name="Kowalski")
+        assert project.stage == "1_first_visit"
+        with pytest.raises(StageTransitionError) as exc_info:
+            project.transition_stage("3_layout_design")
+        message = str(exc_info.value)
+        for kind in SPEC_KINDS:
+            assert kind in message
+        assert project.stage == "1_first_visit"
+
+    def test_skip_2_to_4_over_design_with_incomplete_pack_is_refused(self):
+        """SC-svpk-008 -- 2_pomiar -> 4_decomposition jumps OVER design;
+        the pack gate still fires because the move crosses the design
+        boundary."""
+        project = _project_at_pomiar()
+        with pytest.raises(StageTransitionError) as exc_info:
+            project.transition_stage("4_decomposition")
+        message = str(exc_info.value)
+        for kind in SPEC_KINDS:
+            assert kind in message
+        assert project.stage == "2_pomiar"
+
+    def test_skip_1_to_3_with_complete_pack_advances(self):
+        """SC-svpk-007, SC-svpk-008 -- a complete pack passes the gate on
+        the skip edge just as on the direct one."""
+        project = Project(customer_name="Kowalski")
+        _attach_full_pack(project)
+        project.transition_stage("3_layout_design")
+        assert project.stage == "3_layout_design"
+
+    def test_move_staying_below_design_is_pack_agnostic(self):
+        """SC-svpk-007 -- 1_first_visit -> 2_pomiar stays below the
+        design boundary: advances with an empty pack."""
+        project = Project(customer_name="Kowalski")
+        project.transition_stage("2_pomiar")
+        assert project.stage == "2_pomiar"
+
+    def test_move_starting_at_or_after_design_is_pack_agnostic(self):
+        """SC-svpk-007 -- a project already at 3_layout_design moves
+        forward with an empty pack (no retroactive blocking)."""
+        project = Project(customer_name="Kowalski")
+        project.stage = "3_layout_design"  # legacy row, set directly
+        project.transition_stage("4_decomposition")
+        assert project.stage == "4_decomposition"
+
+        beyond = Project(customer_name="Kowalski")
+        beyond.stage = "5_purchasing"
+        beyond.transition_stage("7_cam_drilling")
+        assert beyond.stage == "7_cam_drilling"
 
 
 class TestSurveyPackPersisted:

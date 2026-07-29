@@ -17,8 +17,10 @@ stores attachments (ArtifactRef) with free-form kinds, so nothing
 distinguishes a complete survey pack from a folder of photos — and design
 (stage 3) can start on missing inputs. This spec makes the survey pack a
 first-class, checkable thing: a fixed enumeration of named ArtifactRef kinds
-plus a completeness checklist, wired into `Project.transition_stage` so the
-2→3 move refuses an incomplete pack and names what is missing. It lives in
+plus a completeness checklist, wired into `Project.transition_stage` so a
+forward move crossing into `3_layout_design` or beyond (the direct 2→3 edge
+and skips like 1→3 or 2→4 alike, wk-fc3aba75) refuses an incomplete pack
+and names what is missing. It lives in
 kitchen-erp because the pack is spine data, not geometry.
 
 **Non-goals**: no geometry capture — room geometry stays in Blender/hb5 per
@@ -68,9 +70,10 @@ Model-level operations, not HTTP (the ERP is a Reflex app over these):
 
 ### Business / validation rules
 
-- The 2→3 refusal is the point: a project at `2_pomiar` with a missing
-  required kind does not reach `3_layout_design`. Other transitions are
-  untouched by this spec.
+- The design-entry refusal is the point: a project below `3_layout_design`
+  with a missing required kind does not reach design — whether moving 2→3
+  directly or skipping (1→3, 2→4; wk-fc3aba75). Moves that stay below the
+  design boundary or start at/after it are untouched by this spec.
 - Artifacts are archived verbatim and append-only (matching the Offer
   `source_ref` discipline); replacing a wrong scan means adding a new
   ArtifactRef, not editing one.
@@ -117,10 +120,14 @@ Success criteria:
 - [x] [SC-svpk-006] `transition_stage("3_layout_design")` at `2_pomiar`
   with an incomplete pack raises `StageTransitionError` naming the missing
   kinds; the stage stays `2_pomiar`
-- [x] [SC-svpk-007] the guard is scoped to the 2→3 edge: a complete pack
-  passes, every other forward move ignores pack state, existing
-  unknown/backward/no-op refusals are unchanged, and a project already at
-  stage ≥3 is not retroactively blocked
+- [x] [SC-svpk-007] the guard is scoped to forward moves crossing into
+  `3_layout_design` or beyond: a complete pack passes, moves that stay
+  below the design boundary or start at/after it ignore pack state
+  (a project already at stage ≥3 is not retroactively blocked), and
+  existing unknown/backward/no-op refusals are unchanged
+- [x] [SC-svpk-008] a forward skip over the boundary (1→3, 2→4) meets
+  the same incomplete-pack refusal as the direct 2→3 edge — the
+  adjacency-free skip bypass is closed (wk-fc3aba75)
 
 ## Decisions
 
@@ -151,6 +158,12 @@ Pre-written `done --claim` texts, scoped to evidence commands:
   StageTransitionError naming the missing survey kinds for an incomplete
   pack and advances once the pack is complete; pinned by refusal-then-pass
   fixtures in kitchen-erp/tests/test_survey_pack.py" (`wk-3fd0fac4`)
+- "a forward transition_stage move crossing into 3_layout_design or beyond
+  refuses an incomplete survey pack naming the missing kinds -- the
+  1_first_visit to 3_layout_design skip included -- while moves that stay
+  below the design boundary or start at or after it keep pack-agnostic
+  semantics; pinned by kitchen-erp/tests/test_survey_pack.py"
+  (`wk-fc3aba75`)
 
 ## Verification & Validation
 

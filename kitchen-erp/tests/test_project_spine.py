@@ -61,6 +61,13 @@ class TestStageTransitions:
 
     def test_backward_transition_rejected(self):
         project = Project(customer_name="Kowalski")
+        # Jumping forward past 3_layout_design requires a complete survey
+        # pack (docs/specs/survey-pack.md, wk-fc3aba75; gated behavior owned
+        # by test_survey_pack.py) -- attach the five required kinds so this
+        # test keeps exercising the backward-refusal contract.
+        for kind in ("survey_dims", "survey_media", "survey_appliance_sheet",
+                     "survey_user_profile", "survey_budget"):
+            project.add_artifact(kind, f"/survey/{kind}.pdf")
         project.transition_stage("5_purchasing")
         with pytest.raises(StageTransitionError):
             project.transition_stage("2_pomiar")

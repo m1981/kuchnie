@@ -5,3 +5,4 @@ SC-svpk-004
 SC-svpk-005
 SC-svpk-006
 SC-svpk-007
+SC-svpk-008
