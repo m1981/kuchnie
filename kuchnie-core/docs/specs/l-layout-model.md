@@ -150,6 +150,40 @@ intended accept command:
 SC wiring at implementation (SC- markers + .sc.txt when the tests exist,
 per the wtuu precedent).
 
+### Success criteria
+
+The markers below are mirrored in
+`kuchnie-core/docs/specs/l-layout-model.sc.txt` and cited in
+`kuchnie-core/tests/test_l_layout_model.py` docstrings; slug `llay` is
+registered in `docs/specs/sc-slugs.txt`.
+
+- [x] [SC-llay-001] `Run` extends the existing `Row` with additive
+  optional layout fields (`start_position_mm`, `end_position_mm`,
+  `direction`, `turn`, corner participation) defaulting to `None`; a
+  Row built without them keeps its pre-spec behaviour
+- [x] [SC-llay-002] `Kitchen.geometry_manifest()` for the hand-computed
+  two-leg L passes `validate_manifest` with issue count 0, speaks the
+  validator's run-entry keys, and survives the dict round-trip with
+  legs, corner and per-run layout fields intact
+- [x] [SC-llay-003] `Run.usable_width_mm(corner)` returns wall width
+  minus the leg's consumed + filler widths on BOTH legs (3000 → 1900,
+  2400 → 1790); read without the corner it exposes the invariant-1
+  violation shape (2400 ≠ 1790, detectably)
+- [x] [SC-llay-004] `CornerLink.for_kitchen` records filler and
+  consumed width per leg and refuses a Run id absent from the Kitchen
+  (`ValueError` naming the id)
+- [x] [SC-llay-005] a leg-B start seeded 600 mm off leg A's end makes
+  `check_run_continuity` fire the `run_continuity` error
+- [x] [SC-llay-006] `east` + `left` declared as `north` fires the
+  `direction` error against the validator's TURNS table
+- [x] [SC-llay-007] the model's duplicated TURNS table pins the
+  validator's current degenerate mapping (left and right agreeing per
+  from-direction) — the rewrite target when wk-075803aa lands
+- [x] [SC-llay-008] the legacy flat fixture `kitchen_01.yaml` loads
+  with layout fields at `None`, validates via
+  `row_findings`/`validate_rows` as before, and serializes to the
+  pre-spec key set (unset layout keys omitted)
+
 Validation: domain-language walkthrough of the model against project P1's
 real L-kitchen (do Run/Leg/CornerLink say what the fitter and the playbook
 mean) — attestation pending; when the operator files it (UNVERIFIED,

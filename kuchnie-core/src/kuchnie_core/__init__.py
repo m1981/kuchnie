@@ -9,6 +9,7 @@ from .model import (
     CargoConfig,
     CornerBlindConfig,
     CornerInternalConfig,
+    CornerLink,
     DecompositionResult,
     DrawerSlot,
     EdgeBand,
@@ -18,9 +19,11 @@ from .model import (
     Panel,
     PanelRole,
     Row,
+    Run,
     ShelfPinSpec,
     SinkConfig,
     WorktopSegment,
+    direction_after_turn,
 )
 from .construction import ConstructionMethod, ConstructionMethodRegistry
 from .blum_drawers import DrawerSystem, DrawerSystemFactory, TandemboxAntaro, Merivobox, Legrabox
@@ -61,6 +64,8 @@ __all__ = [
     # Models
     "Panel", "Accessory", "CabinetInstance", "DecompositionResult", "EdgeBand",
     "Kitchen", "Row", "WorktopSegment",
+    # L-layout model (spec: kuchnie-core/docs/specs/l-layout-model.md, ADR-034)
+    "Run", "CornerLink", "direction_after_turn",
     "PanelRole", "HandleSpec", "ShelfPinSpec",
     # ADR-012 §6 — discriminated cabinet-config union
     "CabinetConfig", "DrawerSlot",

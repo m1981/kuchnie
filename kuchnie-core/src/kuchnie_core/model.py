@@ -383,12 +383,39 @@ class DecompositionResult:
 
 @dataclass
 class Row:
-    """A row of cabinets along one wall."""
+    """A row of cabinets along one wall.
+
+    In L-layout vocabulary this is a **Run** — the existing Row, now
+    optionally aware of where it starts, ends and points (spec:
+    kuchnie-core/docs/specs/l-layout-model.md, ADR-034). The layout
+    fields are additive and default to ``None``: a flat Kitchen whose
+    Rows carry no positions keeps loading, validating and decomposing
+    exactly as before (spec invariant 4).
+
+    Layout fields (mm, kitchen-plan coordinates — the validator's
+    ``*_position_mm`` [x, y] pairs):
+
+    * ``start_position_mm`` / ``end_position_mm`` — where the run
+      starts and ends along its wall.
+    * ``direction`` — one of ``east|north|west|south``.
+    * ``turn`` — ``left|right``, set on the Run AFTER the corner
+      (mirrors the manifest contract read by
+      ``validator.check_run_continuity``).
+    * ``corner_participation`` — which leg role this Run plays in the
+      Kitchen's :class:`CornerLink` (``"leg_a"`` or ``"leg_b"``);
+      ``None`` for a Run not meeting a corner.
+    """
     id: str
     label: str               # "Ściana północna"
     wall_width_mm: int
     wall_height_mm: int
     cabinets: list[CabinetInstance] = field(default_factory=list)
+    # ── L-layout additive fields (spec: l-layout-model.md) ──────
+    start_position_mm: list[float] | None = None   # [x, y]
+    end_position_mm: list[float] | None = None     # [x, y]
+    direction: str | None = None                   # east|north|west|south
+    turn: str | None = None                        # left|right, on the run after the corner
+    corner_participation: str | None = None        # leg_a|leg_b
 
     def used_width_mm(self) -> float:
         """Total width of all cabinets placed in this row."""
@@ -397,6 +424,29 @@ class Row:
     def remaining_mm(self) -> float:
         """Free space left in the row."""
         return self.wall_width_mm - self.used_width_mm()
+
+    def usable_width_mm(self, corner: CornerLink | None = None) -> float:
+        """Wall width minus this leg's corner consumption + filler.
+
+        Derived, not stored (spec invariant 1: the corner consumes
+        width from BOTH legs). Precondition: the Kitchen's corner link
+        is resolved and passed in. Called without a corner — or for a
+        Run the corner does not reference — it degrades to the plain
+        wall width, which is exactly the invariant-1 violation shape
+        the spec names for a leg that ignores its corner consumption.
+        """
+        if corner is None or self.id not in (corner.run_a_id, corner.run_b_id):
+            return float(self.wall_width_mm)
+        return float(
+            self.wall_width_mm
+            - (corner.consumed_mm(self.id) + corner.filler_mm(self.id))
+        )
+
+
+# Ubiquitous-language alias (spec: l-layout-model.md — "Run: one straight
+# stretch of cabinets along one wall — the existing Row, now aware of
+# where it starts"). Same class, so flat-Kitchen JSON stays byte-compatible.
+Run = Row
 
 
 class GrainAxis:
@@ -421,15 +471,212 @@ class WorktopSegment:
     cutouts: list[str] = field(default_factory=list)
 
 
+# ── L-layout: turn table + corner link (spec: l-layout-model.md) ─
+
+# Duplicated verbatim from kuchnie_core.validator.check_run_continuity
+# (the mapping there is function-local, so it cannot be imported).
+# KNOWN QUIRK — the table is DEGENERATE: for a given from-direction,
+# "left" and "right" map to the SAME next direction (e.g. east+left AND
+# east+right → south). Tracked as follow-up wk-075803aa (bd kuchnie-wcj).
+# Spec invariant 3 requires the model to FOLLOW the validator's mapping
+# as-is, so the quirk is conformed to here, not fixed.
+TURNS: dict[tuple[str, str], str] = {
+    ("east", "left"): "south",
+    ("east", "right"): "south",
+    ("north", "left"): "west",
+    ("north", "right"): "west",
+    ("west", "left"): "north",
+    ("west", "right"): "north",
+    ("south", "left"): "east",
+    ("south", "right"): "east",
+}
+
+
+def direction_after_turn(direction: str, turn: str) -> str:
+    """Next run direction per the validator's TURNS mapping (see the
+    degeneracy note on ``TURNS`` — wk-075803aa)."""
+    try:
+        return TURNS[(direction, turn)]
+    except KeyError:
+        raise ValueError(
+            f"Unknown direction/turn pair ({direction!r}, {turn!r}); "
+            f"directions: east|north|west|south, turns: left|right"
+        ) from None
+
+
+@dataclass(frozen=True)
+class CornerLink:
+    """The record that two Runs meet at a corner (spec: l-layout-model.md).
+
+    Carries which Runs, the corner cabinet, the strategy placeholder
+    (``"blind"`` today — full strategy semantics belong to the Stage-2
+    corner-strategy spec) and the filler + consumed width per leg
+    (spec invariant 1: the corner consumes width from BOTH legs).
+
+    Construct through :meth:`for_kitchen` so both Run ids are checked
+    against the Kitchen (spec invariant 5); the bare constructor exists
+    for deserialization of a dict that already passed that check.
+    """
+    run_a_id: str
+    run_b_id: str
+    corner_cabinet_id: str
+    strategy: str = "blind"           # placeholder; Stage-2 spec owns semantics
+    filler_a_mm: float = 0.0
+    filler_b_mm: float = 0.0
+    consumed_a_mm: float = 0.0
+    consumed_b_mm: float = 0.0
+
+    @classmethod
+    def for_kitchen(
+        cls,
+        kitchen: Kitchen,
+        *,
+        run_a_id: str,
+        run_b_id: str,
+        corner_cabinet_id: str,
+        strategy: str = "blind",
+        filler_a_mm: float = 0.0,
+        filler_b_mm: float = 0.0,
+        consumed_a_mm: float = 0.0,
+        consumed_b_mm: float = 0.0,
+    ) -> CornerLink:
+        """Validated construction: both Run ids must exist in the Kitchen
+        (spec invariant 5 — a corner naming an absent Run id is refused)."""
+        known = {r.id for r in kitchen.rows}
+        for rid in (run_a_id, run_b_id):
+            if rid not in known:
+                raise ValueError(
+                    f"CornerLink references unknown Run id {rid!r}; "
+                    f"Kitchen has rows {sorted(known)}"
+                )
+        if run_a_id == run_b_id:
+            raise ValueError(
+                f"CornerLink must join two distinct Runs; got {run_a_id!r} "
+                f"for both legs"
+            )
+        for name, width in (
+            ("filler_a_mm", filler_a_mm), ("filler_b_mm", filler_b_mm),
+            ("consumed_a_mm", consumed_a_mm), ("consumed_b_mm", consumed_b_mm),
+        ):
+            if width < 0:
+                raise ValueError(
+                    f"CornerLink {name} must be >= 0, got {width}"
+                )
+        return cls(
+            run_a_id=run_a_id,
+            run_b_id=run_b_id,
+            corner_cabinet_id=corner_cabinet_id,
+            strategy=strategy,
+            filler_a_mm=filler_a_mm,
+            filler_b_mm=filler_b_mm,
+            consumed_a_mm=consumed_a_mm,
+            consumed_b_mm=consumed_b_mm,
+        )
+
+    def _leg(self, run_id: str) -> str:
+        if run_id == self.run_a_id:
+            return "a"
+        if run_id == self.run_b_id:
+            return "b"
+        raise ValueError(
+            f"Run id {run_id!r} is not a leg of this corner "
+            f"({self.run_a_id!r}, {self.run_b_id!r})"
+        )
+
+    def filler_mm(self, run_id: str) -> float:
+        """Filler width on the given leg."""
+        return self.filler_a_mm if self._leg(run_id) == "a" else self.filler_b_mm
+
+    def consumed_mm(self, run_id: str) -> float:
+        """Width the corner cabinet consumes on the given leg."""
+        return self.consumed_a_mm if self._leg(run_id) == "a" else self.consumed_b_mm
+
+
 @dataclass
 class Kitchen:
     """Top-level kitchen — the unit of work flowing through the whole system.
 
     This is what gets serialized to intermediate JSON,
     sent to the render backend, and consumed by the CLI.
+
+    L-layout additions (spec: l-layout-model.md, ADR-034 — additive,
+    optional, default empty/None; the flat ``rows`` list stays the
+    storage shape):
+
+    * ``legs`` — ordered Run (Row) ids walking the layout, e.g.
+      ``["run_a", "run_b"]`` for an L.
+    * ``corner`` — the :class:`CornerLink` joining two legs, or ``None``.
     """
     version: str = "1.0"
     project_name: str = ""
     created: str = ""
     rows: list[Row] = field(default_factory=list)
     worktops: list[WorktopSegment] = field(default_factory=list)
+    # ── L-layout additive fields (spec: l-layout-model.md) ──────
+    legs: list[str] = field(default_factory=list)
+    corner: CornerLink | None = None
+
+    def run_by_id(self, run_id: str) -> Row:
+        """Look up a Run (Row) by id; raises ``KeyError`` when absent."""
+        for row in self.rows:
+            if row.id == run_id:
+                return row
+        raise KeyError(f"Kitchen has no run {run_id!r}")
+
+    def geometry_manifest(self) -> dict:
+        """Emit the geometry-manifest dict the validator already checks.
+
+        The output language is exactly the contract of
+        ``validator.validate_manifest`` / ``check_run_continuity``
+        (spec invariants 2 and 3): a ``layout.runs`` list whose entries
+        carry ``index``, ``label``, ``start_position_mm``,
+        ``end_position_mm``, ``direction`` and ``turn`` — the same run
+        shape as the reference manifests
+        (``home-builder-adapter/output/meshes/ref_*_manifest.json``).
+        ``objects`` stays empty: this model carries plan-sheet layout,
+        not meshes (ADR-034 — the adapter produces object geometry).
+
+        Precondition (Operation-contracts table): the selected Runs
+        carry positions + directions; a Run missing either raises
+        ``ValueError`` naming it.
+        """
+        run_ids = self.legs if self.legs else [r.id for r in self.rows]
+        runs: list[dict] = []
+        total_cabinets = 0
+        for index, run_id in enumerate(run_ids):
+            row = self.run_by_id(run_id)
+            if (row.start_position_mm is None or row.end_position_mm is None
+                    or row.direction is None):
+                raise ValueError(
+                    f"Run {run_id!r} lacks positions/direction — "
+                    f"geometry_manifest() needs start_position_mm, "
+                    f"end_position_mm and direction on every emitted run"
+                )
+            total_cabinets += len(row.cabinets)
+            runs.append({
+                "label": row.label or row.id,
+                "index": index,
+                "direction": row.direction,
+                "turn": row.turn,
+                "start_position_mm": [float(v) for v in row.start_position_mm],
+                "end_position_mm": [float(v) for v in row.end_position_mm],
+                "total_width_mm": row.wall_width_mm,
+                "cabinet_count": len(row.cabinets),
+                "cabinets": [c.id for c in row.cabinets],
+            })
+        layout_type = "l_shape" if self.corner is not None else (
+            "i_shape" if len(runs) == 1 else "multi_run"
+        )
+        return {
+            "format": "geometry_manifest",
+            "version": "1.0",
+            "units": "mm",
+            "settings": {},
+            "layout": {
+                "type": layout_type,
+                "run_count": len(runs),
+                "total_cabinets": total_cabinets,
+                "runs": runs,
+            },
+            "objects": [],
+        }

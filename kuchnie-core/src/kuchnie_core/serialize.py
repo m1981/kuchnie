@@ -19,6 +19,7 @@ from pathlib import Path
 from .blum_hinges import HingeGeometry
 from .model import (
     CabinetInstance,
+    CornerLink,
     HandleSpec,
     Kitchen,
     Row,
@@ -27,11 +28,37 @@ from .model import (
 )
 
 
+# L-layout additive fields (spec: kuchnie-core/docs/specs/l-layout-model.md).
+# Omitted from the serialized dict while unset so a flat legacy Kitchen keeps
+# producing byte-identical JSON (spec invariant 4); carried when set.
+_ROW_LAYOUT_FIELDS = (
+    "start_position_mm",
+    "end_position_mm",
+    "direction",
+    "turn",
+    "corner_participation",
+)
+
+
 # ── To dict / JSON ──────────────────────────────────────────────
 
 def kitchen_to_dict(kitchen: Kitchen) -> dict:
-    """Kitchen → plain dict (JSON-serializable)."""
-    return asdict(kitchen)
+    """Kitchen → plain dict (JSON-serializable).
+
+    L-layout fields (row positions, ``legs``, ``corner``) appear in the
+    dict when set and are omitted while unset, so consumers of the flat
+    legacy shape see exactly the keys they saw before (spec invariant 4).
+    """
+    data = asdict(kitchen)
+    for row in data.get("rows", []):
+        for key in _ROW_LAYOUT_FIELDS:
+            if row.get(key) is None:
+                row.pop(key, None)
+    if not data.get("legs"):
+        data.pop("legs", None)
+    if data.get("corner") is None:
+        data.pop("corner", None)
+    return data
 
 
 def kitchen_to_json(kitchen: Kitchen, path: str | Path) -> Path:
@@ -84,7 +111,21 @@ def _build_row(d: dict) -> Row:
         wall_width_mm=d["wall_width_mm"],
         wall_height_mm=d["wall_height_mm"],
         cabinets=cabinets,
+        # L-layout additive fields — absent keys stay at their None default
+        start_position_mm=d.get("start_position_mm"),
+        end_position_mm=d.get("end_position_mm"),
+        direction=d.get("direction"),
+        turn=d.get("turn"),
+        corner_participation=d.get("corner_participation"),
     )
+
+
+def _build_corner(d: dict | None) -> CornerLink | None:
+    if not d:
+        return None
+    known = {f.name for f in CornerLink.__dataclass_fields__.values()}
+    filtered = {k: v for k, v in d.items() if k in known}
+    return CornerLink(**filtered)
 
 
 def _build_worktop(d: dict) -> WorktopSegment:
@@ -103,6 +144,8 @@ def kitchen_from_dict(data: dict) -> Kitchen:
         created=data.get("created", ""),
         rows=rows,
         worktops=worktops,
+        legs=list(data.get("legs") or []),
+        corner=_build_corner(data.get("corner")),
     )
 
 
