@@ -6,6 +6,7 @@ collects DecompositionResults, and provides kitchen-wide views.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 
 from .bom import BOM, calculate_bom, worktop_bom_items
 from .decomposer import decompose
@@ -87,7 +88,26 @@ def kitchen_bom(
 
 # ── Row validation ──────────────────────────────────────────────
 
-def row_findings(kitchen: Kitchen) -> list["Finding"]:
+@dataclass(frozen=True)
+class HeightSet:
+    """Decided per-project height lines (playbook Phase 1), supplied by
+    the consumer that stores them (kitchen-erp ProjectDefaults,
+    wk-5b929a7c) — kuchnie-core defines its own carrier so the dependency
+    stays one-way (ERP imports core, never the reverse).
+
+    worktop_height_mm: the decided worktop line, floor to worktop top.
+    worktop_thickness_mm: top thickness used to read a leg's actual line
+        off its base carcasses (plinth + carcass + top); playbook default
+        38 — the model's WorktopSegment carries per-row geometry, this is
+        the project-line convention.
+    """
+    worktop_height_mm: float | None = None
+    worktop_thickness_mm: float = 38.0
+
+
+def row_findings(
+    kitchen: Kitchen, heights: HeightSet | None = None
+) -> list["Finding"]:
     """The design-legality slice of the buildability gate, structured
     (wk-acc8e094): each rule emits a Finding with its gate id, severity
     and offending ref — buildability buckets these directly, no string
@@ -97,7 +117,12 @@ def row_findings(kitchen: Kitchen) -> list["Finding"]:
 
     * FIT  — cabinets fit their rows (blocking).
     * G1   — one worktop line per run: base cabinets (plinth > 0) in a
-      row must share total height_mm (blocking).
+      row must share total height_mm (blocking). With a ``heights``
+      set supplied (wk-5b929a7c), G1 ADDITIONALLY compares each row's
+      (leg's) worktop line — plinth + carcass + top thickness — against
+      the decided ``worktop_height_mm`` and reports a diverging leg
+      (finding, not exception; ``heights=None`` keeps exactly today's
+      behaviour).
     * G6   — plinth line unbroken: base cabinets in a row must share
       plinth_height_mm (blocking).
     * WSTD — run composition uses standard widths (KitchenStandards;
@@ -132,15 +157,38 @@ def row_findings(kitchen: Kitchen) -> list["Finding"]:
             ))
 
         base = [c for c in row.cabinets if c.plinth_height_mm > 0]
-        heights = {c.height_mm for c in base}
-        if len(heights) > 1:
+        carcass_heights = {c.height_mm for c in base}
+        if len(carcass_heights) > 1:
             findings.append(Finding(
                 "G1", BLOCKING,
                 f"Row '{row.label}': G1 — worktop line broken, base cabinet "
-                f"heights differ {sorted(heights)}mm (playbook Phase 1: one "
-                f"height line per run)",
+                f"heights differ {sorted(carcass_heights)}mm (playbook "
+                f"Phase 1: one height line per run)",
                 row.label,
             ))
+        if (heights is not None
+                and heights.worktop_height_mm is not None and base):
+            decided = heights.worktop_height_mm
+            top = heights.worktop_thickness_mm
+            lines = sorted({
+                c.plinth_height_mm + c.height_mm + top for c in base
+            })
+            # 1e-3mm tolerance: absorbs float noise while staying far
+            # below carpentry precision (wk-5b929a7c red-team finding —
+            # sub-micron divergences rendered self-identical messages).
+            diverging = [line for line in lines
+                         if abs(line - decided) > 1e-3]
+            if diverging:
+                findings.append(Finding(
+                    "G1", BLOCKING,
+                    f"Row '{row.label}': G1 — worktop line off the decided "
+                    f"project line: plinth + carcass + {top:g}mm top gives "
+                    f"{', '.join(f'{line:g}' for line in diverging)}mm, "
+                    f"decided worktop_height_mm is {decided:g}mm (playbook "
+                    f"Phase 1: one project-wide line across legs; "
+                    f"720 carcass + 100..150 plinth + 38 top ⇒ 850..910)",
+                    row.label,
+                ))
         plinths = {c.plinth_height_mm for c in base}
         if len(plinths) > 1:
             findings.append(Finding(
@@ -164,7 +212,10 @@ def row_findings(kitchen: Kitchen) -> list["Finding"]:
     return findings
 
 
-def validate_rows(kitchen: Kitchen) -> list[str]:
+def validate_rows(
+    kitchen: Kitchen, heights: HeightSet | None = None
+) -> list[str]:
     """Display layer over ``row_findings`` — same rules, rendered as the
-    flat strings the UI and older callers expect (wk-acc8e094)."""
-    return [f.message for f in row_findings(kitchen)]
+    flat strings the UI and older callers expect (wk-acc8e094).
+    ``heights`` is threaded through unchanged (wk-5b929a7c)."""
+    return [f.message for f in row_findings(kitchen, heights)]

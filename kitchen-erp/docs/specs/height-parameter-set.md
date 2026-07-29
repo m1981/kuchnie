@@ -97,8 +97,34 @@ future elevation sheets) and a spec update.
 `kitchen-erp/tests/test_height_parameters.py`: derivation fixtures
 (elbow 990 → 840..890 band), offset refusal, persistence round-trip, and
 the G1-across-legs consumption path against a two-leg fixture kitchen.
-SC wiring at implementation (SC- markers + .sc.txt when the tests exist,
-per the wtuu precedent).
+The markers below are mirrored in
+`kitchen-erp/docs/specs/height-parameter-set.sc.txt` and are cited in
+`test_height_parameters.py` docstrings; slug `hps` is registered in
+`docs/specs/sc-slugs.txt`.
+
+Success criteria:
+
+- [x] [SC-hps-001] `ProjectDefaults` carries `elbow_height_mm`,
+  `worktop_height_mm`, `wall_line_mm`, `tall_line_mm` — nullable,
+  default `None` (additive migration), all four round-tripping through
+  persistence
+- [x] [SC-hps-002] `derive_worktop_height` applies worktop = elbow −
+  offset: elbow 990 maps to 840..890 across the 100..150 offset band,
+  and the omitted offset is the band midpoint (125)
+- [x] [SC-hps-003] an offset outside 100..150 raises `ValueError`
+  (named error, not clamping); the band edges 100 and 150 are valid
+- [x] [SC-hps-004] a decided `worktop_height_mm` outside 850..910 with
+  no recorded `elbow_height_mm` yields a warning string naming the
+  band; in-band, elbow-derived, or undecided values yield none
+- [x] [SC-hps-005] with a height set supplied, G1 reports a leg whose
+  worktop line (plinth + carcass + top) diverges from the decided
+  `worktop_height_mm`, naming the leg and the arithmetic — a finding,
+  not an exception
+- [x] [SC-hps-006] both legs sitting on the decided line raise no
+  finding
+- [x] [SC-hps-007] with `heights` omitted (or the worktop line
+  undecided), `row_findings`/`validate_rows` behave exactly as today —
+  additive, not breaking
 
 ## Decisions
 
@@ -118,7 +144,7 @@ per the wtuu precedent).
 
 ## Work
 
-- wk-0bc4d5c4 — Height parameter set on ProjectDefaults: worktop/wall-line/tall-line with elbow derivation, consumed by validate_rows G1 across legs (Stage 1, review §C)
+- wk-5b929a7c — Height parameter set on ProjectDefaults: worktop/wall-line/tall-line with elbow derivation, consumed by validate_rows G1 across legs (Stage 1, review §C; successor of a cancelled predecessor whose recorded oracle used the root .venv interpreter that cannot import kitchen_erp — same correction path as the survey-pack twin; the predecessor id lives in the ledger trail and the commit message)
 
 ## Acceptance
 
@@ -128,18 +154,18 @@ Pre-written `done --claim` texts, scoped to evidence commands:
   wall_line_mm and tall_line_mm, and derive_worktop_height applies the
   elbow minus 100..150 formula with the 850..910 default band, refusing an
   out-of-band offset; pinned by
-  kitchen-erp/tests/test_height_parameters.py" (`wk-0bc4d5c4`)
+  kitchen-erp/tests/test_height_parameters.py" (`wk-5b929a7c`)
 - "validate_rows consumes a supplied height parameter set and G1 reports a
   leg whose worktop line diverges from the decided worktop_height_mm
   line, covered by a two-leg fixture in
-  kitchen-erp/tests/test_height_parameters.py" (`wk-0bc4d5c4`)
+  kitchen-erp/tests/test_height_parameters.py" (`wk-5b929a7c`)
 
 ## Verification & Validation
 
 Verification: derivation + consumption contract tests per the API
-contract table — oracle carried by `wk-0bc4d5c4` (`--accept-cmd`);
+contract table — oracle carried by `wk-5b929a7c` (`--accept-cmd`);
 intended accept command:
-`.venv/bin/python -m pytest kitchen-erp/tests/test_height_parameters.py -q`.
+`kitchen-erp/.venv/bin/python -m pytest kitchen-erp/tests/test_height_parameters.py -q`.
 
 Validation: project P1's heights derived from a real measured elbow and
 judged at the fitting (does the band suit the client's body) —

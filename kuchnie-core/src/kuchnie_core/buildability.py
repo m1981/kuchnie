@@ -38,6 +38,10 @@ Findings order by scrap severity (UC-2 ext 5a): blocking before advisory.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .kitchen import HeightSet
 from enum import Enum
 
 from .model import Kitchen
@@ -151,13 +155,16 @@ def _ran(gate_id: str, name: str, findings: list[Finding]) -> GateResult:
 # gate ids attached (wk-acc8e094) — we bucket, never parse strings.
 
 
-def _row_gate_buckets(kitchen: Kitchen) -> dict[str, list[Finding]]:
+def _row_gate_buckets(
+    kitchen: Kitchen,
+    heights: "HeightSet | None" = None,
+) -> dict[str, list[Finding]]:
     from .kitchen import row_findings
 
     buckets: dict[str, list[Finding]] = {
         "FIT": [], "WSTD": [], "G1": [], "G6": [],
     }
-    for finding in row_findings(kitchen):
+    for finding in row_findings(kitchen, heights=heights):
         if finding.gate_id not in buckets:
             raise ValueError(
                 f"row_findings emitted unknown gate id {finding.gate_id!r} — "
@@ -262,6 +269,7 @@ def _gate_manifest(manifest: dict) -> list[Finding]:
 def evaluate_buildability(
     kitchen: Kitchen,
     manifest: dict | None = None,
+    heights: "HeightSet | None" = None,
 ) -> BuildabilityVerdict:
     """Run every buildability gate in order and issue ONE verdict.
 
@@ -269,6 +277,10 @@ def evaluate_buildability(
         kitchen:  the Kitchen to judge.
         manifest: optional geometry manifest (validator.py's input);
                   without it gate M5 is SKIPPED, not silently dropped.
+        heights:  optional kitchen.HeightSet with the decided project
+                  height lines (wk-5b929a7c) — G1 then also compares
+                  legs against worktop_height_mm; omitted keeps today's
+                  intra-row-only G1.
 
     Returns:
         BuildabilityVerdict — buildable iff no gate FAILED. Advisory
@@ -293,7 +305,7 @@ def evaluate_buildability(
         gates.append(_ran("M5", "geometry manifest checks",
                           _gate_manifest(manifest)))
 
-    buckets = _row_gate_buckets(kitchen)
+    buckets = _row_gate_buckets(kitchen, heights=heights)
     gates.append(_ran("FIT", "cabinets fit their rows", buckets["FIT"]))
     gates.append(_ran("WSTD", "standard-width composition (advisory)",
                       buckets["WSTD"]))

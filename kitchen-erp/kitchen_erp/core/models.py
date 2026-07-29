@@ -145,6 +145,18 @@ class ProjectDefaults(SQLModel, table=True):
     hinge_sys_id: int = Field(foreign_key="hardwareset.id")
     drawer_sys_id: int = Field(foreign_key="hardwareset.id")
 
+    # Height parameter set (wk-5b929a7c, spec:
+    # kitchen-erp/docs/specs/height-parameter-set.md): the decided
+    # per-project working-height lines (playbook Phase 1). Additive
+    # nullable columns -- existing rows load as None and keep today's
+    # band-default / G1 semantics. Derivation and the out-of-band warning
+    # live in kitchen_erp.core.heights; carcass math stays with
+    # kuchnie_core.construction.ConstructionMethod (ADR-002).
+    elbow_height_mm: float | None = Field(default=None)
+    worktop_height_mm: float | None = Field(default=None)
+    wall_line_mm: float | None = Field(default=None)
+    tall_line_mm: float | None = Field(default=None)
+
     # Relationships (Navigation properties)
     project: "Project" = Relationship(back_populates="defaults")
 

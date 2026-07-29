@@ -170,6 +170,24 @@ class KitchenState(rx.State):
                 session.exec(text(statement))
         session.commit()
 
+    def _ensure_projectdefaults_schema(self, session):
+        """Height parameter set (wk-5b929a7c, spec:
+        kitchen-erp/docs/specs/height-parameter-set.md): additive nullable
+        height-line columns. Existing local database.db files predate
+        them; ALTER them in like the cabinet/material/project migrations
+        above."""
+        columns = {row[1] for row in session.exec(text("PRAGMA table_info(projectdefaults)")).all()}
+        migrations = {
+            "elbow_height_mm": "ALTER TABLE projectdefaults ADD COLUMN elbow_height_mm FLOAT",
+            "worktop_height_mm": "ALTER TABLE projectdefaults ADD COLUMN worktop_height_mm FLOAT",
+            "wall_line_mm": "ALTER TABLE projectdefaults ADD COLUMN wall_line_mm FLOAT",
+            "tall_line_mm": "ALTER TABLE projectdefaults ADD COLUMN tall_line_mm FLOAT",
+        }
+        for column_name, statement in migrations.items():
+            if column_name not in columns:
+                session.exec(text(statement))
+        session.commit()
+
     def _format_project_date(self, value) -> str:
         return value.strftime("%Y-%m-%d") if value else "—"
 
@@ -892,6 +910,7 @@ class KitchenState(rx.State):
             self._ensure_cabinet_schema(session)
             self._ensure_material_schema(session)
             self._ensure_project_schema(session)
+            self._ensure_projectdefaults_schema(session)
             existing = session.exec(select(Project)).first()
 
             # Board identity comes from the catalog service via the
