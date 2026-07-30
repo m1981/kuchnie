@@ -55,6 +55,14 @@ band midpoint with the chosen offset recorded; a decided
 renders as a warning in the project record (the operator can still decide
 it — bodies differ).
 
+Fitting guidance (playbook review P-2, ratified 2026-07-30): the helper
+returns an exact value, but the DECIDED line should be rounded to 10 mm —
+adjustable legs and plinth stock move in ~10 mm steps, so mm-precision
+promises what the site cannot deliver. The 38 mm top in the band
+arithmetic is a default, not a rule: a thin top (12–28 mm compact
+laminate/stone) is absorbed by a taller plinth to hold the decided line;
+the band checks the line, not the stack.
+
 ### API contract
 
 Model-level operations (Reflex UI sits on top):

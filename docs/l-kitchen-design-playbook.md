@@ -25,7 +25,7 @@ flowchart TD
     P0["Phase 0 — Discovery<br/>walls, diagonals, media points,<br/>appliance models, user height,<br/>handedness, budget bracket"]
     A1[/"OUT: survey pack<br/>(dims, utilities, appliance sheets)"/]:::artifact
 
-    P1["Phase 1 — Fix working heights<br/>worktop = elbow - 100..150 mm<br/>default 850..910 = 720 carcass<br/>+ 100..150 plinth + 38 top"]
+    P1["Phase 1 — Fix working heights<br/>worktop LINE = elbow - 100..150 mm,<br/>rounded to 10 mm (legs + plinth<br/>adjust in ~10 mm steps); band 850..910<br/>stack (720 carcass + plinth + top)<br/>solved to hit the line — a thin top<br/>(12–28) means a taller plinth,<br/>not a lower line<br/>wall-unit line = worktop + 450..600<br/>(default 500; record cook's reach)"]
     A2[/"OUT: height parameter set<br/>(worktop, wall-unit line, tall line)"/]:::artifact
 
     P2["Phase 2 — Zone plan<br/>supplies > cleaning > prep > cooking<br/>sink leg vs hob leg, fridge at end"]
@@ -34,10 +34,10 @@ flowchart TD
     P3["Phase 3 — Corner strategy<br/>blind + filler / diagonal / dead<br/>decided BEFORE any widths"]
     A4[/"OUT: corner module + filler spec"/]:::artifact
 
-    P4["Phase 4 — Base run composition<br/>standard widths 300..900,<br/>appliances first, one filler per run<br/>at the wall end"]
+    P4["Phase 4 — Base run composition<br/>standard widths 300..900,<br/>appliances first, one tolerance filler<br/>per run at the wall end"]
     A5[/"OUT: base cabinet list per leg"/]:::artifact
 
-    P5["Phase 5 — Wall + tall units<br/>mirror base line, hood on duct route,<br/>one continuous top line"]
+    P5["Phase 5 — Wall + tall units<br/>mirror base line, hood on duct route,<br/>one continuous top line<br/>wall corner decided like the base one<br/>(L-corner unit / diagonal / dead + filler),<br/>mirroring the base decision unless<br/>the hood or a window forbids it"]
     A6[/"OUT: full cabinet list"/]:::artifact
 
     P6["Phase 6 — Worktop + services<br/>2 segments + corner joint, cutouts,<br/>sockets, lighting, ventilation"]
@@ -70,17 +70,13 @@ flowchart TD
     S -->|yes| S1["Sink under the window<br/>(drain usually agrees)"]
     S -->|no| S2["Sink on the leg closest<br/>to the drain stack"]
 
-    S1 --> D{"Cook right- or left-handed?"}
+    S1 --> D["Dishwasher ADJACENT to the sink —<br/>side decided with the client:<br/>mime scraping → rinsing → racking;<br/>default: the side away from the corner;<br/>handedness is the tie-breaker,<br/>not the rule"]
     S2 --> D
-    D -->|right| D1["Dishwasher LEFT of sink"]
-    D -->|left| D2["Dishwasher RIGHT of sink"]
-
-    D1 --> H{"Gas point / duct location?"}
-    D2 --> H
+    D --> H{"Gas point / duct location?"}
     H -->|fixed| H1["Hob on the other leg,<br/>near duct, min 300 mm to wall"]
     H -->|flexible| H2["Hob on the other leg, positioned<br/>for min 600 mm prep between<br/>sink and hob"]
 
-    H1 --> F["Fridge + oven column at the OPEN END<br/>of the longer leg — never mid-run,<br/>never in the corner"]
+    H1 --> F["Fridge + oven column at the OPEN END<br/>of the longer leg — never mid-run,<br/>never in the corner<br/>fridge hinge swings toward the room,<br/>not into the adjacent wall;<br/>keep >= 300 mm worktop between<br/>the hob edge and the column side"]
     H2 --> F
 
     F --> V{"Triangle 3.6–6.6 m total?<br/>Landings: 400 by hob,<br/>400 by fridge, 600 by sink?"}
@@ -89,9 +85,11 @@ flowchart TD
 ```
 
 **Hard rules encoded above:** sink-to-hob >= 600 mm worktop between them;
-hob >= 300 mm from a side wall; dishwasher adjacent to sink on the
-dominant-hand side; fridge with >= 400 mm set-down beside it; no traffic
-path through the triangle; walkway in front of the L >= 1100 mm.
+hob >= 300 mm from a side wall; dishwasher adjacent to the sink, side
+decided with the client (handedness as tie-breaker, per the mimed
+question in the survey protocol); fridge with >= 400 mm set-down beside
+it; no traffic path through the triangle; walkway in front of the
+L >= 1200 mm single cook (1500 for two cooks).
 
 ---
 
@@ -109,15 +107,15 @@ flowchart TD
     T -->|yes| DIAG["DIAGONAL CORNER + carousel<br/>best access, 45-degree worktop<br/>segment — flag it in the<br/>worktop order NOW"]
     T -->|no| B{"Budget for pull-out<br/>mechanism?"}
 
-    B -->|yes| BLIND1["BLIND CORNER 1000–1300<br/>+ Magic Corner / LeMans"]
-    B -->|no| BLIND2["BLIND CORNER 1000–1300<br/>+ plain shelves"]
+    B -->|yes| BLIND1["BLIND CORNER — mechanism first:<br/>Magic Corner / LeMans state a minimum<br/>clear door opening (LeMans is handed);<br/>derive cabinet width from it —<br/>default 1050 blind (≈500 mm door);<br/>widening past 1200 buys dead volume,<br/>not access"]
+    B -->|no| BLIND2["BLIND CORNER + plain shelves —<br/>keep the same 1050 geometry so a<br/>mechanism can be retrofitted"]
 
     DEAD --> FILL
     DIAG --> FILL
     BLIND1 --> FILL
     BLIND2 --> FILL
 
-    FILL["MANDATORY in every branch:<br/>50–100 mm filler strip at the internal<br/>corner on BOTH runs — else handles<br/>and drawer fronts collide"]
+    FILL["MANDATORY in every branch:<br/>corner filler on BOTH runs, sized by<br/>collision math — front thickness +<br/>handle projection + reveal:<br/>door meetings >= 50–60;<br/>drawer bank at the corner >= 70–100<br/>with bar handles; handleless<br/>still >= 30–50.<br/>Separate from the Phase-4 wall-end<br/>tolerance filler"]
     FILL --> X["Never in the corner: sink, hob,<br/>dishwasher. Never two appliance<br/>doors meeting at the corner."]
 ```
 
@@ -129,7 +127,7 @@ flowchart TD
 flowchart TD
     M{"Which zone is the module in?"}
     M -->|prep or cooking| W{"Width >= 600?"}
-    M -->|sink| SD["Door cabinet + waste-sorting<br/>drawer; carcass 800–900"]
+    M -->|sink| SD["Door cabinet + waste-sorting<br/>drawer; carcass 600–900, minimum per<br/>the chosen sink's sheet (single bowl<br/>fits 600, 1.5-bowl wants 800+)"]
     M -->|low-use / corner-adjacent| DOOR["Door cabinet<br/>(cheapest per m2)"]
 
     W -->|yes| DR["DRAWER BANK — LEGRABOX or<br/>Tandembox; 900 wide with 2 tall<br/>+ 1 internal beats two door cabinets"]
@@ -146,7 +144,9 @@ flowchart TD
 
 Composition rules: standard widths only (300/400/450/500/600/800/900);
 appliances placed first (they are fixed sizes); wall irregularity absorbed
-by **one filler per run at the wall end, never mid-run**.
+by **one TOLERANCE filler per run at the wall end, never mid-run** — this
+is in addition to the Phase-3 corner filler, so a corner leg normally
+carries two.
 
 ---
 
@@ -156,9 +156,17 @@ by **one filler per run at the wall end, never mid-run**.
   for laminate) and grain direction decided with the order, not at fitting.
 - Cutouts (sink, hob) with >= 50 mm material web around them; the corner
   joint must not land on a cutout.
-- Sockets every ~900 mm above worktop, none within 600 mm of the sink edge;
-  dedicated circuit for induction; under-cabinet LED over the full prep run.
-- Hood height per its spec: >= 650 mm electric / >= 750 mm gas above hob.
+- Sockets every ~900 mm along the prep run, 100–150 mm above the worktop
+  line; a no-socket zone within 600 mm of the sink edge AND across the hob
+  width. Dedicated circuits: induction, oven, dishwasher (confirm with the
+  electrician). Under-cabinet LED over the full prep run.
+- Hood (okap) height above hob: the manufacturer sheet is binding, both
+  directions (some induction hoods permit 550–600; some gas hoods demand
+  more than 750). With no sheet on the project spine yet, plan >= 650
+  electric / >= 750 gas as the floor and mark the value provisional.
+- Integrated fridge/freezer: plinth vent grille (kratka w cokole) + rear
+  airflow duct per the appliance sheet — the vent grille is a BOM line,
+  never an on-site improvisation.
 
 ---
 
@@ -173,11 +181,11 @@ flowchart TD
     G3 -->|no| F3["back to Phase 3 or 4"]
     G3 -->|yes| G4{"Appliance cutouts match<br/>actual model sheets?"}
     G4 -->|no| F4["back to Phase 0 inputs"]
-    G4 -->|yes| G5{"Triangle + landings still legal<br/>after all width changes?"}
+    G4 -->|yes| G5{"Triangle + landings still legal<br/>after all width changes? Walkway in<br/>front of the L >= 1200 single cook<br/>at the narrowest point?"}
     G5 -->|no| F5["back to Phase 2"]
     G5 -->|yes| G6{"Plinth line unbroken?<br/>Top line continuous?"}
     G6 -->|no| F6["back to Phase 4 or 5"]
-    G6 -->|yes| G7{"Worktop joint clear of cutouts?<br/>Gas/hood distances legal?"}
+    G6 -->|yes| G7{"Worktop joint clear of cutouts?<br/>Hood distance matches the appliance<br/>sheet? (fallback floor 650/750<br/>when a sheet is absent)"}
     G7 -->|no| F7["back to Phase 6"]
     G7 -->|yes| PASS(["APPROVED —<br/>decompose to production"])
 ```

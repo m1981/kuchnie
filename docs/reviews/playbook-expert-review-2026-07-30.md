@@ -646,3 +646,16 @@ than a playbook edit alone).
 | P-25 | KEEP | Confirm no-ledger-ids boundary; note corner-filler rule nearing encodement | no | ratify now |
 
 Severity totals: CHANGE 3 · TIGHTEN 8 · KEEP 8 · ADD 6 (25 findings).
+
+---
+
+## Ratification record — 2026-07-30
+
+Operator ratified every row with disposition "ratify now": P-1..P-10,
+P-12..P-20, P-22, P-25 (21 rows). Held per suggested disposition: P-11 and
+P-21 (discuss with client data), P-23 and P-24 (defer to stage 2 —
+candidate G-family work rides wk-89a668a2 scoping). Applied to
+`docs/l-kitchen-design-playbook.md` in the commit carrying this record;
+the P-2 blast radius landed as fitting guidance in
+`kitchen-erp/docs/specs/height-parameter-set.md`. bd `kuchnie-uro` closed
+(its four items resolved by P-2, P-5, P-17 and the spec guidance).
