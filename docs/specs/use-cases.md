@@ -134,7 +134,7 @@ locked (tr-c87a68f9).
    spine as the first calibration datapoint — **⚠ wk-224f3712**
    (spine: tr-e51ef4fd).
 5. After pomiar Michał designs in hb5; decomposition prices the real
-   kitchen through the single BOM fold — supported (tr-ff8a5110,
+   kitchen through the single BOM fold — supported (tr-4ee32b37,
    tr-b93c22bf); worktop enters per-lm with priced cutouts — supported
    (tr-17905dae).
 6. System presents the comparison board: 2–3 variants of the same
