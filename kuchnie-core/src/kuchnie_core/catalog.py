@@ -520,6 +520,71 @@ def _confirmat_side_ops(cab: CabinetInstance, m: ConstructionMethod,
         ))
     return ops
 
+def _count_confirmat_ops(ops_lists: list[list[MachiningOp]]) -> int:
+    """Single source of truth for the Konfirmat 7x50 purchase quantity:
+    count the confirmat through-drill ops actually emitted on the given
+    side-panel ops lists (G13) rather than deriving the count separately."""
+    return sum(1 for ops in ops_lists for op in ops if op.drill_type == "confirmat")
+
+
+def _confirmat_accessory(cab: CabinetInstance, ops_lists: list[list[MachiningOp]]) -> Accessory:
+    """Konfirmat 7x50 — stock draw (Ilosc_zamowiona=0 downstream, never a
+    PO line per the 2026-08-01 owner confirmation). Quantity DERIVED from
+    the confirmat ops actually emitted, not hard-coded (G13)."""
+    return Accessory(
+        id=f"{cab.id}_confirmat",
+        name="Konfirmat 7x50",
+        type="fastener",
+        quantity=_count_confirmat_ops(ops_lists),
+    )
+
+
+def _euro_screw_accessory(cab: CabinetInstance, n_profiles: int) -> Accessory:
+    """Wkret euro 6.3x13 — stock draw, 4 screws per runner cabinet-profile
+    (G13). ``n_profiles`` is 2 × drawer count (each drawer's runner mounts
+    on both the left and right carcass side)."""
+    return Accessory(
+        id=f"{cab.id}_euro_screw",
+        name="Wkret euro 6.3x13",
+        type="fastener",
+        quantity=4 * n_profiles,
+    )
+
+
+def _plinth_hardware_accessories(cab: CabinetInstance) -> list[Accessory]:
+    """Nozka regulowana 100 mm ×4 + Klips cokolu + zaczep ×4 — clip-on
+    cokół hardware, gated on plinth_height_mm > 0 (G13)."""
+    if cab.plinth_height_mm <= 0:
+        return []
+    return [
+        Accessory(
+            id=f"{cab.id}_legs",
+            name="Nozka regulowana 100 mm",
+            type="leg",
+            quantity=4,
+        ),
+        Accessory(
+            id=f"{cab.id}_plinth_clips",
+            name="Klips cokolu + zaczep",
+            type="plinth_clip",
+            quantity=4,
+        ),
+    ]
+
+
+def _hdf_back_fastener_accessory(cab: CabinetInstance) -> Accessory | None:
+    """Zszywki/wkrety HDF — 1 kpl stock draw, gated on an HDF back panel
+    (G13). Returns None when the back material is not HDF."""
+    if "hdf" not in cab.back_material.lower():
+        return None
+    return Accessory(
+        id=f"{cab.id}_hdf_fasteners",
+        name="Zszywki/wkrety HDF",
+        type="fastener",
+        quantity=1,
+    )
+
+
 def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     """Decompose a base cabinet with LEGRABOX drawer system.
 
@@ -649,6 +714,18 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         if "confirmat" in m.joinery_type:
             ops_list.extend(_confirmat_side_ops(cab, m, side_h))
         ops_list.append(_hdf_groove_op(m.back_groove_depth_mm, side_h))
+
+    # -- G13: hardware accessories derived from the emitted ops/config --
+    if "confirmat" in m.joinery_type:
+        r.accessories.append(_confirmat_accessory(cab, [left_ops, right_ops]))
+    if cab.drawers:
+        r.accessories.append(
+            _euro_screw_accessory(cab, n_profiles=2 * len(cab.drawers))
+        )
+    r.accessories.extend(_plinth_hardware_accessories(cab))
+    hdf_fastener = _hdf_back_fastener_accessory(cab)
+    if hdf_fastener is not None:
+        r.accessories.append(hdf_fastener)
 
     # -- Drawer fronts --
     for front in cab.fronts:

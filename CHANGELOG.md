@@ -5,6 +5,82 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-08-01 — Legrabox hardware accessories + purchasing order docs (G13, wk-593a317b)
+
+### Added
+- `kuchnie_core.catalog`: `decompose_dolna_legrabox` now emits five
+  `Accessory` items it previously left out — `Konfirmat 7x50`, `Wkret
+  euro 6.3x13`, `Nozka regulowana 100 mm` ×4, `Klips cokolu + zaczep` ×4,
+  `Zszywki/wkrety HDF`. Shared, DRY helpers so other `dolna_*`
+  decomposers can adopt the same accessories later:
+  `_count_confirmat_ops`, `_confirmat_accessory`, `_euro_screw_accessory`,
+  `_plinth_hardware_accessories` (gated on `plinth_height_mm > 0`),
+  `_hdf_back_fastener_accessory` (gated on an HDF back material, case-
+  insensitive substring match). Every quantity is DERIVED, not
+  hard-coded twice: Konfirmat count is the number of confirmat
+  through-drill ops the decomposer actually emitted (10 for the D60 —
+  verified by direct count, see Notes); Wkret euro count is `4 ×
+  runner cabinet-profiles` (`2 × len(cab.drawers)`).
+- `kuchnie-core/tests/test_G13_legrabox_hardware_accessories.py` — 19
+  tests: D60 quantities pinned against the owner-confirmed golden,
+  confirmat-count derivation, plinth/HDF gating (on and off), shared-
+  helper unit coverage, and K02-fixture scaling checks.
+- `kitchen_erp/core/purchasing.py` gains three order-doc generators
+  consuming ONLY `kuchnie_core` outputs (`calculate_bom` items,
+  `collect_edging_rows`, `result.accessories` — ADR-015, never
+  re-deriving geometry): `board_order_rows` (cutting-service/formatki
+  board order, waste by decor class — plain 15% / directional 20% /
+  HDF 10%, owner-confirmed), `edging_order_rows` (one row per G11 edge
+  identity — material + thickness — standing 150mb roll for
+  white/carcass decors vs. cut-to-length mb +1 buffer for job decors),
+  `hardware_order_rows` (Blum LEGRABOX runner accessories exploded into
+  separate sides/runner/rear-coupling order lines per height code, plus
+  the G13 stock-draw and plinth-hardware accessories routed to
+  `magazyn wlasny` / `dealer okuc` / `dealer Blum`). Each has a matching
+  `*_to_csv` emitter reproducing the golden CSV schemas (`;`-delimited,
+  same headers) byte-for-byte on the data columns.
+- `kitchen-erp/tests/test_purchasing_order_docs.py` — 10 tests: D60
+  cabinet built the same way `run_production_leg.py`'s hand-entered
+  fallback does, row-by-row comparison against
+  `exercises/walking-skeleton-d60/reference/{board,edging,hardware}-order.csv`
+  (all columns except free-text `Uwagi`), Konfirmat-quantity ↔
+  G13-derivation cross-check, and fail-loud coverage for unmapped
+  board decors / hardware accessories.
+
+### Notes
+- **Confirmat op-count check**: the task brief's expected breakdown was
+  "4 sides-to-bottom + 4 trawersy + 2 cokół = 10"; the actual emitted
+  breakdown is 6 sides-to-bottom (3 confirmats × 2 sides, front/mid/rear
+  along the depth) + 4 trawersy (2 × 2 sides) + 0 cokół (the plinth panel
+  carries no confirmat ops in the current decomposer) = 10. The *total*
+  matches (10, confirmed by direct count in the new test), but the
+  breakdown doesn't — reported per the task brief rather than silently
+  reconciled; `_confirmat_side_ops` (pre-existing, unchanged by this
+  work) is the place to revisit if the cokół-fastening breakdown itself
+  needs a code change.
+- **Golden correction (verified then applied)**: `edging-order.csv`'s
+  corpus (0.8mm/biały korpusowy) row originally stated `Netto_mb=2.57` —
+  a hand-arithmetic slip that omitted the cokół's 596mm edge while the
+  row's own note listed cokół. Verified by direct recomputation from the
+  D60 decomposition's emitted panels (720×2 + 564×2 + 596 = 3.16mb) and
+  corrected in both `edging-order.csv` and `reference/bom.csv` (with an
+  inline correction note). The corpus-row test in
+  `kitchen-erp/tests/test_purchasing_order_docs.py` now asserts exact
+  golden equality plus an independent geometry recomputation, pinning
+  golden, generator and decomposition three ways.
+- Flagship regression (`exercises/e2e-d60-legrabox`): `scripts/exercise-
+  gate.sh` correctly flags a diff — `generated/bom.csv` gains exactly the
+  5 new G13 accessory lines (Konfirmat=10, Wkret euro=24, Nozka=4,
+  Klips=4, Zszywki HDF=1), no panel/edging lines changed. Baseline left
+  uncommitted/unupdated per instructions; re-running
+  `walking-skeleton-d60/run_production_leg.py` shows the same 5-line gain
+  in `generated/bom.csv`, with quantities now matching
+  `reference/bom.csv` exactly for all five (the remaining diff there —
+  material-code naming and one front-panel area value — is a pre-existing
+  decor-name/geometry-source gap, not part of G13's scope).
+
+---
+
 ## [Unreleased] — 2026-08-01 — Edge-band identity by thickness (G11, wk-593a317b)
 
 ### Added

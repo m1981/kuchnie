@@ -4,7 +4,7 @@ dealer Blum;LEGRABOX pure boki C NL500 40kg jedwabiscie bialy;770C5002S;2;doklad
 dealer Blum;Prowadnica korpusu BLUMOTION S 40kg NL500 (L+P);750.5001S;3;dokladnie;3;kpl;wspolna dla M i C; 1 kpl = 2 profile
 dealer Blum;Sprzeglo tylnej scianki M;ZB7M000S;1;dokladnie;1;szt;DO-POTWIERDZENIA kod (wywnioskowany z ZB7C000S)
 dealer Blum;Sprzeglo tylnej scianki C;ZB7C000S;2;dokladnie;2;szt;zweryfikowany w rozbiciu kompletu
-magazyn wlasny;Konfirmat 7x50;;12;pobranie z zapasu (opak. 100+);0;szt;pozycja magazynowa, nie liniowa PO
+magazyn wlasny;Konfirmat 7x50;;10;pobranie z zapasu (opak. 100+);0;szt;pozycja magazynowa, nie liniowa PO
 magazyn wlasny;Wkret euro 6.3x13;;24;pobranie z zapasu;0;szt;4 na profil x 6 profili
 dealer okuc;Nozka regulowana 100 mm;NM-BD-100-01;4;zaokraglenie do opakowania +1;1;opak;GTV BD-100; DO-POTWIERDZENIA styl nozki
 dealer okuc;Klips cokolu + zaczep;;4;zaokraglenie do opakowania +1;1;opak;DO-POTWIERDZENIA producent/kod (GTV/Rejs/Hafele)
