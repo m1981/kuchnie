@@ -53,8 +53,20 @@ lines (770…/750…/ZB7…). Still open: 2, 3, 6, 7 below.
 
 ## Component codes verified vs guessed
 
-VERIFIED: 770M5002S (M NL500 white), 750.5001S (runner), ZB7C000S (C rear
-coupling), NM-BD-100-01 (GTV leg), K5307 = Kronospan Dąb Artisan SN
-2800×2070, HDF 3 mm 2800×2070, 150 mb roll standard.
-UNVERIFIED/GUESS: 770C5002S in white (pattern), ZB7M000S (pattern), plinth
-clip producer code (none found — pick with dealer).
+VERIFIED: 770M5002S (M NL500), 770C5002S (C NL500 — dealer-confirmed
+2026-08-02), 750.5001S (runner), ZB7C000S, ZB7M000S (dealer-confirmed
+2026-08-02 as BLUZB7M000S.ATM.R+L, wys. M = 90.5 mm), NM-BD-100-01 (GTV
+leg), K5307 = Kronospan Dąb Artisan SN 2800×2070, HDF 3 mm 2800×2070,
+150 mb roll standard.
+LEARNED 2026-08-02 (dealer listings, owner-supplied): Blum base codes do
+NOT encode colour — the base article is geometry only (770C5002S = boki
+wys. C 177 mm, NL500) and the colour rides in a suffix. Decoded from the
+owner's dealer: `JBM` = jedwabiście biały mat (770C5002S…JBM.R+L, biały),
+`CS-M` = czarny carbon (770C5002S Z R+L V1 CS-M), `ATM` = antracyt mat
+(ZB7M000S.ATM.R+L). Suffix spelling varies by dealer channel — the
+generator therefore models (base_code, colour) as separate attributes
+and keeps the dealer's full SKU string as a free column, never parsing
+colour back out of it.
+STILL OPEN: drawer-box COLOUR (golden assumed jedwabiście biały; the
+dealer listings shown were czarny/antracyt — owner decision, see below);
+plinth clip producer code; leg style confirmation.

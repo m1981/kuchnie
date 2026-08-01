@@ -496,9 +496,14 @@ _BLUM_SIDE_CODES: dict[tuple[str, int], str] = {
     ("C", 500): "770C5002S",
 }
 _BLUM_SIDE_NAME_TEMPLATES: dict[str, str] = {
-    "M": "LEGRABOX pure boki M NL{nl} {cap}kg jedwabiscie bialy",
-    "C": "LEGRABOX pure boki C NL{nl} {cap}kg jedwabiscie bialy",
+    "M": "LEGRABOX pure boki M NL{nl} {cap}kg {colour}",
+    "C": "LEGRABOX pure boki C NL{nl} {cap}kg {colour}",
 }
+# Blum base codes carry geometry only; colour rides in a suffix the dealer
+# wraps into their own SKU (owner's dealer listings 2026-08-02: JBM =
+# jedwabiscie bialy, CS-M = czarny carbon, ATM = antracyt). Colour is a
+# per-project parameter (owner decision 2026-08-02); this is the default.
+DEFAULT_LEGRABOX_COLOUR = "jedwabiscie bialy (JBM)"
 _BLUM_REAR_COUPLING_CODES: dict[str, str] = {
     "M": "ZB7M000S",
     "C": "ZB7C000S",
@@ -566,7 +571,10 @@ def _pack_round_opak(net_qty: int) -> int:
     return 1 if net_qty > 0 else 0
 
 
-def hardware_order_rows(result: DecompositionResult) -> list[HardwareOrderRow]:
+def hardware_order_rows(
+    result: DecompositionResult,
+    legrabox_colour: str = DEFAULT_LEGRABOX_COLOUR,
+) -> list[HardwareOrderRow]:
     """Hardware order doc.
 
     Blum LEGRABOX runner accessories explode into separate order lines —
@@ -575,6 +583,11 @@ def hardware_order_rows(result: DecompositionResult) -> list[HardwareOrderRow]:
     other accessory (G13 stock draws + plinth hardware) looks up its
     order-doc metadata from _STATIC_HARDWARE_CATALOG by name. Consumes
     ONLY result.accessories (ADR-015) — no geometry is re-derived here.
+
+    legrabox_colour is a per-project parameter (owner decision
+    2026-08-02): Blum base codes are geometry-only, so colour appears in
+    the Pozycja text of the colour-bearing lines (boki, sprzegla) and the
+    dealer resolves it to their suffix-wrapped SKU at order time.
     """
     rows: list[HardwareOrderRow] = []
 
@@ -614,7 +627,8 @@ def hardware_order_rows(result: DecompositionResult) -> list[HardwareOrderRow]:
                       else "dokladnie")
             rows.append(HardwareOrderRow(
                 dostawca="dealer Blum",
-                pozycja=_BLUM_SIDE_NAME_TEMPLATES[height].format(nl=nl, cap=cap),
+                pozycja=_BLUM_SIDE_NAME_TEMPLATES[height].format(
+                    nl=nl, cap=cap, colour=legrabox_colour),
                 kod_producenta=code,
                 ilosc_netto=qty,
                 regula_zapasu=regula,
@@ -646,7 +660,7 @@ def hardware_order_rows(result: DecompositionResult) -> list[HardwareOrderRow]:
                 )
             rows.append(HardwareOrderRow(
                 dostawca="dealer Blum",
-                pozycja=f"Sprzeglo tylnej scianki {height}",
+                pozycja=f"Sprzeglo tylnej scianki {height}, {legrabox_colour}",
                 kod_producenta=code,
                 ilosc_netto=qty,
                 regula_zapasu="dokladnie",

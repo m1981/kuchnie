@@ -224,3 +224,26 @@ def test_hardware_order_rows_raises_on_unmapped_accessory():
     acc = Accessory(id="a1", name="Nieznane okucie", type="misc", quantity=1)
     with pytest.raises(ValueError, match="Nieznane okucie"):
         hardware_order_rows(_bare_result(accessories=[acc]))
+
+
+# ── LEGRABOX colour parameter ────────────────────────────────────────
+
+def test_hardware_order_colour_is_per_project_parameter(d60_result):
+    """Colour is a per-project parameter (owner decision 2026-08-02):
+    default is jedwabiscie bialy (JBM); an override changes the Pozycja
+    of every colour-bearing Blum line (boki + sprzegla) and nothing
+    else — base codes are geometry-only and must not move."""
+    default_rows = hardware_order_rows(d60_result)
+    dark_rows = hardware_order_rows(d60_result, legrabox_colour="czarny (CS-M)")
+
+    assert len(default_rows) == len(dark_rows)
+    changed = [
+        (d, k) for d, k in zip(default_rows, dark_rows) if d.pozycja != k.pozycja
+    ]
+    # D60: boki M, boki C, sprzeglo M, sprzeglo C = 4 colour-bearing lines
+    assert len(changed) == 4
+    for d, k in changed:
+        assert "jedwabiscie bialy (JBM)" in d.pozycja
+        assert "czarny (CS-M)" in k.pozycja
+        assert d.kod_producenta == k.kod_producenta
+        assert d.ilosc_zamowiona == k.ilosc_zamowiona

@@ -1,9 +1,9 @@
 Dostawca;Pozycja;Kod_producenta;Ilosc_netto;Regula_zapasu;Ilosc_zamowiona;Jm;Uwagi
-dealer Blum;LEGRABOX pure boki M NL500 40kg jedwabiscie bialy;770M5002S;1;dokladnie (unikalny SKU);1;kpl;szuflada S1
-dealer Blum;LEGRABOX pure boki C NL500 40kg jedwabiscie bialy;770C5002S;2;dokladnie;2;kpl;szuflady S2 S3; DO-POTWIERDZENIA wariant bialy (zweryfikowano antracyt/inox)
+dealer Blum;LEGRABOX pure boki M NL500 40kg jedwabiscie bialy (JBM);770M5002S;1;dokladnie (unikalny SKU);1;kpl;szuflada S1
+dealer Blum;LEGRABOX pure boki C NL500 40kg jedwabiscie bialy (JBM);770C5002S;2;dokladnie;2;kpl;szuflady S2 S3; kod bazowy potwierdzony u dealera 2026-08-02 - kolor NIE jest w kodzie bazowym, zamawia sie z sufiksem koloru (SW-M/TS-M/ATM); kolor DO-DECYZJI wlasciciela
 dealer Blum;Prowadnica korpusu BLUMOTION S 40kg NL500 (L+P);750.5001S;3;dokladnie;3;kpl;wspolna dla M i C; 1 kpl = 2 profile
-dealer Blum;Sprzeglo tylnej scianki M;ZB7M000S;1;dokladnie;1;szt;DO-POTWIERDZENIA kod (wywnioskowany z ZB7C000S)
-dealer Blum;Sprzeglo tylnej scianki C;ZB7C000S;2;dokladnie;2;szt;zweryfikowany w rozbiciu kompletu
+dealer Blum;Sprzeglo tylnej scianki M, jedwabiscie bialy (JBM);ZB7M000S;1;dokladnie;1;szt;potwierdzone u dealera 2026-08-02 (BLUZB7M000S.ATM.R+L, wys. M=90.5mm) - kolor jako sufiks
+dealer Blum;Sprzeglo tylnej scianki C, jedwabiscie bialy (JBM);ZB7C000S;2;dokladnie;2;szt;zweryfikowany w rozbiciu kompletu
 magazyn wlasny;Konfirmat 7x50;;10;pobranie z zapasu (opak. 100+);0;szt;pozycja magazynowa, nie liniowa PO
 magazyn wlasny;Wkret euro 6.3x13;;24;pobranie z zapasu;0;szt;4 na profil x 6 profili
 dealer okuc;Nozka regulowana 100 mm;NM-BD-100-01;4;zaokraglenie do opakowania +1;1;opak;GTV BD-100; DO-POTWIERDZENIA styl nozki
