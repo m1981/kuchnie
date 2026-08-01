@@ -9,6 +9,6 @@ G7;plinth panel (cokol);closed;tr-b2e3dbff
 G8;drawer-stack order semantics;closed;tr-00330365
 G9;drawer-box material field;open;kuchnie-6sm
 G10;grain axis / Uslojenie;closed;tr-15d48651
-G11;edge-band identity by thickness;open;wk-593a317b
+G11;edge-band identity by thickness;closed;tr-4f3bd57d
 G12;front margin shop setting;closed;tr-2faf70f7
-G13;hardware BOM completeness;open;wk-593a317b
+G13;hardware BOM completeness;closed;tr-611a8240
