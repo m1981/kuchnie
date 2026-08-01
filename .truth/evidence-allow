@@ -22,7 +22,6 @@
 # worst flags. find and sort ARE shipped but their write/exec flags
 # (find -exec/-fprintf, sort -o) are refused by that same table.
 grep
-rg
 ls
 cat
 head
@@ -39,12 +38,10 @@ echo
 printf
 test
 [
-date
 basename
 dirname
 realpath
 stat
-file
 sha256sum
 shasum
 md5sum
