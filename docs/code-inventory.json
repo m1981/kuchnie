@@ -257,6 +257,19 @@
       "seed_worktop_compatibility"
     ]
   },
+  "catalog/scripts/seed_worktop_uu.py": {
+    "classes": [],
+    "component": "catalog",
+    "dotted": "catalog.scripts.seed_worktop_uu",
+    "functions": [
+      "_eligible_u_variants",
+      "ensure_hpl_edges",
+      "ensure_sheet_formats",
+      "get_db",
+      "main",
+      "seed_uu_variants"
+    ]
+  },
   "home-builder-adapter/src/__init__.py": {
     "classes": [],
     "component": "home-builder-adapter",
@@ -379,6 +392,15 @@
       "to_kuchnie_core"
     ]
   },
+  "kitchen-erp/kitchen_erp/core/heights.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.heights",
+    "functions": [
+      "derive_worktop_height",
+      "worktop_height_warning"
+    ]
+  },
   "kitchen-erp/kitchen_erp/core/material_mirror.py": {
     "classes": [
       "MirrorStats"
@@ -491,6 +513,14 @@
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.schemas",
     "functions": []
+  },
+  "kitchen-erp/kitchen_erp/core/survey.py": {
+    "classes": [],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.survey",
+    "functions": [
+      "survey_pack_missing"
+    ]
   },
   "kitchen-erp/kitchen_erp/core/variant_derivation.py": {
     "classes": [
@@ -703,12 +733,14 @@
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.bom",
     "functions": [
+      "_edge_material_key",
       "calculate_bom",
       "worktop_bom_items"
     ]
   },
   "kuchnie-core/src/kuchnie_core/buildability.py": {
     "classes": [
+      "BuildabilityError",
       "BuildabilityVerdict",
       "Finding",
       "GateResult",
@@ -724,9 +756,9 @@
       "_gate_manifest",
       "_ran",
       "_row_gate_buckets",
-      "_row_ref",
       "_skipped",
-      "evaluate_buildability"
+      "evaluate_buildability",
+      "require_buildable"
     ]
   },
   "kuchnie-core/src/kuchnie_core/catalog.py": {
@@ -812,7 +844,9 @@
     ]
   },
   "kuchnie-core/src/kuchnie_core/kitchen.py": {
-    "classes": [],
+    "classes": [
+      "HeightSet"
+    ],
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.kitchen",
     "functions": [
@@ -820,6 +854,7 @@
       "all_panels",
       "decompose_kitchen",
       "kitchen_bom",
+      "row_findings",
       "validate_rows"
     ]
   },
@@ -927,6 +962,7 @@
       "CargoConfig",
       "CornerBlindConfig",
       "CornerInternalConfig",
+      "CornerLink",
       "DecompositionResult",
       "DrawerSlot",
       "EdgeBand",
@@ -944,7 +980,9 @@
     ],
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.model",
-    "functions": []
+    "functions": [
+      "direction_after_turn"
+    ]
   },
   "kuchnie-core/src/kuchnie_core/recipe.py": {
     "classes": [
@@ -982,6 +1020,7 @@
     "dotted": "kuchnie_core.serialize",
     "functions": [
       "_build_cabinet",
+      "_build_corner",
       "_build_row",
       "_build_worktop",
       "kitchen_from_dict",

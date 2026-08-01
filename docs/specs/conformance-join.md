@@ -140,3 +140,12 @@ their generators).
   a truth baseline verb, a contradicts edge folding to DISPUTED, truth
   impact --inverse, and the nd- record kind with satisfies edge marked as
   a design RFC — written as drafts and not posted upstream"
+- Increment 5 (wk-1af1a49e): "scripts/spec-coverage.py re-cuts the R2
+  join along the two axes the dashboard aggregates away: a per-component
+  rollup of coverage-audit TRACED/MENTIONED/DARK verdicts with traced
+  percentages, and a per-spec forward trace resolving cited tr-/wk- ids
+  through ledger status to the source modules reached by live claims'
+  evidence_paths, flagging specs standing on dead ids and specs whose
+  live claims reach no source module; --json emits both axes and pinned
+  tests in scripts/tests/test_spec_coverage.py cover id extraction,
+  component grouping and the output contract"
