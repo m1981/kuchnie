@@ -317,6 +317,7 @@ def load_cabinet(yaml_path: str | Path) -> CabinetInstance:
         # Edge banding
         edge_banding_type=k["oklejanie"]["typ"],
         edge_banding_thickness_mm=k["oklejanie"]["grubosc"],
+        front_edge_banding_thickness_mm=k["oklejanie"].get("grubosc_frontu", 2.0),
         # Interior (drawer list normalized to the bottom-up model contract)
         drawers=_normalize_drawer_order(
             k["wnetrze"].get("szuflady", []),

@@ -5,6 +5,81 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-08-01 — Edge-band identity by thickness (G11, wk-593a317b)
+
+### Added
+- `kuchnie_core.model.EdgeBand` gains `catalog_edge_code: str = ""` —
+  supplier SKU for ordering (e.g. `K-8685-SM/BS/PD`), empty when unknown.
+- `kuchnie_core.bom._edge_material_key(band)` — builds the BOM grouping
+  key for `edge_band` items as `{material}_{thickness_mm:.1f}`, with
+  `_{catalog_edge_code}` appended when a code is present. `BOMItem.material`
+  for `category="edge_band"` now carries this composite key instead of the
+  plain material name, so a 0.8×22 carcass ABS band and a 2.0×23 front ABS
+  band price and purchase as distinct lines instead of collapsing into one.
+  Price lookup falls back to the plain material name when no price is keyed
+  under the composite (backward compatible with existing `edge_prices`
+  tables keyed on material alone).
+- `kuchnie_core.export.edging_csv.EdgingRow` gains `catalog_edge_code: str`
+  and the CSV output gains a trailing `Kod_krawedzi` column. `EdgingRow.material`
+  itself is unchanged (still the plain `band.material`) — only the BOM's
+  material key is composite; the edging worklist keeps material and
+  thickness as separate columns.
+- `kuchnie-core/tests/test_G11_edge_band_identity.py` — 15 tests covering
+  the key format, price fallback, and CSV column.
+- `kuchnie_core.model.EdgeBand` gains `width_mm: float = 0.0` — purchase-
+  identity width (e.g. Egger 23mm vs a Kronospan-partner 22mm band for the
+  same 18mm board). Width is supplier/decor-dependent so it is **not**
+  derived by core; it defaults to `0.0` ("unknown") and is only populated
+  by a caller that knows the specific supplier roll (the ERP catalog
+  layer). `_edge_material_key` appends `x{width_mm:.0f}` when known, so
+  same-material/same-thickness bands with different purchase widths now
+  price and purchase as distinct lines; the key format is byte-identical
+  to before when width is unset.
+- `kuchnie_core.model.CabinetInstance` gains
+  `front_edge_banding_thickness_mm: float = 2.0`, alongside the existing
+  `edge_banding_thickness_mm: float = 0.8` (now corpus/carcass-only).
+  Both defaults are owner-confirmed: 0.8mm ABS on carcass edges, 2.0mm ABS
+  on fronts. `kuchnie_core.catalog._front_eb` now sources
+  `front_edge_banding_thickness_mm`; `_body_eb` is unchanged.
+  `kuchnie_core.loader.load_cabinet` reads the new optional YAML key
+  `oklejanie.grubosc_frontu` (via `.get`, default `2.0`) into the new
+  field; `oklejanie.grubosc` keeps mapping to the corpus field as before.
+- `kuchnie_core.export.edging_csv.EdgingRow` gains `width_mm: float = 0.0`
+  and the CSV gains a `Szerokosc_obrzeza_mm` column, placed right after
+  `Grubość_mm` and before `Kod_krawedzi`; empty string when width is
+  unknown.
+- New end-to-end tests in `test_G11_edge_band_identity.py` load
+  `fixtures/K01.yaml` through the real `load_cabinet`/`decompose`
+  pipeline (no hand-built shortcuts) and assert drawer-front panels carry
+  `thickness_mm == 2.0` on their bands, carcass panels `0.8`, and that
+  `calculate_bom` on that decomposition emits at least two distinct
+  `edge_band` material keys differing by thickness. Loader tests cover
+  `oklejanie.grubosc_frontu` present (overrides) and absent (defaults to
+  `2.0`).
+
+### Notes
+- Real decompositions now emit distinct thicknesses: `kuchnie_core.catalog`
+  sources corpus bands from `edge_banding_thickness_mm` (0.8mm, owner-
+  confirmed) and front bands from the new `front_edge_banding_thickness_mm`
+  (2.0mm, owner-confirmed), so a stock K01/G01 decomposition already
+  produces separate 0.8mm carcass and 2.0mm front `edge_band` BOM lines —
+  this is no longer plumbing-only. `catalog_edge_code` and `EdgeBand.width_mm`
+  remain unpopulated by the core decomposer/loader (both default empty/0.0)
+  — populating them from real supplier SKUs and purchase widths is a catalog
+  DB lookup that belongs to the ERP layer, not core. `legrabox.py` still
+  emits no `EdgeBand` at all.
+- No downstream impact found: kitchen-erp's BOM views (`domain_adapter.py`,
+  `variant_derivation.py`) bucket by `BOMItem.category`/`role`/`measure`,
+  never `BOMItem.material`, and its own `EdgingRow.material` usage reads
+  the unchanged plain field. kitchen-cam and home-builder-adapter don't
+  touch either field. `exercises/walking-skeleton-d60/run_production_leg.py`
+  hand-rolls its own BOM/rozrys writers directly off `EdgeBand.material`
+  and never calls `calculate_bom`/`export_edging_csv`, so the flagship
+  exercise baseline is unaffected (re-ran the production leg: `generated/`
+  output byte-identical to the pre-change committed copy).
+
+---
+
 ## [Unreleased] — 2026-07-14 — Dashboard increment 1: by-goal roadmap + Serves: UC- warn (wk-a9212b40)
 
 ### Added

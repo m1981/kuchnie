@@ -53,6 +53,8 @@ class EdgingRow:
     length_mm: float
     material: str
     thickness_mm: float
+    catalog_edge_code: str = ""  # supplier SKU for ordering (e.g. "K-8685-SM/BS/PD")
+    width_mm: float = 0.0  # purchase-identity width; 0.0 = unknown
 
 
 # ── Length rule ─────────────────────────────────────────────────
@@ -87,6 +89,8 @@ def collect_edging_rows(panels: list[Panel]) -> list[EdgingRow]:
                 length_mm=band.length_mm or _edge_length_mm(p, side),
                 material=band.material,
                 thickness_mm=band.thickness_mm,
+                catalog_edge_code=band.catalog_edge_code,
+                width_mm=band.width_mm,
             ))
     return rows
 
@@ -95,6 +99,7 @@ def collect_edging_rows(panels: list[Panel]) -> list[EdgingRow]:
 
 HEADER = [
     "Panel_ID", "Nazwa", "Krawędź", "Długość_mm", "Materiał", "Grubość_mm",
+    "Szerokosc_obrzeza_mm", "Kod_krawedzi",
 ]
 
 
@@ -111,6 +116,8 @@ def rows_to_csv(rows: list[EdgingRow]) -> str:
             f"{r.length_mm:.1f}",
             r.material,
             f"{r.thickness_mm:.1f}",
+            f"{r.width_mm:.0f}" if r.width_mm else "",
+            r.catalog_edge_code,
         ])
     return buf.getvalue()
 

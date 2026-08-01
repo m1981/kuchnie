@@ -6,7 +6,26 @@ not on every keystroke.
 
 from dataclasses import dataclass, field
 
-from .model import DecompositionResult, PanelRole, WorktopSegment
+from .model import DecompositionResult, EdgeBand, PanelRole, WorktopSegment
+
+
+def _edge_material_key(band: EdgeBand) -> str:
+    """G11: Construct edge band material key for BOM grouping.
+
+    Format: "{material}_{thickness_mm}[x{width_mm}][_{catalog_code}]"
+    This ensures edge bands with different thicknesses, purchase widths,
+    or catalog codes produce separate BOM lines for ordering clarity.
+    Width is part of purchase identity (e.g. Egger 23mm vs a
+    Kronospan-partner 22mm band for the same 18mm board) but is
+    supplier/decor-dependent, so it is only appended when known
+    (``band.width_mm`` truthy) — core never derives it.
+    """
+    base = f"{band.material}_{band.thickness_mm:.1f}"
+    if band.width_mm:
+        base = f"{base}x{band.width_mm:.0f}"
+    if band.catalog_edge_code:
+        return f"{base}_{band.catalog_edge_code}"
+    return base
 
 
 @dataclass
@@ -73,13 +92,15 @@ def calculate_bom(
         # Edge banding (band.length_mm already set by catalog)
         for edge_name, band in panel.banded_edges.items():
             length_m = band.length_mm / 1000
-            price_m = edge_prices.get(band.material, 0.0)
+            # G11: material key includes thickness and catalog code for ordering
+            edge_material_key = _edge_material_key(band)
+            price_m = edge_prices.get(edge_material_key, edge_prices.get(band.material, 0.0))
             edge_cost = round(price_m * length_m * panel.quantity, 2)
 
             bom.items.append(BOMItem(
                 description=f"Oklejanie {edge_name} → {panel.name}",
                 category="edge_band",
-                material=band.material,
+                material=edge_material_key,
                 quantity=panel.quantity,
                 unit="mb",
                 unit_price=round(price_m * length_m, 2),

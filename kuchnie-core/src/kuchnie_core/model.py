@@ -90,6 +90,12 @@ class EdgeBand:
     material: str        # e.g. "ABS_swiss_krono.U119_VL"
     thickness_mm: float  # 0.8
     length_mm: float     # length of THIS edge on the panel
+    catalog_edge_code: str = ""  # supplier SKU for ordering (e.g. "K-8685-SM/BS/PD")
+    # Purchase-identity width (mm). Supplier/decor-dependent (e.g. Egger 23mm
+    # vs Kronospan-partner 22mm for 18mm board) — NOT derived by core, so it
+    # defaults to 0.0 ("unknown") and is only populated when a caller (e.g.
+    # the ERP catalog layer) knows the specific supplier roll.
+    width_mm: float = 0.0
 
 
 @dataclass
@@ -317,7 +323,8 @@ class CabinetInstance:
 
     # Edge banding (global default for this cabinet)
     edge_banding_type: str = "ABS"
-    edge_banding_thickness_mm: float = 0.8
+    edge_banding_thickness_mm: float = 0.8  # corpus/carcass — owner-confirmed
+    front_edge_banding_thickness_mm: float = 2.0  # fronts — owner-confirmed
 
     # Plinth / legs
     plinth_height_mm: int = 100

@@ -105,7 +105,7 @@ def _front_eb(cab: CabinetInstance, length_mm: float) -> EdgeBand:
     """Edge band for front panels (front material)."""
     return EdgeBand(
         material=_normalize_edge_material(cab.edge_banding_type, cab.front_material),
-        thickness_mm=cab.edge_banding_thickness_mm,
+        thickness_mm=cab.front_edge_banding_thickness_mm,
         length_mm=length_mm,
     )
 
