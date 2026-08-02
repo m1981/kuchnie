@@ -14,9 +14,11 @@ dependency graphs, the data-flow view, the domain-model/vocabulary check,
 plus one round-3 sequence diagram. It reads four of the five bodies round 2
 asked for and **answers three of that document's open items** (§5 below).
 
-**Status: PARTIAL.** Round 3 (full hotspot table, test-shadow map,
-remaining collaboration diagrams) has not run. Absence of a finding here is
-not a clean bill of health.
+**Status: round 3 has since run** (`architecture-review-round-3-2026-08-02.md`,
+findings N12–N15) and the consolidated verdict is written
+(`architecture-consolidated-review-2026-08-02.md`). **N5 and N6 have shipped**
+— see §7 for the wave-1 outcome and §8 for the unknowns it closed. Absence of
+a finding here is still not a clean bill of health.
 
 **Evidence labels** (same scheme as rounds 0–1): `CONFIRMED` — a command was
 run this session, recorded in Appendix B. `OBSERVED` — read at a cited
@@ -479,7 +481,7 @@ not wiring it.
 finding until the *call path* is read. Two of this session's initial three
 P0s survived that test; this one did not.
 
-### N5 — `sqlite_file_name = "database.db"` is a relative path, so the ERP database depends on the working directory
+### N5 — ✅ SHIPPED (`kuchnie-26s`, 2026-08-02) — `sqlite_file_name = "database.db"` is a relative path, so the ERP database depends on the working directory
 
 **Severity: P1.**
 
@@ -518,7 +520,7 @@ directory and those migrations silently build a second, empty schema.
 **Effort S · Risk low · Blast radius: local dev environments; no production
 deployment exists yet, which is exactly why this is cheap to fix now.**
 
-### N6 — Two hand-copied HTTP catalog clients and no schema-version handshake
+### N6 — ✅ SHIPPED (`kuchnie-019`, 2026-08-02) — Two hand-copied HTTP catalog clients and no schema-version handshake
 
 **Severity: P1.** Extends rounds 0–1 A.6, which flagged the core↔catalog
 file coupling as `NEEDS-BODY`.
@@ -627,44 +629,87 @@ work and only the reachability test (N2 step 4) should land now.
 
 ---
 
-## 7. Suggested execution order
+## 7. Suggested execution order — **wave 1 SHIPPED 2026-08-02**
 
 Merging both documents' repairs into one sequence. Owner questions gate the
 items that depend on facts.
 
-| # | Item | Source | Gate | Effort |
-|---|---|---|---|---|
-| 1 | Fix the CWD-relative DB path; delete the 0-byte decoys | N5 (1–2) | none | S |
-| 2 | Catalog schema-version handshake | N6 (1) | none | S |
-| 3 | `Finding`/`GateStatus` → leaf module, break the core cycles | P1-2 | none | S |
-| 4 | Ask Q2 → move the 4 PLN literals into `SupplierPrice` | P0-3 | **Q2** | S |
-| 5 | `Material.thickness_mm` + `structure` + mirror | P0-1 step 1 | none | S |
-| 6 | Carry `accessories` across the ERP seam (no consumer yet) | N1 step 1 | none | S |
-| 7 | Ask Q5 → cabinet-type routing + plinth bucket, **bundled** | N2 + N3 | **Q5** | M |
-| 8 | Consume accessories; demote `HardwareRule` to price-only | N1 (2–4) | after 6, 7 | M |
-| 9 | Ask Q3 → move construction math out of the adapter | P0-4 | **Q3** | M |
-| 10 | Ask Q4 → `BoardSpec` in full (expect a golden roll) | P0-1 | **Q4** | L |
-| 11 | Ask Q1 → wire `purchasing_docs_for_project` via `derive_variant` | P0-2 | **Q1**, after 10 | M |
-| 12 | Consolidate validation behind `BuildabilityVerdict` | N7 | after round 3 reads `validate_manifest` | M |
+| # | Item | Source | Gate | Effort | Status |
+|---|---|---|---|---|---|
+| 1 | Fix the CWD-relative DB path; delete the 0-byte decoys | N5 (1–2) | none | S | ✅ **SHIPPED** `kuchnie-26s` |
+| 2 | Catalog schema-version handshake | N6 (1) | none | S | ✅ **SHIPPED** `kuchnie-019` |
+| 3 | `Finding`/`GateStatus` → leaf module, break the core cycles | P1-2 | none | S | ✅ **SHIPPED** `kuchnie-5un` |
+| — | *(added)* Reachability gate + `not-yet-wired` allowlist | N12 (round 3) | none | S | ✅ **SHIPPED** `kuchnie-lh2` |
+| 4 | Ask Q2 → move the 4 PLN literals into `SupplierPrice` | P0-3 | **Q2** | S | blocked on owner |
+| 5 | `Material.thickness_mm` + `structure` + mirror | P0-1 step 1 | none | S | **wave 2, in flight** `kuchnie-h45` |
+| 6 | Carry `accessories` across the ERP seam (no consumer yet) | N1 step 1 | none | S | ready |
+| 7 | Ask Q5 → cabinet-type routing + plinth bucket, **bundled** | N2 + N3 | **Q5** | M | needs N8 first |
+| — | *(inserted by the addendum)* `runner_y_mm` into the `DrawerSystem` ABC | N8 | none | M | **wave 2, in flight** `kuchnie-27b` + `kuchnie-b30` |
+| 8 | Consume accessories; demote `HardwareRule` to price-only | N1 (2–4) | after 6, 7 | M | ready after 7 |
+| 9 | Ask Q3 → move construction math out of the adapter | P0-4 | **Q3** | M | blocked on owner |
+| 10 | ~~Ask Q4~~ → `BoardSpec` in full (expect a golden roll) | P0-1 | ~~Q4~~ **none** | L | Q4 answered — see addendum |
+| 11 | Ask Q1 → wire `purchasing_docs_for_project` via `derive_variant` | P0-2 | **parked** | M | phase 3, fidelity-first |
+| 12 | Consolidate validation behind `BuildabilityVerdict` | N7 | ~~after round 3~~ **unblocked** | M | ready — the dict seam is a projection |
 
-Items 1–6 are all small, independent, and need no owner input — that is
-roughly a session's work that de-risks everything after it.
+**Wave 1 outcome (2026-08-02, commits `e043b25..313d4fc`).** Items 1–3 plus
+the round-3 reachability gate shipped as four parallel agents on disjoint
+file sets, then merged and independently re-verified rather than accepted
+from their reports. Final state: 782 core + 248 ERP + 267 catalog + 57 cam +
+33 krono + 25 adapter + 32 scripts tests green; spec-health and doc-health at
+0 failures; exercise-gate byte-identical; both import-cycle findings gone
+from `60-arch-smells`; `KitchenState` down 34 → 30 methods as a side effect
+of the migrations leaving `state.py`.
+
+Three things worth carrying forward from that integration:
+
+1. **Ledger healing, not code, dominated the cost.** Merge-time
+   `invalidate-scan` staled 35 claims across the integration. Every genuine
+   divergence turned out to be *recipe drift*, not a changed fact — two
+   claims use `grep -n`, so a single added field shifted line numbers under
+   them; one begins with `cd`, which recheck refuses under ADR-009. Only
+   `tr-4674581b` was a true relocation (`row_findings` moved module),
+   superseded by `tr-d9722e31`.
+2. **`spec-health.sh` swept `.claude/worktrees/`**, so parallel agent work
+   inflated it to 125 failures across 105 specs where the truth was 25 across
+   21 — and kept failing specs already fixed on main. It blocked its own fix
+   through the pre-commit hook. Fixed and closed as `kuchnie-hes`; the gate
+   now prunes worktrees exactly as it already pruned `.venv`.
+3. **Two new findings surfaced**, both confirmed independently:
+   `catalog/db/engine.py` imports `catalog.scripts.migrate_1_5_0`, which does
+   not exist and genuinely raises `ModuleNotFoundError` (`kuchnie-8be`); and
+   the reachability gate found a sixth orphan the four-round review missed —
+   `kuchnie_core/schema.py`, which `GLOSSARY.md` calls the file of record for
+   the Blender→core YAML contract but which `loader.load_kitchen` never
+   validates through (`kuchnie-qrs`).
 
 ---
 
-## 8. Unknowns (`NEEDS-BODY`, carried into round 3)
+## 8. Unknowns — **all but one now closed**
 
-- Does any production code construct `SqliteMaterialCatalog`, or is
-  `kuchnie_core.materials` currently test-only? (N6 severity depends on it.)
-- Is `validate_manifest`'s dict a legitimate Blender/home-builder wire-format
-  seam, or a second geometry model? Still unread; blocks N7.
-- Does the d60 walking-skeleton exercise cover a drawer base? Determines
-  whether N2 forces a golden roll.
-- `RulesEngine`'s default rules vs the DB rows: which wins when both exist,
-  and are the defaults ever seeded in production? Read `get_default_hardware_rules`
-  before executing N1 step 3.
-- Test-shadow map (which modules have no test naming them) — not built;
-  round 3.
+- ~~Does any production code construct `SqliteMaterialCatalog`?~~ **CLOSED:
+  no.** Answered in the addendum (its only importer is the subpackage's own
+  `__init__.py`) and now *enforced* — the whole subpackage is declared in
+  `docs/not-yet-wired.txt` against `kuchnie-05p`, so the reachability gate
+  fails if it silently acquires or loses a consumer.
+- ~~Is `validate_manifest`'s dict a wire-format seam or a second geometry
+  model?~~ **CLOSED: neither — it is a projection** of the typed model.
+  Answered in the addendum. **This unblocks N7**, whose consolidation was
+  explicitly held pending this answer.
+- Does the d60 walking-skeleton exercise cover a drawer base? **Still open.**
+  Determines whether `kuchnie-lm8` forces a golden roll. `exercise-gate.sh`
+  names the flagship `e2e-d60-legrabox`, which suggests yes, but that has not
+  been confirmed by reading the fixture.
+- ~~`RulesEngine`'s defaults vs the DB rows?~~ **CLOSED.** Read in the
+  addendum: the defaults are a flat tag table seeded into `HardwareRule` via
+  the admin UI, and their prices sit entirely outside the `SupplierPrice`
+  freshness apparatus — which widened P0-3's scope beyond its original four
+  literals.
+- ~~Test-shadow map~~ **CLOSED:** built in round 3 (§4 of that document, 15
+  modules), and `coverage-audit.py` reports `DARK=0`.
+- ~~Is `kuchnie_core/recipe.py` orphaned like `materials`?~~ **CLOSED: no.**
+  The reachability gate resolves it — `recipe.py` is reachable via
+  `kuchnie_core/__init__.py`. N4's hygiene suggestion to consider deleting it
+  therefore does not apply; only its cost-trace labelling item stands.
 
 ---
 
