@@ -539,7 +539,7 @@ Phase 0):
   scattered homes — tr-65aa5969).
 - tr-65aa5969 — evaluate_buildability issues the single ordered-gate
   verdict (UC-2 step 5 supported; ext 5a emission gating shipped as
-  tr-409f4aab, structured findings underneath as tr-4674581b).
+  tr-409f4aab, structured findings underneath as tr-d9722e31).
 - tr-15d48651 — Panel.grain wired, Usłojenie emitted (UC-2 step 6 / ext 6a).
 - tr-8dfe366d — back formula groove-seated, matches carpenter reference
   (UC-2 step 4 trustworthy for flagship types).
@@ -563,7 +563,7 @@ Phase 0):
   cutout positions) and surface as explicit SKIPPED gates
 - wk-cb6a17c8 — CLOSED 2026-07-18 (tr-409f4aab): emission doorways gated
   on the verdict, no override flag; wk-acc8e094 closed with it
-  (tr-4674581b — structured findings replace the string protocol)
+  (tr-d9722e31 — structured findings replace the string protocol)
 - wk-33342f9e — this spec (migration step 1)
 
 ## Acceptance

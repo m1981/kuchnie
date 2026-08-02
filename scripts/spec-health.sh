@@ -21,7 +21,11 @@ if ! ISSUES_JSON="$(scripts/truth issues --json 2>/dev/null)"; then
   echo "spec-health: 'truth issues --json' failed; treating issue records as absent (wk- ids will report missing)" >&2
   ISSUES_JSON='[]'
 fi
-SPEC_FILES="$(find . \( -path ./attic -o -path "*/node_modules" -o -path "*/.venv" -o -name archive \) -prune \
+# .claude/worktrees holds full checkouts of this repo while agents run, so
+# without pruning it every spec is judged once per live worktree and a spec
+# already fixed on main keeps failing from stale copies (kuchnie-hes).
+SPEC_FILES="$(find . \( -path ./attic -o -path "*/node_modules" -o -path "*/.venv" \
+                        -o -path "./.claude/worktrees" -o -name archive \) -prune \
                    -o -type f -path "*docs/specs/*.md" -print | sort)"
 
 export CLAIMS_JSON ISSUES_JSON SPEC_FILES
