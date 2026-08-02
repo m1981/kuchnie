@@ -7,23 +7,69 @@ grouping, texture tiling widths). Offline, the source degrades to the last
 snapshot written to disk — sales visits happen away from the office and a
 dead catalog service must never crash the app.
 
-stdlib-only on purpose, same trade as kitchen-erp's catalog_client: a few
-JSON GETs do not justify a dependency.
+The HTTP client itself is NOT defined here any more: it lived here and, class
+for class, in kitchen-erp too. It now lives once, published by the catalog
+service as `catalog.client` (bead kuchnie-019), and is re-exported below so
+`from ...catalog_source import HttpCatalogClient` keeps working.
+
+That client handshakes on the catalog schema version before reading anything.
+The offline degrade below is scoped to `CatalogUnavailable` only: a service
+that answers with a schema this code does not understand must crash loudly
+rather than quietly serve last week's snapshot, which is precisely how a
+catalog migration used to go unnoticed here.
 """
 from __future__ import annotations
 
 import json
 import logging
 import os
-import urllib.error
-import urllib.parse
-import urllib.request
-from typing import Any, Iterator, Optional, Protocol
+from typing import Any, Optional
+
+try:  # normal case: the repo root (which holds catalog/) is importable
+    from catalog.client import (
+        CLIENT_SCHEMA_VERSION,
+        DEFAULT_CATALOG_URL,
+        PAGE_SIZE,
+        CatalogSchemaMismatch,
+        CatalogUnavailable,
+        DecorHexCatalogClient as CatalogClient,
+        HttpCatalogClient,
+        check_schema_compatible,
+    )
+except ImportError:  # sibling-component checkout: put the repo root on the path
+    import sys
+    from pathlib import Path
+
+    _REPO_ROOT = Path(__file__).resolve().parents[4]
+    if str(_REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(_REPO_ROOT))
+    from catalog.client import (
+        CLIENT_SCHEMA_VERSION,
+        DEFAULT_CATALOG_URL,
+        PAGE_SIZE,
+        CatalogSchemaMismatch,
+        CatalogUnavailable,
+        DecorHexCatalogClient as CatalogClient,
+        HttpCatalogClient,
+        check_schema_compatible,
+    )
+
+# Re-exported from catalog.client so this module's public surface is unchanged.
+__all__ = [
+    "CLIENT_SCHEMA_VERSION",
+    "DEFAULT_CATALOG_URL",
+    "PAGE_SIZE",
+    "CatalogClient",
+    "CatalogSchemaMismatch",
+    "CatalogSource",
+    "CatalogUnavailable",
+    "HttpCatalogClient",
+    "build_materials",
+    "check_schema_compatible",
+]
 
 logger = logging.getLogger("catalog_source")
 
-DEFAULT_CATALOG_URL = "http://127.0.0.1:8000/catalog"
-PAGE_SIZE = 200
 DEFAULT_SNAPSHOT_PATH = "assets/catalog_snapshot.json"
 DEFAULT_TEXTURE_DIR = "assets/textures"
 
@@ -67,61 +113,6 @@ PRICE_GROUP_OVERRIDES: dict[str, int] = {
     "K7031": 2,
 }
 DEFAULT_PRICE_GROUP = 1
-
-
-class CatalogUnavailable(RuntimeError):
-    """The catalog service could not be read."""
-
-
-class CatalogClient(Protocol):
-    def iter_rows(self) -> Iterator[dict[str, Any]]:
-        """Yield flat decor-variant rows from GET /catalog/decors."""
-        ...
-
-    def decor_hex_map(self) -> dict[str, str]:
-        """Map decor business id -> color-family hex approximation."""
-        ...
-
-
-class HttpCatalogClient:
-    def __init__(self, base_url: Optional[str] = None, timeout: float = 10.0):
-        self.base_url = (base_url or os.environ.get("CATALOG_URL", DEFAULT_CATALOG_URL)).rstrip("/")
-        self.timeout = timeout
-
-    @property
-    def origin(self) -> str:
-        parts = urllib.parse.urlsplit(self.base_url)
-        return f"{parts.scheme}://{parts.netloc}"
-
-    def _get_json(self, path: str, params: dict[str, Any]) -> dict[str, Any]:
-        url = f"{self.base_url}{path}"
-        if params:
-            url += f"?{urllib.parse.urlencode(params)}"
-        try:
-            with urllib.request.urlopen(url, timeout=self.timeout) as resp:
-                data: dict[str, Any] = json.load(resp)
-                return data
-        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
-            raise CatalogUnavailable(f"GET {url}: {e}") from e
-
-    def iter_rows(self) -> Iterator[dict[str, Any]]:
-        page = 1
-        while True:
-            payload = self._get_json("/decors", {"page": page, "page_size": PAGE_SIZE})
-            items = payload.get("items", [])
-            yield from items
-            if page * PAGE_SIZE >= payload.get("total", 0) or not items:
-                return
-            page += 1
-
-    def decor_hex_map(self) -> dict[str, str]:
-        payload = self._get_json("/full", {})
-        out: dict[str, str] = {}
-        for producer in payload.get("producers", {}).values():
-            for decor in producer.get("decors", []):
-                if decor.get("id") and decor.get("color_hex"):
-                    out[decor["id"]] = decor["color_hex"]
-        return out
 
 
 def _derive_allowed_zone(roles: set[str]) -> str:
@@ -195,6 +186,10 @@ class CatalogSource:
         )
 
     def _load(self) -> dict[str, Any]:
+        # NOTE: only CatalogUnavailable degrades to the snapshot. A
+        # CatalogSchemaMismatch from the client's version handshake propagates
+        # on purpose — after a catalog migration, a stale snapshot is a wrong
+        # answer delivered confidently (bead kuchnie-019).
         try:
             rows = list(self._client.iter_rows())
         except CatalogUnavailable as e:
