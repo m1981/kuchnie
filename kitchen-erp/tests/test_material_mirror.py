@@ -77,6 +77,85 @@ def test_refresh_populates_mirror_from_catalog(session):
     assert mirrored["D1811-PB-18"].has_woodgrain is True
 
 
+# --- orderable identity (kuchnie-h45 step 1) ------------------------------
+#
+# The catalog row already owns these facts: v_decors_full exposes
+# `structure` (= structures.code, the producer's structure code "ST2"/"PW"/
+# "SM") and `thickness_mm` (= variants.thickness_mm, a float). The mirror
+# used to drop both on the floor.
+
+def test_mirror_populates_structure_and_thickness(session):
+    refresh_material_mirror(session, FakeCatalog([row()]))
+
+    m = boards(session)[0]
+    assert m.structure == "SM"          # catalog row's structures.code
+    assert m.thickness_mm == 18.0       # catalog row's variants.thickness_mm
+
+
+def test_mirror_does_not_confuse_structure_code_with_structure_type(session):
+    """`structure_type` is the family ("wood_grain") and already feeds
+    has_woodgrain; `structure` is the orderable code. Different columns."""
+    refresh_material_mirror(
+        session,
+        FakeCatalog([row(structure="PW", structure_type="wood_grain")]),
+    )
+
+    m = boards(session)[0]
+    assert m.structure == "PW"
+    assert m.has_woodgrain is True
+
+
+def test_mirror_tolerates_a_structureless_variant(session):
+    """v_decors_full LEFT JOINs structures — the column can be NULL, and a
+    catalog row may omit thickness too."""
+    refresh_material_mirror(
+        session,
+        FakeCatalog([row(structure=None, thickness_mm=None)]),
+    )
+
+    m = boards(session)[0]
+    assert m.structure is None
+    assert m.thickness_mm is None
+
+
+def test_mirror_converges_stale_identity_on_an_existing_row(session):
+    """A row mirrored before this change has NULL identity; the next refresh
+    must fill it in and count as an update."""
+    session.add(Material(
+        name="K101 Front White 18mm", brand="Kronospan", category="Board",
+        price_per_unit=42.0, unit="m2", sheet_size_m2=2.8 * 2.07,
+        has_woodgrain=False, catalog_variant_id="K101-PB-18",
+    ))
+    session.commit()
+
+    stats = refresh_material_mirror(session, FakeCatalog([row()]))
+
+    assert (stats.added, stats.updated) == (0, 1)
+    m = boards(session)[0]
+    assert (m.structure, m.thickness_mm) == ("SM", 18.0)
+    assert m.price_per_unit == 42.0     # still ERP-local
+
+
+def test_mirror_reprices_nothing_when_only_thickness_differs(session):
+    """Two variants of one decor differing only in thickness are two rows —
+    the mirror must not collapse them onto each other."""
+    stats = refresh_material_mirror(session, FakeCatalog([
+        row(variant_id="K101-PB-18", thickness_mm=18.0),
+        row(variant_id="K101-PB-36", thickness_mm=36.0),
+    ]))
+
+    assert stats.added == 2
+    assert sorted(m.thickness_mm for m in boards(session)) == [18.0, 36.0]
+
+
+def test_mirrored_fields_list_names_the_identity_columns(session):
+    """The module's own declaration of what the mirror owns must not lie."""
+    from kitchen_erp.core import material_mirror
+
+    assert {"structure", "thickness_mm"} <= set(material_mirror._MIRRORED_FIELDS)
+    assert "price_per_unit" not in material_mirror._MIRRORED_FIELDS
+
+
 def test_refresh_preserves_local_price_and_updates_identity(session):
     session.add(Material(
         name="stale name", brand="Kronospan", category="Board",

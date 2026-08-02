@@ -33,6 +33,10 @@ SCHEMA_MIGRATIONS: list[tuple[str, str, str]] = [
     ("cabinet", "y_mm", "ALTER TABLE cabinet ADD COLUMN y_mm FLOAT DEFAULT 0"),
     ("cabinet", "equipment_price", "ALTER TABLE cabinet ADD COLUMN equipment_price FLOAT DEFAULT 0"),
     ("material", "catalog_variant_id", "ALTER TABLE material ADD COLUMN catalog_variant_id VARCHAR"),
+    # Orderable board identity (kuchnie-h45 step 1): decor code + structure
+    # + thickness + format is what a supplier order actually needs.
+    ("material", "structure", "ALTER TABLE material ADD COLUMN structure VARCHAR"),
+    ("material", "thickness_mm", "ALTER TABLE material ADD COLUMN thickness_mm FLOAT"),
     # Project/Order spine (wk-02a62298): stage, customer contact, lifecycle dates.
     ("project", "stage", f"ALTER TABLE project ADD COLUMN stage VARCHAR DEFAULT '{DEFAULT_STAGE}'"),
     ("project", "customer_email", "ALTER TABLE project ADD COLUMN customer_email VARCHAR"),
