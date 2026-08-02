@@ -101,8 +101,9 @@ ESTIMATE-grade; only a cutting service's recorded offer is offer-grade
 
 **Preconditions:** material prices present (any age — age visible,
 tr-4afef6fb freshness machinery); flat-rate estimate-line price book per
-module type for non-decomposable modules (⚠ wk-224f3712); per-type labor
-weights (⚠ wk-59b943b1). Threshold 2 additionally: pomiar done, kitchen
+module type for non-decomposable modules (shipped, tr-e469bec3);
+per-type labor weights (cennik seed shipped with tr-e469bec3; owner-only
+split view still ⚠ wk-59b943b1). Threshold 2 additionally: pomiar done, kitchen
 laid out in hb5.
 **Minimal guarantees:** every displayed figure carries its grade —
 SZACUNEK badge with per-line price ages (tr-4afef6fb); an estimate is
@@ -124,14 +125,17 @@ locked (tr-c87a68f9).
    (KitchenState rows), sizing survives today.
 2. Non-decomposable modules (cargo, karuzela, sink, oven) enter as
    estimate lines from the flat-rate per-type price book, TTL-aged like
-   every price — **⚠ wk-224f3712**.
+   every price — shipped (tr-e469bec3, standard/komfort pair per type).
 3. System prices the canvas twice — tier "standard" (melamine,
    Tandembox, standard hinges) and tier "komfort" (upper decors,
    LEGRABOX, soft-close) — widens by the pre-pomiar uncertainty margin,
    and shows the od–do widelek with the SZACUNEK badge — **⚠
-   wk-224f3712** (badge machinery live: tr-4afef6fb).
+   shipped (tr-e469bec3;
+   badge machinery tr-4afef6fb; margins od ×0.95 / do ×1.15, brutto 23%,
+   rounded to 100 zł — owner parameters 2026-08-02).
 4. Client agrees to the range; the widelek is stored on the project
-   spine as the first calibration datapoint — **⚠ wk-224f3712**
+   spine as the first calibration datapoint — shipped (tr-e469bec3,
+   append-only QuoteRange)
    (spine: tr-e51ef4fd).
 5. After pomiar Michał designs in hb5; decomposition prices the real
    kitchen through the single BOM fold — supported (tr-4ee32b37,
@@ -159,10 +163,11 @@ locked (tr-c87a68f9).
   wk-59b943b1).
 - 2a. A module type has no entry in the estimate-line price book → line
   flagged unpriced, widelek marked incomplete — never silently omitted
-  (⚠ wk-224f3712).
+  (shipped, tr-e469bec3).
 - 3a. Prices older than TTL → the range renders estimate-grade with
-  ages visible and widens instead of faking precision — badge live
-  (tr-4afef6fb), widening ⚠ wk-224f3712.
+  ages visible — badge live (tr-4afef6fb). RENEGOTIATED 2026-08-02:
+  owner chose NO extra widening; visible ages alone carry the staleness
+  signal (tr-e469bec3).
 - 5a. Post-pomiar design lands outside the quoted widelek → the client
   hears it from Michał with the board open, not from a surprise final
   number — process rule, no mechanism owed.

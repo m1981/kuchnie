@@ -47,3 +47,11 @@ kuchnie-lzl;wk-0bc4d5c4;3;Height parameter set (ProjectDefaults);UC-11;product
 ;;7;Elevation/plan sheets (SVG);UC-11;product
 ;;5;Quote print document;UC-1;product
 ;;1;Krono I/L/U presets;UC-3;product
+kuchnie-a44;wk-224f3712;1;Rough-quote canvas widelka (shipped 2026-08-02);UC-1;product
+kuchnie-60t;wk-59b943b1;1;Labor cennik + owner-only margin view;UC-1;product
+kuchnie-bf0;;0;Screens spec OPEN states;UC-1;process
+kuchnie-3ue;;0;Gate 60/63 drift from offers increment;;process
+kuchnie-mbn;;3;L-layout hardening follow-ups;UC-11;process
+kuchnie-wcj;wk-075803aa;3;TURNS mapping degenerate in validator;UC-11;process
+kuchnie-15c;wk-a1898db5;0;Deep traceability: constants claims + coverage gate;;process
+kuchnie-xjm;wk-8908bacc;0;Migrate 11 rg-evidence claims to grep;;process
