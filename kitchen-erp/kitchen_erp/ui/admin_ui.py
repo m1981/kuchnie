@@ -9,6 +9,10 @@ def material_row(material: MaterialUI) -> rx.Component:
     return rx.table.row(
         rx.table.cell(material.brand),
         rx.table.cell(material.name),
+        # Orderable identity (kuchnie-h45 step 1): structure code + thickness
+        # are what turns "U999 Black" into something a supplier can price.
+        rx.table.cell(material.structure, font_family="monospace"),
+        rx.table.cell(material.thickness_mm, font_family="monospace"),
         rx.table.cell(f"{material.price_per_unit:,.2f} zł".replace(',', "'"), font_family="monospace"),
         rx.table.cell(material.unit),
         rx.table.cell(
@@ -136,6 +140,35 @@ def material_form() -> rx.Component:
                     spacing="1"
                 ),
                 
+                # Orderable identity (kuchnie-h45 step 1). A board you can
+                # actually order is decor code + structure + thickness +
+                # format; the first two lived nowhere until now.
+                rx.hstack(
+                    rx.vstack(
+                        rx.text("Structure", font_size="0.75rem", font_weight="bold"),
+                        rx.input(
+                            value=AdminState.edit_material_structure,
+                            on_change=AdminState.set_edit_material_structure,
+                            placeholder="e.g., ST2, PW, SM"
+                        ),
+                        flex="1",
+                        spacing="1"
+                    ),
+                    rx.vstack(
+                        rx.text("Thickness (mm)", font_size="0.75rem", font_weight="bold"),
+                        rx.input(
+                            type="number",
+                            value=AdminState.edit_material_thickness_mm.to_string(),
+                            on_change=AdminState.set_edit_material_thickness,
+                            placeholder="18"
+                        ),
+                        flex="1",
+                        spacing="1"
+                    ),
+                    width="100%",
+                    spacing="3"
+                ),
+
                 rx.hstack(
                     rx.vstack(
                         rx.text("Price", font_size="0.75rem", font_weight="bold"),
@@ -587,6 +620,8 @@ def admin_page() -> rx.Component:
                         rx.table.row(
                             rx.table.column_header_cell("Brand"),
                             rx.table.column_header_cell("Name"),
+                            rx.table.column_header_cell("Struct."),
+                            rx.table.column_header_cell("Thick. (mm)"),
                             rx.table.column_header_cell("Price"),
                             rx.table.column_header_cell("Unit"),
                             rx.table.column_header_cell("Actions"),

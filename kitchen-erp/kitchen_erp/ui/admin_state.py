@@ -7,7 +7,12 @@ from ..core.models import Material, HardwareSet, HardwareRule
 
 
 class MaterialUI(BaseModel):
-    """ViewModel for material editing"""
+    """ViewModel for material editing.
+
+    structure/thickness_mm are the orderable-identity fields (kuchnie-h45
+    step 1). They are nullable on the table but flattened to ""/0.0 here:
+    Reflex vars must be concrete, and "" / 0.0 render as blank cells.
+    """
     id: int
     name: str
     brand: str
@@ -16,6 +21,8 @@ class MaterialUI(BaseModel):
     unit: str
     sheet_size_m2: float
     has_woodgrain: bool
+    structure: str = ""
+    thickness_mm: float = 0.0
 
 
 class HardwareUI(BaseModel):
@@ -62,6 +69,8 @@ class AdminState(rx.State):
     edit_material_category: str = "Board"
     edit_material_sheet_size: float = 5.796
     edit_material_has_woodgrain: bool = False
+    edit_material_structure: str = ""        # producer structure code, e.g. "ST2"
+    edit_material_thickness_mm: float = 0.0  # 0.0 = not stated
 
     edit_hardware_name: str = ""
     edit_hardware_brand: str = ""
@@ -120,7 +129,9 @@ class AdminState(rx.State):
                     price_per_unit=m.price_per_unit,
                     unit=m.unit,
                     sheet_size_m2=m.sheet_size_m2,
-                    has_woodgrain=m.has_woodgrain
+                    has_woodgrain=m.has_woodgrain,
+                    structure=m.structure or "",
+                    thickness_mm=m.thickness_mm or 0.0,
                 )
                 for m in materials
             ]
@@ -189,6 +200,16 @@ class AdminState(rx.State):
     def set_edit_material_has_woodgrain(self, value: bool):
         self.edit_material_has_woodgrain = value
 
+    def set_edit_material_structure(self, value: str):
+        """Producer structure code as printed in the price list ("ST2")."""
+        self.edit_material_structure = value
+
+    def set_edit_material_thickness(self, value: str):
+        try:
+            self.edit_material_thickness_mm = float(value) if value else 0.0
+        except ValueError:
+            self.edit_material_thickness_mm = 0.0
+
     def set_edit_material_unit(self, value: str):
         self.edit_material_unit = value
     
@@ -248,8 +269,10 @@ class AdminState(rx.State):
         self.edit_material_category = self.material_filter
         self.edit_material_sheet_size = 5.796
         self.edit_material_has_woodgrain = False
+        self.edit_material_structure = ""
+        self.edit_material_thickness_mm = 0.0
         self.show_material_form = True
-    
+
     def open_edit_material_form(self, material_id: int):
         """Open form to edit existing material"""
         with next(get_session()) as session:
@@ -264,10 +287,19 @@ class AdminState(rx.State):
                 self.edit_material_category = material.category or "Board"
                 self.edit_material_sheet_size = material.sheet_size_m2
                 self.edit_material_has_woodgrain = material.has_woodgrain
+                self.edit_material_structure = material.structure or ""
+                self.edit_material_thickness_mm = material.thickness_mm or 0.0
                 self.show_material_form = True
     
     def save_material(self):
-        """Save material (create or update)"""
+        """Save material (create or update).
+
+        Blank identity is written as NULL, not "" / 0.0: a material with no
+        stated structure or thickness (a service, a utility row) must stay
+        distinguishable from one whose thickness is genuinely known.
+        """
+        structure = self.edit_material_structure.strip() or None
+        thickness = self.edit_material_thickness_mm or None
         with next(get_session()) as session:
             if self.is_editing and self.selected_material_id:
                 # Update existing
@@ -280,6 +312,8 @@ class AdminState(rx.State):
                     material.category = self.edit_material_category
                     material.sheet_size_m2 = self.edit_material_sheet_size
                     material.has_woodgrain = self.edit_material_has_woodgrain
+                    material.structure = structure
+                    material.thickness_mm = thickness
             else:
                 # Create new
                 material = Material(
@@ -289,7 +323,9 @@ class AdminState(rx.State):
                     price_per_unit=self.edit_material_price,
                     unit=self.edit_material_unit,
                     sheet_size_m2=self.edit_material_sheet_size,
-                    has_woodgrain=self.edit_material_has_woodgrain
+                    has_woodgrain=self.edit_material_has_woodgrain,
+                    structure=structure,
+                    thickness_mm=thickness,
                 )
                 session.add(material)
             

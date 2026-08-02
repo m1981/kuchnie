@@ -2,8 +2,9 @@
 """Material mirror — ADR-011 phase 3 (spec: docs/specs/material-mirror.md).
 
 kitchen-erp's Material table stops being a place where material facts are
-born: board identity (name, brand, woodgrain, sheet format) converges onto
-the catalog service, keyed by catalog_variant_id. price_per_unit is NEVER
+born: board identity (name, brand, woodgrain, sheet format, structure code,
+thickness) converges onto the catalog service, keyed by
+catalog_variant_id. price_per_unit is NEVER
 written by the mirror on existing rows — pricing is the ERP's own domain
 (catalog's variant_prices is deferred); new rows arrive at 0.0 for the
 admin to price.
@@ -27,7 +28,10 @@ DEFAULT_SHEET_M2 = 5.796  # 2800 x 2070 fallback, same default as the model
 
 # Identity fields the mirror owns on mirrored rows. price_per_unit is
 # deliberately absent.
-_MIRRORED_FIELDS = ("name", "brand", "category", "unit", "sheet_size_m2", "has_woodgrain")
+_MIRRORED_FIELDS = (
+    "name", "brand", "category", "unit", "sheet_size_m2", "has_woodgrain",
+    "structure", "thickness_mm",
+)
 
 
 @dataclass
@@ -61,6 +65,14 @@ def _identity_fields(row: dict) -> dict:
         "unit": "m2",
         "sheet_size_m2": sheet_m2,
         "has_woodgrain": row.get("structure_type") == "wood_grain",
+        # Orderable identity (kuchnie-h45 step 1). Both come straight off
+        # v_decors_full: `structure` is structures.code (the code printed in
+        # the price list — "ST2", "PW", "SM"), LEFT JOINed so it may be
+        # NULL; `thickness_mm` is variants.thickness_mm. Note the
+        # neighbouring `structure_type` ("wood_grain") is a different column
+        # and already feeds has_woodgrain above.
+        "structure": row.get("structure") or None,
+        "thickness_mm": thickness,
     }
 
 

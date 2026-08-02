@@ -97,6 +97,20 @@ class Material(SQLModel, table=True):
     unit: str
     sheet_size_m2: float = Field(default=5.796) # Domyślnie format 2800x2070
     has_woodgrain: bool = Field(default=False)  # Czy ma usłojenie (wymusza większy odpad na CNC)
+    # Orderable board identity (kuchnie-h45 step 1). Owner-confirmed shape
+    # (kuchnie-ubc notes, 2026-08-01): no cross-supplier canonical SKU
+    # exists, so stable identity is (manufacturer, decor code + structure,
+    # thickness_mm, width_mm). `brand` carries the manufacturer, `name` the
+    # decor code, `sheet_size_m2` the format — these two close the gap.
+    #   structure    producer's structure code as printed in the price list
+    #                ("ST2", "PW", "SM"); NOT structure_type ("wood_grain"),
+    #                which is what has_woodgrain already carries.
+    #   thickness_mm board thickness. Float, because 0.8mm edge tape and
+    #                38mm worktops both live in this table.
+    # Both nullable: local-born rows (services, utility materials) and rows
+    # predating the mirror legitimately have neither.
+    structure: str | None = Field(default=None)
+    thickness_mm: float | None = Field(default=None)
     # Mirror key (ADR-011 phase 3): set = identity owned by the catalog
     # service (material_mirror converges it); NULL = local-born row
     # (admin UI / utility), never touched by the mirror.
