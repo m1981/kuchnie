@@ -706,10 +706,19 @@ Three things worth carrying forward from that integration:
   literals.
 - ~~Test-shadow map~~ **CLOSED:** built in round 3 (§4 of that document, 15
   modules), and `coverage-audit.py` reports `DARK=0`.
-- ~~Is `kuchnie_core/recipe.py` orphaned like `materials`?~~ **CLOSED: no.**
-  The reachability gate resolves it — `recipe.py` is reachable via
-  `kuchnie_core/__init__.py`. N4's hygiene suggestion to consider deleting it
-  therefore does not apply; only its cost-trace labelling item stands.
+- Is `kuchnie_core/recipe.py` orphaned like `materials`? **RE-OPENED
+  2026-08-02 — my earlier "closed: no" was wrong.** I closed it on the
+  reachability gate reporting `recipe.py` reachable via
+  `kuchnie_core/__init__.py`. An adversarial audit then showed that gate is
+  blind to `__init__`-laundered re-exports: any module a *reachable* package
+  `__init__` re-exports scores reachable whether or not a caller exists, so
+  the evidence I relied on cannot distinguish "wired" from "re-exported".
+  `recipe.py` has **zero** first-party non-test consumers, as do
+  `geometry.py` and `export/cutlist_csv.py` — the last of which is the
+  formatki cut-list writer, exactly the stage-5/7 output category N12 is
+  about. `tr-fc74bc2e`'s question stands. Tracked as `kuchnie-hf8`; N4's
+  suggestion to consider deleting `recipe.py` rather than wiring it is live
+  again.
 
 ---
 
