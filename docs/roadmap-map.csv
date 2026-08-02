@@ -6,6 +6,11 @@ kuchnie-kei;wk-6b516fdf;1;Freeze the UC-3 selection set onto the spine;UC-3;prod
 kuchnie-mqy;wk-e162877d;1;UC-3 decor picks feed the UC-1 widelka live;UC-3;product
 kuchnie-55g;wk-9faa9de0;1;Sample (probki) request after the first visit;UC-3;product
 kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11);UC-6;product
+kuchnie-paq;wk-f347f06c;2;Artifact-kind vocabulary + variant provenance;UC-6;product
+kuchnie-6ci;wk-54d5b21c;2;Per-stage required-artifact checklist;UC-6;product
+kuchnie-5wi;wk-dc941f55;2;Self-registering artifacts at the ERP seam;UC-6;product
+kuchnie-l8n;wk-a2688db9;2;Terminal lost state for a dead project;UC-6;product
+kuchnie-m5d;wk-71ac4130;2;Find a project by client name or address;UC-6;product
 kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks);UC-2;product
 kuchnie-el6;wk-cd815fba;3;Extraction r3 (front heights, NL derivation);UC-2;product
 kuchnie-djb;wk-99b51e00;3;bpy roster contradiction;;process

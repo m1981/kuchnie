@@ -59,7 +59,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 | UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — below** (dressed 2026-08-02) | 1 | wk-54bde4be, wk-6b516fdf, wk-e162877d, wk-9faa9de0, wk-6716e9c8, wk-c67ffaa1 |
 | UC-4 | Purchaser | Order materials for a job (cutting-service package + hardware CSVs to dealers) | **full — below** (dressed 2026-07-16) | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
 | UC-5 | Assembler | Assemble a cabinet from its per-cabinet sheet | casual (defer until stage-8 milestone) | 8 | — |
-| UC-6 | all hats | Open a project and thread its artifacts through stages 1→11 | **full — to write** | 1–11 | wk-02a62298 |
+| UC-6 | all hats | Open a project and thread its artifacts through stages 1→11 | **full — below** (dressed 2026-08-02) | 1–11 | wk-54d5b21c, wk-f347f06c, wk-dc941f55, wk-a2688db9, wk-71ac4130 |
 | UC-7 | Purchaser | Import a supplier price file into the ERP material mirror | casual | 5 | wk-39ed9155 |
 | UC-8 | AI agent / Purchaser | Refresh the material mirror from the catalog | casual — already spec'd (`kitchen-erp/docs/specs/material-mirror.md`) | 5 | — |
 | UC-9 | Salesperson | Maintain the decor catalog (images, families, pairings) | casual | 1 | wk-6716e9c8, wk-c67ffaa1 |
@@ -446,6 +446,96 @@ net quantities (required − stock + buffer); project stage advances.
   decomposition — a substitution is geometry, not a price line
   (`purchasing-variants.md` cascade rule).
 
+## UC-6 — Thread a project's artifacts through stages 1→11 (fully dressed, interview 2026-08-02)
+
+**Primary actor:** Michał wearing every hat in turn — this use case is the
+thread the other twelve hang from, not a flow he sits down to perform.
+**Scope:** kitchen-erp (Project spine, ArtifactRef, stage machine). Every
+other component appears only as a *producer* of artifacts.
+**Level:** summary (it spans the other use cases)
+**Goal in context:** one kitchen's whole life is recoverable from one
+record — what was measured, designed, compared, ordered, cut and handed
+over — without Michał maintaining it by hand. The record is an **audit
+trail he mostly does not touch**: whatever produces an artifact registers
+it, so the trail fills as a by-product of doing the work.
+
+**Stakeholders & interests:**
+- Michał/owner — never hunts for the file that proves what was ordered;
+  can tell a dead deal from a live one at a glance
+- Michał in three years — can rebuild a damaged part from the archive of
+  a job whose details he has entirely forgotten
+- Every other use case — UC-1's widelka, UC-3's decor set, UC-4's orders
+  and UC-2's production pack all land here, and none of them should have
+  to know how filing works
+
+**Preconditions:** a project exists (creation is the trigger, not a
+step). **Minimal guarantees:** the stage never moves backward
+(tr-e51ef4fd); an artifact once registered is never silently dropped.
+**Success guarantees:** at stage 11 the project carries everything it
+accumulated, frozen. **Trigger:** first contact with a client.
+
+**Audience:** internal only. The record answers to Michał and nobody
+else — no sharing, permission or redaction requirement is in scope, and
+none may be introduced without re-dressing this use case.
+
+**Main success scenario** (⚠ = the system cannot do it yet):
+
+1. Michał creates a project at `1_first_visit` with client contact and
+   address — supported (tr-e51ef4fd).
+2. Each stage's work happens in its own tool, and **the artifacts it
+   produces register themselves** onto the project as they are written —
+   **⚠** nothing self-registers today; every ArtifactRef is placed by
+   hand (wk-dc941f55). The registration seam is kitchen-erp, where the
+   emitters are *called*: `kuchnie_core` returns rows and CSV text and
+   must never depend on the ERP (the dependency rule; emission is
+   already funnelled through one buildability gate, tr-409f4aab).
+3. An artifact derived per variant (rozrys, DXF, BOM) stays
+   project-level but records **which variant produced it** — **⚠**
+   `ArtifactRef` has only `project_id`, so provenance across the 2–3
+   compared variants is unrecoverable (wk-f347f06c).
+4. Michał advances the stage when that stage's work is done; the move
+   **refuses and names what is missing** if the stage's required
+   artifact kinds are absent — **⚠** exactly one stage does this today
+   (2→3, the survey pack: tr-1676fcde, tr-baf3d053); the other nine have
+   neither a required-kind list nor a check (wk-54d5b21c).
+5. Steps 2–4 repeat through the ten occupiable stages. Stage 10
+   (delivery & installation) is permanently out of scope, so the chain
+   skips 9 → 11 — supported (tr-e51ef4fd).
+6. At `11_handover_archive` the project holds **everything it
+   accumulated**, frozen — no curation step decides what mattered —
+   **⚠** stage 11 is reachable but carries no freeze semantics and no
+   completeness meaning (wk-54d5b21c).
+7. Years later Michał finds the job again **by client name or address**
+   — **⚠** the contact fields exist (tr-e51ef4fd) but nothing searches
+   them; the project-record screen is unspecified (wk-71ac4130, and the
+   screen's OPEN states in `kitchen-erp/docs/specs/screens.md`).
+
+**Extensions:**
+
+- 4a. Client goes quiet and the job dies → the project takes an explicit
+  **terminal lost state with a recorded reason**, held off the forward
+  stage chain so a dead deal is distinguishable from a live one parked
+  at the same stage — **⚠** `transition_stage` only advances; there is
+  no way to say "this one died" (wk-a2688db9).
+- 2a. An artifact is produced outside the system entirely (a supplier's
+  PDF, a photo, a paper note) → it is filed by hand against a named
+  kind, the same vocabulary the self-registering emitters use — **⚠**
+  the vocabulary beyond the five `survey_*` kinds does not exist
+  (wk-f347f06c).
+- 4b. A stage's required artifacts are present but wrong (a
+  checklist-complete pack with a misread tape measure) → **accepted
+  residual, not a defect**: kind-set membership is all the spine checks,
+  inherited from the survey pack's own accepted residual.
+
+Reading: this use case adds no new *process* — it names the filing
+discipline the other twelve already assume. Its shape follows one
+principle: **the trail is a by-product, never a chore.** The survey pack
+is the working prototype of every rule here — required kinds, a
+transition that refuses and names what is missing, membership-not-content
+checking — and UC-6 is mostly that pattern generalized from one stage to
+ten, plus the two things the forward-only chain cannot express today:
+variant provenance and death.
+
 ## UC-11 — Design an L-kitchen (fully dressed, dressed 2026-07-28)
 
 **Primary actor:** Michał as Designer
@@ -652,7 +742,18 @@ Phase 0):
 - tr-e469bec3 — the canvas flags a module line with no price-book entry as
   unpriced (UC-3 step 7: what an unpriced decor pick inherits).
 - tr-ab60ea2b — REQUIRED_SURVEY_KINDS names artifact kinds on the spine
-  (UC-3 step 6: the pattern the frozen selection set follows).
+  (UC-3 step 6: the pattern the frozen selection set follows; UC-6 step 4
+  generalizes it to all ten stages).
+- tr-e51ef4fd — the Project spine: stage, contact and lifecycle fields, an
+  ArtifactRef table, and transition_stage refusing backward or unknown
+  moves (UC-6 steps 1, 5, 7 and ext 4a all rest on it).
+- tr-1676fcde, tr-baf3d053 — the 2→3 design-entry guard refuses an
+  incomplete survey pack and names the missing kinds (UC-6 step 4: the one
+  stage gate that exists, and the prototype for the other nine).
+- tr-409f4aab — artifact emission is funnelled through one buildability
+  gate (UC-6 step 2: the single seam self-registration attaches to).
+- tr-c87a68f9 — offers archive their source verbatim as an ArtifactRef
+  (UC-6 step 3: the existing precedent for variant-derived artifacts).
 
 ## Work
 
@@ -669,6 +770,15 @@ Phase 0):
 - wk-e162877d — decor picks feed the UC-1 widelka live, unpriced picks
   inherit the canvas unpriced flag (UC-3 step 7)
 - wk-9faa9de0 — sample (próbki) request after the visit (UC-3 ext 5b)
+- wk-54d5b21c — per-stage required-kind checklist, generalizing the
+  survey-pack guard to all ten stages (UC-6 steps 4, 6)
+- wk-f347f06c — spine artifact-kind vocabulary + variant provenance on
+  ArtifactRef (UC-6 step 3, ext 2a)
+- wk-dc941f55 — self-registering artifacts at the kitchen-erp writer
+  seam, never inside kuchnie_core (UC-6 step 2)
+- wk-a2688db9 — terminal lost state with a reason, off the forward chain
+  (UC-6 ext 4a)
+- wk-71ac4130 — find a project by client name or address (UC-6 step 7)
 - wk-89a668a2 — CLOSED 2026-07-16 (tr-65aa5969): buildability verdict
   gate runner shipped, both rule families delegated (mechanical M1–M5,
   design-legality FIT/WSTD/G1/G6 via validate_rows); G2/G3/G4/G5/G7
@@ -711,3 +821,24 @@ Pre-written `done --claim` texts for the UC-3 lane:
   and re-reading it does not consult the live catalog" (wk-6b516fdf)
 - "a decor pick with no price-book entry raises the canvas unpriced flag
   instead of contributing zero to the widelka range" (wk-e162877d)
+
+Pre-written `done --claim` texts for the UC-6 lane:
+
+- "UC-6 (thread a project's artifacts through stages 1→11) is fully
+  dressed in docs/specs/use-cases.md as an audit trail that fills as a
+  by-product: a seven-step scenario whose every ⚠ step cites an open wk-
+  id, an internal-only audience statement, and extensions covering the
+  dead deal, the hand-filed external artifact and the accepted
+  content-blindness residual" (this dressing)
+- "each spine stage declares its required ArtifactRef kinds and a forward
+  transition_stage move into a stage refuses, naming the missing kinds,
+  on the same membership-check semantics as the survey-pack guard"
+  (wk-54d5b21c)
+- "ArtifactRef records which variant produced it, and a rozrys emitted
+  from one variant is distinguishable from the same artifact emitted
+  from a sibling variant of the same project" (wk-f347f06c)
+- "the kitchen-erp writer seam registers an ArtifactRef for each artifact
+  it emits, and no kuchnie_core module imports kitchen_erp" (wk-dc941f55)
+- "a project can be marked lost with a recorded reason, the mark is not a
+  member of STAGE_SEQUENCE, and a lost project is excluded from the live
+  project list" (wk-a2688db9)
