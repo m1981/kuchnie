@@ -9,11 +9,21 @@ crossing into 3_layout_design or beyond (the direct 2->3 edge and skips
 like 1->3, wk-fc3aba75); everything else about staging stays in
 models.py, untouched by this module.
 
+The dependency runs models -> survey and only that way (kuchnie-5un):
+this module reads `project.artifact_refs` and needs `Project` for typing
+alone, so the import is TYPE_CHECKING-only and models.py can import the
+check at the top of the file instead of inside transition_stage.
+
 Non-goals mirror the spec: no geometry capture (hb5 owns room geometry),
 no parsing of appliance model sheets (archived verbatim), no per-appliance
 sheet coverage (gate G4's later concern).
 """
-from kitchen_erp.core.models import Project
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kitchen_erp.core.models import Project
 
 # The five Phase-0 capture kinds (survey-pack.md, "Data model"), listed in
 # the playbook's Phase-0 item order. Additive vocabulary on the existing
