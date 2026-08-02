@@ -210,13 +210,21 @@ class TestVariantPersistence:
 #   D60 drawer cabinet 600W x 720H x 510D, 3 drawers, 18mm sides/bottom:
 #     carcass internal width KB = 600 - 2*18            = 564
 #     TANDEMBOX antaro:  LW = 564 - 2*12.5 = 539; back panel = 501 x 89 (M)
-#     LEGRABOX:          LW = 564 - 2*13   = 538; back panel = 500 x 63 (M)
+#     LEGRABOX:          LW = 564 - 2*13   = 538; back panel = 500 x 148 (C)
 #   Runner screw axis (stack, drawers bottom-up, zone height 608/3):
-#     y = 18 + 37 = 55, then 55 + 608/3, then 55 + 2*608/3; x = 46 from
-#     the front edge; 5mm dia, 12mm blind -- per side panel, both sides.
+#     y = 18 + 37 = 55, then 55 + 608/3, then 55 + 2*608/3; 5mm dia, 12mm
+#     blind -- per side panel, both sides.
+#   Screw offsets from the front edge (x):
+#     generic systems publish no per-NL chart here yet -> the first mark
+#     only, x = 46. LEGRABOX has one: NL500 -> 46 / 78 / 110 / 398
+#     (legrabox.RUNNER_SCREW_POSITIONS, the same four core drills).
+#   Default height code: the drawer system's own, not this module's --
+#     "C" for LEGRABOX (core's catalog default, ADR-006 single source),
+#     "M" for TANDEMBOX / MERIVOBOX (kuchnie-27b).
 # ---------------------------------------------------------------------------
 
 DRAWER_ZONE_H = 608 / 3  # (720 - 100 plinth - 4*3mm gaps) / 3 drawers
+LEGRABOX_NL500_SCREWS = [46, 78, 110, 398]
 
 
 @pytest.fixture
@@ -291,9 +299,13 @@ class TestDrawerSystemSubstitution:
             (f"erp-D60_{side}", 46, y, 5, 12, "TandemboxAntaro runner screw (NL=500)")
             for side in ("left", "right") for y in expected_y
         ]
+        # LEGRABOX publishes its NL500 screw chart, so the premium tier
+        # drills all four marks -- the same ops core emits (kuchnie-27b;
+        # this path used to drill one screw per runner).
         assert ops_prem == [
-            (f"erp-D60_{side}", 46, y, 5, 12, "Legrabox runner screw (NL=500)")
+            (f"erp-D60_{side}", x, y, 5, 12, "LEGRABOX C runner screw (NL=500)")
             for side in ("left", "right") for y in expected_y
+            for x in LEGRABOX_NL500_SCREWS
         ]
         assert ops_base != ops_prem
 
@@ -312,8 +324,10 @@ class TestDrawerSystemSubstitution:
         assert box_backs(derive_variant(base)) == [
             (f"erp-D60_drawer_S{i}_back", 501, 89) for i in (1, 2, 3)
         ]
+        # LEGRABOX falls back to its OWN default height code (C, from
+        # kuchnie_core.legrabox) rather than this module's old "M".
         assert box_backs(derive_variant(prem)) == [
-            (f"erp-D60_drawer_S{i}_back", 500, 63) for i in (1, 2, 3)
+            (f"erp-D60_drawer_S{i}_back", 500, 148) for i in (1, 2, 3)
         ]
 
     def test_drawer_tier_changes_runner_bom_lines_not_carcass(self, project):

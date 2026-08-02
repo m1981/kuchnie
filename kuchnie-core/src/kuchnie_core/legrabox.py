@@ -10,8 +10,12 @@ All dimensions in mm unless noted.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .model import Accessory, MachiningOp, Panel, PanelRole
+
+if TYPE_CHECKING:  # import-cycle guard: blum_drawers imports THIS module
+    from .blum_drawers import DrawerBoxSpec
 
 
 # ── Height codes ────────────────────────────────────────────────
@@ -51,6 +55,14 @@ NL_MATRIX: dict[str, dict[int, bool]] = {
 }
 
 VALID_NL = [270, 300, 350, 400, 450, 500, 550, 600, 650]
+
+# The height code a LEGRABOX drawer gets when the caller names none.
+# ADR-006: this module is the single LEGRABOX data source, so the default
+# is defined HERE and nowhere else — ``blum_drawers.Legrabox`` and
+# ``catalog.decompose_dolna_legrabox`` both read it from here rather than
+# spelling "C" again (that duplication was the C-vs-M divergence of
+# kuchnie-27b).
+DEFAULT_HEIGHT_CODE = "C"
 
 # Capacity × NL  (kg)
 CAPACITY_NL: dict[int, list[int]] = {
@@ -177,25 +189,20 @@ def validate_capacity(nl: int, capacity_kg: int) -> list[str]:
 # ── Drawer box decomposition ────────────────────────────────────
 
 def decompose_drawer_box(
-    cabinet_id: str,
-    drawer_id: str,
-    kb: int,
-    nl: int,
-    height_code: str,
-    side_thickness: int,
-    base_material: str = "plyta_16mm",
-    back_material: str = "plyta_16mm",
-    base_thickness: int = 16,
-    back_thickness: int = 16,
-    *,
-    runner_y_mm: float,
+    spec: "DrawerBoxSpec",
 ) -> tuple[list[Panel], list[MachiningOp]]:
     """Decompose one LEGRABOX drawer into board-cut panels + runner ops.
 
-    ``runner_y_mm`` is the runner screw-axis height above the side panel's
-    BOTTOM edge — the caller knows where this drawer sits in the stack, this
-    module only knows Blum's screw offsets along the depth. Required, no
-    default: a runner op without a vertical position is scrap board.
+    Takes a single ``blum_drawers.DrawerBoxSpec`` (kuchnie-b30) — the old
+    11-parameter list was a parameter-object candidate on the accepted
+    arch-smells baseline.
+
+    ``spec.runner_y_mm`` is the runner screw-axis height above the side
+    panel's BOTTOM edge — the caller knows where this drawer sits in the
+    stack, this module only knows Blum's screw offsets along the depth.
+    Required, no default: a runner op without a vertical position is scrap
+    board.  ``spec.height_code`` must already be resolved (see
+    ``DrawerSystem.resolve``); ``None`` means the caller skipped resolution.
 
     Returns:
       panels:  drawer back + drawer base (the two board-cut parts)
@@ -207,21 +214,22 @@ def decompose_drawer_box(
     The metal drawer sides, runners, and clips are purchased accessories
     (not panels) — tracked separately.
     """
+    height_code = spec.height_code or DEFAULT_HEIGHT_CODE
     ht = HEIGHTS[height_code]
-    lw_val = lw(kb, side_thickness)
+    lw_val = lw(spec.kb, spec.side_thickness)
 
     back_w = back_panel_width(lw_val)   # LW − 38
     back_h = ht.back_panel_height_mm
 
     base_w = base_panel_width(lw_val)   # LW − 35
-    base_d = base_panel_depth(nl)       # NL − 10
+    base_d = base_panel_depth(spec.nl)  # NL − 10
 
     panels = [
         Panel(
-            id=f"{cabinet_id}_drawer_{drawer_id}_back",
-            name=f"Szuflada {drawer_id} — tył",
-            material=back_material,
-            thickness_mm=back_thickness,
+            id=f"{spec.cabinet_id}_drawer_{spec.drawer_id}_back",
+            name=f"Szuflada {spec.drawer_id} — tył",
+            material=spec.back_material,
+            thickness_mm=spec.back_thickness,
             width_mm=back_w,
             height_mm=back_h,
             banded_edges={},
@@ -229,10 +237,10 @@ def decompose_drawer_box(
             role=PanelRole.DRAWER_BACK,
         ),
         Panel(
-            id=f"{cabinet_id}_drawer_{drawer_id}_base",
-            name=f"Szuflada {drawer_id} — dno",
-            material=base_material,
-            thickness_mm=base_thickness,
+            id=f"{spec.cabinet_id}_drawer_{spec.drawer_id}_base",
+            name=f"Szuflada {spec.drawer_id} — dno",
+            material=spec.base_material,
+            thickness_mm=spec.base_thickness,
             width_mm=base_w,
             height_mm=base_d,
             banded_edges={},
@@ -242,18 +250,18 @@ def decompose_drawer_box(
     ]
 
     # Runner mounting screws — on each carcass side panel
-    screw_offsets = RUNNER_SCREW_POSITIONS.get(nl, [46, 78, 110])
+    screw_offsets = RUNNER_SCREW_POSITIONS.get(spec.nl, [46, 78, 110])
     ops: list[MachiningOp] = []
     for x in screw_offsets:
         ops.append(MachiningOp(
             type="drill",
-            x_mm=x,             # distance from front edge of side panel
-            y_mm=runner_y_mm,   # runner axis height above panel bottom
+            x_mm=x,                  # distance from front edge of side panel
+            y_mm=spec.runner_y_mm,   # runner axis height above panel bottom
             diameter_mm=RUNNER_SCREW_PILOT_DIA_MM,
             depth_mm=RUNNER_SCREW_PILOT_DEPTH_MM,  # blind — euro 6.3x13
             face="inside",
             drill_type="runner_screw",
-            note=f"LEGRABOX {height_code} runner screw (NL={nl})",
+            note=f"LEGRABOX {height_code} runner screw (NL={spec.nl})",
         ))
 
     return panels, ops
@@ -261,25 +269,23 @@ def decompose_drawer_box(
 
 # ── Runner accessory ────────────────────────────────────────────
 
-def make_runner_accessory(
-    cabinet_id: str,
-    drawer_id: str,
-    height_code: str,
-    nl: int,
-    capacity_kg: int = 40,
-    colour: str = "SW-M",
-    motion: str = "BLUMOTION S",
-) -> Accessory:
-    """Create an Accessory entry for a LEGRABOX runner set."""
+def make_runner_accessory(spec: "DrawerBoxSpec") -> Accessory:
+    """Create an Accessory entry for a LEGRABOX runner set.
+
+    Same ``DrawerBoxSpec`` the drawer's board parts come from — one drawer,
+    one description (kuchnie-b30).
+    """
+    height_code = spec.height_code or DEFAULT_HEIGHT_CODE
     if height_code not in HEIGHTS:
         raise KeyError(
             f"unknown LEGRABOX height code: {height_code!r} "
             f"(valid: {sorted(HEIGHTS)})"
         )
-    part_nr = f"LEGRABOX {height_code} NL{nl} {capacity_kg}kg {colour}"
+    part_nr = (f"LEGRABOX {height_code} NL{spec.nl} "
+               f"{spec.capacity_kg}kg {spec.colour}")
     return Accessory(
-        id=f"{cabinet_id}_runner_{drawer_id}",
-        name=f"{part_nr} ({motion})",
+        id=f"{spec.cabinet_id}_runner_{spec.drawer_id}",
+        name=f"{part_nr} ({spec.motion})",
         type="runner",
         quantity=1,
     )
