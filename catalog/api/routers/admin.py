@@ -10,6 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from catalog.api.deps import get_db
+from catalog.db.engine import SCHEMA_VERSION
 from catalog.models.domain import StatsOut
 
 
@@ -21,6 +22,7 @@ router = APIRouter(tags=["admin"])
 def get_stats(
     db: Annotated[sqlite3.Connection, Depends(get_db)],
 ) -> dict:
+    """Row counts plus the schema-version handshake field (bead kuchnie-019)."""
     producers = db.execute("SELECT COUNT(*) FROM producers").fetchone()[0]
     decors = db.execute("SELECT COUNT(*) FROM decors").fetchone()[0]
     variants = db.execute("SELECT COUNT(*) FROM variants").fetchone()[0]
@@ -32,6 +34,7 @@ def get_stats(
         "variants": variants,
         "pairings": pairings,
         "worktops": worktops,
+        "schema_version": SCHEMA_VERSION,
     }
 
 

@@ -161,6 +161,9 @@ class StatsOut(BaseModel):
     variants: int
     pairings: int
     worktops: int
+    # Handshake field (bead kuchnie-019): consumers assert compatibility
+    # against this before reading anything else. See catalog.client.
+    schema_version: str
 
 
 # ── Configurator models ──────────────────────────────────────────

@@ -14,10 +14,42 @@ Usage:
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 
 _SCHEMA_PATH = Path(__file__).parent / "schema.sql"
+
+_VERSION_RE = re.compile(r"^--\s*Version:\s*(\d+\.\d+\.\d+)\s*$")
+_VERSION_HEADER_LINES = 10
+
+
+def _read_schema_version(path: Path = _SCHEMA_PATH) -> str:
+    """Parse the schema version from schema.sql's header comment.
+
+    schema.sql is the authoritative statement of the catalog's shape, and its
+    `-- Version: X.Y.Z` header is where that shape is versioned. Reading it
+    here rather than restating it as a Python constant means a migration that
+    edits the DDL cannot forget to move the number consumers handshake on
+    (bead kuchnie-019).
+    """
+    with path.open(encoding="utf-8") as handle:
+        for _ in range(_VERSION_HEADER_LINES):
+            line = handle.readline()
+            if not line:
+                break
+            match = _VERSION_RE.match(line.rstrip("\n"))
+            if match:
+                return match.group(1)
+    raise RuntimeError(
+        f"{path} has no '-- Version: X.Y.Z' header — the catalog schema version "
+        "is unknown, so no consumer can assert compatibility against it."
+    )
+
+
+#: The catalog schema version this code base ships. Published over the wire by
+#: GET /catalog/admin/stats and asserted by every consumer (catalog.client).
+SCHEMA_VERSION = _read_schema_version()
 
 
 def get_connection(db_path: str = ":memory:") -> sqlite3.Connection:
