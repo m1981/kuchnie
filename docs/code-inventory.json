@@ -748,6 +748,7 @@
   },
   "kuchnie-core/src/kuchnie_core/blum_drawers.py": {
     "classes": [
+      "DrawerBoxSpec",
       "DrawerSystem",
       "DrawerSystemFactory",
       "Legrabox",
