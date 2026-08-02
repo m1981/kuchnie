@@ -6,7 +6,7 @@ from sqlmodel import select
 from ..core.database import get_session, create_db_and_tables
 from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, STAGE_LABELS
 from ..core.schemas import CostTraceLine
-from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
+from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable, CatalogSchemaMismatch
 from ..core.material_mirror import refresh_material_mirror
 from ..core.bom_generator import BOMGenerator
 from ..core.price_import import freshness_display, quote_freshness_for_project
@@ -894,6 +894,13 @@ class KitchenState(rx.State):
                     print(f"material mirror populated from catalog: {stats.added} added")
                 except CatalogUnavailable as e:
                     print(f"⚠️ catalog service unavailable — material mirror empty: {e}")
+                except CatalogSchemaMismatch as e:
+                    # A version mismatch is loud everywhere else by design
+                    # (krono refuses to serve a stale snapshot). Here the
+                    # surrounding contract is "degrades boot, never blocks
+                    # it", and an unmirrored catalog is a visible absence,
+                    # not silently wrong data — so boot continues.
+                    print(f"⛔ catalog schema mismatch — material mirror NOT populated: {e}")
 
             if not existing:
                 # ==========================================

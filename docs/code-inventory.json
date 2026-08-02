@@ -94,6 +94,21 @@
       "list_worktops"
     ]
   },
+  "catalog/client/__init__.py": {
+    "classes": [
+      "CatalogClient",
+      "CatalogSchemaMismatch",
+      "CatalogUnavailable",
+      "DecorHexCatalogClient",
+      "HttpCatalogClient"
+    ],
+    "component": "catalog",
+    "dotted": "catalog.client",
+    "functions": [
+      "_parse_version",
+      "check_schema_compatible"
+    ]
+  },
   "catalog/db/__init__.py": {
     "classes": [],
     "component": "catalog",
@@ -106,6 +121,7 @@
     "dotted": "catalog.db.engine",
     "functions": [
       "_migrate_if_needed",
+      "_read_schema_version",
       "get_connection",
       "init_schema"
     ]
@@ -362,11 +378,7 @@
     "functions": []
   },
   "kitchen-erp/kitchen_erp/core/catalog_client.py": {
-    "classes": [
-      "CatalogClient",
-      "CatalogUnavailable",
-      "HttpCatalogClient"
-    ],
+    "classes": [],
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.catalog_client",
     "functions": []
@@ -377,7 +389,8 @@
     "dotted": "kitchen_erp.core.database",
     "functions": [
       "create_db_and_tables",
-      "get_session"
+      "get_session",
+      "run_startup_migrations"
     ]
   },
   "kitchen-erp/kitchen_erp/core/domain_adapter.py": {
@@ -468,16 +481,55 @@
   },
   "kitchen-erp/kitchen_erp/core/purchasing.py": {
     "classes": [
+      "BoardOrderRow",
       "CountertopStrategy",
+      "EdgingOrderRow",
       "ExactQuantityStrategy",
+      "HardwareOrderRow",
       "LinearMaterialStrategy",
       "PurchasingStrategy",
-      "SheetMaterialStrategy"
+      "SheetMaterialStrategy",
+      "_BoardDecor",
+      "_EdgeIdentity",
+      "_StaticHardware"
     ],
     "component": "kitchen-erp",
     "dotted": "kitchen_erp.core.purchasing",
     "functions": [
-      "get_strategy_for_material"
+      "_edge_material_bucket",
+      "_material_meta",
+      "_pack_round_opak",
+      "_parse_legrabox_accessory",
+      "board_order_rows",
+      "board_order_rows_to_csv",
+      "edging_order_rows",
+      "edging_order_rows_to_csv",
+      "get_strategy_for_material",
+      "hardware_order_rows",
+      "hardware_order_rows_to_csv"
+    ]
+  },
+  "kitchen-erp/kitchen_erp/core/quote_range.py": {
+    "classes": [
+      "EstimateLinePrice",
+      "LaborRate",
+      "QuoteLine",
+      "QuoteRange",
+      "QuoteRangeResult"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.quote_range",
+    "functions": [
+      "_labor_rate",
+      "compute_quote_range",
+      "labor_category_for",
+      "labor_total_for_cabinets",
+      "latest_quote_range",
+      "price_module",
+      "round_to_100",
+      "save_quote_range",
+      "seed_defaults",
+      "widelka_display"
     ]
   },
   "kitchen-erp/kitchen_erp/core/recipe_loader.py": {
@@ -667,10 +719,7 @@
   },
   "krono-compositor-mvp/src/compositor/presentation/catalog_source.py": {
     "classes": [
-      "CatalogClient",
-      "CatalogSource",
-      "CatalogUnavailable",
-      "HttpCatalogClient"
+      "CatalogSource"
     ],
     "component": "krono-compositor-mvp",
     "dotted": "compositor.presentation.catalog_source",
@@ -742,9 +791,8 @@
     "classes": [
       "BuildabilityError",
       "BuildabilityVerdict",
-      "Finding",
       "GateResult",
-      "GateStatus"
+      "HeightSet"
     ],
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.buildability",
@@ -758,7 +806,8 @@
       "_row_gate_buckets",
       "_skipped",
       "evaluate_buildability",
-      "require_buildable"
+      "require_buildable",
+      "row_findings"
     ]
   },
   "kuchnie-core/src/kuchnie_core/catalog.py": {
@@ -767,11 +816,16 @@
     "dotted": "kuchnie_core.catalog",
     "functions": [
       "_body_eb",
+      "_confirmat_accessory",
       "_confirmat_side_ops",
+      "_count_confirmat_ops",
+      "_euro_screw_accessory",
       "_front_eb",
       "_handle_accessory_name",
+      "_hdf_back_fastener_accessory",
       "_hdf_groove_op",
       "_normalize_edge_material",
+      "_plinth_hardware_accessories",
       "decompose_dolna_drzwiowa",
       "decompose_dolna_legrabox",
       "decompose_dolna_narozna_slepa",
@@ -830,6 +884,15 @@
       "rows_to_csv"
     ]
   },
+  "kuchnie-core/src/kuchnie_core/findings.py": {
+    "classes": [
+      "Finding",
+      "GateStatus"
+    ],
+    "component": "kuchnie-core",
+    "dotted": "kuchnie_core.findings",
+    "functions": []
+  },
   "kuchnie-core/src/kuchnie_core/geometry.py": {
     "classes": [
       "BoundingBox",
@@ -844,9 +907,7 @@
     ]
   },
   "kuchnie-core/src/kuchnie_core/kitchen.py": {
-    "classes": [
-      "HeightSet"
-    ],
+    "classes": [],
     "component": "kuchnie-core",
     "dotted": "kuchnie_core.kitchen",
     "functions": [
@@ -854,7 +915,6 @@
       "all_panels",
       "decompose_kitchen",
       "kitchen_bom",
-      "row_findings",
       "validate_rows"
     ]
   },
