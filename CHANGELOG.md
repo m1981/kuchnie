@@ -5,6 +5,88 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-08-02 — Rough-quote canvas widelka + per-type labor pricing (UC-1 threshold 1, wk-224f3712 + wk-59b943b1)
+
+### Added
+- `kitchen_erp/core/quote_range.py` (new core module, kitchen-erp): the
+  UC-1 threshold-1 rough quote. Classifies every canvas module into
+  `BUILDABLE_MODULE_KINDS` (priced from the existing BOMGenerator
+  material-cost baseline + a komfort tier-delta —
+  `KOMFORT_DRAWER_SYSTEM_DELTA_PER_DRAWER` = 180 zł/drawer,
+  `KOMFORT_HINGE_DELTA_PER_DOOR` = 25 zł/door, estimate-grade constants,
+  admin-editable later) or `EQUIPMENT_MODULE_KINDS`/`CORNER_MODULE_KINDS`
+  (flat per-type price from a new `EstimateLinePrice` table, both tiers
+  seeded equal from the hardcoded UI defaults that used to live in
+  `ui/state.py`'s `add_equipment` specs — dishwasher 1399, oven 1999,
+  hood 788, etc.). A module with no price-book entry is flagged
+  `priced=False` and the whole widelka is marked `incomplete=True` —
+  never silently omitted or zero-counted quietly (UC-1 ext 2a, the
+  pre-written screens.md acceptance test).
+  `compute_quote_range` prices the canvas twice and returns
+  `od_brutto = round_to_100(standard_total_net * 0.95 * 1.23)`,
+  `do_brutto = round_to_100(komfort_total_net * 1.15 * 1.23)`
+  (round-half-up to the nearest 100 zł, VAT 23%, owner-confirmed
+  2026-08-02). Freshness reuses `price_import`'s existing
+  `PriceFreshness`/`QuoteFreshness`/`freshness_display` machinery
+  (tr-4afef6fb) merged across both ProjectDefaults materials and the new
+  price-book lines — no separate widening added.
+- Cennik nakładów (wk-59b943b1): a new `LaborRate` table seeded
+  drawer=400, corner=350, door=250, plain/filler=150 zł.
+  `labor_category_for(module_kind, door_count, drawer_count)` maps
+  DRAWER_BASE→drawer, cargo/karuzela kinds→corner, BASE_CABINET/
+  WALL_CABINET/SINK_BASE-with-doors→door, FILLER/SIDE_PANEL→plain;
+  fixed-equipment kinds get no labor line (their flat rate covers
+  montaż). `labor_total_for_cabinets` sums this across a project and
+  REPLACES `Project.labor_markup` (×1.50) everywhere it drove a total:
+  the canvas's `total_price` (`ui/state.py` ~load_mock_data, now
+  material/equipment cost + labor sum, additive) and the project cost
+  trace's "Robocizna" row (`open_project_cost_trace`, now labeled
+  "Robocizna (cennik nakładów)" = the cennik sum instead of
+  `raw_total * (labor_markup - 1)`). `Project.labor_markup` stays on the
+  model, unused by this math, so the owner can differentiate it back in
+  later without a migration.
+- `QuoteRange` (new SQLModel table, additive — no `_ensure_*_schema`
+  migration needed, `ui/state.py:132-190`'s pattern is only for new
+  columns on existing tables): the widelka stored on the project spine
+  as the first calibration datapoint (UC-1 step 4, tr-e51ef4fd) —
+  `od_brutto`, `do_brutto`, `standard_total_net`, `komfort_total_net`,
+  `module_count`, `incomplete`, `created_at` — append-only via
+  `save_quote_range`/`latest_quote_range`, comparable later to an
+  `Offer.total_net`.
+- UI wiring (`kitchen_erp/ui/state.py`, `kitchen_erp/kitchen_erp.py`):
+  the canvas top bar shows `widelka_summary` ("od X do Y zł brutto") next
+  to a SZACUNEK-style badge (`widelka_badge`/`widelka_freshness_lines`,
+  same `freshness_display` pattern as the existing quote badge) and an
+  "niekompletna" flag when `widelka_incomplete`; a "Zapisz widełkę"
+  button (`KitchenState.save_widelka`) persists the current widelka.
+  `CabinetUI.is_unpriced` flags canvas modules with no price-book entry
+  with a small "?" icon (never silently omitted, UC-1 ext 2a).
+- `kitchen-erp/tests/test_quote_range.py` — 21 tests: the pre-written
+  screens.md acceptance (one priced + one unpriced module → flagged,
+  widelka incomplete, badge shows per-line age), a hand-computed golden
+  (1 drawer base + 2 door bases + 1 dishwasher — arithmetic in comments,
+  material baselines measured once from BOMGenerator and treated as a
+  known input, the widelka math itself independently hand-verified),
+  `round_to_100`/VAT/margin pins, `labor_category_for` coverage, the
+  cennik-replaces-markup wiring (source-text pins, same house pattern as
+  `test_quote_freshness.py`'s `test_ui_state_wires_the_doorway`), and
+  `QuoteRange` persistence/retrieval.
+
+### Notes
+- Full kitchen-erp suite: 204 → 225 tests, all passing (21 new, zero
+  regressions in the pre-existing 204 — none of them exercised
+  `KitchenState`/`open_project_cost_trace` directly, so the markup→cennik
+  change moved no existing assertion). `kuchnie-core` suite untouched:
+  775 passed.
+- Scope note: `wk-59b943b1`'s screens.md-pinned acceptance text (role-
+  gated owner-only cost-without-labor view on the comparison board) is
+  threshold-2 surface that does not exist yet; this increment delivers
+  the per-type labor pricing half of that work item that threshold 1
+  actually needs (the Robocizna cost-trace split), per the owner's
+  2026-08-02 scope merge with wk-224f3712.
+
+---
+
 ## [Unreleased] — 2026-08-01 — Legrabox hardware accessories + purchasing order docs (G13, wk-593a317b)
 
 ### Added

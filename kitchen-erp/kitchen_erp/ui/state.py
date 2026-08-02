@@ -11,6 +11,13 @@ from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
 from ..core.bom_generator import BOMGenerator
 from ..core.price_import import freshness_display, quote_freshness_for_project
+from ..core.quote_range import (
+    compute_quote_range,
+    labor_total_for_cabinets,
+    save_quote_range,
+    seed_defaults,
+    widelka_display,
+)
 
 MODULE_LABELS = {
     "BASE_CABINET": "Base cabinet",
@@ -74,6 +81,10 @@ class CabinetUI(BaseModel):
     can_have_fronts: bool = True
     show_canvas_label: bool = True
     is_reorderable: bool = True
+    # Rough-quote widelka (wk-224f3712): True when this module has no
+    # estimate-line price-book entry -- flagged, never silently omitted
+    # (UC-1 ext 2a).
+    is_unpriced: bool = False
 
 
 class CostTraceLineUI(BaseModel):
@@ -95,6 +106,19 @@ class KitchenState(rx.State):
     quote_grade: str = "estimate"          # "current" | "estimate"
     quote_grade_badge: str = ""
     quote_freshness_lines: list[str] = []  # per-material age, display-ready
+
+    # Rough-quote canvas widelka (wk-224f3712, UC-1 steps 1-4): the od-do
+    # range priced twice (tier standard/komfort). The badge fields below
+    # reuse the SAME freshness machinery/display function as
+    # quote_grade_badge above (tr-4afef6fb, price_import.freshness_display)
+    # -- their own state slot because the widelka stands on a wider set of
+    # prices (price-book module lines too, not just ProjectDefaults
+    # materials) than the header's quote_grade_badge.
+    widelka_summary: str = ""              # "od X do Y zł brutto"
+    widelka_incomplete: bool = False       # UC-1 ext 2a: an unpriced line exists
+    widelka_badge: str = ""
+    widelka_freshness_lines: list[str] = []
+    widelka_saved_summary: str = ""        # confirmation after "zapisz widelkę"
 
     wall_cabinets: list[CabinetUI] = []
     base_cabinets: list[CabinetUI] = []
@@ -305,7 +329,7 @@ class KitchenState(rx.State):
         self._relayout_ordered_row(wall_row)
         self._anchor_overlays(project)
 
-    def _module_ui(self, cab: Cabinet, cost: float) -> CabinetUI:
+    def _module_ui(self, cab: Cabinet, cost: float, is_unpriced: bool = False) -> CabinetUI:
         module_kind = cab.module_kind or ("WALL_CABINET" if cab.type == "WALL" else "BASE_CABINET")
         is_wall = module_kind == "WALL_CABINET" or cab.type == "WALL"
         is_appliance = module_kind in ["DISHWASHER", "OVEN", "COOKTOP", "HOOD"]
@@ -349,6 +373,7 @@ class KitchenState(rx.State):
             can_have_fronts=can_have_fronts,
             show_canvas_label=module_kind not in ["COUNTERTOP", "SINK", "FAUCET", "COOKTOP", "SIDE_PANEL"],
             is_reorderable=self._is_row_module(cab),
+            is_unpriced=is_unpriced,
         )
 
     def load_ikea_layout(self):
@@ -609,20 +634,24 @@ class KitchenState(rx.State):
                     )
                 )
             
-            # Add markup
+            # Robocizna (wk-59b943b1, owner decision 2026-08-02): the cennik
+            # nakładów per-module-type sum REPLACES the previous markup-
+            # multiplier formula. Project.labor_markup stays on the model,
+            # unused by this math -- see quote_range.py's module docstring.
             raw_total = total_material_cost + total_hardware_cost + equipment_total
-            markup_cost = raw_total * (project.labor_markup - 1)
-            final_total = raw_total * project.labor_markup
-            
+            seed_defaults(session)
+            labor_cost = labor_total_for_cabinets(session, project.cabinets)
+            final_total = raw_total + labor_cost
+
             trace_rows.append(
                 CostTraceLineUI(
                     category="Project",
-                    label="Robocizna / narzut",
-                    quantity_label=f"{raw_total:,.2f} zł podstawa".replace(',', "'"),
-                    unit_price_label=f"{project.labor_markup:.2f}x",
+                    label="Robocizna (cennik nakładów)",
+                    quantity_label=f"{len(project.cabinets)} modułów",
+                    unit_price_label="wg typu",
                     waste_label="-",
-                    formula=f"{raw_total:,.2f} x ({project.labor_markup:.2f} - 1)".replace(',', "'"),
-                    subtotal_label=f"{markup_cost:,.2f} zł".replace(',', "'"),
+                    formula="suma stawek cennika wg typu modułu (drawer/corner/door/plain)",
+                    subtotal_label=f"{labor_cost:,.2f} zł".replace(',', "'"),
                 )
             )
 
@@ -1041,20 +1070,30 @@ class KitchenState(rx.State):
             wall_list, base_list, plan_modules = [], [], []
             wall_width, base_width = 0.0, 0.0
 
+            # Rough-quote widelka (wk-224f3712/wk-59b943b1, UC-1 steps 1-4):
+            # seed the price books once, then price the whole canvas twice
+            # (standard/komfort) up front so each cab_ui below can flag
+            # itself unpriced (UC-1 ext 2a) without recomputing per row.
+            seed_defaults(session)
+            quote_range_result = compute_quote_range(session, existing)
+            unpriced_cabinet_ids = {
+                line.cabinet_id for line in quote_range_result.lines if not line.priced
+            }
+
             # Use new BOM system for total price calculation
-            
+
             for cab in wall_cabs + base_cabs + decor_cabs:
                 # Generate cost using new BOM system
                 generator = BOMGenerator(cab, existing.defaults)
                 bom_tree = generator.generate()
                 cab_cost = bom_tree.cost
-                
+
                 # Add equipment price if applicable
                 if cab.equipment_price > 0:
                     cab_cost += cab.equipment_price
-                
+
                 total_price += cab_cost
-                cab_ui = self._module_ui(cab, cab_cost)
+                cab_ui = self._module_ui(cab, cab_cost, is_unpriced=cab.id in unpriced_cabinet_ids)
                 plan_modules.append(cab_ui)
 
                 if self._row_key(cab) == "WALL":
@@ -1069,10 +1108,39 @@ class KitchenState(rx.State):
             self.plan_modules = sorted(plan_modules, key=lambda item: (item.y_mm, item.x_mm, item.height_mm))
             self.total_wall_width = wall_width
             self.total_base_width = base_width
-            self.total_price = round(total_price * existing.labor_markup, 2)
+            # Cennik nakładów REPLACES labor_markup here (owner decision
+            # 2026-08-02): additive labor sum, not a x1.50 multiplier.
+            # existing.labor_markup stays on the model, unused by this math.
+            labor_total = labor_total_for_cabinets(session, existing.cabinets)
+            self.total_price = round(total_price + labor_total, 2)
 
             freshness = quote_freshness_for_project(session, existing)
             self.quote_grade = freshness.grade
             self.quote_grade_badge, self.quote_freshness_lines = freshness_display(freshness)
 
+            # Rough-quote widelka display (wk-224f3712): od-do range, badge
+            # reuses the same freshness_display() machinery as above but
+            # covers the wider price set the widelka stands on (price-book
+            # module lines, not just ProjectDefaults materials).
+            self.widelka_summary = widelka_display(quote_range_result.od_brutto, quote_range_result.do_brutto)
+            self.widelka_incomplete = quote_range_result.incomplete
+            self.widelka_badge, self.widelka_freshness_lines = freshness_display(quote_range_result.freshness)
+
             self._update_selected_cabinet_ui()
+
+    def save_widelka(self):
+        """"zapisz widelkę" (UC-1 step 4): store the current od-do range on
+        the project spine as the first calibration datapoint
+        (tr-e51ef4fd), comparable later to an Offer.total_net."""
+        with next(get_session()) as session:
+            project = session.exec(select(Project)).first()
+            if not project:
+                return
+            seed_defaults(session)
+            result = compute_quote_range(session, project)
+            saved = save_quote_range(session, project, result)
+            self.widelka_saved_summary = (
+                f"Zapisano {self._format_project_date(saved.created_at)}: "
+                f"{widelka_display(saved.od_brutto, saved.do_brutto)}"
+                + (" (niekompletna — moduły bez ceny)" if saved.incomplete else "")
+            )

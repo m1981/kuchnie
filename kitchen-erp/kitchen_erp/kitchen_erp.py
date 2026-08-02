@@ -62,6 +62,51 @@ def top_bar() -> rx.Component:
             margin_right="1rem",
         ),
 
+        # Rough-quote widelka (wk-224f3712, UC-1 steps 1-4): the od-do
+        # range, priced twice (standard/komfort), never a point estimate.
+        rx.vstack(
+            rx.text("WIDEŁKI (SZACUNEK)", font_size="0.7rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
+            rx.text(
+                KitchenState.widelka_summary,
+                font_size="1.1rem",
+                font_weight="800",
+                color="#0f172a",
+                font_family="monospace",
+            ),
+            rx.cond(
+                KitchenState.widelka_incomplete,
+                rx.badge("niekompletna — moduł bez ceny", color_scheme="red", variant="soft"),
+                rx.fragment(),
+            ),
+            rx.cond(
+                KitchenState.widelka_badge != "",
+                rx.tooltip(
+                    rx.badge(
+                        KitchenState.widelka_badge,
+                        color_scheme=rx.cond(KitchenState.widelka_incomplete, "red", "amber"),
+                        variant="soft",
+                    ),
+                    content=KitchenState.widelka_freshness_lines.join("\n"),
+                ),
+            ),
+            rx.button(
+                "Zapisz widełkę",
+                on_click=KitchenState.save_widelka,
+                color_scheme="blue",
+                variant="soft",
+                size="1",
+                cursor="pointer",
+            ),
+            rx.cond(
+                KitchenState.widelka_saved_summary != "",
+                rx.text(KitchenState.widelka_saved_summary, font_size="0.65rem", color="#64748b"),
+                rx.fragment(),
+            ),
+            spacing="1",
+            align_items="flex-end",
+            margin_right="2rem",
+        ),
+
         rx.vstack(
             rx.text("CAŁKOWITY KOSZTORYS", font_size="0.75rem", font_weight="bold", color="#64748b", text_align="right", letter_spacing="0.05em"),
             rx.text(
@@ -431,6 +476,20 @@ def plan_module_box(cabinet: CabinetUI) -> rx.Component:
                     ),
                 ),
             ),
+        ),
+        # Unpriced-line flag (UC-1 ext 2a, wk-224f3712): a module with no
+        # estimate-line price-book entry is never silently omitted from
+        # the canvas -- it renders with a visible "?" flag instead.
+        rx.cond(
+            cabinet.is_unpriced,
+            rx.tooltip(
+                rx.icon(
+                    tag="circle-help", size=14, color="#dc2626",
+                    position="absolute", top="4px", right="4px", z_index="6",
+                ),
+                content="Brak ceny w cenniku — widełka niekompletna",
+            ),
+            rx.fragment(),
         ),
         rx.cond(
             cabinet.show_canvas_label,
