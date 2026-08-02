@@ -168,3 +168,30 @@ def _restore_database_module():
     yield
     os.environ.pop("KITCHEN_ERP_DB", None)
     importlib.reload(database)
+
+
+def test_app_module_runs_migrations_at_import_not_from_a_route(tmp_path):
+    """Reaching /admin directly must not hit a pre-migration schema.
+
+    kuchnie-26s moved the DDL out of the Reflex state class but left its only
+    trigger on the "/" route's on_load, so a bookmark straight to /admin ran
+    AdminState.load_materials against an unmigrated database. kuchnie-h45
+    widened that hole by adding two columns. The migration therefore has to
+    fire at module import, before any page is registered.
+    """
+    src = (
+        Path(__file__).resolve().parents[1] / "kitchen_erp" / "kitchen_erp.py"
+    ).read_text()
+
+    call = "create_db_and_tables()"
+    assert call in src, "app module never runs the startup migration"
+
+    # Module level means column 0 — inside a def/on_load it would be indented.
+    assert any(
+        line == call for line in src.splitlines()
+    ), "create_db_and_tables() must run at import, not inside a function or a route hook"
+
+    # And it must precede the first add_page, or a route could load first.
+    assert src.index(call) < src.index("app.add_page"), (
+        "migrations must run before any page is registered"
+    )

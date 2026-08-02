@@ -6,6 +6,7 @@
 # state, and admin UI from the ``ui/`` subpackage.
 import reflex as rx
 from .ui.state import KitchenState, CabinetUI, CostTraceLineUI
+from .core.database import create_db_and_tables
 
 def top_bar() -> rx.Component:
     """The Deal Closer Header."""
@@ -769,6 +770,13 @@ def index() -> rx.Component:
         width="100%", min_height="100vh", bg="#f8fafc", spacing="0"
     )
 
+
+# Schema evolution runs once here, at process startup, BEFORE any route is
+# registered — not from a page's on_load. Reaching /admin directly on a
+# database predating a column would otherwise raise OperationalError, since
+# only "/" carried a migration step (kuchnie-26s moved the DDL out of the
+# Reflex state class but left its single trigger on one route).
+create_db_and_tables()
 
 # Initialize the app and add pages
 app = rx.App()
