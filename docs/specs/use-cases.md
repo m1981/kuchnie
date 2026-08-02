@@ -56,7 +56,7 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 |---|---|---|---|---|---|
 | UC-1 | Salesperson/Designer | Quote a kitchen (two thresholds: iPad canvas widelek → hb5 comparison board; estimate-grade always) | **full — below** (dressed 2026-07-18) | 2–5 | wk-224f3712, wk-59b943b1, wk-593a317b |
 | UC-2 | Production engineer | Produce the production pack | **full — below** | 3–8 | wk-81a47ab8 |
-| UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — to write** | 1 | wk-6716e9c8, wk-c67ffaa1 |
+| UC-3 | Salesperson + Client | Run a first-visit decor session ending in a selection set | **full — below** (dressed 2026-08-02) | 1 | wk-54bde4be, wk-6b516fdf, wk-e162877d, wk-9faa9de0, wk-6716e9c8, wk-c67ffaa1 |
 | UC-4 | Purchaser | Order materials for a job (cutting-service package + hardware CSVs to dealers) | **full — below** (dressed 2026-07-16) | 5, 9 | wk-593a317b, wk-39ed9155, wk-4c37f4ee |
 | UC-5 | Assembler | Assemble a cabinet from its per-cabinet sheet | casual (defer until stage-8 milestone) | 8 | — |
 | UC-6 | all hats | Open a project and thread its artifacts through stages 1→11 | **full — to write** | 1–11 | wk-02a62298 |
@@ -69,8 +69,8 @@ margin-risk. Everything else stays casual (one line) until it earns more.
 
 Worktop BOM position (wk-4c37f4ee) is a subfunction of UC-1/UC-4, not a
 goal. The catalog **configurator** flow (sessions/steps/templates in
-`catalog/`) is an implementation candidate for UC-3 — adopting or atticing
-it is decided when UC-3 gets dressed, not before.
+`catalog/`) is **UC-3's adopted implementation** — settled by the UC-3
+dressing interview on 2026-08-02 (see UC-3 below), not atticed.
 
 ## UC-1 — Quote a kitchen (fully dressed, interview 2026-07-18)
 
@@ -269,6 +269,94 @@ doorways gated); the main scenario's steps all run. This
 use case adds no work — it gives the existing work its requirement, and
 places the buildability verdict ON the main success scenario of the
 business's central flow.
+
+## UC-3 — Run a first-visit decor session (fully dressed, interview 2026-08-02)
+
+**Primary actor:** Michał as Salesperson, driving the iPad
+**Scope:** `catalog/` (decor truth + the six-step configurator),
+krono-compositor (previews), kitchen-erp (the project spine that receives
+the result). The client sits at the same table as an external actor.
+**Level:** sea (user goal)
+**Goal in context:** the first visit ends with the client having *seen*
+decors on a kitchen rather than on a swatch card, and with 2–3 candidate
+sets recorded well enough that a later visit resumes instead of restarts.
+The visit does not have to end in a winner.
+
+**Stakeholders & interests:**
+- Michał/owner — one visit produces a durable record; nothing decided at
+  the table has to be reconstructed from memory afterwards
+- Client — judges colour and decor on a picture, not a 20×15 mm chip; is
+  allowed to go home undecided without losing the session
+- Salesperson-Michał (UC-1) — the picks move the widelka in the same
+  sitting, so the decor conversation and the money conversation are one
+  conversation
+- Purchaser-Michał (UC-4) — the frozen set is what the edge-band and
+  board orders will later be derived against
+
+**Preconditions:** a project exists on the spine; the catalog service and
+compositor are reachable. **Connectivity is the owner's problem, not the
+system's** — the visit assumes a working connection (phone tether when the
+client's wifi is bad); no offline render mode is in scope.
+**Minimal guarantees:** nothing the client picked is lost if the session
+ends without a decision; a decor with no price never silently contributes
+zero to a quoted range.
+**Success guarantees:** 2–3 candidate sets exist against the project, each
+covering all six roles; the chosen set (now or at a later visit) is frozen
+onto the spine as a snapshot.
+**Trigger:** first visit to the client, before the pomiar (UC-12).
+
+**Main success scenario** (⚠ = the system cannot do it yet):
+
+1. Michał opens a configurator session against the project — session
+   machinery supported (tr-5a94302e, tr-43ab6d49); **⚠** the session has
+   no project link, it stands alone on a token (wk-54bde4be).
+2. Michał walks the six roles — front → carcass → worktop → edge →
+   side_panel → plinth — narrowing options as the client reacts;
+   step logic and per-step filtering supported (tr-fcca2d96,
+   tr-40a5beb5).
+3. For a candidate, the compositor shows the decors composited on a
+   **generic showroom scene** — the client's own layout does not exist
+   yet, and is not required here (it returns at the UC-1 comparison
+   board, after the pomiar and the hb5 design). Preview supported
+   (tr-89ff86d6, tr-5fba4784).
+4. A decor with no miniature or no price stays **selectable and visibly
+   marked** rather than hidden — **⚠** the configurator has no badge
+   (wk-54bde4be); the compositor greys out non-renderable decors instead
+   (tr-2007bfcc), which is a different and stricter rule. 90 of 148
+   decors have no image today (tr-e2bf767e).
+5. Steps 1–4 repeat until 2–3 candidate sets stand side by side — **⚠**
+   `/configurator/compare` compares variants, not whole named sets
+   (wk-54bde4be).
+6. Michał freezes the agreed set onto the project spine as a snapshot of
+   the six picks — **⚠** no artifact kind exists (wk-6b516fdf); the
+   spine pattern it would follow is the survey pack's (tr-ab60ea2b).
+7. The picks feed the UC-1 widelka in the same sitting; an unpriced pick
+   inherits the canvas *unpriced* flag rather than contributing zero —
+   flag machinery supported (tr-e469bec3), **⚠** the decor→range link
+   does not exist (wk-e162877d).
+
+**Extensions:**
+
+- 5a. Client leaves undecided → the session **stays open and resumable**
+  at a later visit or by phone; no candidate set is discarded — **⚠**
+  sessions have no open/closed lifecycle and no owner (wk-54bde4be).
+- 5b. Client wants to feel the material → the candidate set becomes a
+  supplier sample (próbki) request placed **after** the visit, and the
+  decision happens once samples arrive — **⚠** not built (wk-9faa9de0);
+  this inserts a step between visit 1 and the pomiar.
+- 4a. The client picks a decor from the 35-strong wood family → today
+  every one of them lacks a grain miniature (tr-e2bf767e), so the
+  preview cannot show grain at all — image acquisition (wk-6716e9c8) is
+  the blocker, colour-family misfiling (wk-c67ffaa1) compounds it.
+
+Reading: the six-role wizard, its BOM assembly and the compositor all
+already exist and are tested — this use case is mostly **wiring, not
+building**. The decision it settles is the one that was open in the
+inventory table above: the `catalog/` configurator flow is **adopted** as
+UC-3's implementation, not atticed. The client's picks live in
+`configurator_sessions` for the duration of the visit; the compositor
+stays stateless and preview-only; kitchen-erp receives a frozen snapshot
+at the end, never a live pointer.
 
 ## UC-4 — Order materials for a job (fully dressed)
 
@@ -547,6 +635,24 @@ Phase 0):
   step 4 coverage).
 - tr-3ef7b607 — confirmat + HDF-groove ops emitted (UC-2 step 7 input).
 - tr-b93c22bf — ERP BOM quantities come from core decompose() (UC-2 step 8).
+- tr-5a94302e — the catalog BOM endpoint is pinned (UC-3 step 1: the
+  six-role session resolves a token to a BOM).
+- tr-43ab6d49 — build_bom walks front/carcass/worktop/side_panel/plinth
+  (UC-3 step 1/2: the wizard already assembles a selection set).
+- tr-fcca2d96, tr-40a5beb5 — configurator-api spec and test manifests are
+  sentinel-watched (UC-3 step 2 rests on a spec that cannot rot silently).
+- tr-89ff86d6 — the compositor serves its catalog from the catalog service
+  with a snapshot fallback, no local CATALOG dict (UC-3 step 3 preview).
+- tr-5fba4784 — the compositor catalog source is tested incl. offline
+  snapshot degradation (UC-3 step 3; the visit's connectivity assumption).
+- tr-2007bfcc — the compositor frontend greys out non-renderable decors
+  (UC-3 step 4: the stricter rule the configurator must NOT copy).
+- tr-e2bf767e — 58 of 148 decors have miniatures and no true wood decor
+  has a grain image (UC-3 step 4 / ext 4a: the badge rule's whole reason).
+- tr-e469bec3 — the canvas flags a module line with no price-book entry as
+  unpriced (UC-3 step 7: what an unpriced decor pick inherits).
+- tr-ab60ea2b — REQUIRED_SURVEY_KINDS names artifact kinds on the spine
+  (UC-3 step 6: the pattern the frozen selection set follows).
 
 ## Work
 
@@ -556,6 +662,13 @@ Phase 0):
 - wk-39ed9155 — supplier price-file import (UC-7 / UC-4)
 - wk-4c37f4ee — worktop per-lm BOM (UC-1/UC-4 subfunction)
 - wk-6716e9c8, wk-c67ffaa1 — decor images + family audit (UC-3/UC-9)
+- wk-54bde4be — adopt the configurator as the UC-3 session: badges,
+  candidate sets, resumable open session (UC-3 steps 1–5, ext 5a)
+- wk-6b516fdf — freeze the selection set onto the spine as a named
+  ArtifactRef kind (UC-3 step 6)
+- wk-e162877d — decor picks feed the UC-1 widelka live, unpriced picks
+  inherit the canvas unpriced flag (UC-3 step 7)
+- wk-9faa9de0 — sample (próbki) request after the visit (UC-3 ext 5b)
 - wk-89a668a2 — CLOSED 2026-07-16 (tr-65aa5969): buildability verdict
   gate runner shipped, both rule families delegated (mechanical M1–M5,
   design-legality FIT/WSTD/G1/G6 via validate_rows); G2/G3/G4/G5/G7
@@ -580,3 +693,21 @@ Pre-written `done --claim` texts for the remaining migration steps:
 - "roadmap-map.csv carries a uc column consumed by scripts/dashboard.py as
   a by-goal roadmap view, and spec-health warns on feature specs lacking a
   Serves: UC- line" (step 3)
+
+Pre-written `done --claim` texts for the UC-3 lane:
+
+- "UC-3 (first-visit decor session) is fully dressed in
+  docs/specs/use-cases.md with the catalog configurator named as its
+  adopted implementation, a six-role main scenario whose every ⚠ step
+  cites an open wk- id, and extensions covering the undecided walk-away
+  (5a), the post-visit sample request (5b) and the wood-family image gap
+  (4a)" (this dressing)
+- "the catalog configurator marks a decor with no price-book entry and a
+  decor with no miniature as selectable-but-flagged in its options
+  payload, distinct from the compositor's non-renderable greying"
+  (wk-54bde4be)
+- "a kitchen-erp project carries a named decor-selection ArtifactRef kind
+  holding the six role picks by id with the timestamp they were agreed,
+  and re-reading it does not consult the live catalog" (wk-6b516fdf)
+- "a decor pick with no price-book entry raises the canvas unpriced flag
+  instead of contributing zero to the widelka range" (wk-e162877d)

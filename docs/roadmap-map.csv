@@ -1,6 +1,10 @@
 bd_id;wk_id;stage;label;uc;axis
 kuchnie-58o;wk-6716e9c8;1;Decor miniature images (90/148 missing);UC-3;product
 kuchnie-7pc;wk-c67ffaa1;1;Color-family audit (K522);UC-3;product
+kuchnie-4n8;wk-54bde4be;1;UC-3 session: adopt the catalog configurator;UC-3;product
+kuchnie-kei;wk-6b516fdf;1;Freeze the UC-3 selection set onto the spine;UC-3;product
+kuchnie-mqy;wk-e162877d;1;UC-3 decor picks feed the UC-1 widelka live;UC-3;product
+kuchnie-55g;wk-9faa9de0;1;Sample (probki) request after the first visit;UC-3;product
 kuchnie-cir;wk-02a62298;2;Project/Order spine (threads 1-11);UC-6;product
 kuchnie-5tt;wk-81a47ab8;3;Extraction fidelity r2 (drawer stacks);UC-2;product
 kuchnie-el6;wk-cd815fba;3;Extraction r3 (front heights, NL derivation);UC-2;product
