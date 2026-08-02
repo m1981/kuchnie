@@ -3,6 +3,11 @@ from datetime import date, datetime
 
 from sqlmodel import SQLModel, Field, Relationship
 
+# survey.py needs Project for typing only (TYPE_CHECKING-guarded), so the
+# survey-pack check is imported here at module level — kuchnie-5un removed
+# the deferred import that used to sit inside transition_stage.
+from kitchen_erp.core.survey import survey_pack_missing
+
 # Project/Order spine (wk-02a62298): stage vocabulary is the L1 process
 # stage list in docs/specs/process-coverage.md, in pipeline order. Stage 10
 # (Delivery & installation) is "out, permanent" per that spec, so it is not
@@ -463,8 +468,7 @@ class Project(SQLModel, table=True):
             # 3_layout_design or beyond (2->3, but also skips like 1->3 or
             # 2->4) refuses an incomplete pack and names the gap. Moves that
             # stay below the design boundary, or start at/after it, ignore
-            # pack state. Lazy import: survey.py imports this module at load.
-            from kitchen_erp.core.survey import survey_pack_missing
+            # pack state.
             missing = survey_pack_missing(self)
             if missing:
                 raise StageTransitionError(

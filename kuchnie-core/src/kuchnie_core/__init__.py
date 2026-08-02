@@ -33,18 +33,17 @@ from .decomposer import decompose
 from .bom import BOM, BOMItem, calculate_bom, worktop_bom_items
 from .loader import load_cabinet, load_kitchen
 from .kitchen import (
-    HeightSet, all_panels, all_accessories, kitchen_bom, row_findings, validate_rows,
+    all_panels, all_accessories, kitchen_bom, validate_rows,
 )
+from .findings import ADVISORY, BLOCKING, Finding, GateStatus
 from .buildability import (
-    ADVISORY,
-    BLOCKING,
     BuildabilityError,
     BuildabilityVerdict,
-    Finding,
     GateResult,
-    GateStatus,
+    HeightSet,
     evaluate_buildability,
     require_buildable,
+    row_findings,
 )
 from .serialize import (
     kitchen_to_dict,
