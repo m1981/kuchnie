@@ -2,10 +2,9 @@
 import re
 import reflex as rx
 from pydantic import BaseModel
-from sqlalchemy import text
 from sqlmodel import select
-from ..core.database import get_session, engine, SQLModel
-from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, STAGE_LABELS, DEFAULT_STAGE
+from ..core.database import get_session, create_db_and_tables
+from ..core.models import Project, Cabinet, Material, HardwareSet, ProjectDefaults, STAGE_LABELS
 from ..core.schemas import CostTraceLine
 from ..core.catalog_client import HttpCatalogClient, CatalogUnavailable
 from ..core.material_mirror import refresh_material_mirror
@@ -152,65 +151,6 @@ class KitchenState(rx.State):
         "Side Panel", "Countertop", "Sink", "Faucet", "Wall Cabinet 400",
         "Wall Cabinet 800", "Hood",
     ]
-
-    def _ensure_cabinet_schema(self, session):
-        columns = {row[1] for row in session.exec(text("PRAGMA table_info(cabinet)")).all()}
-        migrations = {
-            "module_kind": "ALTER TABLE cabinet ADD COLUMN module_kind VARCHAR DEFAULT 'BASE_CABINET'",
-            "x_mm": "ALTER TABLE cabinet ADD COLUMN x_mm FLOAT DEFAULT 0",
-            "y_mm": "ALTER TABLE cabinet ADD COLUMN y_mm FLOAT DEFAULT 0",
-            "equipment_price": "ALTER TABLE cabinet ADD COLUMN equipment_price FLOAT DEFAULT 0",
-        }
-        for column_name, statement in migrations.items():
-            if column_name not in columns:
-                session.exec(text(statement))
-        session.commit()
-
-    def _ensure_material_schema(self, session):
-        columns = {row[1] for row in session.exec(text("PRAGMA table_info(material)")).all()}
-        if "catalog_variant_id" not in columns:
-            session.exec(text("ALTER TABLE material ADD COLUMN catalog_variant_id VARCHAR"))
-        session.commit()
-
-    def _ensure_project_schema(self, session):
-        """Project/Order spine (wk-02a62298): additive columns for stage,
-        customer contact, lifecycle dates. Existing local database.db files
-        predate these columns; ALTER them in like the cabinet/material
-        migrations above."""
-        columns = {row[1] for row in session.exec(text("PRAGMA table_info(project)")).all()}
-        migrations = {
-            "stage": f"ALTER TABLE project ADD COLUMN stage VARCHAR DEFAULT '{DEFAULT_STAGE}'",
-            "customer_email": "ALTER TABLE project ADD COLUMN customer_email VARCHAR",
-            "customer_phone": "ALTER TABLE project ADD COLUMN customer_phone VARCHAR",
-            "customer_address": "ALTER TABLE project ADD COLUMN customer_address VARCHAR",
-            "created_at": "ALTER TABLE project ADD COLUMN created_at DATETIME",
-            "quoted_at": "ALTER TABLE project ADD COLUMN quoted_at DATETIME",
-            "ordered_at": "ALTER TABLE project ADD COLUMN ordered_at DATETIME",
-            "production_at": "ALTER TABLE project ADD COLUMN production_at DATETIME",
-            "installed_at": "ALTER TABLE project ADD COLUMN installed_at DATETIME",
-        }
-        for column_name, statement in migrations.items():
-            if column_name not in columns:
-                session.exec(text(statement))
-        session.commit()
-
-    def _ensure_projectdefaults_schema(self, session):
-        """Height parameter set (wk-5b929a7c, spec:
-        kitchen-erp/docs/specs/height-parameter-set.md): additive nullable
-        height-line columns. Existing local database.db files predate
-        them; ALTER them in like the cabinet/material/project migrations
-        above."""
-        columns = {row[1] for row in session.exec(text("PRAGMA table_info(projectdefaults)")).all()}
-        migrations = {
-            "elbow_height_mm": "ALTER TABLE projectdefaults ADD COLUMN elbow_height_mm FLOAT",
-            "worktop_height_mm": "ALTER TABLE projectdefaults ADD COLUMN worktop_height_mm FLOAT",
-            "wall_line_mm": "ALTER TABLE projectdefaults ADD COLUMN wall_line_mm FLOAT",
-            "tall_line_mm": "ALTER TABLE projectdefaults ADD COLUMN tall_line_mm FLOAT",
-        }
-        for column_name, statement in migrations.items():
-            if column_name not in columns:
-                session.exec(text(statement))
-        session.commit()
 
     def _format_project_date(self, value) -> str:
         return value.strftime("%Y-%m-%d") if value else "—"
@@ -934,12 +874,10 @@ class KitchenState(rx.State):
                 break
 
     def load_mock_data(self):
-        SQLModel.metadata.create_all(engine)
+        # Schema creation + additive migrations live in core.database
+        # (kuchnie-26s) — the UI layer only consumes the schema.
+        create_db_and_tables()
         with next(get_session()) as session:
-            self._ensure_cabinet_schema(session)
-            self._ensure_material_schema(session)
-            self._ensure_project_schema(session)
-            self._ensure_projectdefaults_schema(session)
             existing = session.exec(select(Project)).first()
 
             # Board identity comes from the catalog service via the
