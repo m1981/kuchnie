@@ -1,0 +1,74 @@
+# not-yet-wired — first-party code that is built, tested and deliberately
+# NOT reachable from any application entry point. Gate:
+#   bash scripts/session-gates.d/64-reachability.sh
+#
+# Origin: review finding N12 (docs/reviews/architecture-review-round-3-
+# 2026-08-02.md §3) + N14 (§5). The owner's fidelity-first decision
+# (architecture-consolidated-review-2026-08-02.md) parks the wiring epic,
+# which makes "built but unreachable" a STANDING state — so it has to be a
+# DECLARED one. This file is that declaration. It is not a dead-code list:
+# every entry is ahead of the UI on purpose.
+#
+# Format — one entry per line, each carrying the bead that will wire or
+# retire it (same accepted-deferral convention as docs/arch-smells-
+# baseline.txt, but per entry, because the gate FAILs on a bead-less line):
+#     path/to/module.py           # kuchnie-<id> — why it is parked
+#     path/to/module.py::symbol   # kuchnie-<id> — sub-module deferral
+#
+# Adding an entry is the cheap fix when the gate FAILs; wiring the module
+# is the real one. An entry that becomes reachable is reported as stale —
+# drop it. A new application entry point belongs in the gate's ENTRIES
+# list, NOT here: entry points are legitimately unimported.
+
+# ── stage 5: ERP variant / offer subsystem (kuchnie-lh2) ──────────────
+# wk-593a317b increment 1 + the offer loop. kitchen_erp/ui/ and
+# kitchen_erp.py reference no Variant, derive_variant, record_offer or
+# accept_variant; the UI cannot reach an offer. Wiring epic: kuchnie-ubc.1.
+kitchen-erp/kitchen_erp/core/variant_derivation.py  # kuchnie-lh2 — derive_variant composes every carcass result and has no caller
+kitchen-erp/kitchen_erp/core/offers.py              # kuchnie-lh2 — record_offer/accept_variant, no UI path to the offer loop
+kitchen-erp/kitchen_erp/core/heights.py             # kuchnie-lh2 — worktop-height derivation, waiting on the same UI
+
+# ── stage 5: purchasing order documents (kuchnie-ubc.1) ───────────────
+# purchasing.py IS reachable (ui/state.py imports get_strategy_for_material,
+# a waste-factor helper), so only the order-doc generators are parked. They
+# are pinned byte-for-byte by tests/test_purchasing_order_docs.py while the
+# production join (Material.name -> BOARD_DECOR_CATALOG) runs in nothing.
+kitchen-erp/kitchen_erp/core/purchasing.py::board_order_rows           # kuchnie-ubc.1 — formatki order, test-only caller
+kitchen-erp/kitchen_erp/core/purchasing.py::board_order_rows_to_csv    # kuchnie-ubc.1 — formatki CSV, test-only caller
+kitchen-erp/kitchen_erp/core/purchasing.py::edging_order_rows          # kuchnie-ubc.1 — edging order, test-only caller
+kitchen-erp/kitchen_erp/core/purchasing.py::edging_order_rows_to_csv   # kuchnie-ubc.1 — edging CSV, test-only caller
+kitchen-erp/kitchen_erp/core/purchasing.py::hardware_order_rows        # kuchnie-ubc.1 — hardware order, test-only caller
+kitchen-erp/kitchen_erp/core/purchasing.py::hardware_order_rows_to_csv # kuchnie-ubc.1 — hardware CSV, test-only caller
+
+# ── stage 7: kitchen-cam, whole component (kuchnie-lh2) ───────────────
+# Four test files exercise machining.py and one exercises panel_dxf.py, but
+# kitchen-cam declares no console_scripts and no first-party module imports
+# it — so the drilling file cannot be produced from the software. N12 item 3
+# is the open question: library consumed by the ERP, or a CLI the owner runs.
+# Neither exists yet, which is why the package markers are listed too.
+kitchen-cam/src/kitchen_cam/machining.py       # kuchnie-lh2 — System32/hinge/handle drilling, no consumer
+kitchen-cam/src/kitchen_cam/dxf/panel_dxf.py   # kuchnie-lh2 — panel_to_dxf, no consumer
+kitchen-cam/src/kitchen_cam/__init__.py        # kuchnie-lh2 — package marker; nothing imports kitchen_cam at all
+kitchen-cam/src/kitchen_cam/dxf/__init__.py    # kuchnie-lh2 — package marker, same reason
+
+# ── kuchnie_core.materials — a ports-and-adapters island (kuchnie-05p) ─
+# Finding N14, and the answer to round 2's open question: no production code
+# constructs SqliteMaterialCatalog. __init__.py re-exports its five siblings
+# and nothing imports __init__ — the subpackage imports itself into a circle
+# no entry point enters, which is why "has >= 1 importer" scores it clean.
+# Triage adopt/attic per kuchnie-05p.
+kuchnie-core/src/kuchnie_core/materials/__init__.py           # kuchnie-05p — re-export surface, no consumer
+kuchnie-core/src/kuchnie_core/materials/protocol.py           # kuchnie-05p — MaterialCatalog Protocol, no implementor in a live path
+kuchnie-core/src/kuchnie_core/materials/sqlite_repository.py  # kuchnie-05p — SqliteMaterialCatalog, never constructed
+kuchnie-core/src/kuchnie_core/materials/resolver.py           # kuchnie-05p — MaterialResolver + LRU cache, no caller
+kuchnie-core/src/kuchnie_core/materials/models.py             # kuchnie-05p — VariantInfo/EdgeInfo/WorktopInfo DTOs
+kuchnie-core/src/kuchnie_core/materials/exceptions.py         # kuchnie-05p — four domain exception types
+
+# ── the Blender <-> core YAML contract (kuchnie-qrs) ──────────────────
+# Not in the review's N12 table — the gate found this one. docs/GLOSSARY.md
+# calls schema.py::KitchenSchema the file of record for the Home Builder 5
+# contract, yet loader.load_kitchen parses YAML directly and never validates
+# through it; loader.load_kitchen_from_schema, the missing bridge, has no
+# reference of its own. Adopt (validate in the loader) or attic (say in the
+# GLOSSARY that it is test-only) — kuchnie-qrs.
+kuchnie-core/src/kuchnie_core/schema.py  # kuchnie-qrs — published contract enforced only in tests
