@@ -593,12 +593,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
       - Runner mounting drill ops are added to carcass side panels
       - Runner accessories carry LEGRABOX part numbers
     """
-    from .legrabox import (
-        HEIGHTS,
-        RUNNER_AXIS_OFFSET_MM,
-        decompose_drawer_box,
-        make_runner_accessory,
-    )
+    from .blum_drawers import DrawerBoxSpec, Legrabox
 
     m = method_from_cab(cab)
     r = DecompositionResult(cabinet_id=cab.id, cabinet_type=cab.type)
@@ -672,27 +667,28 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
     ))
 
     # -- Drawer boxes + runner mounting ops --
-    # Drawers stack bottom-up: each zone starts on top of the bottom panel
-    # and the runner screw axis sits RUNNER_AXIS_OFFSET_MM above the zone
-    # floor (wk-7341700c; per-runner value to confirm in Blum planner).
-    runner_y = float(m.bottom_thickness_mm) + RUNNER_AXIS_OFFSET_MM
-    for drawer in cab.drawers:
-        did = drawer["id"]
-        height_code = drawer.get("height_code", "C")
-        nl = drawer.get("nl", 500)
-        capacity = drawer.get("capacity_kg", 40)
-
-        box_panels, runner_ops = decompose_drawer_box(
+    # Drawers stack bottom-up; the screw-axis heights come from the drawer
+    # system's shared stacking helper (kuchnie-27b — kitchen-erp used to
+    # carry a second copy of this arithmetic). The height code a drawer
+    # leaves unset comes from the system too (LEGRABOX: "C").
+    system = Legrabox()
+    for drawer, runner_y in zip(
+        cab.drawers,
+        system.runner_axis_heights(cab.drawers, m.bottom_thickness_mm),
+    ):
+        spec = DrawerBoxSpec(
             cabinet_id=cab.id,
-            drawer_id=did,
+            drawer_id=drawer["id"],
             kb=m.carcass_bottom_width(cab.width_mm),  # KB = internal width
-            nl=nl,
-            height_code=height_code,
-            side_thickness=m.side_thickness_mm,
+            nl=drawer.get("nl", 500),
             runner_y_mm=runner_y,
+            height_code=drawer.get("height_code"),
+            side_thickness=m.side_thickness_mm,
+            capacity_kg=drawer.get("capacity_kg", 40),
         )
+
+        box_panels, runner_ops = system.decompose_drawer_box(spec)
         r.panels.extend(box_panels)
-        runner_y += drawer.get("wysokosc") or HEIGHTS[height_code].side_height_mm
 
         # Mounting ops go on BOTH side panels (mirrored) — each side gets
         # its own instances; downstream CAM mutates ops per side.
@@ -700,13 +696,7 @@ def decompose_dolna_legrabox(cab: CabinetInstance) -> DecompositionResult:
         right_ops.extend(copy.deepcopy(runner_ops))
 
         # Runner accessory (purchased part)
-        r.accessories.append(make_runner_accessory(
-            cabinet_id=cab.id,
-            drawer_id=did,
-            height_code=height_code,
-            nl=nl,
-            capacity_kg=capacity,
-        ))
+        r.accessories.append(system.make_runner_accessory(spec))
 
     # -- Joinery + groove on the side panels (after runner ops so the
     # runner drill indices stay stable for downstream consumers) --

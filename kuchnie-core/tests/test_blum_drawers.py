@@ -10,6 +10,7 @@ Tests prove:
 
 import pytest
 from kuchnie_core.blum_drawers import (
+    DrawerBoxSpec,
     DrawerSystem,
     DrawerSystemFactory,
     TandemboxAntaro,
@@ -251,30 +252,32 @@ class TestDrawerSystemInterface:
         assert len(sys.valid_nl()) > 0
 
     def test_decompose_drawer_box_returns_panels_and_ops(self, sys):
-        panels, ops = sys.decompose_drawer_box(
+        panels, ops = sys.decompose_drawer_box(DrawerBoxSpec(
             cabinet_id="TEST",
             drawer_id="D1",
             kb=600,
             nl=500,
+            runner_y_mm=55.0,
             height_code=sys.height_codes[0],
-        )
+        ))
         assert len(panels) == 2  # back + base
         assert all(p.width_mm > 0 for p in panels)
         assert all(p.height_mm > 0 for p in panels)
 
     def test_decompose_invalid_height_code_raises(self, sys):
         with pytest.raises(ValueError, match="Unknown height code"):
-            sys.decompose_drawer_box(
+            sys.decompose_drawer_box(DrawerBoxSpec(
                 cabinet_id="TEST", drawer_id="D1",
-                kb=600, nl=500, height_code="X"
-            )
+                kb=600, nl=500, runner_y_mm=55.0, height_code="X"
+            ))
 
     def test_decompose_invalid_nl_raises(self, sys):
         with pytest.raises(ValueError, match="not available"):
-            sys.decompose_drawer_box(
+            sys.decompose_drawer_box(DrawerBoxSpec(
                 cabinet_id="TEST", drawer_id="D1",
-                kb=600, nl=999, height_code=sys.height_codes[0]
-            )
+                kb=600, nl=999, runner_y_mm=55.0,
+                height_code=sys.height_codes[0]
+            ))
 
     def test_lw_too_small_raises(self, sys):
         with pytest.raises(ValueError, match="too small"):

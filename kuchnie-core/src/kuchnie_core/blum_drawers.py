@@ -19,10 +19,71 @@ Sources:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .model import Accessory, MachiningOp, Panel, PanelRole
 from . import legrabox as _legrabox
+
+
+# ── Shared defaults ──────────────────────────────────────────────
+
+# The height code a drawer gets when the caller names none. Defined ONCE
+# here for every system that does not own a different answer: "M" is the
+# only code all three Blum systems publish (kuchnie-27b — kitchen-erp used
+# to spell it in its own module).  LEGRABOX overrides it from
+# ``legrabox.DEFAULT_HEIGHT_CODE`` because core's
+# ``catalog.decompose_dolna_legrabox`` has always defaulted to "C" and core
+# is the domain authority; a single cross-system literal is impossible
+# because "C" is not a TANDEMBOX or MERIVOBOX code at all.
+DEFAULT_HEIGHT_CODE = "M"
+
+# Blum's first pre-punched runner screw, measured from the cabinet's FRONT
+# edge. Systems without their own published chart use this single mark.
+_FIRST_RUNNER_SCREW_MM = 46
+
+
+# ── The drawer, described once ───────────────────────────────────
+
+@dataclass(frozen=True)
+class DrawerBoxSpec:
+    """Everything one drawer box needs, in one value (kuchnie-b30).
+
+    Replaces the 10/11-parameter argument lists of
+    ``DrawerSystem.decompose_drawer_box`` and
+    ``legrabox.decompose_drawer_box`` — both were on the accepted
+    ``docs/arch-smells-baseline.txt`` param-bloat list precisely so this
+    could retire them, together with ``make_runner_accessory``'s.
+
+    Three groups of fields, in dependency order:
+
+      * identity + size — ``cabinet_id``/``drawer_id``/``kb``/``nl``
+      * PLACEMENT — ``runner_y_mm`` (required, no default: the screw-axis
+        height above the carcass side's BOTTOM edge) and ``side_thickness``.
+        These are the two data the ``DrawerSystem`` ABC used to lack, which
+        is why kitchen-erp re-implemented the stacking loop and mutated the
+        emitted ops afterwards (kuchnie-27b).
+      * board + purchasing defaults — materials, thicknesses, and the runner
+        set's capacity/colour/motion, so ``make_runner_accessory`` describes
+        the SAME drawer rather than taking its own parallel argument list.
+
+    ``height_code=None`` means "use the drawer system's default"; resolve it
+    with ``DrawerSystem.resolve`` before reading it.
+    """
+
+    cabinet_id: str
+    drawer_id: str
+    kb: int                       # carcass internal width
+    nl: int                       # nominal length (runner depth)
+    runner_y_mm: float            # placement — required, see above
+    height_code: str | None = None
+    side_thickness: int = 0
+    base_material: str = "plyta_16mm"
+    back_material: str = "plyta_16mm"
+    base_thickness: int = 16
+    back_thickness: int = 16
+    capacity_kg: int = 40
+    colour: str = "SW-M"
+    motion: str = "BLUMOTION S"
 
 
 # ── Abstract base ────────────────────────────────────────────────
@@ -87,49 +148,91 @@ class DrawerSystem(ABC):
         """Drawer base depth = NL - 10 (chipboard back variant)."""
         return nl - 10
 
+    # ── Defaults + validation ────────────────────────────────────
+
+    @property
+    def default_height_code(self) -> str:
+        """Height code for a drawer that names none — see DEFAULT_HEIGHT_CODE."""
+        return DEFAULT_HEIGHT_CODE
+
+    def resolve(self, spec: DrawerBoxSpec) -> DrawerBoxSpec:
+        """Fill in the system's default height code and validate the spec.
+
+        Raises:
+          ValueError: if height_code is unknown or NL is invalid for that code.
+        """
+        if spec.height_code is None:
+            spec = replace(spec, height_code=self.default_height_code)
+        if spec.height_code not in self.height_codes:
+            raise ValueError(
+                f"Unknown height code {spec.height_code!r}. "
+                f"Valid: {self.height_codes}"
+            )
+        if not self.is_valid_combo(spec.height_code, spec.nl):
+            raise ValueError(
+                f"{self.__class__.__name__} {spec.height_code} not available "
+                f"with NL={spec.nl}. Valid NLs: {self.valid_nl()}"
+            )
+        return spec
+
+    # ── Vertical placement — the stacking loop, defined ONCE ─────
+
+    def runner_axis_heights(
+        self, drawers: list[dict], bottom_thickness_mm: float
+    ) -> list[float]:
+        """Runner screw-axis height for each drawer in a bottom-up stack.
+
+        ``drawers`` is the ``CabinetInstance.drawers`` contract (listed
+        bottom-up). Each zone starts on top of the carcass bottom panel; the
+        screw axis sits ``RUNNER_AXIS_OFFSET_MM`` above its zone floor, and
+        a zone is as tall as the drawer's front (``wysokosc``) or, failing
+        that, the metal side height of its height code.
+
+        This is the arithmetic ``catalog.decompose_dolna_legrabox`` and
+        kitchen-erp's ``_attach_drawer_boxes`` each used to carry a copy of
+        (kuchnie-27b). ``RUNNER_AXIS_OFFSET_MM`` currently lives in
+        ``legrabox`` and is shared by all three systems — verify per runner
+        in the Blum planner before trusting it for TANDEMBOX/MERIVOBOX.
+        """
+        y = float(bottom_thickness_mm) + _legrabox.RUNNER_AXIS_OFFSET_MM
+        heights: list[float] = []
+        for drawer in drawers:
+            heights.append(y)
+            code = drawer.get("height_code") or self.default_height_code
+            y += drawer.get("wysokosc") or self.side_height(code)
+        return heights
+
+    # ── Decomposition ────────────────────────────────────────────
+
     def decompose_drawer_box(
-        self,
-        cabinet_id: str,
-        drawer_id: str,
-        kb: int,
-        nl: int,
-        height_code: str,
-        base_material: str = "plyta_16mm",
-        back_material: str = "plyta_16mm",
-        base_thickness: int = 16,
-        back_thickness: int = 16,
+        self, spec: DrawerBoxSpec
     ) -> tuple[list[Panel], list[MachiningOp]]:
         """Decompose one drawer into board-cut panels + runner mounting ops.
 
         Returns:
           panels:  drawer back + drawer base (the two board-cut parts)
-          ops:     runner mounting drill positions for ONE side panel
+          ops:     runner mounting drill positions for ONE side panel, in
+                   the carcass-side CAM convention (x = from the FRONT edge,
+                   y = above the BOTTOM edge). Already placed at
+                   ``spec.runner_y_mm`` — no caller may swap the axes
+                   afterwards. Each side needs its own copies.
 
         Raises:
           ValueError: if height_code is unknown or NL is invalid for that code.
         """
-        if height_code not in self.height_codes:
-            raise ValueError(
-                f"Unknown height code {height_code!r}. "
-                f"Valid: {self.height_codes}"
-            )
-        if not self.is_valid_combo(height_code, nl):
-            raise ValueError(
-                f"{self.__class__.__name__} {height_code} not available with NL={nl}. "
-                f"Valid NLs: {self.valid_nl()}"
-            )
-        lw_val = self.lw(kb)
+        spec = self.resolve(spec)
+        lw_val = self.lw(spec.kb)
         back_w = self.back_panel_width(lw_val)
-        back_h = self.back_panel_height(height_code)
+        back_h = self.back_panel_height(spec.height_code)
         base_w = self.base_panel_width(lw_val)
-        base_d = self.base_panel_depth(nl)
+        base_d = self.base_panel_depth(spec.nl)
 
         panels = [
             Panel(
-                id=f"{cabinet_id}_drawer_{drawer_id}_back",
-                name=f"Szuflada {drawer_id} — tył",
-                material=back_material,
-                thickness_mm=back_thickness,
+                id=f"{spec.cabinet_id}_drawer_{spec.drawer_id}_back",
+                name=f"Szuflada {spec.drawer_id} — tył",
+                material=spec.back_material,
+                thickness_mm=spec.back_thickness,
                 width_mm=back_w,
                 height_mm=back_h,
                 banded_edges={},
@@ -137,10 +240,10 @@ class DrawerSystem(ABC):
                 role=PanelRole.DRAWER_BACK,
             ),
             Panel(
-                id=f"{cabinet_id}_drawer_{drawer_id}_base",
-                name=f"Szuflada {drawer_id} — dno",
-                material=base_material,
-                thickness_mm=base_thickness,
+                id=f"{spec.cabinet_id}_drawer_{spec.drawer_id}_base",
+                name=f"Szuflada {spec.drawer_id} — dno",
+                material=spec.base_material,
+                thickness_mm=spec.base_thickness,
                 width_mm=base_w,
                 height_mm=base_d,
                 banded_edges={},
@@ -150,42 +253,38 @@ class DrawerSystem(ABC):
         ]
 
         # Runner mounting screws
-        ops = self._runner_screw_ops(cabinet_id, drawer_id, nl)
+        ops = self._runner_screw_ops(spec)
         return panels, ops
 
-    def _runner_screw_ops(
-        self, cabinet_id: str, drawer_id: str, nl: int
-    ) -> list[MachiningOp]:
-        """Runner screw positions — first screw at 46mm, then 32mm pitch."""
-        # Standard positions (simplified — full chart from Blum per NL)
-        first_screw = 46
-        ops = [
+    def _runner_screw_ops(self, spec: DrawerBoxSpec) -> list[MachiningOp]:
+        """Runner screw positions for a resolved spec.
+
+        Generic systems publish no per-NL screw chart here yet, so only the
+        first mark is emitted — but at the right place: x from the front
+        edge, y at the caller's ``runner_y_mm``.
+        """
+        return [
             MachiningOp(
                 type="drill",
-                x_mm=0,
-                y_mm=first_screw,
+                x_mm=_FIRST_RUNNER_SCREW_MM,
+                y_mm=spec.runner_y_mm,
                 diameter_mm=_legrabox.RUNNER_SCREW_PILOT_DIA_MM,
                 depth_mm=_legrabox.RUNNER_SCREW_PILOT_DEPTH_MM,  # blind
-                note=f"{self.__class__.__name__} runner screw (NL={nl})",
+                face="inside",
+                drill_type="runner_screw",
+                note=(f"{self.__class__.__name__} runner screw "
+                      f"(NL={spec.nl})"),
             ),
         ]
-        return ops
 
-    def make_runner_accessory(
-        self,
-        cabinet_id: str,
-        drawer_id: str,
-        height_code: str,
-        nl: int,
-        capacity_kg: int = 40,
-        colour: str = "SW-M",
-        motion: str = "BLUMOTION S",
-    ) -> Accessory:
+    def make_runner_accessory(self, spec: DrawerBoxSpec) -> Accessory:
         """Create an Accessory entry for the runner set."""
-        part_nr = f"{self.__class__.__name__.upper()} {height_code} NL{nl} {capacity_kg}kg {colour}"
+        spec = self.resolve(spec)
+        part_nr = (f"{self.__class__.__name__.upper()} {spec.height_code} "
+                   f"NL{spec.nl} {spec.capacity_kg}kg {spec.colour}")
         return Accessory(
-            id=f"{cabinet_id}_runner_{drawer_id}",
-            name=f"{part_nr} ({motion})",
+            id=f"{spec.cabinet_id}_runner_{spec.drawer_id}",
+            name=f"{part_nr} ({spec.motion})",
             type="runner",
             quantity=1,
         )
@@ -328,6 +427,25 @@ class Legrabox(DrawerSystem):
 
     def base_panel_depth(self, nl: int) -> int:
         return _legrabox.base_panel_depth(nl)
+
+    @property
+    def default_height_code(self) -> str:
+        return _legrabox.DEFAULT_HEIGHT_CODE
+
+    def decompose_drawer_box(
+        self, spec: DrawerBoxSpec
+    ) -> tuple[list[Panel], list[MachiningOp]]:
+        """Validate here, decompose in the module — one implementation.
+
+        Before kuchnie-27b this class inherited the ABC's generic
+        single-screw op, so the kitchen-erp path drilled ONE runner screw
+        where core drilled the four NL-specific marks from
+        ``legrabox.RUNNER_SCREW_POSITIONS``.
+        """
+        return _legrabox.decompose_drawer_box(self.resolve(spec))
+
+    def make_runner_accessory(self, spec: DrawerBoxSpec) -> Accessory:
+        return _legrabox.make_runner_accessory(self.resolve(spec))
 
 
 # ── Factory ──────────────────────────────────────────────────────

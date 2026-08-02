@@ -16,6 +16,7 @@ from kuchnie_core.legrabox import (
     HEIGHTS, validate_height_nl, validate_capacity,
     decompose_drawer_box,
 )
+from kuchnie_core.blum_drawers import DrawerBoxSpec
 
 FIXTURES = Path(__file__).resolve().parent.parent / "fixtures"
 
@@ -103,11 +104,11 @@ def test_validate_unknown_height():
 
 def test_drawer_box_panel_count():
     """One LEGRABOX drawer → 2 board panels (back + base)."""
-    panels, ops = decompose_drawer_box(
+    panels, ops = decompose_drawer_box(DrawerBoxSpec(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
         runner_y_mm=18,
-    )
+    ))
     assert len(panels) == 2
     assert panels[0].name.endswith("tył")
     assert panels[1].name.endswith("dno")
@@ -115,11 +116,11 @@ def test_drawer_box_panel_count():
 
 def test_drawer_box_back_dimensions():
     """Back: width = LW−38 = 738−38 = 700,  height = 148 (C code)."""
-    panels, _ = decompose_drawer_box(
+    panels, _ = decompose_drawer_box(DrawerBoxSpec(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
         runner_y_mm=18,
-    )
+    ))
     back = panels[0]
     assert back.width_mm == 700
     assert back.height_mm == 148
@@ -128,11 +129,11 @@ def test_drawer_box_back_dimensions():
 
 def test_drawer_box_base_dimensions():
     """Base: width = LW−35 = 703,  depth = NL−10 = 490."""
-    panels, _ = decompose_drawer_box(
+    panels, _ = decompose_drawer_box(DrawerBoxSpec(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
         runner_y_mm=18,
-    )
+    ))
     base = panels[1]
     assert base.width_mm == 703
     assert base.height_mm == 490   # base depth
@@ -141,11 +142,11 @@ def test_drawer_box_base_dimensions():
 
 def test_drawer_box_runner_ops_count():
     """Runner mounting ops for NL=500: 4 screw positions (from PoC table)."""
-    _, ops = decompose_drawer_box(
+    _, ops = decompose_drawer_box(DrawerBoxSpec(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
         runner_y_mm=18,
-    )
+    ))
     assert len(ops) == 4
     assert all(op.type == "drill" for op in ops)
     assert all(op.diameter_mm == 5 for op in ops)
@@ -154,11 +155,11 @@ def test_drawer_box_runner_ops_count():
 def test_drawer_box_first_screw_position():
     """First runner screw at 46mm from front edge (x axis on side panels),
     at the runner height passed by the caller (y axis)."""
-    _, ops = decompose_drawer_box(
+    _, ops = decompose_drawer_box(DrawerBoxSpec(
         cabinet_id="T1", drawer_id="S1",
         kb=764, nl=500, height_code="C", side_thickness=18,
         runner_y_mm=18,
-    )
+    ))
     assert ops[0].x_mm == 46
     assert all(op.y_mm == 18 for op in ops)
 
@@ -250,4 +251,6 @@ def test_runner_accessory_rejects_unknown_height_code():
     from kuchnie_core.legrabox import make_runner_accessory
 
     with pytest.raises(KeyError, match="unknown LEGRABOX height code"):
-        make_runner_accessory("D60", "s1", height_code="X", nl=500)
+        make_runner_accessory(DrawerBoxSpec(
+            cabinet_id="D60", drawer_id="s1", kb=564, nl=500,
+            runner_y_mm=55.0, height_code="X"))

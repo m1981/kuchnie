@@ -28,11 +28,11 @@ import copy
 from dataclasses import dataclass, replace
 
 from kuchnie_core import DrawerSystemFactory
+from kuchnie_core.blum_drawers import DrawerBoxSpec
 from kuchnie_core.bom import calculate_bom
 from kuchnie_core.decomposer import decompose
 from kuchnie_core.export.cutlist_csv import CutPiece, aggregate_panels
 from kuchnie_core.export.edging_csv import EdgingRow, collect_edging_rows
-from kuchnie_core.legrabox import RUNNER_AXIS_OFFSET_MM
 from kuchnie_core.model import (
     CabinetInstance,
     DecompositionResult,
@@ -50,10 +50,13 @@ BASELINE_DRAWER_SYSTEM = "tandembox_antaro"
 BASELINE_CORNER_MECHANISM = "plain_shelves"
 BASELINE_HINGE_CLASS = "standard"
 
-# Drawer-box sizing for this increment: "M" is the one height code all
-# three Blum systems share; NL 500 matches decompose_dolna_legrabox's
-# default for standard 510-560mm base depths.
-DRAWER_BOX_HEIGHT_CODE = "M"
+# Drawer-box sizing for this increment: NL 500 matches
+# decompose_dolna_legrabox's default for standard 510-560mm base depths.
+# The height code is NOT defined here any more -- a drawer that names none
+# gets its drawer system's own default (DrawerSystem.default_height_code:
+# "C" for LEGRABOX per kuchnie_core.legrabox, "M" for the rest). This
+# module used to spell "M" for every system, which diverged from core
+# (kuchnie-27b).
 DRAWER_BOX_NL_MM = 500
 
 
@@ -164,38 +167,35 @@ def _attach_drawer_boxes(
     """Derive drawer-box panels + runner drilling ops from the variant's
     drawer system -- the substitution axis of purchasing-variants.md.
 
-    Mirrors decompose_dolna_legrabox's stacking: drawers are listed
-    bottom-up (CabinetInstance contract), the runner screw axis sits
-    RUNNER_AXIS_OFFSET_MM above each zone's floor, and the mounting ops
-    land on BOTH carcass side panels as independent copies.
+    No stacking arithmetic and no op post-mutation live here: the
+    ``DrawerSystem`` ABC owns both (``runner_axis_heights`` places the
+    stack, ``DrawerBoxSpec.runner_y_mm`` carries the placement into the
+    decomposition), so this path and core's
+    ``catalog.decompose_dolna_legrabox`` are one implementation
+    (kuchnie-27b). All this function still does is fan the ops out onto
+    BOTH carcass side panels as independent copies.
     """
     system = DrawerSystemFactory.get(system_id)
     kb = inst.width_mm - 2 * inst.thickness_side_mm  # carcass internal width
     side_panels = [p for p in result.panels
                    if p.role in (PanelRole.LEFT_SIDE, PanelRole.RIGHT_SIDE)]
 
-    runner_y = float(inst.thickness_bottom_mm) + RUNNER_AXIS_OFFSET_MM
-    for drawer in inst.drawers:
-        box_panels, ops = system.decompose_drawer_box(
+    for drawer, runner_y in zip(
+        inst.drawers,
+        system.runner_axis_heights(inst.drawers, inst.thickness_bottom_mm),
+    ):
+        box_panels, ops = system.decompose_drawer_box(DrawerBoxSpec(
             cabinet_id=inst.id,
             drawer_id=drawer["id"],
             kb=kb,
             nl=drawer.get("nl", DRAWER_BOX_NL_MM),
-            height_code=drawer.get("height_code", DRAWER_BOX_HEIGHT_CODE),
-        )
+            runner_y_mm=runner_y,
+            height_code=drawer.get("height_code"),
+            side_thickness=inst.thickness_side_mm,
+        ))
         result.panels.extend(box_panels)
-        for op in ops:
-            # The DrawerSystem ABC emits the screw offset along the depth
-            # in y_mm; recast to the carcass-side CAM convention (x from
-            # FRONT edge, y from BOTTOM edge) and place the runner axis in
-            # the stack -- vertical placement is the caller's job (see
-            # kuchnie_core.legrabox.decompose_drawer_box).
-            op.x_mm, op.y_mm = op.y_mm, runner_y
-            op.drill_type = op.drill_type or "runner_screw"
         for side in side_panels:
             side.machining_ops.extend(copy.deepcopy(ops))
-        runner_y += (drawer.get("wysokosc")
-                     or system.side_height(drawer.get("height_code", DRAWER_BOX_HEIGHT_CODE)))
 
 
 def _bom_lines(results: list[DecompositionResult]) -> list[BomLine]:
