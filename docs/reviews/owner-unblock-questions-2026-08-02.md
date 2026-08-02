@@ -139,6 +139,22 @@ TRUTH_HUMAN=1 scripts/truth verdict tr-4d916887 retracted --basis "superseded by
 TRUTH_HUMAN=1 scripts/truth verdict tr-611a8240 retracted --basis "superseded by the live tr-6d1f8951 after the colour-parameter increment"
 ```
 
+**Added 2026-08-02 (wave 2).** Two more dead predecessors, both killed by
+repairs landing exactly as intended — a claim recording a defect becomes
+false the day the defect is fixed:
+
+```bash
+TRUTH_HUMAN=1 scripts/truth verdict tr-4674581b retracted --basis "superseded by tr-d9722e31; row_findings moved to buildability.py in kuchnie-5un"
+TRUTH_HUMAN=1 scripts/truth verdict tr-4476e4d8 retracted --basis "superseded by tr-ce5c7845; Material gained structure and thickness_mm in kuchnie-h45 step 1"
+```
+
+`tr-4476e4d8` was one of the eleven claims filed for this review — it
+recorded that `Material` had no thickness field. `kuchnie-h45` step 1 gave it
+one, so the claim is now genuinely false and its successor `tr-ce5c7845`
+records the new truth. The premise link on `kuchnie-h45` has already been
+redirected to the successor, so `truth ready` stays correct with or without
+the retraction; the retraction is bookkeeping, not a blocker.
+
 `tr-ff8a5110` is the judgement call. Its successor `tr-5f88b6f8` is live, so
 retracting it is defensible — but it is also the only surviving record that a
 nondeterministic recipe once slipped through the filing gate. **My
