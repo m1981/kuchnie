@@ -254,6 +254,71 @@ migration step.
 
 ---
 
+## 3a. CORRECTIONS from the source research (2026-08-03)
+
+`sources/process-independence-lineage.md` read the primary literature behind
+§1 and **contradicted this document in four places**. The corrections stand;
+the original text above is left intact so the change is visible.
+
+**C1 — F6's evidence base is thinner than "best-validated" implies.** Fagan's
+famous ~82 % figure comes from *one* 4,439-statement COBOL program written by
+two people at Aetna — not from the operating-system study, which is the source
+of the separate productivity figure. Fagan himself reports systems-programming
+inspections finding "approximately two thirds", with individual inspections
+lower. Wagner's pooled survey across studies: **mean 34 %, median 30 %, range
+8.5–92.7 %**. The *practice* is well-validated; the *rate* is not, and this
+document implied otherwise.
+
+**C2 — modern code review finds far fewer defects than practitioners believe.**
+Bacchelli & Bird classified 570 Microsoft review comments: **defects were 14 %**,
+fourth of nine categories, "mostly address 'micro' level and superficial
+concerns", while code improvements were 29 %. Yet "finding defects" was the top
+stated motivation for 44 % of managers and 44 % of programmers. Sadowski et al.
+at Google: of 44 developers surveyed, **only 2 said review comments had found a
+bug**. **Our 4-of-4 on 2026-08-02 is an existence proof, not a rate**, and this
+document came close to treating it as one.
+
+**C3 — independence and effectiveness trade off, and we bought only one side.**
+The explanation for the low defect yield is *understanding*, not diligence:
+defect-finding is the review outcome that needs the most context, and
+independence is the deliberate removal of context. Fagan paid for that with
+machinery we did not adopt — the overview step, the reader/paraphrase step,
+error-type checklists, entry criteria, a bounded checking rate, and a
+re-inspection threshold. **Actionable consequence: spend on briefing the
+verifier, not on more verifiers.** The verifier prompts on 2026-08-02 were
+long on skepticism and short on context transfer.
+
+**C4 — refusal 4.11 has it backwards, and this is the sharpest correction.**
+"Accept the finding into a baseline *with the reason recorded*" is **Vaughan's
+normalisation step 4**: in her sequence the official, reasoned, recorded act of
+acceptance *is* the normalising mechanism, not a guard against it. Writing the
+justification down is what makes the deviance official. The mitigation is to
+make drift impossible to hide rather than to document it well: **a baseline
+entry must carry the original standard**, so comparison never silently
+re-anchors to the last accepted state, **plus an expiry** that forces the
+judgment to be re-made. Today's `arch-smells-baseline.txt` records the reason
+for `AdminState 36 → 38` but not the original 36, which is exactly the failure
+mode.
+
+**Two further hits on §5.2.** Counting findings-caught-by-verifier is what
+Fagan explicitly forbade in 1976 — inspection data "should not under any
+circumstances be used for programmer performance appraisal" — and the
+mitigation this document proposed (declare it not-a-target) is the
+intent-based segregation Austin's chapter 3 shows does not hold. And Clark &
+Wilson's separation of duty assumes **non-collusion**, which two verifier
+agents built from the same model and the same prompt shape do not satisfy;
+their own remedy is randomisation, so verifiers should differ in model, lens
+or seeded bias rather than merely in scope.
+
+**One supporting find.** The invariant/testimony split in the scratch design
+independently reproduces Clark & Wilson's internal-vs-external consistency
+partition ("computers do not have direct sensors to monitor the real world")
+*and* Austin's full-supervision-vs-delegation partition. Two unrelated
+literatures landing on the same boundary is decent evidence the boundary is
+real, and it partly answers the scratch design's open question about novelty.
+
+---
+
 ## 4. The refusal list — do NOT adopt these
 
 As important as the adoption list. Each of these is either historically
