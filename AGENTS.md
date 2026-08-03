@@ -18,12 +18,51 @@ Kitchen cabinet decomposition engine. Takes YAML cabinet definitions, produces p
 
 ---
 
+## Which documents to read, and when
+
+Read by default: this file, `STATUS.md`, `scripts/truth ready`, and
+`docs/GLOSSARY.md` for any unknown term. That is the whole entry protocol.
+
+**Do NOT read the verification-doctrine documents unless you are deciding
+about the verification machinery itself** —
+`docs/reviews/agentic-verification-doctrine-2026-08-03.md`,
+`verification-system-scratch-design-2026-08-03.md`, and the ~6,000 lines under
+`docs/reviews/sources/`. They are for whoever changes how the ledger and gates
+work, not for whoever builds a decomposer. Loading them costs a large slice of
+context and biases toward meta-work: the session that produced them spent more
+time on ledger healing than on code integration.
+
+If you are resuming feature work, `docs/reviews/session-handoff-2026-08-03.md`
+is the one-page substitute for all of it.
+
 ## Truth ledger
 
 This project keeps a truth ledger. Before relying on a repository fact,
-check it: `scripts/truth list --live`. When you verify a fact, file it:
-`scripts/truth claim "<fact>" --class VERIFIED --evidence-cmd "<cmd>" --paths "<glob,glob>" --tier P1`
-Facts about the world outside the repo: add `--ttl-days N` instead of `--paths`.
+check it: `scripts/truth list --live`.
+
+**File a fact only if it will outlive the work you are about to do.**
+
+- **Do file** facts about the world outside the repo — owner-confirmed rates,
+  manufacturer geometry, standards. Use `--ttl-days N` instead of `--paths`.
+  These are testimony: they do not churn, and other work genuinely stands on
+  them.
+- **Do file** durable properties that no gate covers yet.
+- **Do NOT file a fact that describes a defect you are about to fix.** That
+  fact is engineered to become false the day your own bead lands, and it costs
+  a verdict, an invalidation and a manual retraction to say so. The defect
+  belongs in a bead; the fix belongs in a gate that turns green.
+
+Measured 2026-08-02: eleven defect-describing claims were filed in one
+session; two were retracted within 24 hours and the rest are due to die as
+their own beads ship. See `docs/reviews/session-handoff-2026-08-03.md` §4.
+
+```
+scripts/truth claim "<fact>" --class VERIFIED --evidence-cmd "<cmd>" --paths "<glob,glob>" --tier P1
+```
+
+The evidence command must be able to FAIL when the sentence is false: it must
+read every path in `--paths`, avoid `grep -n` (line numbers drift), and
+produce byte-identical output on three consecutive runs.
 Never edit `.truth/claims.jsonl` directly; status changes are new records.
 Full documentation: `.truth/README.md`.
 
