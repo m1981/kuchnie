@@ -11,6 +11,8 @@
 #     old form piped bd's stderr to /dev/null and counted matches, so a bd
 #     that failed outright looked exactly like "no twins in progress" —
 #     the F1 rule that session-close.sh's own header cites.
+# BLIND-SPOT: it reads bd's status field only.
+#   A bead left `open` but abandoned mid-edit is indistinguishable from one nobody started, and work tracked solely in the truth kernel as a claimed wk- item is invisible here -- that half is session-close.sh's job.
 set -u
 cd "$(git rev-parse --show-toplevel)"
 

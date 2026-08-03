@@ -43,6 +43,8 @@
 # Detail run: bash scripts/session-gates.d/64-reachability.sh
 # Fixture override (scripts/tests/test_reachability.py): REACHABILITY_BASE,
 # REACHABILITY_ROOTS, REACHABILITY_ENTRIES, REACHABILITY_ALLOWLIST.
+# BLIND-SPOT: reachability is computed over static imports.
+#   A module reached only through dynamic dispatch, an entry-point table or a string-keyed registry must be declared not-yet-wired to pass, and one reached only by an allowlisted-but-dead entry point still counts as reachable.
 set -u
 cd "$(git rev-parse --show-toplevel)"
 python3 - "$@" <<'PY'

@@ -6,6 +6,8 @@
 # Checker: scripts/glossary-check.py; accepted debt lives in
 # docs/glossary-baseline.txt (regenerate: glossary-check.py --write).
 # WARN-only, same posture as 50/60/61/62/70. Never exits non-zero.
+# BLIND-SPOT: it checks that domain-surface names HAVE glossary entries.
+#   It cannot check that an entry still describes what the code does, so a term whose meaning drifted while its name held is silently fine.
 cd "$(git rev-parse --show-toplevel)"
 if [ ! -f docs/glossary-baseline.txt ]; then
     echo "glossary-drift: WARN baseline missing — run" \

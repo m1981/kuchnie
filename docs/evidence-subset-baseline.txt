@@ -1,0 +1,25 @@
+# evidence-subset accepted debt -- one 'tr-id path' per line.
+# Each line is a claim that watches a path its own recipe never
+# reads: staling there cannot be detected by the evidence.
+# Regenerate deliberately: python3 scripts/evidence-subset.py --write
+tr-00330365 docs/specs/use-cases.md
+tr-15d48651 kuchnie-core/src/kuchnie_core/catalog.py
+tr-15d48651 kuchnie-core/src/kuchnie_core/export/cutlist_csv.py
+tr-15d48651 kuchnie-core/src/kuchnie_core/model.py
+tr-23661434 docs/l-kitchen-design-playbook.md
+tr-23661434 docs/specs/use-cases.md
+tr-2faf70f7 kuchnie-core/src/kuchnie_core/catalog.py
+tr-2faf70f7 kuchnie-core/src/kuchnie_core/construction.py
+tr-2faf70f7 kuchnie-core/tests/test_construction.py
+tr-436bdf4f kuchnie-core/src/kuchnie_core/catalog.py
+tr-45750046 docs/development-process.md
+tr-45750046 docs/truth-ledger-machinery.md
+tr-591aa208 docs/adr/014-corner-front-panel-roles.md
+tr-591aa208 kitchen-erp/kitchen_erp/core/domain_adapter.py
+tr-7f0c23cd kitchen-erp/kitchen_erp/core/variant_derivation.py
+tr-8dfe366d kuchnie-core/src/kuchnie_core/catalog.py
+tr-8dfe366d kuchnie-core/src/kuchnie_core/construction.py
+tr-ce5e29e2 docs/capability-map.csv
+tr-ce5e29e2 docs/roadmap-map.csv
+tr-d11749e8 kuchnie-core/src/kuchnie_core/catalog.py
+tr-fc74bc2e kitchen-erp/kitchen_erp/core/recipe_loader.py

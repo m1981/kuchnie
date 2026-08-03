@@ -26,6 +26,8 @@
 #  11. stringly-enum: a module uses a distinctive (>= 7 chars) enum value
 #      as a raw literal without referencing the enum — vocabulary bypass
 #      (shared-literal DRIFT is separate: gate 62-vocab-drift.sh)
+# BLIND-SPOT: every detector is syntactic.
+#   A god class split into two classes that call each other constantly passes all nine checks, because coupling through call graphs is not in the rule set.
 cd "$(git rev-parse --show-toplevel)"
 python3 - "$@" <<'PY'
 import ast

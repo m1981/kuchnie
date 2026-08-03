@@ -4,6 +4,8 @@
 # design — promoting this to FAIL is Michał's call (docs/specs/
 # conformance-join.md, gate posture note). Never exits non-zero.
 # Detail runs: python3 scripts/coverage-audit.py ; scripts/code-inventory.py
+# BLIND-SPOT: it compares against the committed inventory, so a module that was already dark when the baseline was taken stays invisible.
+#   It watches the derivative, not the level.
 cd "$(git rev-parse --show-toplevel)"
 python3 - <<'PY'
 import importlib.util, json, subprocess

@@ -7,6 +7,11 @@
 # deliberate vocabulary addition regenerate it:
 #   python3 scripts/shared-literals.py --write
 # WARN-only, same posture as 50/60/61/70. Never exits non-zero.
+# BLIND-SPOT: the threshold is three modules.
+#   A literal duplicated across exactly two modules -- the state every shared-constant failure passes through on its way to three -- is never reported.
+#   UNPROBED: a faithful probe must recompute per-module literal counts,
+#   which duplicates this checker's own matcher -- a second matcher drifts
+#   (ADR-005). Left declared and unprobed on purpose; see kuchnie-<bead>.
 cd "$(git rev-parse --show-toplevel)"
 if [ ! -f docs/shared-literals-baseline.txt ]; then
     echo "vocab-drift: WARN baseline missing — run" \

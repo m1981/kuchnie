@@ -7,6 +7,9 @@
 #   python3 scripts/signature-summary.py --write
 # and commit it WITH the review's claims — same discipline as
 # exercise-gate baselines. WARN-only; promotion to FAIL is Michał's call.
+# BLIND-SPOT: module-level defs, classes and methods only.
+#   A rewritten function BODY with an unchanged signature is invisible -- the gate watches the surface a reviewer reads, not the behaviour a user gets.
+# BLIND-SPOT-PROBE: scripts/tests/probes/61-signature-drift-blind.sh
 cd "$(git rev-parse --show-toplevel)"
 if [ ! -f docs/architecture-signatures.txt ]; then
     echo "signature-drift: WARN baseline missing — run" \

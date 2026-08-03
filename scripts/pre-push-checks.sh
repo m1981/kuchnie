@@ -25,6 +25,12 @@
 # FAILURE, never a pass. Two gates in the upstream reported "clean" for weeks
 # while checking zero files; that is the failure this rule exists to stop.
 #
+# BLIND-SPOT: it verifies that each arm RAN and passed, never that the arm is
+#   a good check. A suite of 1,434 tests that assert nothing green-lights every
+#   arm here, and the dark-arm rule only catches the degenerate case of zero.
+#   The defence against a vacuous check is mutation testing of the checks
+#   themselves (doctrine L1 Adopt 3, `truth mutate`), which does not exist yet.
+#
 # Exit codes: 0 ok / 1 governance (a real finding) / 2 environment.
 set -u
 
@@ -92,6 +98,11 @@ run_suite "kuchnie-core"  kuchnie-core           "$ROOT/.venv/bin/python"
 run_suite "kitchen-erp"   kitchen-erp            "$ROOT/kitchen-erp/.venv/bin/python"
 run_suite "catalog"       catalog                "$ROOT/.venv/bin/python"
 run_suite "kitchen-cam"   kitchen-cam            "$ROOT/.venv/bin/python"
+# Found dark on 2026-08-04 while wiring the blind-spot layer: 49 tests over
+# this repo's own tooling (reachability, dashboard, spec coverage, test-health,
+# gate blind spots) that no root ran. test-health.sh swept them for CITATIONS,
+# which reads like coverage and is not.
+run_suite "repo-tooling"  scripts                "$ROOT/.venv/bin/python"
 
 # --- 3b. the project gates from scripts/session-gates.d ------------------
 #
@@ -163,6 +174,7 @@ run_gate "arch-smells"      scripts/session-gates.d/60-arch-smells.sh    advise
 run_gate "signature-drift"  scripts/session-gates.d/61-signature-drift.sh advise
 run_gate "vocab-drift"      scripts/session-gates.d/62-vocab-drift.sh    advise
 run_gate "glossary-drift"   scripts/session-gates.d/63-glossary-drift.sh advise
+run_gate "evidence-subset"  scripts/session-gates.d/65-evidence-subset.sh advise
 run_gate "ruff"             scripts/session-gates.d/70-ruff.sh           advise
 
 # The list above is hand-written, so a gate dropped into session-gates.d

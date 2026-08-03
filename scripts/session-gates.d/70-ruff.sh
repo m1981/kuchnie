@@ -4,6 +4,9 @@
 # ruff.toml at repo root (correctness-only; NO style rules — see the
 # note there about reformat staling path-watched claims). Never exits
 # non-zero.
+# BLIND-SPOT: the rule set is correctness-only by deliberate choice (ruff.toml).
+#   Style, formatting and typing findings are not merely unreported -- they are not computed, so a clean run says nothing about them.
+# BLIND-SPOT-PROBE: scripts/tests/probes/70-ruff-blind.sh
 cd "$(git rev-parse --show-toplevel)"
 RUFF=".venv/bin/ruff"
 [ -x "$RUFF" ] || RUFF="$(command -v ruff || true)"

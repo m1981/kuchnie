@@ -1,3 +1,7 @@
 #!/usr/bin/env sh
 # Solo/trunk: every commit can invalidate ledger facts; there are no merges to hook.
 python3 scripts/truth invalidate-scan
+
+# Staling was automatic; healing was a remembered chore (doctrine L3).
+# auto-reaffirm re-confirms only the hash-matching half and never blocks.
+bash scripts/auto-reaffirm.sh
