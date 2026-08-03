@@ -121,11 +121,21 @@ and ~6,000 lines of sourced research in `docs/reviews/sources/`.
 
 **Order of work, and the gate on all of it:**
 
-- **`kuchnie-m0m` first** — record *why* a claim was retracted
-  (`fixed`/`wrong`/`moved`) and classify the existing 75. If most are `fixed`,
-  the migration argument holds; if many are `wrong`, the ledger is earning its
-  keep and the answer is better recipes, not fewer claims. **Blocks
-  `kuchnie-glu` and `kuchnie-amu`. Measure before rebuilding.**
+- **`kuchnie-m0m` — MEASURED 2026-08-03, and it refuted the migration
+  premise.** Of 75 retractions, 49 (65 %) record no cause at all. Of the 26
+  that do: `wrong` 38 %, `moved` 26 %, `fixed` 23 %, `version` 11 %. **`fixed`
+  is not dominant — `wrong` is**, so the ledger is catching bad claims rather
+  than expiring repaired ones. Caveat: the 26 are self-selected toward
+  interesting failures, so this weakens the migration argument rather than
+  killing it. Consequences: **`kuchnie-glu` demoted**, **`kuchnie-amu`
+  promoted** (it attacks the dominant readable failure), `kuchnie-bs2`
+  supported.
+  Forward half is **built upstream** as ADR-049 on branch `retraction-cause`
+  in `gh:m1981/truth-ledger` — verified but **not merged, not released**, so
+  kuchnie does not have it yet. Its taxonomy is `restated` / `expired` /
+  `wrong`, three not four: `moved` was rejected because a still-true fact whose
+  recipe moved is a *restatement*, not a tombstone. `restated` must name a
+  validated `--successor`.
 - `kuchnie-bs2` — content-hash verifying traces (Build Systems à la Carte).
   Kills false staleness at the root; largely subsumes auto-reaffirm.
 - `kuchnie-oij` — stale baseline entries must FAIL (import-linter pattern), and
@@ -149,3 +159,80 @@ commercial repo, and it does not finish at our scale. Use a local AST helper.
 **Still unanswered:** the adequacy obligation `S, K ⊢ R` — nothing here answers
 "why is this the right set of statements?" That is the F9 gap and no design in
 the lineage closes it.
+
+---
+
+## 5. Retro — what the reading actually changed, and what it did not
+
+Written after the source studies landed. Keep it: this is the part that
+disappears first under compaction, and it is the part that would stop the next
+session repeating the pattern.
+
+### Sources that changed an engineering decision
+
+Each of these altered a choice I had already made, rather than decorating it.
+
+| Source | What it changed |
+|---|---|
+| Google mutation data — 85 % unproductive, six years of suppression | `kuchnie-amu` repriced S → M/L; suppression list mandatory from day one. Without it I would have shipped a noise generator |
+| Schuler & Zeller — assertion-free suites still kill mutants | `mutation:` spec changed from "turns RED" to "turns RED **for the stated reason**" |
+| Bacchelli & Bird + Sadowski — 14 % of comments, 2 of 44 | Reframed our 4-of-4 as an existence proof, not a rate; produced "brief the verifier, not more verifiers", which visibly changed later agent prompts |
+| Vaughan — normalisation step 4 | Inverted refusal §4.11 by 180°: recording the reason is the normalising mechanism, not a guard against it |
+| Build Systems à la Carte + Estler | Filed `kuchnie-bs2`; demoted `kuchnie-94t` from fix to stopgap |
+| Chen et al. — metamorphic testing | Filed `kuchnie-y5c`; a capability I would not have proposed |
+| Claessen & Hughes — three-way error split | Forced the `kuchnie-m0m` measurement, which then refuted my own mortality diagnosis |
+
+### Cited constantly, implemented not at all
+
+**Fagan is the embarrassment.** He is quoted in every document here, and
+nothing of his method was adopted: no overview step, no reader/paraphrase
+step, no error-type checklists, no bounded checking rate, no re-inspection
+threshold. Only "author ≠ inspector", which we already had. The process
+lineage said this explicitly as correction C3; the correction was *recorded*
+and then not acted on — longer prompts were treated as equivalent to context
+transfer, which is the thing Fagan's machinery exists to provide.
+
+**Knight & Leveson**: noted that 217 claims are not 217 independent checks,
+and that a claim and its evidence command usually share an author. Nothing
+done.
+
+**Clark & Wilson non-collusion**: I observed that two verifiers sharing a
+model and prompt shape violate the assumption — and then dispatched the next
+three agents from the same model anyway. It changed the documentation and not
+the practice.
+
+**Boehm** (no validation layer, only verification) was a *deliberate*
+omission, recorded as such. That one is honest; the three above are not.
+
+### The pattern, and it is uncomfortable
+
+**Quantitative findings moved decisions. Conceptual frameworks moved prose.**
+Everything that changed an implementation carried a number — 85 %, 14 %,
+2-of-44, an order of magnitude, 26 of 75. Everything that produced only
+documentation was a framework: Popper, Fagan's method, Goodhart, Knight &
+Leveson. The source cited most reverently is the one implemented least.
+
+**The refutation rate did not decline across three rounds.** Round one
+undercut the verifier claim, round two repriced the top-ranked item, round
+three falsified three headline claims at once. A converging process would show
+fewer corrections per round. This one did not — which means confident
+syntheses were being produced faster than they were validated. That is the
+same failure this whole session set out to diagnose, one floor up.
+
+**The best implementation result did not come from the reading.** ADR-049's
+`restated / expired / wrong` taxonomy — sharper than my four, and it rejected
+`moved` with an argument I accepted — came from an agent instructed to
+challenge my design. Adversarial delegation outperformed the bibliography.
+
+### What to do differently next time
+
+1. **Prefer a measurement to a synthesis.** `kuchnie-m0m` cost one afternoon
+   and overturned a conclusion three documents rested on.
+2. **Diversify verifiers by model or lens, not only by scope** — the one
+   concrete unimplemented control that is cheap and would have caught the
+   non-collusion gap.
+3. **Before writing doctrine, check the upstream.** Four consecutive backlog
+   items turned out to exist already in `gh:m1981/truth-ledger` (ADR-037
+   recipe lints, ADR-032 expiry, ADR-033 velocity, "Explicit non-goals").
+   The doctrine surveyed the industry since 1970 and never surveyed this
+   project since v0.9.14.
