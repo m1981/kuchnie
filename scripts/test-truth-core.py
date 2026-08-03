@@ -204,6 +204,45 @@ class TestPremiseMatrix(unittest.TestCase):
         self.assertIsNotNone(tm.premise_check("cannot_verify", "P1")[1])
         self.assertIsNone(tm.premise_check("live", "P1")[1])
 
+class TestStatusRegistry(unittest.TestCase):
+    """R13 (P2 contract layer): the exported vocabularies are closed --
+    every status is classified, the registry sets stay inside STATUSES,
+    and the verdict map covers exactly VERDICTS."""
+
+    def test_every_status_is_classified_by_premise_check(self):
+        # (passes, warn) without raising, for every STATUSES x TIERS cell
+        for status in tm.STATUSES:
+            for tier in tm.TIERS:
+                passes, warn = tm.premise_check(status, tier)
+                self.assertIsInstance(passes, bool, (status, tier))
+                self.assertTrue(warn is None or isinstance(warn, str),
+                                (status, tier))
+
+    def test_active_statuses_are_a_proper_subset_of_statuses(self):
+        self.assertTrue(tm.ACTIVE_STATUSES < set(tm.STATUSES),
+                        "ACTIVE_STATUSES must be a proper subset of "
+                        "STATUSES -- a member outside the vocabulary is "
+                        "a registry corruption")
+
+    def test_verdict_status_covers_verdicts_into_statuses(self):
+        self.assertEqual(set(tm.VERDICT_STATUS), set(tm.VERDICTS))
+        self.assertTrue(set(tm.VERDICT_STATUS.values()) <= set(tm.STATUSES))
+
+    def test_vocab_report_derives_from_the_matrix(self):
+        v = tm.vocab_report()
+        self.assertIn("disputed", v["citation_bad"],
+                      "the R1 incident's exact drift: disputed must be "
+                      "in the satellites' blocking contract")
+        self.assertTrue(set(v["citation_bad"]) <= set(v["statuses"]))
+        self.assertTrue(set(v["active"]) <= set(v["statuses"]))
+        # premise_blocking/premise_warn are premise_check EVALUATED, so
+        # spot-check the ADR-001 cells they must reflect
+        self.assertIn("retracted", v["premise_blocking"])
+        self.assertIn("disputed", v["premise_blocking"])
+        self.assertNotIn("live", v["premise_blocking"])
+        self.assertIn("unverified", v["premise_warn"])
+        self.assertIn("cannot_verify", v["premise_warn"])
+
 # --------------------------------------------------------- primitives
 
 class TestPrimitives(unittest.TestCase):
@@ -1396,6 +1435,104 @@ class TestSupersedes(unittest.TestCase):
         prem = {"w": ["tr-000000d1"]}
         self.assertEqual(tm.apply_supersedes(prem, {}), prem)
 
+# ------------------- non-claim intake predicates (R14b, P2 contract layer)
+
+class TestSupersedeError(unittest.TestCase):
+    """The ADR-013 rule ladder, decided in the core -- each refusal
+    branch reachable in-process for the first time."""
+    W = "wk-00000001"
+
+    def test_bad_id_shape_refused(self):
+        err = tm.supersede_error(self.W, "wk-00000009", "tr-000000bb",
+                                 {}, [])
+        self.assertIn("--supersedes must name a tr- claim id", err)
+
+    def test_self_supersede_refused(self):
+        err = tm.supersede_error(self.W, "tr-000000aa", "tr-000000aa",
+                                 {}, [])
+        self.assertIn("cannot supersede itself", err)
+
+    def test_missing_replacement_refused(self):
+        err = tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                                 {}, [])
+        self.assertIn("replacement claim tr-000000bb is not in the ledger",
+                      err)
+
+    def test_not_currently_a_premise_refused(self):
+        claims = {"tr-000000bb": {"status": "live"}}
+        err = tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                                 claims, [])
+        self.assertIn(f"not currently a premise of {self.W}", err)
+
+    def test_still_passing_premise_refused(self):
+        for status in tm.ACTIVE_STATUSES:
+            claims = {"tr-000000aa": {"status": status},
+                      "tr-000000bb": {"status": "live"}}
+            err = tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                                     claims, ["tr-000000aa"])
+            self.assertIn("passes ready as-is", err, status)
+
+    def test_retracted_premise_returns_the_ack_sentinel(self):
+        # ADR-017 (C3): the human gate itself is I/O and stays in the
+        # shell -- the predicate only reports that it is required.
+        claims = {"tr-000000aa": {"status": "retracted"},
+                  "tr-000000bb": {"status": "live"}}
+        self.assertEqual(
+            tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                               claims, ["tr-000000aa"]),
+            tm.RETRACTED_NEEDS_ACK)
+
+    def test_dead_premise_passes(self):
+        for status in ("stale", "diverged", "cannot_verify"):
+            claims = {"tr-000000aa": {"status": status},
+                      "tr-000000bb": {"status": "live"}}
+            self.assertIsNone(
+                tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                                   claims, ["tr-000000aa"]), status)
+        # a MISSING old premise (in the premise list, not the fold) is
+        # dead-for-supersede too
+        self.assertIsNone(
+            tm.supersede_error(self.W, "tr-000000aa", "tr-000000bb",
+                               {"tr-000000bb": {"status": "live"}},
+                               ["tr-000000aa"]))
+
+class TestContradictsIntakeError(unittest.TestCase):
+    """Issue #4 intake checks, decided in the core, filing order."""
+    CLAIMS = {"tr-000000aa": {"status": "live"},
+              "tr-000000bb": {"status": "live"},
+              "tr-000000cc": {"status": "retracted"}}
+
+    def test_self_edge_refused(self):
+        self.assertIn("cannot contradict itself",
+                      tm.contradicts_intake_error("tr-000000aa",
+                                                  "tr-000000aa",
+                                                  self.CLAIMS, []))
+
+    def test_unknown_id_refused_either_side(self):
+        err = tm.contradicts_intake_error("tr-000000aa", "tr-0000dead",
+                                          self.CLAIMS, [])
+        self.assertIn("unknown claim tr-0000dead", err)
+        err = tm.contradicts_intake_error("tr-0000dead", "tr-000000bb",
+                                          self.CLAIMS, [])
+        self.assertIn("unknown claim tr-0000dead", err)
+
+    def test_retracted_endpoint_refused(self):
+        err = tm.contradicts_intake_error("tr-000000aa", "tr-000000cc",
+                                          self.CLAIMS, [])
+        self.assertIn("tr-000000cc is retracted", err)
+
+    def test_duplicate_edge_refused_either_direction(self):
+        edge = rec("contradicts", {"a": "tr-000000bb", "b": "tr-000000aa",
+                                   "basis": "x"}, rid="tr-000000ee")
+        err = tm.contradicts_intake_error("tr-000000aa", "tr-000000bb",
+                                          self.CLAIMS, events(edge))
+        self.assertIn("already declared (tr-000000ee)", err)
+
+    def test_clean_pair_passes(self):
+        self.assertIsNone(
+            tm.contradicts_intake_error("tr-000000aa", "tr-000000bb",
+                                        self.CLAIMS, []))
+
 # ------------------------------------------------- impact query (ADR-005)
 
 class TestImpact(unittest.TestCase):
@@ -1697,6 +1834,56 @@ class TestOverrideDecay(unittest.TestCase):
             tm.decide_invalidation(plain, {}, exact + timedelta(seconds=1)),
             d, "ttl_default must not change expiry behavior (ADR-019)")
 
+
+class TestSeparationReport(unittest.TestCase):
+    """ADR-010 separation instrument: what the records can prove about
+    verifier independence, as a pure fold over fabricated streams. The
+    gate compares two session STRINGS, so the only mechanical evidence of
+    separation is that the claim existed long enough for a separate
+    session to have done the work."""
+
+    def _pair(self, cid, vid, c_ts, v_ts, c_sess="author", v_sess="verifier"):
+        c = rec("claim", claim_p(), rid=cid, ts=c_ts); c["session"] = c_sess
+        v = rec("verdict", {"claim": cid, "verdict": "agree", "basis": "b"},
+                rid=vid, ts=v_ts); v["session"] = v_sess
+        return [(1, c), (2, v)]
+
+    def test_sub_floor_agree_is_unevidenced(self):
+        ev = self._pair("tr-aaaaaaa1", "tr-bbbbbbb1",
+                        "2026-08-01T00:00:00.000000+00:00",
+                        "2026-08-01T00:00:00.300000+00:00")
+        r = tm.separation_report(ev, None)
+        self.assertEqual(r["unevidenced"], 1)
+        self.assertEqual(r["fastest"][1], "tr-aaaaaaa1")
+        self.assertEqual(r["live_unevidenced"], ["tr-aaaaaaa1"])
+
+    def test_above_floor_agree_is_evidenced(self):
+        ev = self._pair("tr-aaaaaaa2", "tr-bbbbbbb2",
+                        "2026-08-01T00:00:00.000000+00:00",
+                        "2026-08-01T00:05:00.000000+00:00")
+        r = tm.separation_report(ev, None)
+        self.assertEqual(r["unevidenced"], 0)
+        self.assertEqual(r["live_unevidenced"], [])
+
+    def test_same_session_agree_is_counted(self):
+        """ADR-010 should refuse these at the CLI, so a non-zero count here
+        is a gate regression, not a style question."""
+        ev = self._pair("tr-aaaaaaa3", "tr-bbbbbbb3",
+                        "2026-08-01T00:00:00.000000+00:00",
+                        "2026-08-01T01:00:00.000000+00:00",
+                        c_sess="same", v_sess="same")
+        self.assertEqual(tm.separation_report(ev, None)["same_session"], 1)
+
+    def test_report_is_pure_of_the_clock(self):
+        """Every figure is read from record timestamps; `now` is signature
+        parity only. Two wildly different clocks must agree."""
+        ev = self._pair("tr-aaaaaaa4", "tr-bbbbbbb4",
+                        "2026-08-01T00:00:00.000000+00:00",
+                        "2026-08-01T00:00:00.100000+00:00")
+        import datetime as _dt
+        a = tm.separation_report(ev, _dt.datetime(2020, 1, 1))
+        b = tm.separation_report(ev, _dt.datetime(2099, 1, 1))
+        self.assertEqual(a, b)
 
 class TestOverrideReport(unittest.TestCase):
     """R13 / ADR-033: override_report counts + verbatim-repeat detection,
@@ -2343,6 +2530,22 @@ class TestCrossSurfaceVersions(unittest.TestCase):
             "when the script's semantics change; the 'current CLI:' line "
             "moves every release (ADR-026).")
 
+    # P3/ADR-044: cli.py's docstring line 1 is what argparse renders as
+    # the --help description (main() reads its own module's __doc__), so
+    # it joins the lockstep or the two self-statements drift.
+    def test_cli_module_docstring_pins_cli_version(self):
+        with open(os.path.join(HERE, "..", "truthlib", "cli.py")) as f:
+            got = _VER_RE.search(f.readline())  # `"""truth vX.Y.Z -- ...`
+        self.assertIsNotNone(got, "truthlib/cli.py line 1 carries no "
+                             "version self-statement")
+        self.assertEqual(
+            got.group(1), _cli_version(),
+            "cross-surface drift (ADR-044): truthlib/cli.py's docstring "
+            f"line 1 states v{got.group(1)} but the entry docstring "
+            f"(scripts/truth line 2) states v{_cli_version()}; main() "
+            "renders cli.py's line as the argparse description, so the "
+            "two must move together (ADR-026 lockstep).")
+
     # ADR-026: the schema $id is a SCHEMA-CONTRACT version (two-component,
     # independent of the product version), bumped only when the record
     # SHAPE changes. It lapsed three times (v0.8.1 ts pattern, v0.9.0
@@ -2352,10 +2555,13 @@ class TestCrossSurfaceVersions(unittest.TestCase):
     # a conscious "is this a shape change? then bump $id" review.
     # v0.12: ADR-035 evidence_exit_basis; v0.13: ADR-036 orphan_basis
     # (verdict + issue_event); v0.14: ADR-037 generated_ok_basis;
-    # v0.15: ADR-039 blast_forecast.
-    EXPECTED_SCHEMA_ID = "truth-ledger-record.v0.15"
+    # v0.15: ADR-039 blast_forecast; v0.16: ADR-046 envelope admission
+    # rule -- concerns + blast_forecast marked legacy-admitted/closed
+    # (description-level deprecation; the structural checks stay so
+    # legacy records keep validating).
+    EXPECTED_SCHEMA_ID = "truth-ledger-record.v0.16"
     PINNED_SHAPE_SHA256 = \
-        "46da42cc8b2d1140024fb5ffe72bf7148140e36aa0568570197c763af97edb96"
+        "3418acbf535fe0d163dfae44da2385ec780cc74acfdd69a7bcbaa0d5c8846561"
 
     def _schema(self):
         import json as _json
@@ -2414,6 +2620,287 @@ class TestAppendSingleWrite(unittest.TestCase):
                 lines = f.read().splitlines()
             self.assertEqual(len(lines), 1)
             self.assertEqual(json.loads(lines[0])["kind"], "claim")
+
+
+class TestAppendRecords(unittest.TestCase):
+    # R2: multi-record transactions land in ONE write(2) call -- "both
+    # records or neither" (ADR-002/ADR-014) is literal, not aspirational.
+    # append_record delegates here with n=1, so there is exactly one
+    # writer path; cmd_done's claim+event pair rides one buffer.
+
+    def _counting(self, path):
+        """Monkeypatch ledger_path + os.write; returns (calls, restore)."""
+        orig_lp, orig_write = tm.ledger_path, tm.os.write
+        calls = []
+
+        def counting_write(fd, data):
+            calls.append(bytes(data))
+            return orig_write(fd, data)
+
+        tm.ledger_path = lambda: path
+        tm.os.write = counting_write
+
+        def restore():
+            tm.os.write = orig_write
+            tm.ledger_path = orig_lp
+        return calls, restore
+
+    def test_two_record_batch_is_one_write_parseable_and_ordered(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, ".truth", "claims.jsonl")
+            calls, restore = self._counting(path)
+            try:
+                recs = tm.append_records(
+                    [("claim", claim_p(), "tr-"),
+                     ("issue_event", {"issue": "wk-00000001",
+                                      "event": "closed", "basis": "b"},
+                      "tr-")])
+            finally:
+                restore()
+            self.assertEqual(len(calls), 1,
+                             "a 2-record append must issue exactly one "
+                             "write(2) -- two calls reopen the torn-write "
+                             "window R2 closed")
+            with open(path, encoding="utf-8") as f:
+                parsed = [json.loads(ln) for ln in f.read().splitlines()]
+            self.assertEqual([p["kind"] for p in parsed],
+                             ["claim", "issue_event"])
+            self.assertEqual(tm.validate_events(list(enumerate(parsed, 1))),
+                             [])
+            self.assertGreater(parsed[1]["ts"], parsed[0]["ts"],
+                               "file order must equal ts order within a "
+                               "batch (ADR-015)")
+            self.assertEqual([r["id"] for r in recs],
+                             [p["id"] for p in parsed])
+
+    def test_single_record_append_unchanged(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, ".truth", "claims.jsonl")
+            calls, restore = self._counting(path)
+            try:
+                rec = tm.append_record("issue", {"title": "x", "text": "",
+                                                 "deps": [], "premises": []},
+                                       prefix="wk-")
+            finally:
+                restore()
+            self.assertEqual(len(calls), 1)
+            with open(path, encoding="utf-8") as f:
+                lines = f.read().splitlines()
+            self.assertEqual(len(lines), 1)
+            self.assertEqual(json.loads(lines[0])["id"], rec["id"])
+            self.assertTrue(rec["id"].startswith("wk-"))
+
+    def test_done_claim_pair_lands_in_one_write(self):
+        # Drives cmd_done itself (in-process, throwaway git sandbox) so a
+        # revert to two append_record calls -- each a valid single write --
+        # is caught here, not just at the append_records unit level.
+        import argparse, contextlib, io, tempfile
+        with tempfile.TemporaryDirectory() as d:
+            d = os.path.realpath(d)
+            _mk_sandbox(d)
+            cwd, orig_write = os.getcwd(), tm.os.write
+            env_before = {k: os.environ.get(k)
+                          for k in ("TRUTH_ACTOR", "TRUTH_SESSION",
+                                    "TRUTH_NOW")}
+            os.environ["TRUTH_ACTOR"] = "t"
+            os.environ["TRUTH_SESSION"] = "s-core-test"
+            os.environ.pop("TRUTH_NOW", None)
+            record_writes = []
+
+            def counting_write(fd, data):
+                if b'"kind"' in bytes(data):  # ledger lines only, not
+                    record_writes.append(bytes(data))  # subprocess plumbing
+                return orig_write(fd, data)
+
+            try:
+                os.chdir(d)
+                wid = tm.append_record("issue",
+                                       {"title": "w", "text": "",
+                                        "deps": [], "premises": []},
+                                       prefix="wk-")["id"]
+                tm.os.write = counting_write
+                ns = argparse.Namespace(
+                    issue_id=wid, cancel=False, reopen=False, basis="done",
+                    orphan_ok=None, claim_text="the work made f.txt true",
+                    evidence_class="UNVERIFIED", evidence_cmd=None,
+                    paths=None, tier="P2", ttl_days=None, claim_basis=None,
+                    single_run=False, duplicate_ok=False, scope_ok=None,
+                    evidence_unsafe_ok=False, evidence_exit_ok=None,
+                    generated_ok=None, accept_unsafe_ok=False, json=False)
+                out, err = io.StringIO(), io.StringIO()
+                with contextlib.redirect_stdout(out), \
+                        contextlib.redirect_stderr(err):
+                    tm.cmd_done(ns)
+            finally:
+                tm.os.write = orig_write
+                os.chdir(cwd)
+                for k, v in env_before.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+            self.assertEqual(len(record_writes), 1,
+                             "done --claim must land claim+event in ONE "
+                             "write(2): both records or neither (ADR-002)")
+            recs = [json.loads(ln) for ln in
+                    record_writes[0].decode("utf-8").splitlines()]
+            self.assertEqual([r["kind"] for r in recs],
+                             ["claim", "issue_event"])
+            self.assertGreater(recs[1]["ts"], recs[0]["ts"])
+            self.assertIn("filed tr-", out.getvalue())
+
+
+class TestLedgerLock(unittest.TestCase):
+    """ADR-045 (D2): the write-verb serialization lock. Unit level only
+    -- acquire/release semantics and the lock-file location; the real
+    two-process serialization through the CLI is canary FAULT LK.
+    Reentrancy is deliberately NOT required (no verb nests write verbs;
+    an acceptance oracle filing into the SAME repo would self-deadlock,
+    disclosed in ADR-045)."""
+
+    def _sandbox(self):
+        """A throwaway git repo, chdir'd into (ledger_lock resolves the
+        git dir from the working directory, like every shellio probe)."""
+        import tempfile
+        d = os.path.realpath(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, d, True)
+        subprocess.run(["git", "init", "-q", "-b", "main", d], check=True,
+                       capture_output=True)
+        cwd = os.getcwd()
+        self.addCleanup(os.chdir, cwd)
+        os.chdir(d)
+        return d
+
+    def test_lock_targets_the_git_dir_and_excludes_while_held(self):
+        import fcntl
+        d = self._sandbox()
+        lock_path = os.path.join(d, ".git", tm.LEDGER_LOCK_NAME)
+        with tm.ledger_lock():
+            self.assertTrue(
+                os.path.exists(lock_path),
+                f"ledger_lock must create {tm.LEDGER_LOCK_NAME} under "
+                "the GIT DIR -- never flock the ledger fd itself, and "
+                "never a worktree sibling that would dirty git status "
+                "(ADR-045)")
+            probe = os.open(lock_path, os.O_RDWR)
+            try:
+                with self.assertRaises(
+                        OSError,
+                        msg="a second LOCK_EX|LOCK_NB on the held lock "
+                            "must be refused -- the critical section "
+                            "is exclusive"):
+                    fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            finally:
+                os.close(probe)
+        # released on exit: a fresh non-blocking acquire succeeds
+        probe = os.open(lock_path, os.O_RDWR)
+        try:
+            fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(probe, fcntl.LOCK_UN)
+        finally:
+            os.close(probe)
+
+    def test_release_survives_a_refusal_exit(self):
+        # Write verbs sys.exit their refusals INSIDE the critical
+        # section; the lock must not stay held past that.
+        import fcntl
+        d = self._sandbox()
+        with self.assertRaises(SystemExit):
+            with tm.ledger_lock():
+                sys.exit("truth: simulated refusal")
+        probe = os.open(os.path.join(d, ".git", tm.LEDGER_LOCK_NAME),
+                        os.O_RDWR)
+        try:
+            fcntl.flock(probe, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        finally:
+            os.close(probe)
+
+
+class TestLastLedgerTsTailSeek(unittest.TestCase):
+    """R15: _last_ledger_ts reads only the ledger tail (64KB window).
+    Every case is asserted against the OLD full-scan implementation,
+    inlined here as the oracle -- the seek is an optimization, never a
+    semantics change."""
+
+    @staticmethod
+    def _oracle(path):
+        # the pre-v0.9.29 implementation, verbatim semantics
+        if not os.path.exists(path):
+            return None
+        last = None
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    last = json.loads(line).get("ts")
+                except json.JSONDecodeError:
+                    continue
+        return last
+
+    def _with_ledger(self, content):
+        import tempfile
+        d = tempfile.mkdtemp()
+        self.addCleanup(__import__("shutil").rmtree, d, True)
+        path = os.path.join(d, ".truth", "claims.jsonl")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        orig_lp = tm.ledger_path
+        tm.ledger_path = lambda: path
+        self.addCleanup(setattr, tm, "ledger_path", orig_lp)
+        return path
+
+    @staticmethod
+    def _line(i):
+        ts = f"2026-07-01T00:00:{i % 60:02d}.{i:06d}+00:00"
+        return json.dumps({"id": f"tr-{i:08x}", "kind": "claim", "ts": ts,
+                           "payload": {"text": "pad " * 40}}) + "\n"
+
+    def test_ledger_larger_than_window_matches_full_scan(self):
+        body = "".join(self._line(i) for i in range(400))  # ~120KB > 64KB
+        path = self._with_ledger(body)
+        self.assertGreater(os.path.getsize(path), tm._LAST_TS_TAIL_BYTES,
+                           "fixture must exceed the tail window or this "
+                           "test exercises nothing")
+        self.assertEqual(tm._last_ledger_ts(), self._oracle(path))
+        self.assertEqual(tm._last_ledger_ts(),
+                         json.loads(self._line(399))["ts"])
+
+    def test_file_smaller_than_window(self):
+        path = self._with_ledger(self._line(1) + self._line(2))
+        self.assertEqual(tm._last_ledger_ts(), self._oracle(path))
+
+    def test_last_line_without_trailing_newline(self):
+        path = self._with_ledger(self._line(1) + self._line(2).rstrip("\n"))
+        self.assertEqual(tm._last_ledger_ts(), self._oracle(path))
+        self.assertEqual(tm._last_ledger_ts(),
+                         json.loads(self._line(2))["ts"])
+
+    def test_junk_tail_line_walks_back(self):
+        path = self._with_ledger(self._line(1) + self._line(2)
+                                 + "{not json\n")
+        self.assertEqual(tm._last_ledger_ts(), self._oracle(path))
+        self.assertEqual(tm._last_ledger_ts(),
+                         json.loads(self._line(2))["ts"])
+
+    def test_empty_and_absent_ledger(self):
+        path = self._with_ledger("")
+        self.assertIsNone(tm._last_ledger_ts())
+        os.remove(path)
+        self.assertIsNone(tm._last_ledger_ts())
+
+    def test_window_of_pure_junk_falls_back_to_full_scan(self):
+        # one good line, then >64KB of junk: only the fallback scan can
+        # find the ts (correctness-first clause of R15)
+        body = self._line(7) + ("x" * 80 + "\n") * 1000
+        path = self._with_ledger(body)
+        self.assertGreater(os.path.getsize(path), tm._LAST_TS_TAIL_BYTES)
+        self.assertEqual(tm._last_ledger_ts(), self._oracle(path))
+        self.assertEqual(tm._last_ledger_ts(),
+                         json.loads(self._line(7))["ts"])
 
 
 # ---------------------- batch-1 hardening (roadmap-v3 R1/R2)
@@ -2489,8 +2976,10 @@ class TestEvidenceExitWarning(unittest.TestCase):
             # the record is untouched: the captured returncode (first run,
             # never re-run) is in the capsule, the warning is print-only
             self.assertEqual(filed["payload"]["evidence"]["returncode"], 1)
+            # ADR-046: no blast_forecast key -- intake no longer stamps
+            # it (the envelope admission rule; computed on read instead)
             self.assertEqual(sorted(filed["payload"]),
-                             ["anchor_commit", "blast_forecast",
+                             ["anchor_commit",
                               "cost_tier", "evidence", "evidence_class",
                               "evidence_paths", "text", "ttl_days"])
 
@@ -2654,25 +3143,255 @@ class TestBlastForecast(unittest.TestCase):
         self.assertEqual(tm.blast_forecast([], hist), 0)
 
     def test_floor_falls_back_then_calibrates(self):
-        def claim_with(bf, status="live"):
+        # ADR-046: forecasts are COMPUTED from history at read time --
+        # each claim watches its own file fN.txt, and the history gives
+        # fN.txt exactly N touching commits, so the P90 math is
+        # unchanged from the stored-int era it replaces.
+        def claim_with(i, status="live"):
             return {"status": status,
-                    "claim": {"payload": {"evidence_paths": ["f"],
-                                          "blast_forecast": bf}}}
+                    "claim": {"payload": {"evidence_paths": [f"f{i}.txt"]}}}
+        def hist(n):
+            # commit j touches every fi.txt with i > j, so fi.txt is
+            # touched by exactly i commits
+            return [(f"c{j}", frozenset(f"f{i}.txt" for i in range(j + 1, n)))
+                    for j in range(n - 1)]
         few = {f"tr-{i:08x}": claim_with(i) for i in range(5)}
-        self.assertEqual(tm.effective_blast_floor(few),
+        self.assertEqual(tm.effective_blast_floor(few, hist(5)),
                          (tm.BLAST_ADVISORY_FLOOR, "fallback"))
         many = {f"tr-{i:08x}": claim_with(i) for i in range(30)}
-        floor, src = tm.effective_blast_floor(many)
+        floor, src = tm.effective_blast_floor(many, hist(30))
         self.assertEqual(src, "calibrated")
         self.assertEqual(floor, 26)  # P90 of 0..29
         # stale claims are excluded from calibration
         stale = {f"tr-{i:08x}": claim_with(i, "stale") for i in range(30)}
-        self.assertEqual(tm.effective_blast_floor(stale),
+        self.assertEqual(tm.effective_blast_floor(stale, hist(30)),
                          (tm.BLAST_ADVISORY_FLOOR, "fallback"))
         # an all-cold corpus clamps to 1 -- never a floor of 0 that
         # flags stone-cold watches as hot (R5 review, F2)
-        cold = {f"tr-{i:08x}": claim_with(0) for i in range(30)}
-        self.assertEqual(tm.effective_blast_floor(cold), (1, "calibrated"))
+        cold = {f"tr-{i:08x}": claim_with(i) for i in range(30)}
+        self.assertEqual(tm.effective_blast_floor(cold, []),
+                         (1, "calibrated"))
+        # None history (shallow/unavailable) must NEVER calibrate -- a
+        # truncated log would be the quietly-cold floor ADR-039 forbids
+        self.assertEqual(tm.effective_blast_floor(many, None),
+                         (tm.BLAST_ADVISORY_FLOOR, "fallback"))
+
+class TestIntakeAdvisories(unittest.TestCase):
+    """R6 (P2 purity hoist): intake_advisories is pure -- the shell
+    gathers generated_source / porcelain / shallow_state once and passes
+    plain data; these tests feed facts and assert the composition."""
+
+    def _adv(self, evts=(), tier="P2", ttl=None, scope_ok=None,
+             cls="UNVERIFIED", payload=None, generated_ok=None,
+             claims=None, generated_source=None, porcelain=None,
+             shallow_state=None, blast_forecast_live=None,
+             blast_history=None):
+        return tm.intake_advisories(list(evts), tier, ttl, scope_ok, cls,
+                                    payload if payload is not None
+                                    else claim_p(),
+                                    generated_ok=generated_ok,
+                                    claims=claims,
+                                    generated_source=generated_source,
+                                    porcelain=porcelain,
+                                    shallow_state=shallow_state,
+                                    blast_forecast_live=blast_forecast_live,
+                                    blast_history=blast_history)
+
+    def test_clean_filing_is_silent(self):
+        self.assertEqual(self._adv(), [])
+
+    def test_fs1_half_life_note_beside_a_chosen_ttl(self):
+        evts = []
+        for i in range(tm.HALF_LIFE_MIN_OBS):
+            cid = f"tr-00000a{i:02d}"
+            evts += [
+                rec("claim", claim_p(cost_tier="P2"), rid=cid,
+                    ts="2026-07-01T00:00:00.000000+00:00"),
+                rec("verdict", {"claim": cid, "verdict": "agree",
+                                "basis": "b"}, rid=f"tr-00000b{i:02d}",
+                    ts="2026-07-02T00:00:00.000000+00:00"),
+                rec("invalidation", {"claim": cid, "commit": "c" * 7,
+                                     "reason": "evidence paths changed"},
+                    rid=f"tr-00000c{i:02d}",
+                    ts="2026-07-04T00:00:00.000000+00:00"),
+            ]
+        msgs = self._adv(evts=events(*evts), ttl=10)
+        self.assertTrue(any("ledger median half-life for P2: 2.0d" in m
+                            and "you chose 10d" in m for m in msgs), msgs)
+
+    def test_scope_override_decay_notice(self):
+        msgs = self._adv(scope_ok="single-file scope covers it")
+        self.assertTrue(any("--scope-ok override filed with no --ttl-days"
+                            in m for m in msgs), msgs)
+
+    def test_dropped_generated_override_is_voiced(self):
+        # --generated-ok stated, nothing stored: the basis must not
+        # vanish silently (ADR-037) -- and it must not decay
+        msgs = self._adv(generated_ok="the artifact is the deliverable")
+        self.assertTrue(any("the basis was NOT" in m and "stored" in m
+                            for m in msgs), msgs)
+        self.assertFalse(any("--generated-ok override filed" in m
+                             for m in msgs), msgs)
+
+    def test_dark_generated_list_notice(self):
+        payload = claim_p(evidence_paths=["f.txt"])
+        msgs = self._adv(payload=payload, claims={},
+                         generated_source="absent", blast_forecast_live=0)
+        self.assertTrue(any("generated-artifact check is dark" in m
+                            for m in msgs), msgs)
+        msgs = self._adv(payload=payload, claims={},
+                         generated_source="empty", blast_forecast_live=0)
+        self.assertFalse(any("check is dark" in m for m in msgs), msgs)
+
+    def test_dirty_watch_lines_from_porcelain_data(self):
+        payload = claim_p(evidence_paths=["f.txt"])
+        msgs = self._adv(payload=payload, claims={},
+                         generated_source="empty", blast_forecast_live=0,
+                         porcelain=" M f.txt\x00?? other.txt\x00")
+        self.assertTrue(any(m.startswith("dirty watch: f.txt")
+                            for m in msgs), msgs)
+        self.assertFalse(any("other.txt" in m for m in msgs), msgs)
+
+    def test_blast_advisory_at_or_above_the_floor(self):
+        # ADR-046: the forecast arrives as LIVE data (the gate's own
+        # computation), never from the payload -- a stored legacy int
+        # must be ignored, which the hot arm proves by contradiction.
+        hot = claim_p(evidence_paths=["w.txt"], blast_forecast=1)
+        msgs = self._adv(payload=hot, claims={}, generated_source="empty",
+                         blast_forecast_live=20)
+        self.assertTrue(any("blast: watch matched 20 commits" in m
+                            and "floor 15, fallback" in m
+                            for m in msgs), msgs)
+        cold = claim_p(evidence_paths=["w.txt"])
+        msgs = self._adv(payload=cold, claims={}, generated_source="empty",
+                         blast_forecast_live=3)
+        self.assertFalse(any(m.startswith("blast:") for m in msgs), msgs)
+
+    def test_missing_forecast_voices_the_gathered_state(self):
+        payload = claim_p(evidence_paths=["w.txt"])
+        msgs = self._adv(payload=payload, claims={},
+                         generated_source="empty", shallow_state="shallow")
+        self.assertTrue(any("blast: shallow history" in m for m in msgs),
+                        msgs)
+        msgs = self._adv(payload=payload, claims={},
+                         generated_source="empty",
+                         shallow_state="unavailable")
+        self.assertTrue(any("blast: history unavailable" in m
+                            for m in msgs), msgs)
+
+    def test_exit_warning_suppressed_by_a_stored_basis(self):
+        p = verified_p()
+        p["evidence"]["returncode"] = 1
+        bare = self._adv(cls="VERIFIED", payload=p, claims={},
+                         generated_source="empty")
+        self.assertTrue(any("evidence command exited 1" in m
+                            for m in bare), bare)
+        p2 = dict(p, evidence_exit_basis="diff-style probe")
+        excused = self._adv(cls="VERIFIED", payload=p2, claims={},
+                            generated_source="empty")
+        self.assertFalse(any("evidence command exited" in m
+                             for m in excused), excused)
+
+class TestBlastReport(unittest.TestCase):
+    """L4-F5: the churn instrument's pure report, pinned exactly --
+    both the ADR-046 live-history path (forecasts computed on read) and
+    the legacy path (history=None reports stored pre-ADR-046 ints)."""
+
+    def _fixture(self):
+        c1 = rec("claim", claim_p(evidence_paths=["a.py"],
+                                  blast_forecast=3), rid="tr-00000b01")
+        c2 = rec("claim", claim_p(evidence_paths=["b.py"],
+                                  blast_forecast=1), rid="tr-00000b02")
+        c3 = rec("claim", claim_p(), rid="tr-00000b03")  # pathless: out
+        i1 = rec("invalidation", {"claim": "tr-00000b01", "commit": "c" * 7,
+                                  "touched": ["a.py"]}, rid="tr-00000b11",
+                 ts="2026-07-02T00:00:00.000000+00:00")
+        i2 = rec("invalidation", {"claim": "tr-00000b01", "commit": "c" * 7,
+                                  "touched": ["a.py", "x.py"]},
+                 rid="tr-00000b12",
+                 ts="2026-07-03T00:00:00.000000+00:00")
+        return events(c1, c2, c3, i1, i2)
+
+    def test_legacy_fixture_events_to_exact_report(self):
+        # history=None: stored legacy ints are reported as-is
+        self.assertEqual(
+            tm.blast_report(self._fixture()),
+            {"rows": [{"claim": "tr-00000b01", "observed": 2,
+                       "forecast": 3},
+                      {"claim": "tr-00000b02", "observed": 0,
+                       "forecast": 1}],
+             "staler_ranking": [{"path": "a.py", "invalidations": 2},
+                                {"path": "x.py", "invalidations": 1}],
+             "effective_floor": tm.BLAST_ADVISORY_FLOOR,
+             "floor_source": "fallback"})
+
+    def test_live_history_overrides_stored_legacy_ints(self):
+        # ADR-046: with history as data, forecasts are computed live --
+        # a.py touched by 5 commits beats its stored 3, and b.py's cold
+        # 0 beats its stored 1. The stored ints must be IGNORED.
+        hist = [(f"c{j}", frozenset(["a.py"])) for j in range(5)]
+        rep = tm.blast_report(self._fixture(), history=hist)
+        self.assertEqual(rep["rows"],
+                         [{"claim": "tr-00000b01", "observed": 2,
+                           "forecast": 5},
+                          {"claim": "tr-00000b02", "observed": 0,
+                           "forecast": 0}])
+        self.assertEqual((rep["effective_floor"], rep["floor_source"]),
+                         (tm.BLAST_ADVISORY_FLOOR, "fallback"))
+
+class TestCitationBlockPaths(unittest.TestCase):
+    """L4-F5: hits x globs -> blocking paths, incl. the structural
+    LEDGER_REL exclusion (TG9's core half)."""
+
+    def test_scope_filter_and_ledger_exclusion(self):
+        hits = ["docs/notes/aside.md", "docs/specs/z.md", tm.LEDGER_REL,
+                "docs/specs/a.md"]
+        self.assertEqual(
+            tm.citation_block_paths(hits, ["docs/specs/**"]),
+            ["docs/specs/a.md", "docs/specs/z.md"])  # sorted, in-scope
+        # the ledger never blocks, even under a scope that covers it
+        self.assertEqual(
+            tm.citation_block_paths([tm.LEDGER_REL], [".truth/**"]), [])
+        self.assertEqual(
+            tm.citation_block_paths([], ["docs/specs/**"]), [])
+
+class TestLoadersReturnErr(unittest.TestCase):
+    """R14a: the policy-file loaders RETURN a pathspec-magic refusal
+    instead of sys.exiting two frames below the gate table."""
+
+    def _load(self, rel, content, fn):
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, ".truth"), exist_ok=True)
+            with open(os.path.join(d, rel), "w", encoding="utf-8") as f:
+                f.write(content)
+            orig = tm.repo_root
+            tm.repo_root = lambda: d
+            try:
+                return fn()
+            finally:
+                tm.repo_root = orig
+
+    def test_generated_globs_magic_line_returns_error(self):
+        globs, source, err = self._load(tm.GENERATED_PATHS_REL,
+                                        ":(exclude)docs/**\n",
+                                        tm.load_generated_globs)
+        self.assertIsNone(globs)
+        self.assertIn("pathspec magic is refused", err)
+        globs, source, err = self._load(tm.GENERATED_PATHS_REL,
+                                        "gen/**\n", tm.load_generated_globs)
+        self.assertEqual((globs, source, err), (["gen/**"], "file", None))
+
+    def test_citation_scope_magic_line_returns_error(self):
+        globs, source, err = self._load(tm.CITATION_SCOPE_REL,
+                                        "!docs/**\n", tm.load_citation_scope)
+        self.assertIsNone(globs)
+        self.assertIn("pathspec magic is refused", err)
+        globs, source, err = self._load(tm.CITATION_SCOPE_REL,
+                                        "docs/specs/**\n",
+                                        tm.load_citation_scope)
+        self.assertEqual((globs, source, err),
+                         (["docs/specs/**"], "file", None))
 
 class TestCommitGateBanner(unittest.TestCase):
     """R2: loud fail-open -- an unwired ADR-025 commit gate is announced
@@ -3267,91 +3986,71 @@ class TestScopeDecayCLI(unittest.TestCase):
             self.assertIn("1 ttl (re-file)", r.stdout)
 
 
-class TestOverrideReportCLI(unittest.TestCase):
-    """R13 / ADR-033 end-to-end: a scope-ok override expires, the same
-    justification is re-filed, and `truth stats` raises the advisory."""
+class TestStatsCLIShape(unittest.TestCase):
+    """ADR-046 (Tier C): `truth stats` keeps EXACTLY the Tier B core --
+    counts, verdicts, half-life (feeds the FS-1 intake advisory), queue
+    aging. The retired TestOverrideReportCLI arms
+    (test_verbatim_refile_after_expiry_raises_the_advisory,
+    test_max_scope_ttl_rendered_in_plain_text) moved to
+    scripts/test-instruments.sh, which drives the same assertions
+    through instruments/override-velocity.py; the pure override_report
+    tests above never moved."""
 
-    SB = "the include filter deliberately covers the whole codebase"
-    QTEXT = "no occurrences remain anywhere in the codebase"
-    ECMD = "grep -rc data --include=f.txt ."
-
-    def _scope_claim(self, d, env_extra=None):
-        r = _truth(d, "claim", self.QTEXT, "--class", "VERIFIED",
-                   "--evidence-cmd", self.ECMD, "--paths", "f.txt",
-                   "--tier", "P1", "--scope-ok", self.SB, env_extra=env_extra)
-        self.assertEqual(r.returncode, 0, r.stderr)
-        return r.stdout.strip().splitlines()[-1]
-
-    def test_verbatim_refile_after_expiry_raises_the_advisory(self):
+    def test_stats_json_keeps_core_keys_and_nothing_else(self):
         with tempfile.TemporaryDirectory() as d:
             _mk_sandbox(d)
-            past = {"TRUTH_NOW": "2026-06-01T00:00:00+00:00"}
-            prior = self._scope_claim(d, env_extra=past)
-            _truth(d, "invalidate-scan")  # prior -> stale (ttl, ttl_default)
-            repeat = self._scope_claim(d)  # same sentence + scope_basis, now
-            r = _truth(d, "stats")
-            self.assertIn("overrides:", r.stdout)
-            self.assertIn("decay-expiries=1", r.stdout)
-            self.assertIn("ADR-033", r.stdout)
-            self.assertIn("review whether the scope judgment was ever real",
-                          r.stdout)
-            self.assertIn(repeat, r.stdout)
-            self.assertIn(prior, r.stdout)
-            # --json shape
-            r = _truth(d, "stats", "--json")
-            o = json.loads(r.stdout)["overrides"]
-            self.assertEqual(o["scope_basis_filings"], 2)
-            self.assertEqual(o["decay_expiries"], 1)
-            self.assertEqual(o["max_scope_ttl_days"], 30)
-            self.assertEqual(len(o["repeats"]), 1)
-            self.assertEqual(o["repeats"][0]["claim"], repeat)
-            self.assertEqual(o["repeats"][0]["prior"], prior)
-            self.assertEqual(o["repeats"][0]["prior_status"], "stale")
-
-    def test_max_scope_ttl_rendered_in_plain_text(self):
-        """F2: the `max scope ttl <N>d` suffix is part of the PLAIN
-        `truth stats` render, not only the JSON field. A large --ttl-days
-        (the visible opt-out) must surface in plain text; this fails if
-        the suffix is ever dropped while JSON stays intact."""
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            r = _truth(d, "claim", self.QTEXT, "--class", "VERIFIED",
-                       "--evidence-cmd", self.ECMD, "--paths", "f.txt",
-                       "--tier", "P1", "--scope-ok", self.SB,
-                       "--ttl-days", "36500")
+            r = _truth(d, "claim", "f.txt holds data")
             self.assertEqual(r.returncode, 0, r.stderr)
-            r = _truth(d, "stats")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertIn("max scope ttl 36500d", r.stdout)
-            # and the JSON twin carries the same number (both surfaces)
             rj = _truth(d, "stats", "--json")
+            self.assertEqual(rj.returncode, 0, rj.stderr)
             self.assertEqual(
-                json.loads(rj.stdout)["overrides"]["max_scope_ttl_days"],
-                36500)
+                sorted(json.loads(rj.stdout)),
+                ["claims_by_status", "claims_by_tier", "half_life",
+                 "queue_max_age_days", "queue_size", "verdicts"],
+                "stats --json must keep its Tier B core keys and must "
+                "NOT regrow the Tier C sections (overrides/blast/"
+                "separation/concerns moved to instruments/*.py, ADR-046)")
+
+    def test_stats_plain_render_has_no_tier_c_sections(self):
+        with tempfile.TemporaryDirectory() as d:
+            _mk_sandbox(d)
+            _truth(d, "claim", "f.txt holds data")
+            r = _truth(d, "stats")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("claims by status:", r.stdout)
+            self.assertIn("verdicts:", r.stdout)
+            self.assertIn("queue:", r.stdout)
+            for gone in ("overrides:", "hollow:", "blast:", "separation:",
+                         "concerns:"):
+                self.assertNotIn(gone, r.stdout,
+                                 f"retired stats section {gone!r} is back")
 
 
 class TestConcernsCore(unittest.TestCase):
-    """42010 stakeholder concerns are TRIAGE METADATA only: slug hygiene,
-    the stats tally, and -- the hard constraint -- proof the fold is
-    concern-blind (a tagged claim and its untagged twin derive identical
-    status under every verdict/invalidation shape)."""
+    """LEGACY 42010 stakeholder concerns (Tier C since D4/ADR-046: the
+    filing surface is gone; the field is closed to new records). What
+    remains under test is exactly what remains in truthlib: CONCERN_RE
+    and claim_concerns still guard validate's legacy branch and feed the
+    meta-repo's concern-tag instrument, and -- the hard constraint --
+    the fold stays concern-blind over the legacy records (a tagged claim
+    and its untagged twin derive identical status under every
+    verdict/invalidation shape). The retired CLI arms (TestConcernsCLI;
+    the stats tally test) live on in scripts/test-instruments.sh."""
 
-    def test_slug_hygiene(self):
-        self.assertIsNone(tm.concerns_intake_error(None))
-        self.assertIsNone(tm.concerns_intake_error([]))
-        self.assertIsNone(tm.concerns_intake_error(
-            ["security", "a-b-1", "x" * 32]))
+    def test_slug_shape_guards_the_legacy_validate_branch(self):
+        # CONCERN_RE is what validate's legacy branch shape-checks
+        # stored tags against (kernel mirror + schema pattern, FS-2).
+        for good in ("security", "a-b-1", "x" * 32):
+            self.assertIsNotNone(tm.CONCERN_RE.match(good), repr(good))
         for bad in ("Security", "sec_urity", "", "x" * 33,
                     "sec urity", "s/c", "security\n", "\nsecurity"):
-            self.assertIsNotNone(tm.concerns_intake_error([bad]),
-                                 repr(bad))
+            self.assertIsNone(tm.CONCERN_RE.match(bad), repr(bad))
 
     def test_claim_concerns_read_side_degrades(self):
-        """red-team F2: the read verbs (list --concern, stats) consume
-        claim_concerns(), which returns [] for any malformed hand-appended
-        value -- never a crash on an unhashable item, never substring
-        matching on a bare string. validate reports the malformation; the
-        reads just degrade to 'no tags'."""
+        """red-team F2: the legacy readers (validate's finding text, the
+        concern-tag instrument) consume claim_concerns(), which returns
+        [] for any malformed hand-appended value -- never a crash on an
+        unhashable item, never substring matching on a bare string."""
         self.assertEqual(tm.claim_concerns({"concerns":
                                             ["security", "latency"]}),
                          ["security", "latency"])
@@ -3361,10 +4060,11 @@ class TestConcernsCore(unittest.TestCase):
         self.assertEqual(tm.claim_concerns({"concerns": ["ok", ["a"], 3]}),
                          ["ok"])
         # and stats_report itself survives the unhashable-item ledger
+        # (no concern keys any more -- just no crash, ADR-046)
         report = tm.stats_report(
             events(rec("claim", claim_p(concerns=[["a"]]))), NOW)
-        self.assertEqual(report["concerns"], {})
-        self.assertEqual(report["concerns_untagged_active"], 1)
+        self.assertNotIn("concerns", report)
+        self.assertNotIn("concerns_untagged_active", report)
 
     def test_fold_is_concern_blind(self):
         # bare claim first -- no verdict/invalidation at all: the INITIAL
@@ -3402,135 +4102,35 @@ class TestConcernsCore(unittest.TestCase):
             self.assertEqual(cp["tr-00000001"]["status_ts"],
                              ct["tr-00000001"]["status_ts"], kind)
 
-    def test_stats_report_concern_tally(self):
+    def test_legacy_tagged_and_forecast_records_still_admitted(self):
+        """ADR-046 legacy admission: a ledger holding pre-demotion
+        records (concerns and blast_forecast in payloads -- this
+        meta-repo's own ledger is one) must still validate, fold, and
+        list; the fields just stopped meaning anything to the CLI."""
         evs = events(
-            rec("claim", claim_p(concerns=["security"])),
+            rec("claim", claim_p(concerns=["security", "latency"])),
             rec("claim", claim_p(text="config parser rejects bad input",
-                                 concerns=["latency", "security"]),
-                rid="tr-00000002"),
-            rec("claim", claim_p(text="cache layer evicts old entries"),
-                rid="tr-00000003"),
-            rec("claim", claim_p(text="worker pool drains on shutdown",
-                                 concerns=["security"]),
-                rid="tr-00000004"),
-            rec("verdict", {"claim": "tr-00000004", "verdict": "retracted",
-                            "basis": "b"}, rid="tr-00000005"),
-            rec("claim", claim_p(text="scheduler honors the quiet hours"),
-                rid="tr-00000006"),
-            rec("invalidation", {"claim": "tr-00000006", "commit": "abc1234",
-                                 "reason": "x"}, rid="tr-00000007"))
-        report = tm.stats_report(evs, NOW)
-        # retracted tr-00000004 drops out of the tag counts; the stale
-        # untagged tr-00000006 is not active, so untagged counts only
-        # tr-00000003
-        self.assertEqual(report["concerns"], {"latency": 1, "security": 2})
-        self.assertEqual(report["concerns_untagged_active"], 1)
+                                 evidence_paths=["f.txt"],
+                                 blast_forecast=7),
+                rid="tr-00000002"))
+        self.assertEqual(tm.validate_events(evs), [])
+        claims, _ = tm.fold(evs)
+        self.assertEqual(claims["tr-00000001"]["status"], "unverified")
+        # ...while the legacy SHAPE checks still fire on junk values
+        bad = events(rec("claim", claim_p(concerns=["Not_A_Slug"])),
+                     rec("claim", claim_p(text="second",
+                                          evidence_paths=["f.txt"],
+                                          blast_forecast=-1),
+                         rid="tr-00000002"))
+        errs = tm.validate_events(bad)
+        self.assertTrue(any("concerns" in e for e in errs), errs)
+        self.assertTrue(any("blast_forecast" in e for e in errs), errs)
 
     def test_old_format_records_still_validate(self):
         # backward compatibility: a ledger predating concerns (no key at
         # all) is not an error anywhere in the mirror
         self.assertEqual(tm.validate_events(events(rec("claim", claim_p()))),
                          [])
-
-class TestConcernsCLI(unittest.TestCase):
-    """--concern end to end: filing, hygiene refusal, list filter, stats
-    section, and old-format ledger backward compatibility."""
-
-    def test_filing_stores_sorted_deduplicated_tags(self):
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            r = _truth(d, "claim", "f.txt holds data",
-                       "--concern", "security", "--concern", "latency",
-                       "--concern", "security")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            with open(os.path.join(d, ".truth", "claims.jsonl")) as f:
-                filed = json.loads(f.read().splitlines()[-1])
-            self.assertEqual(filed["payload"]["concerns"],
-                             ["latency", "security"])
-            # and validate accepts what claim filed
-            self.assertEqual(_truth(d, "validate").returncode, 0)
-
-    def test_untagged_filing_carries_no_concerns_key(self):
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            r = _truth(d, "claim", "f.txt holds data")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            with open(os.path.join(d, ".truth", "claims.jsonl")) as f:
-                filed = json.loads(f.read().splitlines()[-1])
-            self.assertNotIn("concerns", filed["payload"])
-
-    def test_malformed_tag_refused_before_anything_files(self):
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            for bad in ("Not_A_Slug", "UPPER", "", "x" * 33, "a b",
-                        "security\n"):  # F1: $ matches before trailing \n
-                r = _truth(d, "claim", "f.txt holds data", "--concern", bad)
-                self.assertNotEqual(r.returncode, 0, repr(bad))
-                self.assertIn("is not a slug", r.stderr, repr(bad))
-                self.assertIn("not a concern-gate", r.stderr, repr(bad))
-            with open(os.path.join(d, ".truth", "claims.jsonl")) as f:
-                self.assertEqual(f.read(), "")  # nothing was filed
-
-    def test_list_filter_composes_with_status_flags(self):
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            a = _truth(d, "claim", "f.txt holds data",
-                       "--concern", "security").stdout.strip()
-            b = _truth(d, "claim", "config parser rejects bad input",
-                       "--concern", "latency").stdout.strip()
-            _truth(d, "claim", "cache layer evicts old entries")
-            r = _truth(d, "list", "--concern", "security", "--json")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertEqual([row["id"] for row in json.loads(r.stdout)], [a])
-            # composes with a status flag: both unverified, so the tag
-            # still narrows to one; --live matches nothing yet
-            r = _truth(d, "list", "--unverified", "--concern", "latency",
-                       "--json")
-            self.assertEqual([row["id"] for row in json.loads(r.stdout)], [b])
-            r = _truth(d, "list", "--live", "--concern", "latency", "--json")
-            self.assertEqual(json.loads(r.stdout), [])
-
-    def test_stats_concerns_section_plain_and_json(self):
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            _truth(d, "claim", "f.txt holds data", "--concern", "security",
-                   "--concern", "latency")
-            _truth(d, "claim", "cache layer evicts old entries")
-            r = _truth(d, "stats")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertIn("concerns: latency=1, security=1, "
-                          "untagged-active=1", r.stdout)
-            rj = _truth(d, "stats", "--json")
-            report = json.loads(rj.stdout)
-            self.assertEqual(report["concerns"],
-                             {"latency": 1, "security": 1})
-            self.assertEqual(report["concerns_untagged_active"], 1)
-
-    def test_old_format_ledger_lists_folds_validates_stats(self):
-        """CRITICAL backward compatibility: a ledger written before
-        concerns existed (no key anywhere) must list, fold, validate, and
-        stats without error, and a --concern filter over it is simply
-        empty."""
-        with tempfile.TemporaryDirectory() as d:
-            _mk_sandbox(d)
-            old = [rec("claim", claim_p()),
-                   rec("verdict", {"claim": "tr-00000001", "verdict": "agree",
-                                   "basis": "b"}, rid="tr-00000002",
-                       ts="2026-07-02T00:00:00.000000+00:00")]
-            with open(os.path.join(d, ".truth", "claims.jsonl"), "w") as f:
-                f.write("".join(json.dumps(e) + "\n" for e in old))
-            r = _truth(d, "validate")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            r = _truth(d, "list", "--json")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertEqual([row["status"] for row in json.loads(r.stdout)],
-                             ["live"])
-            r = _truth(d, "list", "--concern", "security", "--json")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertEqual(json.loads(r.stdout), [])
-            r = _truth(d, "stats")
-            self.assertEqual(r.returncode, 0, r.stderr)
-            self.assertIn("concerns: none, untagged-active=1", r.stdout)
 
 
 class TestScanRenameBlindness(unittest.TestCase):
@@ -3564,6 +4164,185 @@ class TestScanRenameBlindness(unittest.TestCase):
             self.assertIn(cid, r.stdout)
             r = _truth(d, "list", "--stale")
             self.assertIn(cid, r.stdout)
+
+
+class TestDoctorJson(unittest.TestCase):
+    """`truth doctor --json`: the contract layer's machine surface for
+    the installation check (one question, one surface -- consumers were
+    parsing text + exit code). The flag changes REPORTING only: the same
+    checks, in the same order, with the same exit code, rendered as one
+    object; and with the flag absent the text is what it always was."""
+
+    GATE_CHECK = "pre-commit hook enforces INV-A/INV-B"
+
+    def _text_rows(self, out):
+        """(level, check) per doctor text line, summary line excluded."""
+        rows = []
+        for line in out.splitlines():
+            for level in ("OK", "FAIL", "WARN"):
+                if line.startswith(level + " "):
+                    rows.append((level.lower(),
+                                 line[len(level):].strip().split(" -- ")[0]))
+                    break
+        return rows
+
+    def test_json_shape_counts_and_failing_check(self):
+        with tempfile.TemporaryDirectory() as d:
+            _mk_sandbox(d)          # deliberately UNWIRED: no hooks, no
+            r = _truth(d, "doctor", "--json")   # gitattributes, no discovery
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            obj = json.loads(r.stdout)
+            self.assertEqual(set(obj),
+                             {"ok", "warn", "fail", "failures", "warnings"})
+            for level in ("ok", "warn", "fail"):
+                for entry in obj[level]:
+                    self.assertEqual(set(entry), {"check", "detail"}, entry)
+                    self.assertIsInstance(entry["check"], str)
+                    self.assertIsInstance(entry["detail"], str)
+            # the counts are the lists' lengths -- a consumer may trust
+            # failures>0 <=> exit 1 without re-counting
+            self.assertEqual(obj["failures"], len(obj["fail"]))
+            self.assertEqual(obj["warnings"], len(obj["warn"]))
+            self.assertGreater(obj["failures"], 0)
+            names = [e["check"] for e in obj["fail"]]
+            self.assertIn(self.GATE_CHECK, names, names)
+            detail = [e["detail"] for e in obj["fail"]
+                      if e["check"] == self.GATE_CHECK][0]
+            self.assertIn("check-truth", detail)
+            # --json REPLACES the human render; no text leaks into it
+            self.assertNotIn("FAIL  ", r.stdout)
+            self.assertNotIn("doctor: ", r.stdout)
+
+    def test_plain_text_unchanged_and_renders_the_same_run(self):
+        with tempfile.TemporaryDirectory() as d:
+            _mk_sandbox(d)
+            txt = _truth(d, "doctor")
+            js = _truth(d, "doctor", "--json")
+            self.assertEqual(txt.returncode, 1, txt.stdout + txt.stderr)
+            # the pre-existing text contract, character for character
+            self.assertIn(f"FAIL  {self.GATE_CHECK} -- ", txt.stdout)
+            obj = json.loads(js.stdout)
+            # the trailing summary, blank separator line included, and
+            # counting the same run the JSON counted
+            self.assertTrue(
+                txt.stdout.endswith(
+                    f"\n\ndoctor: {obj['failures']} failure(s), "
+                    f"{obj['warnings']} warning(s)\n"),
+                repr(txt.stdout[-80:]))
+            self.assertNotIn("{", txt.stdout)
+            # one run, two renders: the same (level, check) population,
+            # and within each level the JSON preserves the text's order
+            rows = self._text_rows(txt.stdout)
+            self.assertEqual(
+                set(rows),
+                {(lvl, e["check"]) for lvl in ("ok", "warn", "fail")
+                 for e in obj[lvl]})
+            for lvl in ("ok", "warn", "fail"):
+                self.assertEqual([e["check"] for e in obj[lvl]],
+                                 [c for l_, c in rows if l_ == lvl])
+
+
+class TestModulePurity(unittest.TestCase):
+    """P3 (ADR-044): the PURE CORE banner as a theorem, not a comment.
+
+    Each pure truthlib module is parsed with ast and refused: any
+    subprocess import, any `os.environ` attribute access, any open()
+    call (allowlist deliberately EMPTY -- pure modules receive file
+    content as data), any clock read (`datetime.now`, `time.time`;
+    parse_ts is fine -- it parses strings), and any import edge that
+    violates the DAG (a pure module never imports shellio or cli, and
+    each imports only the truthlib modules below it)."""
+
+    PURE = ("registry", "kernel", "evidence", "policy", "advisory")
+    # the import DAG, pure side: module -> truthlib modules it may import
+    DAG = {"registry": set(),
+           "kernel": {"registry"},
+           "evidence": {"registry", "kernel"},
+           "policy": {"registry", "kernel"},
+           "advisory": {"registry", "kernel", "evidence", "policy"}}
+    OPEN_ALLOWLIST = ()  # empty by design; justify any future entry here
+
+    def _tree(self, name):
+        import ast
+        path = os.path.join(HERE, "..", "truthlib", name + ".py")
+        with open(path, encoding="utf-8") as f:
+            return ast.parse(f.read(), filename=path)
+
+    def _truthlib_imports(self, tree):
+        import ast
+        mods = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for a in node.names:
+                    mods.add(a.name)
+            elif isinstance(node, ast.ImportFrom):
+                mods.add(node.module or "")
+        return mods
+
+    def test_pure_modules_never_import_subprocess(self):
+        for name in self.PURE:
+            mods = self._truthlib_imports(self._tree(name))
+            self.assertFalse(
+                any(m == "subprocess" or m.startswith("subprocess.")
+                    for m in mods),
+                f"truthlib/{name}.py imports subprocess -- shellio is the "
+                "only subprocess importer (ADR-044)")
+
+    def test_cli_never_imports_subprocess(self):
+        """ADR-044 amendment: shellio is the ONLY subprocess importer --
+        mechanically, cli included. The module table asserted this from
+        day one while cli.py imported subprocess for the ADR-014
+        acceptance oracle, and no test could catch it because cli is not
+        (and cannot be) in the PURE set: cli orchestrates I/O. So this
+        arm checks the ONE property the table names, on the one impure
+        module the table does not exempt. The oracle now runs through
+        shellio.run_accept_command."""
+        mods = self._truthlib_imports(self._tree("cli"))
+        self.assertFalse(
+            any(m == "subprocess" or m.startswith("subprocess.")
+                for m in mods),
+            "truthlib/cli.py imports subprocess -- shellio is the only "
+            "subprocess importer (ADR-044); route the execution through "
+            "a named shellio function instead")
+
+    def test_pure_modules_respect_the_import_dag(self):
+        for name in self.PURE:
+            got = {m.split(".", 1)[1] for m in
+                   self._truthlib_imports(self._tree(name))
+                   if m == "truthlib" or m.startswith("truthlib.")}
+            self.assertLessEqual(
+                got, self.DAG[name],
+                f"truthlib/{name}.py imports {sorted(got - self.DAG[name])} "
+                "-- outside its DAG row; pure modules never import shellio "
+                "or cli (ADR-044)")
+
+    def test_pure_modules_never_touch_env_files_or_clock(self):
+        import ast
+        for name in self.PURE:
+            for node in ast.walk(self._tree(name)):
+                if isinstance(node, ast.Attribute):
+                    base = node.value
+                    if isinstance(base, ast.Name):
+                        self.assertFalse(
+                            base.id == "os" and node.attr == "environ",
+                            f"truthlib/{name}.py reads os.environ "
+                            "(ADR-044: env is shellio's)")
+                        self.assertFalse(
+                            base.id == "datetime" and node.attr == "now",
+                            f"truthlib/{name}.py calls datetime.now "
+                            "(ADR-044: the clock is shellio's)")
+                        self.assertFalse(
+                            base.id == "time" and node.attr == "time",
+                            f"truthlib/{name}.py calls time.time "
+                            "(ADR-044: the clock is shellio's)")
+                if isinstance(node, ast.Call) \
+                        and isinstance(node.func, ast.Name) \
+                        and node.func.id == "open":
+                    self.assertIn(
+                        name, self.OPEN_ALLOWLIST,
+                        f"truthlib/{name}.py calls open() -- pure modules "
+                        "take file content as data (ADR-044; the "
+                        "allowlist is empty by design)")
 
 
 if __name__ == "__main__":

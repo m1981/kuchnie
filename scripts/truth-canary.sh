@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# truth-canary.sh v0.9.0 -- seeded-fault acceptance suite (v0.9.0 issue #4 C1-C5 contradicts/DISPUTED + SC session-close survival gate + v0.7.1 issue #5 W5-W8 impact --inverse + v0.7.0 ADR-014 AC1-AC7 acceptance oracles + v0.6.4 ADR-013 R10 premise supersede +seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6 + v0.6.3 TL-2 work-kernel discovery warn + ADR-023 H5 FAULT T dormant-glob-materializes arm + ADR-024 FAULT T unreachable-glob-refused arm + ADR-025 FAULT DG doctor-decides-hook-or-CI + ADR-027 FAULT AN1-AN5 anchor_commit/commit git-SHA-prefix floor + ADR-028 FAULT IF future-dated-issue transition coherence + ADR-009/M4 FAULT SD screen-gates-execution ordering + v0.9.12 R3/ADR-030 FAULT RA reaffirm-mismatch-never-auto-filed + v0.9.13 R6/ADR-031 unified duplicate-id rule: B1/B3-B5 expect the one message, FAULT K2 later-ts distinct duplicate flips to refused + v0.9.14 R12/ADR-032 FAULT SD-decay --scope-ok default-expiry (4 arms incl. negative control) + R13/ADR-033 FAULT OV override-velocity verbatim-repeat advisory (2 arms incl. negative control) + v0.9.20/ADR-034 FAULT GS staged gate table + CC-1 advisory block (5 arms incl. negative control) + v0.9.21/ADR-035 FAULT X positive-claim exit gate (8 arms incl. negative control + validate mirror) + v0.9.22/ADR-036 FAULT TG tombstone citation gate (11 arms incl. scope policy, fail-closed, preflight, unicode quotepath) + v0.9.23/ADR-037 FAULT RC recipe lints + generated-paths (10 arms incl. per-segment, carve-outs, decay, quote-split, dropped-override) + v0.9.24/ADR-038 FAULT DW dirty-watch advisory (7 arms incl. untracked-under-glob, rename, unicode, UU-conflict) + v0.9.25/ADR-039 FAULT BF blast forecast + churn report (7 arms incl. window boundary, shallow, unborn-HEAD)).
+# truth-canary.sh v0.9.0 -- seeded-fault acceptance suite (v0.9.0 issue #4 C1-C5 contradicts/DISPUTED + SC session-close survival gate + v0.7.1 issue #5 W5-W8 impact --inverse + v0.7.0 ADR-014 AC1-AC7 acceptance oracles + v0.6.4 ADR-013 R10 premise supersede +seeded faults + TL hardening + adapter seam + bd normalization + ADR-002 work kernel + ADR-006 issue-fold hardening + INV-M dead-tripwire intake checks + ADR-005 impact verb + spec-health/doc-health incl. degradation paths + v0.6 solo-regime hardening: ADR-007 Q-faults, ADR-008 B-faults, ADR-009 E-faults, ADR-010 V-faults, ADR-011 H-faults, ADR-012 M1 + v0.6.2 review-finding faults: F1 arg-deny E5, F2 ts-evasion B3/B4, F3 scope-signal Q5/Q6 + v0.6.3 TL-2 work-kernel discovery warn + ADR-023 H5 FAULT T dormant-glob-materializes arm + ADR-024 FAULT T unreachable-glob-refused arm + ADR-025 FAULT DG doctor-decides-hook-or-CI + ADR-027 FAULT AN1-AN5 anchor_commit/commit git-SHA-prefix floor + ADR-028 FAULT IF future-dated-issue transition coherence + ADR-009/M4 FAULT SD screen-gates-execution ordering + v0.9.12 R3/ADR-030 FAULT RA reaffirm-mismatch-never-auto-filed + v0.9.13 R6/ADR-031 unified duplicate-id rule: B1/B3-B5 expect the one message, FAULT K2 later-ts distinct duplicate flips to refused + v0.9.14 R12/ADR-032 FAULT SD-decay --scope-ok default-expiry (4 arms incl. negative control) + R13/ADR-033 FAULT OV override-velocity verbatim-repeat advisory (2 arms incl. negative control) + v0.9.20/ADR-034 FAULT GS staged gate table + CC-1 advisory block (5 arms incl. negative control) + v0.9.21/ADR-035 FAULT X positive-claim exit gate (8 arms incl. negative control + validate mirror) + v0.9.22/ADR-036 FAULT TG tombstone citation gate (11 arms incl. scope policy, fail-closed, preflight, unicode quotepath) + v0.9.23/ADR-037 FAULT RC recipe lints + generated-paths (10 arms incl. per-segment, carve-outs, decay, quote-split, dropped-override) + v0.9.24/ADR-038 FAULT DW dirty-watch advisory (7 arms incl. untracked-under-glob, rename, unicode, UU-conflict) + v0.9.25/ADR-039 FAULT BF blast forecast + churn report (7 arms incl. window boundary, shallow, unborn-HEAD) + ADR-010 FAULT SEP separation instrument (3 arms incl. negative control) + P1 review R1 FAULT S2D disputed-citer spec fails + R3 SC dead-sensor scream and claimed-count false-match immunity + L3-F7 FAULT GE check-truth environment lane (2 arms incl. negative control) + v0.9.27 P2 contract layer: FAULT VC vocab-verb contract (2 arms) + GS6 done --claim --json advisory echo + v0.9.29/ADR-045 FAULT LK ledger-lock two-process serialization (2 arms) + FAULT UM5-UM7 pre-merge-commit merge gate (installer-driven; honest sync passes, tampered merge refused) + doctor pre-merge-commit WARN/quiet/CI-exempt arms (3) + v0.9.30/ADR-046 tiering (D4): FAULT SEP (3 arms) and FAULT OV's two stats arms RETIRED -- the separation and override-velocity stats sections left the template CLI for Tier C instruments, and the arms moved to the meta-repo gate scripts/test-instruments.sh; BF5 RETIRED there too (stats blast section render); BF4 FLIPPED to assert blast_forecast is NOT stored while the BF1 advisory still voices from the live computation (BF 7->6 arms); the concerns surface had no canary arms -- its retired core-suite arms are named in ADR-046).
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PASS=0; FAIL=0
@@ -8,7 +8,12 @@ ok()   { PASS=$((PASS+1)); say "  CAUGHT: $*"; }
 miss() { FAIL=$((FAIL+1)); say "  MISSED: $*"; }
 
 TMP1="$(mktemp -d)"; TMP2="$(mktemp -d)"; TMP3="$(mktemp -d)"; TMP4="$(mktemp -d)"; TMP5="$(mktemp -d)"
-cleanup() { rm -rf "$TMP1" "$TMP2" "$TMP3" "$TMP4" "$TMP5"; }
+# Every later per-arm mktemp -d appends itself to TDIRS so the EXIT trap
+# is the backstop when an arm dies before its own rm -rf line (which each
+# arm keeps -- belt and braces). ${TDIRS+...} keeps set -u happy on an
+# empty array under macOS bash 3.2.
+TDIRS=()
+cleanup() { rm -rf "$TMP1" "$TMP2" "$TMP3" "$TMP4" "$TMP5" ${TDIRS+"${TDIRS[@]}"}; }
 trap cleanup EXIT
 
 mkrepo() {
@@ -19,6 +24,7 @@ mkrepo() {
   mkdir -p scripts .truth prompts
   touch .truth/claims.jsonl
   cp "$HERE/truth" scripts/truth
+  cp -R "$HERE/../truthlib" truthlib  # ADR-044: the entry resolves ../truthlib from its own real path
   cp "$HERE/../.truth/evidence-allow" .truth/evidence-allow
   cp "$HERE/../.truth/evidence-deny" .truth/evidence-deny  # ADR-022 baseline
   cp "$HERE/../.truth/generated-paths" .truth/generated-paths  # ADR-037 (empty=silent)
@@ -55,6 +61,26 @@ if $T doctor >/dev/null 2>&1; then
 else
   miss "doctor failed a correctly wired repo"; $T doctor || true
 fi
+# ADR-045 (D3): git runs pre-merge-commit, never pre-commit, when a merge
+# auto-commits -- so a locally gated repo without the third hook lands
+# union-merged ledgers ungated. Doctor must WARN (adoption-gated, never
+# FAIL: pre-v0.9.29 installs lack it blamelessly) and go quiet once the
+# hook is installed.
+DOC_PMC="$($T doctor 2>&1)"
+if printf '%s\n' "$DOC_PMC" | grep -q "WARN  pre-merge-commit hook gates merge commits"; then
+  ok "doctor WARNs: pre-commit wired but pre-merge-commit absent (merge commits ungated, ADR-045)"
+else
+  miss "doctor stayed silent on a locally gated repo missing pre-merge-commit (ADR-045)"
+fi
+printf '#!/usr/bin/env bash\nexec bash scripts/check-truth.sh\n' > .git/hooks/pre-merge-commit
+chmod +x .git/hooks/pre-merge-commit
+DOC_PMC="$($T doctor 2>&1)"
+if printf '%s\n' "$DOC_PMC" | grep -q "OK    pre-merge-commit hook gates merge commits" \
+   && ! printf '%s\n' "$DOC_PMC" | grep -q "WARN  pre-merge-commit"; then
+  ok "doctor quiet (OK line) once pre-merge-commit is installed"
+else
+  miss "doctor still warns, or reports no OK, after pre-merge-commit was installed"
+fi
 # TL-1: hooks live where core.hooksPath says; .git/hooks wiring must not count
 git config core.hooksPath .hookmgr/_
 mkdir -p .hookmgr/_
@@ -77,7 +103,7 @@ git config --unset core.hooksPath
 # gate. A CI config that names the gate script passes; neither hook nor CI
 # fails. Isolated sub-repo so the main sandbox's wiring is untouched.
 say "FAULT DG (ADR-025): doctor decides the commit gate via CI when no hook exists"
-DG="$(mktemp -d)"
+DG="$(mktemp -d)"; TDIRS+=("$DG")
 mkrepo "$DG"   # NB: mkrepo cd's into $DG. No subshell -- ok/miss mutate the
                # PASS/FAIL counters and a subshell would discard them (a
                # miss here would be invisible). Restore cwd with cd below.
@@ -90,6 +116,41 @@ if [ "$DGRC" -ne 0 ] \
   ok "doctor FAILs the gate (exit 1) with neither hook nor CI"
 else
   miss "doctor did not fail the gate on a repo with no hook and no CI"
+fi
+# `doctor --json` is the SAME run rendered as one object (the contract
+# layer's machine surface): the exit contract is unchanged, the missing
+# gate is named in fail[], and the counts are the lists' lengths.
+DGJ="$($T doctor --json 2>&1)"; DGJRC=$?
+if [ "$DGJRC" -eq 1 ] && printf '%s' "$DGJ" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+assert set(d) == {"ok", "warn", "fail", "failures", "warnings"}, sorted(d)
+assert all(set(e) == {"check", "detail"}
+           for lvl in ("ok", "warn", "fail") for e in d[lvl]), d
+assert d["failures"] == len(d["fail"]), d
+assert d["warnings"] == len(d["warn"]), d
+assert "pre-commit hook enforces INV-A/INV-B" in [e["check"] for e in d["fail"]], d["fail"]
+'; then
+  ok "doctor --json emits the structured report (fail[] names the missing gate) at the unchanged exit 1"
+else
+  miss "doctor --json did not parse as the contract object, or lost the exit-1 contract"
+fi
+# and the flag changes REPORTING only: with --json ABSENT the render is
+# the pre-existing text, pinned literally (NOT by re-running doctor and
+# comparing it to itself -- that compares one binary to the same binary
+# and would pass any leak present in both runs). Every line is an
+# OK/FAIL/WARN line, a blank, or the summary; the summary agrees with
+# the JSON counts; no JSON leaks in.
+DGTXT="$($T doctor 2>&1)"; DGTRC=$?
+DGSUM="$(printf '%s' "$DGJ" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("doctor: %d failure(s), %d warning(s)" % (d["failures"], d["warnings"]))')"
+if [ "$DGTRC" -eq 1 ] \
+   && [ "$(printf '%s\n' "$DGTXT" | tail -1)" = "$DGSUM" ] \
+   && printf '%s\n' "$DGTXT" | grep -q '^FAIL  pre-commit hook enforces INV-A/INV-B -- ' \
+   && ! printf '%s\n' "$DGTXT" | grep -q '"check"' \
+   && [ "$(printf '%s\n' "$DGTXT" | grep -cvE '^(OK    |FAIL  |WARN  |doctor: |$)')" -eq 0 ]; then
+  ok "plain doctor renders the unchanged text (OK/FAIL/WARN + summary agreeing with the JSON counts), no JSON leak"
+else
+  miss "plain doctor output changed when the --json surface was added"
 fi
 # a workflow in a SUBDIR must NOT satisfy the gate (GitHub never runs it)
 mkdir -p .github/workflows/disabled
@@ -112,6 +173,14 @@ if [ "$DGRC" -eq 0 ] \
   ok "doctor PASSes BOTH gate arms via a CI config naming check-truth and invalidate-scan"
 else
   miss "doctor did not accept the CI-named gate on both arms at exit 0 (ADR-025 regression)"
+fi
+# ADR-045: a CI-arm repo (no LOCAL pre-commit hook) is exempt from the
+# pre-merge-commit warn -- its gate runs server-side on push/PR, where a
+# merge commit arrives like any other.
+if printf '%s\n' "$DGOUT" | grep -q "pre-merge-commit"; then
+  miss "CI-arm repo got the pre-merge-commit line -- the exemption regressed (ADR-045)"
+else
+  ok "CI-arm repo exempt from the pre-merge-commit warn (gate runs server-side)"
 fi
 # a directory named after a hook must not crash doctor (it must report)
 rm -f .github/workflows/truth.yml; mkdir -p .git/hooks/pre-commit
@@ -177,12 +246,16 @@ else
 fi
 
 say "FAULT Q (TL-5): records must carry a real session id, never s-unknown"
-TRUTH_SESSION="" $T claim "session fallback probe" --class UNVERIFIED --tier P2 >/dev/null
-LAST_SESSION=$(tail -1 .truth/claims.jsonl | python3 -c "import json,sys;print(json.load(sys.stdin)['session'])")
-if [ "$LAST_SESSION" != "s-unknown" ] && [ -n "$LAST_SESSION" ]; then
-  ok "unset TRUTH_SESSION falls back to a derived id ($LAST_SESSION)"
+CID_QS=$(TRUTH_SESSION="" $T claim "session fallback probe" --class UNVERIFIED --tier P2)
+if [ -z "$CID_QS" ] || ! grep -q "$CID_QS" .truth/claims.jsonl; then
+  miss "fault injection failed: session-fallback claim was never filed (tail -1 would read the PREVIOUS record)"
 else
-  miss "record filed with session '$LAST_SESSION'"
+  LAST_SESSION=$(tail -1 .truth/claims.jsonl | python3 -c "import json,sys;print(json.load(sys.stdin)['session'])")
+  if [ "$LAST_SESSION" != "s-unknown" ] && [ -n "$LAST_SESSION" ]; then
+    ok "unset TRUTH_SESSION falls back to a derived id ($LAST_SESSION)"
+  else
+    miss "record filed with session '$LAST_SESSION'"
+  fi
 fi
 TRUTH_SESSION=s-custom-probe $T claim "session override probe" --class UNVERIFIED --tier P2 --duplicate-ok >/dev/null
 if tail -1 .truth/claims.jsonl | grep -q '"session": "s-custom-probe"'; then
@@ -195,11 +268,15 @@ say "FAULT D (G10): claim past its ttl_days must expire to stale"
 CID_D=$(TRUTH_NOW="2026-06-01T00:00:00+00:00" $T claim \
         "external API allows 100 req/min" --class INFERRED \
         --basis "vendor docs read 2026-06-01" --ttl-days 7 --tier P1)
-$T invalidate-scan --quiet
-if $T list --stale --json | grep -q "$CID_D"; then
-  ok "claim $CID_D expired after ttl elapsed"
+if [ -z "$CID_D" ] || ! grep -q "$CID_D" .truth/claims.jsonl; then
+  miss "fault injection failed: the ttl claim was never filed (an empty id makes grep -q match anything)"
 else
-  miss "ttl_days is still a dead field: $CID_D outlived its ttl"
+  $T invalidate-scan --quiet
+  if $T list --stale --json | grep -q "$CID_D"; then
+    ok "claim $CID_D expired after ttl elapsed"
+  else
+    miss "ttl_days is still a dead field: $CID_D outlived its ttl"
+  fi
 fi
 # ADR-019 (H2): the fold reads no clock -- a TTL'd claim is NOT stale
 # until a scan writes the invalidation record. File one already long past
@@ -290,20 +367,27 @@ else
   miss "gate misfired with no scoping signal in the command"
 fi
 say "FAULT Q5 (ADR-007, F3): a ripgrep -t type filter is a scope signal (no slash)"
-if $T claim "no occurrences remain anywhere in the codebase" --class VERIFIED \
-     --evidence-cmd "grep -t txt -rc hello ." --paths "watched.txt" \
-     --tier P1 2>/dev/null; then
-  miss "intake accepted a universal quantifier over a -t-scoped command (F3 evasion)"
+# The sentence must NOT collide with any claim already filed in this
+# sandbox: Q5's original text was byte-identical to the claim Q2 filed,
+# so G8 refused BEFORE the ADR-007 gate ever saw the -t flag (gate table
+# order) -- the arm was vacuous. A distinct sentence plus asserting the
+# refusal NAMES ADR-007 (the GS1/GS2 pattern) pins the right gate.
+Q5ERR=$($T claim "zero stray hello markers survive across the tracked corpus" \
+        --class VERIFIED --evidence-cmd "grep -t txt -rc hello ." \
+        --paths "watched.txt" --tier P1 2>&1); Q5RC=$?
+if [ "$Q5RC" -ne 0 ] && printf '%s\n' "$Q5ERR" | grep -q "ADR-007"; then
+  ok "-t type-filter scope signal refused, and the refusal names ADR-007"
 else
-  ok "-t type-filter scope signal caught under a universal quantifier"
+  miss "-t scope signal not refused by the ADR-007 gate (rc=$Q5RC, F3 evasion or wrong gate)"
 fi
 say "FAULT Q6 (ADR-007, F3): a glob-metacharacter positional is a scope signal"
-if $T claim "X appears everywhere in the code" --class VERIFIED \
-     --evidence-cmd "grep -c hello watched.*" --paths "watched.txt" \
-     --tier P1 2>/dev/null; then
-  miss "intake accepted a universal quantifier over a glob-scoped command (F3 evasion)"
+Q6ERR=$($T claim "X appears everywhere in the code" --class VERIFIED \
+        --evidence-cmd "grep -c hello watched.*" --paths "watched.txt" \
+        --tier P1 2>&1); Q6RC=$?
+if [ "$Q6RC" -ne 0 ] && printf '%s\n' "$Q6ERR" | grep -q "ADR-007"; then
+  ok "glob-metacharacter positional scope signal refused, and the refusal names ADR-007"
 else
-  ok "glob-metacharacter positional scope signal caught under a universal quantifier"
+  miss "glob positional not refused by the ADR-007 gate (rc=$Q6RC, F3 evasion or wrong gate)"
 fi
 
 say "FAULT E1 (ADR-009): a non-allowlisted program in the evidence command must be refused"
@@ -389,7 +473,7 @@ grep -v '^bash$' .truth/evidence-allow > .truth/evidence-allow.tmp && mv .truth/
 # here: the default carries no grey-zone program, and a consumer who keeps
 # one is warned rather than silently trusted.
 say "FAULT AL (ADR-040): the shipped allowlist default is grey-zone free, and a consumer keeping a removed program is warned"
-AL_TMP=$(mktemp -d)
+AL_TMP=$(mktemp -d); TDIRS+=("$AL_TMP")
 cp "$HERE/../.truth/evidence-allow" "$AL_TMP/shipped"
 cp .truth/evidence-allow "$AL_TMP/mine.bak"
 if grep -qxE 'rg|file|date' "$AL_TMP/shipped"; then
@@ -424,6 +508,14 @@ else
 fi
 cp "$AL_TMP/mine.bak" .truth/evidence-allow
 rm -rf "$AL_TMP"
+
+# ---- FAULT SEP: RETIRED (ADR-046) ---------------------------------------
+# SEP1/SEP2/SEP3 pinned the ADR-010 separation instrument through the
+# `truth stats` separation section, which left the template CLI (Tier C).
+# Their assertions moved VERBATIM-in-substance to the meta-repo gate
+# scripts/test-instruments.sh, which drives the same separation_report
+# through instruments/separation-report.py (incl. the SEP3 negative
+# control and the JSON-field-not-text-grep lesson).
 
 say "FAULT T (INV-M): a dead evidence-path tripwire must be refused at intake"
 if $T claim "a and watched are fine" --class VERIFIED \
@@ -984,19 +1076,23 @@ fi
 
 say "FAULT RL (ADR-002, HIGH-3): start --release returns a claimed item to open; refused from open"
 WK_REL=$($T issue "kernel issue for release probe" 2>/dev/null)
-$T start "$WK_REL" >/dev/null 2>&1                     # -> claimed
-# releasing a claimed item must put it back in ready (open, deps ok)
-$T start "$WK_REL" --release >/dev/null 2>&1
-if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_REL"; then
-  ok "start --release returned $WK_REL to the ready pool (claimed -> open)"
+if [ -z "$WK_REL" ] || ! grep -q "$WK_REL" .truth/claims.jsonl; then
+  miss "fault injection failed: the release-probe issue was never filed (an empty id makes grep -q match anything)"
 else
-  miss "start --release did not return $WK_REL to open"
-fi
-# released is valid ONLY from claimed: a second release (now open) must refuse
-if $T start "$WK_REL" --release >/dev/null 2>&1; then
-  miss "start --release accepted from open state (transition guard missing)"
-else
-  ok "start --release refused from open -- released is valid only from claimed"
+  $T start "$WK_REL" >/dev/null 2>&1                     # -> claimed
+  # releasing a claimed item must put it back in ready (open, deps ok)
+  $T start "$WK_REL" --release >/dev/null 2>&1
+  if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_REL"; then
+    ok "start --release returned $WK_REL to the ready pool (claimed -> open)"
+  else
+    miss "start --release did not return $WK_REL to open"
+  fi
+  # released is valid ONLY from claimed: a second release (now open) must refuse
+  if $T start "$WK_REL" --release >/dev/null 2>&1; then
+    miss "start --release accepted from open state (transition guard missing)"
+  else
+    ok "start --release refused from open -- released is valid only from claimed"
+  fi
 fi
 
 say "FAULT R5 (ADR-002): kernel-as-tracker seam must join identically to native"
@@ -1190,6 +1286,25 @@ else
   rm -f docs/specs/bad.md
 fi
 
+say "FAULT S2D (R1): spec citing a DISPUTED side must fail -- contradicts promises specs citing either side fail"
+CID_DS1=$($T claim "ds-fixture parser accepts unicode identifiers" --class UNVERIFIED --tier P1)
+CID_DS2=$($T claim "ds-fixture serializer emits ascii output only" --class UNVERIFIED --tier P1)
+TRUTH_SESSION=s-canary-verifier $T verdict "$CID_DS1" agree --basis "canary: ds" >/dev/null
+TRUTH_SESSION=s-canary-verifier $T verdict "$CID_DS2" agree --basis "canary: ds" >/dev/null
+$T contradicts "$CID_DS1" "$CID_DS2" --basis "canary: unicode in cannot leave ascii-only out" >/dev/null
+if ! $T list --disputed | grep -q "$CID_DS1"; then
+  miss "fault injection failed: $CID_DS1 never derived DISPUTED, S2D cannot run armed"
+else
+  printf '# Spec: canary disputed\nstands on %s\n' "$CID_DS1" > docs/specs/disputed.md
+  S2D_OUT=$(bash scripts/spec-health.sh 2>&1) && S2D_RC=0 || S2D_RC=$?
+  if [ "$S2D_RC" -ne 0 ] && echo "$S2D_OUT" | grep -q "FAIL  $CID_DS1  disputed"; then
+    ok "spec on disputed $CID_DS1 failed with exit $S2D_RC"
+  else
+    miss "spec-health passed a spec citing disputed $CID_DS1 (rc=$S2D_RC): $(echo "$S2D_OUT" | grep "$CID_DS1" || true)"
+  fi
+  rm -f docs/specs/disputed.md
+fi
+
 say "FAULT S3 (spec-health): zero-id spec must WARN but not fail"
 printf '# Spec: canary unwired\nprose with no ids\n' > docs/specs/unwired.md
 S3_OUT=$(bash scripts/spec-health.sh 2>&1) && S3_RC=0 || S3_RC=$?
@@ -1306,6 +1421,41 @@ else
 fi
 git checkout -q -- .truth/claims.jsonl
 
+say "FAULT GE (L3-F7): unreadable staged ledger must route to the environment lane (exit 2), never a false green"
+# Own sandbox (the FAULT DG pattern): FAULT N/A above restore the ledger
+# from the INDEX, so the main sandbox's ledger is still tampered here and
+# an honest append could never pass its gate. No subshell -- ok/miss
+# mutate the counters; cwd restored below.
+GE="$(mktemp -d)"; TDIRS+=("$GE")
+mkrepo "$GE"
+git add -A && git commit -qm "ge: init" --no-verify
+$T claim "ge environment lane probe fact" --class UNVERIFIED --tier P2 >/dev/null 2>&1
+git add .truth/claims.jsonl
+GESHIM="$(mktemp -d)"; TDIRS+=("$GESHIM")
+GEREAL="$(command -v git)"
+printf '#!/usr/bin/env bash\n[ "${1:-}" = "show" ] && { echo "git: simulated show failure" >&2; exit 128; }\nexec "%s" "$@"\n' "$GEREAL" > "$GESHIM/git"
+chmod +x "$GESHIM/git"
+if PATH="$GESHIM:$PATH" git show ":.truth/claims.jsonl" >/dev/null 2>&1; then
+  miss "fault injection failed: the git shim still serves show"
+else
+  PATH="$GESHIM:$PATH" bash scripts/check-truth.sh >/dev/null 2>&1; GE_RC=$?
+  if [ "$GE_RC" -eq 2 ]; then
+    ok "dead git show exited 2 (environment, not governance)"
+  else
+    miss "check-truth with a dead git show exited $GE_RC instead of 2 (empty-pipe false green?)"
+  fi
+  # negative control: the shim was the only fault -- the same staged
+  # honest append passes with a working git
+  bash scripts/check-truth.sh >/dev/null 2>&1; GE2_RC=$?
+  if [ "$GE2_RC" -eq 0 ]; then
+    ok "same staged append passes with a working git (exit 0)"
+  else
+    miss "negative control failed: healthy gate exited $GE2_RC on an honest append"
+  fi
+fi
+cd "$TMP1"
+rm -rf "$GE" "$GESHIM"
+
 # ======================================================= sandbox 2 (G1)
 say "FAULT F (G1): VERIFIED claim in a zero-commit repo must be refused"
 mkrepo "$TMP2"
@@ -1388,6 +1538,18 @@ if PATH="/usr/bin:/bin" $T ready | grep -q "^$WK_R10"; then
   ok "supersede released the HELD issue (redirect honored by ready)"
 else
   miss "issue $WK_R10 still HELD after supersede"; PATH="/usr/bin:/bin" $T ready || true
+fi
+# R10-shape (v0.9.32): intake may not be weaker than the validate mirror.
+# A non-tr-hex8 claim ref used to APPEND -- and `truth validate` then
+# refused the line, on an append-only file.
+R10SL=$(wc -l < .truth/claims.jsonl)
+R10SERR=$($T premise "$WK_R10" '#' 2>&1); R10SRC=$?
+if [ "$R10SRC" -ne 0 ] && printf '%s\n' "$R10SERR" | grep -q "tr-hex8" \
+   && [ "$(wc -l < .truth/claims.jsonl)" -eq "$R10SL" ] \
+   && $T validate >/dev/null 2>&1; then
+  ok "premise refuses a non-tr-hex8 claim ref before appending -- the ledger never goes invalid-by-its-own-validator"
+else
+  miss "premise accepted a malformed claim ref (rc=$R10SRC) -- intake weaker than validate"
 fi
 
 say "FAULT R11 (ADR-017, C3): superseding a RETRACTED premise needs the human gate"
@@ -1616,10 +1778,13 @@ git add -A && git commit -qm "canary: sc file"
 WK_SC=$($T issue "sc probe item" 2>/dev/null)
 $T start "$WK_SC" >/dev/null
 git add .truth/claims.jsonl && git commit -qm "canary: sc claimed" --no-verify
-if bash scripts/session-close.sh 2>/dev/null | grep -q "still claimed"; then
-  ok "claimed work item refused with the claimed-count named"
+# capture rc, not just the phrase: a fail->warn downgrade in
+# session-close.sh would keep printing "still claimed" at exit 0
+SCC_OUT=$(bash scripts/session-close.sh 2>/dev/null); SCC_RC=$?
+if [ "$SCC_RC" -ne 0 ] && printf '%s' "$SCC_OUT" | grep -q "still claimed"; then
+  ok "claimed work item refused (non-zero exit) with the claimed-count named"
 else
-  miss "in-flight claimed item not flagged"
+  miss "in-flight claimed item not flagged as a blocking hole (rc=$SCC_RC)"
 fi
 $T start "$WK_SC" --release --basis "canary: hand back" >/dev/null
 $T claim "sc unverified probe fact" --class UNVERIFIED --tier P2 >/dev/null
@@ -1630,6 +1795,31 @@ if [ "$SC_RC" -eq 0 ] && printf '%s' "$SC_OUT" | grep -q "WARN.*unverified"; the
 else
   miss "unverified-claim debt handling wrong (rc=$SC_RC)"
 fi
+# R3: the claimed probe must count the STATUS column, never free text --
+# an issue whose TITLE contains "claimed" used to false-FAIL the gate
+WK_SCT=$($T issue "audit claimed counter probe" 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "canary: sc titled probe" --no-verify
+SCT_OUT=$(bash scripts/session-close.sh 2>/dev/null); SCT_RC=$?
+if ! $T issues | grep -q "audit claimed counter probe"; then
+  miss "fault injection failed: the titled probe issue was never filed"
+elif printf '%s' "$SCT_OUT" | grep -q "still claimed"; then
+  miss "the word 'claimed' in an OPEN issue's title false-matched the claimed count (rc=$SCT_RC)"
+else
+  ok "open issue titled 'claimed' did not trip the claimed count (rc=$SCT_RC)"
+fi
+# R3/F1: a dead CLI must scream, never degrade to zero counts and
+# "Safe to close" -- the gate's own sensor may not die silently
+cp .truth/claims.jsonl claims.sc.bak
+echo 'sc corrupt probe: not json' >> .truth/claims.jsonl
+SCD_OUT=$(bash scripts/session-close.sh 2>/dev/null); SCD_RC=$?
+if ! grep -q 'sc corrupt probe' .truth/claims.jsonl; then
+  miss "fault injection failed: the ledger was never corrupted"
+elif [ "$SCD_RC" -ne 0 ] && printf '%s' "$SCD_OUT" | grep -q "nothing below was checked"; then
+  ok "corrupt ledger screamed 'nothing below was checked' at exit $SCD_RC"
+else
+  miss "dead CLI degraded silently (rc=$SCD_RC): $(printf '%s' "$SCD_OUT" | tail -2)"
+fi
+mv claims.sc.bak .truth/claims.jsonl
 mkdir -p scripts/session-gates.d
 printf '#!/usr/bin/env bash\nexit 1\n' > scripts/session-gates.d/always-fail.sh
 git add -A && git commit -qm "canary: sc failing gate" --no-verify
@@ -1782,7 +1972,7 @@ fi
 # peer claim in the same sweep proves the contrast: it IS reaffirmed, and
 # its advanced anchor (F2) survives the next scan.
 say "FAULT RA (ADR-030): reaffirm must file nothing on changed evidence, reaffirm the unchanged peer"
-RA="$(mktemp -d)"; RA_PREV="$PWD"
+RA="$(mktemp -d)"; TDIRS+=("$RA"); RA_PREV="$PWD"
 mkrepo "$RA"   # NB: mkrepo cd's into $RA. No subshell -- ok/miss mutate the
                # PASS/FAIL counters; cwd restored via $RA_PREV below.
 echo "solid"  > ra-ok.txt
@@ -1836,7 +2026,7 @@ rm -rf "$RA"
 # (ADR-032 -> ADR-019 scan -> ADR-030 arm 1). Own sandbox; no subshell so
 # ok/miss mutate the counters; cwd restored via $SD_PREV.
 say "FAULT SD-decay (ADR-032): a --scope-ok override without --ttl-days must decay to a default 30-day expiry"
-SD="$(mktemp -d)"; SD_PREV="$PWD"
+SD="$(mktemp -d)"; TDIRS+=("$SD"); SD_PREV="$PWD"
 mkrepo "$SD"
 echo "data" > f.txt
 git add -A && git commit -qm "sd: init" --no-verify -q
@@ -1883,50 +2073,15 @@ fi
 cd "$SD_PREV"
 rm -rf "$SD"
 
-# ---- FAULT OV (ADR-033, v0.9.14): override-velocity verbatim-repeat -------
-# `truth stats` raises a NON-blocking advisory when a scope justification
-# is re-filed verbatim (tokens() token-set-identical) after the prior claim
-# died. Two arms: (1) a verbatim re-justification after expiry produces the
-# advisory (red if the detector is patched out); (2) NEGATIVE CONTROL: a
-# genuinely narrowed re-file produces NO advisory.
-say "FAULT OV (ADR-033): a verbatim scope re-justification after expiry must raise the advisory; a narrowed one must not"
-OV="$(mktemp -d)"; OV_PREV="$PWD"
-mkrepo "$OV"
-echo "data" > f.txt
-git add -A && git commit -qm "ov: init" --no-verify -q
-OV_SB="the include filter deliberately covers the whole codebase"
-OV_EC="grep -rc data --include=f.txt ."
-CID_OV1=$(TRUTH_NOW="2026-06-01T00:00:00+00:00" $T claim \
-          "no occurrences remain anywhere in the codebase" --class VERIFIED \
-          --evidence-cmd "$OV_EC" --paths f.txt --tier P1 \
-          --scope-ok "$OV_SB" 2>/dev/null)
-$T invalidate-scan --quiet   # CID_OV1 -> stale (ttl, ttl_default)
-CID_OV2=$($T claim "no occurrences remain anywhere in the codebase" \
-          --class VERIFIED --evidence-cmd "$OV_EC" --paths f.txt --tier P1 \
-          --scope-ok "$OV_SB" 2>/dev/null)   # same sentence + justification
-OVOUT=$($T stats 2>/dev/null)
-if printf '%s\n' "$OVOUT" | grep -q "ADR-033" \
-   && printf '%s\n' "$OVOUT" | grep -q "$CID_OV2" \
-   && printf '%s\n' "$OVOUT" | grep -q "$CID_OV1"; then
-  ok "verbatim re-justification after expiry raised the advisory ($CID_OV2 vs $CID_OV1)"
-else
-  miss "override-velocity advisory missing for a verbatim re-justification (detector patched out?)"
-fi
-CID_OV3=$(TRUTH_NOW="2026-06-01T00:00:00+00:00" $T claim \
-          "every call site is covered by the services grep" --class VERIFIED \
-          --evidence-cmd "$OV_EC" --paths f.txt --tier P2 \
-          --scope-ok "services is the only place this pattern can appear" 2>/dev/null)
-$T invalidate-scan --quiet   # CID_OV3 -> stale
-CID_OV4=$($T claim "every call site is covered by the services grep" \
-          --class VERIFIED --evidence-cmd "$OV_EC" --paths f.txt --tier P2 \
-          --scope-ok "now narrowed to the single services subtree after refactor" 2>/dev/null)
-if $T stats --json 2>/dev/null | python3 -c "import json,sys; o=json.load(sys.stdin)['overrides']; ids=[r['claim'] for r in o['repeats']]; sys.exit(0 if '$CID_OV4' not in ids and '$CID_OV2' in ids else 1)"; then
-  ok "negative control: a genuinely narrowed re-file produced no advisory ($CID_OV4)"
-else
-  miss "override-velocity advisory false-fired on a genuinely narrowed re-file"
-fi
-cd "$OV_PREV"
-rm -rf "$OV"
+# ---- FAULT OV: RETIRED (ADR-046) ----------------------------------------
+# The two override-velocity stats arms ("verbatim re-justification after
+# expiry raised the advisory" and its narrowed-re-file negative control)
+# pinned the `truth stats` overrides section, which left the template CLI
+# (Tier C). Their assertions moved to the meta-repo gate
+# scripts/test-instruments.sh, which seeds the identical expiry/repeat
+# fixture and drives override_report through
+# instruments/override-velocity.py. The PURE detector tests
+# (TestOverrideReport in test-truth-core.py) never moved.
 
 # ---- FAULT GS (ADR-034, v0.9.20): staged gate table + CC-1 advisories ----
 # The intake gate sequence is data (INTAKE_GATES) and post-append
@@ -1939,7 +2094,7 @@ rm -rf "$OV"
 # render as one contiguous prefixed block; (5) GS5 NEGATIVE CONTROL: a
 # clean filing prints zero advisory lines (silence on clean, CC-1).
 say "FAULT GS (ADR-034): staged gate order + one CC-1 advisory block"
-GS="$(mktemp -d)"; GS_PREV="$PWD"
+GS="$(mktemp -d)"; TDIRS+=("$GS"); GS_PREV="$PWD"
 mkrepo "$GS"
 echo "data" > f.txt
 git add -A && git commit -qm "gs: init" --no-verify -q
@@ -1993,6 +2148,58 @@ if printf '%s\n' "$GS5ERR" | grep -q "^truth: advisory:"; then
 else
   ok "GS5: negative control -- a clean filing prints zero advisory lines"
 fi
+# GS6 (P2, SI-3 at claim-at-death): done --claim --json emits one object
+# {issue, event, claim, accept, advisories}; the advisory messages ride
+# the ECHO, never either ledger line (the GS3 contract, done edition).
+$T issue "gs6 work closing with a scoped claim" >/dev/null 2>&1
+GS6ID=$(python3 -c "
+import json
+last = None
+for l in open('.truth/claims.jsonl'):
+    r = json.loads(l)
+    if r.get('kind') == 'issue': last = r['id']
+print(last)")
+$T start "$GS6ID" >/dev/null 2>&1
+GS6OUT=$($T done "$GS6ID" --basis "gs6 close" \
+         --claim "the gs6 data marker sits committed in f.txt" \
+         --class VERIFIED --evidence-cmd "cat f.txt" --paths f.txt \
+         --duplicate-ok --scope-ok "single-file scope is the whole domain" \
+         --json 2>/dev/null)
+if printf '%s\n' "$GS6OUT" | python3 -c "
+import json, sys
+o = json.load(sys.stdin)
+ok = (o.get('event') == 'closed' and (o.get('claim') or {}).get('id')
+      and any('ADR-032' in a for a in o.get('advisories', [])))
+sys.exit(0 if ok else 1)" \
+   && ! tail -2 .truth/claims.jsonl | grep -q '"advisories"'; then
+  ok "GS6: done --claim --json echoes advisories[]; neither ledger line carries them"
+else
+  miss "GS6: done --json advisory echo broken, or advisories leaked into the ledger ($GS6OUT)"
+fi
+# GS7 (2026-08-02 audit gap): the gate table's FIRST row, text-nonempty
+# (G0), had no end-to-end arm -- its only pins were the table-order test
+# and the schema's minLength, both of which a gutted gate body leaves
+# green. A hard, override-less refusal with no arm is the vacuous class
+# one level up, so it gets one: empty and whitespace-only text refused,
+# nothing appended, plus a NEGATIVE CONTROL that ordinary text still files.
+GS7N=$(grep -c "" .truth/claims.jsonl)
+GS7A=$($T claim "" --tier P2 2>&1); GS7ARC=$?
+GS7B=$($T claim "   " --tier P2 2>&1); GS7BRC=$?
+GS7M=$(grep -c "" .truth/claims.jsonl)
+if [ "$GS7ARC" -ne 0 ] && [ "$GS7BRC" -ne 0 ] \
+   && printf '%s\n' "$GS7A" | grep -q "must be non-empty" \
+   && printf '%s\n' "$GS7B" | grep -q "must be non-empty" \
+   && [ "$GS7M" -eq "$GS7N" ]; then
+  ok "GS7: empty and whitespace-only claim text refused (G0), ledger unchanged"
+else
+  miss "GS7: text-nonempty gate did not refuse (rc=$GS7ARC/$GS7BRC, lines $GS7N->$GS7M)"
+fi
+if $T claim "gs7 negative control files ordinary sentence text" \
+     --tier P2 >/dev/null 2>&1; then
+  ok "GS7b: negative control -- ordinary text still files (G0 is not a blanket refusal)"
+else
+  miss "GS7b: the text-nonempty gate refused legitimate text"
+fi
 cd "$GS_PREV"
 rm -rf "$GS"
 
@@ -2008,7 +2215,7 @@ rm -rf "$GS"
 # validate refuses basis-beside-rc0, tolerates a legacy capsule with
 # no returncode; X7 done --claim parity.
 say "FAULT X (ADR-035): positive text + failing evidence must refuse; absence proofs keep the warning path"
-XG="$(mktemp -d)"; XG_PREV="$PWD"
+XG="$(mktemp -d)"; TDIRS+=("$XG"); XG_PREV="$PWD"
 mkrepo "$XG"
 echo "data" > f.txt
 git add -A && git commit -qm "x: init" --no-verify -q
@@ -2106,7 +2313,7 @@ rm -rf "$XG"
 # silent; pathspec-magic lines refused; dead scope loud. --orphan-ok
 # stores its basis; the ledger itself never blocks (TG9).
 say "FAULT TG (ADR-036): retraction must refuse while the id is cited inside the scope"
-TG="$(mktemp -d)"; TG_PREV="$PWD"
+TG="$(mktemp -d)"; TDIRS+=("$TG"); TG_PREV="$PWD"
 mkrepo "$TG"
 mkdir -p docs/specs docs/notes
 echo "data" > f.txt
@@ -2226,12 +2433,30 @@ if [ "$TG11RC" -eq 6 ]; then
 else
   miss "TG11: unicode-named citing file was invisible to the sweep (fail-open, rc=$TG11RC)"
 fi
+# TG12 (v0.9.32): the preflight takes LEDGER ids, nothing else. A junk
+# arg used to be swept literally across the corpus and reported "clean".
+# Both junk shapes must refuse, name the expected shape, and sweep
+# nothing; a well-formed unknown id must still answer clean at rc 0
+# (the negative control -- the refusal may not swallow TG6's contract).
+TG12A=$($T citations '#' 2>&1); TG12ARC=$?
+TG12B=$($T citations not-an-id 2>&1); TG12BRC=$?
+TG12C=$($T citations tr-deadbeef 2>/dev/null); TG12CRC=$?
+if [ "$TG12ARC" -ne 0 ] && [ "$TG12BRC" -ne 0 ] \
+   && printf '%s\n' "$TG12A" | grep -q "tr-hex8" \
+   && printf '%s\n' "$TG12B" | grep -q "tr-hex8" \
+   && ! printf '%s\n' "$TG12A" | grep -q "^#: " \
+   && [ "$TG12CRC" -eq 0 ] \
+   && printf '%s\n' "$TG12C" | grep -q "tr-deadbeef: clean"; then
+  ok "TG12: a non-id arg is refused by shape before any sweep (both junk forms), while a well-formed unknown id still reports clean at rc 0"
+else
+  miss "TG12: citations accepted a non-id arg or broke the clean case (rc=$TG12ARC/$TG12BRC/$TG12CRC)"
+fi
 cd "$TG_PREV"
 rm -rf "$TG"
 
 # ---- FAULT RC (ADR-037, v0.9.23): recipe lints + generated-paths --------
 say "FAULT RC (ADR-037): recipe rot classes warn; generated-artifact watches refuse"
-RC="$(mktemp -d)"; RC_PREV="$PWD"
+RC="$(mktemp -d)"; TDIRS+=("$RC"); RC_PREV="$PWD"
 mkrepo "$RC"
 mkdir -p gen
 echo "data" > f.txt
@@ -2335,7 +2560,7 @@ rm -rf "$RC"
 
 # ---- FAULT DW (ADR-038, v0.9.24): the dirty-watch advisory --------------
 say "FAULT DW (ADR-038): a claim watching uncommitted content must hear about restale-at-birth"
-DW="$(mktemp -d)"; DW_PREV="$PWD"
+DW="$(mktemp -d)"; TDIRS+=("$DW"); DW_PREV="$PWD"
 mkrepo "$DW"
 mkdir -p ns
 echo "data" > f.txt
@@ -2422,7 +2647,7 @@ rm -rf "$DW"
 
 # ---- FAULT BF (ADR-039, v0.9.25): blast forecast + churn report ---------
 say "FAULT BF (ADR-039): a hot watch must voice its blast forecast; cold, shallow and unborn repos must degrade loudly or silently as designed"
-BF="$(mktemp -d)"; BF_PREV="$PWD"
+BF="$(mktemp -d)"; TDIRS+=("$BF"); BF_PREV="$PWD"
 mkrepo "$BF"
 echo "w0" > w.txt
 echo "cold" > cold.txt
@@ -2437,11 +2662,19 @@ if printf '%s\n' "$BF1" | grep -q "blast: watch matched 1[0-9] commits"; then
 else
   miss "BF1: hot watch stayed silent"
 fi
-BF4OK=$(python3 -c "import json; p=json.loads(open('.truth/claims.jsonl').read().splitlines()[-1])['payload']; print('ok' if isinstance(p.get('blast_forecast'), int) and p['blast_forecast'] >= 15 else 'bad')")
-if [ "$BF4OK" = ok ] && $T validate >/dev/null 2>&1; then
-  ok "BF4: blast_forecast stored on the record; validate accepts it (and tolerates its absence on legacy lines)"
+# BF4 FLIPPED by ADR-046 (the item-2 red-proof arm): the forecast is
+# computed on read and NEVER stamped -- the payload must NOT carry
+# blast_forecast while the BF1 advisory above still voiced at/above the
+# floor from the live computation. Legacy stored ints stay validate-
+# tolerated (checked by appending one).
+BF4OK=$(python3 -c "import json; p=json.loads(open('.truth/claims.jsonl').read().splitlines()[-1])['payload']; print('ok' if 'blast_forecast' not in p else 'bad')")
+BF4LEGACY='{"id": "tr-00bf4bf4", "kind": "claim", "actor": "canary", "session": "s-legacy", "ts": "2026-01-01T00:00:00.000000+00:00", "payload": {"text": "legacy forecast line for BF4", "evidence_class": "UNVERIFIED", "cost_tier": "P2", "ttl_days": null, "evidence_paths": ["w.txt"], "blast_forecast": 3}}'
+if [ "$BF4OK" = ok ] && printf '%s\n' "$BF1" | grep -q "blast: watch matched" \
+   && $T validate >/dev/null 2>&1 \
+   && printf '%s\n' "$BF4LEGACY" | $T validate --stdin >/dev/null 2>&1; then
+  ok "BF4: blast_forecast NOT stored (ADR-046 computed-on-read) while the advisory still voiced; validate keeps admitting a legacy stored line"
 else
-  miss "BF4: forecast not stored or validate refused (state=$BF4OK)"
+  miss "BF4: forecast stamped again, advisory dark, or legacy line refused (state=$BF4OK)"
 fi
 BF2=$($T claim "cold.txt sits untouched since the initial commit" \
       --class VERIFIED --evidence-cmd "grep cold cold.txt" --paths cold.txt \
@@ -2476,17 +2709,15 @@ if [ "$BF6N" = "1" ] && [ "$BF6W" -ge 16 ] 2>/dev/null; then
 else
   miss "BF6: window semantics broken (cold=$BF6N hot=$BF6W -- a plain --since would empty the log here)"
 fi
-BF5=$($T stats 2>/dev/null | grep "^blast:")
-if printf '%s\n' "$BF5" | grep -q "floor 15 (fallback)" \
-   && printf '%s\n' "$BF5" | grep -q "top observed-vs-forecast"; then
-  ok "BF5: stats renders the blast section (floor + observed-vs-forecast rows)"
-else
-  miss "BF5: stats blast section missing or malformed"
-fi
-BFSH="$(mktemp -d)"
+# BF5 RETIRED (ADR-046): the stats blast section left the template CLI
+# (Tier C). Its render assertion (floor + observed-vs-forecast rows)
+# moved to scripts/test-instruments.sh, driven through
+# instruments/blast-report.py against the identical hot-watch fixture.
+BFSH="$(mktemp -d)"; TDIRS+=("$BFSH")
 git clone -q --depth 1 "file://$PWD" "$BFSH/shallow" 2>/dev/null
 ( cd "$BFSH/shallow" && mkdir -p .truth scripts \
   && cp "$BF/scripts/truth" scripts/truth \
+  && cp -R "$BF/truthlib" truthlib \
   && cp "$BF/.truth/evidence-allow" .truth/ \
   && cp "$BF/.truth/generated-paths" .truth/ 2>/dev/null; touch .truth/claims.jsonl
   BF3=$(TRUTH_ACTOR=canary TRUTH_SESSION=s-bf python3 scripts/truth claim \
@@ -2502,10 +2733,11 @@ else
   miss "BF3: shallow history degraded silently"
 fi
 rm -rf "$BFSH"
-BFU="$(mktemp -d)"
+BFU="$(mktemp -d)"; TDIRS+=("$BFU")
 ( cd "$BFU" && git init -q -b main . && git config user.email t@t \
   && git config user.name t && mkdir -p .truth scripts \
   && cp "$BF/scripts/truth" scripts/truth \
+  && cp -R "$BF/truthlib" truthlib \
   && cp "$BF/.truth/evidence-allow" .truth/ && touch .truth/claims.jsonl \
   && echo seed > s.txt && git add -A
   BF7=$(TRUTH_ACTOR=canary TRUTH_SESSION=s-bf python3 scripts/truth claim \
@@ -2523,6 +2755,208 @@ fi
 rm -rf "$BFU"
 cd "$BF_PREV"
 rm -rf "$BF"
+
+# ---- FAULT VC (P2 contract layer, v0.9.27): the vocab verb --------------
+# `truth vocab` exports the machine vocabulary; spec-health/fact-health
+# source their citation-blocking set from it at runtime, so the R1
+# hand-copy drift class is structurally closed: removing `disputed` from
+# CITATION_BAD reddens VC1 AND the S2D / fact-health disputed arms
+# together (proven in the P2 red-run) -- that cascade is the contract.
+say "FAULT VC (P2): vocab --json exports the contract; the read verb stays banner-free"
+VC="$(mktemp -d)"; TDIRS+=("$VC"); VC_PREV="$PWD"
+mkrepo "$VC"
+echo "data" > f.txt
+git add -A && git commit -qm "vc: init" --no-verify -q
+VC1OUT=$($T vocab --json 2>/dev/null)
+if printf '%s\n' "$VC1OUT" | python3 -c "
+import json, sys
+v = json.load(sys.stdin)
+ok = ('disputed' in v['citation_bad']
+      and set(v['active']) == {'live', 'unverified'}
+      and set(v['verdicts']) == {'agree', 'diverge', 'cannot_verify',
+                                 'retracted'}
+      and set(v['citation_bad']) <= set(v['statuses'])
+      and 'disputed' in v['premise_blocking']
+      and 'unverified' in v['premise_warn'])
+sys.exit(0 if ok else 1)"; then
+  ok "VC1: vocab --json parses; citation_bad carries disputed; the sets cohere"
+else
+  miss "VC1: vocab contract broken: $VC1OUT"
+fi
+# VC2: one greppable line per key, and NO commit-gate banner -- this
+# sandbox is deliberately unwired, so a write verb would print it; the
+# satellites poll vocab on every sweep and banner noise would train
+# 2>/dev/null (the exemption a read verb earns by changing nothing).
+VC2ERR=$($T vocab 2>&1 >/dev/null)
+VC2OUT=$($T vocab 2>/dev/null)
+if [ -z "$VC2ERR" ] && printf '%s\n' "$VC2OUT" | grep -q "^citation_bad: .*disputed"; then
+  ok "VC2: plain output greppable (citation_bad line) and zero stderr on an unwired clone"
+else
+  miss "VC2: plain vocab output or read-verb silence broken (stderr=[$VC2ERR])"
+fi
+cd "$VC_PREV"
+rm -rf "$VC"
+
+# ---- FAULT UM (union merge): the headline sync path, driven for real ----
+# Union-merge confluence was only ever validated by in-process permutation
+# (B6) and a hand-duplicated line (B2); the merge=union attribute binding
+# itself -- the path git actually takes when two sessions' branches meet
+# -- was untested. Two branches append distinct claims, git merges them,
+# and the fold must come out identical in BOTH merge directions.
+# NB: this arm pins the UNGATED merge behavior (no hooks installed); the
+# deferred gate-fires assertion lives in UM5-UM7 below (ADR-045/D3).
+say "FAULT UM (union merge): branch ledgers must merge conflict-free, keep both sides, validate, and fold direction-independently"
+UM="$(mktemp -d)"; TDIRS+=("$UM"); UM_PREV="$PWD"
+mkrepo "$UM"   # NB: mkrepo cd's into $UM. No subshell -- ok/miss mutate the
+               # PASS/FAIL counters; cwd restored via $UM_PREV below.
+echo ".truth/claims.jsonl merge=union" >> .gitattributes   # committed BEFORE branching
+git add -A && git commit -qm "um: init (union attribute first)" --no-verify -q
+CID_UM0=$($T claim "um base fact stands committed" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "um: base claim" --no-verify -q
+git checkout -qb um-side
+CID_UMA=$(TRUTH_SESSION=s-um-side $T claim "um side branch filed its own fact" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "um: side claim" --no-verify -q
+git checkout -q main
+CID_UMB=$(TRUTH_SESSION=s-um-main $T claim "um mainline filed a different fact" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "um: main claim" --no-verify -q
+UMR="$(mktemp -d)"; TDIRS+=("$UMR")   # pre-merge clone for the reverse direction
+git clone -q "$PWD" "$UMR/rev" 2>/dev/null
+git merge -q --no-edit um-side >/dev/null 2>&1   # direction A: main <- side
+if grep -q "<<<<<<<" .truth/claims.jsonl; then
+  miss "UM1: union merge left conflict markers in the ledger (merge=union not bound)"
+else
+  ok "UM1: merged ledger carries no conflict markers"
+fi
+if [ -n "$CID_UMA" ] && [ -n "$CID_UMB" ] \
+   && grep -q "$CID_UMA" .truth/claims.jsonl \
+   && grep -q "$CID_UMB" .truth/claims.jsonl; then
+  ok "UM2: both sides' claims survive the merge ($CID_UMA + $CID_UMB)"
+else
+  miss "UM2: a side's claim vanished in the merge (side=${CID_UMA:-unfiled} main=${CID_UMB:-unfiled})"
+fi
+if $T validate >/dev/null 2>&1; then
+  ok "UM3: validate accepts the union-merged ledger (exit 0; an ADR-008 order warning on stderr is tolerable)"
+else
+  miss "UM3: validate refused the union-merged ledger"
+fi
+UM_FOLD='import json,sys; print(sorted((r["id"], r["status"]) for r in json.load(sys.stdin)))'
+UM_A=$($T list --json 2>/dev/null | python3 -c "$UM_FOLD")
+UM_B=$( cd "$UMR/rev" \
+        && git checkout -q um-side 2>/dev/null \
+        && git merge -q --no-edit main >/dev/null 2>&1 \
+        && python3 scripts/truth list --json 2>/dev/null | python3 -c "$UM_FOLD" )
+if [ -n "$UM_A" ] && [ "$UM_A" = "$UM_B" ]; then
+  ok "UM4: the opposite-direction merge folds to the identical id->status map"
+else
+  miss "UM4: fold changed with merge direction (a=[$UM_A] b=[$UM_B])"
+fi
+cd "$UM_PREV"
+rm -rf "$UM" "$UMR"
+
+# ---- FAULT UM5-UM7 (ADR-045/D3): the pre-merge-commit hook gates the ----
+# ---- merge-commit class the union-merge sync story produces          ----
+# P0 deliberately deferred the gate-fires assertion to the phase where the
+# hook exists; this is that phase. Hooks land via scripts/install-hooks.sh
+# so the INSTALLER itself is exercised, then: (i) the honest bidirectional
+# sync must still commit THROUGH the gate (a union-merged ledger is a
+# prefix extension of ours, so check-truth passes), and (ii) a branch that
+# REWRITES an early committed ledger line and lands it with --no-verify
+# must be BLOCKED when the union merge tries to auto-commit (non-prefix
+# result, INV-A).
+say "FAULT UM5-UM7 (ADR-045): pre-merge-commit gates merge commits -- honest sync passes, tampered merge refused"
+UMH="$(mktemp -d)"; TDIRS+=("$UMH"); UMH_PREV="$PWD"
+mkrepo "$UMH"   # NB: mkrepo cd's into $UMH; cwd restored via $UMH_PREV
+cp "$HERE/install-hooks.sh" scripts/install-hooks.sh
+echo ".truth/claims.jsonl merge=union" >> .gitattributes
+git add -A && git commit -qm "umh: init" --no-verify -q
+bash scripts/install-hooks.sh >/dev/null 2>&1
+if [ -x .git/hooks/pre-merge-commit ] \
+   && grep -q "check-truth" .git/hooks/pre-merge-commit; then
+  ok "UM5: install-hooks.sh wrote an executable pre-merge-commit invoking check-truth"
+else
+  miss "UM5: installer did not wire pre-merge-commit (ADR-045)"
+fi
+CID_UH0=$($T claim "umh base fact stands committed" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "umh: base" -q  # NO --no-verify: the wired pre-commit gate must pass this
+git checkout -qb umh-side
+CID_UHA=$(TRUTH_SESSION=s-umh-side $T claim "umh side branch filed its own fact" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "umh: side" -q
+git checkout -q main
+CID_UHB=$(TRUTH_SESSION=s-umh-main $T claim "umh mainline filed a different fact" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "umh: main" -q
+if git merge --no-edit umh-side >/dev/null 2>&1 \
+   && [ ! -f "$(git rev-parse --git-dir)/MERGE_HEAD" ] \
+   && grep -q "$CID_UHA" .truth/claims.jsonl \
+   && grep -q "$CID_UHB" .truth/claims.jsonl; then
+  ok "UM6: honest union merge auto-commits THROUGH the gate (merged ledger is a prefix extension of ours)"
+else
+  miss "UM6: the pre-merge-commit gate blocked (or the merge lost) an honest union merge"
+fi
+# RED direction: rewrite an early COMMITTED ledger line on a branch, land
+# it with --no-verify, merge it back. The 3-way union takes the tampered
+# line (ours left it untouched), so the staged result is NOT a prefix
+# extension of ours and the new hook must refuse the merge commit.
+UMH_HEAD_BEFORE=$(git rev-parse HEAD)
+git checkout -qb umh-tamper
+# -i.bak is the only sed -i form GNU and BSD/macOS sed both accept
+sed -i.bak "s/umh base fact stands committed/umh base fact stands TAMPERED/" .truth/claims.jsonl && rm -f .truth/claims.jsonl.bak
+git add .truth/claims.jsonl && git commit -qm "umh: tamper an early line" --no-verify -q
+git checkout -q main
+CID_UHC=$(TRUTH_SESSION=s-umh-main2 $T claim "umh mainline advanced once more" --class UNVERIFIED --tier P2 2>/dev/null)
+git add .truth/claims.jsonl && git commit -qm "umh: advance main (forces a real 3-way merge, no fast-forward)" -q
+git merge --no-edit umh-tamper >/dev/null 2>&1; UMH_RC=$?
+if { [ "$UMH_RC" -ne 0 ] || [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; } \
+   && ! git show HEAD:.truth/claims.jsonl 2>/dev/null | grep -q "stands TAMPERED"; then
+  ok "UM7: pre-merge-commit BLOCKED the tampered union merge (nothing tampered committed)"
+else
+  miss "UM7: a merge rewriting a committed ledger line landed past the gate (ADR-045/INV-A)"
+fi
+git merge --abort >/dev/null 2>&1 || true
+cd "$UMH_PREV"
+rm -rf "$UMH"
+
+# ---- FAULT LK (ADR-045/D2): write verbs serialize on the ledger lock ----
+# Deterministic two-process serialization through the REAL CLI: a holder
+# takes LOCK_EX on the lock target, a background `truth claim` must NOT
+# append while it is held, and must land promptly once released.
+say "FAULT LK (ADR-045): a write verb blocks on the held ledger lock and lands after release"
+LK="$(mktemp -d)"; TDIRS+=("$LK"); LK_PREV="$PWD"
+mkrepo "$LK"   # NB: mkrepo cd's into $LK; cwd restored via $LK_PREV
+git add -A && git commit -qm "lk: init" --no-verify -q
+rm -f .lk-held .lk-release
+python3 - <<'PYEOF' &
+import fcntl, os, time
+fd = os.open(".git/truth-ledger.lock", os.O_CREAT | os.O_RDWR, 0o644)
+fcntl.flock(fd, fcntl.LOCK_EX)
+open(".lk-held", "w").close()
+deadline = time.time() + 30          # backstop: never wedge the suite
+while not os.path.exists(".lk-release") and time.time() < deadline:
+    time.sleep(0.05)
+PYEOF
+LK_HOLDER=$!
+LK_WAITED=0
+while [ ! -f .lk-held ] && [ "$LK_WAITED" -lt 100 ]; do sleep 0.05; LK_WAITED=$((LK_WAITED+1)); done
+$T claim "lk fact filed under contention" --class UNVERIFIED --tier P2 >/dev/null 2>&1 &
+LK_CLAIMER=$!
+sleep 1
+LK_N=$(wc -l < .truth/claims.jsonl | tr -d ' ')
+if [ "$LK_N" -eq 0 ] && kill -0 "$LK_CLAIMER" 2>/dev/null; then
+  ok "LK1: the claim neither appended nor exited while the lock was held (~1s)"
+else
+  miss "LK1: a write verb proceeded past a held ledger lock (appended=$LK_N lines; ADR-045/R10)"
+fi
+touch .lk-release
+wait "$LK_CLAIMER" 2>/dev/null
+wait "$LK_HOLDER" 2>/dev/null
+if [ "$(wc -l < .truth/claims.jsonl | tr -d ' ')" -eq 1 ] \
+   && grep -q "lk fact filed under contention" .truth/claims.jsonl; then
+  ok "LK2: the blocked claim landed exactly once after the lock was released"
+else
+  miss "LK2: the record did not land (or landed twice) after release"
+fi
+rm -f .lk-held .lk-release
+cd "$LK_PREV"
+rm -rf "$LK"
 
 say ""
 say "canary result: $PASS caught, $FAIL missed"
