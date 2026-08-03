@@ -48,6 +48,32 @@ That is not an engineering defect. It is a **taxonomy defect**: a statement
 describing a defect was stored as a *fact*, and facts describing defects are
 built to expire. The FIT death-curve in the doctrine document is this ratio.
 
+### 1a. CONTESTED — the mortality reading may be wrong
+
+`sources/verification-testing-lineage.md` challenges the diagnosis above.
+Claessen & Hughes found QuickCheck failures split roughly evenly across three
+causes — a faulty generator, a faulty *specification*, and a faulty program —
+and an industrial project reported that **over half of 200+ defects found were
+in the standard being implemented, not the implementation**.
+
+If claim mortality here has the same shape, then a meaningful share of the
+75 retractions are the apparatus **working**: catching a wrong belief rather
+than merely expiring a fixed one. That would make the 35 % a health signal,
+not a taxonomy defect, and would weaken the argument of this document.
+
+**We cannot currently tell, because a retraction records prose but not a
+cause category.** The cheapest high-value change in either document is to make
+retraction record *which* of three things failed:
+
+- `fixed` — the fact was true and the defect it described was repaired
+- `wrong` — the fact was never true; the check or the reading was faulty
+- `moved` — the fact is still true but the recipe pointed at the old location
+
+Do this **before** the classification pass in §5, because the split determines
+whether the split is worth doing at all. If most retractions are `fixed`, the
+taxonomy argument holds. If many are `wrong`, the ledger is earning its keep
+and the right response is better recipes, not fewer claims.
+
 ---
 
 ## 2. First principles — what are we actually trying to do?

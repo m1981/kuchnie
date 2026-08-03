@@ -319,6 +319,68 @@ real, and it partly answers the scratch design's open question about novelty.
 
 ---
 
+## 3b. CORRECTIONS from the verification/testing research (2026-08-03)
+
+`sources/verification-testing-lineage.md` read fourteen primaries in full and
+repriced this document's **top-ranked item**.
+
+**C5 — `truth mutate` is not the cheap win §6 claimed.** Google's published
+mutation-testing experience: developers classified **85 % of raw mutants as
+unproductive**; the deliverable is ~7 mutants per change, not hundreds; and
+moving the productive ratio from 15 % to 89 % took **six years of suppression
+heuristics**. A mutation harness shipped without a suppression list from day
+one produces noise, and noise gets switched off — which §4.11 of this very
+document says is worse than no gate at all. **Reprice: `kuchnie-amu` is M/L
+with a mandatory suppression list, not the S it looked like.**
+
+**C6 — the `mutation:` field as specified is too weak.** Schuler & Zeller
+showed test suites with *every assertion deleted* still kill many mutants,
+because the program crashes. So "a perturbation that turns it RED" does not
+establish that the check checks. The field must require the invariant to turn
+RED **for the stated reason** — the failure output must name the property, not
+merely be non-zero.
+
+**C7 — metamorphic testing is the biggest thing we missed, and it fits this
+domain unusually well.** Chen, Cheung & Yiu (HKUST, circa 1998) answer the
+oracle problem without an oracle: assert a *relation between runs* rather than
+an expected output. Concretely here:
+
+- mirror a cabinet → the drilling pattern must mirror
+- permute the order of panels → total board consumption must not change
+- double every drawer → runner-screw count must exactly double
+- change a decor → geometry must not move at all
+
+**No golden file, and no rot on legitimate change.** That matters more here
+than almost anywhere: this repo's flagship regression asset is a byte-identical
+golden that must be deliberately "rolled" whenever geometry legitimately
+changes, and each roll is a manual judgment. Metamorphic relations survive
+rolls untouched. Filed as its own item.
+
+**C8 — the ledger has no validation layer, only verification.** Boehm's
+distinction, in his own 1979 words and in the first person: "Am I building the
+product right" (verification) versus "Am I building the right product"
+(validation). Every mechanism in this repo — evidence commands, gates,
+invariants — is verification. Nothing checks that the thing being built is the
+right thing. In practice the owner questions (rates, reveal conventions,
+drawer defaults) *are* the validation layer, but they are ad hoc and live in
+review documents rather than in the apparatus. Worth naming; not obviously
+worth mechanising.
+
+**C9 — Dijkstra's actual argument is the scratch design's argument, from
+1969.** The famous line is a floor remark at the NATO conference. The sentence
+immediately after it in his written contribution — always cut — says his
+question was *not* "how do we prove programs correct" but **"for what program
+structures can we prove correctness cheaply"**. That is exactly the
+invariant-versus-testimony move: choose the structures whose properties are
+cheap to keep true.
+
+**C10 — Weyuker (1982) already documented our exact bug.** She proposes
+invariant checking, then warns that if `cos` is computed as `√(1−sin²x)`, then
+checking `sin²+cos²=1` "cannot be expected to be revealing". Evidence that
+cannot fail, in the same shape, named 44 years before we hit it.
+
+---
+
 ## 4. The refusal list — do NOT adopt these
 
 As important as the adoption list. Each of these is either historically
