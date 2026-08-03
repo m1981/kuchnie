@@ -1,3 +1,9 @@
 #!/usr/bin/env sh
 # Injected by beads (GH#3132): husky helper layout not mirrored into this dir.
 export PATH="$PWD/node_modules/.bin:$PATH"
+
+# --- ADR-045 merge gate ---
+# git runs THIS hook, never pre-commit, when a merge auto-commits -- the
+# commit class a union-merge ledger sync produces. Without this line the
+# ledger gate is bypassed on exactly the commits most likely to corrupt it.
+bash scripts/check-truth.sh || exit 1
