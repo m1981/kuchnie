@@ -29,7 +29,13 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 GATE_DIR = ROOT / "scripts" / "session-gates.d"
-EXTRA_GATES = [ROOT / "scripts" / "pre-push-checks.sh"]
+# Gates that live outside session-gates.d because their question is shaped by
+# a boundary other than the session: pre-push-checks.sh IS the push boundary,
+# and impact-check.sh asks "what depends on the commits ahead of upstream?",
+# which has no meaning at session close. They are named here so the
+# declaration obligation reaches them exactly as it reaches the directory.
+EXTRA_GATES = [ROOT / "scripts" / "pre-push-checks.sh",
+               ROOT / "scripts" / "impact-check.sh"]
 
 DECL = "# BLIND-SPOT:"
 PROBE = "# BLIND-SPOT-PROBE:"

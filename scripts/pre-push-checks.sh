@@ -196,6 +196,28 @@ else
   pass "gate-reconcile" "every gate in session-gates.d is reached from here"
 fi
 
+# --- 3c. the blast radius of what is about to be pushed ------------------
+#
+# The L5 gap: a change verified in isolation and shipped without anyone
+# enumerating what depended on it (/admin then crashed on every legacy
+# database). `scripts/truth impact` could always answer "what knowledge does
+# editing these paths endanger?", but nothing ASKED it at the moment of
+# shipping, and a question nobody asks is not a check.
+#
+# It lives in scripts/ rather than session-gates.d because it is a PUSH-shaped
+# question -- "the commits ahead of the upstream ref" has no meaning at a
+# session boundary, where session-close.sh runs. It is wired through run_gate
+# anyway so it obeys the same summary-line contract and the same dark-arm rule
+# as everything above; scripts/tests/test_gate_blind_spots.py names it in
+# EXTRA_GATES so its BLIND-SPOT declaration is pinned like the others'.
+#
+# ADVISORY, and this one is not a posture compromise: a wide blast radius is
+# information, not a defect. Touching a heavily-watched file is legitimate
+# work, and a gate that refuses legitimate work teaches its own bypass
+# (ADR-014) -- here that bypass would take the blocking arms above with it.
+say ""
+run_gate "impact-check"     scripts/impact-check.sh                      advise
+
 # --- 4. what the system needs FROM YOU (printed, never blocking) ---------
 # The control-flow audit's other finding: nothing surfaced the human queue at
 # any boundary, so items needing judgment waited on someone opening a file.
