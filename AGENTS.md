@@ -18,6 +18,47 @@ Kitchen cabinet decomposition engine. Takes YAML cabinet definitions, produces p
 
 ---
 
+## Session order
+
+1. `bd prime` — **automatic**, injected by the `SessionStart` hook in
+   `.claude/settings.json`. Carries the beads context and the persistent
+   memories. Nothing to do.
+2. `STATUS.md` — the generated dashboard, five PM questions; §3 names the next
+   work and its start commands.
+3. **`bash scripts/truth-bd-adapter.sh | scripts/truth ready --stdin`** — NOT
+   `bd ready`. This is `bd ready` filtered by premise validity: issues standing
+   on stale or diverged facts are HELD. The plain `bd ready` will hand you work
+   built on a dead fact. The adapter form is needed because the native work
+   kernel otherwise outranks the `bd` default (see
+   `docs/beads-integration-guide.md` §2).
+4. Do the work. Claim with `bd update <id> --claim`.
+5. `git push` — the content gates fire on their own
+   (`scripts/pre-push-checks.sh`: spec-health, doc-health, exercise-gate and
+   all four domain suites, ~40 s, blocking). It also prints, without blocking,
+   how many claims need your judgment and how many beads are flagged human.
+
+`scripts/session-close.sh` is the fuller survival gate and is invoked by no
+code — run it by hand when ending a substantial session.
+
+## Reading rules — bounded reads (QB-013)
+
+**Never let a bounded read support an unbounded claim.** If your conclusion
+contains *never*, *none*, *empty*, *all*, or *does not exist*, the read behind
+it must be unfiltered.
+
+Three failures of this shape occurred in one session on 2026-08-03:
+
+- `bd close A B` piped through `tail -1` showed only the second confirmation.
+  The first bead silently did not close, leaving a P1 item blocked by finished
+  work. **After any state-changing command, verify by re-query — never by
+  reading its output.**
+- `grep -A 4 "^on:"` truncated a workflow trigger block and produced a
+  published finding that a gate "has never run". It carries two triggers.
+  **Before asserting absence, read the whole block.**
+- `grep -c 'unverified'` matched the word inside claim *text* rather than the
+  status column. **Anchor on the field or column, never the bare substring**,
+  and run a positive control you know matches.
+
 ## Which documents to read, and when
 
 Read by default: this file, `STATUS.md`, `scripts/truth ready`, and

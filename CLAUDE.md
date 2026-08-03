@@ -111,3 +111,26 @@ domain hub; scope authority is `docs/specs/process-coverage.md` (L1 map).
 See `docs/spec-convention.md` (ledger-wired specs), `docs/adr/` (decisions;
 accepted ADRs are immutable — write a superseding ADR), and
 `docs/file-naming-convention.md`.
+
+## Reading rules — bounded reads (QB-013)
+
+Mirrored from `AGENTS.md`; kept here too because this file is not
+template-managed and so cannot be overwritten by a `copier update`.
+
+**Never let a bounded read support an unbounded claim.** If the conclusion says
+*never*, *none*, *empty*, *all* or *does not exist*, the read behind it must be
+unfiltered. Concretely, from three same-day failures:
+
+- Verify by **re-query**, never by reading a command's output. A `tail -1` on a
+  multi-id `bd close` hid a silent failure and left a P1 item blocked.
+- Before asserting absence, **read the whole block** — a `grep -A 4` on a YAML
+  trigger produced a published claim that a gate "has never run" when it runs
+  on every push.
+- Anchor greps on the **field or column**, never the bare substring, and run a
+  **positive control** you know matches. `grep -c 'unverified'` matched claim
+  text, not status, and mis-reported a gate for weeks.
+
+Full incident record: `docs/question-bank.md` QB-013, which generalises QB-011.
+The rule is also stored via `bd remember --key bounded-reads`, so it arrives
+through `bd prime` at session start rather than depending on this file being
+opened.
