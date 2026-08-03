@@ -93,6 +93,97 @@ run_suite "kitchen-erp"   kitchen-erp            "$ROOT/kitchen-erp/.venv/bin/py
 run_suite "catalog"       catalog                "$ROOT/.venv/bin/python"
 run_suite "kitchen-cam"   kitchen-cam            "$ROOT/.venv/bin/python"
 
+# --- 3b. the project gates from scripts/session-gates.d ------------------
+#
+# These eleven gates were reachable ONLY through `session-close.sh`, which no
+# code invokes — it is named in STATUS.md, CLAUDE.md, AGENTS.md and
+# development-process.md, all prose. `20-exercise-gate.sh` already has a road
+# here (section 2 above); the other ten get one now.
+#
+# POSTURE IS NOT UNIFORM, AND THAT IS DELIBERATE. Each gate declares its own
+# contract in its header and this loop obeys it rather than overriding it:
+#
+#   block   — the gate's own contract is FAIL-on-finding, and it is green
+#             today, so blocking costs nothing until something breaks.
+#   advise  — one of two reasons, never "it seemed noisy":
+#             (a) six gates say verbatim "WARN-only by design ... promoting
+#                 this to FAIL is Michał's call" and never exit non-zero.
+#                 Wiring them as blocking would silently overrule a recorded
+#                 owner decision.
+#             (b) two gates carry SESSION semantics that are wrong at a push
+#                 boundary. `10-bd-twins` fails on any in-progress bead —
+#                 normal mid-work, and routine when agents push from
+#                 worktrees. `30-dashboard-fresh` goes stale from ledger
+#                 appends the post-commit hook itself makes. Blocking either
+#                 would refuse legitimate pushes, and a gate that refuses
+#                 legitimate work teaches its own bypass (ADR-014).
+#
+# Promotion of any `advise` arm to `block` is the owner's call and, per
+# ADR-047, needs an adoption metric and a review date — how often it is red
+# on a normal push. That metric does not exist yet; these lines produce it.
+#
+# THE DARK-ARM RULE APPLIES TO ADVISORY ARMS TOO. An advisory gate that
+# always exits 0 has no other proof of life, so a gate emitting no summary
+# line is a hard FAILURE at any posture. Every gate here ends with a
+# column-0 "<name>: <counts>" line; losing it means the gate broke.
+#
+# Cost measured 2026-08-03: ~8.5s for all ten, of which 30-dashboard-fresh
+# is 5.9s. `session-close.sh` remains the fuller gate — it also checks the
+# working tree and claimed work items, which only make sense at a session
+# boundary. This is a second road, not a replacement.
+ADV=0
+WIRED=""
+run_gate() {  # label, path, posture(block|advise)
+  local label="$1" path="$2" posture="$3" out rc sum
+  WIRED="$WIRED $(basename "$path")"
+  [ -f "$path" ] || { bad "$label" "gate missing: $path"; return; }
+  out=$(bash "$path" 2>&1); rc=$?
+  sum=$(printf '%s\n' "$out" | grep -E '^[^[:space:]].*: ' | tail -1)
+  if [ -z "$sum" ]; then
+    bad "$label" "emitted no summary line -- the arm is dark, not clean"
+    return
+  fi
+  if [ "$posture" = block ]; then
+    if [ $rc -eq 0 ]; then pass "$label" "$sum"; else bad "$label" "$sum"; fi
+  else
+    ADV=$((ADV+1)); say "  advise $label -- $sum"
+  fi
+}
+
+say ""
+run_gate "test-health"      scripts/session-gates.d/40-test-health.sh    block
+run_gate "reachability"     scripts/session-gates.d/64-reachability.sh   block
+
+say ""
+say "  advisory gates (never block; promotion to blocking is the owner's call)"
+run_gate "bd-twins"         scripts/session-gates.d/10-bd-twins.sh       advise
+run_gate "dashboard-fresh"  scripts/session-gates.d/30-dashboard-fresh.sh advise
+run_gate "new-dark"         scripts/session-gates.d/50-new-dark.sh       advise
+run_gate "arch-smells"      scripts/session-gates.d/60-arch-smells.sh    advise
+run_gate "signature-drift"  scripts/session-gates.d/61-signature-drift.sh advise
+run_gate "vocab-drift"      scripts/session-gates.d/62-vocab-drift.sh    advise
+run_gate "glossary-drift"   scripts/session-gates.d/63-glossary-drift.sh advise
+run_gate "ruff"             scripts/session-gates.d/70-ruff.sh           advise
+
+# The list above is hand-written, so a gate dropped into session-gates.d
+# tomorrow would be invisible here — a new check reachable from nothing,
+# which is the exact failure this file was written to end (ADR-048: a check
+# no scheduled root invokes is prose). Reconcile the directory against what
+# ran, and fail on any gate this file does not name. `20-exercise-gate.sh`
+# is expected: section 2 runs `scripts/exercise-gate.sh` directly.
+say ""
+UNWIRED=""
+for g in scripts/session-gates.d/*.sh; do
+  b=$(basename "$g")
+  [ "$b" = "20-exercise-gate.sh" ] && continue
+  case " $WIRED " in *" $b "*) ;; *) UNWIRED="$UNWIRED $b" ;; esac
+done
+if [ -n "$UNWIRED" ]; then
+  bad "gate-reconcile" "session-gates.d holds gate(s) this hook never runs:$UNWIRED -- add a run_gate line (or say why not)"
+else
+  pass "gate-reconcile" "every gate in session-gates.d is reached from here"
+fi
+
 # --- 4. what the system needs FROM YOU (printed, never blocking) ---------
 # The control-flow audit's other finding: nothing surfaced the human queue at
 # any boundary, so items needing judgment waited on someone opening a file.
@@ -104,10 +195,10 @@ say "        (printed, not blocking -- 'scripts/truth queue' and 'bd human list'
 
 say ""
 if [ $FAIL -eq 0 ]; then
-  say "pre-push-checks: all $PASS arms green"
+  say "pre-push-checks: all $PASS blocking arms green, $ADV advisory arm(s) reported"
   exit 0
 fi
-say "pre-push-checks: BLOCKED ($FAIL failing, $PASS green)."
+say "pre-push-checks: BLOCKED ($FAIL failing, $PASS green, $ADV advisory)."
 say "  These had no automatic trigger before 2026-08-03; a failure here is"
 say "  drift that would otherwise have shipped unnoticed."
 say "  Emergency exit is 'git push --no-verify' -- loud, and in the reflog."
