@@ -48,7 +48,61 @@ That is not an engineering defect. It is a **taxonomy defect**: a statement
 describing a defect was stored as a *fact*, and facts describing defects are
 built to expire. The FIT death-curve in the doctrine document is this ratio.
 
-### 1a. CONTESTED — the mortality reading may be wrong
+### 1a. MEASURED 2026-08-03 — the mortality reading was wrong
+
+**`kuchnie-m0m` was measured. The diagnosis below does not survive it.**
+
+Of the 75 retractions, **49 (65 %) record no readable cause at all** — the
+basis is boilerplate, most often "superseded; successor in verdict trail" or a
+single batch event of 18 on 2026-07-16. That alone justified the bead: for two
+thirds of our belief deaths, the ledger cannot say why.
+
+Of the **26 that do carry a cause**:
+
+| Cause | Count | Share of readable |
+|---|---|---|
+| **`wrong`** — never true; the check or the reading was faulty | **10** | **38 %** |
+| `moved` — still true, recipe pointed at the old location | 7 | 26 % |
+| `fixed` — was true, the defect it described was repaired | 6 | 23 % |
+| `version` — state legitimately moved on (template pins) | 3 | 11 % |
+
+**`fixed` is not dominant — `wrong` is.** `wrong` + `moved` = 64 % of readable
+causes, i.e. the ledger catching bad claims and bad recipes. That is the
+apparatus **working**, exactly as Claessen & Hughes predict, and it is the
+opposite of the taxonomy-defect story told below.
+
+Concrete examples of `wrong`, which are worth reading because they are all our
+own failure modes: *"--paths mis-filed as one space-separated literal, tripwire
+could never fire"*; *"repo-wide clause false (attic survivors)"*; *"overstated
+scope"*; *"self-referential — asserted the gate exit it was itself gated by"*;
+*"rejected by its verifier for misclassifying a genuine divergence as
+mechanical"*.
+
+**The caveat, and it is a serious one.** The 26 are a self-selected sample: a
+retraction someone bothered to explain is plausibly more likely to be an
+*interesting* failure than a routine expiry. That biases the sample **toward
+`wrong`**, and the 49 silent ones may be disproportionately `fixed`. So this
+measurement **weakens** the taxonomy argument rather than refuting it outright.
+The classification is also keyword-based over the basis text, not a human read
+of each case.
+
+**What changes as a result:**
+
+- **`kuchnie-glu` (the migration) is demoted.** Its premise — that most facts
+  die from being fixed — is not supported by the evidence we can read. Do not
+  run the classification pass on the strength of this document alone.
+- **`kuchnie-amu` (mutation testing) is promoted.** If the largest readable
+  cause is "the claim was never true", then a harness that catches checks which
+  cannot fail attacks the dominant failure mode, not a hypothetical one.
+- **`kuchnie-bs2` (verifying traces) is supported** — `moved` at 26 % is recipe
+  drift, which content hashing removes.
+- **`kuchnie-m0m` stays open** for its forward-looking half: make the cause a
+  required field, so the next 75 do not need archaeology.
+
+The original diagnosis is left below, unedited, because being able to see a
+wrong call is the point.
+
+### 1b. The original diagnosis (superseded by 1a)
 
 `sources/verification-testing-lineage.md` challenges the diagnosis above.
 Claessen & Hughes found QuickCheck failures split roughly evenly across three
