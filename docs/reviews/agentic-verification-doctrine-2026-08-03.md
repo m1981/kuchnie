@@ -103,10 +103,11 @@ a redirected premise. The formal theory of *what else must go* when a belief
 is withdrawn also exists — the **AGM postulates** (Alchourrón, Gärdenfors,
 Makinson, 1985), belief revision.
 
-**Assessment:** this repo independently reinvented a 1979 AI mechanism and
-applied it to facts about a codebase. The reinvention is sound. The
-application — TMS over code facts — is, as far as this analysis can tell,
-genuinely unusual: TMS lived in expert systems, not software engineering.
+**Assessment: WITHDRAWN — see §3c R1.** This section claimed the ledger was a
+rediscovered TMS and that the application was novel. Both are false. The
+mechanism is `make` with a manual belief-revision step, and the problem has
+prior art in reflexion models, iComment, traceability and Daikon. The text is
+left in place so the correction is legible.
 
 ### 2.2 Mainstream and solved — you are already aligned
 
@@ -378,6 +379,91 @@ cheap to keep true.
 invariant checking, then warns that if `cos` is computed as `√(1−sin²x)`, then
 checking `sin²+cos²=1` "cannot be expected to be revealing". Evidence that
 cannot fail, in the same shape, named 44 years before we hit it.
+
+---
+
+## 3c. REFUTATIONS from the knowledge/architecture research (2026-08-03)
+
+`sources/knowledge-architecture-lineage.md` read Doyle 1979 and Zave & Jackson
+1997 page by page and **falsified three headline claims of this analysis**,
+including the one called "the strongest single result". They are corrected
+here rather than quietly amended.
+
+**R1 — the truth ledger is NOT a Truth Maintenance System. §2.1 is withdrawn.**
+
+The `premise` verb's signature is `truth premise <issue> <claim_id>`: the
+dependent is always a *work item*, never a claim. No record kind can make a
+claim depend on a claim. **Verified independently:** all 42 premise records
+point at `kuchnie-*` or `wk-*` ids. So the belief graph is bipartite, depth 1,
+acyclic by construction — **there is nothing to propagate**, which is the
+entire point of a TMS. There are no outlists (Doyle's actual novelty), no
+well-founded support, no dependency-directed backtracking, and zero
+`contradicts` records in 2,133.
+
+What actually kills a belief here is **656 path-triggered invalidations against
+42 premise edges**, with 204 of 217 claims path-watched. That mechanism is
+Feldman's `make` — published the same year as Doyle. And `--supersedes` is not
+a TMS operation either; it is an AGM selection function executed by hand.
+
+Two consequences. The ATMS refusal (§4.6) **stands, but for a better reason**:
+de Kleer's own fit criterion — we do not have the problem ATMS solves — which,
+unlike a cost argument, does not expire when compute gets cheaper. And **the
+novelty claim must be dropped**: reflexion models, iComment, requirements
+traceability and Daikon all worked this problem.
+
+**R2 — the FIT diagnosis is wrong in its causal order. §2.3 is over-stated.**
+
+James Shore, Fit's own project coordinator, puts the **failed collaboration
+premise first** and cost second. The specific claim this document made — that
+teams spent more effort repairing executable documents than doing the work —
+**is measured nowhere**; Adzic and Jeffries contested it publicly in 2010; and
+the only controlled experiments (Ricca et al.) found Fit tables *helped*
+maintenance tasks with no significant time cost.
+
+What transfers to us is the **tooling** failure: executable specifications that
+refactoring cannot reach — which is precisely our 25 `grep -n` claims. What
+does not transfer is the collaboration premise, because we never had it. **FIT
+is therefore weaker evidence against this design than §2.3 claimed**, and the
+"same curve" warning should be read as a hypothesis to measure (`kuchnie-m0m`),
+not an established parallel.
+
+**R3 — invariant-vs-testimony is half a rediscovery, and the novelty is
+elsewhere.** Testimony *is* Zave & Jackson's **K** (domain knowledge),
+epistemology included. But invariants are **not S**: their S is optative and
+about the environment, whereas ours are constraints on machine internals, which
+they explicitly exclude. It is a two-way split of a three-way distinction, and
+the missing third is **R** (requirements).
+
+What they solved and we have not is the adequacy obligation **S, K ⊢ R** — the
+only mechanism in this whole lineage that answers *"why is this the right set
+of statements?"*, which is exactly the gap §5.3 concedes under F9. What they
+did **not** solve is keeping K true; their mechanism is "validated (checked
+informally)". **So a TTL on a testimony record is a small but genuine
+advance** — and a far better novelty claim than the one this document was
+making.
+
+### Actionable finds from the same research
+
+- **Build Systems à la Carte (2018)** classifies our rebuild strategy in its
+  weakest cell — dirty bit × topological — and offers three cheap upgrades:
+  **content-hash verifying traces** (which would kill false staleness
+  outright), early cutoff, and a *volatile* category for world facts that no
+  path can watch. This is the single best-fitting piece of theory found, and it
+  fits because we are a build system, not a TMS.
+- **Estler et al. (2014)**, across 260M lines: specifications change an order
+  of magnitude *less* than implementations (Cohen's d > 0.99). Our
+  "path touched → STALE" rule assumes the opposite, so **a high false-stale
+  rate is structural**, not incidental.
+- **`import-linter`'s `unmatched_ignore_imports_alerting`** defaults to
+  `error`: a stale exemption fails the build. That is refusal §4.11 solved
+  mechanically, in Python, adoptable immediately.
+- **CodeQL is out.** Its licence forbids running the engine on a private
+  commercial repository without paid Code Security, and the closest public data
+  point at our scale never finished in two hours. **§7's open question closes
+  as "no"** — the local AST helper is the right call.
+- **Knight & Leveson (1986)** refutes the unstated assumption that 217 claims
+  are 217 *independent* checks. We are worse off than N-version programming,
+  because a claim and its evidence command usually share an author.
 
 ---
 

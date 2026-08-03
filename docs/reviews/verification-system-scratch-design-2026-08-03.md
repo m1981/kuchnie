@@ -291,7 +291,14 @@ mechanism this design deletes. Build the cheap version or skip it.
   golden was regenerated at commit X, deliberately." That is an event with a
   justification. Git plus a commit message probably suffices, but I have not
   tested that claim against real cases.
-- **Whether this is novel.** The doctrine already flags that TMS-over-code
+- **Novelty — ANSWERED, and the answer is "mostly not".** `sources/
+  knowledge-architecture-lineage.md` establishes that testimony is Zave &
+  Jackson's K, that our invariants are *not* their S, and that the split is a
+  two-way cut of a three-way distinction whose missing third (R) carries the
+  adequacy obligation `S, K ⊢ R` we lack. The one genuine advance is small and
+  specific: **they never solved keeping K true, and a TTL on a testimony record
+  does.** Claim that, not the rest.
+- **Superseded original wording.** — The doctrine already flags that TMS-over-code
   may have prior art. The invariant/testimony split resembles the distinction
   between *specification* and *domain assumption* in Michael Jackson's problem
   frames, and between requirements and domain properties in the
