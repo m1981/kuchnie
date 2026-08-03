@@ -121,6 +121,45 @@ schedule while ADR-046 had retired six proven canary arms INTO one of them, so
 
 ---
 
+## 4a. CORRECTIONS AND FIXES (same day)
+
+**One finding of mine was wrong.** §2's diagram and §4's table claim
+`truth-gate.yml` fires only on `pull_request` and has therefore never run.
+**False.** Its trigger block carries *both* `pull_request` and
+`push: branches: [main]`, and `gh run list` shows it completing successfully
+on a push event. I read the block with `grep -A 4`, which truncated it — the
+same truncation family as the `tail -1` that hid a failed `bd close` earlier
+in this session. The claim is withdrawn; the diagram node `NEVER` should be
+read as retracted.
+
+**Two findings were real and are now fixed.**
+
+- `pre-push` was empty of this project's machinery. It now runs
+  `scripts/pre-push-checks.sh`, appended after the beads-managed block whose
+  markers are left untouched.
+- The 1,434 domain tests had no trigger. They now run at push, together with
+  `spec-health`, `doc-health` and the flagship `exercise-gate`.
+
+Measured on its first real run: 7 arms, ~40 s, all green — spec-health 21
+specs, doc-health 133 docs, exercise-gate byte-identical, kuchnie-core 819,
+kitchen-erp 291, catalog 267, kitchen-cam 57.
+
+**The dark-arm rule earned its keep immediately.** Its first run reported
+`kuchnie-core -- ran 0 tests -- the arm is dark` and the same for `catalog`.
+That was not a broken suite: it was a bug in *my own* count parser, which
+required a non-digit before the number and so failed on output beginning
+`819 passed`. Had the arm defaulted to "no failures found → pass", two live
+suites would have been silently unchecked from day one — the exact failure
+the upstream reported when two of its gates read "clean" for weeks while
+examining zero files.
+
+**And the queue is now surfaced.** The run prints, without blocking, how many
+claims sit in the verdict queue and how many beads are flagged for human
+judgment. That is the "reminds you when it needs something" this document
+said the system lacked.
+
+---
+
 ## 5. Answering the question
 
 **Does the system look after itself?** For the **ledger**, yes, and well. For

@@ -236,3 +236,50 @@ challenge my design. Adversarial delegation outperformed the bibliography.
    recipe lints, ADR-032 expiry, ADR-033 velocity, "Explicit non-goals").
    The doctrine surveyed the industry since 1970 and never surveyed this
    project since v0.9.14.
+
+---
+
+## 6. The meta phase — bilans (2026-08-03)
+
+18 commits, 7,453 lines of documentation, 10 beads filed. **All ten still
+open; nothing from the meta phase shipped in kuchnie.** One mechanism shipped
+upstream (ADR-049 in v0.9.34) and one behavioural fix landed here (the
+AGENTS.md rule against filing facts engineered to die).
+
+**What it addressed.** Three false beliefs killed — the ledger is not a TMS,
+"FIT died of maintenance cost" is folklore, invariant-vs-testimony is half a
+rediscovery of Zave & Jackson. One measurement (`kuchnie-m0m`) overturned a
+diagnosis three documents rested on. One control-flow audit with evidence
+from hook lines rather than recollection.
+
+**What it did not.** None of the ten beads. Fagan's context-transfer
+machinery, Knight & Leveson's independence, Clark & Wilson's non-collusion —
+all cited, none implemented; I noted the non-collusion violation and then
+dispatched the next three agents from the same model anyway. The `S, K ⊢ R`
+adequacy obligation stays open. And **`kuchnie-lm8` sat untouched throughout**
+— the opportunity cost of the meta phase is one wave of fidelity work.
+
+**Costs.** The doctrine and scratch design were written *before* the source
+research and needed three rounds of correction — rework caused by sequencing.
+Four backlog items turned out to already exist upstream: pure waste from
+surveying the industry since 1970 without surveying this project since
+v0.9.14.
+
+**Verdict.** Worth it once, as a one-off. But the refutation rate did not
+decline across three research rounds, which means syntheses were being
+produced faster than they were validated. Repeating the exercise now would
+yield far less.
+
+**Two rules that follow.** Prefer a measurement to a synthesis — `kuchnie-m0m`
+cost one afternoon and had the best value-per-cost of anything here. And
+before writing doctrine, read the upstream: `gh:m1981/truth-ledger` had
+already solved four of the things being proposed.
+
+### Since the bilans
+
+The two real control-flow holes are **fixed**: `scripts/pre-push-checks.sh`
+now runs at push — spec-health, doc-health, exercise-gate and all 1,434
+domain tests, ~40 s, blocking — and prints the human queue without blocking.
+A third "hole" turned out to be my own reading error: `truth-gate.yml` does
+fire on push, and I had truncated its trigger block with `grep -A 4`.
+
