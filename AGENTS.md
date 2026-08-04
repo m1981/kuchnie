@@ -37,8 +37,13 @@ Kitchen cabinet decomposition engine. Takes YAML cabinet definitions, produces p
    all four domain suites, ~40 s, blocking). It also prints, without blocking,
    how many claims need your judgment and how many beads are flagged human.
 
-`scripts/session-close.sh` is the fuller survival gate and is invoked by no
-code — run it by hand when ending a substantial session.
+`scripts/session-close.sh` is the fuller survival gate. Nothing runs it
+against THIS repo — run it by hand when ending a substantial session. (The
+earlier wording said "invoked by no code", which a grep falsifies: the weekly
+canary copies it into a sandbox and exercises it there, so its logic is tested
+unattended while this repo's own session state never is. Precision matters
+here because a gate whose correctness is verified but which never fires reads
+as covered.)
 
 ## Reading rules — bounded reads (QB-013)
 
