@@ -33,7 +33,7 @@ in this exercise; nesting; worktop; pricing beyond the BOM positions.
 
 ## Ground truths
 
-- tr-8ed0a7ff — home_builder_5 addon present (the design-leg input).
+- tr-bd0ba211 — home_builder_5 addon present (the design-leg input).
 - tr-76d6de33 — LEGRABOX numbers single-sourced in `legrabox.py`.
 - tr-0e13ba64 — drawer-box roles + separate BOM bucketing shipped.
 

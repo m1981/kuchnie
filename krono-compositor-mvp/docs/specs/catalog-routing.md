@@ -68,7 +68,7 @@ against the real service.
 - tr-0ba0f782 — catalog decor-variant models expose `img_url` but no
   `texture_width_mm` or `hex_color`; hence the local-override decisions
   above.
-- tr-7e7a33cd — the catalog SQLite database exists (gitignored artifact);
+- tr-f96d9afa — the catalog SQLite database exists (gitignored artifact);
   needed for the live smoke.
 
 The original premise set — "the hardcoded CATALOG dict still ships",

@@ -1847,8 +1847,8 @@
 {"dst": "tr-239065a8", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 55, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "tr-3ef7b607", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 57, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "tr-8dfe366d", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 62, "src": "docs/specs/process-coverage.md", "via": "ledger"}
-{"dst": "tr-8ed0a7ff", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 54, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "tr-b2e3dbff", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 56, "src": "docs/specs/process-coverage.md", "via": "ledger"}
+{"dst": "tr-bd0ba211", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 54, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "tr-e3c86dfd", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 65, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "tr-fc74bc2e", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 58, "src": "docs/specs/process-coverage.md", "via": "ledger"}
 {"dst": "wk-02a62298", "extractor": "x_cites", "file": "docs/specs/process-coverage.md", "kind": "cites", "line": 69, "src": "docs/specs/process-coverage.md", "via": "ledger"}
@@ -2075,7 +2075,7 @@
 {"dst": "kuchnie-4uo", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 42, "src": "docs/specs/walking-skeleton-d60.md", "via": "bead"}
 {"dst": "tr-0e13ba64", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 38, "src": "docs/specs/walking-skeleton-d60.md", "via": "ledger"}
 {"dst": "tr-76d6de33", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 37, "src": "docs/specs/walking-skeleton-d60.md", "via": "ledger"}
-{"dst": "tr-8ed0a7ff", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 36, "src": "docs/specs/walking-skeleton-d60.md", "via": "ledger"}
+{"dst": "tr-bd0ba211", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 36, "src": "docs/specs/walking-skeleton-d60.md", "via": "ledger"}
 {"dst": "wk-9f1ad053", "extractor": "x_cites", "file": "docs/specs/walking-skeleton-d60.md", "kind": "cites", "line": 42, "src": "docs/specs/walking-skeleton-d60.md", "via": "ledger"}
 {"dst": "ADR-019", "extractor": "x_cites", "file": "docs/templates/archetype-a-domain-library.md", "kind": "cites", "line": 118, "src": "docs/templates/archetype-a-domain-library.md", "via": "adr"}
 {"dst": "ADR-019", "extractor": "x_cites", "file": "docs/templates/archetype-b-data-service.md", "kind": "cites", "line": 107, "src": "docs/templates/archetype-b-data-service.md", "via": "adr"}
@@ -4284,6 +4284,7 @@
 {"dst": "tr-239065a8", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 1304, "src": "wk-cc0daf81", "via": "work kernel"}
 {"dst": "tr-380842e6", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 1304, "src": "wk-cc0daf81", "via": "work kernel"}
 {"dst": "tr-8ed0a7ff", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 1304, "src": "wk-cc0daf81", "via": "work kernel"}
+{"dst": "tr-bd0ba211", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 1304, "src": "wk-cc0daf81", "via": "work kernel"}
 {"dst": "tr-e51ef4fd", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 1302, "src": "wk-cc39b1b0", "via": "work kernel"}
 {"dst": "tr-ef90fea5", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 488, "src": "wk-cd815fba", "via": "work kernel"}
 {"dst": "tr-380842e6", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 331, "src": "wk-cde2e8b7", "via": "work kernel"}
@@ -4437,6 +4438,12 @@
 {"dst": ".truth/accept-allow", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 1590, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".truth/accept-allow", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 1596, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".truth/accept-allow", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 1683, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2354, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2405, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2416, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2424, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2430, "src": "scripts/truth-canary.sh", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 2486, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 25, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 53, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 110, "src": "scripts/truth-canary.sh", "via": ""}
@@ -4634,6 +4641,7 @@
 {"dst": ".truth/accept-allow", "extractor": "x_reads", "file": "truthlib/cli.py", "kind": "reads", "line": 1483, "src": "truthlib/cli.py", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": "truthlib/cli.py", "kind": "reads", "line": 1198, "src": "truthlib/cli.py", "via": ""}
 {"dst": ".truth/accept-allow", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 208, "src": "truthlib/registry.py", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 31, "src": "truthlib/registry.py", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 11, "src": "truthlib/registry.py", "via": ""}
 {"dst": ".truth/evidence-allow", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 175, "src": "truthlib/registry.py", "via": ""}
 {"dst": ".truth/evidence-deny", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 188, "src": "truthlib/registry.py", "via": ""}
@@ -4643,6 +4651,7 @@
 {"dst": "prompts/truth-verifier.md", "extractor": "x_reads", "file": "truthlib/registry.py", "kind": "reads", "line": 24, "src": "truthlib/registry.py", "via": ""}
 {"dst": ".gitattributes", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 209, "src": ".truth/README.md", "via": ""}
 {"dst": ".truth/accept-allow", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 272, "src": ".truth/README.md", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 481, "src": ".truth/README.md", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 175, "src": ".truth/README.md", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 209, "src": ".truth/README.md", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_references", "file": ".truth/README.md", "kind": "references", "line": 485, "src": ".truth/README.md", "via": ""}
@@ -4970,11 +4979,15 @@
 {"dst": ".truth/accept-allow", "extractor": "x_references", "file": "docs/adr/truth/027-anchor-floor-and-schema-necessary-not-sufficient.md", "kind": "references", "line": 74, "src": "docs/adr/truth/027-anchor-floor-and-schema-necessary-not-sufficient.md", "via": ""}
 {"dst": "truthlib/advisory.py", "extractor": "x_references", "file": "docs/adr/truth/033-override-velocity-report.md", "kind": "references", "line": 9, "src": "docs/adr/truth/033-override-velocity-report.md", "via": ""}
 {"dst": ".truth/accept-allow", "extractor": "x_references", "file": "docs/adr/truth/034-staged-intake-gate-table.md", "kind": "references", "line": 28, "src": "docs/adr/truth/034-staged-intake-gate-table.md", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_references", "file": "docs/adr/truth/036-tombstone-citation-gate.md", "kind": "references", "line": 74, "src": "docs/adr/truth/036-tombstone-citation-gate.md", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_references", "file": "docs/adr/truth/036-tombstone-citation-gate.md", "kind": "references", "line": 54, "src": "docs/adr/truth/036-tombstone-citation-gate.md", "via": ""}
 {"dst": ".truth/generated-paths", "extractor": "x_references", "file": "docs/adr/truth/037-recipe-lints-generated-paths.md", "kind": "references", "line": 68, "src": "docs/adr/truth/037-recipe-lints-generated-paths.md", "via": ""}
 {"dst": ".truth/generated-paths", "extractor": "x_references", "file": "docs/adr/truth/037-recipe-lints-generated-paths.md", "kind": "references", "line": 79, "src": "docs/adr/truth/037-recipe-lints-generated-paths.md", "via": ""}
 {"dst": ".truth/evidence-allow", "extractor": "x_references", "file": "docs/adr/truth/040-audited-allowlist-default.md", "kind": "references", "line": 58, "src": "docs/adr/truth/040-audited-allowlist-default.md", "via": ""}
 {"dst": ".truth/evidence-allow", "extractor": "x_references", "file": "docs/adr/truth/040-audited-allowlist-default.md", "kind": "references", "line": 73, "src": "docs/adr/truth/040-audited-allowlist-default.md", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_references", "file": "docs/adr/truth/042-check-liveness.md", "kind": "references", "line": 37, "src": "docs/adr/truth/042-check-liveness.md", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_references", "file": "docs/adr/truth/042-check-liveness.md", "kind": "references", "line": 81, "src": "docs/adr/truth/042-check-liveness.md", "via": ""}
+{"dst": ".truth/citation-scope", "extractor": "x_references", "file": "docs/adr/truth/042-check-liveness.md", "kind": "references", "line": 127, "src": "docs/adr/truth/042-check-liveness.md", "via": ""}
 {"dst": ".truth/generated-paths", "extractor": "x_references", "file": "docs/adr/truth/042-check-liveness.md", "kind": "references", "line": 127, "src": "docs/adr/truth/042-check-liveness.md", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_references", "file": "docs/adr/truth/044-truthlib-package-split.md", "kind": "references", "line": 31, "src": "docs/adr/truth/044-truthlib-package-split.md", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_references", "file": "docs/adr/truth/044-truthlib-package-split.md", "kind": "references", "line": 56, "src": "docs/adr/truth/044-truthlib-package-split.md", "via": ""}

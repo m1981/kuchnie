@@ -1,0 +1,5 @@
+# ADR-036 citation scope. spec-health sweeps *docs/specs/*.md at ANY depth,
+# so the gate must cover the same set -- the built-in default (docs/specs/**)
+# reaches only the root-level ones and would let a nested citation be orphaned.
+docs/specs/**
+**/docs/specs/**

@@ -51,7 +51,7 @@ permanently, krono stays 2.5D decor choice (ratified 2026-07-29,
 
 ## Ground truths
 
-- tr-8ed0a7ff — home_builder_5 present (stage 3 input exists).
+- tr-bd0ba211 — home_builder_5 present (stage 3 input exists).
 - tr-239065a8 — extraction reads bbox + toe kick (stage 3 contract works; successor of the pre-rule-8 claim that watched a generated log).
 - tr-b2e3dbff — dolna_legrabox emits stretchers + plinth (stage 4 buildable).
 - tr-3ef7b607 — confirmat + groove ops emitted (stage 7 input exists).

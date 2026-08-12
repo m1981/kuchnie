@@ -35,7 +35,7 @@ layout repair — a geometrically inconsistent scene is reported, not fixed.
 ### External dependency pin
 
 home_builder_5 Blender addon, present at the pinned local path
-(tr-8ed0a7ff), exercised through the harness which records hb5 path + SHA
+(tr-bd0ba211), exercised through the harness which records hb5 path + SHA
 and Blender binary + version in `run-manifest.json` per run
 (tr-380842e6). Owned by an external author; changes arrive silently on
 update — the pin plus manifest is the notice mechanism.
@@ -98,7 +98,7 @@ walking-skeleton-d60 golden guards the one-wall path against regression.
 
 ## Ground truths
 
-- tr-8ed0a7ff — hb5 addon present at the pinned path (the external
+- tr-bd0ba211 — hb5 addon present at the pinned path (the external
   system exists — dependency-pin row).
 - tr-239065a8 — extraction derives cabinet envelopes from cages (bbox →
   mm, toe kick) — the rows marked "existing, unchanged" above.
