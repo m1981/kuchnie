@@ -119,6 +119,115 @@ premise validity; issues standing on stale/diverged facts are HELD. Full loop:
 
 ---
 
+## Push gate: the five things that block it
+
+Learned by hitting each one. `git push --no-verify` is the emergency exit,
+loud and in the reflog — every case below has an ordinary repair instead.
+
+### 1. `copier update` needs the answers file named
+
+This repo's answers file is `.copier-answers.truth-ledger.yml`, not the
+default. Copier must be told which file to open *before* it can fetch
+anything, so the flag is not optional:
+
+```bash
+copier update --answers-file .copier-answers.truth-ledger.yml \
+              --vcs-ref=vX.Y.Z --trust
+grep _commit .copier-answers.truth-ledger.yml     # confirm the pin moved
+```
+
+Without it: `Cannot update because cannot obtain old template references
+from .copier-answers.yml`.
+
+### 2. `deps-graph` is built from `git ls-files` — rebuild it LAST
+
+Any file staged *after* the rebuild invalidates the artifact, and
+`test_committed_graph_is_current` blocks the push. Order, always:
+
+```bash
+git add -A
+git status --porcelain          # MUST be only what you just staged
+python3 scripts/deps-graph.py --build
+git add docs/deps-graph.jsonl
+git commit
+```
+
+Build-then-add is the wrong order and costs a second round.
+
+### 3. `deps-graph` also encodes LEDGER STATUS, not just code
+
+A `watches` edge carries `via: live|unverified`, and `x_watches` emits no
+edge at all for a `stale` or `retracted` claim ("the graph shows live
+coupling, not historical coupling"). So **a claim staling or being verified
+makes the committed graph stale with zero code changes.**
+
+Consequence: when a commit touches a watched path, the post-commit scan
+stales the claim, the edge vanishes, and the graph must be rebuilt. If you
+then verify that claim, the edge returns as `via: live` — a *different*
+line, so rebuild again. Verify first, rebuild second, commit once.
+
+Diagnose instead of guessing:
+
+```bash
+cp docs/deps-graph.jsonl /tmp/committed.jsonl
+python3 scripts/deps-graph.py --build
+diff /tmp/committed.jsonl docs/deps-graph.jsonl
+```
+
+A `"kind": "watches"` line in the diff means a claim changed status, not
+that code changed.
+
+### 4. `spec-health` FAILs mean a spec cites a DEAD id
+
+`FAIL <id> stale -- spec stands on a dead fact`. The repair depends on why
+the fact died:
+
+| status | repair |
+|---|---|
+| `stale`, watched path moved | `TRUTH_SESSION=s-verifier scripts/truth reaffirm` |
+| `stale`, **TTL expired** | **re-file, never re-verify** (ADR-019: the TTL clock counts from the claim's own ts and no verdict restarts it, so an agree is re-staled by the very next scan, forever) |
+| `retracted` | swap the citation to the successor |
+| `diverged` | dispatch for judgement, then re-file or fix the recipe |
+
+Re-filing a TTL-expired fact, end to end — the order is enforced by the
+gates, not by convention:
+
+1. File the successor claim (G8 allows it: the old one is `stale`, and the
+   near-duplicate active set is exactly `{live, unverified}`).
+2. **While the old claim is still merely `stale`**, redirect any premise
+   pointing at it: `scripts/truth premise <wk-id> <new-tr> --supersedes
+   <old-tr>`. Ungated now; after retraction the same redirect needs the
+   ADR-017 human gate.
+3. Swap every citation inside the citation scope. ADR-036 refuses the
+   retraction with exit 6 while any remain.
+4. Retract with the cause the two ADR-049 questions give you. If the
+   sentence is *still true* and a successor states it — that is
+   `restated`, and `--successor` is mandatory. `expired` means the world
+   moved on; a lapsed TTL is not the world moving.
+
+```bash
+TRUTH_HUMAN=1 TRUTH_HUMAN_ACK=<old-id> scripts/truth verdict <old-id> \
+  retracted --basis "<why>" --cause restated --successor <new-id>
+```
+
+### 5. Do NOT run `scripts/install-hooks.sh` here
+
+`core.hooksPath` points at `.beads/hooks`, so `.git/hooks` would never run
+and the installer correctly refuses. All three gates (`pre-commit`,
+`pre-merge-commit`, `post-merge`) are already wired there. A fresh clone
+shows a different picture, because `core.hooksPath` is local git config and
+is never cloned — do not diagnose hooks from a clone.
+
+### Two rules that catch most of the rest
+
+- **Verify from a different session.** ADR-010 refuses an `agree` on a claim
+  your session filed. Use `TRUTH_SESSION=s-verifier`.
+- **`--deps` and `--premise` are frozen at birth.** ADR-006 makes the issue
+  payload first-wins, so neither can be retrofitted. Premise links can still
+  be *added* later via `truth premise`; dependencies cannot. Get them right
+  when you file.
+
+
 ## Feature specs (start here when the user describes a new feature)
 
 When the user starts talking about a **new feature** — or any change bigger
