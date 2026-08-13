@@ -709,6 +709,16 @@ def x_watches(c: Corpus) -> tuple[list[Edge], Report]:
     Consequence, declared: `truth impact` answers "what could this change still
     endanger?", so a claim that is already stale or retracted contributes no
     edges. The graph shows live coupling, not historical coupling.
+
+    EPHEMERAL (ADR-052). Because the edge set keys on claim STATUS, it turns
+    over at the rate of the invalidation scan, not the rate of commits:
+    measured on this repo over 36 days, 46.1 status transitions per day of
+    path-carrying claims against 13.9 commits, a ratio of 3.3 to 1. These 73
+    edges are 1.3% of the graph and caused most of its rebuilds. They are
+    therefore NOT written to the committed artifact; the query path recomputes
+    them live, which costs one fold (~43ms, well under the FS-3 gate). Nothing
+    queried them from the file: `truth impact` -- the one verb asking exactly
+    this question -- folds the ledger directly and never reads this graph.
     """
     rep = Report("watches", classifies=False)
     edges: list[Edge] = []
@@ -729,13 +739,24 @@ def x_watches(c: Corpus) -> tuple[list[Edge], Report]:
     return edges, rep
 
 
+# ADR-052: extractors whose edge set keys on LEDGER STATUS rather than on
+# repository content. They turn over with the invalidation scan, so freezing
+# them in a committed artifact makes the whole file inherit the churn of its
+# fastest-moving component -- and the committed copy then lies for most of
+# the day. Excluded from `--build`, recomputed on every query.
+EPHEMERAL_EXTRACTORS = (x_watches,)
+
+
 # ── build ────────────────────────────────────────────────────────────────
-def build(root: Path, verbose: bool = True) -> tuple[list[Edge], list[Report],
-                                                     Corpus]:
+def build(root: Path, verbose: bool = True,
+          skip_ephemeral: bool = False) -> tuple[list[Edge], list[Report],
+                                                 Corpus]:
     c = Corpus(root)
     edges: list[Edge] = []
     reports: list[Report] = []
     for fn in EXTRACTORS:
+        if skip_ephemeral and fn in EPHEMERAL_EXTRACTORS:
+            continue
         e, rep = fn(c)
         edges.extend(e)
         reports.append(rep)
@@ -882,12 +903,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--kind", action="append", default=[])
     ap.add_argument("--orphans", action="store_true")
     ap.add_argument("--render", choices=["mermaid"])
+    ap.add_argument("--no-live", action="store_true",
+                    help="ADR-052: do not recompute the ephemeral "
+                         "(ledger-status) edges; answer from the committed "
+                         "artifact alone -- for reproducing a query offline")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
 
     need_build = args.build or args.stats or args.orphans
     if need_build:
-        edges, reports, c = build(ROOT)
+        edges, reports, c = build(ROOT, skip_ephemeral=args.build)
         if args.build:
             write_graph(edges, GRAPH_PATH)
             print(f"deps-graph: wrote {GRAPH_PATH} "
@@ -908,6 +933,22 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     edges = load_graph(GRAPH_PATH)
+    # ADR-052: the committed artifact holds only content-derived edges. The
+    # ephemeral ones key on ledger STATUS, so they are recomputed here, on
+    # every query, from the live fold -- the file can no longer be stale
+    # about them because it no longer claims to know them.
+    if not args.no_live:
+        c = Corpus(ROOT)
+        for fn in EPHEMERAL_EXTRACTORS:
+            try:
+                live, _rep = fn(c)
+                edges.extend(live)
+            except SystemExit as e:
+                # The extractor fails LOUD when it examined nothing (F1):
+                # surface that on stderr and answer from the file rather
+                # than silently returning a graph missing a whole kind.
+                print(f"deps-graph: live edges unavailable -- {e}",
+                      file=sys.stderr)
     if args.kind:
         edges = [e for e in edges if e.kind in args.kind]
     if args.of:

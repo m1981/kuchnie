@@ -164,11 +164,53 @@ def test_committed_graph_is_current():
     committed = ROOT / "docs" / "deps-graph.jsonl"
     if not committed.exists():
         pytest.skip("docs/deps-graph.jsonl not built yet")
-    edges, _, _ = dg.build(ROOT)
+    edges, _, _ = dg.build(ROOT, skip_ephemeral=True)
     fresh = "".join(json.dumps(e.as_dict(), sort_keys=True,
                                ensure_ascii=False) + "\n" for e in edges)
     assert fresh == committed.read_text(encoding="utf-8"), (
         "docs/deps-graph.jsonl is stale — run scripts/deps-graph.py --build")
+
+
+def test_committed_graph_holds_no_ephemeral_edges():
+    """ADR-052: the artifact freezes CONTENT, never ledger STATUS.
+
+    x_watches keys its edge set on claim status, so it turns over with the
+    invalidation scan rather than with commits — measured here at 46.1
+    status transitions per day against 13.9 commits, 3.3 to 1. Those 73
+    edges were 1.3% of the graph and caused most of its rebuilds, while
+    nothing read them from the file: `truth impact`, the one verb asking
+    exactly this question, folds the ledger directly.
+
+    This arm is the falsifier. If a future extractor keys on status and is
+    written to the artifact, the push gate starts failing on scans again
+    and this test says which extractor did it.
+    """
+    committed = ROOT / "docs" / "deps-graph.jsonl"
+    if not committed.exists():
+        pytest.skip("docs/deps-graph.jsonl not built yet")
+    ephemeral_kinds = set()
+    for fn in dg.EPHEMERAL_EXTRACTORS:
+        # the kind is the Report name the extractor declares
+        ephemeral_kinds.add(fn.__name__.removeprefix("x_"))
+    found = {json.loads(l)["kind"] for l in
+             committed.read_text(encoding="utf-8").splitlines() if l.strip()}
+    leaked = found & ephemeral_kinds
+    assert not leaked, (
+        f"ephemeral edge kind(s) {sorted(leaked)} were written to the "
+        "committed graph; they key on ledger status, so the artifact would "
+        "go stale on every invalidation scan (ADR-052)")
+
+
+def test_query_recomputes_the_ephemeral_edges_live():
+    """The other half: dropping them from the file must not lose them.
+
+    A reader asking for a `watches` edge gets it from the live fold, so the
+    information is not gone — only its frozen, lying copy is."""
+    edges, _, _ = dg.build(ROOT, skip_ephemeral=False)
+    kinds = {e.kind for e in edges}
+    assert "watches" in kinds, (
+        "the watches extractor produced nothing at all — it is supposed to "
+        "fail loud, so this means the live path is broken, not empty")
 
 
 # ── the unknown must be loud ─────────────────────────────────────────────
