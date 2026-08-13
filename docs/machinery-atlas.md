@@ -33,6 +33,36 @@ because most misdrawings of this system come from using ordinary words
 > dependencies, and — most importantly — the seams where the machine stops
 > and requires a human.
 
+## Whose questions these views answer
+
+ISO/IEC/IEEE 42010 says a view frames a *stakeholder concern*. The views below
+were drawn framing *mechanisms* — useful, and unanchored. This section is the
+anchor. Prose deliberately, NOT a payload field: ADR-046 evicted the concern
+tag for having no reader, and it must not return by the side door.
+
+| reader | when they arrive | what they ask |
+|---|---|---|
+| **The operator** (one person, this repo) | monthly audit, or after an incident | Is a gate still paying for itself? What is in the verdict queue, and why? |
+| **A fresh agent session** (no memory of yesterday) | at the start of any task | What is true here right now, and what may I stand on? |
+| **A verifier** (a different session, by construction) | when dispatched a claim | Does this evidence support this sentence — and could anyone else re-run it? |
+| **A consumer repo** (adopting the template) | at `copier update` | What did I just accept, what refuses me, and what is mine to configure? |
+
+Which view answers whom:
+
+- **0 decomposition** — consumer and agent: the pieces, before the flows.
+- **1 provenance, 2 trigger topology** — agent: what fires, and when.
+- **3 claim lifecycle, 4 work kernel** — agent and operator: how a fact and a
+  work item move, and what stops them.
+- **5 twin coupling** — consumer: what the template owns versus what you own.
+- **6 gate anatomy, 8 defence map** — operator: which gate catches what, and
+  where the holes are.
+- **7 human seams** — verifier and operator: the four places a machine refuses
+  to decide.
+- **9 sequences** — all four, when a static picture is not enough.
+
+A view that answers nobody's question here is decoration, and should be cut at
+the next review. That is this section's own falsifier.
+
 ## Vocabulary — use these words, not synonyms
 
 **Ledger side.**
@@ -120,6 +150,116 @@ Diagrams at these angles, each with a caption naming its evidence and an
 
 # Part II — The atlas
 
+## 0. Decomposition: what the components are and what each owns
+
+**OBSERVED.** Module names and sizes from `wc -l truthlib/*.py`; the gate rows
+from `INTAKE_GATES`; the tier split from ADR-046; the import DAG from ADR-044
+and from `TestModulePurity`, which parses the AST and refuses any edge not on
+the list. Every node below is a thing on disk, not a concept.
+
+**Why this view exists.** The nine views that follow are behavioural or
+topological — they answer what fires, when, and what stops. None answers the
+question a reader asks first: *what are the pieces?* That answer lived only in
+a prose table in ADR-044. Here it is drawn, with the two other hierarchies
+that cross it.
+
+```mermaid
+flowchart TB
+  subgraph TIERA["TIER A — the kernel every consumer runs"]
+    direction TB
+    subgraph PURE["pure core — no I/O, no clock, no env (TestModulePurity enforces)"]
+      direction LR
+      REG["registry.py<br/>vocabulary + lexicons"]
+      KER["kernel.py<br/>canon, fold_key, fold,<br/>order_check, validate mirror"]
+      EVI["evidence.py<br/>the ONE screen, recipe lints,<br/>recheck, reaffirm triage"]
+      POL["policy.py<br/>ADR-001 matrix, supersede,<br/>intake predicates"]
+      ADV["advisory.py<br/>CC-1 block + pure reports:<br/>queue, impact, stats, staling"]
+    end
+    GAT["gates.py<br/>INTAKE_GATES + run_intake_stage"]
+    SIO["shellio.py<br/>ALL I/O — the only subprocess importer"]
+    CLI["cli.py<br/>argparse + cmd_*; refusals exit here"]
+  end
+
+  subgraph TIERB["TIER B — governance: each gate justifies itself with a metric (ADR-047)"]
+    direction LR
+    GATES["intake gate table"]
+    HOOKS["commit gates<br/>pre-commit · pre-merge-commit · post-merge"]
+    SAT["satellites<br/>spec-health · doc-health · test-health · deps-graph"]
+    SESS["consumer session gates<br/>session-gates.d/"]
+  end
+
+  subgraph TIERC["TIER C — instruments: do the Tier B gates pay? (meta-repo only)"]
+    INST["override-velocity · separation · blast · retraction-causes"]
+  end
+
+  REG --> KER --> EVI
+  KER --> POL
+  EVI --> ADV
+  POL --> ADV
+  SIO -.reads only.-> KER
+  GAT --> POL
+  GAT --> EVI
+  GAT --> SIO
+  CLI --> GAT
+  CLI --> ADV
+  CLI --> SIO
+  CLI ==> GATES
+  CLI ==> HOOKS
+  ADV -.pure reports consumed by.-> INST
+  SAT -.truth vocab --json.-> CLI
+```
+
+**The import DAG, as a rule.** `TestModulePurity` fails any edge not here:
+
+```
+registry ← kernel ← evidence, policy ← advisory
+shellio  → kernel, registry only
+gates    → policy, evidence, kernel, registry, shellio
+cli      → everything
+```
+
+The dashed edge is the one that matters: **I/O may consume pure functions,
+never the reverse.** That is what makes the fold replayable on any machine.
+
+**The intake pipeline, as ordered data** (ADR-034 — a later gate ADR adds a
+*row*, not a paragraph). The execution boundary is deliberately not a row: the
+screen decides whether a command runs at all, so it is not a peer refusal in a
+flat list (ADR-029).
+
+```mermaid
+flowchart LR
+  A[claim text + flags] --> P1[text-nonempty] --> P2[near-duplicate G8]
+  P2 --> P3[quantifier-scope 007] --> P4[paths INV-M]
+  P4 --> P5[generated-paths 037] --> P6[scope-decay 032]
+  P6 --> P7[blast-forecast 039] --> P8[class-precheck]
+  P8 ==> B{{"EXECUTION BOUNDARY<br/>screen, then G6 double-run<br/>NOT a table row"}}
+  B --> Q1[evidence-exit 035] --> Q2[capsule coherence 051]
+  Q2 --> R[(append)] --> CC1[CC-1 advisory block]
+```
+
+**What each layer may know about the others:**
+
+| layer | may depend on | may NOT |
+|---|---|---|
+| pure core | registry, and each other per the DAG | shellio, subprocess, clock, env |
+| gates | pure core + shellio | cli |
+| shellio | kernel, registry | evidence, policy, advisory, gates, cli |
+| cli | everything | — |
+| Tier B satellites | `truth * --json` only | truthlib internals |
+| Tier C instruments | `truth * --json`, raw ledger, pure reports | Tier B gate internals |
+
+The satellite row was learned the hard way: when `disputed` joined `STATUSES`,
+every gated copy stayed correct and both hand-copied ones drifted. Satellites
+now fetch the vocabulary at runtime and fail LOUD if the call fails — never a
+silent fallback to a remembered set (ADR-043).
+
+**Reading the three axes together.** Vertical (Tier A→B→C) is *who runs it*.
+Horizontal inside Tier A is *purity* — left is data-to-data, right touches the
+world, and the boundary is a theorem rather than a comment. The gate table is
+*when*. A change crossing any of the three without saying so is caught by a
+test, not by a review.
+
+
 ## 1. Provenance: what is inherited, and what is deliberately withheld
 
 ```mermaid
@@ -189,7 +329,7 @@ flowchart LR
 
     P --> WF1["truth-scan.yml<br/>scan → commit demotions → death report"]
     P --> WF2["truth-gate.yml<br/>INV-A/INV-B in CI · catches --no-verify"]
-    CR --> WF3["truth-canary.yml<br/>261 seeded faults"]
+    CR --> WF3["truth-canary.yml<br/>273 seeded faults"]
 
     H -.->|"prose only"| SC["session-close.sh<br/>dirty tree · claimed items ·<br/>all 11 gates"]
 
@@ -401,7 +541,7 @@ flowchart LR
     F8["a check exists but<br/>nothing runs it"] --> D8["ADR-048 reachability;<br/>local gate-reconcile arm"]
     F9["a gate refuses<br/>legitimate work"] --> D9["ADR-014; posture chosen<br/>per gate, not per taste"]
     F10["advisories become<br/>furniture"] --> D10["ADR-005 whisper budget;<br/>ADR-047 adoption metric"]
-    F11["the checkers themselves rot"] --> D11["weekly canary:<br/>261 seeded faults, 0 missed"]
+    F11["the checkers themselves rot"] --> D11["weekly canary:<br/>273 seeded faults<br/>1 known miss: UM4"]
 
     style D11 fill:#efe
 ```

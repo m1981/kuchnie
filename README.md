@@ -38,10 +38,17 @@ No cycles. `kuchnie_core` imports only stdlib + Pydantic + PyYAML.
 
 ## Read order for new sessions
 
+0. [`docs/machinery-atlas.md`](docs/machinery-atlas.md) — what the machinery IS.
+   Ten views, each captioned with the evidence it was drawn from and labelled
+   OBSERVED or INFERRED. Start with view 0 (decomposition) and view 3 (claim
+   lifecycle); the other eight answer questions you will not have yet.
 1. [`AGENTS.md`](AGENTS.md) — operational rules, architecture constraints, file map
 2. `scripts/truth ready` — current actionable work, gated by the truth ledger (see `.truth/README.md`)
 3. [`docs/freeze/DOC-TRUST-REPORT.md`](docs/freeze/DOC-TRUST-REPORT.md) — which `.md` files to trust
-4. The ADR of your workstream (in `docs/adr/`)
+4. The ADR of your workstream (in `docs/adr/`). Read on demand, never front to
+   back — the truth-ledger set under `docs/adr/truth/` is densely
+   cross-referenced; if you need a spine: ADR-002 (work kernel), ADR-009
+   (evidence screen), ADR-034 (gate table), ADR-046 (tiering).
 
 ---
 
