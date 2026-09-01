@@ -4347,10 +4347,6 @@
 {"dst": "tr-a71e0a32", "extractor": "x_premise", "file": ".truth/claims.jsonl", "kind": "premise", "line": 2190, "src": "wk-ffdedc4f", "via": "work kernel"}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-gate.yml", "kind": "reads", "line": 37, "src": ".github/workflows/truth-gate.yml", "via": ""}
 {"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-gate.yml", "kind": "reads", "line": 62, "src": ".github/workflows/truth-gate.yml", "via": ""}
-{"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-scan.yml", "kind": "reads", "line": 46, "src": ".github/workflows/truth-scan.yml", "via": ""}
-{"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-scan.yml", "kind": "reads", "line": 48, "src": ".github/workflows/truth-scan.yml", "via": ""}
-{"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-scan.yml", "kind": "reads", "line": 56, "src": ".github/workflows/truth-scan.yml", "via": ""}
-{"dst": ".truth/claims.jsonl", "extractor": "x_reads", "file": ".github/workflows/truth-scan.yml", "kind": "reads", "line": 64, "src": ".github/workflows/truth-scan.yml", "via": ""}
 {"dst": "AGENTS.md", "extractor": "x_reads", "file": "scripts/check-governance.sh", "kind": "reads", "line": 57, "src": "scripts/check-governance.sh", "via": ""}
 {"dst": "catalog/README.md", "extractor": "x_reads", "file": "scripts/check-governance.sh", "kind": "reads", "line": 65, "src": "scripts/check-governance.sh", "via": ""}
 {"dst": "docs/spec-convention.md", "extractor": "x_reads", "file": "scripts/check-governance.sh", "kind": "reads", "line": 92, "src": "scripts/check-governance.sh", "via": ""}
@@ -5547,8 +5543,6 @@
 {"dst": ".beads/hooks/pre-commit", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 19, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
 {"dst": ".beads/hooks/pre-commit", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 82, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
 {"dst": ".beads/hooks/pre-commit", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 83, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
-{"dst": ".github/workflows/truth-canary.yml", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 87, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
-{"dst": ".github/workflows/truth-scan.yml", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 86, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
 {"dst": "AGENTS.md", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 41, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
 {"dst": "AGENTS.md", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 97, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
 {"dst": "CLAUDE.md", "extractor": "x_references", "file": "docs/reviews/control-flow-scratch-2026-08-03.md", "kind": "references", "line": 41, "src": "docs/reviews/control-flow-scratch-2026-08-03.md", "via": ""}
@@ -5755,10 +5749,6 @@
 {"dst": "scripts/truth", "extractor": "x_references", "file": "docs/truth-trial/TRIAL-LOG.md", "kind": "references", "line": 96, "src": "docs/truth-trial/TRIAL-LOG.md", "via": ""}
 {"dst": "scripts/truth-bd-adapter.sh", "extractor": "x_references", "file": "docs/truth-trial/TRIAL-LOG.md", "kind": "references", "line": 85, "src": "docs/truth-trial/TRIAL-LOG.md", "via": ""}
 {"dst": "uv.lock", "extractor": "x_references", "file": "docs/truth-trial/TRIAL-LOG.md", "kind": "references", "line": 79, "src": "docs/truth-trial/TRIAL-LOG.md", "via": ""}
-{"dst": "scripts/auto-reaffirm.sh", "extractor": "x_triggers", "file": ".beads/hooks/post-commit", "kind": "triggers", "line": 7, "src": ".beads/hooks/post-commit", "via": ""}
-{"dst": "scripts/truth", "extractor": "x_triggers", "file": ".beads/hooks/post-commit", "kind": "triggers", "line": 3, "src": ".beads/hooks/post-commit", "via": ""}
-{"dst": "scripts/auto-reaffirm.sh", "extractor": "x_triggers", "file": ".beads/hooks/post-merge", "kind": "triggers", "line": 38, "src": ".beads/hooks/post-merge", "via": ""}
-{"dst": "scripts/truth", "extractor": "x_triggers", "file": ".beads/hooks/post-merge", "kind": "triggers", "line": 2, "src": ".beads/hooks/post-merge", "via": ""}
 {"dst": "scripts/check-governance.sh", "extractor": "x_triggers", "file": ".beads/hooks/pre-commit", "kind": "triggers", "line": 2, "src": ".beads/hooks/pre-commit", "via": ""}
 {"dst": "scripts/check-truth.sh", "extractor": "x_triggers", "file": ".beads/hooks/pre-commit", "kind": "triggers", "line": 3, "src": ".beads/hooks/pre-commit", "via": ""}
 {"dst": "scripts/check-truth.sh", "extractor": "x_triggers", "file": ".beads/hooks/pre-merge-commit", "kind": "triggers", "line": 9, "src": ".beads/hooks/pre-merge-commit", "via": ""}
@@ -5766,13 +5756,8 @@
 {"dst": "scripts/truth", "extractor": "x_triggers", "file": ".githooks/post-commit", "kind": "triggers", "line": 3, "src": ".githooks/post-commit", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_triggers", "file": ".githooks/post-merge", "kind": "triggers", "line": 3, "src": ".githooks/post-merge", "via": ""}
 {"dst": "scripts/check-truth.sh", "extractor": "x_triggers", "file": ".githooks/pre-commit", "kind": "triggers", "line": 2, "src": ".githooks/pre-commit", "via": ""}
-{"dst": "scripts/test-truth-core.py", "extractor": "x_triggers", "file": ".github/workflows/truth-canary.yml", "kind": "triggers", "line": 35, "src": ".github/workflows/truth-canary.yml", "via": ""}
-{"dst": "scripts/test-truth-v04.py", "extractor": "x_triggers", "file": ".github/workflows/truth-canary.yml", "kind": "triggers", "line": 38, "src": ".github/workflows/truth-canary.yml", "via": ""}
-{"dst": "scripts/truth", "extractor": "x_triggers", "file": ".github/workflows/truth-canary.yml", "kind": "triggers", "line": 51, "src": ".github/workflows/truth-canary.yml", "via": ""}
-{"dst": "scripts/truth-canary.sh", "extractor": "x_triggers", "file": ".github/workflows/truth-canary.yml", "kind": "triggers", "line": 44, "src": ".github/workflows/truth-canary.yml", "via": ""}
 {"dst": "scripts/test-truth-core.py", "extractor": "x_triggers", "file": ".github/workflows/truth-gate.yml", "kind": "triggers", "line": 64, "src": ".github/workflows/truth-gate.yml", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_triggers", "file": ".github/workflows/truth-gate.yml", "kind": "triggers", "line": 62, "src": ".github/workflows/truth-gate.yml", "via": ""}
-{"dst": "scripts/truth", "extractor": "x_triggers", "file": ".github/workflows/truth-scan.yml", "kind": "triggers", "line": 47, "src": ".github/workflows/truth-scan.yml", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_triggers", "file": ".husky/post-commit", "kind": "triggers", "line": 3, "src": ".husky/post-commit", "via": ""}
 {"dst": "scripts/truth", "extractor": "x_triggers", "file": ".husky/post-merge", "kind": "triggers", "line": 2, "src": ".husky/post-merge", "via": ""}
 {"dst": "scripts/check-governance.sh", "extractor": "x_triggers", "file": ".husky/pre-commit", "kind": "triggers", "line": 2, "src": ".husky/pre-commit", "via": ""}

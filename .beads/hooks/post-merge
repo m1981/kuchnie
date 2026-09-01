@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-python3 scripts/truth invalidate-scan
+# DISARMED 2026-09-01 (D2, .truth/FROZEN.md): python3 scripts/truth invalidate-scan
 
 # --- BEGIN BEADS INTEGRATION v1.1.0 ---
 # This section is managed by beads. Do not remove these markers.
@@ -35,4 +35,4 @@ fi
 # --- END BEADS INTEGRATION v1.1.0 ---
 
 # Staling is automatic; so is the mechanical half of healing (doctrine L3).
-bash scripts/auto-reaffirm.sh
+# DISARMED 2026-09-01 (D2, .truth/FROZEN.md): bash scripts/auto-reaffirm.sh
