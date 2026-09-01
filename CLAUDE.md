@@ -3,6 +3,7 @@
 This file provides instructions and context for AI coding agents working on this project.
 
 > **Read `AGENTS.md` first — it is the canonical agent guide for this repo.**
+> **Since 2026-09-01:** the truth-ledger v1 installation is FROZEN (`.truth/FROZEN.md`); the live verifier is `scripts/tl2` (truth-ledger2 installation #2) — see AGENTS.md's first block for the two-repository contract.
 > **Session start:** open `STATUS.md` (generated dashboard, five PM
 > questions — §3 names the next work and its start commands), then
 > `scripts/truth ready`. **Vocabulary:** any unknown term or letter code
