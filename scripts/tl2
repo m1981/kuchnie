@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""tl2 — the engine's CLI. Verbs: capsule, check, vacuity, whisper,
+retract, mirror, ready.
+
+tier: client (ships to installations)
+Bought by: CMP-002 (capsule/check), CMP-006 (vacuity), CMP-011
+(whisper), CMP-017 (retract), CMP-005 (mirror), CMP-018 (ready).
+Metric rows: docs/governance/gate-metrics.md.
+
+mirror (bought by CMP-005): the bidirectional traceability check at
+grep weight — a manifest of ids (one per line) against the ids cited
+under a root: a manifest id cited nowhere is a GAP, a cited id absent
+from the manifest is an ORPHAN, either direction reds. Both directions
+by default, always: CMP-005's harm was one read surface offering what
+another hid, with no parity assertion in either direction.
+
+ready (bought by CMP-018): the derived queue — open complaints,
+probation countdowns from gate-metrics, and non-OK capsules, computed
+at read time and never hand-maintained (v1's roster lesson). Advisory:
+it orders what exists, invents nothing, never blocks.
+
+retract (bought by CMP-017): the store is append-only, so a wrong or
+superseded capsule is never deleted — it is tombstoned by a `ret-`
+record naming the cause and (optionally) the successor capsule id,
+COPE-shaped like v1's retraction ceremony. `check` reports a retracted
+capsule as RETRACT without reddening the exit code; `whisper` stops
+speaking for it. Without this verb, every legitimate edit of a watched
+document left one permanently SUSPECT row, and a permanently red check
+trains readers to scroll past red (CMP-017).
+
+vacuity (first F-3 instance): materializes a base tree, overlays the
+working-tree test file onto it, runs the given command there, and
+classifies by the runner convention (calibrated to pytest): inner exit
+1 = PROVEN (assertion-level red on old code — the test carries
+evidence), 0 = GREEN-ON-BOTH (pass, counted, no evidence about the
+change), anything else = INCONCLUSIVE (collection/import error — never
+counted as red). Outer exit: 0 / 3 / 4 respectively.
+
+whisper (first F-8 instance): given paths about to be touched, prints
+one line per capsule watching them — context injection at the moment
+of action, wired into an agent harness's pre-edit hook. Fail-open by
+design: it never blocks, never exits nonzero on content, and stays
+silent when nothing watches. No fatigue budget yet: there is no
+priority field to budget by; the first noise complaint buys one
+(CMP-008's measured 3x-understated whisper ratio is the cautionary
+record).
+
+First F-5 instance (docs/candidates.md): an evidence capsule binds a
+sentence to the command that evidences it, the sha256 of that command's
+output, the commit anchor, and the watched paths. `check` recomputes
+everything at read time (architecture §2): an unresolvable anchor is
+SUSPECT (fail-closed), a watched path changed since the anchor —
+committed or not — is SUSPECT, a re-run whose output hash differs is
+STALE, otherwise OK. Nothing but the capsule records is stored.
+
+Determinism of the capsuled command and adequacy of the watched set are
+the author's responsibility (architecture §2, mode 3). Python stdlib
+only; reads nothing outside the repository it runs in.
+"""
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+STORE = "capsules.jsonl"
+
+
+def run(cmd):
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+
+def git(args):
+    return run("git " + args)
+
+
+def sha256(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def cmd_capsule(args):
+    result = run(args.cmd)
+    if result.returncode != 0:
+        sys.stderr.write("tl2: evidence command failed (rc=%d); a capsule "
+                         "records evidence, not an error:\n%s"
+                         % (result.returncode, result.stderr))
+        return 2
+    anchor = git("rev-parse HEAD").stdout.strip()
+    record = {
+        "sentence": args.sentence,
+        "cmd": args.cmd,
+        "output_sha256": sha256(result.stdout),
+        "anchor": anchor,
+        "watch": args.watch,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    record["id"] = "cap-" + sha256(json.dumps(record, sort_keys=True))[:8]
+    with open(args.store, "a") as fh:
+        fh.write(json.dumps(record, sort_keys=True) + "\n")
+    print("filed %s anchored %s" % (record["id"], anchor[:7]))
+    return 0
+
+
+def check_one(rec):
+    anchor = rec["anchor"]
+    if git("cat-file -e %s^{commit}" % anchor).returncode != 0:
+        return "SUSPECT", "anchor %s unresolvable (fail-closed)" % anchor[:7]
+    paths = " ".join("'%s'" % p for p in rec["watch"])
+    committed = git("diff --name-only %s..HEAD -- %s" % (anchor, paths))
+    dirty = git("status --porcelain -- %s" % paths)
+    changed = (committed.stdout.strip() + "\n" + dirty.stdout.strip()).strip()
+    if changed:
+        return "SUSPECT", "watched path changed since %s: %s" % (
+            anchor[:7], " ".join(sorted(set(
+                line.split()[-1] for line in changed.splitlines()))))
+    result = run(rec["cmd"])
+    if result.returncode != 0:
+        return "STALE", "evidence command now fails (rc=%d)" % result.returncode
+    if sha256(result.stdout) != rec["output_sha256"]:
+        return "STALE", "output hash differs on re-run"
+    return "OK", ""
+
+
+def load_records(store):
+    if not os.path.exists(store):
+        return []
+    with open(store) as fh:
+        return [json.loads(l) for l in fh if l.strip()]
+
+
+def retraction_map(records):
+    return {r["retracts"]: r for r in records
+            if r.get("kind") == "retraction"}
+
+
+def cmd_check(args):
+    records = load_records(args.store)
+    if not records:
+        print("no capsules filed (%s absent)" % args.store)
+        return 0
+    retracted = retraction_map(records)
+    worst = 0
+    for rec in records:
+        if rec.get("kind") == "retraction":
+            continue
+        if rec["id"] in retracted:
+            ret = retracted[rec["id"]]
+            succ = ("; successor " + ret["successor"]) if ret.get(
+                "successor") else ""
+            print("RETRACT %s  %s  [%s%s]" % (rec["id"], rec["sentence"],
+                                              ret["cause"], succ))
+            continue
+        status, why = check_one(rec)
+        print("%-7s %s  %s%s" % (status, rec["id"], rec["sentence"],
+                                 ("  [" + why + "]") if why else ""))
+        if status != "OK":
+            worst = 1
+    return worst
+
+
+def cmd_retract(args):
+    records = load_records(args.store)
+    capsules = {r["id"] for r in records if "sentence" in r}
+    retracted = retraction_map(records)
+    if args.cap not in capsules:
+        sys.stderr.write("tl2: no capsule %s in %s\n"
+                         % (args.cap, args.store))
+        return 2
+    if args.cap in retracted:
+        sys.stderr.write("tl2: %s is already retracted (by %s)\n"
+                         % (args.cap, retracted[args.cap]["id"]))
+        return 2
+    if args.successor and args.successor not in capsules:
+        sys.stderr.write("tl2: successor %s is not a capsule in %s\n"
+                         % (args.successor, args.store))
+        return 2
+    rec = {
+        "kind": "retraction",
+        "retracts": args.cap,
+        "cause": args.cause,
+        "successor": args.successor,
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    rec["id"] = "ret-" + sha256(json.dumps(rec, sort_keys=True))[:8]
+    with open(args.store, "a") as fh:
+        fh.write(json.dumps(rec, sort_keys=True) + "\n")
+    print("retracted %s by %s%s" % (args.cap, rec["id"],
+                                    (" -> " + args.successor)
+                                    if args.successor else ""))
+    return 0
+
+
+def cmd_vacuity(args):
+    import shutil
+    import tempfile
+    scratch = tempfile.mkdtemp(prefix="tl2-vacuity-")
+    try:
+        arch = run("git archive %s | tar -x -C '%s'" % (args.base, scratch))
+        if arch.returncode != 0:
+            sys.stderr.write("tl2: cannot materialize %s:\n%s"
+                             % (args.base, arch.stderr))
+            return 2
+        dest = os.path.join(scratch, args.test)
+        os.makedirs(os.path.dirname(dest) or scratch, exist_ok=True)
+        shutil.copy2(args.test, dest)
+        inner = subprocess.run(args.run, shell=True, cwd=scratch,
+                               capture_output=True, text=True)
+        if inner.returncode == 1:
+            print("PROVEN        %s fails on %s at assertion level — "
+                  "the test carries evidence" % (args.test, args.base))
+            return 0
+        if inner.returncode == 0:
+            print("GREEN-ON-BOTH %s passes on %s — no evidence about "
+                  "the change (counted, not red)" % (args.test, args.base))
+            return 3
+        print("INCONCLUSIVE  %s on %s: runner exit %d "
+              "(collection/import error, not an assertion) — zero "
+              "evidence either way" % (args.test, args.base,
+                                       inner.returncode))
+        return 4
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+def cmd_whisper(args):
+    records = load_records(args.store)
+    retracted = retraction_map(records)
+    targets = [p.rstrip("/") for p in args.paths]
+    for rec in records:
+        if rec.get("kind") == "retraction" or rec["id"] in retracted:
+            continue
+        for w in rec["watch"]:
+                w = w.rstrip("/")
+                if any(p == w or p.startswith(w + "/") for p in targets):
+                    print("whisper %s  %s  [anchored %s]"
+                          % (rec["id"], rec["sentence"], rec["anchor"][:7]))
+                    break
+    return 0
+
+
+def cmd_mirror(args):
+    import re as _re
+    with open(args.manifest) as fh:
+        manifest = {l.strip() for l in fh if l.strip()}
+    # Slug scoping: only ids of the manifest's own famil(ies) are this
+    # mirror's business — a root holding two spec families must not
+    # flag the sibling family as orphans. v1's falsification round had
+    # already named this amendment; the unscoped first build measured
+    # 28 false orphans on its first real installation run.
+    families = {i.rsplit("-", 1)[0] for i in manifest}
+    pattern = _re.compile(args.pattern)
+    cited = set()
+    for root, _dirs, files in os.walk(args.root):
+        if "/." in root or root.startswith("./."):
+            continue
+        for name in files:
+            path = os.path.join(root, name)
+            if os.path.abspath(path) == os.path.abspath(args.manifest):
+                continue
+            try:
+                with open(path, errors="ignore") as fh:
+                    cited.update(pattern.findall(fh.read()))
+            except OSError:
+                continue
+    cited = {c for c in cited if c.rsplit("-", 1)[0] in families}
+    worst = 0
+    for gap in sorted(manifest - cited):
+        print("GAP     %s  in manifest, cited nowhere under %s"
+              % (gap, args.root))
+        worst = 1
+    for orphan in sorted(cited - manifest):
+        print("ORPHAN  %s  cited, absent from %s" % (orphan, args.manifest))
+        worst = 1
+    if not worst:
+        print("mirror clean: %d id(s), both directions" % len(manifest))
+    return worst
+
+
+def cmd_ready(args):
+    from datetime import date
+    today = date.today()
+    rows = 0
+    for rec in load_records(args.store):
+        if rec.get("kind") == "retraction":
+            continue
+        if rec["id"] in retraction_map(load_records(args.store)):
+            continue
+        status, why = check_one(rec)
+        if status != "OK":
+            print("capsule    %-7s %s  %s — retire or re-anchor"
+                  % (status, rec["id"], rec["sentence"]))
+            rows += 1
+    cdir = args.complaints
+    if os.path.isdir(cdir):
+        for name in sorted(os.listdir(cdir)):
+            if not (name.startswith("CMP-") and name.endswith(".md")):
+                continue
+            with open(os.path.join(cdir, name)) as fh:
+                text = fh.read()
+            if "Disposition: open" in text:
+                title = text.splitlines()[0].lstrip("# ").strip()
+                print("complaint  open    %s — %s" % (name[:-3], title))
+                rows += 1
+    if os.path.exists(args.metrics):
+        import re as _re
+        with open(args.metrics) as fh:
+            for line in fh:
+                if not line.startswith("| `"):
+                    continue
+                dates = _re.findall(r"\d{4}-\d{2}-\d{2}", line)
+                gate = line.split("`")[1]
+                if not dates:
+                    continue
+                due = date(*map(int, dates[-1].split("-")))
+                left = (due - today).days
+                if left < 0:
+                    print("probation  OVERDUE %s — was due %s, judge it "
+                          "by its record" % (gate, due))
+                    rows += 1
+                elif left <= args.horizon:
+                    print("probation  %3dd    %s — due %s"
+                          % (left, gate, due))
+                    rows += 1
+    if not rows:
+        print("nothing ready")
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="tl2")
+    ap.add_argument("--store", default=STORE)
+    sub = ap.add_subparsers(dest="verb", required=True)
+    c = sub.add_parser("capsule", help="file an evidence capsule")
+    c.add_argument("sentence")
+    c.add_argument("--cmd", required=True)
+    c.add_argument("--watch", nargs="+", required=True)
+    sub.add_parser("check", help="recompute every capsule's status")
+    v = sub.add_parser("vacuity",
+                       help="does this test fail on the pre-change tree?")
+    v.add_argument("--test", required=True)
+    v.add_argument("--run", required=True)
+    v.add_argument("--base", default="HEAD")
+    w = sub.add_parser("whisper",
+                       help="which capsules watch the paths I am about to touch")
+    w.add_argument("paths", nargs="+")
+    r = sub.add_parser("retract",
+                       help="tombstone a capsule with a cause and successor")
+    r.add_argument("cap")
+    r.add_argument("--cause", required=True)
+    r.add_argument("--successor")
+    m = sub.add_parser("mirror",
+                       help="manifest ids vs cited ids, both directions")
+    m.add_argument("--manifest", required=True)
+    m.add_argument("--root", default=".")
+    m.add_argument("--pattern", default=r"SC-[a-z0-9]{3,12}-[0-9]{3}")
+    y = sub.add_parser("ready", help="the derived queue: what is ready to act on")
+    y.add_argument("--complaints", default="docs/complaints")
+    y.add_argument("--metrics", default="docs/governance/gate-metrics.md")
+    y.add_argument("--horizon", type=int, default=45)
+    args = ap.parse_args()
+    return {"capsule": cmd_capsule, "check": cmd_check,
+            "vacuity": cmd_vacuity, "whisper": cmd_whisper,
+            "retract": cmd_retract, "mirror": cmd_mirror,
+            "ready": cmd_ready}[args.verb](args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
