@@ -4478,6 +4478,7 @@
 {"dst": "kitchen-erp/kitchen_erp/core/offers.py", "extractor": "x_reads", "file": "scripts/tests/test_reachability.py", "kind": "reads", "line": 34, "src": "scripts/tests/test_reachability.py", "via": ""}
 {"dst": "kitchen-erp/kitchen_erp/core/variant_derivation.py", "extractor": "x_reads", "file": "scripts/tests/test_reachability.py", "kind": "reads", "line": 33, "src": "scripts/tests/test_reachability.py", "via": ""}
 {"dst": "kuchnie-core/src/kuchnie_core/model.py", "extractor": "x_reads", "file": "scripts/tests/test_spec_coverage.py", "kind": "reads", "line": 36, "src": "scripts/tests/test_spec_coverage.py", "via": ""}
+{"dst": "capsules.jsonl", "extractor": "x_reads", "file": "scripts/tl2", "kind": "reads", "line": 68, "src": "scripts/tl2", "via": ""}
 {"dst": ".gitattributes", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 53, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".gitattributes", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 110, "src": "scripts/truth-canary.sh", "via": ""}
 {"dst": ".gitattributes", "extractor": "x_reads", "file": "scripts/truth-canary.sh", "kind": "reads", "line": 3183, "src": "scripts/truth-canary.sh", "via": ""}
