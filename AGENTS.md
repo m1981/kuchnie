@@ -2,6 +2,18 @@
 
 Read this before making changes. It's short on purpose.
 
+> **Since 2026-09-01 — the freeze and the successor.** The truth-ledger
+> v1 installation here is **FROZEN** (`.truth/FROZEN.md` is the law:
+> nothing writes to `.truth/claims.jsonl`; `scripts/truth ready` and
+> other read verbs still work over the archive). The successor is
+> **installation #2 of truth-ledger2**: `scripts/tl2` (pinned to an
+> engine tag; capsules in `capsules.jsonl` guard the freeze itself).
+> This is a **two-repository session** — harms found here are filed as
+> complaints upstream in `~/PycharmProjects/truth-ledger2`, engine
+> defects are fixed upstream (never by editing the vendor copy), and
+> both repositories are pushed before closing. The full choreography:
+> `truth-ledger2/docs/runbooks/consumer.md`.
+
 > **Session start:** open `STATUS.md` (generated dashboard, five PM
 > questions — §3 names the next work and its start commands), then
 > `scripts/truth ready`. **Vocabulary:** any unknown term or letter code
