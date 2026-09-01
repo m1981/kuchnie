@@ -1,4 +1,5 @@
 cfgapi catalog/docs/specs/configurator-api.md
+drsub kitchen-erp/docs/specs/drawer-substitution.md
 hps kitchen-erp/docs/specs/height-parameter-set.md
 llay kuchnie-core/docs/specs/l-layout-model.md
 svpk kitchen-erp/docs/specs/survey-pack.md
