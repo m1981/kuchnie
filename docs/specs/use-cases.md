@@ -138,7 +138,8 @@ locked (tr-c87a68f9).
    append-only QuoteRange)
    (spine: tr-e51ef4fd).
 5. After pomiar Michał designs in hb5; decomposition prices the real
-   kitchen through the single BOM fold — supported (tr-4ee32b37,
+   kitchen through the single BOM fold — supported (ADR-015, its
+   ledger pin frozen 2026-09-01 per .truth/FROZEN.md;
    tr-b93c22bf); worktop enters per-lm with priced cutouts — supported
    (tr-17905dae).
 6. System presents the comparison board: 2–3 variants of the same
