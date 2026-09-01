@@ -1,11 +1,36 @@
 #!/usr/bin/env python3
 """tl2 — the engine's CLI. Verbs: capsule, check, vacuity, whisper,
-retract, mirror, ready.
+retract, mirror, ready, verify, lint.
 
 tier: client (ships to installations)
 Bought by: CMP-002 (capsule/check), CMP-006 (vacuity), CMP-011
-(whisper), CMP-017 (retract), CMP-005 (mirror), CMP-018 (ready).
+(whisper), CMP-017 (retract), CMP-005 (mirror), CMP-018 (ready),
+CMP-007 (verify), CMP-009 (criticality tiers inside whisper/ready),
+CMP-020 (mirror citation scope), CMP-004 (lint, proposer only).
 Metric rows: docs/governance/gate-metrics.md.
+
+lint (first F-1 instance, bought by CMP-004 — a spec sentence that no
+test could fail seeded zero rows silently): the PROPOSER only. The
+ruled gating layer measured empty on real traffic (107 normative
+lines, 0 hits, and a miss on CMP-004's own sentence) and stays
+unbought. `--brief <spec>` extracts candidate lines mechanically
+(extraction suggests, never judges) and hands a fresh session the
+judgment duty plus the report skeleton; `--intake <file>` gates only
+the report's shape (marker, limit line, finding blocks, SC-
+proposals). A proposal never gates; a human accepts it into the spec,
+or not.
+
+verify (first F-4 instance, bought by CMP-007 — an author-verified
+sentence was false by 16x): the mechanical halves of the
+fresh-context-verifier ceremony. `--brief <cap-id>` emits the
+verifier's brief — the capsule's sentence and recipe plus the duty to
+go BEYOND the recipe (v1's good verifier checked `git show` and
+invocation, not just the hash) and the mandatory report skeleton.
+`--intake <file>` is the only part that gates (architecture §6): a
+report missing the `proposed-by: llm` marker, the independence-limit
+line, or a valid verdict is refused. The verdict itself NEVER gates —
+a human disposes. Dispatch criteria and choreography:
+docs/runbooks/verifier.md.
 
 mirror (bought by CMP-005): the bidirectional traceability check at
 grep weight — a manifest of ids (one per line) against the ids cited
@@ -40,10 +65,21 @@ whisper (first F-8 instance): given paths about to be touched, prints
 one line per capsule watching them — context injection at the moment
 of action, wired into an agent harness's pre-edit hook. Fail-open by
 design: it never blocks, never exits nonzero on content, and stays
-silent when nothing watches. No fatigue budget yet: there is no
-priority field to budget by; the first noise complaint buys one
-(CMP-008's measured 3x-understated whisper ratio is the cautionary
-record).
+silent when nothing watches.
+
+criticality tiers (first F-6 instance, bought by CMP-009 — fourteen
+v1 sentinels produced 43 alarms and zero defects): the installation
+may carry `criticality.tiers`, lines of `<class> <path-prefix>` with
+classes money | auth | data-integrity | compliance | plain; unlisted
+paths are plain, and no file means everything is plain — unearned
+rigor is how alarm fatigue starts, so rigor is ruled, never inferred
+(the classification is a dated operator ruling; an LLM proposal stays
+a `.proposed` file until ratified). Two consumers scale on it:
+`whisper` tags non-plain hits with their class and speaks them all,
+while plain hits are budgeted to three lines (`--all` lifts the cap)
+— v1's full-voice/one-line fatigue design, finally bought by the
+alarm-fatigue complaint it was waiting for; `ready` tags non-OK
+capsules on non-plain paths and lists them first.
 
 First F-5 instance (docs/candidates.md): an evidence capsule binds a
 sentence to the command that evidences it, the sha256 of that command's
@@ -224,19 +260,65 @@ def cmd_vacuity(args):
         shutil.rmtree(scratch, ignore_errors=True)
 
 
+TIER_CLASSES = ("money", "auth", "data-integrity", "compliance", "plain")
+
+
+def load_tiers():
+    tiers = []
+    if os.path.exists("criticality.tiers"):
+        with open("criticality.tiers") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split(None, 1)
+                if len(parts) == 2 and parts[0] in TIER_CLASSES:
+                    tiers.append((parts[0], parts[1].strip().rstrip("/")))
+    return tiers
+
+
+def classify(path, tiers):
+    p = path.rstrip("/")
+    for cls, prefix in tiers:
+        if p == prefix or p.startswith(prefix + "/"):
+            return cls
+    return "plain"
+
+
+def rec_class(rec, tiers):
+    classes = [classify(w, tiers) for w in rec.get("watch", [])]
+    for cls in TIER_CLASSES:
+        if cls in classes:
+            return cls
+    return "plain"
+
+
 def cmd_whisper(args):
     records = load_records(args.store)
     retracted = retraction_map(records)
+    tiers = load_tiers()
     targets = [p.rstrip("/") for p in args.paths]
+    hits = []
     for rec in records:
         if rec.get("kind") == "retraction" or rec["id"] in retracted:
             continue
         for w in rec["watch"]:
-                w = w.rstrip("/")
-                if any(p == w or p.startswith(w + "/") for p in targets):
-                    print("whisper %s  %s  [anchored %s]"
-                          % (rec["id"], rec["sentence"], rec["anchor"][:7]))
-                    break
+            w = w.rstrip("/")
+            if any(p == w or p.startswith(w + "/") for p in targets):
+                hits.append((classify(w, tiers), rec))
+                break
+    nonplain = [(c, r) for c, r in hits if c != "plain"]
+    plain = [r for c, r in hits if c == "plain"]
+    for cls, rec in nonplain:
+        print("whisper [%s] %s  %s  [anchored %s]"
+              % (cls, rec["id"], rec["sentence"], rec["anchor"][:7]))
+    shown = plain if args.all else plain[:3]
+    for rec in shown:
+        print("whisper %s  %s  [anchored %s]"
+              % (rec["id"], rec["sentence"], rec["anchor"][:7]))
+    if not args.all and len(plain) > len(shown):
+        print("whisper: +%d more plain-class watcher(s) — the fatigue "
+              "budget (CMP-009); `--all` lifts it" % (len(plain) - len(shown)))
     return 0
 
 
@@ -251,6 +333,7 @@ def cmd_mirror(args):
     # 28 false orphans on its first real installation run.
     families = {i.rsplit("-", 1)[0] for i in manifest}
     pattern = _re.compile(args.pattern)
+    cite_name = _re.compile(args.cite_name)
     cited = set()
     for root, _dirs, files in os.walk(args.root):
         if "/." in root or root.startswith("./."):
@@ -258,6 +341,13 @@ def cmd_mirror(args):
         for name in files:
             path = os.path.join(root, name)
             if os.path.abspath(path) == os.path.abspath(args.manifest):
+                continue
+            # CMP-020: citations count only from test-shaped files by
+            # default — the spec's own inline ids satisfied the scan
+            # and killed the GAP direction in the shipped layout (v1's
+            # ruling, dropped by the first build: "an id cited only in
+            # conftest.py or a README is invisible by design").
+            if not args.cite_all and not cite_name.search(name):
                 continue
             try:
                 with open(path, errors="ignore") as fh:
@@ -282,16 +372,24 @@ def cmd_ready(args):
     from datetime import date
     today = date.today()
     rows = 0
-    for rec in load_records(args.store):
-        if rec.get("kind") == "retraction":
-            continue
-        if rec["id"] in retraction_map(load_records(args.store)):
+    records = load_records(args.store)
+    retracted = retraction_map(records)
+    tiers = load_tiers()
+    cap_rows = []
+    for rec in records:
+        if rec.get("kind") == "retraction" or rec["id"] in retracted:
             continue
         status, why = check_one(rec)
         if status != "OK":
-            print("capsule    %-7s %s  %s — retire or re-anchor"
-                  % (status, rec["id"], rec["sentence"]))
-            rows += 1
+            cls = rec_class(rec, tiers)
+            tag = ("[%s] " % cls) if cls != "plain" else ""
+            cap_rows.append((TIER_CLASSES.index(cls),
+                             "capsule    %-7s %s%s  %s — retire or "
+                             "re-anchor" % (status, tag, rec["id"],
+                                            rec["sentence"])))
+    for _, line in sorted(cap_rows, key=lambda t: t[0]):
+        print(line)
+        rows += 1
     cdir = args.complaints
     if os.path.isdir(cdir):
         for name in sorted(os.listdir(cdir)):
@@ -328,6 +426,140 @@ def cmd_ready(args):
     return 0
 
 
+LIMIT_LINE = "independent in context, not in failure"
+
+
+def cmd_verify(args):
+    if args.brief:
+        rec = next((r for r in load_records(args.store)
+                    if r.get("id") == args.brief and "sentence" in r), None)
+        if rec is None:
+            sys.stderr.write("tl2: no capsule %s\n" % args.brief)
+            return 2
+        print("VERIFIER BRIEF — capsule %s" % rec["id"])
+        print("Sentence: %s" % rec["sentence"])
+        print("Recipe:   %s" % rec["cmd"])
+        print("Anchor:   %s   Watched: %s" % (rec["anchor"],
+                                              " ".join(rec["watch"])))
+        print("""
+Your duty goes BEYOND the recipe: (1) run the recipe and compare
+against the recorded hash; (2) check the anchor commit actually did
+what the sentence implies; (3) judge whether the command is the right
+instrument for the sentence's WHOLE domain — one instance is not the
+domain. You inherit no context from the author; that is the point.
+
+Report format — every line below is mandatory, intake refuses without
+them:
+  proposed-by: llm
+  limit: %s — the reviewer shares the author model's blind spots
+  verdict: agree | disagree | inconclusive
+  basis: <what you actually did and saw, beyond the recipe>
+
+The verdict never gates; a human disposes of it.""" % LIMIT_LINE)
+        return 0
+    if args.intake:
+        try:
+            text = open(args.intake).read()
+        except OSError as e:
+            sys.stderr.write("tl2: %s\n" % e)
+            return 2
+        worst = 0
+        if "proposed-by: llm" not in text:
+            print("RED  intake: missing `proposed-by: llm` marker "
+                  "(architecture §6.2)")
+            worst = 1
+        if LIMIT_LINE not in text:
+            print("RED  intake: missing the independence-limit line "
+                  "(architecture §6.4)")
+            worst = 1
+        verdicts = [l.split(":", 1)[1].strip() for l in text.splitlines()
+                    if l.strip().lower().startswith("verdict:")]
+        if not verdicts or verdicts[0] not in ("agree", "disagree",
+                                               "inconclusive"):
+            print("RED  intake: no valid verdict line "
+                  "(agree | disagree | inconclusive)")
+            worst = 1
+        if worst:
+            return 1
+        print("intake: report accepted — verdict %s; the human disposes"
+              % verdicts[0])
+        return 0
+    sys.stderr.write("tl2: verify needs --brief <cap-id> or "
+                     "--intake <file>\n")
+    return 2
+
+
+LINT_KEYWORDS = r"\b(shall|must|always|never|only|may|should|will)\b"
+
+
+def cmd_lint(args):
+    import re as _re
+    if args.brief:
+        try:
+            lines = open(args.brief).read().splitlines()
+        except OSError as e:
+            sys.stderr.write("tl2: %s\n" % e)
+            return 2
+        kw = _re.compile(LINT_KEYWORDS, _re.I)
+        cands = [(i + 1, l.strip()) for i, l in enumerate(lines)
+                 if kw.search(l)][:40]
+        print("PROPOSER BRIEF — spec %s" % args.brief)
+        print("Candidate normative-ish lines (keyword-extracted, %d shown;"
+              " extraction only suggests, it never judges):" % len(cands))
+        for no, text in cands:
+            print("  %s:%d  %s" % (args.brief, no, text[:160]))
+        print("""
+Your duty is JUDGMENT, which no keyword list carries (measured: the
+one real incident of this class — "extras may run in any order" —
+contains no stock keyword-vagueness pair): flag the sentences a test
+could never fail, including quantities with no number ("in minutes",
+"fast enough"), conditions with no negative branch, and "may"-strength
+norms; for each, draft 2-3 testable SC-<slug>-NNN assertions (slug
+from the spec filename; check docs/specs/sc-slugs.txt where present).
+
+Report format — mandatory lines, intake refuses without them:
+  proposed-by: llm
+  limit: %s — the reviewer shares the author model's blind spots
+  finding: <file>:<line>  (one block per flagged sentence)
+  why: <one line: what makes it untestable>
+  proposes: SC-<slug>-NNN <the testable assertion>
+
+Proposals never gate; a human accepts them into the spec, or not.""" %
+              LIMIT_LINE)
+        return 0
+    if args.intake:
+        try:
+            text = open(args.intake).read()
+        except OSError as e:
+            sys.stderr.write("tl2: %s\n" % e)
+            return 2
+        worst = 0
+        if "proposed-by: llm" not in text:
+            print("RED  intake: missing `proposed-by: llm` marker "
+                  "(architecture §6.2)")
+            worst = 1
+        if LIMIT_LINE not in text:
+            print("RED  intake: missing the independence-limit line "
+                  "(architecture §6.4)")
+            worst = 1
+        findings = [l for l in text.splitlines()
+                    if l.strip().lower().startswith("finding:")]
+        if not findings:
+            print("RED  intake: no `finding:` block")
+            worst = 1
+        if "SC-" not in text:
+            print("RED  intake: no SC- proposal — a flag without a "
+                  "testable replacement is half the duty")
+            worst = 1
+        if worst:
+            return 1
+        print("intake: proposal accepted — %d finding(s); a human "
+              "disposes" % len(findings))
+        return 0
+    sys.stderr.write("tl2: lint needs --brief <spec> or --intake <file>\n")
+    return 2
+
+
 def main():
     ap = argparse.ArgumentParser(prog="tl2")
     ap.add_argument("--store", default=STORE)
@@ -345,6 +577,8 @@ def main():
     w = sub.add_parser("whisper",
                        help="which capsules watch the paths I am about to touch")
     w.add_argument("paths", nargs="+")
+    w.add_argument("--all", action="store_true",
+                   help="lift the plain-class fatigue budget (F-6)")
     r = sub.add_parser("retract",
                        help="tombstone a capsule with a cause and successor")
     r.add_argument("cap")
@@ -355,15 +589,28 @@ def main():
     m.add_argument("--manifest", required=True)
     m.add_argument("--root", default=".")
     m.add_argument("--pattern", default=r"SC-[a-z0-9]{3,12}-[0-9]{3}")
+    m.add_argument("--cite-name", default=r"(^test_|_test\.)",
+                   help="basename regex of files whose citations count")
+    m.add_argument("--cite-all", action="store_true",
+                   help="pre-CMP-020 behavior: every file cites")
     y = sub.add_parser("ready", help="the derived queue: what is ready to act on")
     y.add_argument("--complaints", default="docs/complaints")
     y.add_argument("--metrics", default="docs/governance/gate-metrics.md")
     y.add_argument("--horizon", type=int, default=45)
+    f = sub.add_parser("verify",
+                       help="F-4: brief a fresh verifier / intake its report")
+    f.add_argument("--brief", metavar="CAP_ID")
+    f.add_argument("--intake", metavar="REPORT_FILE")
+    g = sub.add_parser("lint",
+                       help="F-1 proposer: brief a spec linter / intake proposals")
+    g.add_argument("--brief", metavar="SPEC_FILE")
+    g.add_argument("--intake", metavar="REPORT_FILE")
     args = ap.parse_args()
     return {"capsule": cmd_capsule, "check": cmd_check,
             "vacuity": cmd_vacuity, "whisper": cmd_whisper,
             "retract": cmd_retract, "mirror": cmd_mirror,
-            "ready": cmd_ready}[args.verb](args)
+            "ready": cmd_ready, "verify": cmd_verify,
+            "lint": cmd_lint}[args.verb](args)
 
 
 if __name__ == "__main__":
