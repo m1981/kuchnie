@@ -5,6 +5,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
+## [Unreleased] — 2026-09-02 — SC-drsub citing tests + variant pricing / drawer-axis budget walk (drawer-substitution spec, bead kuchnie-max)
+
+### Added
+- `kitchen-erp/tests/test_drawer_substitution.py`: the six citing tests
+  for `kitchen-erp/docs/specs/drawer-substitution.md` (SC-drsub-001..006,
+  id in the first docstring line; `tl2 mirror` now clean in both
+  directions where it reported 6 GAPs). Every test carries `tl2 vacuity`
+  evidence: SC-001/002 PROVEN red at `ca3721f` (pre kuchnie-27b — ERP
+  drilled one LEGRABOX screw and spelled height code "M" for every
+  system), SC-004 PROVEN red at `4b39f44~1` (before the derivation
+  increment), SC-003/005/006 PROVEN red at the commit preceding this one
+  (module below absent). Imports are function-local so vacuity can
+  overlay the file onto pre-change bases without collection errors.
+- `kitchen_erp/core/variant_pricing.py` (new, DB-free): `price_variant`
+  prices one derivation's BOM lines against a caller-assembled
+  `{line name: unit price}` book — an unknown line stays in the result
+  flagged `priced=False` and marks the price `incomplete` (UC-1 ext 2a
+  pattern, SC-drsub-005); `walk_drawer_axis` walks the drawer-system
+  axis of a draft variant against a budget: candidates only from
+  `DrawerSystemFactory` (SC-drsub-006), each re-derived and priced in
+  both widelka tiers (od/do brutto, owner margins 2026-08-02; fit =
+  `od_brutto <= budget` per UC-1 ext 1a's trigger), rejection carried
+  with its reason, exhaustion returned as explicit `no_fit_on_axis`
+  (SC-drsub-003). The walk proposes and restores the variant's own
+  axis; applying the winner is the board's action.
+
+---
+
 ## [Unreleased] — 2026-08-02 — Rough-quote canvas widelka + per-type labor pricing (UC-1 threshold 1, wk-224f3712 + wk-59b943b1)
 
 ### Added
