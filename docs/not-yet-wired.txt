@@ -27,6 +27,7 @@
 kitchen-erp/kitchen_erp/core/variant_derivation.py  # kuchnie-lh2 — derive_variant composes every carcass result and has no caller
 kitchen-erp/kitchen_erp/core/offers.py              # kuchnie-lh2 — record_offer/accept_variant, no UI path to the offer loop
 kitchen-erp/kitchen_erp/core/heights.py             # kuchnie-lh2 — worktop-height derivation, waiting on the same UI
+kitchen-erp/kitchen_erp/core/variant_pricing.py     # kuchnie-lh2 — price_variant/walk_drawer_axis (SC-drsub-003/005/006), comparison board not built; same wiring epic kuchnie-ubc.1
 
 # ── stage 5: purchasing order documents (kuchnie-ubc.1) ───────────────
 # purchasing.py IS reachable (ui/state.py imports get_strategy_for_material,
