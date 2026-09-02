@@ -590,6 +590,20 @@
       "resolve_parameters"
     ]
   },
+  "kitchen-erp/kitchen_erp/core/variant_pricing.py": {
+    "classes": [
+      "AxisCandidate",
+      "AxisWalkResult",
+      "PricedLine",
+      "VariantPrice"
+    ],
+    "component": "kitchen-erp",
+    "dotted": "kitchen_erp.core.variant_pricing",
+    "functions": [
+      "price_variant",
+      "walk_drawer_axis"
+    ]
+  },
   "kitchen-erp/kitchen_erp/kitchen_erp.py": {
     "classes": [],
     "component": "kitchen-erp",
